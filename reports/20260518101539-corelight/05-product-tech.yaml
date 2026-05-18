@@ -1,0 +1,1992 @@
+schemaVersion: "report-v2"
+artifact: "product-tech"
+slug: "corelight"
+runDate: "2026-05-18"
+company:
+  name: "Corelight, Inc."
+chapter:
+  number: 5
+  title: "Product & Technology"
+  summary: >-
+    Corelight's Open NDR Platform is built on Zeek, the open-source network security monitor created by co-founder Vern
+    Paxson at Lawrence Berkeley National Laboratory. The commercial platform wraps Zeek's 400-plus protocol parsers with
+    Suricata IDS signatures, ML-based behavioral analytics, and Smart PCAP to produce structured JSON network evidence.
+    Five product lines cover the full deployment spectrum: physical sensors at 1G/10G/100G, virtual sensors (VMware
+    ESXi/KVM), cloud sensors (AWS VPC Traffic Mirroring, Azure vTAP, GCP Packet Mirroring), the Corelight Investigator
+    SaaS investigation UI, and the cloud-managed NDR Platform. Key differentiators include Encrypted Traffic Analysis
+    for TLS inspection without decryption, an open data model enabling export to any SIEM or data lake, and
+    custodianship of the Zeek open-source project. The platform integrates natively with Splunk, Microsoft Sentinel,
+    Google Chronicle, IBM QRadar, Elasticsearch, CrowdStrike Falcon, and Apache Kafka. Trust posture includes SOC 2
+    Type II and ISO 27001 certifications; FedRAMP authorization is in progress as of 2026. Sensor v29 introduced ML
+    detection package enhancements; GCP Cloud Sensor reached GA; AI-powered investigation features have been released
+    into the Investigator SaaS product. Key diligence gaps are the specific ML model architecture, FedRAMP timeline,
+    OT/ICS protocol depth, and independent performance benchmarks for large-scale enterprise deployments.
+
+sections:
+  - id: product-portfolio-overview
+    title: "Product Portfolio: Five Lines Covering On-Premises, Virtual, Cloud, and Managed NDR"
+    body: >-
+      Corelight markets five distinct product lines that collectively address network detection and response (NDR) across
+      on-premises data centers, virtualized environments, cloud-native workloads, and fully managed deployments.
+      The flagship offering is the Corelight Sensor, a purpose-built physical network appliance available in 1G, 10G,
+      and 100G throughput variants designed to tap high-speed enterprise network links and produce rich Zeek-based
+      telemetry. Physical sensors are the most mature offering and carry the strongest compliance posture, having
+      undergone the most rigorous enterprise production validation. The Corelight Virtual Sensor targets customers who
+      cannot deploy physical taps, supporting VMware ESXi and KVM hypervisors for deployment inside virtualized data
+      centers and private clouds. The Corelight Cloud Sensor addresses the growing share of enterprise workloads
+      running in public cloud environments, supporting AWS VPC Traffic Mirroring, Azure vTAP, and GCP Packet Mirroring
+      as of its 2024-2025 GA release for all three major cloud providers. Corelight Investigator is a cloud-delivered
+      SaaS web application providing security analysts with an intuitive threat investigation UI layered on top of the
+      structured log data produced by any Corelight sensor type. The fifth product, the Corelight NDR Platform, is a
+      cloud-based managed detection service providing continuous threat monitoring for organizations that do not want
+      to operate the analytics infrastructure themselves. Together these five lines allow Corelight to address
+      enterprise accounts with heterogeneous infrastructure, reducing the need for multiple vendor relationships and
+      positioning Corelight as a full-stack network visibility solution rather than a point product. A key strategic
+      decision embedded in the portfolio is the open data model: every product line exports structured JSON logs
+      compatible with any SIEM or data lake, which prevents customer lock-in to proprietary analytics formats and is a
+      deliberate competitive differentiator versus closed NDR competitors.
+    claimRefs: [CE004, CE005, CE006, CE007, CE008, CE009, CE032, CE040]
+    tableRefs: [TE001]
+    figureRefs: [FE001]
+
+  - id: core-technical-architecture
+    title: "Core Technical Architecture: Zeek Engine, Protocol Parsing, and Open Data Model"
+    body: >-
+      Corelight's technical architecture centers on Zeek (formerly Bro), the open-source network security monitor
+      originally developed at Lawrence Berkeley National Laboratory by co-founder Vern Paxson. Zeek functions as a
+      stateful network analysis framework that intercepts raw packet streams and applies a scripting-language-driven
+      analysis pipeline to produce structured, application-layer log records. Corelight ships Zeek with over 400
+      protocol parsers covering HTTP/HTTPS, DNS, SSL/TLS, SMTP, FTP, SSH, Kerberos, LDAP, SMB/DCE-RPC, RDP,
+      and dozens of specialized protocols, each producing typed JSON log records. This breadth of protocol coverage
+      allows analysts to reconstruct the precise sequence of transactions in any observed network session without
+      capturing raw packets by default, dramatically reducing storage requirements compared to full PCAP-based
+      approaches. Corelight supplements Zeek's scripted analytics with Suricata IDS, an open-source intrusion
+      detection engine running in parallel to apply tens of thousands of community signatures and custom detection
+      rules against the same traffic stream. The combination gives analysts both behavioral (Zeek) and
+      signature-based (Suricata) detection in a single integrated pipeline. Machine learning models provide a third
+      analytics layer, trained to identify anomalous communication patterns that neither deterministic Zeek scripts
+      nor static Suricata signatures would flag. The core data output is the Zeek log set: structured JSON files
+      organized by protocol and session type, exportable directly to Splunk, Elasticsearch, Microsoft Sentinel,
+      Google Chronicle, IBM QRadar, or any data lake via Apache Kafka. The open data model—a deliberate design
+      principle—means customers are not locked into Corelight's proprietary analytics; the same log data can be
+      queried in the customer's preferred tool, unlike closed NDR platforms that require proprietary dashboards. An
+      important architectural component is Corelight's custodianship of the Zeek open-source project: the company
+      is the primary financial backer and code contributor, granting it a privileged position in the Zeek roadmap
+      and ensuring commercial feature priorities flow back into the open-source base. The Zeek Community ID standard
+      (github.com/corelight/zeek-community-id), which provides a deterministic hash for network flow correlation
+      across heterogeneous tools, is a Corelight-originated open-source contribution now adopted across multiple
+      security products.
+    claimRefs: [CE001, CE002, CE003, CE010, CE029, CE032, CE037, CE040]
+    tableRefs: [TE003]
+    figureRefs: [FE003]
+
+  - id: key-capabilities-and-detection
+    title: "Key Detection Capabilities: ETA, ML Analytics, Smart PCAP, and MITRE Coverage"
+    body: >-
+      Corelight delivers a layered detection capability set that addresses both the breadth of protocol visibility and
+      the depth of behavioral analysis required for modern enterprise SOC operations. Encrypted Traffic Analysis (ETA)
+      is among the most strategically significant capabilities: by extracting cipher suite metadata, certificate chain
+      details, JA3/JA3S fingerprints, and behavioral features from TLS handshakes without decrypting session content,
+      Corelight can identify suspicious encrypted communication patterns—including command-and-control channels,
+      malware beaconing, and anomalous certificate usage—while preserving data privacy and avoiding the legal and
+      performance complexities of full TLS interception. Smart PCAP provides selective full-packet capture: rather than
+      continuously storing multi-terabyte PCAP files, Smart PCAP records complete packet data only when a detection
+      event triggers a capture window, providing the forensic detail of PCAP at a fraction of the storage cost.
+      Domain Generation Algorithm (DGA) detection identifies malware that uses algorithmically generated domain names
+      for command-and-control rendezvous, an evasion technique that bypasses static blacklists. Command and control
+      (C2) traffic detection combines ML-based beaconing analysis, Suricata signatures, and Zeek protocol metadata
+      to flag adversary infrastructure communications. Lateral movement detection tracks internal network behaviors
+      consistent with credential theft, pass-the-hash, Kerberoasting, and SMB-based traversal. File analysis
+      capabilities include SHA256 hashing and MIME type detection for every file transferred across observed protocols,
+      creating a searchable inventory of file transfers without storing file contents by default. The platform claims
+      coverage of more than 80 MITRE ATT&CK tactics, techniques, and procedures (TTPs) and ships with over 70,000
+      out-of-the-box detection signatures. Company-claimed performance benchmarks include 95% faster incident response
+      and 4:1 tool consolidation versus alternatives, though these claims have not been independently audited. The
+      Black Hat conference NOC deployment and Mandiant/CrowdStrike partnerships serve as informal performance proof
+      points in high-fidelity, high-volume environments.
+    claimRefs: [CE011, CE012, CE013, CE014, CE015, CE016, CE017, CE033, CE034, CE035, CE036, CE042]
+    tableRefs: [TE002]
+    figureRefs: [FE002]
+
+  - id: integrations-and-partner-ecosystem
+    title: "Integrations and Partner Ecosystem: SIEM, XDR, and Open Export"
+    body: >-
+      Corelight's integration strategy is built around the principle that network evidence should flow into the
+      customer's existing security stack rather than requiring analysts to adopt a proprietary Corelight console.
+      The Corelight for Splunk application, available on the Splunk marketplace, packages pre-built dashboards,
+      correlation searches, and sourcetype configurations to ingest Zeek logs directly into Splunk Enterprise
+      or Splunk Cloud, enabling analysts to use familiar SPL queries on network evidence alongside endpoint and
+      identity telemetry. Microsoft Sentinel integration is provided via a dedicated data connector that maps
+      Zeek log fields to the Azure Monitor log schema, supporting KQL-based analytics and MITRE ATT&CK workbooks
+      within the Sentinel native environment. A blog post from Corelight in 2024 described the Sentinel integration
+      as enabling smarter alert triage and reducing analyst fatigue by combining Corelight's high-fidelity network
+      evidence with Sentinel's AI-driven analytics. Google Chronicle integration provides a cloud-native SIEM path
+      for organizations on the Google security stack. IBM QRadar support is provided via a Device Support Module (DSM)
+      enabling Corelight log normalization within QRadar. Elasticsearch, Kibana, and OpenSearch are supported as
+      direct export targets for customers operating open-source SIEM stacks. Apache Kafka is supported for
+      high-throughput log streaming to data lakes, SOAR platforms, and custom analytics pipelines. The CrowdStrike
+      Falcon integration—bolstered by CrowdStrike's strategic investment in Corelight—provides API-driven enrichment
+      that correlates network session evidence from Corelight with endpoint process and threat telemetry from the
+      CrowdStrike Falcon platform, enabling analysts to pivot from a suspicious network connection to the specific
+      endpoint process that initiated it. The Cisco XDR integration, announced in 2024, feeds Corelight high-fidelity
+      network evidence into Cisco's extended detection and response platform, leveraging Corelight's sensor network
+      as a telemetry source for Cisco's AI-driven correlation engine. These partnerships mean that Corelight sensors
+      function as a foundational network evidence layer in multiple larger security platforms rather than only as a
+      standalone NDR tool.
+    claimRefs: [CE018, CE019, CE020, CE021, CE022, CE023, CE024, CE038, CE041]
+
+  - id: trust-compliance-security-posture
+    title: "Trust, Compliance, and Security Posture"
+    body: >-
+      Corelight has invested in enterprise trust certifications appropriate for its target market of Fortune 500
+      corporations and federal government agencies. The company holds a SOC 2 Type II certification, confirming
+      that an independent auditor has examined its security, availability, processing integrity, confidentiality,
+      and privacy controls over a defined period and found them to meet the AICPA Trust Services Criteria. ISO
+      27001 certification attests to a formally structured information security management system (ISMS) aligned
+      to the international standard, which is an increasingly common requirement for European and multinational
+      enterprise procurement. HIPAA-capable status means Corelight's deployment architecture can be configured
+      to handle PHI-adjacent network telemetry in healthcare environments, though HIPAA is not an auditable
+      certification in the same sense as SOC 2 or ISO 27001. FedRAMP authorization is in progress as of early
+      2026; for federal government customers that require FedRAMP-authorized cloud services, the current status
+      represents a procurement barrier that limits addressable market in the civilian agency segment until
+      authorization is complete. Corelight's architecture separates sensor data processing (on-premises or in
+      the customer's cloud environment) from the management plane (Corelight SaaS services), which gives
+      customers the option to keep all raw network telemetry within their own environment—a significant selling
+      point for data-sovereignty-sensitive buyers including government agencies and regulated enterprises.
+      The open-core model introduces a dependency risk: if a significant security vulnerability is discovered in
+      the Zeek or Suricata open-source base, Corelight is responsible for patching and distributing updated
+      sensor software, creating a potential lag between public vulnerability disclosure and enterprise patch
+      deployment. No public bug bounty program or coordinated vulnerability disclosure policy has been
+      confirmed from public sources as of May 2026, representing a diligence gap for security-conscious
+      enterprise buyers. The company's physical sensor appliances undergo hardware validation and the
+      software distribution chain is managed through Corelight's commercial update mechanism, separate from
+      the upstream Zeek open-source release cadence.
+    claimRefs: [CE025, CE026, CE027, CE028]
+    tableRefs: [TE004]
+    figureRefs: [FE004]
+
+  - id: product-roadmap-recent-releases
+    title: "Product Roadmap and Recent Releases: Sensor v29, GCP GA, and AI Investigation Features"
+    body: >-
+      Corelight's recent product release cadence reflects a strategic push on three fronts: machine learning
+      enhancement, cloud coverage expansion, and AI-driven investigation productivity. Sensor v29, released in
+      the 2024-2025 timeframe, was the most significant hardware sensor milestone, introducing enhanced ML
+      detection packages, new protocol coverage extensions, and improved detection fidelity for encrypted
+      traffic analysis scenarios. Corelight published a dedicated blog post describing the ML improvements
+      in v29 as a step toward 'modernizing threat detection' by reducing false positives and improving the
+      signal-to-noise ratio for SOC analysts dealing with alert fatigue. The Cloud Sensor for GCP achieved
+      general availability, completing Corelight's public cloud sensor coverage across all three major cloud
+      providers (AWS, Azure, GCP) and enabling customers with Google Cloud workloads to apply the same
+      Zeek-based network telemetry to GCP environments that they run on-premises. AI-powered investigation
+      features in the Corelight Investigator SaaS product have been progressively introduced, including AI
+      triage capabilities that score and prioritize network evidence to surface the most investigation-worthy
+      sessions to analysts. The Microsoft Sentinel integration and a refreshed Cisco XDR integration were
+      announced in 2024, expanding the reach of Corelight network evidence into cloud-native SIEM and XDR
+      workflows. Looking forward, Corelight's roadmap emphasis on AI-assisted investigation and expanded cloud
+      sensor coverage reflects the broader NDR market trajectory toward SaaS delivery and AI-augmented SOC
+      operations. Diligence gaps in roadmap validation include the absence of a public changelog or detailed
+      release notes for sensor software versions beyond blog-post summaries, no confirmed timeline for FedRAMP
+      authorization completion, limited documentation of OT/ICS protocol roadmap items, and no public product
+      demo or benchmark data for AI triage features. These gaps are standard for a private growth-stage vendor
+      but represent specific due-diligence items for investors assessing long-term product defensibility.
+    claimRefs: [CE029, CE030, CE031, CE033, CE034, CE041]
+    tableRefs: [TE005]
+
+callouts:
+  - calloutType: strength
+    title: "Open Data Model as Strategic Differentiator"
+    body: >-
+      Corelight's architectural decision to expose all network evidence as open JSON logs—rather than proprietary
+      formats—gives it a durable competitive advantage with data-sovereign enterprise buyers and SIEM-invested
+      security teams. ESG research commissioned by Corelight found that open NDR approaches outperform closed
+      black-box alternatives for integration flexibility and SOC productivity.
+    claimRefs: [CE032, CE040]
+
+  - calloutType: strength
+    title: "Zeek Custodianship Creates Protocol Coverage Moat"
+    body: >-
+      As the primary financial backer and code contributor to the Zeek open-source project, Corelight has
+      privileged access to the protocol parsing roadmap and can ship commercial detection capabilities days to
+      weeks ahead of any competitor who builds on the same open-source base without direct project influence.
+      The 400+ protocol parser library and Zeek Community ID standard are concrete manifestations of this moat.
+    claimRefs: [CE001, CE003, CE037, CE039]
+
+  - calloutType: risk
+    title: "FedRAMP Authorization Gap Limits Federal Revenue Until Completion"
+    body: >-
+      Corelight's FedRAMP authorization remains in progress as of mid-2026. Until authorization is complete,
+      federal civilian agency customers cannot deploy Corelight's cloud-delivered products under their standard
+      FedRAMP procurement requirements, limiting cloud-delivered NDR revenue from the U.S. federal segment—a
+      historically strong market for Corelight given its LBNL and government research heritage.
+    claimRefs: [CE027]
+
+  - calloutType: risk
+    title: "Open-Source Dependency Risk: Zeek and Suricata Vulnerability Surface"
+    body: >-
+      Because the sensor core depends on Zeek and Suricata open-source projects, any critical vulnerability
+      discovered upstream creates an obligation for Corelight to patch and distribute updated sensor binaries
+      quickly across its enterprise customer base. The lag between upstream CVE disclosure and enterprise patch
+      deployment is a managed but real risk, especially in air-gapped federal environments where software
+      updates require additional approval cycles.
+    claimRefs: [CE001, CE010, CE040]
+
+  - calloutType: insight
+    title: "Sensor v29 ML Enhancements Reflect Detection-Quality Competition"
+    body: >-
+      The Sensor v29 release's emphasis on ML detection package improvements signals that Corelight is competing
+      on detection quality, not just protocol coverage. As competitors like Vectra AI and Darktrace advance
+      unsupervised learning capabilities, Corelight's roadmap investment in ML detection fidelity is necessary
+      to maintain differentiation beyond the Zeek protocol-parsing moat alone.
+    claimRefs: [CE029, CE013]
+
+tables:
+  - id: TE001
+    title: "Corelight Product Module and Asset Matrix"
+    columns:
+      - "Product / Module"
+      - "Primary User"
+      - "Deployment Mode"
+      - "Maturity / Status"
+      - "Key Differentiation"
+      - "Diligence Gap"
+    rows:
+      - - "Physical Sensor (1G / 10G / 100G)"
+        - "Enterprise SOC, Federal, Large Campus"
+        - "Hardware appliance on-premises; dedicated network TAP"
+        - "GA – most mature; broadest enterprise validation"
+        - "Full protocol coverage; high-throughput certified; air-gap compatible"
+        - "Hardware supply chain, manufacturing partner, appliance BOM not publicly disclosed"
+      - - "Virtual Sensor (VMware ESXi / KVM)"
+        - "Enterprise SOC with virtualized data center"
+        - "Virtual machine deployed in customer hypervisor; SPAN port or virtual TAP"
+        - "GA – production-validated"
+        - "No hardware procurement friction; rapid deployment in virtualized environments"
+        - "Performance at high vCPU contention not independently benchmarked"
+      - - "Cloud Sensor (AWS / Azure / GCP)"
+        - "Cloud-native enterprise, hybrid cloud SOC"
+        - "Cloud-native agent using VPC Traffic Mirroring, vTAP, or GCP Packet Mirroring"
+        - "GA (AWS, Azure, GCP) – GCP GA in 2024–2025"
+        - "Cloud-native deployment; same Zeek telemetry as on-premises sensors"
+        - "Traffic mirroring adds cloud egress cost; cloud sensor parity with physical for encrypted traffic depth not confirmed"
+      - - "Corelight Investigator (SaaS)"
+        - "SOC analyst, IR team, threat hunter"
+        - "Cloud-delivered SaaS web application; consumes sensor log data"
+        - "GA – AI triage features in active development (2025–2026)"
+        - "Purpose-built investigation UI with AI-assisted alert prioritization; no SIEM required"
+        - "AI triage scoring methodology not publicly documented; integration depth with third-party SIEMs limited"
+      - - "Corelight NDR Platform (Managed)"
+        - "MSSP, MDR, enterprise with no internal SOC analytics capability"
+        - "Cloud-managed service; Corelight operates detection infrastructure"
+        - "GA – positioned for managed NDR market segment"
+        - "Removes operational burden; full Zeek telemetry with Corelight-managed detection rules"
+        - "Managed service SLA, uptime guarantees, and customer data isolation controls not publicly confirmed"
+    notes: >-
+      Maturity ratings are assessments based on publicly available product page descriptions, blog posts, and
+      press releases. No independent third-party benchmark or analyst maturity rating specifically scores each
+      product line. The Physical Sensor is the most independently validated due to its longer market presence.
+      Cloud Sensor and NDR Platform maturity assessments are based primarily on company-disclosed GA announcements.
+    claimRefs: [CE004, CE005, CE006, CE007, CE008, CE009]
+
+  - id: TE002
+    title: "Corelight Workflow and Use-Case Table"
+    columns:
+      - "User Job"
+      - "Current Workflow Without Corelight"
+      - "Corelight Solution"
+      - "Measurable Benefit (Claimed)"
+      - "Limitation / Gap"
+    rows:
+      - - "SOC threat detection and triage"
+        - "SIEM alert review with limited network context; analysts pivot manually across disparate tools"
+        - "Zeek log stream integrated into SIEM/Splunk; AI triage in Investigator reduces noise"
+        - "95% faster incident response (company-claimed); 4:1 tool consolidation (company-claimed)"
+        - "Both claims are self-reported; no independent audit; benefit depends on baseline maturity"
+      - - "Incident response and forensics"
+        - "PCAP capture at scale creates massive storage requirements; post-incident coverage gaps"
+        - "Smart PCAP records full packets only on detection trigger; structured logs provide session context by default"
+        - "Significant reduction in storage costs; preserved forensic fidelity for triggered events"
+        - "Smart PCAP trigger configuration must be tuned; missed detections mean missed PCAP windows"
+      - - "Threat hunting (proactive)"
+        - "Hunters write custom SIEM queries against endpoint logs with limited or no network telemetry"
+        - "Structured Zeek logs enable JA3/JA3S fingerprinting, DNS anomaly hunting, protocol behavioral analysis"
+        - "Enables network-layer hypothesis testing not possible with endpoint-only telemetry"
+        - "Hunting effectiveness depends on analyst Zeek log familiarity; training requirement non-trivial"
+      - - "Cloud workload visibility"
+        - "Cloud-native workloads produce no network telemetry in SIEM; blind spot for lateral movement"
+        - "Cloud Sensor captures VPC/vNet traffic via provider mirroring APIs; same Zeek analysis applied"
+        - "Closes network visibility gap in cloud environments without deploying hardware"
+        - "Cloud provider mirroring APIs have throughput caps; egress cost adds per-GB cost at scale"
+      - - "Regulatory compliance and audit"
+        - "Manual packet evidence collection for audit; compliance teams rely on firewall logs with limited application-layer detail"
+        - "Protocol-level logs capture application transactions (HTTP, DNS, SMTP) relevant to HIPAA, PCI-DSS, NERC CIP audit trails"
+        - "Richer network audit trail reduces manual evidence collection effort"
+        - "SOC 2 and ISO 27001 cover Corelight's own security posture; FedRAMP for cloud delivery still in progress"
+    notes: >-
+      Measurable benefits marked 'company-claimed' are sourced from Corelight marketing materials and press releases;
+      none has been independently verified by a third-party auditor or published case study with specific baseline and
+      outcome data. The 95% faster IR and 4:1 consolidation figures should be treated as aspirational benchmarks
+      pending disclosure of methodology and customer-specific evidence.
+    claimRefs: [CE011, CE012, CE033, CE034, CE039]
+
+  - id: TE003
+    title: "Corelight Technology and Operating Architecture Table"
+    columns:
+      - "Layer / Component"
+      - "Role in Platform"
+      - "Key Dependency"
+      - "Risk"
+    rows:
+      - - "Zeek protocol analysis engine"
+        - "Core packet parsing and log generation; 400+ protocol parsers produce structured JSON logs"
+        - "Zeek open-source project (Corelight-custodied); requires C++ and Zeek scripting language expertise"
+        - "Upstream vulnerability in Zeek creates sensor patch obligation; key-person risk if Vern Paxson reduces involvement"
+      - - "Suricata IDS engine"
+        - "Signature-based threat detection layer running in parallel to Zeek; matches known threat patterns"
+        - "Suricata open-source project (OISF); community signatures and ET Pro commercial feeds"
+        - "Signature freshness requires timely threat-intel feed updates; dual-engine processing increases CPU load"
+      - - "ML anomaly detection models"
+        - "Behavioral analytics layer detecting DGA, C2 beaconing, lateral movement, and protocol anomalies"
+        - "Corelight proprietary ML models; training data from customer-consented telemetry"
+        - "Model architecture not publicly documented; detection quality not independently benchmarked; model drift risk"
+      - - "Smart PCAP subsystem"
+        - "Selective full-packet capture triggered by detection events; reduces storage vs. always-on PCAP"
+        - "Local sensor storage or customer NFS/SAN; trigger rules configured by SOC team"
+        - "Missed detections mean no PCAP for those sessions; misconfigured triggers reduce forensic coverage"
+      - - "Cloud sensor VPC mirroring layer"
+        - "Captures cloud workload traffic via AWS/Azure/GCP provider APIs; feeds same Zeek analysis pipeline"
+        - "Cloud provider VPC Traffic Mirroring, Azure vTAP, GCP Packet Mirroring APIs"
+        - "Provider API changes or deprecations could break sensor; throughput caps limit coverage at scale"
+      - - "Data export and integration layer"
+        - "Forwards structured JSON logs to SIEM, data lake, or SOAR; Apache Kafka for streaming"
+        - "Customer SIEM (Splunk, Sentinel, Chronicle, QRadar, Elasticsearch) and Kafka infrastructure"
+        - "SIEM ingestion pipeline failures cause log gaps; customer-managed SIEM infrastructure is outside Corelight control"
+      - - "Corelight Investigator SaaS management plane"
+        - "Cloud-delivered investigation UI and sensor management; AI triage and correlation"
+        - "Corelight cloud infrastructure (AWS or GCP); internet connectivity from sensor to management plane"
+        - "Internet dependency for management plane may conflict with air-gapped deployment requirements"
+    notes: >-
+      Architecture details are reconstructed from product documentation, blog posts, GitHub repositories, and
+      industry descriptions of Zeek-based NDR platforms. Corelight does not publish a detailed technical
+      architecture document publicly. The ML model layer is particularly opaque—detection model architecture,
+      training data sourcing, versioning policy, and false-positive rates are not publicly disclosed.
+    claimRefs: [CE001, CE002, CE003, CE010, CE011, CE012, CE013, CE032]
+
+  - id: TE004
+    title: "Corelight Trust, Quality, and Compliance Table"
+    columns:
+      - "Control / Certification"
+      - "Status"
+      - "Scope"
+      - "Verification Path"
+      - "Gap / Caveat"
+    rows:
+      - - "SOC 2 Type II"
+        - "Certified – confirmed via company disclosures"
+        - "Corelight commercial platform and cloud services"
+        - "Request current SOC 2 Type II report directly from Corelight security team"
+        - "Specific audit period, scope boundaries, and auditor name not confirmed from public sources"
+      - - "ISO 27001"
+        - "Certified – confirmed via company disclosures"
+        - "Corelight ISMS covering product development and cloud operations"
+        - "Request ISO 27001 certificate with issuing body name and expiry date"
+        - "Certificate scope (whether physical sensor manufacturing is included) not confirmed"
+      - - "FedRAMP"
+        - "In Progress / Partial – authorization not yet complete as of mid-2026"
+        - "Cloud-delivered Corelight services (Investigator SaaS, NDR Platform)"
+        - "Check FedRAMP Marketplace (fedramp.gov) for current authorization status; request agency ATO letters"
+        - "Until FedRAMP authorization completes, federal civilian agencies cannot deploy Corelight cloud products under standard FedRAMP requirement"
+      - - "HIPAA-Capable"
+        - "Capability claim – not an auditable certification"
+        - "Deployment architecture can handle PHI-adjacent telemetry; BAA required for covered entities"
+        - "Request Business Associate Agreement template and HIPAA technical safeguard documentation"
+        - "HIPAA is a compliance posture, not a third-party certification; actual compliance depends on customer configuration"
+      - - "Vulnerability Disclosure / Bug Bounty"
+        - "Not confirmed – no public policy or HackerOne/Bugcrowd listing identified"
+        - "Unknown"
+        - "Request Corelight PSIRT policy, CVE issuance history, and responsible disclosure contacts"
+        - "Absence of public VDP is a gap for security-conscious enterprise buyers; increases uncertainty about historical CVE handling"
+      - - "Data Residency and Sovereignty"
+        - "Partially addressed – sensor data stays in customer environment; management plane in Corelight cloud"
+        - "Raw network telemetry on-premises; management metadata in Corelight SaaS"
+        - "Review SaaS Terms of Service and DPA for data types sent to Corelight cloud; confirm customer data isolation"
+        - "Management plane cloud region selection and data isolation controls not publicly documented"
+    notes: >-
+      SOC 2 Type II and ISO 27001 status is based on company disclosures in product and marketing materials;
+      no auditor name, report date, or scope boundary has been independently confirmed from public sources.
+      FedRAMP status is 'in progress' based on absence from the FedRAMP Marketplace authorization list and
+      company communications indicating pursuit of authorization. All gaps require direct request to Corelight
+      security team during due diligence.
+    claimRefs: [CE025, CE026, CE027, CE028]
+
+  - id: TE005
+    title: "Corelight Product Roadmap and Release History Table"
+    columns:
+      - "Date / Stage"
+      - "Feature / Milestone"
+      - "Status"
+      - "Strategic Implication"
+      - "Source"
+    rows:
+      - - "2024 (H1)"
+        - "Corelight Sensor v29 release – ML detection package enhancements, improved detection fidelity"
+        - "Released – GA"
+        - "Positions Corelight as ML-forward NDR vendor; reduces alert fatigue; competes with Vectra AI/Darktrace on detection quality"
+        - "Corelight blog: corelight.com/blog/corelight-sensor-v29-release/"
+      - - "2024–2025"
+        - "ML threat detection modernization (Sensor v29 expansion) – behavioral models for DGA, C2, lateral movement"
+        - "Released – GA"
+        - "Third analytics layer supplementing Zeek scripts and Suricata signatures; strengthens differentiation"
+        - "Corelight blog: corelight.com/blog/modernizing-threat-detection-ml-corelight-sensor-v29/"
+      - - "2024–2025"
+        - "Cloud Sensor for GCP – general availability across all three major cloud providers"
+        - "Released – GA"
+        - "Completes public cloud coverage; addresses enterprise hybrid cloud network visibility gap"
+        - "Corelight product page: corelight.com/products/sensors"
+      - - "2024–2025"
+        - "Corelight Investigator AI triage features – AI-assisted alert prioritization and investigation surfacing"
+        - "Released – active development"
+        - "Reduces analyst fatigue; supports AI-led SOC narrative for enterprise sales; SaaS growth driver"
+        - "Corelight product page: corelight.com/products/corelight-investigator"
+      - - "2024"
+        - "Microsoft Sentinel data connector integration – native Corelight log ingestion for Azure Sentinel customers"
+        - "Released – GA"
+        - "Expands addressable market to Microsoft-stack enterprise customers; supports AI triage in Sentinel"
+        - "Corelight blog: corelight.com/blog/corelight-and-microsoft-integration/"
+      - - "2024"
+        - "Cisco XDR integration – Corelight network evidence as telemetry source for Cisco XDR platform"
+        - "Released – GA"
+        - "Leverages Cisco Investments strategic relationship; embeds Corelight in Cisco XDR sales motion"
+        - "Corelight blog: corelight.com/blog/fueling-cisco-xdr-corelight-high-fidelity-network-evidence/"
+      - - "In Progress (2026)"
+        - "FedRAMP authorization for cloud-delivered services"
+        - "In Progress – not yet authorized as of mid-2026"
+        - "Critical gate for federal civilian agency cloud adoption; authorization would expand federal revenue significantly"
+        - "Company communications and absence from fedramp.gov marketplace as of 2026-05-18"
+      - - "Roadmap (2026+)"
+        - "Expanded OT/ICS protocol coverage – industrial protocol parsers for critical infrastructure customers"
+        - "Roadmap – not confirmed as GA"
+        - "Addresses critical infrastructure segment requirement; competitive with Claroty, Dragos in OT visibility"
+        - "Analyst commentary on NDR market OT requirements; not confirmed by Corelight as of May 2026"
+    notes: >-
+      Release dates are approximate; Corelight does not publish a public version changelog or release calendar.
+      Blog post publication dates are used as proxies for GA release timing. FedRAMP and OT/ICS roadmap items
+      are inferred from product direction, analyst commentary, and market positioning — neither has been
+      confirmed as a specific committed delivery date by Corelight. All roadmap items should be verified
+      in management discussions during due diligence.
+    claimRefs: [CE029, CE030, CE031, CE041]
+
+figures:
+  - id: FE001
+    title: "Corelight Open NDR Platform Architecture Map"
+    type: stack
+    layout: wide
+    summary: >-
+      Five-layer architecture stack depicting the Corelight Open NDR Platform from the network collection
+      layer at the bottom through protocol analysis, ML and signature-based detection, investigation, and
+      integration at the top. The open JSON export at the top layer is the architectural mechanism by which
+      Corelight's 'Open NDR' branding is technically realized — logs flow up and out to any SIEM or data lake.
+    data:
+      layers:
+        - label: "Layer 1: Collection & Packet Capture"
+          detail: >-
+            Physical sensors (1G/10G/100G), Virtual Sensors (ESXi/KVM), and Cloud Sensors (AWS VPC Traffic
+            Mirroring, Azure vTAP, GCP Packet Mirroring) tap network traffic. Smart PCAP provides selective
+            full-packet recording when detection events are triggered.
+          tone: neutral
+        - label: "Layer 2: Protocol Analysis & Zeek Log Generation (400+ Parsers)"
+          detail: >-
+            Zeek (open-source, Corelight-custodied) applies 400+ protocol parsers to produce structured JSON
+            logs for every observed session — HTTP, DNS, SSL/TLS, SMB, Kerberos, SSH, SMTP, FTP, and dozens
+            of specialized protocols. Outputs include connection metadata, application-layer records, and file
+            transfer inventory.
+          tone: positive
+        - label: "Layer 3: Multi-Engine Detection (Suricata + ML + Zeek Analytics)"
+          detail: >-
+            Three parallel detection engines process the same traffic stream: Suricata IDS applies tens of
+            thousands of signature-based rules; Zeek scripts encode behavioral detection logic; proprietary ML
+            models score anomalous patterns including DGA, C2 beaconing, lateral movement, and protocol
+            deviations. Encrypted Traffic Analysis (ETA/JA3) operates at this layer.
+          tone: positive
+        - label: "Layer 4: Investigation & Response (Corelight Investigator SaaS)"
+          detail: >-
+            Cloud-delivered Corelight Investigator provides a purpose-built threat investigation UI with
+            AI-assisted triage, session timeline reconstruction, pivoting by IP/user/file SHA256, and
+            integration with CrowdStrike Falcon for endpoint context. NDR Platform delivers this layer as a
+            fully managed service.
+          tone: positive
+        - label: "Layer 5: Open Integration & Export (SIEM, Data Lake, SOAR)"
+          detail: >-
+            All Zeek logs are exported as open JSON to Splunk, Microsoft Sentinel, Google Chronicle,
+            IBM QRadar, Elasticsearch, and Apache Kafka. The open data model is the defining architectural
+            commitment — customers are not locked to Corelight's proprietary analytics tooling.
+          tone: positive
+    claimRefs: [CE001, CE003, CE004, CE010, CE011, CE032, CE040]
+
+  - id: FE002
+    title: "SOC and Incident Response Workflow with Corelight"
+    type: flow
+    layout: wide
+    summary: >-
+      Seven-node flow diagram tracing the path from network packet capture through Zeek log generation,
+      SIEM ingestion, detection, analyst triage, IR investigation, and remediation. Illustrates how
+      Corelight sits at the 'evidence generation' step, providing structured telemetry consumed by
+      downstream SOC tools rather than requiring analysts to operate a separate Corelight-only console.
+    data:
+      nodes:
+        - id: network-tap
+          label: "Network Traffic (TAP / Mirror)"
+          detail: >-
+            Raw packet stream from physical TAP, SPAN port, or cloud provider mirroring API (AWS/Azure/GCP)
+            feeds the Corelight sensor continuously.
+          tone: neutral
+        - id: sensor-processing
+          label: "Corelight Sensor Processing"
+          detail: >-
+            Zeek engine parses 400+ protocols; Suricata applies IDS signatures; ML models score behavioral
+            anomalies; Smart PCAP optionally records full packets for triggered events.
+          tone: positive
+        - id: log-generation
+          label: "Structured Zeek Log Generation (JSON)"
+          detail: >-
+            Session logs, DNS records, HTTP transactions, SSL/TLS metadata, file transfers, and detection
+            notices output as structured JSON — the core 'network evidence' product.
+          tone: positive
+        - id: siem-ingestion
+          label: "SIEM / Data Lake Ingestion"
+          detail: >-
+            Zeek logs forwarded to Splunk, Microsoft Sentinel, Elasticsearch, Google Chronicle, IBM QRadar,
+            or a data lake via Apache Kafka; no Corelight-proprietary console required for analytics.
+          tone: positive
+        - id: detection-alerting
+          label: "Threat Detection and AI Triage"
+          detail: >-
+            SIEM correlation rules, Corelight detection packages, and AI triage features score and
+            prioritize alerts; Investigator SaaS surfaces highest-fidelity network evidence to analysts.
+          tone: positive
+        - id: ir-investigation
+          label: "IR Investigation and Timeline Reconstruction"
+          detail: >-
+            SOC analyst pivots from alert to full session context, DNS history, file hashes, and lateral
+            movement paths using Corelight Investigator or SIEM queries on Zeek log data.
+          tone: positive
+        - id: remediation
+          label: "Remediation and Response Action"
+          detail: >-
+            Analyst triggers endpoint isolation via CrowdStrike Falcon API enrichment or SOAR playbook;
+            network block instructions sent to firewall; Smart PCAP evidence preserved for forensic record.
+          tone: positive
+      edges:
+        - from: network-tap
+          to: sensor-processing
+          label: "Packet stream"
+        - from: sensor-processing
+          to: log-generation
+          label: "Zeek parsing"
+        - from: log-generation
+          to: siem-ingestion
+          label: "JSON log export"
+        - from: siem-ingestion
+          to: detection-alerting
+          label: "SIEM analytics"
+        - from: detection-alerting
+          to: ir-investigation
+          label: "Alert queue"
+        - from: ir-investigation
+          to: remediation
+          label: "Response action"
+    claimRefs: [CE001, CE003, CE011, CE018, CE021, CE023, CE032]
+
+  - id: FE003
+    title: "Corelight Critical Dependency Map"
+    type: dag
+    layout: wide
+    summary: >-
+      Directed acyclic graph mapping Corelight's eight critical dependencies and the directional relationships
+      that create platform risk. The two most significant upstream dependencies are the Zeek and Suricata
+      open-source projects, where a critical vulnerability or governance change would propagate directly into
+      the commercial platform. Cloud provider API dependencies are significant for the growing cloud sensor
+      product line.
+    data:
+      nodes:
+        - id: corelight-platform
+          label: "Corelight Commercial Platform"
+          detail: "The integrated Open NDR Platform combining all sensors, detection, and SaaS services."
+          tone: positive
+        - id: zeek-oss
+          label: "Zeek Open Source (Corelight-custodied)"
+          detail: >-
+            Core protocol analysis engine; 400+ parsers; Corelight is primary maintainer, reducing fork risk
+            but creating key-person dependency on Zeek committers.
+          tone: positive
+        - id: suricata-oss
+          label: "Suricata Open Source (OISF)"
+          detail: >-
+            IDS/IPS engine for signature-based detection; maintained by OISF independent of Corelight;
+            Corelight contributes but does not control the project.
+          tone: neutral
+        - id: cloud-infra-aws-azure-gcp
+          label: "Cloud Provider Mirroring APIs (AWS/Azure/GCP)"
+          detail: >-
+            Cloud sensor relies on AWS VPC Traffic Mirroring, Azure vTAP, and GCP Packet Mirroring APIs;
+            API changes or deprecation would break cloud sensor functionality.
+          tone: neutral
+        - id: hardware-supply
+          label: "Hardware Supply Chain (Physical Sensors)"
+          detail: >-
+            Physical sensors require network hardware components; supply chain concentration or
+            component shortage creates fulfillment risk for hardware appliance revenue stream.
+          tone: neutral
+        - id: ml-threat-intel
+          label: "ML Models and Threat Intelligence Feeds"
+          detail: >-
+            Proprietary ML detection models require training data and threat intelligence feeds;
+            feed freshness and model update cadence affect detection fidelity.
+          tone: neutral
+        - id: siem-integration-partners
+          label: "SIEM Integration Partners (Splunk, Sentinel, Chronicle, QRadar, Elastic)"
+          detail: >-
+            SIEM API changes or competitive moves by integration partners could break or disadvantage
+            Corelight's integration quality; Splunk acquisition by Cisco creates strategic complexity.
+          tone: neutral
+        - id: crowdstrike-api
+          label: "CrowdStrike Falcon Enrichment API"
+          detail: >-
+            Endpoint-to-network correlation feature depends on CrowdStrike Falcon API availability;
+            CrowdStrike is both a strategic investor and a potential competitor in XDR.
+          tone: neutral
+      edges:
+        - from: zeek-oss
+          to: corelight-platform
+          label: "Core parsing engine"
+        - from: suricata-oss
+          to: corelight-platform
+          label: "IDS signature layer"
+        - from: cloud-infra-aws-azure-gcp
+          to: corelight-platform
+          label: "Cloud sensor infrastructure"
+        - from: hardware-supply
+          to: corelight-platform
+          label: "Physical sensor hardware"
+        - from: ml-threat-intel
+          to: corelight-platform
+          label: "ML detection layer"
+        - from: siem-integration-partners
+          to: corelight-platform
+          label: "Integration targets"
+        - from: crowdstrike-api
+          to: corelight-platform
+          label: "Endpoint enrichment"
+    claimRefs: [CE001, CE007, CE010, CE021, CE039, CE040]
+
+  - id: FE004
+    title: "Corelight Product Maturity and Capability Matrix"
+    type: matrix
+    layout: wide
+    summary: >-
+      Eight-row by five-column matrix scoring Corelight's five product lines against eight capability
+      dimensions. Physical and Virtual Sensors score highest across all detection dimensions as the most
+      mature offerings. Cloud Sensor has full protocol coverage but limited Smart PCAP depth. Investigator
+      is a UI layer, not a detection engine. All product lines score neutral on OT/ICS protocol support,
+      reflecting a known coverage gap for industrial environments.
+    data:
+      columns:
+        - "Physical Sensor"
+        - "Virtual Sensor"
+        - "Cloud Sensor"
+        - "Investigator (SaaS)"
+        - "NDR Platform"
+      rows:
+        - label: "Protocol Coverage (400+ Zeek parsers)"
+          values:
+            - {label: "Full – GA", tone: positive}
+            - {label: "Full – GA", tone: positive}
+            - {label: "Full – GA", tone: positive}
+            - {label: "N/A (UI layer)", tone: neutral}
+            - {label: "Full via sensors", tone: positive}
+        - label: "ML / AI Behavioral Detection"
+          values:
+            - {label: "Yes – v29 enhanced", tone: positive}
+            - {label: "Yes – v29 enhanced", tone: positive}
+            - {label: "Yes", tone: positive}
+            - {label: "AI Triage UI", tone: positive}
+            - {label: "Managed ML", tone: positive}
+        - label: "Encrypted Traffic Analysis (ETA / JA3)"
+          values:
+            - {label: "Yes – full", tone: positive}
+            - {label: "Yes – full", tone: positive}
+            - {label: "Yes – full", tone: positive}
+            - {label: "Display only", tone: neutral}
+            - {label: "Yes", tone: positive}
+        - label: "Smart PCAP (Selective)"
+          values:
+            - {label: "Yes – full", tone: positive}
+            - {label: "Yes – full", tone: positive}
+            - {label: "Partial", tone: neutral}
+            - {label: "No", tone: neutral}
+            - {label: "Partial", tone: neutral}
+        - label: "SIEM Integration Maturity"
+          values:
+            - {label: "High", tone: positive}
+            - {label: "High", tone: positive}
+            - {label: "High", tone: positive}
+            - {label: "Native SaaS", tone: positive}
+            - {label: "Managed", tone: positive}
+        - label: "SOC 2 / ISO 27001 Certified"
+          values:
+            - {label: "Yes", tone: positive}
+            - {label: "Yes", tone: positive}
+            - {label: "Yes", tone: positive}
+            - {label: "Yes (SaaS)", tone: positive}
+            - {label: "Yes", tone: positive}
+        - label: "FedRAMP Authorization"
+          values:
+            - {label: "In Progress", tone: neutral}
+            - {label: "In Progress", tone: neutral}
+            - {label: "In Progress", tone: neutral}
+            - {label: "In Progress", tone: neutral}
+            - {label: "In Progress", tone: neutral}
+        - label: "OT / ICS Protocol Support"
+          values:
+            - {label: "Limited", tone: neutral}
+            - {label: "Limited", tone: neutral}
+            - {label: "Not confirmed", tone: neutral}
+            - {label: "N/A", tone: neutral}
+            - {label: "Limited", tone: neutral}
+    claimRefs: [CE004, CE005, CE006, CE007, CE008, CE009, CE025, CE026, CE027]
+
+localEvidence:
+  searchQueries:
+    - query: "Corelight platform architecture Zeek sensors product lines 2026"
+      engine: google
+      hits: 10
+      retainedSourceRefs: [SE001, SE002, SE003]
+    - query: "Corelight Zeek protocol parsers open NDR technical architecture 2026"
+      engine: google
+      hits: 10
+      retainedSourceRefs: [SE011, SE012, SE013]
+    - query: "Corelight Sensor v29 ML detection release 2024 2026"
+      engine: google
+      hits: 8
+      retainedSourceRefs: [SE007, SE008]
+    - query: "Corelight cloud sensor AWS Azure GCP deployment 2026"
+      engine: google
+      hits: 8
+      retainedSourceRefs: [SE002, SE014]
+    - query: "Corelight Investigator SaaS AI investigation features 2026"
+      engine: google
+      hits: 8
+      retainedSourceRefs: [SE003, SE001]
+    - query: "Corelight SOC 2 ISO 27001 FedRAMP compliance certification 2026"
+      engine: google
+      hits: 7
+      retainedSourceRefs: [SE001, SE015]
+    - query: "Corelight Splunk integration app marketplace 2026"
+      engine: google
+      hits: 7
+      retainedSourceRefs: [SE015, SE016]
+    - query: "Corelight CrowdStrike integration endpoint network correlation 2026"
+      engine: google
+      hits: 8
+      retainedSourceRefs: [SE006, SE017]
+    - query: "Zeek open source network security monitor protocol analysis github 2026"
+      engine: github
+      hits: 10
+      retainedSourceRefs: [SE011, SE012]
+    - query: "Corelight GitHub open source community zeek-community-id 2026"
+      engine: github
+      hits: 8
+      retainedSourceRefs: [SE013]
+    - query: "Corelight Microsoft Sentinel XDR Cisco integration 2024 2026"
+      engine: google
+      hits: 8
+      retainedSourceRefs: [SE009, SE018]
+    - query: "Corelight encrypted traffic analysis smart PCAP detection 2026"
+      engine: google
+      hits: 7
+      retainedSourceRefs: [SE004, SE005]
+
+  researchQuestions:
+    - id: QE001
+      question: "What five product lines does Corelight offer as of 2026, and what deployment modes does each support?"
+      type: enumeration
+      targets: ["contentRequirements/1"]
+      status: answered
+
+    - id: QE002
+      question: "What third-party SIEM and security platform integrations does Corelight support natively?"
+      type: enumeration
+      targets: ["contentRequirements/3"]
+      status: answered
+
+    - id: QE003
+      question: "What open-source components form the technical foundation of the Corelight platform?"
+      type: enumeration
+      targets: ["contentRequirements/2"]
+      status: answered
+
+    - id: QE004
+      question: "What throughput tiers (Gbps) are available for Corelight physical sensor appliances?"
+      type: quantification
+      targets: ["contentRequirements/1"]
+      status: answered
+
+    - id: QE005
+      question: "How many protocol parsers does Corelight ship with its sensors as of 2026?"
+      type: quantification
+      targets: ["contentRequirements/2"]
+      status: answered
+
+    - id: QE006
+      question: "How many MITRE ATT&CK TTPs does Corelight claim detection coverage for with its platform?"
+      type: quantification
+      targets: ["contentRequirements/4"]
+      status: answered
+
+    - id: QE007
+      question: "Does Corelight hold a current SOC 2 Type II certification as of 2026?"
+      type: verification
+      targets: ["contentRequirements/5"]
+      status: answered
+
+    - id: QE008
+      question: "Is Corelight ISO 27001 certified as of 2026, and what scope does the certification cover?"
+      type: verification
+      targets: ["contentRequirements/5"]
+      status: answered
+
+    - id: QE009
+      question: "What is the current FedRAMP authorization status of Corelight cloud products as of mid-2026?"
+      type: verification
+      targets: ["contentRequirements/5"]
+      status: answered
+
+    - id: QE010
+      question: "How does Corelight's Encrypted Traffic Analysis work to identify threats without decrypting TLS sessions?"
+      type: mechanism
+      targets: ["contentRequirements/2"]
+      status: answered
+
+    - id: QE011
+      question: "How does Smart PCAP work—what detection events trigger a selective full-packet capture window?"
+      type: mechanism
+      targets: ["contentRequirements/2"]
+      status: answered
+
+    - id: QE012
+      question: "How does the Zeek protocol analysis engine convert raw packets into structured JSON log records?"
+      type: mechanism
+      targets: ["contentRequirements/2"]
+      status: answered
+
+    - id: QE013
+      question: "How does the CrowdStrike Falcon integration correlate Corelight network evidence with endpoint telemetry?"
+      type: mechanism
+      targets: ["contentRequirements/3"]
+      status: answered
+
+    - id: QE014
+      question: "How does Corelight's ML anomaly detection layer supplement rule-based Zeek analytics and Suricata signatures?"
+      type: mechanism
+      targets: ["contentRequirements/2"]
+      status: answered
+
+    - id: QE015
+      question: "How does Corelight's open data model compare to proprietary closed NDR approaches from ExtraHop or Vectra AI?"
+      type: comparison
+      targets: ["contentRequirements/4"]
+      status: answered
+
+    - id: QE016
+      question: "What differentiates Corelight's 400+ Zeek protocol parsers from what Suricata-only or signature-only NDR platforms provide?"
+      type: comparison
+      targets: ["contentRequirements/4"]
+      status: answered
+
+    - id: QE017
+      question: "What new ML detection capabilities were introduced in Corelight Sensor v29 and what problem do they address?"
+      type: freshness
+      targets: ["contentRequirements/3"]
+      status: answered
+
+    - id: QE018
+      question: "When did the Corelight Cloud Sensor for GCP reach general availability, and what cloud mirroring mechanism does it use?"
+      type: freshness
+      targets: ["contentRequirements/3"]
+      status: answered
+
+    - id: QE019
+      question: "What AI-powered investigation features has Corelight released in the Investigator SaaS product in 2025–2026?"
+      type: freshness
+      targets: ["contentRequirements/3"]
+      status: answered
+
+    - id: QE020
+      question: "What integrations or platform partnerships has Corelight announced or shipped in 2024–2026?"
+      type: freshness
+      targets: ["contentRequirements/3"]
+      status: answered
+
+    - id: QE021
+      question: "Are there documented performance degradation, sensor drop-rate, or reliability issues reported by Corelight customers or in public reviews?"
+      type: adverse
+      targets: ["contentRequirements/3"]
+      status: partial
+
+    - id: QE022
+      question: "What are the risks of Corelight's dependency on Zeek open-source maintainership—what happens if community governance changes?"
+      type: adverse
+      targets: ["contentRequirements/2"]
+      status: answered
+
+    - id: QE023
+      question: "Are there documented limitations or coverage gaps in Corelight's cloud sensor compared to physical sensor deployments?"
+      type: adverse
+      targets: ["contentRequirements/2"]
+      status: answered
+
+    - id: QE024
+      question: "Has Corelight disclosed any CVEs, sensor software vulnerabilities, or security incidents affecting the platform?"
+      type: adverse
+      targets: ["contentRequirements/5"]
+      status: partial
+
+    - id: QE025
+      question: "What evidence supports Corelight's claim of 95% faster incident response — what is the baseline and methodology?"
+      type: verification
+      targets: ["contentRequirements/4"]
+      status: answered
+
+    - id: QE026
+      question: "What evidence supports the 4:1 tool consolidation claim—what tools are displaced and in which customer deployments?"
+      type: quantification
+      targets: ["contentRequirements/4"]
+      status: answered
+
+  claims:
+    - id: CE001
+      statement: >-
+        Corelight builds its Open NDR Platform on Zeek (formerly Bro), the open-source network security monitor
+        originally developed at Lawrence Berkeley National Laboratory by Corelight co-founder Vern Paxson.
+      confidence: high
+      sourceRefs: [SE011, SE012, SE001]
+      type: third-party-reported
+      topic: "Zeek platform foundation"
+      freshness: historical
+    - id: CE002
+      statement: >-
+        Zeek produces structured JSON logs (Zeek logs) organized by protocol and session type that form the
+        foundational data output of the Corelight platform, enabling export to any SIEM or data lake.
+      confidence: high
+      sourceRefs: [SE011, SE001, SE019]
+      type: third-party-reported
+      topic: "open data model"
+      freshness: current
+    - id: CE003
+      statement: >-
+        Corelight ships its sensors with more than 400 protocol parsers covering HTTP, DNS, SSL/TLS, SMTP, FTP,
+        Kerberos, SMB, RDP, SSH, and dozens of specialized protocols.
+      confidence: medium
+      sourceRefs: [SE001, SE011]
+      type: company-claimed
+      topic: "protocol parser coverage"
+      freshness: current
+    - id: CE004
+      statement: >-
+        Corelight offers five product lines: the Physical Sensor (hardware appliance), Virtual Sensor (VMware
+        ESXi/KVM), Cloud Sensor (AWS/Azure/GCP), Corelight Investigator (SaaS investigation UI), and the
+        Corelight NDR Platform (managed detection service).
+      confidence: high
+      sourceRefs: [SE001, SE002, SE003, SE014]
+      type: company-claimed
+      topic: "product portfolio"
+      freshness: current
+    - id: CE005
+      statement: >-
+        Corelight physical sensors are available in 1G, 10G, and 100G network throughput variants designed for
+        different enterprise network scale requirements.
+      confidence: medium
+      sourceRefs: [SE002, SE001]
+      type: company-claimed
+      topic: "physical sensor specifications"
+      freshness: current
+    - id: CE006
+      statement: >-
+        The Corelight Virtual Sensor supports deployment on VMware ESXi and KVM hypervisors for virtualized
+        data center environments.
+      confidence: medium
+      sourceRefs: [SE002, SE001]
+      type: company-claimed
+      topic: "virtual sensor deployment"
+      freshness: current
+    - id: CE007
+      statement: >-
+        The Corelight Cloud Sensor supports AWS VPC Traffic Mirroring, Azure vTAP, and GCP Packet Mirroring
+        as the cloud network capture mechanisms for public cloud visibility.
+      confidence: medium
+      sourceRefs: [SE002, SE014]
+      type: company-claimed
+      topic: "cloud sensor deployment"
+      freshness: current
+    - id: CE008
+      statement: >-
+        Corelight Investigator is a cloud-delivered SaaS web application providing threat investigation,
+        session timeline reconstruction, and AI-assisted alert triage to SOC analysts.
+      confidence: medium
+      sourceRefs: [SE003, SE001]
+      type: company-claimed
+      topic: "Corelight Investigator"
+      freshness: current
+    - id: CE009
+      statement: >-
+        The Corelight NDR Platform is a cloud-based managed detection service providing continuous threat
+        monitoring for organizations that prefer a managed security operations model.
+      confidence: medium
+      sourceRefs: [SE001, SE014]
+      type: company-claimed
+      topic: "NDR Platform managed service"
+      freshness: current
+    - id: CE010
+      statement: >-
+        Corelight integrates Suricata IDS alongside Zeek within the sensor pipeline, running signature-based
+        threat detection in parallel with Zeek behavioral analysis against the same network traffic stream.
+      confidence: medium
+      sourceRefs: [SE001, SE019]
+      type: company-claimed
+      topic: "Suricata IDS integration"
+      freshness: current
+    - id: CE011
+      statement: >-
+        Corelight provides Encrypted Traffic Analysis (ETA) that inspects TLS session metadata — including JA3
+        and JA3S fingerprints, cipher suites, and certificate chain data — to identify suspicious encrypted
+        communications without decrypting session content.
+      confidence: medium
+      sourceRefs: [SE004, SE001]
+      type: company-claimed
+      topic: "encrypted traffic analysis"
+      freshness: current
+    - id: CE012
+      statement: >-
+        Smart PCAP is a Corelight capability that records full packet data selectively only when a detection
+        event triggers a capture window, dramatically reducing storage requirements compared to always-on PCAP.
+      confidence: medium
+      sourceRefs: [SE002, SE001]
+      type: company-claimed
+      topic: "Smart PCAP"
+      freshness: current
+    - id: CE013
+      statement: >-
+        Corelight uses ML-based anomaly detection models as a third analytics layer supplementing Zeek scripts
+        and Suricata signatures, introduced with enhanced capabilities in the Sensor v29 release.
+      confidence: medium
+      sourceRefs: [SE007, SE008]
+      type: company-claimed
+      topic: "ML detection"
+      freshness: current
+    - id: CE014
+      statement: >-
+        Domain Generation Algorithm (DGA) detection is a built-in detection capability in the Corelight
+        platform, identifying malware that uses algorithmically generated domain names for C2 rendezvous.
+      confidence: medium
+      sourceRefs: [SE008, SE001]
+      type: company-claimed
+      topic: "DGA detection"
+      freshness: current
+    - id: CE015
+      statement: >-
+        Command and control (C2) traffic detection — combining ML beaconing analysis, Suricata signatures, and
+        Zeek protocol metadata — is a core detection capability of the Corelight platform.
+      confidence: medium
+      sourceRefs: [SE008, SE001, SE034]
+      type: company-claimed
+      topic: "C2 detection"
+      freshness: current
+    - id: CE016
+      statement: >-
+        Lateral movement detection identifying internal network behaviors consistent with credential theft,
+        pass-the-hash, Kerberoasting, and SMB-based traversal is supported by Corelight sensors.
+      confidence: medium
+      sourceRefs: [SE008, SE001]
+      type: company-claimed
+      topic: "lateral movement detection"
+      freshness: current
+    - id: CE017
+      statement: >-
+        Corelight sensors perform file analysis including SHA256 hashing and MIME type detection for all files
+        transferred across observed protocols, creating a searchable file inventory without storing content.
+      confidence: medium
+      sourceRefs: [SE001, SE019]
+      type: company-claimed
+      topic: "file analysis"
+      freshness: current
+    - id: CE018
+      statement: >-
+        Corelight provides a dedicated Splunk application for log ingestion, available on the Splunk marketplace,
+        with pre-built dashboards and sourcetype configurations for Zeek log analysis in Splunk.
+      confidence: medium
+      sourceRefs: [SE015, SE001]
+      type: company-claimed
+      topic: "Splunk integration"
+      freshness: current
+    - id: CE019
+      statement: >-
+        Corelight has a Microsoft Sentinel data connector enabling native ingestion of Corelight Zeek logs into
+        Azure Sentinel with KQL-based analytics and MITRE ATT&CK workbooks.
+      confidence: medium
+      sourceRefs: [SE018, SE001]
+      type: company-claimed
+      topic: "Microsoft Sentinel integration"
+      freshness: current
+    - id: CE020
+      statement: >-
+        Apache Kafka is supported as a high-throughput log streaming target for routing Corelight Zeek logs
+        to data lakes, SOAR platforms, and custom analytics pipelines.
+      confidence: medium
+      sourceRefs: [SE001]
+      type: company-claimed
+      topic: "Kafka integration"
+      freshness: current
+    - id: CE021
+      statement: >-
+        CrowdStrike Falcon integration provides API-driven enrichment that correlates Corelight network session
+        evidence with endpoint process and threat telemetry from the CrowdStrike platform.
+      confidence: medium
+      sourceRefs: [SE006, SE017]
+      type: company-claimed
+      topic: "CrowdStrike integration"
+      freshness: current
+    - id: CE022
+      statement: >-
+        IBM QRadar integration is available via a Device Support Module (DSM) that normalizes Corelight Zeek
+        log data within the QRadar SIEM ecosystem.
+      confidence: medium
+      sourceRefs: [SE001]
+      type: company-claimed
+      topic: "IBM QRadar integration"
+      freshness: current
+    - id: CE023
+      statement: >-
+        Google Chronicle integration is supported for Corelight log ingestion into Google's cloud-native
+        security analytics platform.
+      confidence: medium
+      sourceRefs: [SE001]
+      type: company-claimed
+      topic: "Google Chronicle integration"
+      freshness: current
+    - id: CE024
+      statement: >-
+        Elasticsearch, Kibana, and OpenSearch are supported as direct export targets for Corelight Zeek logs,
+        enabling analytics on open-source SIEM stacks.
+      confidence: medium
+      sourceRefs: [SE001]
+      type: company-claimed
+      topic: "Elasticsearch integration"
+      freshness: current
+    - id: CE025
+      statement: >-
+        Corelight holds a SOC 2 Type II certification, confirmed by company disclosures on the Corelight
+        platform and product pages.
+      confidence: medium
+      sourceRefs: [SE001, SE020, SE032]
+      type: company-claimed
+      topic: "SOC 2 compliance"
+      freshness: current
+    - id: CE026
+      statement: >-
+        Corelight holds ISO 27001 certification for its information security management system, confirmed
+        by company disclosures.
+      confidence: medium
+      sourceRefs: [SE001, SE020]
+      type: company-claimed
+      topic: "ISO 27001 compliance"
+      freshness: current
+    - id: CE027
+      statement: >-
+        Corelight's FedRAMP authorization for cloud-delivered services (Investigator, NDR Platform) is in
+        progress as of mid-2026; the products are not currently listed as FedRAMP-authorized on the FedRAMP
+        Marketplace.
+      confidence: medium
+      sourceRefs: [SE001, SE020, SE033]
+      type: estimated
+      topic: "FedRAMP authorization"
+      freshness: current
+    - id: CE028
+      statement: >-
+        Corelight describes its deployment architecture as HIPAA-capable, meaning it can be configured to
+        handle PHI-adjacent network telemetry in healthcare environments with a Business Associate Agreement.
+      confidence: medium
+      sourceRefs: [SE001]
+      type: company-claimed
+      topic: "HIPAA capability"
+      freshness: current
+    - id: CE029
+      statement: >-
+        Corelight Sensor v29 was released in 2024, introducing ML detection package enhancements and new
+        detection capabilities described as 'modernizing threat detection' with improved ML models.
+      confidence: medium
+      sourceRefs: [SE007, SE008]
+      type: company-claimed
+      topic: "Sensor v29 release"
+      freshness: recent
+    - id: CE030
+      statement: >-
+        The Corelight Cloud Sensor for GCP reached general availability in 2024–2025, completing public
+        cloud coverage for all three major cloud providers (AWS, Azure, GCP).
+      confidence: medium
+      sourceRefs: [SE002, SE014]
+      type: company-claimed
+      topic: "cloud sensor GCP GA"
+      freshness: recent
+    - id: CE031
+      statement: >-
+        AI-powered investigation features including AI triage capabilities were released into the Corelight
+        Investigator SaaS product in 2025–2026, providing automated prioritization of network evidence.
+      confidence: medium
+      sourceRefs: [SE003, SE001]
+      type: company-claimed
+      topic: "AI investigation features"
+      freshness: recent
+    - id: CE032
+      statement: >-
+        Corelight's open data model allows all structured Zeek log output to be exported to any SIEM or data
+        lake, deliberately contrasting with proprietary closed NDR platforms that require vendor-specific
+        analytics tooling.
+      confidence: high
+      sourceRefs: [SE010, SE001, SE011]
+      type: company-claimed
+      topic: "open data model differentiation"
+      freshness: current
+    - id: CE033
+      statement: >-
+        Corelight claims its platform enables 95% faster incident response compared to legacy network
+        security approaches; this claim is self-reported and has not been independently audited.
+      confidence: low
+      sourceRefs: [SE001, SE031]
+      type: company-claimed
+      topic: "IR performance claim"
+      freshness: current
+    - id: CE034
+      statement: >-
+        Corelight claims a 4:1 tool consolidation ratio enabling customers to reduce their security toolstack;
+        this claim is self-reported and has not been independently benchmarked.
+      confidence: low
+      sourceRefs: [SE001]
+      type: company-claimed
+      topic: "tool consolidation claim"
+      freshness: current
+    - id: CE035
+      statement: >-
+        Corelight claims its detection library covers more than 80 MITRE ATT&CK tactics, techniques, and
+        procedures (TTPs) across the full ATT&CK framework.
+      confidence: medium
+      sourceRefs: [SE001, SE010]
+      type: company-claimed
+      topic: "MITRE ATT&CK coverage"
+      freshness: current
+    - id: CE036
+      statement: >-
+        Corelight ships more than 70,000 out-of-the-box detection signatures combining behavioral, AI, and
+        ML detections across the sensor and detection library.
+      confidence: medium
+      sourceRefs: [SE001]
+      type: company-claimed
+      topic: "detection signature count"
+      freshness: current
+    - id: CE037
+      statement: >-
+        The Zeek Community ID project (github.com/corelight/zeek-community-id), providing a deterministic
+        hash standard for network flow correlation across heterogeneous security tools, is a
+        Corelight-originated open-source contribution now broadly adopted in the security community.
+      confidence: high
+      sourceRefs: [SE013, SE011, SE012]
+      type: third-party-reported
+      topic: "Zeek Community ID open source"
+      freshness: historical
+    - id: CE038
+      statement: >-
+        Corelight sensors are used in the Black Hat conference network operations center (NOC), providing
+        network visibility for one of the security industry's most adversarial network environments.
+      confidence: medium
+      sourceRefs: [SE001, SE021]
+      type: company-claimed
+      topic: "Black Hat NOC deployment"
+      freshness: current
+    - id: CE039
+      statement: >-
+        Corelight Cloud Sensor supports all three major cloud providers through AWS VPC Traffic Mirroring,
+        Azure vTAP, and GCP Packet Mirroring native cloud network capture APIs.
+      confidence: medium
+      sourceRefs: [SE002, SE014]
+      type: company-claimed
+      topic: "cloud sensor coverage"
+      freshness: current
+    - id: CE040
+      statement: >-
+        The Corelight Open NDR Platform uses Zeek, Suricata, and Sigma as open-source foundations, with
+        proprietary detection libraries, ML models, and the Investigator SaaS as commercial extensions.
+      confidence: medium
+      sourceRefs: [SE001, SE010, SE011]
+      type: company-claimed
+      topic: "open-source platform foundation"
+      freshness: current
+    - id: CE041
+      statement: >-
+        Corelight announced and released an integration with Microsoft Sentinel (2024) and a refreshed Cisco
+        XDR integration (2024), expanding network evidence delivery into cloud-native SIEM and XDR platforms.
+      confidence: medium
+      sourceRefs: [SE009, SE018]
+      type: company-claimed
+      topic: "SIEM and XDR integrations 2024"
+      freshness: recent
+    - id: CE042
+      statement: >-
+        Corelight's detection library and sensor analytics are mapped to the MITRE ATT&CK framework, providing
+        structured ATT&CK-aligned coverage that security teams use to assess detection gaps against known TTPs.
+      confidence: medium
+      sourceRefs: [SE001, SE010]
+      type: company-claimed
+      topic: "MITRE ATT&CK framework alignment"
+      freshness: current
+
+  evidenceGaps:
+    - id: EGE001
+      topic: "Corelight sensor technical documentation"
+      description: >-
+        docs.corelight.com returned HTTP 401 during research, blocking access to official sensor
+        deployment guides, protocol parser documentation, and API references. The technical architecture
+        described in this chapter is reconstructed from blog posts, product pages, and Zeek open-source
+        documentation rather than official Corelight technical docs. Performance reliability metrics
+        and drop-rate data are not publicly disclosed.
+      impact: medium
+      relatedQuestionRefs: [QE021]
+      diligencePath: >-
+        Request access to the Corelight technical documentation portal and sensor deployment guides
+        directly from Corelight during due diligence.
+
+    - id: EGE002
+      topic: "ML model architecture and detection quality benchmarks"
+      description: >-
+        Corelight does not publicly document its ML anomaly detection model architecture, training data
+        sources, versioning policy, false-positive rates, or benchmark comparisons. The Sensor v29 ML
+        enhancements are described only in high-level blog posts without technical specifics.
+      impact: high
+      diligencePath: >-
+        Request technical white paper on ML detection methodology, false-positive rate data, and
+        third-party evaluation (e.g., NSS Labs equivalent) during due diligence.
+
+    - id: EGE003
+      topic: "FedRAMP authorization timeline and scope"
+      description: >-
+        Corelight has not disclosed a specific FedRAMP authorization timeline or the exact scope of
+        products under authorization review. The absence of Corelight from the FedRAMP Marketplace
+        authorized product list as of mid-2026 confirms authorization is not yet complete.
+      impact: medium
+      diligencePath: >-
+        Check the FedRAMP Marketplace (fedramp.gov) for current status; request Corelight FedRAMP
+        authorization timeline, agency sponsor name, and authorization scope in due diligence.
+
+    - id: EGE004
+      topic: "Physical sensor manufacturing supply chain and hardware BOM"
+      description: >-
+        Corelight does not publicly disclose its physical sensor hardware supply chain, manufacturing
+        partners, component BOM, or lead times. Supply chain concentration and component availability
+        risk cannot be assessed from public sources.
+      impact: low
+      diligencePath: >-
+        Request hardware BOM summary, manufacturing partner names, and component lead time data
+        from Corelight operations team during due diligence.
+
+    - id: EGE005
+      topic: "Vulnerability disclosure policy and CVE history"
+      description: >-
+        No public Corelight PSIRT, bug bounty program, or coordinated vulnerability disclosure policy
+        was identified. Historical CVE exposure from Zeek and Suricata open-source components is
+        documentable via public CVE databases but Corelight-specific sensor CVE history is not available
+        from public sources.
+      impact: medium
+      relatedQuestionRefs: [QE024]
+      diligencePath: >-
+        Request Corelight PSIRT policy, historical CVE list for sensor software, responsible disclosure
+        contacts, and patch SLA commitments during due diligence.
+
+  sources:
+    - id: SE001
+      publisher: "Corelight, Inc."
+      title: "Corelight Open NDR Platform – Platform Overview Page"
+      url: "https://corelight.com/platform/"
+      date: "2026-05-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - platform architecture
+        - product overview
+        - open NDR
+        - Open NDR Platform
+
+    - id: SE002
+      publisher: "Corelight, Inc."
+      title: "Corelight Sensors – Physical, Virtual, and Cloud Sensor Product Page"
+      url: "https://corelight.com/products/sensors"
+      date: "2026-05-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - sensor products
+        - physical sensor
+        - virtual sensor
+        - cloud sensor
+        - throughput specifications
+
+    - id: SE003
+      publisher: "Corelight, Inc."
+      title: "Corelight Investigator – SaaS Investigation UI Product Page"
+      url: "https://corelight.com/products/corelight-investigator"
+      date: "2026-05-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - Corelight Investigator
+        - SaaS investigation
+        - AI triage
+        - threat investigation UI
+
+    - id: SE004
+      publisher: "Corelight, Inc."
+      title: "Corelight Threat Hunting Use Case"
+      url: "https://corelight.com/use-cases/threat-hunting/"
+      date: "2026-05-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - threat hunting
+        - use cases
+        - encrypted traffic analysis
+        - JA3 fingerprinting
+
+    - id: SE005
+      publisher: "Corelight, Inc."
+      title: "Corelight Incident Response Use Case"
+      url: "https://corelight.com/use-cases/incident-response/"
+      date: "2026-05-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - incident response
+        - use cases
+        - smart PCAP
+        - forensics
+
+    - id: SE006
+      publisher: "Corelight, Inc."
+      title: "Corelight and CrowdStrike Alliance Page"
+      url: "https://corelight.com/alliances/crowdstrike/"
+      date: "2026-05-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - CrowdStrike integration
+        - endpoint network correlation
+        - strategic alliance
+
+    - id: SE007
+      publisher: "Corelight, Inc."
+      title: "Corelight Sensor v29 Release Blog Post"
+      url: "https://corelight.com/blog/corelight-sensor-v29-release/"
+      date: "2024-01-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - sensor v29
+        - product release
+        - ML detection enhancements
+        - "2024"
+
+    - id: SE008
+      publisher: "Corelight, Inc."
+      title: "Modernizing Threat Detection with ML in Corelight Sensor v29"
+      url: "https://corelight.com/blog/modernizing-threat-detection-ml-corelight-sensor-v29/"
+      date: "2024-01-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - ML threat detection
+        - sensor v29
+        - DGA detection
+        - C2 detection
+        - lateral movement
+
+    - id: SE009
+      publisher: "Corelight, Inc."
+      title: "Fueling Cisco XDR with Corelight High-Fidelity Network Evidence"
+      url: "https://corelight.com/blog/fueling-cisco-xdr-corelight-high-fidelity-network-evidence/"
+      date: "2024-01-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - Cisco XDR integration
+        - network evidence
+        - partner integration
+        - "2024"
+
+    - id: SE010
+      publisher: "Corelight, Inc."
+      title: "ESG White Paper: Open vs. Closed NDR"
+      url: "https://corelight.com/resources/white-paper/esg-open-vs-closed-ndr/"
+      date: "2023-01-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - open NDR
+        - closed NDR
+        - competitive differentiation
+        - open data model
+        - MITRE ATT&CK
+
+    - id: SE011
+      publisher: "Zeek Project / GitHub"
+      title: "Zeek Network Security Monitor — GitHub Repository (zeek/zeek)"
+      url: "https://github.com/zeek/zeek"
+      date: "2026-04-21"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: high
+      independence: independent
+      topics:
+        - Zeek open source
+        - network security monitor
+        - protocol parsers
+        - GitHub activity
+      keyQuote: >-
+        Zeek is a powerful framework for network analysis and security monitoring. Clang-Tidy, Coverity,
+        and PVS-Studio are used for static analysis.
+
+    - id: SE012
+      publisher: "Corelight / GitHub"
+      title: "Corelight GitHub Organization — Open Source Repository Portfolio"
+      url: "https://github.com/corelight"
+      date: "2026-04-21"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics:
+        - Corelight open source
+        - GitHub organization
+        - Zeek contributions
+        - developer signal
+
+    - id: SE013
+      publisher: "Corelight / GitHub"
+      title: "Zeek Community ID — Corelight Open-Source Network Flow ID Standard"
+      url: "https://github.com/corelight/zeek-community-id"
+      date: "2026-01-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics:
+        - Zeek Community ID
+        - network flow correlation
+        - open source standard
+        - Corelight contribution
+
+    - id: SE014
+      publisher: "Corelight, Inc."
+      title: "Corelight Cloud Sensor — AWS, Azure, and GCP Deployment"
+      url: "https://corelight.com/cloud-sensor/"
+      date: "2026-05-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - cloud sensor
+        - AWS VPC Traffic Mirroring
+        - Azure vTAP
+        - GCP Packet Mirroring
+
+    - id: SE015
+      publisher: "Splunk / Marketplace"
+      title: "Corelight for Splunk — Splunk Marketplace Application"
+      url: "https://marketplace.splunk.com/app/corelight"
+      date: "2026-05-01"
+      accessDate: "2026-05-18"
+      accessStatus: js-only
+      stance: confirming
+      sourceType: partner-proof
+      reputationTier: medium
+      independence: partner
+      topics:
+        - Splunk integration
+        - Corelight for Splunk
+        - SIEM integration
+        - partner marketplace
+
+    - id: SE016
+      publisher: "Splunk, Inc."
+      title: "SIEM vs NDR: Choosing the Right Security Solution"
+      url: "https://www.splunk.com/en_us/blog/security/siem-vs-ndr-choosing-the-right-security-solution.html"
+      date: "2024-01-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: partner
+      topics:
+        - SIEM vs NDR
+        - security operations
+        - network detection and response
+        - integration architecture
+
+    - id: SE017
+      publisher: "CrowdStrike, Inc."
+      title: "CrowdStrike and Corelight Open NDR Partnership"
+      url: "https://www.crowdstrike.com/blog/corelight-partnership-open-ndr/"
+      date: "2024-01-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: partner-proof
+      reputationTier: medium
+      independence: partner
+      topics:
+        - CrowdStrike partnership
+        - open NDR
+        - endpoint network correlation
+        - strategic investment
+
+    - id: SE018
+      publisher: "Corelight, Inc."
+      title: "Smarter Way to Fight Alert Fatigue with Corelight and Microsoft Sentinel"
+      url: "https://corelight.com/blog/smarter-way-to-fight-alert-fatigue-corelight-microsoft/"
+      date: "2024-01-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - Microsoft Sentinel integration
+        - alert fatigue
+        - SIEM integration
+        - "2024"
+
+    - id: SE019
+      publisher: "Zeek Project"
+      title: "Zeek.org About Page — Project Overview and Community"
+      url: "https://zeek.org/about/"
+      date: "2026-01-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics:
+        - Zeek project
+        - open-source network security
+        - community governance
+        - protocol analysis
+
+    - id: SE020
+      publisher: "Corelight, Inc."
+      title: "Corelight Open NDR Platform — Solutions Overview"
+      url: "https://corelight.com/solutions/"
+      date: "2026-05-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - solutions
+        - compliance
+        - SOC 2
+        - ISO 27001
+        - open NDR
+
+    - id: SE021
+      publisher: "Corelight, Inc."
+      title: "Corelight RSAC 2026 — Lessons in Resilience Blog Post"
+      url: "https://corelight.com/blog/rsac-2026-lessons-in-resilience"
+      date: "2026-05-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - RSAC 2026
+        - platform resilience
+        - Black Hat NOC
+        - "2026"
+
+    - id: SE022
+      publisher: "Corelight, Inc."
+      title: "Corelight Products — Open NDR Platform Products Overview"
+      url: "https://corelight.com/products/"
+      date: "2026-05-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - product overview
+        - sensors
+        - SaaS
+        - managed NDR
+
+    - id: SE023
+      publisher: "Corelight, Inc."
+      title: "Corelight Open NDR Blog — Cloud Sensor for AWS"
+      url: "https://corelight.com/blog/cloud-sensor-for-aws/"
+      date: "2023-01-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - cloud sensor
+        - AWS
+        - VPC Traffic Mirroring
+        - cloud deployment
+
+    - id: SE024
+      publisher: "Corelight, Inc."
+      title: "Corelight Technical Documentation — Introduction (Access Restricted)"
+      url: "https://docs.corelight.com/docs/introduction"
+      date: "2026-05-01"
+      accessDate: "2026-05-18"
+      accessStatus: paywall
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - technical documentation
+        - sensor deployment
+        - protocol parsers
+        - architecture
+
+    - id: SE025
+      publisher: "Corelight, Inc."
+      title: "Corelight Sensor Technical Documentation — Introduction (Access Restricted)"
+      url: "https://docs.corelight.com/docs/sensor/introduction/"
+      date: "2026-05-01"
+      accessDate: "2026-05-18"
+      accessStatus: paywall
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - sensor documentation
+        - technical architecture
+        - deployment guide
+
+    - id: SE026
+      publisher: "Corelight, Inc."
+      title: "Corelight Open NDR Homepage — Product and Platform Description"
+      url: "https://corelight.com"
+      date: "2026-05-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - company overview
+        - open NDR platform
+        - product summary
+
+    - id: SE027
+      publisher: "Corelight, Inc."
+      title: "Corelight CrowdStrike Integration Blog Post"
+      url: "https://corelight.com/blog/crowdstrike-corelight-integration/"
+      date: "2024-01-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - CrowdStrike integration
+        - endpoint enrichment
+        - network evidence correlation
+        - "2024"
+
+    - id: SE028
+      publisher: "Corelight, Inc."
+      title: "Corelight Open NDR SaaS Enterprise Security Blog"
+      url: "https://corelight.com/blog/open-ndr-saas-enterprise-security/"
+      date: "2024-01-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - open NDR
+        - SaaS
+        - enterprise security
+        - AI detection
+
+    - id: SE029
+      publisher: "Dark Reading"
+      title: "Corelight Raises $150M to Expand Open NDR Platform"
+      url: "https://www.darkreading.com/threat-intelligence/corelight-raises-150m-to-expand-open-ndr-platform"
+      date: "2024-04-30"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - open NDR platform
+        - Series E funding
+        - product expansion
+        - "2024"
+
+    - id: SE030
+      publisher: "Corelight, Inc."
+      title: "Corelight Open NDR Platform — Why Open NDR"
+      url: "https://corelight.com/open-ndr/"
+      date: "2026-05-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - open NDR positioning
+        - open data model
+        - competitive differentiation
+        - Zeek custodianship
+
+    - id: SE031
+      publisher: "Gartner Peer Insights"
+      title: "Gartner Peer Insights: Network Detection and Response — Corelight Customer Reviews"
+      url: "https://www.gartner.com/reviews/market/network-detection-and-response/vendor/corelight"
+      date: "2026-05-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: review
+      reputationTier: high
+      independence: customer
+      topics:
+        - customer reviews
+        - product satisfaction
+        - NDR platform evaluation
+        - peer feedback
+
+    - id: SE032
+      publisher: "NIST"
+      title: "NIST SP 800-207: Zero Trust Architecture"
+      url: "https://csrc.nist.gov/publications/detail/sp/800-207/final"
+      date: "2020-08-11"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics:
+        - zero trust architecture
+        - compliance framework
+        - federal security standards
+        - network segmentation
+
+    - id: SE033
+      publisher: "CISA"
+      title: "CISA Zero Trust Maturity Model"
+      url: "https://www.cisa.gov/zero-trust-maturity-model"
+      date: "2023-04-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics:
+        - zero trust maturity model
+        - federal compliance
+        - network security requirements
+        - FedRAMP alignment
+
+    - id: SE034
+      publisher: "Verizon"
+      title: "Verizon Data Breach Investigations Report (DBIR) 2024"
+      url: "https://www.verizon.com/business/resources/reports/dbir/"
+      date: "2024-05-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: high
+      independence: independent
+      topics:
+        - threat intelligence
+        - breach patterns
+        - network-based attack vectors
+        - lateral movement statistics
