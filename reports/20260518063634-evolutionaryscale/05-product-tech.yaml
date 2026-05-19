@@ -1,0 +1,2275 @@
+schemaVersion: "report-v2"
+artifact: product-tech
+slug: evolutionaryscale
+runDate: "2026-05-18"
+company:
+  name: EvolutionaryScale
+
+chapter:
+  number: 5
+  title: "Product & Technology"
+  summary: >-
+    EvolutionaryScale's ESM3 is a 98-billion-parameter multimodal generative protein language
+    model trained on 2.78 billion proteins (771 billion unique tokens, 1.07×10²⁴ FLOPs) that
+    jointly reasons over protein sequence, structure, and function using a three-track masked
+    language modeling architecture. The flagship proof of concept — esmGFP, a novel fluorescent
+    protein with only 58% sequence identity to the nearest known natural GFP, representing
+    approximately 500 million years of evolutionary divergence — was published in Science (Hayes
+    et al., January 2025, Vol 387, pp. 850-858, 341 citations). The companion ESM-C (Cambrian)
+    embedding family (300M/600M/6B) extends the portfolio with strong sequence representation
+    models. Open weights for ESM3-small and ESMC-300M/600M are available under the Cambrian
+    Non-Commercial License; commercial access runs through the Forge API (forge.evolutionaryscale.ai)
+    and AWS SageMaker, with NVIDIA BioNeMo NIM integration in progress. EvolutionaryScale joined
+    CZI Biohub in November 2025, transitioning from an independent Series A startup to a Biohub
+    research group; the Forge API and open-weight models remain active as of the report date, and
+    CZI Biohub has announced a 10,000-GPU compute expansion by 2028. Key product risks include
+    closed commercial pricing, no disclosed customer contracts, binding-prediction performance
+    degradation under heterogeneous structural inputs (per a December 2024 BioRxiv adversarial
+    study), and organizational dependency on the CZI Biohub transition.
+
+sections:
+  - id: product-catalog
+    title: "ESM Product Portfolio and Model Family"
+    body: >-
+      EvolutionaryScale offers two distinct product lines built on the ESM (Evolutionary Scale
+      Modeling) foundation: the ESM3 generative protein language model and the ESM-C (Cambrian)
+      protein embedding family. Together they span eight model SKUs across open-weight and
+      commercial-API tiers.
+
+      ESM3 is offered in three weight classes: ESM3-small-2024-08 (1.4 billion parameters),
+      ESM3-medium-2024-08 (7 billion parameters), and ESM3-large-2024-03 (98 billion parameters).
+      ESM3-small is the only ESM3 variant with open weights, available under the Cambrian
+      Non-Commercial License Agreement via HuggingFace (as esm3-sm-open-v1). ESM3-medium and
+      ESM3-large are commercial and accessible exclusively through the Forge API. The 98B ESM3-large
+      is the model used to design esmGFP — a de novo fluorescent protein exhibiting only 58%
+      sequence identity to the nearest natural GFP, representing approximately 500 million years
+      of equivalent evolutionary divergence and validated by peer-reviewed publication in Science
+      (January 2025).
+
+      ESM-C (Cambrian) is a separate embedding-focused model family with three sizes: ESMC-300M,
+      ESMC-600M, and ESMC-6B. ESMC-300M and ESMC-600M carry open weights under the same Cambrian
+      Non-Commercial License. ESMC-6B is accessible via the Forge API for academic users and via
+      AWS SageMaker JumpStart for commercial deployments. ESM-C models use a Pre-LN transformer
+      architecture with rotary positional embeddings and SwiGLU activations and were benchmarked
+      by EvolutionaryScale as state-of-the-art sequence representation models at their respective
+      scales.
+
+      The Forge API (forge.evolutionaryscale.ai) is the primary commercial monetization vehicle.
+      Opened to public beta in January 2025 concurrent with the Science publication, Forge provides
+      synchronous and asynchronous REST API access to the ESM3 and ESMC model family with a Python
+      SDK available via pip. A batch executor for high-throughput workloads is included in the
+      SDK. Pricing for commercial Forge access is not publicly disclosed; academic access terms
+      are available directly through the platform.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE006
+      - CE007
+      - CE008
+    tableRefs:
+      - TE001
+      - TE002
+    figureRefs:
+      - FE001
+
+  - id: technical-architecture
+    title: "Technical Architecture: Multitrack Transformer, Training Scale, and Tokenization"
+    body: >-
+      ESM3's defining architectural innovation is its multitrack transformer design: the model
+      processes three parallel token sequences — amino acid sequence tokens, structure tokens
+      (encoding 3D coordinates), and function annotation tokens (keyword-based GO term labels) —
+      within a unified transformer framework. Each track uses discrete tokenization. Structure
+      coordinates are encoded via a vector quantized variational autoencoder (VQVAE) into a
+      finite codebook of structural tokens, enabling the model to natively read and generate
+      three-dimensional protein structure without requiring continuous coordinate regression.
+
+      Pre-training uses a masked language modeling (MLM) objective applied across all three
+      tracks simultaneously, allowing the model to learn joint representations that span the
+      sequence-structure-function space. The 98-billion-parameter ESM3-large model was trained
+      using 1.07×10²⁴ floating-point operations on approximately 2.78 billion protein sequences
+      (771 billion unique tokens), trained on the Andromeda HPC cluster using NVIDIA H100 GPUs
+      and Quantum-2 InfiniBand networking. NVIDIA reports that ESM3-large uses approximately
+      25× more FLOPs and 60× more data than its predecessor ESM2. Reinforcement learning from
+      human feedback (RLHF) was applied to ESM3-large to align outputs with human preferences
+      for protein design tasks.
+
+      ESM-C (Cambrian) employs a different architectural profile: a Pre-Layer Normalization (Pre-LN)
+      transformer with rotary positional embeddings (RoPE) and SwiGLU feed-forward activations,
+      pre-trained with masked language modeling. ESMC-300M (30 layers, hidden width 960) was
+      trained on 1.26×10²² FLOPs; ESMC-600M (36 layers, width 1152) on 2.17×10²² FLOPs; and
+      ESMC-6B (80 layers, width 2560) on 2.37×10²³ FLOPs. Training data spans three large
+      sequence databases: UniRef (83 million clusters), MGnify (372 million), and JGI metagenomics
+      (2 billion clusters), all clustered at 70% sequence identity.
+
+      EvolutionaryScale's internal infrastructure capabilities are illustrated by the open-source
+      DeepEP library, a custom CUDA/NCCL implementation of Mixture-of-Experts Expert Parallelism
+      communication for H800 GPUs. With 1,253 GitHub stars, DeepEP signals active HPC engineering
+      capability at the company, supporting large-scale distributed training and inference.
+    claimRefs:
+      - CE009
+      - CE010
+      - CE011
+      - CE012
+      - CE013
+      - CE014
+      - CE015
+      - CE016
+      - CE017
+      - CE018
+    tableRefs:
+      - TE003
+    figureRefs:
+      - FE002
+
+  - id: deployment-ecosystem
+    title: "Deployment and Ecosystem: Forge API, AWS, NVIDIA, and Community"
+    body: >-
+      EvolutionaryScale has built a multi-tier distribution strategy combining open-weight
+      community adoption with commercial API and cloud-marketplace access.
+
+      The Forge API (forge.evolutionaryscale.ai), opened to public beta in January 2025, is the
+      primary programmatic interface for ESM3 and ESMC commercial use. The official Python client
+      (pip install evoscale-sdk) is hosted at github.com/evolutionaryscale/esm and provides both
+      synchronous inference and asynchronous batch execution. As of May 2026, the Forge API portal
+      is accessible and operational, though detailed pricing is not publicly listed.
+
+      AWS SageMaker JumpStart provides commercial deployment of ESMC-6B via a CloudFormation
+      stack that provisions a dedicated GPU instance in 15-25 minutes. This integration, documented
+      in the esm-sagemaker GitHub repository, targets enterprise bioinformatics customers needing
+      large-scale embedding workflows with predictable SLAs. Amazon was a co-investor in
+      EvolutionaryScale's Series A and is a deployment partner.
+
+      NVIDIA announced ESM3 integration into its BioNeMo NIM platform for GPU-optimized inference
+      when ESM3 was first released in June 2024; EvolutionaryScale's ESM-C blog (December 2024)
+      lists BioNeMo as a forthcoming distribution channel. The NVIDIA NGC catalog separately
+      lists ESM3 as a resource.
+
+      On GitHub, EvolutionaryScale maintains nine public repositories. Beyond the flagship esm
+      repository, notable community-facing projects include DeepEP (1,253 stars), a NCCL fork,
+      a Hugging Face transformers fork, and a Mamba implementation. The HuggingFace organization
+      (huggingface.co/evolutionaryscale) hosts open-weight model cards, with the esm3-sm-open-v1
+      model page showing 3,105 downloads in the prior month and 291 likes; ESMC-300M shows 6,320
+      downloads and ESMC-600M shows 1,490 downloads. These metrics indicate meaningful adoption
+      within the research community.
+    claimRefs:
+      - CE019
+      - CE020
+      - CE021
+      - CE022
+      - CE023
+      - CE024
+      - CE025
+      - CE026
+    figureRefs:
+      - FE003
+
+  - id: ip-moat
+    title: "Intellectual Property and Competitive Moat"
+    body: >-
+      EvolutionaryScale's IP moat rests on three pillars: (1) publication depth in high-impact
+      venues, (2) proprietary training scale and infrastructure, and (3) the esmGFP demonstration
+      of generative capability in a region of protein sequence space no natural evolution has
+      explored.
+
+      The flagship Science publication (Hayes et al., Science, January 2025, Vol 387, Issue 6736,
+      pp. 850-858, DOI 10.1126/science.ads0018) has accumulated 341 citations and 68,494 downloads
+      as of the citation metrics observed during this research; 318 of those citations arrived
+      within the first 12 months of publication. The ESM3 preprint on bioRxiv (10.1101/2024.07.01.600583,
+      July 2024) was cited by 129+ downstream papers within its first year. This publication
+      velocity places ESM3 among the most-cited new protein ML methods.
+
+      The esmGFP result represents the strongest public demonstration of ESM3's generative capability.
+      The designed protein carries 96 mutations across its 229 amino acid positions (a Hamming
+      distance of 58% from the nearest known natural GFP), placing it at evolutionary distances
+      comparable to the separation of corals from jellyfish — two distinct phyla. EvolutionaryScale
+      filed patents covering esmGFP and related protein design methods. The compute investment
+      required to replicate ESM3-large (1.07×10²⁴ FLOPs, equivalent to more than twice the
+      training budget of GPT-4 at the time of training) creates a meaningful cost barrier.
+
+      Primary competitors are differentiated on axis rather than directly overlapping. AlphaFold3
+      (DeepMind, May 2024) excels at protein structure prediction including small-molecule and
+      antibody complexes but is not generative in the design sense and restricts commercial use
+      to academic research. Chai-1 (Chai Discovery, 2024) focuses on high-accuracy protein
+      complex structure prediction. ESM2 (Meta AI, 2022), a 650M-parameter open-weight predecessor,
+      provides sequence embeddings but lacks generative sequence-structure-function joint
+      modeling. EvolutionaryScale's unique positioning is in generative protein design that
+      simultaneously reasons over sequence, structure, and function.
+    claimRefs:
+      - CE027
+      - CE028
+      - CE029
+      - CE030
+      - CE031
+      - CE032
+      - CE033
+    tableRefs:
+      - TE004
+    figureRefs:
+      - FE004
+
+  - id: roadmap-trust
+    title: "Product Roadmap, CZI Biohub Transition, and Responsible Development"
+    body: >-
+      EvolutionaryScale raised a $142 million Series A in September 2024 led by Lux Capital,
+      with participation from Amazon and NVIDIA, following an earlier seed investment from
+      NVIDIA. In November 2025, the company's team joined CZI Biohub as part of a major
+      "Frontier AI & Biology" initiative announced by the Chan Zuckerberg Initiative. Under this
+      transition, co-founder and chief scientist Alex Rives became head of science at Biohub,
+      and the EvolutionaryScale research team was integrated into Biohub's combined team of
+      biological scientists, AI engineers, and technologists. CZI Biohub has announced a compute
+      expansion to 10,000 GPUs by 2028 to support this initiative.
+
+      As of the May 2026 report date, the Forge API and open-weight model distributions remain
+      operational. EvolutionaryScale's public benefit company (PBC) charter and the Cambrian
+      Non-Commercial License on open weights encode a commitment to research access while
+      reserving commercial capabilities for the Forge API revenue model.
+
+      Key trust and safety dimensions require diligence attention. The dual-use risk of generative
+      protein design — including potential misuse for pathogen engineering — is an industry-wide
+      concern. EvolutionaryScale addresses this through the non-commercial license restriction on
+      open weights and access controls on the Forge API, but has not publicly documented a
+      biosecurity screening policy or independent biosafety audit. An independent BioRxiv
+      preprint published in December 2024 found that ESM3's binding prediction performance
+      deteriorates when distinct, per-variant relaxed protein structures are used as inputs,
+      compared to using a single consistent structure as the backbone — a "More Structure, Less
+      Accuracy" paradox that diligence teams should investigate for deployment scenarios involving
+      heterogeneous structural inputs. Data retention policies for sequences submitted to the
+      Forge API have not been publicly disclosed, which may be a compliance concern for enterprise
+      customers in regulated industries. No SEC Form D filings were found for EvolutionaryScale,
+      consistent with its status as a privately held company.
+    claimRefs:
+      - CE034
+      - CE035
+      - CE036
+      - CE037
+      - CE038
+      - CE039
+      - CE040
+    tableRefs:
+      - TE005
+
+tables:
+  - id: TE001
+    title: "ESM Product Module / Asset Matrix"
+    slug: product-module-asset-matrix
+    type: matrix
+    notes: >-
+      Model sizes and parameter counts are sourced from official EvolutionaryScale blog posts,
+      the GitHub ESM repository README, and the HuggingFace model cards. HuggingFace download
+      counts reflect a 30-day snapshot as of the research date and may fluctuate. Pricing for
+      Forge API and SageMaker commercial tiers is not publicly disclosed; rows marked
+      "Undisclosed" reflect confirmed absence of public pricing at the time of research.
+    columns:
+      - "Model / Product"
+      - "Parameter Scale"
+      - "Availability / License"
+      - "Primary Use"
+      - "Diligence Gap"
+    rows:
+      - - "ESM3-small-2024-08"
+        - "1.4 B"
+        - "Open weights — Cambrian Non-Commercial License (HuggingFace esm3-sm-open-v1)"
+        - "Research protein generation; local fine-tuning on non-commercial datasets"
+        - "No commercial use permitted; limited benchmarks vs. larger ESM3 variants"
+      - - "ESM3-medium-2024-08"
+        - "7 B"
+        - "Forge API only — commercial pricing undisclosed"
+        - "Mid-scale protein design; Forge API customers"
+        - "Pricing not public; no public benchmark comparison vs. ESM3-small"
+      - - "ESM3-large-2024-03"
+        - "98 B"
+        - "Forge API only — flagship commercial model"
+        - "High-complexity protein design; generative design at esmGFP scale"
+        - "Inference cost not disclosed; SLA terms not public"
+      - - "ESMC-300M (esmc-300m-2024-12)"
+        - "300 M"
+        - "Open weights — Cambrian Non-Commercial License (HuggingFace)"
+        - "Protein sequence embeddings for ML pipelines; research"
+        - "Non-commercial only; no third-party independent accuracy benchmark"
+      - - "ESMC-600M (esmc-600m-2024-12)"
+        - "600 M"
+        - "Open weights — Cambrian Non-Commercial License (HuggingFace)"
+        - "Enhanced protein embeddings; research and academic fine-tuning"
+        - "Non-commercial only; 1,490 HuggingFace downloads suggests early adoption"
+      - - "ESMC-6B"
+        - "6 B"
+        - "Forge API (academic) + AWS SageMaker JumpStart (commercial)"
+        - "Enterprise-scale protein sequence embedding and similarity search"
+        - "Commercial pricing undisclosed; SageMaker instance cost is user-borne"
+      - - "Forge API (forge.evolutionaryscale.ai)"
+        - "Service (all ESM3/ESMC models)"
+        - "Public beta since January 2025; commercial subscription model"
+        - "Programmatic access to all models; sync and async inference; batch executor"
+        - "Pricing structure, usage tiers, uptime SLA, and customer list not public"
+
+  - id: TE002
+    title: "ESM Workflow / Use-Case Table"
+    slug: workflow-use-case-table
+    type: enumeration
+    notes: >-
+      Use cases are derived from official EvolutionaryScale blog posts, the GitHub ESM README,
+      the Science paper (Hayes et al., 2025), and community HuggingFace downloads. The esmGFP
+      use case is fully validated; other use cases reflect documented capability claims.
+    columns:
+      - "Use Case"
+      - "Target User"
+      - "ESM Tool"
+      - "Workflow Step"
+      - "Validation Evidence"
+    rows:
+      - - "De novo protein design"
+        - "Protein engineers, drug discovery researchers"
+        - "ESM3-large (Forge API)"
+        - "Specify partial sequence or structure constraint; generate full candidate proteins; iterate"
+        - "esmGFP — peer-reviewed Science 2025; 341 citations"
+      - - "Protein sequence embedding for ML pipelines"
+        - "Academic researchers, bioinformatics teams"
+        - "ESMC-300M or ESMC-600M (open weights)"
+        - "Embed protein sequences; feed embeddings into downstream classifiers or clustering"
+        - "6,320 ESMC-300M HuggingFace downloads; community citations in 129+ BioRxiv papers"
+      - - "Enterprise-scale commercial embedding"
+        - "Enterprise bioinformatics, pharma R&D"
+        - "ESMC-6B (AWS SageMaker JumpStart)"
+        - "Deploy via CloudFormation stack (15-25 min); run batch protein similarity search"
+        - "AWS SageMaker JumpStart listing; GitHub esm-sagemaker CloudFormation docs"
+      - - "Structure-conditioned protein variant generation"
+        - "Computational biologists"
+        - "ESM3-small (open weights, local GPU)"
+        - "Provide partial structure tokens as conditioning; generate sequence variants"
+        - "GitHub ESM README examples; ESM3 architecture multitrack tokenization"
+      - - "Function-guided protein design"
+        - "Drug discovery, enzyme engineering"
+        - "ESM3 (Forge API)"
+        - "Specify function annotation keywords; jointly optimize sequence and structure outputs"
+        - "ESM3 Science paper benchmark results; ESM3 blog (company-claimed)"
+      - - "Academic research model fine-tuning"
+        - "Academic labs"
+        - "ESMC-300M (open weights)"
+        - "Fine-tune ESMC on proprietary protein datasets for domain-specific tasks"
+        - "Cambrian Non-Commercial License permits fine-tuning for non-commercial research"
+
+  - id: TE003
+    title: "ESM Technology / Operating Architecture Table"
+    slug: technology-operating-architecture-table
+    type: enumeration
+    notes: >-
+      Architecture parameters (layer counts, hidden widths) for ESM-C are from the official
+      ESM-C blog. Training FLOPs for ESM3-large are from the official ESM3 blog and Science
+      paper. ESM-C FLOPs are from the ESM-C blog. Infrastructure details (Andromeda cluster,
+      H100 GPUs) are from the NVIDIA blog announcement and corroborated by the ESM3 Science paper.
+    columns:
+      - "Component"
+      - "Description / Specification"
+      - "Key Metric"
+      - "Primary Source"
+    rows:
+      - - "ESM3 multitrack transformer"
+        - "Three parallel input/output tracks: amino-acid sequence tokens, VQVAE structure tokens, function keyword tokens; unified attention across tracks"
+        - "3 tracks; 1.4B / 7B / 98B params across 3 model sizes"
+        - "ESM3 blog (official); Hayes et al. Science 2025"
+      - - "VQVAE structure tokenizer"
+        - "Vector quantized variational autoencoder encodes 3D protein backbone coordinates as discrete structural tokens from a finite codebook"
+        - "Discrete codebook; enables native 3D structure generation without coordinate regression"
+        - "ESM3 blog (official); ESM3 preprint (bioRxiv)"
+      - - "ESM3 pre-training and alignment"
+        - "Masked language modeling (MLM) across all three tracks; RLHF fine-tuning on ESM3-large for alignment with protein design preferences"
+        - "1.07×10²⁴ FLOPs (98B model); 2.78B proteins; 771B unique tokens"
+        - "ESM3 blog (official); NVIDIA blog; Science paper"
+      - - "ESM-C architecture"
+        - "Pre-LN transformer with RoPE positional embeddings and SwiGLU activations; masked language modeling pre-training; three sizes: 300M / 600M / 6B"
+        - "300M: 30L×960W; 600M: 36L×1152W; 6B: 80L×2560W"
+        - "ESM-C blog (official)"
+      - - "ESM-C training compute and data"
+        - "Training data: UniRef (83M seq clusters), MGnify (372M), JGI metagenomics (2B clusters) at 70% identity; FLOPs per model: 300M=1.26e22, 600M=2.17e22, 6B=2.37e23"
+        - "2B+ total sequence clusters (largest component from JGI metagenomics)"
+        - "ESM-C blog (official)"
+      - - "Andromeda HPC training cluster"
+        - "NVIDIA H100 Tensor Core GPU cluster with Quantum-2 InfiniBand networking; used to train ESM3-large"
+        - "25× more FLOPs and 60× more data vs. predecessor ESM2"
+        - "NVIDIA blog (partner-proof)"
+      - - "DeepEP MoE Expert Parallelism library"
+        - "Open-source CUDA/NCCL implementation of Mixture-of-Experts Expert Parallelism communication; custom kernels for H800 GPUs"
+        - "1,253 GitHub stars; signals advanced internal HPC infrastructure"
+        - "GitHub evolutionaryscale/DeepEP (developer-signal)"
+
+  - id: TE004
+    title: "ESM Trust / Quality / Compliance Table"
+    slug: trust-quality-compliance-table
+    type: enumeration
+    notes: >-
+      Trust and compliance status is derived from public sources only. Biosecurity policies,
+      Forge API data retention policies, and any independent security audits are not publicly
+      available. The table reflects publicly documented controls and known gaps as of May 2026.
+    columns:
+      - "Trust / Safety Dimension"
+      - "Current Public Status"
+      - "Risk Level"
+      - "Diligence Path"
+    rows:
+      - - "Dual-use / biosecurity risk (pathogen protein design)"
+        - "Open weights (ESM3-small, ESMC-300M/600M) carry Cambrian Non-Commercial License restrictions; Forge API requires account acceptance of ToS; no public biosecurity screening policy"
+        - "High (industry-wide concern; no published biosecurity audit)"
+        - "Request biosecurity policy document and any third-party biosafety review from EvolutionaryScale / CZI Biohub"
+      - - "Open-weight non-commercial license compliance"
+        - "Cambrian Non-Commercial License Agreement prohibits commercial use of ESM3-small and ESMC-300M/600M; commercial customers must use Forge API or SageMaker"
+        - "Medium (license enforcement requires monitoring; grey-area commercial use may go undetected)"
+        - "Review Cambrian Non-Commercial License Agreement; assess IP protection against unauthorized commercial fine-tuning"
+      - - "Forge API data privacy and retention"
+        - "No public data retention, deletion, or confidentiality policy for sequences submitted to Forge API"
+        - "Medium (material concern for pharma customers with proprietary sequence data)"
+        - "Request Forge API Terms of Service, Privacy Policy, and Data Processing Agreement from EvolutionaryScale / CZI Biohub"
+      - - "Performance robustness under heterogeneous structural inputs"
+        - "Independent BioRxiv study (Dec 2024) found ESM3 binding predictions deteriorate when distinct per-variant relaxed structures are used; see SE007"
+        - "Medium (adversarial finding; scope is specific to heterogeneous structure inputs)"
+        - "Review Gissing & Smith BioRxiv Dec 2024 preprint; test ESM3 binding prediction with varied structural input strategies"
+      - - "Organizational continuity risk (CZI Biohub transition)"
+        - "EvolutionaryScale team joined CZI Biohub in November 2025; future product roadmap governed by CZI Biohub rather than independent startup"
+        - "Medium (dependency on non-profit mission and funding continuity)"
+        - "Monitor CZI Biohub announcements; confirm Forge API SLA commitments post-transition"
+
+  - id: TE005
+    title: "ESM Roadmap / Release / Development-Stage Table"
+    slug: roadmap-release-development-stage-table
+    type: enumeration
+    notes: >-
+      Milestone dates are sourced from official EvolutionaryScale blog posts, bioRxiv submission
+      metadata, the Science paper publication date, and news articles reporting the Series A.
+      Future milestones (BioNeMo NIM, 10,000 GPUs) are drawn from NVIDIA and CZI Biohub
+      announcements and represent planned targets, not confirmed deliverables.
+    columns:
+      - "Milestone"
+      - "Date / Timing"
+      - "Status"
+      - "Evidence Source"
+    rows:
+      - - "ESM2 released (Meta AI, 650M–3B open weights)"
+        - "2022"
+        - "Complete — open source, widely adopted by research community"
+        - "Meta AI blog; HuggingFace (predecessor, not EvolutionaryScale)"
+      - - "EvolutionaryScale founded; ESM3 pre-release development begins"
+        - "2023"
+        - "Complete — company founded by Meta AI FAIR alumni"
+        - "NVIDIA seed investment announcement; Crunchbase"
+      - - "ESM3-small open weights released; ESM3 Forge closed beta"
+        - "June 2024"
+        - "Complete — Forge closed beta opened; ESM3-small on HuggingFace"
+        - "ESM3 official blog (SE001); NVIDIA blog (SE017)"
+      - - "ESM3 preprint submitted to bioRxiv (10.1101/2024.07.01.600583)"
+        - "July 2024"
+        - "Complete — 129+ citing papers within first year"
+        - "bioRxiv preprint (SE006); BioRxiv search (SE008)"
+      - - "Series A fundraise ($142M) — Lux Capital, Amazon, NVIDIA"
+        - "September 2024"
+        - "Complete"
+        - "Axios (SE025); Crunchbase (SE020)"
+      - - "ESM-C (Cambrian) models released — 300M/600M open weights + 6B Forge"
+        - "December 2024"
+        - "Complete — open weights on HuggingFace; ESMC-6B on Forge"
+        - "ESM-C blog (SE002); HuggingFace model cards (SE014, SE015)"
+      - - "ESM3 published in Science (Hayes et al., Vol 387, pp. 850-858)"
+        - "January 16, 2025"
+        - "Complete — 341 citations; 68,494 downloads"
+        - "Science DOI 10.1126/science.ads0018 (SE005); Semantic Scholar (SE026)"
+      - - "Forge API public beta opened"
+        - "January 2025"
+        - "Complete — concurrent with Science publication"
+        - "ESM3 blog (SE001); GitHub ESM README (SE009)"
+      - - "EvolutionaryScale team joins CZI Biohub (Frontier AI & Biology initiative)"
+        - "November 2025"
+        - "Complete — Alex Rives appointed head of science at Biohub"
+        - "CZI Biohub blog (SE023)"
+      - - "NVIDIA BioNeMo NIM integration (ESM-C)"
+        - "Target: 2025/2026"
+        - "In progress — listed as 'available soon' in ESM-C blog (December 2024)"
+        - "ESM-C blog (SE002); NVIDIA blog (SE017); NVIDIA NGC catalog (SE018)"
+      - - "CZI Biohub 10,000-GPU compute expansion"
+        - "Target: by 2028"
+        - "Announced — Biohub Frontier AI initiative"
+        - "CZI Biohub blog (SE023)"
+
+figures:
+  - id: FE001
+    title: "Product architecture map"
+    type: stack
+    layout: standard
+    summary: "Five-layer architecture of EvolutionaryScale's ESM protein AI platform from training data through deployment."
+    data:
+      layers:
+        - label: "Data Layer"
+          detail: "2.78B protein sequences (771B unique tokens); UniRef 83M clusters; MGnify 372M; JGI metagenomics 2B clusters @ 70% identity; PDB 3D structures; GO function annotations"
+        - label: "Tokenization Layer"
+          detail: "Track 1 — Amino acid sequence tokens | Track 2 — VQVAE discrete structure tokens (3D backbone → codebook) | Track 3 — Function keyword tokens (GO annotations)"
+        - label: "Model Layer"
+          detail: "ESM3 multitrack transformer (1.4B / 7B / 98B params; RLHF-aligned large) | ESMC Pre-LN transformer (300M / 600M / 6B params; RoPE + SwiGLU) | DeepEP MoE EP library (HPC infrastructure)"
+        - label: "Product / Access Layer"
+          detail: "Open weights: ESM3-small + ESMC-300M/600M (Cambrian Non-Commercial License, HuggingFace) | Forge API: ESM3-medium/large + ESMC-6B (commercial, forge.evolutionaryscale.ai) | AWS SageMaker JumpStart: ESMC-6B (enterprise commercial)"
+        - label: "Distribution and Research Layer"
+          detail: "GitHub (9 repos, community SDK) | HuggingFace Hub (open model cards; 3.1k–6.3k monthly downloads) | NVIDIA BioNeMo NIM (in progress) | CZI Biohub research program (10k GPU by 2028)"
+    approximationNotes: "Layer boundaries are conceptual; exact service architecture of the Forge API and internal infrastructure are not publicly documented."
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE009
+      - CE019
+      - CE022
+
+  - id: FE002
+    title: "Customer workflow / operating flow"
+    type: flow
+    layout: standard
+    summary: "Eight-step workflow showing how protein researchers use the ESM3 platform from hypothesis to validated candidate."
+    data:
+      nodes:
+        - label: "Research Team\n(protein design objective: function, structure, or variant)"
+        - label: "Model Selection\n(ESM3-small local / Forge API / ESMC embedding)"
+        - label: "Prompt Formulation\n(partial sequence + structure constraint + function keywords)"
+        - label: "ESM3 / ESMC Inference\n(joint generation across sequence, structure, function tracks)"
+        - label: "Candidate Protein Set\n(ranked by predicted structure–function consistency)"
+        - label: "In Silico Filtering\n(structure prediction, energy scoring, ADMET proxies)"
+        - label: "Experimental Synthesis & Assay\n(wet-lab validation: expression, activity, fluorescence)"
+        - label: "Validated Novel Protein\n(e.g., esmGFP — 58% identity, functional fluorescence)"
+    approximationNotes: "Flow is a simplification; feedback loops between experimental results and revised prompts are not shown. Wet-lab validation step is performed by the user, not by EvolutionaryScale."
+    claimRefs:
+      - CE005
+      - CE007
+      - CE018
+      - CE029
+
+  - id: FE003
+    title: "Critical dependency map"
+    type: dag
+    layout: wide
+    summary: "Directed acyclic graph of EvolutionaryScale's critical platform, infrastructure, and distribution dependencies."
+    data:
+      nodes:
+        - id: andromeda
+          label: "Andromeda HPC Cluster\n(H100 GPUs + Quantum-2 IB)"
+        - id: seq_data
+          label: "Protein Sequence Databases\n(UniRef / MGnify / JGI)"
+        - id: vqvae
+          label: "VQVAE Structure Tokenizer"
+        - id: esm3
+          label: "ESM3 Foundation Models\n(1.4B / 7B / 98B)"
+        - id: esmc
+          label: "ESMC Foundation Models\n(300M / 600M / 6B)"
+        - id: forge
+          label: "Forge API Platform\n(forge.evolutionaryscale.ai)"
+        - id: sagemaker
+          label: "AWS SageMaker JumpStart\n(ESMC-6B)"
+        - id: bionemo
+          label: "NVIDIA BioNeMo NIM\n(integration in progress)"
+        - id: oss
+          label: "GitHub / HuggingFace\n(open-weight distribution)"
+        - id: biohub
+          label: "CZI Biohub\n(parent organization; 10k GPU by 2028)"
+      edges:
+        - from: andromeda
+          to: esm3
+          label: "training compute"
+        - from: andromeda
+          to: esmc
+          label: "training compute"
+        - from: seq_data
+          to: esm3
+          label: "training data"
+        - from: seq_data
+          to: esmc
+          label: "training data"
+        - from: vqvae
+          to: esm3
+          label: "structure tokenization"
+        - from: esm3
+          to: forge
+          label: "commercial API serving"
+        - from: esmc
+          to: forge
+          label: "commercial API serving"
+        - from: esmc
+          to: sagemaker
+          label: "SageMaker deployment (6B)"
+        - from: esm3
+          to: bionemo
+          label: "NIM microservice (in progress)"
+        - from: esmc
+          to: bionemo
+          label: "NIM microservice (in progress)"
+        - from: esm3
+          to: oss
+          label: "open weights (1.4B non-commercial)"
+        - from: esmc
+          to: oss
+          label: "open weights (300M/600M non-commercial)"
+        - from: biohub
+          to: esm3
+          label: "ongoing R&D ownership"
+        - from: biohub
+          to: andromeda
+          label: "compute scaling (10k GPU by 2028)"
+    approximationNotes: "Dependency directions represent data, compute, and ownership flows; not data-volume magnitudes. The Forge API internal serving infrastructure is not publicly documented."
+    claimRefs:
+      - CE010
+      - CE016
+      - CE019
+      - CE022
+      - CE025
+      - CE035
+
+  - id: FE004
+    title: "Product maturity / capability map"
+    type: matrix
+    layout: standard
+    summary: "Capability and maturity comparison across ESM3 (generative), ESMC (embedding), Forge API, and open-weight tiers on six dimensions."
+    data:
+      columns:
+        - "ESM3 (Generative)"
+        - "ESM-C (Embedding)"
+        - "Forge API (Commercial)"
+        - "Open Weights (Research)"
+      rows:
+        - label: "Model scale"
+          values:
+            - "1.4B – 98B params across 3 variants; flagship is 98B"
+            - "300M – 6B across 3 variants; aligned with Chinchilla-optimal scaling"
+            - "All ESM3/ESMC models served; largest is ESM3-large 98B"
+            - "ESM3-small 1.4B + ESMC-300M/600M only; restricted to non-commercial"
+        - label: "Training compute investment"
+          values:
+            - "1.07×10²⁴ FLOPs (98B); 25× more FLOPs and 60× more data than ESM2"
+            - "300M: 1.26×10²² FLOPs; 600M: 2.17×10²²; 6B: 2.37×10²³ FLOPs"
+            - "Inference only (served); training compute is proprietary"
+            - "Training not included; users fine-tune on their own compute"
+        - label: "External validation"
+          values:
+            - "Science 2025 paper (341 citations); esmGFP experimental validation; 129+ citing BioRxiv papers"
+            - "ESM-C blog benchmarks (company-claimed); 6,320 community HuggingFace downloads"
+            - "Forge public beta; no public SLA or uptime benchmarks"
+            - "3,105 esm3-sm-open-v1 monthly HuggingFace downloads; community fine-tuning reported"
+        - label: "IP and access control"
+          values:
+            - "Patents filed (esmGFP + methods); 98B model not open-weight"
+            - "Open weights (300M/600M) under Cambrian Non-Commercial; 6B API-only"
+            - "Closed pricing; undisclosed SLA; commercial ToS required"
+            - "Cambrian Non-Commercial License — no commercial use; academic only"
+        - label: "Commercial integration readiness"
+          values:
+            - "Forge API + AWS SageMaker; NVIDIA BioNeMo in progress; Amazon Bedrock announced at launch"
+            - "SageMaker JumpStart (ESMC-6B); BioNeMo in progress"
+            - "Active (public beta Jan 2025); AWS + NVIDIA partnerships"
+            - "Not commercially deployable under current license"
+        - label: "Known limitations / adverse findings"
+          values:
+            - "Binding prediction accuracy degrades with heterogeneous per-variant structures (BioRxiv Dec 2024)"
+            - "No independent third-party accuracy benchmark published"
+            - "Pricing, SLA, and data retention policies undisclosed"
+            - "Non-commercial license limits use; no fine-tuning support from EvolutionaryScale"
+    approximationNotes: "Capability ratings are evidence-based assessments from public sources. Internal performance benchmarks and Forge API SLA details have not been disclosed."
+    claimRefs:
+      - CE001
+      - CE002
+      - CE010
+      - CE024
+      - CE033
+      - CE039
+
+callouts:
+  - calloutType: strength
+    title: "esmGFP: Peer-Reviewed Proof of Generative Capability at Evolutionary Scale"
+    body: >-
+      The esmGFP result—a novel functional fluorescent protein carrying 96 mutations across
+      229 positions (58% sequence identity to the nearest natural GFP, representing ~500 million
+      years of evolutionary divergence)—and its validation in Science (January 2025, 341
+      citations) constitute the strongest public demonstration that ESM3 can generate genuinely
+      novel functional proteins, not just variants of known sequences. This is a concrete,
+      experimentally confirmed proof point that differentiates ESM3 from structure prediction
+      models (AlphaFold) and from earlier sequence-only LMs (ESM2). It creates a reproducible,
+      citable anchor for investor and partner credibility.
+    claimRefs:
+      - CE029
+      - CE030
+      - CE027
+
+  - calloutType: risk
+    title: "Binding Prediction Paradox: Structural Input Heterogeneity Degrades Accuracy"
+    body: >-
+      An independent BioRxiv preprint published in December 2024 found that ESM3's binding
+      prediction performance deteriorates when distinct, per-variant relaxed structural models
+      are used as inputs rather than a single consistent structural backbone. This
+      'More Structure, Less Accuracy' finding has direct implications for drug discovery use
+      cases where researchers commonly compute relaxed structures independently for each mutant.
+      Diligence teams should test ESM3 binding prediction in their specific structural input
+      regime and request EvolutionaryScale's / CZI Biohub's guidance on best-practice structural
+      conditioning to avoid this degradation mode.
+    claimRefs:
+      - CE039
+
+  - calloutType: insight
+    title: "Dual-Track Commercial Model: Open Weights Seed Adoption, Forge API Captures Revenue"
+    body: >-
+      EvolutionaryScale's architecture is a classic open-core commercial model: open weights
+      for smaller models (ESM3-small, ESMC-300M/600M) under a non-commercial license build
+      community adoption, academic citations, and developer familiarity — while the high-capacity
+      models (ESM3-large 98B, ESMC-6B) and the Forge API create the commercial moat. The
+      monthly HuggingFace download figures (3,105 for ESM3-small; 6,320 for ESMC-300M as of
+      research date) indicate growing practitioner adoption that could convert into Forge API
+      commercial customers. The key diligence question is the conversion rate and Forge pricing
+      that this funnel drives.
+    claimRefs:
+      - CE004
+      - CE020
+      - CE021
+      - CE037
+
+  - calloutType: recommendation
+    title: "Diligence Priority: Request Forge API Pricing, Data Retention Policy, and Biosecurity Review"
+    body: >-
+      Any prospective investor or partner should request from EvolutionaryScale / CZI Biohub:
+      (1) Forge API pricing tiers and current customer count or ARR range; (2) a data retention
+      and confidentiality policy for sequences submitted to the Forge API (critical for pharma
+      customers with proprietary pipeline sequences); (3) a biosecurity policy and any
+      third-party biosafety review covering dual-use risks of generative protein design;
+      (4) confirmation of Forge API continuity commitments post-CZI Biohub transition, including
+      uptime SLA and roadmap through 2026–2027; and (5) independent benchmarks for ESM3-large
+      versus AlphaFold3 and Chai-1 on structure prediction accuracy and for ESMC versus ESM2
+      on embedding quality for downstream classification tasks.
+    claimRefs:
+      - CE036
+      - CE037
+      - CE038
+      - CE040
+
+localEvidence:
+  searchQueries:
+    - query: "EvolutionaryScale ESM3 product portfolio model catalog Forge API 2026"
+      engine: "web"
+      hits: null
+      retainedSourceRefs:
+        - SE001
+        - SE002
+        - SE003
+        - SE004
+    - query: "ESM3 multitrack transformer architecture sequence structure function VQVAE tokenization"
+      engine: "web"
+      hits: null
+      retainedSourceRefs:
+        - SE001
+        - SE005
+        - SE006
+        - SE009
+    - query: "ESM3 98 billion parameters 1.07e24 FLOPs 2.78 billion proteins esmGFP training"
+      engine: "web"
+      hits: null
+      retainedSourceRefs:
+        - SE001
+        - SE005
+        - SE016
+        - SE017
+    - query: "ESM Cambrian ESM-C 300M 600M 6B protein embedding Pre-LN RoPE SwiGLU"
+      engine: "web"
+      hits: null
+      retainedSourceRefs:
+        - SE002
+        - SE009
+        - SE013
+        - SE014
+        - SE015
+    - query: "EvolutionaryScale Forge API deployment commercial pricing AWS SageMaker 2026"
+      engine: "web"
+      hits: null
+      retainedSourceRefs:
+        - SE004
+        - SE009
+        - SE019
+    - query: "EvolutionaryScale GitHub DeepEP NCCL MoE expert parallelism H800 CUDA open source"
+      engine: "web"
+      hits: null
+      retainedSourceRefs:
+        - SE011
+        - SE012
+    - query: "ESM3 HuggingFace downloads open weights Cambrian Non-Commercial License community adoption"
+      engine: "web"
+      hits: null
+      retainedSourceRefs:
+        - SE013
+        - SE014
+        - SE015
+    - query: "NVIDIA BioNeMo NIM ESM3 EvolutionaryScale H100 GPU inference integration 2026"
+      engine: "web"
+      hits: null
+      retainedSourceRefs:
+        - SE016
+        - SE017
+        - SE018
+    - query: "EvolutionaryScale Series A 142 million Lux Capital Amazon NVIDIA funding 2026"
+      engine: "web"
+      hits: null
+      retainedSourceRefs:
+        - SE020
+        - SE024
+        - SE025
+    - query: "EvolutionaryScale CZI Biohub frontier AI biology acquisition Alex Rives 2026"
+      engine: "web"
+      hits: null
+      retainedSourceRefs:
+        - SE023
+    - query: "ESM3 binding prediction paradox adverse limitation structure heterogeneous BioRxiv 2024"
+      engine: "web"
+      hits: null
+      retainedSourceRefs:
+        - SE007
+    - query: "AlphaFold3 Chai-1 ESM3 comparison protein structure generative design competing models 2026"
+      engine: "web"
+      hits: null
+      retainedSourceRefs:
+        - SE026
+        - SE027
+        - SE028
+
+  researchQuestions:
+    - id: QE001
+      question: "What are all the model SKUs in EvolutionaryScale's current product portfolio, including ESM3 and ESM-C variants?"
+      type: enumeration
+      targets:
+        - "contentRequirements/1"
+        - "plannedTables/product-module-asset-matrix"
+      status: answered
+
+    - id: QE002
+      question: "What are the parameter counts and architectural configurations for each ESM3 and ESM-C model size?"
+      type: enumeration
+      targets:
+        - "contentRequirements/2"
+        - "plannedTables/technology-operating-architecture-table"
+      status: answered
+
+    - id: QE003
+      question: "What deployment channels and distribution platforms does EvolutionaryScale use to serve its models as of May 2026?"
+      type: enumeration
+      targets:
+        - "contentRequirements/3"
+        - "plannedTables/roadmap-release-development-stage-table"
+      status: answered
+
+    - id: QE004
+      question: "What open-source repositories has EvolutionaryScale published on GitHub, and what are their star counts?"
+      type: enumeration
+      targets:
+        - "contentRequirements/3"
+        - "plannedFigures/critical-dependency-map"
+      status: answered
+
+    - id: QE005
+      question: "What use cases are explicitly documented or demonstrated for ESM3 and ESM-C in official and community sources?"
+      type: enumeration
+      targets:
+        - "contentRequirements/0"
+        - "plannedTables/workflow-use-case-table"
+      status: answered
+
+    - id: QE006
+      question: "How many citations has the ESM3 Science paper (Hayes et al., 2025) accumulated, and how many downstream preprints cite the ESM3 bioRxiv preprint?"
+      type: quantification
+      targets:
+        - "contentRequirements/4"
+        - "plannedTables/product-module-asset-matrix"
+      status: answered
+
+    - id: QE007
+      question: "What is the total compute budget (FLOPs) used to train ESM3-large, and how does it compare to ESM2?"
+      type: quantification
+      targets:
+        - "contentRequirements/2"
+        - "plannedTables/technology-operating-architecture-table"
+      status: answered
+
+    - id: QE008
+      question: "What are the 30-day HuggingFace download counts for the open-weight ESM3 and ESMC model cards?"
+      type: quantification
+      targets:
+        - "contentRequirements/3"
+        - "plannedTables/product-module-asset-matrix"
+      status: answered
+
+    - id: QE009
+      question: "How many protein sequences and unique tokens were used in training ESM3-large?"
+      type: quantification
+      targets:
+        - "contentRequirements/2"
+        - "plannedTables/technology-operating-architecture-table"
+      status: answered
+
+    - id: QE010
+      question: "How many GitHub repositories does EvolutionaryScale maintain, and how many stars does DeepEP have?"
+      type: quantification
+      targets:
+        - "contentRequirements/3"
+        - "plannedFigures/critical-dependency-map"
+      status: answered
+
+    - id: QE011
+      question: "Does ESM3 use a vector quantized variational autoencoder (VQVAE) to encode 3D protein structure as discrete tokens?"
+      type: verification
+      targets:
+        - "contentRequirements/2"
+        - "plannedFigures/product-architecture-map"
+      status: answered
+
+    - id: QE012
+      question: "Was RLHF (reinforcement learning from human feedback) applied to ESM3-large for alignment with protein design preferences?"
+      type: verification
+      targets:
+        - "contentRequirements/2"
+        - "plannedTables/technology-operating-architecture-table"
+      status: answered
+
+    - id: QE013
+      question: "Does the Forge API (forge.evolutionaryscale.ai) currently operate as an accessible public beta as of May 2026?"
+      type: verification
+      targets:
+        - "contentRequirements/3"
+        - "plannedTables/product-module-asset-matrix"
+      status: answered
+
+    - id: QE014
+      question: "Is EvolutionaryScale a public benefit company (PBC) as its official communications indicate?"
+      type: verification
+      targets:
+        - "contentRequirements/5"
+        - "plannedTables/trust-quality-compliance-table"
+      status: answered
+
+    - id: QE015
+      question: "Has EvolutionaryScale filed any SEC Form D equity offering disclosures as of May 2026?"
+      type: verification
+      targets:
+        - "contentRequirements/5"
+        - "plannedTables/trust-quality-compliance-table"
+      status: answered
+
+    - id: QE016
+      question: "What evidence exists that ESM3 binding prediction accuracy degrades when distinct per-variant structural inputs are used?"
+      type: adverse
+      targets:
+        - "contentRequirements/5"
+        - "plannedTables/trust-quality-compliance-table"
+      status: answered
+
+    - id: QE017
+      question: "What structural and methodological limitations does the December 2024 BioRxiv preprint identify in ESM3's protein design workflow?"
+      type: adverse
+      targets:
+        - "contentRequirements/2"
+        - "plannedTables/technology-operating-architecture-table"
+      status: answered
+
+    - id: QE018
+      question: "What is the current status and terms of the CZI Biohub acquisition / transition for EvolutionaryScale as of May 2026?"
+      type: freshness
+      targets:
+        - "contentRequirements/3"
+        - "plannedTables/roadmap-release-development-stage-table"
+      status: answered
+
+    - id: QE019
+      question: "What is the current Forge API pricing model and commercial customer base for EvolutionaryScale as of May 2026?"
+      type: freshness
+      targets:
+        - "contentRequirements/0"
+        - "plannedTables/product-module-asset-matrix"
+      status: unresolved
+
+    - id: QE020
+      question: "What is the current status of the NVIDIA BioNeMo NIM integration for ESM3 and ESM-C as of May 2026?"
+      type: freshness
+      targets:
+        - "contentRequirements/3"
+        - "plannedTables/roadmap-release-development-stage-table"
+      status: partial
+
+    - id: QE021
+      question: "Has EvolutionaryScale disclosed any product roadmap updates for new model releases or platform features in 2026?"
+      type: freshness
+      targets:
+        - "contentRequirements/3"
+        - "plannedTables/roadmap-release-development-stage-table"
+      status: unresolved
+
+    - id: QE022
+      question: "What is the technical mechanism by which ESM3 generates novel protein sequences using its multitrack transformer architecture?"
+      type: mechanism
+      targets:
+        - "contentRequirements/2"
+        - "plannedFigures/customer-workflow-operating-flow"
+      status: answered
+
+    - id: QE023
+      question: "How does the VQVAE structure tokenizer enable ESM3 to natively reason about 3D protein structure during sequence generation?"
+      type: mechanism
+      targets:
+        - "contentRequirements/2"
+        - "plannedFigures/product-architecture-map"
+      status: answered
+
+    - id: QE024
+      question: "What is the mechanism by which ESM3 was used to design esmGFP, and what design constraints were applied?"
+      type: mechanism
+      targets:
+        - "contentRequirements/4"
+        - "plannedTables/product-module-asset-matrix"
+      status: answered
+
+    - id: QE025
+      question: "How does ESM3's generative protein design capability differ mechanistically from AlphaFold3's protein structure prediction?"
+      type: comparison
+      targets:
+        - "contentRequirements/4"
+        - "plannedFigures/product-maturity-capability-map"
+      status: answered
+
+    - id: QE026
+      question: "How does ESMC-600M compare to ESM2-650M and Chai-1 on protein embedding and structure prediction benchmarks?"
+      type: comparison
+      targets:
+        - "contentRequirements/4"
+        - "plannedFigures/product-maturity-capability-map"
+      status: partial
+
+    - id: QE027
+      question: "How does the Cambrian Non-Commercial License for ESM3-small compare to AlphaFold3's academic-use-only license in terms of permitted commercial applications?"
+      type: comparison
+      targets:
+        - "contentRequirements/5"
+        - "plannedTables/trust-quality-compliance-table"
+      status: answered
+
+    - id: QE028
+      question: "Has EvolutionaryScale published a public biosecurity screening policy for dual-use risks of generative protein design?"
+      type: verification
+      targets:
+        - "contentRequirements/5"
+        - "plannedTables/trust-quality-compliance-table"
+      status: partial
+
+  sources:
+    - id: SE001
+      publisher: "EvolutionaryScale"
+      title: "Simulating 500 million years of evolution with a language model"
+      url: "https://www.evolutionaryscale.ai/blog/esm3-release"
+      date: "2024-06-25"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - "esm3"
+        - "protein-language-model"
+        - "esmGFP"
+        - "training-scale"
+      keyQuote: "ESM3 is a generative model that reasons over the sequence, structure and function of proteins simultaneously. We trained ESM3 on an enormous scale: 771B tokens and 1.07×10^24 FLOPs."
+
+    - id: SE002
+      publisher: "EvolutionaryScale"
+      title: "ESM Cambrian: New foundational protein language models"
+      url: "https://www.evolutionaryscale.ai/blog/esm-cambrian"
+      date: "2024-12-03"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - "esmc"
+        - "protein-embedding"
+        - "esm-cambrian"
+        - "training-data"
+      keyQuote: "ESM Cambrian (ESMC) introduces a new family of protein language models with 300M, 600M, and 6B parameter sizes."
+
+    - id: SE003
+      publisher: "EvolutionaryScale"
+      title: "EvolutionaryScale — Homepage"
+      url: "https://www.evolutionaryscale.ai"
+      date: null
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - "company-overview"
+        - "training-scale"
+        - "protein-ai"
+
+    - id: SE004
+      publisher: "EvolutionaryScale"
+      title: "Forge — EvolutionaryScale API Platform"
+      url: "https://forge.evolutionaryscale.ai"
+      date: null
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - "forge-api"
+        - "commercial-deployment"
+        - "protein-design-api"
+
+    - id: SE005
+      publisher: "American Association for the Advancement of Science (AAAS)"
+      title: "Simulating 500 million years of evolution with a language model (Science, Vol 387)"
+      url: "https://www.science.org/doi/10.1126/science.ads0018"
+      date: "2025-01-16"
+      accessDate: "2026-05-18"
+      accessStatus: paywall
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics:
+        - "esm3"
+        - "esmGFP"
+        - "peer-reviewed"
+        - "science-paper"
+        - "protein-language-model"
+      keyQuote: "Hayes et al. Science Vol 387 Issue 6736 pp. 850-858 (January 16, 2025); DOI 10.1126/science.ads0018"
+
+    - id: SE006
+      publisher: "bioRxiv / Cold Spring Harbor Laboratory"
+      title: "Simulating 500M years of evolution with a language model (ESM3 preprint)"
+      url: "https://www.biorxiv.org/content/10.1101/2024.07.01.600583"
+      date: "2024-07-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - "esm3"
+        - "esmGFP"
+        - "preprint"
+        - "protein-design"
+      keyQuote: "esmGFP is 58% sequence identical to the nearest natural GFP and has 96 mutations out of 229 total amino acid positions."
+
+    - id: SE007
+      publisher: "bioRxiv / Cold Spring Harbor Laboratory"
+      title: "More Structure, Less Accuracy: ESM3's Binding Prediction Paradox"
+      url: "https://www.biorxiv.org/content/10.1101/2024.12.09.627585v1"
+      date: "2024-12-09"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: adverse
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: independent
+      topics:
+        - "esm3"
+        - "binding-prediction"
+        - "adverse"
+        - "protein-design-limitation"
+      keyQuote: "When distinct relaxed mutant structures are used per variant (rather than a single consistent backbone), ESM3's binding prediction performance deteriorates — a counter-intuitive result suggesting that more structural information can reduce accuracy."
+
+    - id: SE008
+      publisher: "bioRxiv / Cold Spring Harbor Laboratory"
+      title: "bioRxiv search — EvolutionaryScale ESM3 citing papers"
+      url: "https://www.biorxiv.org/search/evolutionaryscale+ESM3"
+      date: null
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: independent
+      topics:
+        - "esm3"
+        - "citation-count"
+        - "academic-adoption"
+
+    - id: SE009
+      publisher: "EvolutionaryScale"
+      title: "GitHub — evolutionaryscale/esm (official Python client and model weights)"
+      url: "https://github.com/evolutionaryscale/esm"
+      date: null
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics:
+        - "esm3"
+        - "esmc"
+        - "forge-api"
+        - "open-weights"
+        - "github"
+
+    - id: SE010
+      publisher: "EvolutionaryScale"
+      title: "GitHub — evolutionaryscale organization page"
+      url: "https://github.com/evolutionaryscale"
+      date: null
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics:
+        - "github-organization"
+        - "open-source"
+        - "repositories"
+
+    - id: SE011
+      publisher: "EvolutionaryScale"
+      title: "GitHub — evolutionaryscale/DeepEP (MoE Expert Parallelism library)"
+      url: "https://github.com/evolutionaryscale/DeepEP"
+      date: null
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics:
+        - "deepep"
+        - "moe"
+        - "expert-parallelism"
+        - "hpc"
+        - "h800"
+
+    - id: SE012
+      publisher: "GitHub / EvolutionaryScale"
+      title: "GitHub API — evolutionaryscale/esm repository metadata"
+      url: "https://api.github.com/repos/evolutionaryscale/esm"
+      date: null
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics:
+        - "github"
+        - "esm-repository"
+        - "stars"
+        - "developer-signal"
+
+    - id: SE013
+      publisher: "HuggingFace / EvolutionaryScale"
+      title: "HuggingFace — EvolutionaryScale organization page"
+      url: "https://huggingface.co/evolutionaryscale"
+      date: null
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics:
+        - "huggingface"
+        - "open-weights"
+        - "esm3"
+        - "esmc"
+
+    - id: SE014
+      publisher: "HuggingFace / EvolutionaryScale"
+      title: "HuggingFace model card — esm3-sm-open-v1"
+      url: "https://huggingface.co/EvolutionaryScale/esm3-sm-open-v1"
+      date: null
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics:
+        - "esm3-small"
+        - "open-weights"
+        - "huggingface-downloads"
+        - "cambrian-license"
+      keyQuote: "3,105 downloads in the last month; 291 likes; license: Cambrian Non-Commercial License Agreement"
+
+    - id: SE015
+      publisher: "HuggingFace / EvolutionaryScale"
+      title: "HuggingFace model card — esmc-600m-2024-12"
+      url: "https://huggingface.co/EvolutionaryScale/esmc-600m-2024-12"
+      date: null
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics:
+        - "esmc-600m"
+        - "open-weights"
+        - "huggingface-downloads"
+
+    - id: SE016
+      publisher: "NVIDIA"
+      title: "NVIDIA Clara BioNeMo — Platform for generative AI in drug discovery"
+      url: "https://www.nvidia.com/en-us/clara/bionemo/"
+      date: null
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: partner-proof
+      reputationTier: high
+      independence: partner
+      topics:
+        - "bionemo"
+        - "nim"
+        - "nvidia-partnership"
+        - "drug-discovery"
+
+    - id: SE017
+      publisher: "NVIDIA"
+      title: "EvolutionaryScale Debuts With ESM3 Generative AI Model for Protein Design"
+      url: "https://blogs.nvidia.com/blog/evolutionaryscale-esm3-generative-ai-nim-bionemo-h100/"
+      date: "2024-06-25"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: partner-proof
+      reputationTier: high
+      independence: partner
+      topics:
+        - "esm3"
+        - "nvidia-partnership"
+        - "h100"
+        - "andromeda-cluster"
+        - "bionemo"
+      keyQuote: "ESM3 was trained using the Andromeda cluster, which uses NVIDIA H100 GPUs and NVIDIA Quantum-2 InfiniBand networking. ESM3 uses roughly 25x more flops and 60x more data than its predecessor, ESM2."
+
+    - id: SE018
+      publisher: "NVIDIA"
+      title: "NVIDIA NGC Catalog — ESM3 (Clara resource)"
+      url: "https://catalog.ngc.nvidia.com/orgs/nvidia/teams/clara/resources/esm3"
+      date: null
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: partner-proof
+      reputationTier: high
+      independence: partner
+      topics:
+        - "nvidia-ngc"
+        - "esm3"
+        - "bionemo"
+        - "nim"
+
+    - id: SE019
+      publisher: "Amazon Web Services"
+      title: "Amazon SageMaker JumpStart — Foundation models and ML solutions"
+      url: "https://aws.amazon.com/sagemaker/jumpstart/"
+      date: null
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: partner-proof
+      reputationTier: high
+      independence: partner
+      topics:
+        - "aws-sagemaker"
+        - "commercial-deployment"
+        - "esmc-6b"
+
+    - id: SE020
+      publisher: "Crunchbase"
+      title: "EvolutionaryScale — Crunchbase organization profile"
+      url: "https://www.crunchbase.com/organization/evolutionaryscale"
+      date: null
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics:
+        - "company-profile"
+        - "funding"
+        - "investors"
+
+    - id: SE021
+      publisher: "U.S. Securities and Exchange Commission (SEC)"
+      title: "SEC EDGAR EFTS — Form D search for EvolutionaryScale"
+      url: "https://efts.sec.gov/LATEST/search-index?q=%22EvolutionaryScale%22&forms=D"
+      date: null
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics:
+        - "sec-form-d"
+        - "regulatory"
+        - "private-company"
+
+    - id: SE022
+      publisher: "Hacker News (Algolia)"
+      title: "Hacker News search — EvolutionaryScale community discussion"
+      url: "https://hn.algolia.com/api/v1/search?query=EvolutionaryScale&tags=story"
+      date: null
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: independent
+      topics:
+        - "hacker-news"
+        - "developer-sentiment"
+        - "community-signal"
+
+    - id: SE023
+      publisher: "CZI Biohub"
+      title: "Biohub launches initiative combining frontier AI & frontier biology"
+      url: "https://biohub.org/blog/frontier-ai-biology-initiative/"
+      date: "2025-11-06"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: partner-proof
+      reputationTier: high
+      independence: partner
+      topics:
+        - "czi-biohub"
+        - "frontier-ai-biology"
+        - "alex-rives"
+        - "acquisition"
+        - "10000-gpus"
+      keyQuote: "The team at EvolutionaryScale, a frontier AI research lab and public benefit company that has created groundbreaking, large-scale AI systems for the life sciences, will join Biohub to help advance this initiative. Alex Rives, EvolutionaryScale's co-founder and chief scientist, will serve as head of science."
+
+    - id: SE024
+      publisher: "Lux Capital"
+      title: "EvolutionaryScale Series A — Lux Capital investment update"
+      url: "https://lux.vc/updates/evolutionaryscale-series-a/"
+      date: "2024-09-26"
+      accessDate: "2026-05-18"
+      accessStatus: broken
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - "series-a"
+        - "lux-capital"
+        - "funding"
+
+    - id: SE025
+      publisher: "Axios"
+      title: "EvolutionaryScale raises $142 million Series A — Axios Pro Health Tech"
+      url: "https://www.axios.com/pro/health-tech-deals/2024/09/26/evolutionaryscale-protein-ai-142-million-series-a-amazon-nvidia"
+      date: "2024-09-26"
+      accessDate: "2026-05-18"
+      accessStatus: broken
+      stance: confirming
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics:
+        - "series-a"
+        - "funding"
+        - "amazon"
+        - "nvidia"
+
+    - id: SE026
+      publisher: "Semantic Scholar / Allen Institute for AI"
+      title: "Semantic Scholar paper search — ESM3 EvolutionaryScale citations"
+      url: "https://api.semanticscholar.org/graph/v1/paper/search?query=ESM3+EvolutionaryScale+protein+language+model&fields=title,year,publicationDate,authors,citationCount,externalIds&limit=5"
+      date: null
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics:
+        - "citation-metrics"
+        - "esm3"
+        - "academic-impact"
+
+    - id: SE027
+      publisher: "DeepMind / Google"
+      title: "AlphaFold — DeepMind protein structure prediction"
+      url: "https://deepmind.google/technologies/alphafold/"
+      date: null
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: other
+      reputationTier: high
+      independence: competitor
+      topics:
+        - "alphafold"
+        - "deepmind"
+        - "protein-structure"
+        - "competitor"
+
+    - id: SE028
+      publisher: "Chai Discovery"
+      title: "Chai Discovery — protein complex structure prediction"
+      url: "https://www.chaidiscovery.com"
+      date: null
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: other
+      reputationTier: medium
+      independence: competitor
+      topics:
+        - "chai-1"
+        - "chai-discovery"
+        - "competitor"
+        - "protein-structure"
+
+    - id: SE029
+      publisher: "Semantic Scholar / Allen Institute for AI"
+      title: "Semantic Scholar paper search — ESM3 protein language model evaluation benchmark limitation"
+      url: "https://api.semanticscholar.org/graph/v1/paper/search?query=ESM3+protein+language+model+evaluation+benchmark+limitation&fields=title,year,abstract,citationCount&limit=5"
+      date: null
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics:
+        - "citation-metrics"
+        - "esm3"
+        - "benchmark"
+        - "limitation-papers"
+
+  claims:
+    - id: CE001
+      statement: >-
+        EvolutionaryScale's product portfolio consists of two model families: ESM3 (multimodal
+        generative protein LM in 1.4B/7B/98B sizes) and ESM-C / Cambrian (embedding-focused
+        protein LM in 300M/600M/6B sizes).
+      type: company-claimed
+      topic: product-portfolio
+      sourceRefs:
+        - SE001
+        - SE002
+        - SE003
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+
+    - id: CE002
+      statement: >-
+        ESM3-small-2024-08 has 1.4 billion parameters; ESM3-medium-2024-08 has 7 billion; and
+        ESM3-large-2024-03 has 98 billion parameters.
+      type: company-claimed
+      topic: model-sizes
+      sourceRefs:
+        - SE001
+        - SE009
+        - SE017
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+        - QE002
+
+    - id: CE003
+      statement: >-
+        ESMC-300M uses 30 transformer layers with hidden width 960; ESMC-600M uses 36 layers
+        with width 1152; ESMC-6B uses 80 layers with width 2560.
+      type: company-claimed
+      topic: esmc-architecture
+      sourceRefs:
+        - SE002
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE002
+
+    - id: CE004
+      statement: >-
+        Open weights for ESM3-small-2024-08 and ESMC-300M/ESMC-600M are available on
+        HuggingFace under the Cambrian Non-Commercial License Agreement, which prohibits
+        commercial use.
+      type: company-claimed
+      topic: open-weights-license
+      sourceRefs:
+        - SE001
+        - SE014
+        - SE009
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+        - QE027
+
+    - id: CE005
+      statement: >-
+        EvolutionaryScale's open weights for ESM3-small were first released in June 2024
+        concurrent with the ESM3 launch; ESMC-300M and ESMC-600M open weights were released
+        in December 2024.
+      type: observed
+      topic: release-timeline
+      sourceRefs:
+        - SE001
+        - SE002
+      confidence: high
+      freshness: historical
+      answersQuestionRefs:
+        - QE003
+        - QE018
+
+    - id: CE006
+      statement: >-
+        ESM3's flagship proof of concept is esmGFP, a novel functional fluorescent protein
+        designed with only 58% sequence identity to the nearest known natural GFP — approximately
+        equivalent to 500 million years of evolutionary distance.
+      type: company-claimed
+      topic: esmGFP
+      sourceRefs:
+        - SE001
+        - SE005
+        - SE006
+      confidence: high
+      freshness: historical
+      answersQuestionRefs:
+        - QE024
+
+    - id: CE007
+      statement: >-
+        The Forge API (forge.evolutionaryscale.ai) provides programmatic access to ESM3 and
+        ESMC models through a Python SDK (pip install evoscale-sdk) with synchronous and
+        asynchronous inference and a batch executor; the API was opened to public beta in
+        January 2025.
+      type: company-claimed
+      topic: forge-api
+      sourceRefs:
+        - SE001
+        - SE004
+        - SE009
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE003
+        - QE013
+
+    - id: CE008
+      statement: >-
+        Amazon Web Services and NVIDIA are EvolutionaryScale's primary commercial deployment
+        partners: ESMC-6B is deployed on AWS SageMaker JumpStart, and NVIDIA is integrating
+        ESM-C into BioNeMo NIM.
+      type: third-party-reported
+      topic: deployment-partners
+      sourceRefs:
+        - SE017
+        - SE018
+        - SE019
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE003
+        - QE020
+
+    - id: CE009
+      statement: >-
+        ESM3 uses a multitrack transformer architecture with three separate discrete token
+        tracks: amino acid sequence tokens, VQVAE-encoded structure tokens (representing 3D
+        backbone coordinates), and function keyword tokens (GO annotations).
+      type: company-claimed
+      topic: esm3-architecture
+      sourceRefs:
+        - SE001
+        - SE005
+        - SE006
+      confidence: high
+      freshness: historical
+      answersQuestionRefs:
+        - QE011
+        - QE022
+        - QE023
+
+    - id: CE010
+      statement: >-
+        ESM3-large (98B parameters) was trained on 2.78 billion proteins, 771 billion unique
+        tokens, using 1.07×10²⁴ floating-point operations on the Andromeda cluster.
+      type: company-claimed
+      topic: training-scale
+      sourceRefs:
+        - SE001
+        - SE005
+        - SE017
+      confidence: high
+      freshness: historical
+      answersQuestionRefs:
+        - QE007
+        - QE009
+
+    - id: CE011
+      statement: >-
+        ESM3 employs a vector quantized variational autoencoder (VQVAE) to encode 3D protein
+        backbone coordinates as discrete structural tokens, enabling the transformer to natively
+        generate structure as tokens rather than as continuous coordinates.
+      type: company-claimed
+      topic: vqvae-tokenization
+      sourceRefs:
+        - SE001
+        - SE006
+      confidence: high
+      freshness: historical
+      answersQuestionRefs:
+        - QE011
+        - QE023
+
+    - id: CE012
+      statement: >-
+        ESM3 is pre-trained using a masked language modeling (MLM) objective applied jointly
+        across all three tracks (sequence, structure, function), enabling the model to infer
+        any track from the others.
+      type: company-claimed
+      topic: pre-training
+      sourceRefs:
+        - SE001
+        - SE005
+      confidence: high
+      freshness: historical
+      answersQuestionRefs:
+        - QE022
+
+    - id: CE013
+      statement: >-
+        Reinforcement learning from human feedback (RLHF) was applied to ESM3-large to align
+        outputs with human preferences for protein design tasks.
+      type: company-claimed
+      topic: rlhf-alignment
+      sourceRefs:
+        - SE001
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs:
+        - QE012
+
+    - id: CE014
+      statement: >-
+        ESM-C uses a Pre-Layer Normalization transformer architecture with rotary positional
+        embeddings (RoPE), SwiGLU feed-forward activations, and masked language modeling
+        pre-training.
+      type: company-claimed
+      topic: esmc-architecture
+      sourceRefs:
+        - SE002
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs:
+        - QE002
+
+    - id: CE015
+      statement: >-
+        ESMC training compute: ESMC-300M was trained on 1.26×10²² FLOPs; ESMC-600M on
+        2.17×10²² FLOPs; ESMC-6B on 2.37×10²³ FLOPs.
+      type: company-claimed
+      topic: esmc-training
+      sourceRefs:
+        - SE002
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs:
+        - QE007
+
+    - id: CE016
+      statement: >-
+        ESM-C was trained on three protein sequence databases: UniRef (83 million sequence
+        clusters), MGnify (372 million), and JGI metagenomics (2 billion clusters), all
+        clustered at 70% sequence identity.
+      type: company-claimed
+      topic: esmc-training-data
+      sourceRefs:
+        - SE002
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs:
+        - QE009
+
+    - id: CE017
+      statement: >-
+        EvolutionaryScale's DeepEP library is an open-source CUDA/NCCL implementation of
+        Mixture-of-Experts Expert Parallelism communication optimized for H800 GPUs, with
+        1,253 GitHub stars as of the research date.
+      type: observed
+      topic: deepep
+      sourceRefs:
+        - SE011
+        - SE010
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE004
+        - QE010
+
+    - id: CE018
+      statement: >-
+        NVIDIA reports that ESM3-large uses approximately 25× more FLOPs and 60× more training
+        data than its predecessor, ESM2 (Meta AI), and was trained on NVIDIA H100 GPUs via the
+        Andromeda HPC cluster.
+      type: third-party-reported
+      topic: training-scale
+      sourceRefs:
+        - SE017
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs:
+        - QE007
+        - QE025
+
+    - id: CE019
+      statement: >-
+        The GitHub ESM repository (github.com/evolutionaryscale/esm) provides the official
+        Python client library for the Forge API and access to open-weight models, with
+        installation via pip.
+      type: observed
+      topic: github-deployment
+      sourceRefs:
+        - SE009
+        - SE012
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE003
+        - QE004
+
+    - id: CE020
+      statement: >-
+        The HuggingFace model card for esm3-sm-open-v1 showed 3,105 downloads in the prior
+        30 days and 291 likes as of the research access date.
+      type: observed
+      topic: community-adoption
+      sourceRefs:
+        - SE013
+        - SE014
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE008
+
+    - id: CE021
+      statement: >-
+        The ESMC-300M model card showed 6,320 downloads on HuggingFace; the ESMC-600M model
+        card showed 1,490 downloads, as of the research access date.
+      type: observed
+      topic: community-adoption
+      sourceRefs:
+        - SE013
+        - SE015
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE008
+
+    - id: CE022
+      statement: >-
+        ESMC-6B is available via the Forge API for academic users and via AWS SageMaker
+        JumpStart for commercial deployments; the SageMaker deployment uses a CloudFormation
+        stack documented in the esm-sagemaker GitHub repository, with setup time of 15-25 minutes.
+      type: company-claimed
+      topic: esmc-6b-deployment
+      sourceRefs:
+        - SE002
+        - SE009
+        - SE019
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE003
+        - QE005
+
+    - id: CE023
+      statement: >-
+        EvolutionaryScale's GitHub organization (github.com/evolutionaryscale) hosts nine
+        public repositories including esm (flagship), DeepEP (1,253 stars), a NCCL fork, a
+        Hugging Face transformers fork, a Mamba implementation, and esm-sagemaker.
+      type: observed
+      topic: github-repositories
+      sourceRefs:
+        - SE010
+        - SE011
+        - SE009
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE004
+        - QE010
+
+    - id: CE024
+      statement: >-
+        EvolutionaryScale has not filed any SEC Form D equity offering disclosures as of
+        May 2026, confirming the company's status as a privately held entity that has not
+        made registered securities offerings.
+      type: observed
+      topic: corporate-status
+      sourceRefs:
+        - SE021
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE015
+
+    - id: CE025
+      statement: >-
+        NVIDIA announced a partnership with EvolutionaryScale to integrate ESM3 into the
+        BioNeMo NIM platform for GPU-optimized inference, and participated in EvolutionaryScale's
+        seed investment.
+      type: third-party-reported
+      topic: nvidia-partnership
+      sourceRefs:
+        - SE016
+        - SE017
+        - SE018
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE020
+
+    - id: CE026
+      statement: >-
+        Hacker News search results show ten or more community discussion threads covering
+        EvolutionaryScale and ESM3, including "Show HN: ESM C" and multiple threads on the
+        Science publication and initial ESM3 launch, indicating meaningful developer community
+        engagement.
+      type: observed
+      topic: developer-signal
+      sourceRefs:
+        - SE022
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE004
+
+    - id: CE027
+      statement: >-
+        The ESM3 Science paper (Hayes et al., January 2025, Vol 387, Issue 6736, pp. 850-858,
+        DOI 10.1126/science.ads0018) has accumulated 341 citations and 68,494 downloads, with
+        318 of the citations arriving within the first 12 months of publication.
+      type: observed
+      topic: publication-impact
+      sourceRefs:
+        - SE005
+        - SE026
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE006
+
+    - id: CE028
+      statement: >-
+        The ESM3 preprint on bioRxiv (submitted July 2024, DOI 10.1101/2024.07.01.600583) was
+        cited by 129+ downstream papers within its first year of availability, signaling rapid
+        academic adoption.
+      type: observed
+      topic: preprint-citations
+      sourceRefs:
+        - SE006
+        - SE008
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE006
+
+    - id: CE029
+      statement: >-
+        esmGFP carries 96 mutations out of 229 total amino acid positions, achieving 58%
+        sequence identity to the nearest known natural GFP and representing a protein in a
+        region of sequence space separated from known fluorescent proteins by approximately
+        500 million years of evolutionary divergence.
+      type: third-party-reported
+      topic: esmGFP
+      sourceRefs:
+        - SE001
+        - SE005
+        - SE006
+      confidence: high
+      freshness: historical
+      answersQuestionRefs:
+        - QE024
+
+    - id: CE030
+      statement: >-
+        ESM3 designed esmGFP by jointly optimizing across sequence, structure, and function
+        tracks, using the multitrack generative capability to explore protein sequence space
+        beyond the reach of natural evolution or previous directed-evolution methods.
+      type: company-claimed
+      topic: esmGFP-mechanism
+      sourceRefs:
+        - SE001
+        - SE005
+      confidence: high
+      freshness: historical
+      answersQuestionRefs:
+        - QE024
+        - QE022
+
+    - id: CE031
+      statement: >-
+        The 58% sequence identity distance between esmGFP and the nearest natural GFP is
+        comparable to the evolutionary separation between corals and jellyfish, which represent
+        two distinct animal phyla.
+      type: company-claimed
+      topic: esmGFP-evolutionary-context
+      sourceRefs:
+        - SE001
+        - SE006
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs:
+        - QE024
+
+    - id: CE032
+      statement: >-
+        EvolutionaryScale filed patents covering esmGFP and related protein design methods,
+        as stated in the ESM3 bioRxiv preprint.
+      type: third-party-reported
+      topic: ip-patents
+      sourceRefs:
+        - SE006
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs:
+        - QE025
+
+    - id: CE033
+      statement: >-
+        ESM3 competes in the protein AI landscape against AlphaFold3 (structure prediction,
+        DeepMind, May 2024), Chai-1 (protein complex structure, Chai Discovery), and ESM2
+        (sequence LM, Meta AI); each competitor focuses on structure prediction rather than
+        generative protein design.
+      type: inferred
+      topic: competitive-landscape
+      sourceRefs:
+        - SE027
+        - SE028
+        - SE017
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE025
+        - QE026
+
+    - id: CE034
+      statement: >-
+        EvolutionaryScale raised a $142 million Series A in September 2024 led by Lux Capital,
+        with participation from Amazon and NVIDIA, following an earlier seed investment from NVIDIA.
+      type: third-party-reported
+      topic: funding
+      sourceRefs:
+        - SE024
+        - SE025
+        - SE020
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs:
+        - QE018
+
+    - id: CE035
+      statement: >-
+        In November 2025, EvolutionaryScale's team joined CZI Biohub as part of its Frontier
+        AI & Biology initiative; co-founder and chief scientist Alex Rives was appointed head
+        of science at Biohub.
+      type: third-party-reported
+      topic: czi-biohub-transition
+      sourceRefs:
+        - SE023
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE018
+
+    - id: CE036
+      statement: >-
+        Open-weight ESM3 and ESMC models are distributed under the Cambrian Non-Commercial
+        License Agreement, which restricts use to non-commercial research; commercial customers
+        must access models through the Forge API or AWS SageMaker.
+      type: company-claimed
+      topic: licensing
+      sourceRefs:
+        - SE001
+        - SE014
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE027
+
+    - id: CE037
+      statement: >-
+        EvolutionaryScale employs a dual-access commercial model: open-weight non-commercial
+        access for research and community adoption, and Forge API / SageMaker commercial
+        access with undisclosed pricing.
+      type: inferred
+      topic: business-model
+      sourceRefs:
+        - SE001
+        - SE002
+        - SE004
+        - SE019
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE019
+
+    - id: CE038
+      statement: >-
+        EvolutionaryScale is described as a public benefit company (PBC) in CZI Biohub's
+        November 2025 announcement, consistent with its stated mission of advancing biology
+        through responsible AI.
+      type: third-party-reported
+      topic: corporate-structure
+      sourceRefs:
+        - SE023
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE014
+
+    - id: CE039
+      statement: >-
+        An independent BioRxiv preprint (December 2024) found that ESM3's binding prediction
+        accuracy deteriorates when distinct per-variant relaxed protein structures are used as
+        inputs, compared to a single consistent structural backbone — a finding the authors
+        describe as the 'More Structure, Less Accuracy' paradox.
+      type: third-party-reported
+      topic: adverse-finding
+      sourceRefs:
+        - SE007
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE016
+        - QE017
+
+    - id: CE040
+      statement: >-
+        EvolutionaryScale has not publicly disclosed commercial pricing for the Forge API,
+        customer names or contract counts, or revenue metrics as of May 2026.
+      type: observed
+      topic: disclosure-gap
+      sourceRefs:
+        - SE003
+        - SE004
+        - SE021
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE019
+
+  evidenceGaps:
+    - type: private-evidence-only
+      severity: material
+      topic: forge-api-commercial
+      missingEvidence: >-
+        Forge API pricing tiers, current commercial customer list, estimated ARR or revenue
+        range, and API uptime/SLA terms are not publicly disclosed.
+      whyItMatters: >-
+        Without public pricing or customer metrics, it is impossible to assess the commercial
+        traction of the Forge API or the revenue model supporting EvolutionaryScale's / CZI
+        Biohub's operating costs. This is a blocking diligence issue for any investor or
+        partner seeking to evaluate commercial viability.
+      diligencePath: >-
+        Request directly from EvolutionaryScale / CZI Biohub: (1) Forge API pricing sheet;
+        (2) current Forge customer count and industry breakdown; (3) estimated ARR or monthly
+        revenue range; (4) SLA terms and historical uptime; (5) any commercial partnership
+        agreements beyond AWS and NVIDIA.
+      relatedQuestionRefs:
+        - QE019
+
+    - type: missing-source
+      severity: material
+      topic: biosecurity-policy
+      missingEvidence: >-
+        A public biosecurity screening policy, dual-use risk assessment, or independent
+        biosafety audit for EvolutionaryScale's generative protein design capabilities
+        has not been identified.
+      whyItMatters: >-
+        Generative protein language models capable of designing functional proteins at
+        evolutionary scales raise legitimate biosecurity concerns regarding potential misuse
+        for pathogen engineering. Absence of a public biosecurity policy is a material gap
+        for institutional investors, government customers, and regulated industry partners.
+      diligencePath: >-
+        Request from EvolutionaryScale / CZI Biohub: (1) biosecurity policy and Forge API
+        access controls; (2) any third-party biosafety review commissioned; (3) engagement
+        with the Johns Hopkins Center for Health Security or equivalent body; (4) confirmation
+        of any government oversight or disclosure commitments.
+      relatedQuestionRefs:
+        - QE028
+        - QE016
+
+    - type: private-evidence-only
+      severity: material
+      topic: forge-data-privacy
+      missingEvidence: >-
+        A publicly available Terms of Service, Privacy Policy, and Data Processing Agreement
+        for the Forge API that specifies how user-submitted protein sequences are stored,
+        processed, retained, and deleted.
+      whyItMatters: >-
+        Pharmaceutical and biotech customers submitting proprietary protein sequences to
+        the Forge API require contractual assurance that their IP will not be used in
+        training future model versions or disclosed to third parties. Absence of a public
+        data policy may block adoption by regulated enterprise customers.
+      diligencePath: >-
+        Request Forge API Terms of Service, Privacy Policy, and a sample Data Processing
+        Agreement from EvolutionaryScale / CZI Biohub. Verify GDPR and CCPA compliance
+        posture for EU and California customers.
+      relatedQuestionRefs:
+        - QE019
+        - QE028
+
+    - type: missing-source
+      severity: minor
+      topic: product-roadmap-2026
+      missingEvidence: >-
+        Any public disclosure of EvolutionaryScale's or CZI Biohub's technology product
+        roadmap for 2026–2027, including planned new model releases, platform enhancements,
+        or pricing structure changes post-Biohub transition. The status of the NVIDIA BioNeMo
+        NIM integration for ESM-C also remains partially confirmed (listed as 'available soon'
+        in December 2024) but not yet independently verified as launched.
+      whyItMatters: >-
+        Following the November 2025 CZI Biohub transition, EvolutionaryScale's independent
+        product roadmap is subsumed by Biohub's research agenda. Investors and partners need
+        to understand how Biohub's non-profit mission will govern commercial Forge API
+        development versus open research priorities. The BioNeMo NIM status gap matters for
+        customers planning GPU-optimized inference deployments.
+      diligencePath: >-
+        Monitor CZI Biohub press releases and annual reports; review Forge API changelog
+        and GitHub repository commits; request product roadmap briefing from CZI Biohub
+        partnership or business development team; check NVIDIA NGC catalog for updated
+        BioNeMo NIM availability status.
+      relatedQuestionRefs:
+        - QE021
+        - QE018
+        - QE020
+
+    - type: missing-source
+      severity: minor
+      topic: competitive-benchmarks
+      missingEvidence: >-
+        Independent third-party benchmarks comparing ESMC-600M against ESM2-650M (Meta AI),
+        ESM-C against ESMFold, or ESM3 against AlphaFold3 on protein structure prediction
+        accuracy, embedding quality for downstream classification, or binding affinity
+        prediction benchmarks.
+      whyItMatters: >-
+        Without independent benchmarks, ESM-C's claimed state-of-the-art embedding quality
+        and ESM3's design advantages over competitors cannot be objectively verified by
+        prospective customers or investors. EvolutionaryScale's self-reported benchmarks
+        in the ESM-C blog are company-claimed and subject to selection bias.
+      diligencePath: >-
+        Search CAMEO, CASP15, and community protein ML benchmark repositories for ESM3 and
+        ESMC evaluations; request EvolutionaryScale / CZI Biohub's head-to-head benchmark
+        data comparing ESM3 and ESMC against AlphaFold3, Chai-1, and ESM2 under independent
+        test conditions.
+      relatedQuestionRefs:
+        - QE026

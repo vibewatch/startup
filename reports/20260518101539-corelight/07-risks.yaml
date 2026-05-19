@@ -1,0 +1,2186 @@
+schemaVersion: "report-v2"
+artifact: "risks"
+slug: "corelight"
+runDate: "2026-05-18"
+company:
+  name: "Corelight, Inc."
+chapter:
+  order: 7
+  number: 7
+  title: "Risks"
+  letter: "R"
+  summary: >-
+    Corelight faces a layered risk profile spanning regulatory/legal, operational/security, partner/dependency,
+    and people/execution dimensions. On the regulatory front, the most material near-term risk is the pending
+    FedRAMP authorization: federal civilian agencies cannot contract for cloud-hosted Corelight services until
+    authorization is achieved, representing a direct cap on government ARR. Export control exposure under EAR/ITAR
+    is elevated given that network security monitoring tools with ML capabilities are dual-use and Corelight's
+    government focus includes US allies and Five Eyes partners who may have geographic resale implications. GDPR
+    and CCPA compliance risks are present for the SaaS Investigator platform and cloud sensors given that network
+    telemetry can contain personal data. CMMC 2.0 requirements for DoD supply-chain participants add procurement
+    complexity and cost. Open-source license compliance across Zeek (BSD), Suricata (GPL v2), and third-party
+    components is manageable but requires ongoing SBOM discipline. The Zeek trademark is owned by the
+    International Computer Science Institute (ICSI), creating a legal dependency that would complicate any
+    rebrand or trademark dispute. Operationally, Corelight faces the existential risk endemic to NDR vendors: a
+    breach of its own platform — the Solarwinds/Kaseya precedent — would be deeply damaging to customer trust
+    and could trigger contract termination clauses across its government base. Cloud provider concentration in
+    AWS/Azure/GCP and dependency on cloud mirroring APIs creates a platform-availability risk. Partner
+    dependency on CrowdStrike (as both investor and integration partner) and Cisco Investments (as both investor
+    and direct competitor) creates strategic conflict risks that could materialize in M&A scenarios. Zeek
+    open-source governance dependency — Corelight is the primary code contributor but does not own the
+    trademark — is an asymmetric risk if a forked or competing Zeek distribution gains traction. Key-person
+    risk is concentrated in CEO Brian Dye (commercial franchise holder since 2021) and co-founder Vern Paxson
+    (inventor of Zeek and primary technical credibility anchor). Kill criteria include a material breach of
+    Corelight's own infrastructure, loss of a major government contract or CISA advisory relationship, and a
+    dominant Zeek fork driven by a well-funded competitor.
+
+sections:
+  - id: regulatory-legal-risk
+    title: "Regulatory and Legal Risk: FedRAMP, Export Controls, GDPR, CMMC, and Open-Source License"
+    body: >-
+      Corelight's regulatory and legal risk profile is dominated by five active exposure categories, each with
+      distinct materiality and mitigation maturity. The most immediate commercial risk is the incomplete FedRAMP
+      authorization for the Corelight cloud platform. FedRAMP (Federal Risk and Authorization Management Program)
+      is the mandatory US government cloud security authorization framework; without an authorized listing on the
+      FedRAMP Marketplace, civilian federal agencies cannot procure cloud-hosted Corelight Investigator or NDR
+      Platform services. As of mid-2026, Corelight is listed as FedRAMP authorization "in progress," not yet
+      authorized. Given that government customers represent an estimated 30–40% of Corelight's ARR and that the
+      federal civilian cloud market is growing rapidly, this gap directly limits addressable revenue. Physical
+      on-premises sensors remain deployable in classified and sensitive environments without FedRAMP, but the
+      SaaS and managed platform products are constrained. The FedRAMP process is resource-intensive — typically
+      requiring 12–24 months and millions of dollars in compliance investment — and the outcome is not guaranteed.
+      Export control risk under the Export Administration Regulations (EAR) administered by the US Department of
+      Commerce Bureau of Industry and Security (BIS) is material for network security monitoring technology.
+      Cybersecurity tools with ML-based behavioral analytics are potentially classified under Export Control
+      Classification Number (ECCN) 4E001 or 5E002 categories, which restrict export to certain jurisdictions
+      without a license. Corelight's government-sector focus, including intelligence community and Five Eyes
+      partner relationships, creates a dual-use classification risk that must be actively managed. Additionally,
+      any international personnel with access to the most sensitive analytics source code or trained model weights
+      may trigger deemed-export considerations under ITAR/EAR. GDPR risk is present for EU-headquartered customer
+      deployments because Zeek-generated network logs can contain IP addresses, DNS query content, and HTTP
+      headers, all of which may qualify as personal data under Article 4 GDPR. If Corelight's cloud infrastructure
+      processes EU personal data without adequate data processing agreements, Standard Contractual Clauses, or
+      Schrems II-compliant transfer mechanisms, it could face regulatory action from EU data protection
+      authorities. CCPA creates parallel obligations for California-resident data processed in SaaS contexts.
+      Corelight's open-source license compliance risk centers on three components: Zeek (BSD 3-Clause, permissive),
+      Suricata (GPL v2, copyleft), and various third-party packages. The GPL v2 copyleft in Suricata requires that
+      any distribution of software linked with Suricata comply with GPL v2's source disclosure requirements.
+      Corelight ships Suricata as an embedded analytics engine within its sensor software; if sensor firmware
+      includes proprietary ML code linked against GPL v2 libraries, a license-compliance defect could expose
+      Corelight to copyright claims from the Open Information Security Foundation (OISF), which owns Suricata.
+      The Zeek trademark — the "Z and Design" mark and the ZEEK mark — is owned by the International Computer
+      Science Institute (ICSI) and is licensed to Corelight under a trademark license agreement. This creates a
+      legal dependency: if Corelight and ICSI were to dispute the license terms, Corelight could lose the right
+      to use "Zeek" in product and marketing materials, forcing an expensive and disruptive rebrand of its
+      central technical asset. This risk is low probability but high severity.
+    claimRefs: [CR001, CR002, CR003, CR004, CR005, CR006, CR007, CR008, CR009]
+    tableRefs: [TR001]
+    figureRefs: [FR001]
+
+  - id: operational-security-risk
+    title: "Operational and Security Risk: Own-Platform Breach, Cloud Concentration, and Firmware Vulnerabilities"
+    body: >-
+      The most consequential operational risk for Corelight is a security compromise of its own sensor platform
+      or SaaS infrastructure. An NDR vendor that is itself compromised — the analogy to the 2020 SolarWinds SUNBURST
+      supply-chain attack or the 2021 Kaseya VSA ransomware incident — would face catastrophic reputational damage
+      precisely because the product's value proposition is detecting adversary activity in customer networks.
+      Corelight sensors sit at the most sensitive vantage point in enterprise network architecture: they observe
+      all traffic and produce comprehensive network evidence. If an adversary were to compromise a Corelight sensor
+      firmware update mechanism, the attacker would gain passive surveillance access to every enterprise network
+      where the compromised sensor is deployed. This threat model makes firmware update chain integrity,
+      code-signing practices, and tamper detection critical security controls. Corelight holds SOC 2 Type II and
+      ISO 27001 certifications, which attest to formal security management practices, but no public bug bounty
+      program or coordinated vulnerability disclosure policy has been confirmed from public sources as of mid-2026.
+      The absence of a published CVD policy is a diligence gap. NVD search results for "zeek" show historical
+      CVEs against the open-source Zeek codebase, which Corelight must patch and distribute on its own update
+      timeline, creating a potential lag between public disclosure and customer patch deployment. Data breach risk
+      at the SaaS infrastructure layer is the second material operational exposure. Corelight Investigator and the
+      NDR Platform are cloud-hosted SaaS products; a breach of the multi-tenant SaaS environment could expose
+      network metadata from multiple enterprise customers simultaneously. Even if raw PCAP data is stored
+      on-premises, the metadata and alert records in the cloud management plane could reveal sensitive operational
+      patterns of high-value targets including government agencies. Cloud provider concentration risk arises from
+      Corelight's architectural dependency on AWS VPC Traffic Mirroring, Azure vTAP, and GCP Packet Mirroring APIs.
+      If any of these cloud providers changes its traffic mirroring API, introduces new pricing, or restricts access
+      — as has occurred with other cloud-adjacent security products — Corelight's cloud sensor value proposition for
+      that cloud would be impaired until the platform is re-architected. Single-cloud-provider outages would reduce
+      sensor visibility for customers in that cloud. Sensor firmware vulnerabilities represent a hardware attack
+      surface that is particularly difficult to remediate at scale: enterprise customers with thousands of deployed
+      sensors require coordinated firmware update campaigns, and a zero-day vulnerability in sensor processing
+      code could leave a large installed base exposed for weeks during a staged rollout. Operational failures in
+      the managed NDR Platform — including false negative rates (missed threats), excessive false positive alert
+      volume, or platform outages — would directly undermine service commitments and trigger SLA penalties.
+    claimRefs: [CR010, CR011, CR012, CR013, CR014, CR015, CR016, CR017]
+    tableRefs: [TR002]
+    figureRefs: [FR002]
+
+  - id: partner-dependency-risk
+    title: "Partner and Dependency Risk: Zeek Open-Source, ICSI License, CrowdStrike, and Cisco Conflict"
+    body: >-
+      Corelight's most fundamental dependency risk is its structural reliance on the Zeek open-source project.
+      Zeek is not merely an upstream dependency — it is the technical foundation of Corelight's entire product
+      portfolio. Corelight employs core Zeek maintainers and is the primary financial contributor to the Zeek
+      project, but it does not own the Zeek trademark (held by ICSI) and does not have exclusive rights to the
+      codebase (BSD license allows forks). If a well-funded competitor — for example, a hyperscaler or a
+      private-equity-backed security consolidator — were to fund a rival Zeek distribution, the open-source moat
+      that Corelight currently exploits could become a competitive liability. A Zeek fork gaining enterprise
+      adoption would commoditize the core protocol analysis engine and remove one of Corelight's primary barriers
+      to entry. The ICSI trademark license creates a distinct legal dependency: Corelight's right to use the Zeek
+      brand in product marketing is contingent on the license agreement with the International Computer Science
+      Institute, an academic institution with its own governance processes. If ICSI faces funding pressure,
+      changes leadership, or is approached by a competing commercial entity for an exclusive arrangement, Corelight
+      could face a trademark renegotiation at an inopportune time. The CrowdStrike strategic investment and
+      integration partnership creates a dual-role conflict. CrowdStrike is both an investor (via the CrowdStrike
+      Falcon Fund, Series E 2024) and a direct competitor to Corelight in certain XDR and network visibility
+      scenarios where CrowdStrike Falcon's Adversary Intelligence modules or network controls overlap with
+      Corelight sensor capabilities. In an M&A scenario, CrowdStrike's board-level visibility into Corelight's
+      strategic plans and customer base creates an information asymmetry risk. The CrowdStrike integration
+      dependency means that if CrowdStrike changes its partner API terms or deprecates the integration, Corelight
+      would lose a major co-sell channel and reference-customer story. Cisco Investments' participation in
+      the Series E as a strategic investor creates a similar conflict: Cisco is simultaneously an investor in
+      Corelight and a direct competitor via Cisco's own XDR platform, network security products (Cisco Secure
+      Network Analytics/Stealthwatch), and NDR-adjacent capabilities in the Cisco security portfolio. The Cisco
+      XDR integration announced in 2024 positions Corelight as a telemetry feed into Cisco's platform, which
+      is strategically subordinate to the Cisco stack. Splunk and Elasticsearch serve as primary distribution
+      channels through the Corelight for Splunk app and Elasticsearch export support; changes to Splunk's
+      partner program following Cisco's 2024 acquisition of Splunk could affect Corelight's integration
+      economics and go-to-market positioning. Mandiant/Google's role in incident response workflows creates
+      a dependency on Google's continued prioritization of Corelight as the NDR partner for IR engagements.
+    claimRefs: [CR018, CR019, CR020, CR021, CR022, CR023, CR024, CR025]
+    tableRefs: [TR003]
+    figureRefs: [FR003]
+
+  - id: people-execution-risk
+    title: "People and Execution Risk: Key-Person Concentration, Talent Market, and Leadership Bench"
+    body: >-
+      Corelight's people risk is concentrated in two individuals whose departure would have materially different
+      but both significant impacts on the company's trajectory. CEO Brian Dye joined in 2021 and has led
+      Corelight through its most aggressive growth phase: he raised the $150M Series E in April 2024, established
+      CrowdStrike and Cisco as strategic investors, presided over dual Gartner Magic Quadrant Leader and Forrester
+      Wave Leader designations, and built the enterprise go-to-market organization. Dye's departure without a
+      seasoned replacement would create a leadership vacuum at the most critical commercial phase — the company
+      is approaching a probable liquidity event (IPO or M&A) and an executive transition during this window
+      would introduce risk in investor relations, customer retention, and M&A negotiation leverage. Co-founder
+      and Chief Scientist Vern Paxson is the inventor of Zeek and the technical credibility anchor of the
+      company. Paxson holds deep standing in the network security research community, having published foundational
+      papers on network traffic analysis and passive measurement. His departure or reduced engagement would
+      weaken Corelight's open-source community relationships, its academic research credibility, and its ability
+      to attract top-tier security engineers who joined partly to work alongside the Zeek inventor. The cybersecurity
+      talent market is structurally competitive: demand for engineers with deep network protocol expertise, ML
+      applied to security, and systems programming skills (C/C++ for sensor firmware, Zeek scripting language)
+      substantially exceeds supply. Corelight competes for talent against hyperscaler security teams (Google
+      Mandiant, Microsoft Security, Amazon AWS Security), well-funded pure-play competitors (Vectra AI, ExtraHop/
+      Arista, Darktrace), and government contractors (Booz Allen, Palantir) that offer clearance-linked career
+      paths. The San Francisco Bay Area engineering cost base is a structural headwind relative to competitors
+      with offshore engineering centers. Beyond Dye and Paxson, Corelight's CTO role was not publicly disclosed
+      as of mid-2026, representing a governance gap: if the company lacks a publicly named CTO, it may signal
+      either vacancy or deliberate non-disclosure ahead of a leadership announcement, both of which warrant
+      diligence investigation. The hiring of Hatem Naguib (former CEO Barracuda Networks) to the board in 2026
+      is a positive signal for governance depth, but does not address operational execution risk. Execution risk
+      also encompasses the challenge of scaling federal sales: government procurement cycles are 12–36 months,
+      require cleared sales personnel, and depend on CMMC and FedRAMP compliance milestones that are not yet
+      complete. Failure to achieve FedRAMP authorization on schedule would force the sales team to extend pipeline
+      timelines or write off federal cloud opportunities.
+    claimRefs: [CR026, CR027, CR028, CR029, CR030, CR031, CR032, CR033]
+    tableRefs: [TR004]
+
+  - id: mitigation-and-kill-criteria
+    title: "Mitigation and Kill Criteria"
+    body: >-
+      Corelight has demonstrated meaningful risk mitigation progress across multiple dimensions, though several
+      critical gaps remain open as of mid-2026. On the regulatory front, the SOC 2 Type II and ISO 27001
+      certifications provide a solid baseline trust posture and support enterprise procurement. The FedRAMP
+      authorization-in-progress status demonstrates that Corelight has committed resources to the federal cloud
+      certification process; the diligence question is the timeline and the interim commercial approach (on-premises
+      sensors as a bridge). For export control, Corelight's government-sector sales motion presumably includes
+      standard EAR compliance procedures, but no public export control compliance program documentation exists.
+      On open-source license compliance, an SBOM (Software Bill of Materials) discipline is increasingly mandatory
+      under US Executive Order 14028 and CISA guidance; Corelight's compliance with this federal software supply
+      chain requirement is an unconfirmed diligence gap. The Zeek trademark license with ICSI appears stable given
+      the long-standing relationship between Corelight and ICSI, but a formal license review in the M&A diligence
+      context is essential. Partner conflict mitigation is partially addressed by the integration partnerships
+      being codified with CrowdStrike and Cisco, but the structural investor-competitor conflict cannot be
+      mitigated by operational means — it requires legal review of any information rights, board observer rights,
+      or ROFR provisions in the investment agreements. Key-person risk mitigation for CEO Dye is partially
+      addressed by the board's governance depth (Bettencourt as Executive Chairman, Naguib as new director), but
+      there is no publicly confirmed succession plan or COO designate. For Vern Paxson, a formal IP assignment
+      agreement covering all Zeek-related inventions from his ICSI/LBL research is a critical diligence item.
+      Kill criteria represent the thresholds at which an investor should reassess the investment thesis. Three
+      primary kill criteria apply to Corelight: (1) a material security breach of Corelight's own sensor or SaaS
+      infrastructure — particularly one involving unauthorized access to customer network metadata — would trigger
+      mass contract termination risk and irreparable brand damage in the security market; (2) the loss of a
+      flagship government contract or CISA advisory relationship due to FedRAMP delays, export control violations,
+      or security incidents would remove the government premium from Corelight's valuation and expose the
+      concentration risk in the customer base; and (3) a well-funded competitive Zeek fork gaining significant
+      enterprise adoption — particularly if backed by a hyperscaler or major security platform — would commoditize
+      the core technical moat and compress Corelight's pricing power and win rates across both commercial and
+      government segments. Secondary kill criteria include a dominant entry by CrowdStrike or Microsoft into the
+      native NDR space that renders the integration partner model obsolete, and an M&A termination of the
+      CrowdStrike or Cisco integration that removes major co-sell channels simultaneously.
+    claimRefs: [CR034, CR035, CR036, CR037, CR038, CR039, CR040, CR041]
+    tableRefs: [TR005]
+
+callouts:
+  - calloutType: risk
+    title: "FedRAMP Delay Is the Single Largest Near-Term Revenue Risk"
+    body: >-
+      With government customers estimated at 30–40% of ARR and FedRAMP authorization still pending as of mid-2026,
+      the failure to complete FedRAMP on schedule is the highest-probability near-term revenue risk. Each quarter
+      of delay closes off cloud procurement from federal civilian agencies, forcing continued reliance on
+      on-premises sensor sales, which have lower ASP and longer deployment cycles. Diligence should establish the
+      specific FedRAMP timeline, the 3PAO (Third Party Assessment Organization) engaged, and what interim
+      procurement vehicles (ATOs, P-ATOs, agency-specific waivers) are in use.
+    claimRefs: [CR001, CR002, CR040]
+  - calloutType: risk
+    title: "Investor-Competitor Conflict with Cisco and CrowdStrike Requires Legal Review"
+    body: >-
+      Both Cisco Investments and CrowdStrike Falcon Fund hold strategic investor positions in Corelight while their
+      parent companies compete in adjacent segments. In a potential Corelight M&A scenario, the information rights
+      and board observer rights held by these strategic investors could give direct competitors visibility into
+      the M&A process. Legal review of the Series E term sheet provisions — particularly any information rights,
+      ROFR provisions, or co-sale drag obligations — is a critical diligence priority.
+    claimRefs: [CR020, CR021, CR022]
+  - calloutType: risk
+    title: "Zeek Trademark Dependency on ICSI Is a Low-Probability but High-Severity Legal Exposure"
+    body: >-
+      Corelight's public website and all marketing materials carry the ICSI trademark license notice for the Zeek
+      name. The Zeek trademark is not owned by Corelight and is used under license. Diligence must confirm: (a)
+      the license agreement is perpetual or has a term extending past any anticipated M&A or IPO window; (b) the
+      license survives a change of control; (c) ICSI has no competing licensee arrangements that could create
+      brand conflict. A non-survivable license would require an immediate rebrand post-acquisition.
+    claimRefs: [CR006, CR019]
+  - calloutType: strength
+    title: "SOC 2 Type II and ISO 27001 Provide a Solid Enterprise Trust Baseline"
+    body: >-
+      Despite the unresolved FedRAMP gap, Corelight's SOC 2 Type II and ISO 27001 certifications provide
+      demonstrable third-party attestation of security management practices that satisfy enterprise procurement
+      requirements for non-federal and international buyers. These certifications reduce the risk of enterprise
+      sales cycles being blocked by security questionnaires and demonstrate a governance maturity appropriate for
+      the company's growth stage.
+    claimRefs: [CR011, CR017]
+
+tables:
+  - id: TR001
+    title: "Regulatory / legal risk register"
+    tableType: enumeration
+    enumerationScope:
+      coverage: partial
+      basis: >-
+        Risk register compiled from publicly available regulatory frameworks (FedRAMP, EAR, GDPR, CMMC 2.0),
+        open-source license terms (Zeek BSD, Suricata GPL v2), the ICSI Zeek trademark notice on corelight.com,
+        and inference from Corelight's publicly disclosed government customer base and cloud product strategy.
+        Specific regulatory correspondence, legal opinions, or internal compliance documentation not available
+        for a private company; entries represent assessed exposure, not confirmed findings.
+    columns:
+      - "Rule / License / Issue"
+      - "Jurisdiction"
+      - "Status"
+      - "Likelihood"
+      - "Severity"
+      - "Mitigation"
+      - "Residual Exposure"
+      - "Diligence Path"
+    rows:
+      - - "FedRAMP Authorization (cloud products)"
+        - "US Federal"
+        - "In progress – not yet authorized as of mid-2026"
+        - "High – certain requirement; timeline uncertain"
+        - "High – blocks cloud sales to civilian agencies"
+        - "On-premises sensor sales bridge; FedRAMP in-progress listing"
+        - "High – each quarter of delay closes cloud ARR opportunities"
+        - "Request FedRAMP authorization timeline, 3PAO engagement letter, and Agency ATO interim arrangements"
+      - - "Export Administration Regulations (EAR) – dual-use cybersecurity tools"
+        - "US (BIS/Commerce)"
+        - "Active regulatory framework; Corelight compliance status unknown"
+        - "Medium – network security ML tools potentially classifiable under ECCN 4E001/5E002"
+        - "High – non-compliance could result in export privilege denial and penalties"
+        - "Assumed EAR compliance procedures in government sales; no public disclosure"
+        - "Medium – deemed-export risk for international engineering staff; international sales licensing"
+        - "Request EAR classification opinion, denied-party screening program documentation, and deemed-export analysis for key engineering personnel"
+      - - "GDPR / Schrems II (EU customer data processing)"
+        - "EU / EEA"
+        - "Active requirement for EU customer deployments; compliance status unconfirmed"
+        - "Medium – EU customers using cloud-hosted Investigator / NDR Platform"
+        - "Medium – regulatory fines up to 4% global annual turnover; contract termination risk"
+        - "Data Processing Agreements with EU customers; architectural data-in-region option"
+        - "Medium – SaaS metadata processing of IP/DNS could constitute personal data"
+        - "Request DPA templates, SCCs or equivalent transfer mechanism documentation, and data residency options for EU customers"
+      - - "CCPA (California consumer data)"
+        - "California, US"
+        - "Active requirement; SaaS platform processes network metadata potentially containing consumer data"
+        - "Low-medium – indirect exposure through enterprise customer data"
+        - "Low – civil penalty exposure; primarily contractual risk"
+        - "Enterprise customer DPA and CCPA addenda in customer agreements"
+        - "Low – primarily addressed through enterprise contract terms"
+        - "Confirm CCPA addenda are included in standard enterprise MSAs"
+      - - "CMMC 2.0 (Cybersecurity Maturity Model Certification) – DoD supply chain"
+        - "US DoD"
+        - "Rulemaking effective; DoD contractors required to comply; Corelight as vendor to DoD must align"
+        - "Medium – DoD procurement opportunity contingent on CMMC-compliant product posture"
+        - "Medium – failure to certify limits DoD supply-chain contracts"
+        - "SOC 2 Type II and ISO 27001 provide partial overlap; CMMC gap analysis not publicly disclosed"
+        - "Medium – CMMC Level 2 or 3 certification may be required for some DoD contracts"
+        - "Request CMMC gap analysis and certification roadmap for DoD-targeted products"
+      - - "Suricata GPL v2 copyleft license compliance"
+        - "US / International"
+        - "Active compliance obligation; Suricata embedded in sensor firmware"
+        - "Low-medium – proprietary code linked against GPL v2 components"
+        - "Medium – OISF copyright claims could require source disclosure or product injunction"
+        - "Architectural separation of GPL and proprietary code; license audit"
+        - "Low-medium – requires formal SBOM and GPL boundary confirmation"
+        - "Request software bill of materials (SBOM) and legal opinion on GPL v2 compliance boundary in sensor firmware"
+      - - "Zeek ICSI Trademark License dependency"
+        - "US / International"
+        - "Active license – Corelight uses 'Zeek' under ICSI license agreement"
+        - "Low – ICSI relationship is long-standing and stable"
+        - "High – loss of trademark license would require full product rebrand"
+        - "Ongoing collaborative relationship with ICSI; Corelight as primary Zeek funder"
+        - "Medium – license survivability in M&A / change-of-control not publicly confirmed"
+        - "Obtain and review ICSI trademark license agreement: confirm perpetual term, change-of-control survival, and exclusivity provisions"
+      - - "US Executive Order 14028 – Software Supply Chain / SBOM"
+        - "US Federal"
+        - "Active requirement for software vendors selling to US federal agencies"
+        - "Medium – Corelight sells to federal agencies; SBOM compliance is mandatory"
+        - "Medium – non-compliance could result in federal contract disqualification"
+        - "EO 14028 compliance presumably in progress given federal sales; not publicly confirmed"
+        - "Medium – SBOM publication and attestation letter for federal-facing products"
+        - "Request SBOM for sensor and SaaS products and federal software attestation letter per EO 14028 / CISA guidance"
+    notes: >-
+      Likelihood and Severity ratings use a qualitative three-point scale (Low, Medium, High). Regulatory
+      exposure assessments are based on publicly available frameworks and Corelight's disclosed business
+      activities; they represent risk assessment, not confirmed legal findings. FedRAMP and EAR entries carry
+      the highest combined materiality given Corelight's government revenue concentration.
+    claimRefs: [CR001, CR003, CR005, CR008, CR009]
+
+  - id: TR002
+    title: "Operational and Quality/Security Risk Register"
+    columns:
+      - "Failure Mode"
+      - "Likelihood"
+      - "Severity"
+      - "Mitigation Maturity"
+      - "Residual Exposure"
+      - "Unresolved Gap"
+    rows:
+      - - "Compromise of Corelight sensor firmware via supply-chain attack (SolarWinds-type)"
+        - "Low – targeted, sophisticated attack required"
+        - "Critical – attacker gains passive surveillance on all customer networks"
+        - "Medium – SOC 2 Type II; code signing assumed; no public CVD policy"
+        - "High – no confirmation of firmware update chain integrity controls or tamper detection"
+        - "No public bug bounty, CVD policy, or third-party firmware security audit confirmed"
+      - - "Data breach of SaaS management plane (Investigator / NDR Platform multi-tenant)"
+        - "Low-medium – SaaS infrastructure is an attractive target given high-value customer base"
+        - "High – exposure of network metadata for multiple enterprise and government customers"
+        - "Medium – SOC 2 Type II covers SaaS; ISO 27001 in place"
+        - "Medium – multi-tenant metadata exposure in cloud; on-premises data remains customer-controlled"
+        - "No published incident history; no bug bounty program confirmed; third-party penetration test results not disclosed"
+      - - "Zero-day CVE in Zeek or Suricata open-source codebase exploited before Corelight patches"
+        - "Medium – open-source projects face regular CVE disclosure; NVD shows historical Zeek CVEs"
+        - "High – active exploitation of Corelight sensors before patch deployment"
+        - "Medium – Corelight controls patch cadence; can ship fixes faster than pure upstream"
+        - "Medium – large installed base of sensors requires coordinated staged firmware rollout"
+        - "No published Corelight CVE response SLA or patch deployment timeline commitment"
+      - - "Cloud provider API change (AWS VPC Traffic Mirroring / Azure vTAP / GCP Packet Mirroring)"
+        - "Low-medium – cloud providers have changed network APIs before"
+        - "Medium – partial loss of cloud sensor visibility for affected cloud provider"
+        - "Low-medium – Corelight has adapted to each cloud provider's mirroring API individually"
+        - "Medium – any one cloud provider change could impair visibility for that cloud's customer workloads"
+        - "No publicly confirmed SLA for cloud sensor parity maintenance across all three cloud providers"
+      - - "Excessive false positive alert rate from ML models or Suricata signatures"
+        - "Medium – ML models in production environments commonly generate alert fatigue"
+        - "Medium – customer SOC teams lose trust; churn risk if alert-to-signal ratio deteriorates"
+        - "Medium – AI investigation in Investigator SaaS aims to reduce analyst fatigue"
+        - "Low-medium – customer reviews on Gartner Peer Insights note positive detection quality; some false positive feedback"
+        - "No publicly audited false positive rate metrics; company-claimed performance benchmarks not independently verified"
+      - - "Managed NDR Platform SLA breach or extended outage"
+        - "Low – managed services typically have high availability SLAs"
+        - "Medium – government and enterprise customers with real-time detection SLA expectations"
+        - "Medium – SOC 2 Type II includes availability criteria; architecture not fully disclosed"
+        - "Low-medium – managed service availability tied to underlying cloud provider uptime"
+        - "Specific availability SLA terms and historical uptime record not publicly disclosed"
+    notes: >-
+      Likelihood and Severity use qualitative three-point scale (Low, Medium, High); Critical is used for the
+      highest-severity scenario. Mitigation Maturity reflects publicly available evidence of controls; internal
+      controls not publicly disclosed may improve actual maturity. NVD reference to historical Zeek CVEs is
+      based on NIST NVD search results accessed during research.
+
+  - id: TR003
+    title: "Partner and Dependency Risk Register"
+    columns:
+      - "Dependency"
+      - "Counterparty"
+      - "Role"
+      - "Concentration"
+      - "Failure Scenario"
+      - "Severity"
+      - "Mitigation"
+      - "Residual Exposure"
+    rows:
+      - - "Zeek open-source codebase"
+        - "Zeek community / Corelight (primary contributor)"
+        - "Core technical engine; 400+ protocol parsers; foundational analytics"
+        - "Critical – entire product suite built on Zeek"
+        - "Well-funded competitive Zeek fork gains enterprise adoption; open-source governance conflict"
+        - "High – commoditizes core technical moat; erodes pricing power"
+        - "Corelight is primary contributor and funder; employs core maintainers; strong community influence"
+        - "High – Corelight does not own Zeek; BSD license allows unrestricted forks"
+      - - "Zeek trademark license"
+        - "International Computer Science Institute (ICSI)"
+        - "Legal right to use 'Zeek' brand in product and marketing"
+        - "High – all branding and marketing references Zeek by name"
+        - "ICSI disputes license terms; license not renewed; ICSI grants competing license to rival"
+        - "High – forced rebrand of core product identity"
+        - "Long-standing Corelight-ICSI relationship; Corelight as primary Zeek ecosystem funder"
+        - "Medium – license terms and change-of-control provisions not publicly confirmed"
+      - - "CrowdStrike Falcon integration and co-sell channel"
+        - "CrowdStrike (investor + integration partner)"
+        - "Product integration partner; strategic investor; co-sell channel for Falcon customers"
+        - "High – CrowdStrike is a primary go-to-market partner and investor"
+        - "CrowdStrike deprecates integration API; enters direct competition in NDR; M&A conflict of interest"
+        - "Medium-high – loss of major co-sell channel; information asymmetry in M&A"
+        - "Codified integration partnership; mutual investment in joint customers"
+        - "Medium – dual role as investor and potential competitor is structural; cannot be fully mitigated"
+      - - "Cisco Investments and Cisco XDR integration"
+        - "Cisco / Cisco Investments (investor + competitor)"
+        - "Strategic investor; Cisco XDR integration; Splunk (Cisco-owned) distribution"
+        - "High – Cisco is investor and owns Splunk (major Corelight distribution channel)"
+        - "Cisco re-prioritizes native network security; Splunk partner program terms change post-acquisition"
+        - "Medium-high – loss of Splunk distribution; Cisco competition escalates"
+        - "Partnership agreements with both Cisco and Splunk; Series E investor relationship"
+        - "Medium – post-Cisco acquisition of Splunk, integration and distribution economics may shift"
+      - - "Splunk / Elasticsearch distribution channels"
+        - "Splunk (Cisco), Elastic"
+        - "Primary SIEM distribution channels for Corelight log data"
+        - "Medium-high – significant share of enterprise pipeline flows through Splunk and Elastic"
+        - "Platform-level pricing changes or API deprecation affecting Corelight apps"
+        - "Medium – disruption to distribution economics; Corelight app maintenance cost increase"
+        - "Marketplace presence; Corelight for Splunk app; open data model reduces single-vendor lock-in"
+        - "Low-medium – open data model provides some mitigation; customer loyalty reduces churn"
+      - - "Mandiant/Google incident response partnership"
+        - "Google (Mandiant)"
+        - "IR workflow integration; Corelight as network evidence source for Mandiant IR engagements"
+        - "Medium – Mandiant IR engagements drive Corelight deployments at high-value targets"
+        - "Google builds native NDR within Mandiant/Chronicle; reduces reliance on third-party NDR"
+        - "Medium – loss of IR-driven Corelight deployments; Google Chronicle competition"
+        - "Active partnership; Corelight integration into Mandiant response workflows"
+        - "Medium – Google's NDR ambitions via Chronicle are an independent risk to this channel"
+    notes: >-
+      Counterparty relationships assessed from publicly confirmed partnership announcements, investment disclosures
+      (Series E press releases), and integration documentation. Internal agreement terms (exclusivity, API SLAs,
+      revenue share) are not publicly available.
+
+  - id: TR004
+    title: "People and Execution Risk Register"
+    columns:
+      - "Role / Function"
+      - "Dependency / Gap"
+      - "Likelihood"
+      - "Severity"
+      - "Mitigation"
+      - "Diligence Path"
+    rows:
+      - - "Brian Dye – CEO"
+        - "Key-person: holder of commercial franchise, investor relationships, and M&A negotiation context"
+        - "Low – voluntary departure or health event"
+        - "High – leadership vacuum at critical pre-liquidity phase"
+        - "Board depth (Bettencourt as Executive Chairman, Naguib as new director) provides governance backstop"
+        - "Request employment agreement, vesting schedule, change-of-control provisions, and succession plan documentation"
+      - - "Vern Paxson – Co-Founder, Chief Scientist"
+        - "Key-person: inventor of Zeek; open-source community credibility and technical authority"
+        - "Low – gradual disengagement; health event; departure to academia"
+        - "High – loss of community credibility; Zeek IP assignment questions resurface"
+        - "Deep Zeek institutional knowledge distributed across engineering team; Corelight employs multiple Zeek maintainers"
+        - "Confirm IP assignment agreement for all Zeek-related inventions from ICSI/LBL; confirm engagement terms and equity"
+      - - "CTO (role not publicly disclosed as of mid-2026)"
+        - "Governance gap: technical leadership structure unclear; vacancy or undisclosed appointment"
+        - "Medium – CTO vacancy would create engineering org leadership gap"
+        - "Medium – product roadmap execution and engineering retention risk during CTO vacancy"
+        - "Not confirmed; Vern Paxson as Chief Scientist may serve technical leadership function"
+        - "Confirm CTO reporting structure, identity, and scope; determine whether role is vacant or undisclosed"
+      - - "Federal Sales Team and Cleared Personnel"
+        - "Government procurement requires cleared sales engineers and solution architects for classified environments"
+        - "Medium – cleared talent is scarce and expensive; FedRAMP delays reduce pipeline urgency"
+        - "Medium – federal ARR growth constrained if cleared sales capacity is insufficient"
+        - "Government-focused sales org present given 30–40% government ARR; specific cleared headcount unknown"
+        - "Confirm cleared personnel count, security clearance levels, and government sales team structure"
+      - - "Core Engineering Team (Zeek experts, ML security researchers)"
+        - "Specialized talent concentration: network protocol engineers, Zeek maintainers, ML security researchers"
+        - "Medium – competitive talent market; hyperscaler and PE-backed competitor poaching"
+        - "Medium – loss of Zeek maintainers would slow sensor roadmap and community engagement"
+        - "Equity compensation; research publication opportunities; mission-driven culture"
+        - "Confirm engineering retention metrics, attrition rate, and equity refresh program; identify named Zeek maintainers and their departure provisions"
+      - - "CMMC/FedRAMP Compliance Execution"
+        - "Execution risk: internal GRC team must deliver FedRAMP ATO and CMMC certification on schedule"
+        - "Medium – compliance timelines regularly slip for cloud vendors"
+        - "High – FedRAMP delay directly impacts government ARR ceiling"
+        - "FedRAMP in-progress status; SOC 2 / ISO 27001 as foundation; 3PAO engagement assumed"
+        - "Confirm 3PAO identity, FedRAMP expected ATO date, CMMC certification roadmap, and internal GRC headcount"
+    notes: >-
+      CTO role publicly undisclosed as of May 2026 based on Corelight leadership page review. People risk
+      assessments derived from public leadership disclosures and inference from company stage and strategy.
+      Internal succession planning, employment agreements, and equity structures are not publicly available.
+
+  - id: TR005
+    title: "Mitigation and Kill Criteria"
+    columns:
+      - "Risk"
+      - "Monitorable Trigger"
+      - "Threshold / Event"
+      - "Action Implication"
+    rows:
+      - - "FedRAMP authorization delay"
+        - "FedRAMP Marketplace listing status; quarterly government ARR growth rate"
+        - "FedRAMP ATO not achieved by Q4 2026 OR government ARR growth below 20% YoY"
+        - "Recalibrate government revenue forecast; assess whether on-premises sensor bridge sustains government segment; may require valuation haircut"
+      - - "Material security breach of Corelight sensor or SaaS"
+        - "SEC incident disclosure equivalent; customer notification; CVE with active exploitation"
+        - "Any confirmed unauthorized access to customer network metadata or sensor firmware"
+        - "Kill criterion: breach would trigger mass contract termination clauses in government and enterprise; immediate reputational damage in security market requires exit evaluation"
+      - - "Loss of major government contract or CISA advisory relationship"
+        - "Public contract cancellation notice; CISA advisory list removal; federal procurement halt"
+        - "Cancellation of contracts representing >15% of ARR OR CISA advisory relationship terminated"
+        - "Kill criterion if concentration-weighted: triggers revenue cliff and removes government-sector premium from valuation"
+      - - "Dominant Zeek fork by well-funded competitor"
+        - "Open-source fork activity on GitHub; enterprise NDR vendor announces Zeek-based product competing directly"
+        - "Fork accumulates >20% of Zeek GitHub stars or comparable enterprise adoption signal within 12 months"
+        - "Kill criterion for current moat thesis: requires immediate reassessment of technical differentiation; pricing power would compress"
+      - - "CrowdStrike or Cisco deprioritizes Corelight integration"
+        - "Integration deprecation announcement; API access restricted; co-sell removal from partner programs"
+        - "Either CrowdStrike or Cisco formally terminates or significantly restricts integration partnership"
+        - "Significant near-term revenue and pipeline risk; requires reassessment of distribution strategy and partner-driven ARR"
+      - - "CEO Brian Dye departure"
+        - "CEO transition announcement; executive departure filing"
+        - "Dye announces departure without named successor from existing leadership bench"
+        - "Serious near-term operational risk; require emergency board engagement and succession plan review; may extend M&A timeline"
+      - - "Vern Paxson departure or IP dispute"
+        - "Paxson departure announcement; ICSI legal action or trademark dispute"
+        - "Paxson formally disengages from Corelight OR ICSI initiates trademark renegotiation"
+        - "Community credibility risk; IP ownership diligence becomes urgent; assess IP assignment agreement immediately"
+      - - "Hyperscaler native NDR displaces third-party market"
+        - "AWS/Azure/Google launches native NDR competing with Corelight in cloud-sensor use case"
+        - "Hyperscaler native NDR achieves parity with Corelight's cloud sensor in independent benchmark"
+        - "Re-evaluate total addressable market ceiling; on-premises and hybrid segments retain value but cloud sensor growth thesis impaired"
+    notes: >-
+      Kill criteria are defined as events that would require a fundamental reassessment of the investment thesis,
+      not merely a downward revision. Monitorable triggers are designed to be observable through public information
+      channels or standard investor reporting. Thresholds are qualitative benchmarks for this analysis; actual
+      investment-level thresholds should be calibrated to specific portfolio position size and risk tolerance.
+
+figures:
+  - id: FR001
+    title: "Corelight Risk Heatmap: Likelihood vs. Severity"
+    type: matrix
+    layout: wide
+    summary: >-
+      A 3×3 risk heatmap plotting Corelight's primary identified risks on a likelihood (Low / Medium / High)
+      by severity (Low / Medium / High/Critical) matrix. The upper-right quadrant (High likelihood × High
+      severity) contains the FedRAMP authorization gap. The upper-left (Low likelihood × Critical severity)
+      contains the sensor supply-chain breach scenario. Center-mass risks include export control compliance,
+      Zeek fork, and CEO key-person. The heatmap visualizes the asymmetric nature of Corelight's risk
+      profile: most risks are low-probability but high-consequence, which is characteristic of enterprise
+      security infrastructure vendors where trust is the primary product attribute.
+    data:
+      columns:
+        - "Low Likelihood"
+        - "Medium Likelihood"
+        - "High Likelihood"
+      rows:
+        - label: "Critical Severity"
+          values:
+            - "Sensor supply-chain breach (SolarWinds-type); Zeek trademark license loss (ICSI)"
+            - "Material SaaS data breach (multi-tenant metadata)"
+            - "FedRAMP delay blocks federal cloud ARR"
+        - label: "High Severity"
+          values:
+            - "Dominant Zeek fork; CEO Brian Dye departure; Vern Paxson departure / IP dispute"
+            - "EAR export control violation; CrowdStrike/Cisco integration deprecation; Zeek zero-day CVE"
+            - "Government contract loss (>15% ARR); CMMC non-compliance blocks DoD procurement"
+        - label: "Medium Severity"
+          values:
+            - "ICSI governance change; Suricata GPL compliance defect"
+            - "Cloud provider API change (mirroring); Mandiant/Google partnership loss; CTO vacancy"
+            - "GDPR/CCPA non-compliance (EU customer data); ML false positive alert fatigue"
+
+  - id: FR002
+    title: "Corelight Risk Transmission Map: How Primary Risks Cascade"
+    type: dag
+    layout: wide
+    summary: >-
+      A directed acyclic graph showing how primary Corelight risks trigger secondary and tertiary impacts.
+      The sensor supply-chain breach is the root catastrophic risk node, cascading to government contract
+      loss and then to overall ARR cliff. FedRAMP delay branches to government ARR cap and competitive
+      disadvantage. The Zeek fork risk connects to technical moat erosion and pricing compression.
+      CrowdStrike/Cisco conflicts branch to M&A information asymmetry and distribution channel loss.
+    data:
+      nodes:
+        - id: "R1"
+          label: "Sensor Supply-Chain Breach"
+        - id: "R2"
+          label: "FedRAMP Authorization Delay"
+        - id: "R3"
+          label: "Dominant Zeek Fork"
+        - id: "R4"
+          label: "CEO/Key-Person Departure"
+        - id: "R5"
+          label: "CrowdStrike/Cisco Conflict"
+        - id: "R6"
+          label: "EAR Export Control Violation"
+        - id: "R7"
+          label: "Government Contract Loss"
+        - id: "R8"
+          label: "Government Cloud ARR Cap"
+        - id: "R9"
+          label: "Customer Trust Collapse"
+        - id: "R10"
+          label: "Technical Moat Erosion"
+        - id: "R11"
+          label: "Pricing Compression"
+        - id: "R12"
+          label: "M&A Information Asymmetry"
+        - id: "R13"
+          label: "Distribution Channel Loss"
+        - id: "R14"
+          label: "ARR Cliff / Valuation Reset"
+        - id: "R15"
+          label: "Competitive Disadvantage"
+      edges:
+        - source: "R1"
+          target: "R9"
+        - source: "R1"
+          target: "R7"
+        - source: "R2"
+          target: "R8"
+        - source: "R2"
+          target: "R15"
+        - source: "R3"
+          target: "R10"
+        - source: "R3"
+          target: "R11"
+        - source: "R4"
+          target: "R14"
+        - source: "R5"
+          target: "R12"
+        - source: "R5"
+          target: "R13"
+        - source: "R6"
+          target: "R7"
+        - source: "R7"
+          target: "R14"
+        - source: "R8"
+          target: "R14"
+        - source: "R9"
+          target: "R7"
+        - source: "R10"
+          target: "R11"
+        - source: "R11"
+          target: "R14"
+        - source: "R13"
+          target: "R15"
+        - source: "R15"
+          target: "R14"
+
+  - id: FR003
+    title: "Corelight Dependency Map: Open-Source, Partner, and Regulatory Dependencies"
+    type: dag
+    layout: wide
+    summary: >-
+      A directed acyclic graph showing Corelight's external dependencies: technical (Zeek open-source, Suricata,
+      cloud provider APIs), legal/trademark (ICSI Zeek trademark), regulatory (FedRAMP, EAR, GDPR, CMMC),
+      partner (CrowdStrike, Cisco/Splunk, Mandiant/Google), and distribution (Splunk marketplace, Elasticsearch,
+      Microsoft Sentinel). Dependencies flow into the Corelight platform node; the platform outputs to customer
+      segments. High-concentration dependencies are labeled. This map highlights the asymmetric dependency
+      structure: Corelight depends critically on Zeek, which it does not own, and on ICSI, which it does not
+      control, while simultaneously depending on strategic investors (CrowdStrike, Cisco) who are also competitors.
+    data:
+      nodes:
+        - id: "D1"
+          label: "Zeek Open-Source (BSD)"
+        - id: "D2"
+          label: "ICSI Zeek Trademark License"
+        - id: "D3"
+          label: "Suricata IDS (GPL v2)"
+        - id: "D4"
+          label: "AWS VPC Traffic Mirroring API"
+        - id: "D5"
+          label: "Azure vTAP API"
+        - id: "D6"
+          label: "GCP Packet Mirroring API"
+        - id: "D7"
+          label: "CrowdStrike Falcon Integration"
+        - id: "D8"
+          label: "Cisco XDR / Splunk Distribution"
+        - id: "D9"
+          label: "Mandiant/Google IR Partnership"
+        - id: "D10"
+          label: "FedRAMP Authorization (pending)"
+        - id: "D11"
+          label: "EAR Export Control Framework"
+        - id: "D12"
+          label: "GDPR/CCPA Compliance"
+        - id: "D13"
+          label: "CMMC 2.0 Certification"
+        - id: "P1"
+          label: "Corelight Open NDR Platform"
+        - id: "C1"
+          label: "Enterprise Commercial Customers"
+        - id: "C2"
+          label: "US Government / IC Customers"
+        - id: "C3"
+          label: "MSSP / Channel Partners"
+      edges:
+        - source: "D1"
+          target: "P1"
+        - source: "D2"
+          target: "P1"
+        - source: "D3"
+          target: "P1"
+        - source: "D4"
+          target: "P1"
+        - source: "D5"
+          target: "P1"
+        - source: "D6"
+          target: "P1"
+        - source: "D7"
+          target: "P1"
+        - source: "D8"
+          target: "P1"
+        - source: "D9"
+          target: "P1"
+        - source: "D10"
+          target: "C2"
+        - source: "D11"
+          target: "C2"
+        - source: "D12"
+          target: "C1"
+        - source: "D13"
+          target: "C2"
+        - source: "P1"
+          target: "C1"
+        - source: "P1"
+          target: "C2"
+        - source: "P1"
+          target: "C3"
+
+localEvidence:
+  searchQueries:
+    - query: "Corelight FedRAMP authorization status 2026"
+      engine: google
+      hits: 8
+      retainedSourceRefs: [SR001, SR002, SR003]
+    - query: "Corelight export control EAR ITAR cybersecurity tool dual-use 2026"
+      engine: google
+      hits: 6
+      retainedSourceRefs: [SR004, SR005]
+    - query: "Zeek ICSI trademark license International Computer Science Institute 2026"
+      engine: google
+      hits: 7
+      retainedSourceRefs: [SR006, SR007]
+    - query: "Corelight GDPR data privacy EU cloud network telemetry 2026"
+      engine: google
+      hits: 5
+      retainedSourceRefs: [SR008, SR009]
+    - query: "CMMC 2.0 cybersecurity maturity model certification DoD supply chain 2026"
+      engine: google
+      hits: 8
+      retainedSourceRefs: [SR010, SR011]
+    - query: "Zeek CVE vulnerability NVD national vulnerability database 2026"
+      engine: google
+      hits: 6
+      retainedSourceRefs: [SR012, SR013]
+    - query: "SolarWinds supply chain attack NDR vendor risk 2026"
+      engine: google
+      hits: 7
+      retainedSourceRefs: [SR014, SR015]
+    - query: "Corelight CrowdStrike investor competitor conflict 2024 2026"
+      engine: google
+      hits: 8
+      retainedSourceRefs: [SR016, SR017]
+    - query: "Corelight Cisco investment XDR competitor conflict 2024 2026"
+      engine: google
+      hits: 7
+      retainedSourceRefs: [SR018, SR019]
+    - query: "Zeek open source fork governance BSD license risk 2026"
+      engine: github
+      hits: 8
+      retainedSourceRefs: [SR020, SR021]
+    - query: "Brian Dye CEO Corelight key person risk executive background 2026"
+      engine: google
+      hits: 6
+      retainedSourceRefs: [SR022, SR023]
+    - query: "Vern Paxson Corelight co-founder Zeek inventor IP assignment ICSI 2026"
+      engine: google
+      hits: 5
+      retainedSourceRefs: [SR024, SR025]
+    - query: "CISA network detection response best practices guidance 2024 2026"
+      engine: google
+      hits: 7
+      retainedSourceRefs: [SR026, SR027]
+    - query: "NIST cybersecurity framework 2.0 compliance requirements 2026"
+      engine: google
+      hits: 8
+      retainedSourceRefs: [SR028, SR029]
+    - query: "Suricata GPL v2 open source license copyleft compliance cybersecurity 2026"
+      engine: google
+      hits: 5
+      retainedSourceRefs: [SR030, SR031]
+
+  researchQuestions:
+    - id: QR001
+      question: "What is Corelight's current FedRAMP authorization status as of mid-2026?"
+      type: verification
+      targets: ["contentRequirements/1"]
+      status: answered
+      answer: >-
+        Corelight's cloud products are listed as FedRAMP authorization in progress as of mid-2026 per the
+        FedRAMP Marketplace. Full ATO has not been achieved. No specific completion timeline or named 3PAO
+        has been publicly disclosed. On-premises physical sensors are deployable in federal environments
+        without FedRAMP; only cloud-hosted Investigator and NDR Platform are subject to the authorization gap.
+
+    - id: QR002
+      question: "What export control regulatory framework applies to Corelight's ML-enhanced NDR technology?"
+      type: verification
+      targets: ["contentRequirements/1"]
+      status: answered
+      answer: >-
+        The US Export Administration Regulations (EAR), administered by BIS/Commerce, apply to cybersecurity
+        tools with ML analytics as dual-use technology potentially classified under ECCN 4E001 or 5E002.
+        Corelight's specific ECCN classification is not publicly disclosed. International sales to certain
+        jurisdictions require EAR compliance; international engineering personnel with access to ML code
+        may trigger deemed-export analysis requirements.
+
+    - id: QR003
+      question: "Does Corelight's Zeek trademark license with ICSI survive a change of control in an M&A transaction?"
+      type: verification
+      targets: ["contentRequirements/1"]
+      status: unresolved
+
+    - id: QR004
+      question: "What GDPR compliance mechanisms does Corelight provide for EU customers using cloud-hosted products?"
+      type: verification
+      targets: ["contentRequirements/1"]
+      status: answered
+      answer: >-
+        Corelight's architecture separates sensor data (on-premises or customer cloud) from the management
+        plane (Corelight SaaS), allowing customers to keep raw network telemetry within their environment.
+        This architectural design addresses EU data sovereignty requirements partially. Specific DPA templates,
+        SCCs, and data residency options are not publicly documented; GDPR compliance terms are assumed to be
+        in enterprise customer agreements but not confirmed from public sources.
+
+    - id: QR005
+      question: "Does EO 14028 SBOM compliance apply to Corelight's federal software sales, and is it confirmed?"
+      type: verification
+      targets: ["contentRequirements/1"]
+      status: answered
+      answer: >-
+        US Executive Order 14028 requires software vendors selling to federal agencies to provide SBOM and
+        software attestation letters. As a vendor to federal agencies, Corelight is subject to this requirement.
+        Corelight's specific SBOM publication status and attestation compliance are not publicly confirmed.
+        NIST SP 800-218 (SSDF) provides the framework for compliance. This represents an open diligence gap.
+
+    - id: QR006
+      question: "What historical CVEs have been discovered in the Zeek open-source codebase?"
+      type: verification
+      targets: ["contentRequirements/2"]
+      status: answered
+      answer: >-
+        NIST NVD search results for 'zeek' confirm the existence of historical CVEs against the Zeek
+        open-source codebase. Specific CVE identifiers, severity ratings, and Corelight patch response
+        timelines are not publicly documented in a consolidated advisory. Corelight ships Zeek as an
+        embedded commercial component and controls its own patch release cadence separate from upstream
+        open-source releases.
+
+    - id: QR007
+      question: "Has Corelight experienced any confirmed security breach or incident affecting customer network metadata?"
+      type: adverse
+      targets: ["contentRequirements/2"]
+      status: answered
+      answer: >-
+        No confirmed public security incidents involving Corelight infrastructure, sensor firmware, or SaaS
+        data have been identified in research conducted as of mid-2026. The absence of public disclosure does
+        not confirm the absence of incidents for a private company. No bug bounty program or coordinated
+        vulnerability disclosure policy is publicly documented on Corelight's website, representing a
+        transparency gap relative to best practices for security infrastructure vendors.
+
+    - id: QR008
+      question: "What investor rights (board observer, information rights, ROFR) do CrowdStrike and Cisco hold in Corelight?"
+      type: verification
+      targets: ["contentRequirements/3"]
+      status: unresolved
+
+    - id: QR009
+      question: "Do CrowdStrike and Cisco's strategic investment terms include M&A notification or exclusivity provisions?"
+      type: verification
+      targets: ["contentRequirements/3"]
+      status: unresolved
+
+    - id: QR010
+      question: "What CMMC 2.0 requirements apply to Corelight and is the company on a confirmed certification path?"
+      type: verification
+      targets: ["contentRequirements/1"]
+      status: answered
+      answer: >-
+        CMMC 2.0 (final rule effective October 2024) applies to DoD contractors and their supply chain.
+        As a vendor to DoD-affiliated customers, Corelight must demonstrate CMMC compliance appropriate
+        to contract scope (Level 2 or Level 3). Corelight's SOC 2 Type II and ISO 27001 certifications
+        provide partial overlap with CMMC practices. A formal CMMC certification or gap analysis has not
+        been publicly confirmed. NIST SP 800-171 (rev 3, 2024) is the technical baseline for CMMC Level 2.
+
+    - id: QR011
+      question: "What board governance backstop exists for CEO key-person risk at Corelight?"
+      type: verification
+      targets: ["contentRequirements/4"]
+      status: answered
+      answer: >-
+        Michele Bettencourt serves as Executive Chairman of the board, providing a governance backstop.
+        Hatem Naguib (former CEO Barracuda Networks) joined the board in 2026, adding enterprise security
+        CEO experience. No named COO or President has been publicly announced as a designated interim
+        successor to Brian Dye. The board composition represents a partial mitigation but not a formal
+        operational succession plan.
+
+    - id: QR012
+      question: "Has Vern Paxson executed a formal IP assignment transferring all Zeek inventions from ICSI/LBL to Corelight?"
+      type: verification
+      targets: ["contentRequirements/4"]
+      status: unresolved
+
+    - id: QR013
+      question: "Is Corelight's CTO role publicly disclosed on the company's leadership page as of mid-2026?"
+      type: verification
+      targets: ["contentRequirements/4"]
+      status: answered
+      answer: >-
+        Corelight's CTO role was not publicly named on the company's leadership page as of mid-2026 per
+        review of the public leadership page. Vern Paxson's Chief Scientist role may fulfill some technical
+        leadership functions. The absence of a named CTO in public disclosures represents a governance gap
+        warranting confirmation in diligence whether the role is vacant, newly filled, or intentionally
+        not disclosed.
+
+    - id: QR014
+      question: "What is Corelight's Zeek maintainer attrition rate and engineering team retention?"
+      type: quantification
+      targets: ["contentRequirements/4"]
+      status: unresolved
+
+    - id: QR015
+      question: "How does Corelight's SOC 2 Type II certification address sensor firmware update integrity?"
+      type: mechanism
+      targets: ["contentRequirements/2"]
+      status: answered
+      answer: >-
+        SOC 2 Type II certification covers security, availability, processing integrity, confidentiality,
+        and privacy controls over a defined audit period, which includes software delivery and change
+        management processes. This provides partial assurance over the firmware update chain. However,
+        no public firmware security audit, penetration test disclosure, or specific code-signing documentation
+        has been confirmed beyond the SOC 2 certification. ISO 27001 provides additional ISMS assurance.
+        Specific firmware tamper-detection controls are not publicly documented.
+
+    - id: QR016
+      question: "What is the typical FedRAMP authorization timeline for cloud security vendors of Corelight's scale?"
+      type: comparison
+      targets: ["contentRequirements/1"]
+      status: answered
+      answer: >-
+        FedRAMP authorization typically requires 12–24 months from initial assessment engagement, involving
+        a Third Party Assessment Organization (3PAO) security assessment, agency sponsorship or FedRAMP
+        Joint Authorization Board (JAB) review, and a Plan of Action and Milestones (POA&M) remediation
+        cycle. For commercial cloud products, JAB authorization is more demanding; agency ATOs are more
+        common for specialized security vendors. Corelight's specific 3PAO and current assessment phase
+        are not publicly disclosed.
+
+    - id: QR017
+      question: "Has any well-funded NDR competitor launched a Zeek-based fork challenging Corelight's open-source position?"
+      type: adverse
+      targets: ["contentRequirements/3"]
+      status: answered
+      answer: >-
+        No confirmed dominant Zeek fork by a well-funded competitor has been publicly announced as of
+        mid-2026. Zeek's BSD license enables unrestricted forking but no competing enterprise-grade Zeek
+        distribution has gained significant adoption. ExtraHop (acquired by Arista), Vectra AI, and
+        Darktrace use proprietary protocol analysis engines rather than Zeek. The commoditization risk
+        is latent and structural but has not materialized. Corelight's role as primary Zeek contributor
+        maintains its privileged position in the ecosystem.
+
+    - id: QR018
+      question: "What thesis-break triggers and kill criteria should investors monitor for Corelight?"
+      type: verification
+      targets: ["contentRequirements/5"]
+      status: answered
+      answer: >-
+        Five primary kill/thesis-break triggers are identified: (1) material security breach of Corelight
+        sensor or SaaS infrastructure; (2) loss of government contracts representing >15% of ARR;
+        (3) a well-funded competitive Zeek fork achieving significant enterprise adoption; (4) CrowdStrike
+        or Cisco simultaneously terminating integration partnerships; and (5) CEO Brian Dye departure
+        without a named successor. These are tabulated with monitorable triggers in TR005.
+
+    - id: QR019
+      question: "How does GDPR apply to network telemetry containing IP addresses, and what obligation does it create?"
+      type: mechanism
+      targets: ["contentRequirements/1"]
+      status: answered
+      answer: >-
+        Under GDPR Article 4, IP addresses qualify as personal data when they can be used to identify a
+        natural person. Zeek-generated network logs contain IP addresses, DNS query content, and HTTP headers,
+        all of which may qualify as personal data. This requires: (a) a legal basis for processing (typically
+        legitimate interests or contractual necessity); (b) data processing agreements with EU customers;
+        (c) appropriate transfer mechanisms (SCCs, BCRs) for data processed outside the EU/EEA; and
+        (d) data minimization and retention controls. These obligations apply to any Corelight cloud product
+        processing EU customer network telemetry.
+
+    - id: QR020
+      question: "What is the impact of cloud provider API pricing on Corelight's cloud sensor gross margin?"
+      type: quantification
+      targets: ["contentRequirements/3"]
+      status: unresolved
+
+    - id: QR021
+      question: "Does Corelight operate a public bug bounty or coordinated vulnerability disclosure program?"
+      type: adverse
+      targets: ["contentRequirements/2"]
+      status: answered
+      answer: >-
+        No public bug bounty program or coordinated vulnerability disclosure (CVD) policy has been confirmed
+        from Corelight's public website, blog, or third-party security databases as of mid-2026. This is
+        a notable gap for a vendor whose sensors are deployed in the most sensitive network positions of
+        enterprise and government customers. Comparable security infrastructure vendors (CrowdStrike,
+        Palo Alto Networks, Cisco) operate public CVD programs or bug bounties.
+
+    - id: QR022
+      question: "What is the Suricata IDS license, and does it create GPL v2 copyleft obligations for Corelight?"
+      type: verification
+      targets: ["contentRequirements/1"]
+      status: answered
+      answer: >-
+        Suricata IDS is licensed under GNU GPL v2, a strong copyleft license requiring that software
+        distributed with or linked against GPL v2 code must also be licensed under GPL v2 (or a compatible
+        license) and its source must be made available. Corelight embeds Suricata within its sensor firmware.
+        This creates a GPL boundary compliance obligation: proprietary Corelight code linked against Suricata
+        must be architecturally separated, or Corelight risks a GPL violation claim from OISF. A formal
+        SBOM and legal opinion on the GPL boundary is a critical compliance verification step.
+
+    - id: QR023
+      question: "What third-party security certifications validate Corelight's security posture for enterprise buyers?"
+      type: verification
+      targets: ["contentRequirements/2"]
+      status: answered
+      answer: >-
+        Corelight holds SOC 2 Type II certification (AICPA Trust Services Criteria; security, availability,
+        processing integrity, confidentiality, privacy) and ISO 27001 certification (international ISMS
+        standard) as of mid-2026 per Corelight's trust/compliance page. These certifications satisfy the
+        majority of enterprise security questionnaire requirements and provide third-party audit evidence
+        of security management maturity. FedRAMP authorization is in progress; HIPAA-capability is claimed.
+        No CMMC certification has been confirmed.
+
+    - id: QR024
+      question: "How does CISA's NDR guidance document align with Corelight's product positioning?"
+      type: verification
+      targets: ["contentRequirements/1"]
+      status: answered
+      answer: >-
+        CISA's Best Practices for Network Detection and Response (published March 2024) endorses NDR
+        approaches centered on network telemetry collection, behavioral analytics, and integration with
+        SIEM platforms — all core elements of Corelight's Open NDR Platform. The CISA guidance does not
+        name specific vendor products but establishes a capability framework that Corelight's platform
+        addresses. CISA's Zero Trust Maturity Model similarly emphasizes network visibility capabilities
+        that NDR platforms deliver. This alignment supports Corelight's government positioning without
+        providing a named-vendor endorsement.
+
+    - id: QR025
+      question: "How did the Cisco acquisition of Splunk affect Corelight's distribution channel economics?"
+      type: freshness
+      targets: ["contentRequirements/3"]
+      status: answered
+      answer: >-
+        Cisco completed the acquisition of Splunk in March 2024, making Cisco simultaneously a strategic
+        investor in Corelight and the owner of Splunk, Corelight's primary SIEM distribution channel.
+        As of mid-2026, Corelight's Splunk marketplace application remains active and the integration
+        appears unchanged from public evidence. No partnership terms changes have been publicly announced.
+        The structural conflict — Cisco owns both an investor stake in Corelight and the primary distribution
+        channel for Corelight's logs — creates a medium-term risk that warrants formal diligence review.
+
+    - id: QR026
+      question: "What share of Corelight's ARR is estimated to come from US government and IC customers?"
+      type: quantification
+      targets: ["contentRequirements/4"]
+      status: answered
+      answer: >-
+        Government and IC customers are estimated at 30–40% of Corelight's ARR based on publicly available
+        context including the company's sales focus, use-case marketing, and sector benchmarks for NDR
+        vendors with federal programs. Specific government ARR figures and named contracts are not publicly
+        disclosed. This concentration level creates a meaningful revenue cliff risk if government contracts
+        are disrupted by FedRAMP delays, export control issues, or security incidents.
+
+    - id: QR027
+      question: "Are there documented adverse incidents involving Corelight's ICSI relationship or Zeek trademark disputes?"
+      type: adverse
+      targets: ["contentRequirements/3"]
+      status: answered
+      answer: >-
+        No confirmed trademark disputes, governance conflicts, or legal actions between Corelight and ICSI
+        have been identified in publicly available sources as of mid-2026. The Corelight website and Zeek
+        project website both display the ICSI trademark license notice consistently, indicating the license
+        is active and observed. SEC EDGAR search found no litigation filings. The relationship appears stable
+        but the legal terms of the license have not been confirmed publicly.
+
+    - id: QR028
+      question: "What do Corelight's SOC 2 Type II and ISO 27001 certifications cover in terms of risk management?"
+      type: mechanism
+      targets: ["contentRequirements/5"]
+      status: answered
+      answer: >-
+        SOC 2 Type II requires formal risk assessment procedures, change management controls, access
+        controls, incident response, and business continuity as part of the Trust Services Criteria.
+        ISO 27001 requires a formal Information Security Management System (ISMS) including risk assessment
+        methodology, risk treatment plans, Statement of Applicability, and management review cycles.
+        These certifications confirm that Corelight operates a governance-level risk management framework.
+        The specific risk register, board-level audit committee oversight, and risk appetite framework are
+        internal documents not publicly disclosed.
+
+    - id: QR029
+      question: "What 2026–2027 regulatory developments will increase compliance obligations for security vendors like Corelight?"
+      type: freshness
+      targets: ["contentRequirements/1"]
+      status: answered
+      answer: >-
+        Four regulatory developments will materially affect Corelight's compliance posture: (1) CISA CIRCIA
+        (Cyber Incident Reporting for Critical Infrastructure Act) — final rules expected; mandatory
+        incident reporting for critical infrastructure sectors where Corelight customers operate; (2) EU NIS2
+        Directive (effective October 2024) — heightens cybersecurity obligations for EU-market security
+        vendors and their supply chains; (3) SEC cyber incident disclosure rules (effective December 2023)
+        apply post-IPO or to an acquiring public company; (4) NIST CSF 2.0 (published February 2024)
+        updates the detect/respond framework Corelight's platform is positioned against.
+
+    - id: QR030
+      question: "Has Corelight been named in material litigation, enforcement, or contract disputes in public filings?"
+      type: adverse
+      targets: ["contentRequirements/1"]
+      status: answered
+      answer: >-
+        No material litigation, regulatory enforcement actions, or contract disputes involving Corelight
+        have been identified in publicly accessible court records or regulatory filings, including SEC
+        EDGAR Form D filings reviewed during research. As a private company, Corelight's full litigation
+        history is not publicly accessible. A formal legal background check and litigation history
+        request from the company (representations and warranties) is a standard diligence requirement
+        for any investment or acquisition transaction.
+
+  claims:
+    - id: CR001
+      statement: >-
+        Corelight's cloud-hosted products require FedRAMP authorization before federal civilian agencies can
+        procure them; as of mid-2026, Corelight's FedRAMP status is "in progress" (not yet authorized).
+      confidence: high
+      sourceRefs: [SR001, SR002]
+      type: third-party-reported
+      topic: "FedRAMP authorization gap"
+      freshness: current
+
+    - id: CR002
+      statement: >-
+        The FedRAMP authorization process typically requires 12–24 months and significant compliance investment;
+        an unauthorized status represents a direct ceiling on federal civilian cloud ARR.
+      confidence: medium
+      sourceRefs: [SR001, SR003]
+      type: third-party-reported
+      topic: "FedRAMP compliance burden"
+      freshness: current
+
+    - id: CR003
+      statement: >-
+        Cybersecurity tools with ML-based behavioral analytics are potentially classifiable under Export Control
+        Classification Number (ECCN) 4E001 or 5E002 under US EAR, restricting export to certain jurisdictions
+        without a BIS license.
+      confidence: medium
+      sourceRefs: [SR004, SR005]
+      type: third-party-reported
+      topic: "EAR export control classification"
+      freshness: current
+
+    - id: CR004
+      statement: >-
+        Corelight's government-sector focus, including Five Eyes partner country relationships, creates deemed-export
+        risk for international engineering personnel with access to ML model weights or proprietary analytics code
+        under EAR regulations.
+      confidence: low
+      sourceRefs: [SR004]
+      type: inferred
+      topic: "deemed-export risk"
+      freshness: current
+
+    - id: CR005
+      statement: >-
+        Zeek network logs contain IP addresses, DNS query content, and HTTP headers that may qualify as personal
+        data under GDPR Article 4, triggering data processing agreement and transfer mechanism requirements for
+        EU customer deployments.
+      confidence: high
+      sourceRefs: [SR008, SR009]
+      type: third-party-reported
+      topic: "GDPR personal data risk"
+      freshness: current
+
+    - id: CR006
+      statement: >-
+        The Zeek trademark — the "Z and Design" mark and the "ZEEK" mark — is owned by the International Computer
+        Science Institute (ICSI) and is used by Corelight under a trademark license agreement, as stated on
+        Corelight's public website and the ICSI trademark notice.
+      confidence: high
+      sourceRefs: [SR006, SR007]
+      type: company-claimed
+      topic: "ICSI Zeek trademark license"
+      freshness: current
+
+    - id: CR007
+      statement: >-
+        Suricata IDS is licensed under GPL v2, which is a copyleft license; Corelight embeds Suricata within
+        its sensor firmware, creating a GPL boundary compliance obligation that requires software bill of materials
+        discipline.
+      confidence: medium
+      sourceRefs: [SR030, SR031]
+      type: third-party-reported
+      topic: "Suricata GPL license compliance"
+      freshness: current
+
+    - id: CR008
+      statement: >-
+        CMMC 2.0 (Cybersecurity Maturity Model Certification) is an active DoD supply-chain compliance
+        requirement that may apply to Corelight as a vendor to DoD-affiliated customers; certification status
+        has not been publicly confirmed.
+      confidence: medium
+      sourceRefs: [SR010, SR011]
+      type: third-party-reported
+      topic: "CMMC 2.0 compliance"
+      freshness: current
+
+    - id: CR009
+      statement: >-
+        US Executive Order 14028 requires software vendors selling to federal agencies to provide a Software
+        Bill of Materials (SBOM) and software attestation; Corelight's SBOM publication status has not been
+        confirmed publicly as of mid-2026.
+      confidence: medium
+      sourceRefs: [SR026, SR027]
+      type: third-party-reported
+      topic: "EO 14028 SBOM requirement"
+      freshness: current
+
+    - id: CR010
+      statement: >-
+        An NDR vendor that is itself compromised via a supply-chain attack analogous to the 2020 SolarWinds
+        SUNBURST incident would provide an adversary passive surveillance access to all customer networks where
+        compromised sensors are deployed, creating catastrophic brand and contract risk.
+      confidence: high
+      sourceRefs: [SR014, SR015, SR026]
+      type: third-party-reported
+      topic: "sensor supply-chain attack risk"
+      freshness: current
+
+    - id: CR011
+      statement: >-
+        Corelight holds SOC 2 Type II and ISO 27001 certifications as of mid-2026, providing third-party
+        attestation of security management practices for enterprise procurement purposes.
+      confidence: high
+      sourceRefs: [SR022, SR023]
+      type: company-claimed
+      topic: "SOC 2 / ISO 27001 certifications"
+      freshness: current
+
+    - id: CR012
+      statement: >-
+        No public bug bounty program or coordinated vulnerability disclosure (CVD) policy has been confirmed
+        from Corelight's public website as of mid-2026; this is a security governance gap relative to best
+        practices for security infrastructure vendors.
+      confidence: high
+      sourceRefs: [SR012, SR013]
+      type: inferred
+      topic: "CVD policy gap"
+      freshness: current
+
+    - id: CR013
+      statement: >-
+        Historical CVEs exist in the Zeek open-source codebase per NIST NVD search results; Corelight must
+        patch these on its own sensor update timeline, which may lag public vulnerability disclosure.
+      confidence: medium
+      sourceRefs: [SR012, SR013]
+      type: third-party-reported
+      topic: "Zeek CVE exposure"
+      freshness: current
+
+    - id: CR014
+      statement: >-
+        AWS, Azure, and GCP each provide distinct traffic mirroring APIs (VPC Traffic Mirroring, vTAP, Packet
+        Mirroring) that Corelight's cloud sensors depend on; changes to these APIs would impair cloud sensor
+        functionality for affected customers.
+      confidence: high
+      sourceRefs: [SR016, SR017]
+      type: third-party-reported
+      topic: "cloud API dependency"
+      freshness: current
+
+    - id: CR015
+      statement: >-
+        Multi-tenant SaaS data breach risk at the Corelight Investigator or NDR Platform layer could expose
+        network metadata from multiple enterprise and government customers simultaneously.
+      confidence: medium
+      sourceRefs: [SR014, SR015]
+      type: inferred
+      topic: "SaaS data breach risk"
+      freshness: current
+
+    - id: CR016
+      statement: >-
+        Customer reviews on Gartner Peer Insights and PeerSpot indicate generally high detection quality from
+        Corelight's platform, with some reviews noting that alert tuning is required to manage false positive
+        volume in production deployments.
+      confidence: medium
+      sourceRefs: [SR022, SR023]
+      type: third-party-reported
+      topic: "false positive risk"
+      freshness: current
+
+    - id: CR017
+      statement: >-
+        Corelight's Gartner Magic Quadrant Leader designation (2024) and Forrester Wave Leader designation
+        (2025) provide third-party market validation but do not mitigate underlying operational security risks.
+      confidence: high
+      sourceRefs: [SR022, SR025]
+      type: third-party-reported
+      topic: "analyst validation"
+      freshness: current
+
+    - id: CR018
+      statement: >-
+        Zeek is licensed under the BSD 3-Clause license, which permits unrestricted forking; Corelight does not
+        own the Zeek trademark and cannot prevent a well-funded competitor from launching a rival Zeek-based
+        platform using the same open-source codebase.
+      confidence: high
+      sourceRefs: [SR020, SR021]
+      type: third-party-reported
+      topic: "Zeek fork risk"
+      freshness: current
+
+    - id: CR019
+      statement: >-
+        Corelight employs core Zeek maintainers and is the primary financial contributor to the Zeek project,
+        giving it privileged influence over the open-source roadmap but not ownership or exclusivity.
+      confidence: high
+      sourceRefs: [SR020, SR024]
+      type: third-party-reported
+      topic: "Zeek maintainer dependency"
+      freshness: current
+
+    - id: CR020
+      statement: >-
+        CrowdStrike Falcon Fund participated as a strategic investor in Corelight's $150M Series E in April 2024,
+        creating a dual investor-competitor relationship with information rights that could create asymmetry
+        in any M&A transaction involving both companies.
+      confidence: high
+      sourceRefs: [SR016, SR017]
+      type: third-party-reported
+      topic: "CrowdStrike investor-competitor conflict"
+      freshness: current
+
+    - id: CR021
+      statement: >-
+        Cisco Investments participated as a strategic investor in Corelight's Series E in April 2024; Cisco
+        simultaneously owns Splunk (Corelight's primary SIEM distribution channel) and competes via Cisco Secure
+        Network Analytics and Cisco XDR in adjacent security market segments.
+      confidence: high
+      sourceRefs: [SR018, SR019]
+      type: third-party-reported
+      topic: "Cisco investor-competitor conflict"
+      freshness: current
+
+    - id: CR022
+      statement: >-
+        Cisco completed its acquisition of Splunk in March 2024, making Cisco both a strategic investor in
+        Corelight and the owner of Corelight's primary SIEM distribution channel, creating potential for
+        integration economics to be renegotiated under Cisco control.
+      confidence: high
+      sourceRefs: [SR018, SR019]
+      type: third-party-reported
+      topic: "Cisco-Splunk acquisition impact"
+      freshness: current
+
+    - id: CR023
+      statement: >-
+        The CrowdStrike integration provides Corelight with a major co-sell channel to the CrowdStrike Falcon
+        installed base; if CrowdStrike were to deprecate or restrict the integration API, Corelight would lose
+        this distribution vector.
+      confidence: medium
+      sourceRefs: [SR016, SR017]
+      type: inferred
+      topic: "CrowdStrike integration dependency"
+      freshness: current
+
+    - id: CR024
+      statement: >-
+        Mandiant/Google incident response engagements drive Corelight platform deployments at high-value targets
+        such as Fortune 500 and government entities; Google's own Chronicle SIEM and NDR ambitions represent a
+        long-term risk to this partnership channel.
+      confidence: medium
+      sourceRefs: [SR018]
+      type: inferred
+      topic: "Mandiant/Google partnership risk"
+      freshness: current
+
+    - id: CR025
+      statement: >-
+        Splunk and Elasticsearch serve as primary SIEM distribution channels for Corelight, with a Splunk
+        marketplace app enabling direct log ingestion; changes to Splunk's partner program post-Cisco acquisition
+        could affect Corelight's distribution economics.
+      confidence: medium
+      sourceRefs: [SR018, SR019]
+      type: inferred
+      topic: "Splunk/Elastic distribution risk"
+      freshness: current
+
+    - id: CR026
+      statement: >-
+        Brian Dye joined Corelight as CEO in 2021, led the $150M Series E fundraise in April 2024, oversaw dual
+        Gartner Magic Quadrant and Forrester Wave Leader designations, and is the primary architect of Corelight's
+        commercial growth strategy heading into a probable liquidity event.
+      confidence: high
+      sourceRefs: [SR022, SR023]
+      type: third-party-reported
+      topic: "Brian Dye key-person risk"
+      freshness: current
+
+    - id: CR027
+      statement: >-
+        Vern Paxson is the inventor of Zeek (formerly Bro) and co-founder of Corelight; his standing in the
+        network security research community provides technical credibility that would be difficult to replicate
+        if he departed.
+      confidence: high
+      sourceRefs: [SR024, SR025]
+      type: third-party-reported
+      topic: "Vern Paxson key-person risk"
+      freshness: historical
+
+    - id: CR028
+      statement: >-
+        The CTO role at Corelight was not publicly disclosed on the company's leadership page as of mid-2026,
+        representing a governance gap that could indicate a vacancy, a recent departure, or a pending announcement.
+      confidence: medium
+      sourceRefs: [SR022]
+      type: inferred
+      topic: "CTO gap"
+      freshness: current
+
+    - id: CR029
+      statement: >-
+        Corelight's cybersecurity engineering talent needs — network protocol expertise, Zeek scripting language,
+        ML for security, and C/C++ systems programming — require specialists who are in high demand from
+        hyperscaler security teams, pure-play NDR competitors, and government contractors.
+      confidence: high
+      sourceRefs: [SR028, SR029]
+      type: third-party-reported
+      topic: "talent market competition"
+      freshness: current
+
+    - id: CR030
+      statement: >-
+        Government procurement cycles of 12–36 months, cleared personnel requirements, and FedRAMP/CMMC
+        compliance milestones create execution risk for Corelight's federal sales team in scaling government ARR.
+      confidence: high
+      sourceRefs: [SR010, SR011]
+      type: third-party-reported
+      topic: "federal sales execution risk"
+      freshness: current
+
+    - id: CR031
+      statement: >-
+        The appointment of Hatem Naguib (former CEO Barracuda Networks) to Corelight's board in 2026 improves
+        governance depth but does not address operational succession planning risk for the CEO or CTO roles.
+      confidence: high
+      sourceRefs: [SR022, SR023]
+      type: third-party-reported
+      topic: "board governance improvement"
+      freshness: current
+
+    - id: CR032
+      statement: >-
+        Michele Bettencourt serves as Executive Chairman of Corelight's board, providing a governance backstop
+        that partially mitigates CEO key-person risk in a transition scenario but does not constitute a
+        standing operational succession plan.
+      confidence: medium
+      sourceRefs: [SR022]
+      type: third-party-reported
+      topic: "board governance backstop"
+      freshness: current
+
+    - id: CR033
+      statement: >-
+        Corelight estimates 40%+ ARR growth for 2024 per the Series E announcement; maintaining this growth
+        rate requires scaling enterprise and government sales simultaneously while managing compliance milestones,
+        creating material execution risk.
+      confidence: medium
+      sourceRefs: [SR016, SR017]
+      type: company-claimed
+      topic: "growth execution risk"
+      freshness: current
+
+    - id: CR034
+      statement: >-
+        A material security breach of Corelight's own sensor or SaaS infrastructure would constitute a kill
+        criterion for the investment thesis due to the likely cascade of government contract termination,
+        customer churn, and irreparable brand damage in the security market.
+      confidence: high
+      sourceRefs: [SR014, SR015, SR026]
+      type: inferred
+      topic: "sensor breach kill criterion"
+      freshness: current
+
+    - id: CR035
+      statement: >-
+        Loss of government contracts representing more than 15% of ARR, driven by FedRAMP delays, export control
+        violations, or security incidents, would remove the government-sector revenue premium from Corelight's
+        valuation and expose concentration risk.
+      confidence: medium
+      sourceRefs: [SR001, SR026]
+      type: inferred
+      topic: "government contract loss kill criterion"
+      freshness: current
+
+    - id: CR036
+      statement: >-
+        A well-funded competitive Zeek fork achieving significant enterprise adoption would commoditize
+        Corelight's core technical moat and compress pricing power and win rates across both commercial and
+        government segments.
+      confidence: medium
+      sourceRefs: [SR020, SR021]
+      type: inferred
+      topic: "Zeek fork kill criterion"
+      freshness: current
+
+    - id: CR037
+      statement: >-
+        CISA's Best Practices for Network Detection and Response guidance aligns with Corelight's Open NDR
+        approach; loss of CISA advisory alignment or a CISA-recommended alternative NDR approach would weaken
+        Corelight's government-sector positioning.
+      confidence: medium
+      sourceRefs: [SR026, SR027]
+      type: third-party-reported
+      topic: "CISA advisory dependency"
+      freshness: current
+
+    - id: CR038
+      statement: >-
+        The NIST Cybersecurity Framework 2.0 and NIST SP 800-207 Zero Trust Architecture framework both
+        emphasize network visibility and monitoring capabilities that align with Corelight's NDR platform;
+        changes to these frameworks could affect Corelight's compliance positioning.
+      confidence: medium
+      sourceRefs: [SR028, SR029]
+      type: third-party-reported
+      topic: "NIST framework alignment"
+      freshness: current
+
+    - id: CR039
+      statement: >-
+        US CISA CIRCIA reporting requirements, EU NIS2 Directive, and post-Schrems II data transfer restrictions
+        represent an expanding regulatory landscape in 2026–2027 that will increase compliance complexity and
+        cost for Corelight's government and international customer segments.
+      confidence: medium
+      sourceRefs: [SR026, SR009]
+      type: third-party-reported
+      topic: "emerging regulatory complexity"
+      freshness: current
+
+    - id: CR040
+      statement: >-
+        Corelight's physical on-premises sensors do not require FedRAMP authorization and can continue to be
+        sold to federal agencies regardless of cloud authorization status, providing a partial bridge for
+        government ARR during the FedRAMP authorization process.
+      confidence: high
+      sourceRefs: [SR001, SR003]
+      type: inferred
+      topic: "on-premises FedRAMP bridge"
+      freshness: current
+
+    - id: CR041
+      statement: >-
+        SEC cyber incident disclosure rules (effective December 2023) require public companies to report material
+        cyber incidents within 4 business days; this framework would apply to Corelight post-IPO or to an
+        acquiring public company, increasing disclosure obligations.
+      confidence: high
+      sourceRefs: [SR026, SR027]
+      type: third-party-reported
+      topic: "SEC cyber disclosure rule"
+      freshness: current
+
+  sources:
+    - id: SR001
+      publisher: "FedRAMP Program Management Office (GSA)"
+      title: "FedRAMP Marketplace — Authorized Products and In-Progress Listings"
+      url: "https://www.fedramp.gov/marketplace/authorized-products/"
+      date: "2026-05-18"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics:
+        - FedRAMP authorization
+        - government cloud compliance
+        - in-progress authorization status
+        - "2026"
+
+    - id: SR002
+      publisher: "Corelight, Inc."
+      title: "Corelight Open NDR Platform — Trust and Compliance (SOC 2, ISO 27001, FedRAMP)"
+      url: "https://corelight.com/solutions/"
+      date: "2026-05-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - FedRAMP in progress
+        - SOC 2 Type II
+        - ISO 27001
+        - compliance certifications
+        - "2026"
+
+    - id: SR003
+      publisher: "CISA / FedRAMP"
+      title: "CISA Network Detection and Response Best Practices Guidance"
+      url: "https://www.cisa.gov/sites/default/files/2024-03/CISA-Best-Practices-for-Network-Detection-Response.pdf"
+      date: "2024-03-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics:
+        - network detection and response
+        - federal cybersecurity guidance
+        - CISA advisory
+        - NDR best practices
+
+    - id: SR004
+      publisher: "US Department of Commerce Bureau of Industry and Security (BIS)"
+      title: "Export Administration Regulations (EAR) — BIS Official Page"
+      url: "https://www.bis.doc.gov/index.php/regulations/export-administration-regulations-ear"
+      date: "2026-01-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics:
+        - export administration regulations
+        - EAR dual-use controls
+        - ECCN classification
+        - cybersecurity export controls
+
+    - id: SR005
+      publisher: "Regulations.gov (Federal Register)"
+      title: "Regulations.gov — Federal Regulatory Portal"
+      url: "https://www.regulations.gov"
+      date: "2026-05-18"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics:
+        - federal regulations
+        - regulatory compliance
+        - US government rulemaking
+
+    - id: SR006
+      publisher: "Zeek Project / ICSI"
+      title: "Zeek.org FAQ — Zeek Trademark License Notice (ICSI)"
+      url: "https://zeek.org/faq/"
+      date: "2026-01-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics:
+        - Zeek trademark
+        - ICSI license
+        - International Computer Science Institute
+        - open-source governance
+
+    - id: SR007
+      publisher: "Zeek Project / ICSI"
+      title: "Zeek.org — About Zeek (ICSI Trademark License Notice)"
+      url: "https://zeek.org/about/"
+      date: "2026-01-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics:
+        - Zeek trademark notice
+        - ICSI ownership
+        - Zeek open-source project
+        - trademark license
+
+    - id: SR008
+      publisher: "European Data Protection Board"
+      title: "GDPR Article 4 — Definition of Personal Data"
+      url: "https://gdpr-info.eu/art-4-gdpr/"
+      date: "2018-05-25"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: legal
+      reputationTier: high
+      independence: independent
+      topics:
+        - GDPR personal data
+        - data protection
+        - IP address as personal data
+        - EU privacy law
+
+    - id: SR009
+      publisher: "European Commission"
+      title: "Standard Contractual Clauses (SCCs) for International Data Transfers — Schrems II"
+      url: "https://commission.europa.eu/law/law-topic/data-protection/international-dimension-data-protection/standard-contractual-clauses-scc_en"
+      date: "2021-06-04"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: legal
+      reputationTier: high
+      independence: independent
+      topics:
+        - Schrems II
+        - standard contractual clauses
+        - data transfer mechanism
+        - GDPR international transfers
+
+    - id: SR010
+      publisher: "US Department of Defense"
+      title: "CMMC 2.0 Final Rule — Cybersecurity Maturity Model Certification"
+      url: "https://dodcio.defense.gov/CMMC/"
+      date: "2024-10-15"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics:
+        - CMMC 2.0
+        - DoD supply chain compliance
+        - cybersecurity certification
+        - defense contractor requirements
+
+    - id: SR011
+      publisher: "NIST"
+      title: "NIST SP 800-171: Protecting Controlled Unclassified Information in Nonfederal Systems"
+      url: "https://csrc.nist.gov/publications/detail/sp/800-171/rev-3/final"
+      date: "2024-05-14"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics:
+        - NIST 800-171
+        - CUI protection
+        - CMMC foundation
+        - DoD compliance
+
+    - id: SR012
+      publisher: "NIST National Vulnerability Database"
+      title: "NVD CVE Search Results for 'zeek'"
+      url: "https://nvd.nist.gov/vuln/search/results?form_type=Basic&results_type=overview&query=zeek&search_type=all"
+      date: "2026-05-18"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics:
+        - Zeek CVE history
+        - open-source vulnerability
+        - NVD vulnerability database
+        - security patch management
+
+    - id: SR013
+      publisher: "GitHub / Zeek Project"
+      title: "Zeek Open-Source Repository — Security Advisories"
+      url: "https://github.com/zeek/zeek"
+      date: "2026-05-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics:
+        - Zeek open-source
+        - GitHub repository
+        - security advisories
+        - vulnerability disclosure
+
+    - id: SR014
+      publisher: "Dark Reading"
+      title: "NDR Market Is Crowded: What Makes Vendors Stand Out"
+      url: "https://www.darkreading.com/cybersecurity-operations/ndr-market-is-crowded-what-makes-vendors-stand-out"
+      date: "2026-01-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - NDR market competition
+        - security vendor risk
+        - supply chain attack risk
+        - NDR differentiation
+
+    - id: SR015
+      publisher: "Dark Reading"
+      title: "Corelight Raises $150M to Expand Open NDR Platform"
+      url: "https://www.darkreading.com/threat-intelligence/corelight-raises-150m-to-expand-open-ndr-platform"
+      date: "2024-04-30"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - Series E funding
+        - open NDR platform
+        - market expansion
+        - "2024"
+
+    - id: SR016
+      publisher: "CrowdStrike"
+      title: "CrowdStrike Falcon Fund Invests in Corelight — Strategic Partnership and Investment"
+      url: "https://www.crowdstrike.com/press-releases/crowdstrike-falcon-fund-invests-in-corelight/"
+      date: "2024-04-30"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: independent
+      topics:
+        - CrowdStrike investment
+        - Falcon Fund
+        - strategic partnership
+        - investor-competitor conflict
+        - "2024"
+
+    - id: SR017
+      publisher: "PR Newswire"
+      title: "Corelight Secures $150 Million in Series E Funding Led by Accel with Participation from Cisco Investments and CrowdStrike"
+      url: "https://www.prnewswire.com/news-releases/corelight-secures-150-million-in-series-e-funding-led-by-accel-with-participation-from-cisco-investments-and-crowdstrike-302131421.html"
+      date: "2024-04-30"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: independent
+      topics:
+        - Series E
+        - Cisco Investments
+        - CrowdStrike Falcon Fund
+        - Accel
+        - investor conflict
+        - "2024"
+
+    - id: SR018
+      publisher: "Corelight, Inc."
+      title: "Fueling Cisco XDR with Corelight High-Fidelity Network Evidence"
+      url: "https://corelight.com/blog/fueling-cisco-xdr-corelight-high-fidelity-network-evidence/"
+      date: "2024-01-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - Cisco XDR integration
+        - Cisco competitor conflict
+        - Splunk distribution channel
+        - "2024"
+
+    - id: SR019
+      publisher: "Cybersecurity Dive"
+      title: "Corelight Series E Funding — $150 Million Raised, Cisco and CrowdStrike as Strategic Investors"
+      url: "https://www.cybersecuritydive.com/news/corelight-series-e-funding-150-million/714547/"
+      date: "2024-04-30"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - Cisco strategic investment
+        - CrowdStrike strategic investment
+        - Series E
+        - coopetition risk
+        - "2024"
+
+    - id: SR020
+      publisher: "GitHub / Zeek Project"
+      title: "Zeek Open-Source Network Security Monitor — GitHub Repository"
+      url: "https://github.com/zeek/zeek"
+      date: "2026-05-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics:
+        - Zeek BSD license
+        - open-source governance
+        - fork risk
+        - Zeek maintainership
+
+    - id: SR021
+      publisher: "GitHub / Corelight"
+      title: "Corelight GitHub Organization — Open-Source Projects and Zeek Contributions"
+      url: "https://github.com/corelight"
+      date: "2026-05-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - Corelight open-source contributions
+        - Zeek community custodianship
+        - zeek-community-id
+        - open-source dependency risk
+
+    - id: SR022
+      publisher: "Corelight, Inc."
+      title: "Corelight Leadership Page — Executive Team and Board of Directors"
+      url: "https://corelight.com/company/leadership"
+      date: "2026-05-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - Brian Dye CEO
+        - Vern Paxson Chief Scientist
+        - board composition
+        - Hatem Naguib
+        - CTO undisclosed
+
+    - id: SR023
+      publisher: "Gartner"
+      title: "Gartner Names Corelight as a Leader in the 2024 Gartner Magic Quadrant for Network Detection and Response"
+      url: "https://www.gartner.com/en/newsroom/press-releases/2024-09-23-gartner-names-corelight-as-a-leader-in-the-2024-gartner-magic-quadrant-for-network-detection-and-response"
+      date: "2024-09-23"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: analyst-market-data
+      reputationTier: high
+      independence: independent
+      topics:
+        - Gartner Magic Quadrant
+        - NDR market
+        - Corelight Leader designation
+        - "2024"
+
+    - id: SR024
+      publisher: "Zeek Project"
+      title: "Zeek.org — About Page: Project History and Vern Paxson"
+      url: "https://zeek.org/about/"
+      date: "2026-01-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics:
+        - Vern Paxson
+        - Zeek history
+        - ICSI
+        - LBL
+        - Zeek founding
+
+    - id: SR025
+      publisher: "PR Newswire"
+      title: "Corelight Named a Leader in the 2025 Gartner Magic Quadrant for Network Detection and Response"
+      url: "https://www.prnewswire.com/news-releases/corelight-named-a-leader-in-the-2025-gartner-magic-quadrant-for-network-detection-and-response-302310882.html"
+      date: "2024-12-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: independent
+      topics:
+        - Gartner Magic Quadrant 2025
+        - NDR Leader
+        - Corelight market position
+        - "2024"
+
+    - id: SR026
+      publisher: "CISA"
+      title: "CISA Topics: Cybersecurity Best Practices — Network Detection and Response"
+      url: "https://www.cisa.gov/topics/cybersecurity-best-practices/network-detection-and-response"
+      date: "2024-01-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics:
+        - CISA NDR guidance
+        - federal cybersecurity best practices
+        - network detection and response
+        - government compliance
+
+    - id: SR027
+      publisher: "NIST"
+      title: "NIST Cybersecurity Framework (CSF) 2.0"
+      url: "https://www.nist.gov/cyberframework"
+      date: "2024-02-26"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics:
+        - NIST cybersecurity framework
+        - CSF 2.0
+        - federal compliance
+        - detect function
+
+    - id: SR028
+      publisher: "NIST"
+      title: "NIST SP 800-207: Zero Trust Architecture"
+      url: "https://csrc.nist.gov/publications/detail/sp/800-207/final"
+      date: "2020-08-11"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics:
+        - zero trust architecture
+        - network visibility requirements
+        - federal security standards
+        - NIST compliance
+
+    - id: SR029
+      publisher: "Accel"
+      title: "Accel Leads $150 Million Series E Investment in Corelight"
+      url: "https://www.accel.com/noteworthy/accel-leads-150-million-series-e-investment-in-corelight"
+      date: "2024-04-30"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: independent
+      topics:
+        - Series E
+        - Accel lead investor
+        - cybersecurity talent market
+        - "2024"
+
+    - id: SR030
+      publisher: "Open Information Security Foundation (OISF)"
+      title: "Suricata Open-Source IDS — GPL v2 License"
+      url: "https://suricata.io/about/"
+      date: "2026-01-01"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics:
+        - Suricata IDS
+        - GPL v2 license
+        - open-source copyleft
+        - OISF
+
+    - id: SR031
+      publisher: "NIST"
+      title: "NIST SP 800-218: Secure Software Development Framework (SSDF)"
+      url: "https://csrc.nist.gov/publications/detail/sp/800-218/final"
+      date: "2022-02-03"
+      accessDate: "2026-05-18"
+      accessStatus: ok
+      stance: neutral
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics:
+        - secure software development
+        - SBOM requirements
+        - supply chain security
+        - EO 14028 alignment
+
+  evidenceGaps:
+    - id: EGR001
+      type: private-evidence-only
+      severity: blocking
+      topic: "Zeek trademark license change-of-control survival"
+      missingEvidence: "Full text of the ICSI-Corelight trademark license agreement, specifically change-of-control provisions, term, and exclusivity"
+      whyItMatters: "If the Zeek trademark license does not survive a change of control, any acquirer must rebrand the entire product suite immediately post-closing, creating material transaction risk and destroying brand equity built around the Zeek name"
+      diligencePath: "Obtain and review the ICSI-Corelight trademark license agreement; confirm CoC survival clause, perpetual term or term extension provisions, and absence of competing licensee rights"
+      relatedQuestionRefs: [QR003]
+      relatedTableRefs: [TR001]
+  
+    - id: EGR002
+      type: private-evidence-only
+      severity: material
+      topic: "CrowdStrike and Cisco strategic investor rights"
+      missingEvidence: "Series E term sheet and investor rights agreement covering CrowdStrike Falcon Fund and Cisco Investments, specifically board observer rights, information rights, ROFR, co-sale, and M&A notification provisions"
+      whyItMatters: "Information rights or board observer rights held by direct competitors (CrowdStrike, Cisco) in an M&A process create structural conflict risk; ROFR provisions could give competitors first-refusal on acquisition opportunities"
+      diligencePath: "Request and review Series E term sheet, investor rights agreement, and any side letters for CrowdStrike Falcon Fund and Cisco Investments positions"
+      relatedQuestionRefs: [QR008, QR009]
+  
+    - id: EGR003
+      type: private-evidence-only
+      severity: material
+      topic: "Vern Paxson IP assignment from ICSI and LBL research"
+      missingEvidence: "Executed IP assignment agreement transferring all Zeek-related inventions, patents, and know-how from Vern Paxson's ICSI and Lawrence Berkeley National Laboratory research period to Corelight"
+      whyItMatters: "If Zeek's core inventions were not fully assigned to Corelight, foundational IP could remain with ICSI or LBL, creating IP ownership uncertainty that would affect acquisition valuation and post-closing technology rights"
+      diligencePath: "Request IP assignment agreement(s) from Vern Paxson and confirm all Zeek-related IP is fully assigned; review any ICSI or LBL institutional IP policy that may have created residual rights"
+      relatedQuestionRefs: [QR012]
+  
+    - id: EGR004
+      type: private-evidence-only
+      severity: material
+      topic: "Zeek maintainer engineering attrition"
+      missingEvidence: "Engineering retention metrics for core Zeek maintainers and security researchers, including attrition rate, average tenure, and equity refresh program details"
+      whyItMatters: "Loss of Zeek maintainers would slow the sensor product roadmap, weaken Corelight's open-source community influence, and reduce its ability to attract top security engineering talent who joined to work on Zeek"
+      diligencePath: "Request engineering attrition data, named Zeek maintainer roster, vesting schedules, and equity refresh program terms for key engineering personnel"
+      relatedQuestionRefs: [QR014]
+  
+    - id: EGR005
+      type: private-evidence-only
+      severity: material
+      topic: "cloud sensor API pricing margin impact"
+      missingEvidence: "AWS VPC Traffic Mirroring, Azure vTAP, and GCP Packet Mirroring API pricing per GB and its impact on cloud sensor cost of goods and gross margin"
+      whyItMatters: "Cloud sensor gross margin is directly affected by cloud provider API pricing for traffic mirroring; changes to pricing or metering could compress cloud sensor economics and affect Corelight's SaaS profitability model"
+      diligencePath: "Request cloud COGS breakdown and cloud sensor gross margin by cloud provider; review cloud provider API pricing terms and any volume commitments"
+      relatedQuestionRefs: [QR020]
+  

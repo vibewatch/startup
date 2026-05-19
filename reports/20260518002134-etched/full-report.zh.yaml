@@ -1,0 +1,5142 @@
+schemaVersion: report-v2
+artifact: full-report
+slug: etched
+runDate: '2026-05-18'
+company:
+  name: Etched
+  website: https://etched.com
+  sector: AI Hardware / Semiconductor
+  stage: early-stage private
+  headquarters: Santa Clara, CA, USA
+  shortDescription: >-
+    AI chip startup building the "Sohu" ASIC — a Transformer-only inference accelerator claiming 10–20× throughput per
+    dollar over NVIDIA H100 GPUs for large-language-model inference.
+revision:
+  status: current
+  refreshOfRunId: null
+  supersededByRunId: null
+  refreshReason: null
+subtitle: 把 Transformer 写死进 ASIC，押注赢家拿走大部分的推理市场；上行空间高，架构风险也足以致命
+coverageNotes: >-
+  Etched 接近隐身运营，公开财务披露有限。$120M Series A（2024 年 7 月）和 Sohu
+  基准测试说法已有公开记录；收入、客户、毛利率和流片状态均未披露。本报告依赖公司官方沟通、学术来源、竞争者文件和二级媒体报道。架构迁移风险（Mamba、MoE）以及对 TSMC 制造的依赖，是最需要持续跟踪的两大证据缺口。
+coverFacts:
+  - label: Series A 轮融资额
+    value: 120
+    unit: USD M
+    claimRefs:
+      - CI001
+  - label: 融资公布日期
+    value: July 2024
+    unit: ''
+    claimRefs:
+      - CI001
+  - label: 声称相对 H100 的吞吐优势
+    value: 10
+    unit: × (Llama 70B tokens/s)
+    claimRefs:
+      - CE001
+  - label: 员工数（估计）
+    value: 30
+    unit: employees
+    claimRefs:
+      - CO009
+companyProfile:
+  summary: >-
+    Etched 是一家位于 Santa Clara 的半导体创业公司，2022 年由 Gavin Uberti（CEO）和 Chris Zhu（CTO）创立；两人都曾就读 Harvard 本科，也曾在 Microsoft
+    任职。公司在打造「Sohu」：一颗专用 ASIC，把 Transformer 注意力机制固化到硅片里，去掉 GPU 推理的可编程开销。Etched 于 2024 年 7 月完成由 Positive Sum 领投的 $120M
+    Series A，估值未披露。截至 2026 年 Q1，Etched 未披露客户，没有量产收入，也未公开确认已流片。公司的投资逻辑是：Transformer 推理已经足够稳定，值得用硬编码 ASIC 来换取相对 H100 GPU
+    在规模化场景下 10–20× 的每美元吞吐提升。
+  foundedDate: '2022-01-01'
+  founders:
+    - name: Gavin Uberti
+      role: CEO
+      background: Harvard 本科（退学创办 Etched）；曾在 Microsoft 实习；Sohu 芯片概念的主架构师；Series A 时 23 岁。此前没有把芯片推向量产的经验。
+      claimRefs:
+        - CO004
+    - name: Chris Zhu
+      role: CTO
+      background: Harvard 本科（退学创办 Etched）；曾在 Microsoft 实习；Sohu 联合架构师；背景覆盖芯片设计和 ML 系统。此前没有在创业公司完成流片的经验。
+      claimRefs:
+        - CO005
+  foundingLocation: Cambridge, MA, USA
+  headquarters: Santa Clara, CA, USA
+  productSummary: >-
+    Sohu 是一颗只面向 Transformer 推理的 ASIC，采用 TSMC 4nm 制程制造。它把多头注意力、FlashAttention 式内存分块和 KV-cache 管理固化为固定逻辑，从而去掉 GPU shader
+    开销。Etched 声称，Sohu 在 Llama 70B 上可达到 500K+ tokens/second，并且单台服务器可支持 8× 141B 参数模型，相比之下 H100 DGX 为 1×。配套软件 SDK 提供与
+    PyTorch/vLLM 推理栈的即插即用兼容。
+  customerFocus: >-
+    超大规模云厂商的 AI 推理团队（AWS、Google、Microsoft）、大型基础模型实验室（OpenAI、Anthropic、Cohere、Mistral），以及每年在 LLM 服务 GPU 计算上花费 >$50M 的专业推理
+    API 提供商（Together AI、Groq、Perplexity）。
+  businessModel: 面向推理运营方直接销售 ASIC 硬件，并可能从 SDK 授权和托管推理云服务中获得经常性收入。截至 2026 年 Q1，收入为零；商业模式仍处于商业化前阶段。
+  stage: early-stage private
+  fundingStatus: >-
+    2024 年 7 月完成由 Positive Sum 领投的 $120M Series A；此前种子轮金额未披露。Series A 投后估值未公开；基于同类尚无收入 AI 芯片轮次，估计为
+    $600M–$800M。累计融资：公开确认约 $120M+。
+  disclosureProfile: private-undisclosed
+  claimRefs:
+    - CO001
+    - CO002
+    - CO003
+    - CO004
+    - CO005
+    - CO009
+    - CI001
+    - CE001
+chapters:
+  - number: 1
+    title: 公司概况
+    sections:
+      - number: '1.1'
+        title: 公司身份与使命
+        blocks:
+          - type: paragraph
+            body: >
+              Etched 是一家总部位于 California 州 Cupertino 的半导体创业公司，2022 年注册成立。公司官网展示的使命是「为超级智能打造硬件」。Etched 的核心判断是：Transformer
+              神经网络架构——GPT-4、LLaMA、Claude 等现代大语言模型的底座——在可预见的未来仍会主导 AI；只为 Transformer 工作负载优化的专用硅片，能显著跑赢通用 GPU。
+
+              公司的主产品是 Sohu 芯片，一颗从零设计、用于加速 Transformer 推理的专用集成电路（ASIC）。GPU 是可编程的通用加速器，Sohu 则把 Transformer
+              计算图固化进硅片，去掉可编程性带来的开销，以大幅提高每瓦吞吐。Etched 公开声称，单颗 Sohu 芯片在 Transformer 推理工作负载下可提供约 500,000 tokens/second，而
+              NVIDIA H100 GPU 约为 20,000 tokens/second——相当于公司声称的 25x 优势。截至研究日期，这些性能数字来自公司口径，尚未得到独立验证。Etched
+              采用无晶圆厂（fabless）半导体模式：公司设计芯片，制造依赖第三方晶圆厂（最可能是 TSMC）。
+
+              Etched 的商业模式，是把 Sohu 芯片卖给希望大幅降低大规模 Transformer 模型服务成本和延迟的云超大规模厂商、大企业和 AI 推理服务商。公司目前尚无收入，Sohu 芯片仍在开发中。
+            claimRefs:
+              - CO001
+              - CO002
+              - CO005
+              - CO006
+              - CO007
+              - CO008
+              - CO014
+              - CO015
+              - CO016
+              - CO017
+          - type: table
+            tableRef: TO001
+            claimRefs:
+              - CO001
+              - CO002
+              - CO003
+              - CO004
+              - CO005
+              - CO006
+              - CO007
+              - CO008
+              - CO009
+              - CO018
+              - CO032
+              - CO033
+          - type: figure
+            figureRef: FO003
+            claimRefs:
+              - CO003
+              - CO004
+              - CO006
+              - CO007
+              - CO008
+              - CO016
+              - CO033
+      - number: '1.2'
+        title: 创始人与领导层
+        blocks:
+          - type: paragraph
+            body: >
+              Etched 由 Gavin Uberti（CEO）和 Chris Zhu（CTO）共同创立，早期媒体报道还将 Robert Winslow 列为联合创始人。Gavin Uberti 担任首席执行官，此前曾在
+              Microsoft 从事研究，具备 AI 系统和硬件加速经验。AI 研究与工程的交叉背景，让他具备深科技半导体创业公司所需的创始人与市场匹配度。Chris Zhu 担任首席技术官，带来硬件设计和 AI
+              系统方面的互补技术能力。
+
+              创始团队规模很小，三位联合创始人之外的领导层名单未公开。关键人依赖因此较重——任何一位创始人离开，都可能明显影响技术路线和投资人信心。董事会和治理结构也未公开；这对当前阶段的私营创业公司很常见，但仍是尽调缺口。截至研究日期，Etched
+              自创立以来未报告任何重大领导层变动。公司员工数未公开；基于资金充足的半导体创业公司在 Series A 后的典型招聘节奏，团队规模应已扩大，但没有可用的具体数字。
+
+              创始团队的技术深度是重要资产：定制 ASIC 需要硬件设计、芯片架构、EDA 工具和半导体制造的深厚能力。创始人背景显示他们具备相关能力，但公开资料无法独立核验其具体芯片设计资历。
+            claimRefs:
+              - CO010
+              - CO011
+              - CO012
+              - CO032
+              - CO041
+          - type: table
+            tableRef: TO002
+            claimRefs:
+              - CO010
+              - CO011
+              - CO012
+              - CO041
+      - number: '1.3'
+        title: 融资历史与投资人
+        blocks:
+          - type: paragraph
+            body: >
+              Etched 于 2024 年 6 月 26 日公开宣布完成 $120 million Series A，报道估值约 $1 billion，使公司在 Series A
+              阶段成为独角兽。Bloomberg、Reuters、TechCrunch、Wired、Fortune 等财经与科技媒体均做了大量报道。Primary Venture Partners
+              被列为关键投资人，Positive Sum 被确认参投。完整投资人银团构成和持股比例未公开。
+
+              对尚无收入的半导体创业公司来说，$120 million 融资规模很大，反映出投资人对 AI 基础设施的高度兴趣，也反映出资本正在押注下一代推理硬件。相比之下，近年其他 AI
+              芯片创业公司的融资也接近这一量级：Groq 多轮累计融资超过 $1 billion，Cerebras Systems 累计融资约 $720 million。Series A 之前，Etched
+              的前种子轮和种子轮融资历史未公开。截至研究日期，没有公开记录显示公司发生老股交易、债务融资或可转债。
+
+              对一家尚未流片、没有付费客户、且面对成熟生态巨头的公司来说，Series A 即 $1 billion 估值相当激进。这个估值主要像是在买一个期权：Transformer 架构将主导 AI 推理，且 Etched
+              能把芯片做出来。这个判断同时带有显著技术风险和市场风险。
+            claimRefs:
+              - CO003
+              - CO004
+              - CO009
+              - CO018
+              - CO023
+              - CO037
+              - CO038
+          - type: table
+            tableRef: TO003
+            claimRefs:
+              - CO003
+              - CO009
+              - CO010
+              - CO011
+              - CO012
+              - CO018
+              - CO021
+      - number: '1.4'
+        title: 公司里程碑与历史
+        blocks:
+          - type: paragraph
+            body: >
+              截至研究日期，Etched 约成立两年，公开历史有限。公司 2022 年创立于 California 州 Cupertino，使命是打造专用 AI
+              推理硬件。创立初期（2022-2023）以隐身开发为主——Etched 基本没有公开披露技术或融资状态。关键拐点出现在 2024 年 6 月 26 日：公司同日宣布 $120 million Series
+              A，并发布 Sohu 芯片及一组详细性能说法。
+
+              Sohu 的公开发布，是 Etched 首次重大对外披露，内容包括 500,000 tokens per second 吞吐、相对 NVIDIA H100 GPU 25x 性能等说法。公告获得
+              Bloomberg、Reuters、Wired、Fortune、TechCrunch 等媒体大量关注，也在开发者社区引发讨论。行业分析师既注意到这些说法的雄心，也指出只押注单一 AI 架构的巨大风险。
+
+              从芯片设计角度看，关键里程碑应包括架构设计、RTL 开发、硅前仿真、流片（首颗硅片）和最终量产。截至研究日期，Etched 尚未公开确认流片或量产时间表，这是公司公开里程碑披露中的重大缺口。Series A
+              之后，公司推定正处于活跃芯片开发阶段，并拥有支持硅片周期的资金；但具体技术里程碑仍未披露。
+            claimRefs:
+              - CO001
+              - CO003
+              - CO005
+              - CO006
+              - CO037
+              - CO040
+          - type: table
+            tableRef: TO004
+            claimRefs:
+              - CO001
+              - CO003
+              - CO005
+              - CO006
+              - CO037
+              - CO040
+          - type: figure
+            figureRef: FO001
+            claimRefs:
+              - CO001
+              - CO003
+              - CO005
+              - CO006
+              - CO037
+      - number: '1.5'
+        title: 战略背景与竞争位置
+        blocks:
+          - type: paragraph
+            body: >
+              Etched 的战略押注，本质上是架构级押注：Transformer 神经网络将在未来十年甚至更久继续主导 AI，且这种主导足够稳，值得为 Transformer 计算单独设计一颗
+              ASIC。核心风险是架构过时——如果 AI 研究产出继任架构（例如状态空间模型、Mamba 或混合方案），以不同计算原语达到相当或更好性能，Sohu 芯片中固化的 Transformer
+              逻辑可能在商业化规模形成前就过时。
+
+              NVIDIA 以 H100 和后续 GPU 产品主导 AI 加速器市场，背后有 CUDA 软件生态、成熟供应链、企业关系，以及数千工程师年的软件优化。要挑战
+              NVIDIA，硬件性能更好还不够，还必须在总拥有成本和生态兼容性上胜出。其他纯 AI 芯片创业公司——包括 Groq（LPU 推理）、Cerebras（晶圆级 ASIC）、SambaNova（AI
+              加速器系统）、Tenstorrent（基于 RISC-V 的 AI 芯片）和 Intel Gaudi——多年努力后，仍难以从 NVIDIA 手中拿到有意义份额。
+
+              因此，Etched 的竞争位置高风险，也可能高回报：如果 Transformer 架构足够持久，且 Etched 把硅片量产跑通，公司就能以显著更低成本服务庞大的推理市场。若 25x
+              性能说法得到验证，对每年在推理计算上花费数亿美元的超大规模云厂商来说，将是很有吸引力的经济优势。但在当前开发阶段，这些说法尚未验证，投资人和潜在客户只能主要评估技术逻辑，而不是依靠经验证据。
+            claimRefs:
+              - CO019
+              - CO020
+              - CO024
+              - CO025
+              - CO026
+              - CO027
+              - CO028
+              - CO029
+              - CO030
+              - CO035
+              - CO036
+              - CO039
+          - type: figure
+            figureRef: FO002
+            claimRefs:
+              - CO003
+              - CO005
+              - CO009
+              - CO010
+              - CO019
+              - CO021
+      - number: '1.6'
+        title: 图表
+        blocks:
+          - type: callout
+            title: Transformer 专用硅片的先行者
+            body: Etched 正在开拓面向 Transformer 推理的专用 ASIC 架构。如果芯片兑现其声称的 25x 性能优势，就可能把大规模 AI 推理成本大幅打下来，缓解现代 LLM 部署中最资本密集的瓶颈之一。
+            calloutType: strength
+            claimRefs:
+              - CO005
+              - CO006
+              - CO016
+          - type: callout
+            title: 单一架构押注伴随过时风险
+            body: >-
+              Etched 的全部价值主张，都依赖 Transformer 架构继续主导。状态空间模型（Mamba）、混合架构、非 Transformer LLM 等新方案构成实质尾部风险，可能让 Sohu
+              的硬编码逻辑在芯片进入商业量产前就过时。
+            calloutType: risk
+            claimRefs:
+              - CO035
+              - CO036
+  - number: 2
+    title: 市场分析
+    sections:
+      - number: '2.1'
+        title: 市场定义与边界
+        blocks:
+          - type: paragraph
+            body: >
+              Etched 竞争的是 AI 加速器硬件市场，这是更大半导体行业中增长很快的一块。这个市场可以按不同颗粒度定义。最宽口径下，Etched 属于整体 AI 芯片市场，覆盖训练、推理和边缘 AI
+              芯片。更精确地看，Etched 的产品（Sohu ASIC）瞄准 AI 推理加速器细分市场——也就是为生产环境中运行神经网络模型、而非训练模型而优化的芯片。
+
+              Etched 可触达市场的边界，还受架构进一步限定：Sohu 只为 Transformer 模型硬编码，因此它的总可用市场（TAM）受限于 AI 推理工作负载中 Transformer
+              占比。截至研究日期，商业部署的大语言模型和生成式 AI 工作负载绝大多数都建立在 Transformer 架构之上，包括 GPT-4、LLaMA、Claude 和 Gemini。这给 Etched
+              带来很大的近端市场。但如果非 Transformer 架构拿到重要推理份额，可触达市场就会收缩。
+
+              现状替代方案主要是云厂商（AWS、Google Cloud、Microsoft Azure、Oracle Cloud）部署的 NVIDIA H100/H200/B200 GPU
+              集群，以及大型企业的本地部署。相邻竞争者包括 Google 内部 TPU 基础设施（不以传统芯片形式对外销售）、AWS Trainium/Inferentia，以及
+              Groq、Cerebras、AMD（MI300X）、Intel（Gaudi 3）等第三方 AI 加速器。Etched 的芯片并不面向训练工作负载——这明确不在 Sohu ASIC 范围内。
+            claimRefs:
+              - CM001
+              - CM002
+              - CM003
+              - CM004
+              - CM005
+          - type: table
+            tableRef: TM001
+            claimRefs:
+              - CM001
+              - CM002
+              - CM003
+              - CM004
+      - number: '2.2'
+        title: 市场规模：TAM、SAM 与 SOM
+        blocks:
+          - type: paragraph
+            body: >
+              AI 芯片市场增长快且不确定，测算必须同时看几个口径。2023 年全球 AI 芯片市场收入估计约 $53 billion，其中 NVIDIA 占主导份额。独立市场研究机构预计，到 2030 年复合年增长率为
+              30-40%，这会把整体 AI 芯片市场收入推到 $300-500 billion 区间；但这类长期预测的不确定区间很宽。
+
+              在整体市场内部，推理相对训练的份额正在上升。多份行业分析认为，随着模型训练更成熟、LLM 商业部署带动推理需求增长，到 2025-2027 年，推理将占 AI 计算总支出的 50% 或以上。如果推理份额在
+              2028-2030 年达到 $150 billion，而 Transformer 工作负载占推理的 80-90%（与当前模型部署模式一致），Transformer 推理 ASIC 的可服务市场（SAM）将在
+              $120-135 billion 区间——不过 Etched 作为对抗既有巨头的创业公司，只能拿到其中一小部分。
+
+              Etched 近期可获取市场（SOM）要受限得多。产品发布后的前 2-3 年，现实 SOM 应该是云超大规模厂商试点项目，以及由每 token 成本主导采购决策的推理即服务工作负载。如果到 2027-2028
+              年，Etched 只拿到 $50-100 billion 推理市场的 0.1-1%，也对应 $50M-$1B 收入——区间很宽，反映出公司当前商业路径仍极不确定。
+
+              本章所有规模数字均来自第三方行业分析估计，且存在重大不确定性；本研究无法访问官方市场研究报告。
+            claimRefs:
+              - CM006
+              - CM007
+              - CM008
+              - CM009
+              - CM010
+              - CM011
+          - type: table
+            tableRef: TM002
+            claimRefs:
+              - CM006
+              - CM007
+              - CM008
+              - CM009
+              - CM010
+              - CM011
+          - type: figure
+            figureRef: FM001
+            claimRefs:
+              - CM006
+              - CM007
+              - CM008
+              - CM009
+              - CM010
+              - CM011
+          - type: figure
+            figureRef: FM002
+            claimRefs:
+              - CM007
+              - CM008
+              - CM009
+              - CM010
+              - CM011
+      - number: '2.3'
+        title: 买方分层与采用路径
+        blocks:
+          - type: paragraph
+            body: >
+              Etched 的主要买方，是规模化运营 AI 推理基础设施的云超大规模厂商和大型企业。按规模和采购成熟度，买方可以分成三层。
+
+              第一层——超大规模云厂商（AWS、Google、Microsoft Azure、Oracle Cloud）：这些公司以巨大规模部署 GPU 集群，支撑 LLM API（GPT、Claude、Gemini、基于
+              LLaMA 的产品）的推理工作负载。它们量最大、采购流程最成熟，也最可能从更低每 token 成本的硅片中受益。但它们的销售周期也最长，技术验证要求最高，并且已经在 NVIDIA 生态中投入巨大。Google 和
+              AWS 已运营自研 AI 芯片（TPU、Trainium/Inferentia），对 Etched 的潜在销售形成内部竞争。
+
+              第二层——AI 原生公司（OpenAI、Anthropic、Cohere、Mistral AI 等）：这些公司为商业 AI API
+              运行海量推理工作负载。它们对成本敏感，技术成熟度高，会显著受益于更低推理成本。但它们通常也把 NVIDIA GPU 可用性当作战略后备。
+
+              第三层——推理即服务提供商（Together AI、Anyscale、Replicate 等）：这些较小规模的推理平台，如果 Etched 的性能和每 token 成本得到验证，可能把 Etched
+              芯片接入基础设施。这类买方销售周期更短，也更愿意试验替代硬件。
+
+              Etched 的采用路径需要完成四步：（1）完成芯片流片和首颗硅片；（2）与主流模型服务框架（vLLM、TensorRT-LLM、Hugging Face Transformers）实现软件兼容；（3）证明每
+              token 成本明显优于 NVIDIA H100/H200；（4）自建或补齐企业销售和支持能力，以服务超大规模云厂商采购团队。
+            claimRefs:
+              - CM012
+              - CM013
+              - CM014
+              - CM015
+              - CM016
+              - CM017
+          - type: table
+            tableRef: TM003
+            claimRefs:
+              - CM012
+              - CM013
+              - CM014
+              - CM015
+          - type: figure
+            figureRef: FM003
+            claimRefs:
+              - CM012
+              - CM013
+              - CM014
+              - CM015
+              - CM016
+      - number: '2.4'
+        title: 增长驱动因素与采用约束
+        blocks:
+          - type: paragraph
+            body: >
+              AI 推理硬件市场的首要增长驱动，是大语言模型在商业应用中的爆发式采用。自 2022 年 11 月 ChatGPT 发布以来，LLM 推理量在消费者 AI 应用、企业软件集成和基于 API 的 AI
+              服务中大幅增长。每一次 LLM API 查询都会产生推理计算成本；LLM 采用越多，累计推理计算需求就越大，可触达机会也随之扩大。
+
+              次级驱动包括：（1）成本经济性——GPU
+              推理昂贵，每天运行数百万次推理的公司面临巨额计算账单；（2）延迟要求——实时应用需要低延迟推理，专用硬件可能更高效；（3）能源效率——数据中心电力受限，让更高每瓦性能的硅片对超大规模云厂商更有吸引力；（4）供应链多元化——超大规模云厂商正在主动寻找
+              NVIDIA 依赖的替代方案。
+
+              Etched 自身的关键采用约束包括：（1）软件生态——CUDA 和 NVIDIA GPU 软件生态根基很深，任何新芯片都必须支持主要 ML 框架；（2）切换成本——替换 GPU
+              基础设施代价高，超大规模云厂商需要有说服力的总拥有成本（TCO）才会迁移；（3）硅片成熟度——作为创业公司，Etched 有良率、可靠性和支持能力风险，而既有厂商没有这些负担；（4）架构锁定风险——采用 Sohu
+              的客户，会暴露在绑定特定 AI 架构的单一供应商风险之下；（5）资本强度——芯片开发和量产需要规模，只有大订单才能支撑。
+            claimRefs:
+              - CM018
+              - CM019
+              - CM020
+              - CM021
+              - CM022
+              - CM023
+              - CM024
+          - type: table
+            tableRef: TM004
+            claimRefs:
+              - CM018
+              - CM019
+              - CM020
+              - CM021
+              - CM022
+              - CM023
+              - CM024
+          - type: figure
+            figureRef: FM004
+            claimRefs:
+              - CM015
+              - CM016
+              - CM017
+      - number: '2.5'
+        title: 市场规模测算缺口与矛盾
+        blocks:
+          - type: paragraph
+            body: >
+              AI 芯片市场变化很快，公开数据有限，分析师估计差异很大。本章市场规模分析受到几个重要缺口影响。
+
+              第一，公开行业研究没有充分记录 Transformer 专用推理在整体 AI 推理市场中的占比；多数市场规模报告把所有推理计算合并统计。Etched
+              的可触达市场受这个比例约束，但要精确量化，需要公开资料中没有的专有市场数据。
+
+              第二，IDC、Gartner、Grand View Research、Markets and Markets 等市场研究机构发布的 AI 芯片市场规模估计差异很大：2023 年数字从 $40B 到 $80B
+              不等，2030 年预测从 $200B 到 $900B 不等。这些差异来自市场边界定义不同、对 GPU 采用率假设不同，以及对训练与推理比例的看法不同。本章采用的数字，是公开引用区间中的合理中点，应视为数量级估计。
+
+              第三，模型效率提升（量化、蒸馏、speculative
+              decoding）正在快速改变推理市场动态，可能降低单次查询所需计算量——进而改变总计算支出轨迹。这些效率提升既是风险（总市场更小），也是机会（模型更高效后，推理更便宜，需求可能扩大）。
+            claimRefs:
+              - CM025
+              - CM026
+              - CM027
+              - CM028
+              - CM029
+      - number: '2.6'
+        title: 图表
+        blocks:
+          - type: callout
+            title: 推理市场庞大且快速增长
+            body: >-
+              AI 推理市场是科技行业增长最快的细分领域之一。LLM API 调用量呈指数级增长，超大规模云厂商每年在 GPU 基础设施上投入数百亿美元，因此更高效推理硅片的总可触达机会巨大。如果 Etched 兑现每
+              token 成本优势，市场拉力会很强。
+            calloutType: strength
+            claimRefs:
+              - CM006
+              - CM018
+              - CM019
+          - type: callout
+            title: 架构依赖限制可触达市场
+            body: >-
+              Etched 的市场边界取决于 Transformer 架构能持续多久。如果非 Transformer 模型即便拿到 30-40% 推理工作负载，Etched 的 SAM
+              也会按比例缩小。这不是假想风险——Mamba 和 SSM 架构正在被积极开发和部署，结合 Transformer 与非 Transformer 组件的混合模型也在升温。
+            calloutType: risk
+            claimRefs:
+              - CM003
+              - CM004
+              - CM027
+  - number: 3
+    title: 竞争格局
+    sections:
+      - number: '3.1'
+        title: 竞争格局概览
+        blocks:
+          - type: paragraph
+            body: >
+              Etched 竞争的是 AI 推理加速器市场，目前由 NVIDIA 主导。竞争格局分为几个层级：GPU 既有厂商（NVIDIA）、超大规模云厂商内部项目（AWS
+              Trainium/Inferentia、Google TPU、Microsoft Maia）、专用推理创业公司（Groq、Cerebras、SambaNova）、AI 芯片通用厂商（AMD、Intel
+              Gaudi），以及 Etched 独有的仅支持 Transformer 的 ASIC 细分。几乎每个买方当前技术栈中的现状竞争者，都是 NVIDIA H100 或 H200 GPU 集群。
+
+
+              Etched 的差异化策略是架构专用化：把 Transformer 注意力机制固化进硅片后，公司声称相对 GPU 推理可实现 10× 或更高的吞吐效率。已识别竞争者中，没有其他公司对仅支持 Transformer
+              执行做出同样狭窄的架构押注。Groq 使用带确定性流式架构的 LPU（语言处理单元）。Cerebras 使用晶圆级处理器。Graphcore 使用 IPU（智能处理单元）。这三者都是通用 AI
+              加速器，没有一家只面向 Transformer。
+
+
+              竞争风险是结构性的：NVIDIA 的生态护城河（CUDA、NeMo、TensorRT、分销）是最强切换壁垒。买方评估 Etched
+              时，必须克服软件集成成本、模型兼容性不确定，以及缺少量产参考部署的问题。Etched 唯一可持续的反驳，是在 Transformer 推理规模下给出每 token 成本优势；但在量产硅片可用前，这一点无法验证。
+            claimRefs: []
+          - type: table
+            tableRef: TP001
+            claimRefs: []
+          - type: table
+            tableRef: TP002
+            claimRefs: []
+          - type: figure
+            figureRef: FP001
+            claimRefs:
+              - CP001
+              - CP003
+              - CP005
+              - CP010
+              - CP011
+              - CP018
+      - number: '3.2'
+        title: 现有 GPU 竞争者
+        blocks:
+          - type: paragraph
+            body: >
+              截至 2024-2025 年，NVIDIA 约占 AI 加速器市场 80-90%。H100 和即将推出的 Blackwell 架构主导训练与推理工作负载。NVIDIA
+              的竞争护城河由四层相互咬合的能力构成：（1）CUDA 软件生态，积累了数十年开发者投入；（2）NeMo 和 TensorRT 推理优化框架；（3）与 TSMC 绑定的大规模制造承诺；（4）信任——每一家主要 AI
+              公司都已在生产环境验证 NVIDIA 硅片。NVIDIA 的主要弱点是定价权：2023-2024 年峰值时期，H100 GPU 单价为 $30-40K，H100 推理集群每机架成本为 $2-8M。
+
+
+              AMD Instinct MI300X 已成为推理工作负载中最可信的替代 GPU。AMD 的 ROCm 软件栈明显改善，Microsoft Azure 也承诺为 OpenAI 工作负载大规模部署
+              MI300X。Intel Gaudi（原 Habana Labs，2019 年以约 $2B 被收购）瞄准训练和推理工作负载，但尚未取得显著市场份额；Intel 软件生态明显落后于 CUDA。
+
+
+              GPU 既有厂商对 Etched 的主要战略回应，会是降低推理优化 SKU（H100 NVL、Blackwell B100、B200）价格，并加快推理专用固件和软件开发。AMD 和 NVIDIA
+              都已在出货推理优化版本，提供更高的每 FLOP 内存带宽。
+            claimRefs: []
+      - number: '3.3'
+        title: 超大规模云厂商内部项目
+        blocks:
+          - type: paragraph
+            body: >
+              AWS、Google 和 Microsoft 都开发了内部 AI 芯片，专门用来降低 NVIDIA 依赖和推理成本。Google 的 TPU（张量处理单元）项目已迭代到 v5，是最成熟的内部芯片项目。Google
+              TPU v5e 专门针对推理优化，并可通过 Google Cloud 使用；第三方不能直接购买芯片。Google 大量使用 TPU 做 Gemini 推理，内部已部署数万颗。
+
+
+              AWS Trainium（训练）和 Inferentia（推理）是 Amazon 的内部 AI 芯片。AWS Inferentia2 面向大语言模型的高性价比推理，可由 AWS 客户通过 Amazon EC2
+              Inf2 实例使用。AWS 未披露这些芯片的收入或部署规模，但它们对 AWS 生态中的第三方推理硬件构成可信威胁。Microsoft 开发了 Maia 100 AI 加速器，并于 2023 年 11
+              月发布，目标是 Azure AI 内部推理工作负载，包括 OpenAI 的 Azure 部署。
+
+
+              Etched 仍有向超大规模云厂商销售的可能——鉴于 Sohu 芯片的吞吐说法，OpenAI
+              被公开列为潜在客户——但云厂商内部项目既是竞争，也带来买方验证风险：超大规模云厂商已经证明，它们愿意且有能力自研硅片，而不是向第三方付费。
+            claimRefs: []
+          - type: table
+            tableRef: TP003
+            claimRefs: []
+          - type: figure
+            figureRef: FP002
+            claimRefs:
+              - CP001
+              - CP002
+              - CP003
+              - CP004
+              - CP008
+              - CP009
+              - CP010
+              - CP011
+              - CP014
+      - number: '3.4'
+        title: 专用推理芯片创业公司
+        blocks:
+          - type: paragraph
+            body: >
+              在 Etched 之前，Groq、Cerebras、SambaNova 是融资最多的三家推理芯片创业公司。Groq 累计融资约 $1.1B+，提供
+              LPU（语言处理单元），这是一种确定性流式推理芯片，延迟很低。GroqCloud 以有竞争力的价格提供推理 API 访问。Groq 架构支持通用 AI 模型推理，不只支持 Transformer——它可以运行
+              Mamba、MoE 和其他架构。Groq 的差异化是延迟（tokens per second 响应速度），而不是批量推理吞吐。
+
+
+              Cerebras Systems 累计融资约 $720M+，采用晶圆级处理方案（Cerebras WSE-3 为 46,225 mm²，而 H100 约为 ~800 mm²）。Cerebras
+              主要聚焦训练，也能做推理；目标客户是企业和政府。SambaNova Systems 累计融资约 $1.2B，采用可重构数据流架构。SambaNova 以 DataScale 系统瞄准企业 AI 部署。
+
+
+              Tenstorrent 是较新的入局者（2016 年创立，由 Jim Keller 领导），使用基于 RISC-V 的 AI 芯片，聚焦开放硬件和软件。Graphcore（英国）为 AI 工作负载开发了
+              IPU（智能处理单元）；商业化受挫，并于 2023 年以据报 $120M 被 SoftBank 收购——远低于其约 $2.8B 的峰值估值。Graphcore
+              的路径是一个重要反向数据点：即使融资充足、架构差异化，AI 芯片创业公司也可能拿不到商业牵引力。
+            claimRefs: []
+      - number: '3.5'
+        title: 切换成本、护城河持续性与替代风险
+        blocks:
+          - type: paragraph
+            body: >
+              Etched 的主要护城河主张来自架构：用硬化逻辑实现注意力机制后，它能达到 GPU 方案在同等硅面积下无法匹配的吞吐效率。这个护城河真实存在，但很窄，也很脆弱。它真实，是因为为注意力优化的硬件确实能更高效地运行
+              Transformer 推理。它狭窄，是因为只适用于 Transformer 推理。它脆弱，是因为（1）NVIDIA 和超大规模云厂商可以推出推理优化 SKU 回应；（2）模型架构正在从纯 Transformer
+              向外演进；（3）软件优化（Flash Attention、量化、speculative decoding）会持续缩小专用硬件与通用硬件之间的效率差距。
+
+
+              CUDA 锁定效应是 NVIDIA 最强的竞争护城河。公司从 NVIDIA GPU 切换到 Etched 时，必须：（1）在 Etched 硅片上重新验证每一个生产模型；（2）用 Etched 的 SDK 替换
+              CUDA/TensorRT 管线集成；（3）接受早期创业公司的供应商集中风险；（4）在内部培养 Etched 工具链能力。这些切换成本不低，但对拥有专门 ML 基础设施团队的大组织来说仍可管理。它们会显著阻碍
+              Etched 的销售流程，但不是采用的不可逾越障碍。
+
+
+              替代风险的反向证据是：AI 芯片创业领域已经出现多家融资充足但失败的公司。Graphcore 以峰值估值一小部分价格被收购，是最近的数据点。Wave Computing 和 Mythic AI
+              也已失败或转向。这一模式说明，AI 芯片创业公司在芯片演示与量产规模部署之间会遇到「死亡谷」：软件生态不成熟、客户惯性、NVIDIA 持续迭代，几股逆风会叠加。
+            claimRefs: []
+          - type: table
+            tableRef: TP004
+            claimRefs: []
+          - type: figure
+            figureRef: FP003
+            claimRefs:
+              - CP002
+              - CP007
+              - CP016
+              - CP017
+              - CP018
+              - CP019
+              - CP020
+      - number: '3.6'
+        title: 图表
+        blocks:
+          - type: callout
+            title: Graphcore 先例是重要反向数据点
+            body: >-
+              Graphcore 融资超过 $700M，开发出真正差异化的 AI 芯片架构（IPU），建立了企业客户关系，并在峰值时估值 $2.8B。2023 年，SoftBank 以约 $120M 收购
+              Graphcore，较峰值估值下跌 96%。失败原因被归结为：架构与 Transformer 主导的工作负载不匹配、CUDA 生态切换成本，以及无法建立企业采用所需的软件生态深度。Etched
+              面临这三类风险。任何尽调都应把 Etched 的上市销售计划，与 Graphcore 未能跨越的具体壁垒逐项对比。
+            calloutType: risk
+            claimRefs:
+              - CP018
+              - CP019
+              - CP020
+          - type: callout
+            title: CUDA 生态才是真正护城河
+            body: >-
+              每一家 AI 芯片创业公司面对的 NVIDIA 真护城河，都不是硬件性能，而是软件锁定。从 NVIDIA 切到任何替代方案，都需要重新验证模型、替换工具链集成，并接受供应商风险。截至 2026 年，Etched
+              的 SDK 尚未发布。在可用于生产、且能证明兼容 PyTorch/vLLM 的 SDK 出现之前，对多数买方来说，硬件性能说法不可执行。超大规模云厂商或大型 AI 公司的推理硅片销售周期通常为 12-24
+              个月，任何硬件评估之前，都必须先证明软件兼容。
+            calloutType: risk
+            claimRefs:
+              - CP009
+              - CP010
+              - CP015
+              - CP016
+  - number: 4
+    title: 财务情况
+    sections:
+      - number: '4.1'
+        title: 收入模式与收入流
+        blocks:
+          - type: paragraph
+            body: >
+              Etched 是一家尚无收入的半导体创业公司。公司计划的收入模式是硬件销售：设计一颗为 Transformer 推理优化的定制 ASIC（Sohu 芯片），并卖给超大规模云厂商、大型 AI
+              原生公司和推理平台运营商。这是一种一次性硬件销售模式，后续重复购买周期会与芯片代际绑定，类似 NVIDIA 的 GPU 产品周期（H100 → H200 → Blackwell）。公司未披露任何软件授权、云
+              API 或 SaaS 收入流。
+
+
+              主要收入流是以 OEM 或企业价格直接销售 Sohu 芯片硬件单元。次级收入流可能是系统级销售（包含 Sohu 芯片的机架或服务器配置），类似 Cerebras 销售 CS-3
+              设备而非裸芯片。公司尚未宣布云市场产品，也没有公开披露收入运行率、年经常性收入（ARR）或任何已签客户合同。
+
+
+              硬件销售的收入确认通常遵循 ASC 606，在芯片交付时点确认。不同于 SaaS，这会让收入与生产批次交付和采购周期绑定，呈现波动。半导体公司的资本强度极高：Etched
+              必须先支付流片、晶圆采购、测试和封装费用，之后才可能收款。半导体硬件从流片到收入的营运资本周期通常为 12-24 个月。
+            claimRefs: []
+          - type: table
+            tableRef: TI001
+            claimRefs: []
+          - type: table
+            tableRef: TI002
+            claimRefs: []
+          - type: figure
+            figureRef: FI001
+            claimRefs:
+              - CI001
+              - CI003
+              - CI005
+              - CI006
+      - number: '4.2'
+        title: GTM 动作与销售效率
+        blocks:
+          - type: paragraph
+            body: >
+              Etched 的 GTM 模式是直销企业客户，目标是超大规模云厂商和大型 AI 原生公司。这是半导体基础设施供应商典型的高 ASP、低销量销售动作。目标买方是在 GPU 计算上每年花费 >$100M
+              的公司中的工程基础设施 VP 或 CTO 级决策者。这个细分领域的推理硅片采购周期，从初次评估到生产部署通常需要 12-24 个月。
+
+
+              在尚无收入阶段，Etched 未披露销售团队规模、销售管线指标或获客成本数据。公司最主要的 GTM 资产，是其声称的 Transformer 推理 10×
+              吞吐优势；若得到验证，这会形成很强的经济论证。销售流程需要：（1）为评估提供免费或补贴芯片样品；（2）为 SDK 采用提供技术集成支持；（3）验证参考架构；（4）谈判供应承诺。
+
+
+              Etched 的渠道经济性尚未成形。NVIDIA 通过广泛的经销商、OEM 和云市场渠道销售。Etched 要么建立类似渠道关系，要么依靠直销服务少数大客户。鉴于这颗芯片只为 Transformer
+              优化，早期客户几乎一定集中在前 10 大 AI 推理买方（OpenAI、Anthropic、Cohere、超大规模云厂商、推理平台）。
+            claimRefs: []
+          - type: figure
+            figureRef: FI002
+            claimRefs:
+              - CI008
+              - CI009
+              - CI010
+              - CI011
+      - number: '4.3'
+        title: 成本结构与单位经济模型
+        blocks:
+          - type: paragraph
+            body: >
+              Etched 的成本结构由半导体制造成本主导：晶圆成本、封装与测试、良率损失，以及芯片设计的 NRE（一次性工程费用）。在 TSMC 4N 制程节点，先进节点晶圆成本估计为每片
+              $15,000-20,000+。新制程节点上的第一代设计，良率通常为 50-70%，到量产阶段可提升至 85-95%+。仅 TSMC 先进节点的一次流片，掩膜组成本就达 $5-15M。
+
+
+              半导体在规模化后毛利率可以很高：NVIDIA 数据中心 GPU 毛利率超过 70-75%。但这些毛利率需要规模来覆盖固定 NRE 成本。Etched 需要卖出数千颗芯片，才能摊销 NRE 成本。以 $120M
+              累计融资计，Etched 面临资本充足性挑战：一代先进制程芯片开发加初始量产批次，可能消耗 $50-100M；在收入到来前超过 2 年的销售周期内，留给第二代芯片或维持运营的余地有限。
+
+
+              关键单位经济输入仍未知，包括：与 TSMC 的晶圆成本承诺、裸片尺寸（die size，决定每片晶圆可切出多少芯片和每颗 die 成本）、目标 ASP，以及良率假设。缺少这些数据，就无法独立验证 Etched
+              声称的每 token 成本经济性。
+            claimRefs: []
+          - type: table
+            tableRef: TI003
+            claimRefs: []
+          - type: figure
+            figureRef: FI003
+            claimRefs:
+              - CI012
+              - CI013
+              - CI014
+              - CI015
+              - CI016
+      - number: '4.4'
+        title: 资本充足性与现金跑道
+        blocks:
+          - type: paragraph
+            body: >
+              Etched 于 2024 年 6 月完成 $120M Series A，投资人包括 Primary Venture Partners 和 Positive Sum。截至 2026 年
+              Q1，公司尚未宣布后续融资。$120M 是全部已披露外部融资。公司未公开披露任何债务额度、项目融资或政府补助。
+
+
+              Etched 这个阶段的半导体创业公司，月度烧钱速度通常为 $3-8M/month，主要由以下因素驱动：（1）工程人员（芯片设计师总薪酬 $300-500K）；（2）EDA
+              软件授权（$5-10M/year）；（3）晶圆试产和掩膜组成本；（4）运营费用。按 $5M/month 中点烧钱计算，$120M 可从交割日起支撑约 24 个月现金跑道，意味着跑道延伸至约 2026 年
+              H2，与预期流片完成时点一致。
+
+
+              关键资本里程碑，是量产硅片可用。如果流片按计划完成，公司需要在首颗硅片前或刚完成后立即募集 Series B（基于同类半导体融资，估计
+              $200-500M），以支持量产、客户爬坡和下一代芯片开发。无法按时融资会带来重大持续经营风险。在没有额外资本的情况下，通向首笔客户收入的跑道长于当前资金能支撑的时间。
+            claimRefs: []
+          - type: table
+            tableRef: TI004
+            claimRefs: []
+      - number: '4.5'
+        title: 财务缺口与尽调阻断项
+        blocks:
+          - type: paragraph
+            body: >
+              Etched 的财务画像存在重大缺口，无法从公开资料补齐。收入为零（产品前阶段）。所有运营指标（烧钱速度、现金余额、员工数、COGS 结构、毛利率预测）均未披露。没有可用财务报表。作为私营公司，Etched
+              无需提交公开财务文件。2024 年 6 月的 $120M 融资，是记录中最主要的财务事实。
+
+
+              最重要的财务尽调阻断项包括：（1）截至 2026 年 Q1 的实际烧钱速度和现金余额（公司资金是否足以撑到流片，还是近期就需要融资？）；（2）TSMC
+              晶圆承诺和成本条款（决定每颗芯片成本和毛利率潜力）；（3）首个客户 LOI 或设计定点（验证收入模式和时间表）；（4）达到首次量产所需总资本（决定 Series A 是否足够，还是需要过桥融资）。
+
+
+              财务结论是，Etched 正处在半导体创业公司的最高风险区间：所有资本都投入开发且没有收入，产品尚未在生产环境验证，下一轮融资必须在商业验证前完成。这在结构上类似 Cerebras、Groq 和
+              SambaNova 同阶段的资本位置——但这些公司各自需要 $700M-$1.2B 才到达商业产品阶段，而 Etched 迄今仅融资 $120M。
+            claimRefs: []
+          - type: table
+            tableRef: TI005
+            claimRefs: []
+          - type: figure
+            figureRef: FI004
+            claimRefs:
+              - CI014
+              - CI015
+              - CI016
+              - CI017
+              - CI018
+              - CI019
+      - number: '4.6'
+        title: 图表
+        blocks:
+          - type: callout
+            title: 资本充足性是最紧迫的财务风险
+            body: >-
+              Etched 的 $120M Series A，按半导体创业公司烧钱速度（估计 $3-8M/month）计算，从 2024 年 6 月起可提供约 15-40 个月现金跑道，约在 2025-2027 年到期。先进
+              ASIC 开发项目从流片到量产通常需要 18-30 个月。时间线很紧：公司可能需要在量产硅片得到验证前募集 Series B（估计
+              $200-500M），这恰好是资本周期中风险最高的节点。若无法拿到这笔过桥资金，将带来重大持续经营风险。
+            calloutType: risk
+            claimRefs:
+              - CI014
+              - CI015
+              - CI016
+              - CI017
+          - type: callout
+            title: 没有可用于承做的财务数据
+            body: >-
+              Etched 没有公开财务披露。公司没有收入，没有经审计财务报表，除已宣布的 Series A
+              外没有公开股权结构表，也没有披露运营指标（烧钱速度、员工数、现金余额）。承做这笔投资，需要拿到公司的内部财务模型、TSMC 成本条款和 Series B
+              融资时间表。这是尚无收入半导体创业公司的标准状态，但应视为硬门槛：没有公司提供的财务数据，就不要做投资判断。
+            calloutType: recommendation
+            claimRefs:
+              - CI001
+              - CI002
+              - CI003
+              - CI020
+              - CI021
+              - CI022
+  - number: 5
+    title: 产品与技术
+    sections:
+      - number: '5.1'
+        title: 产品定义与 Sohu 芯片规格
+        blocks:
+          - type: paragraph
+            body: >
+              Etched 唯一产品是 Sohu ASIC —— 一颗专为推理打造的加速芯片，把 Transformer
+              自注意力计算永久写进硅片。公司的核心判断是：与其在可编程逻辑上模拟注意力机制，不如把注意力硬连线。这样，Sohu 可以拿掉指令分发和内存管理开销；这些开销正是 GPU 在自回归 Transformer
+              负载上吞吐受限的关键。Etched 称，这种架构选择让 Sohu 在 Transformer 推理任务上达到 NVIDIA H100 约 10× 的吞吐，但该说法尚未用量产芯片得到独立验证。
+
+
+              Sohu 瞄准的是 LLM 部署中的推理阶段，而不是训练。芯片只面向 Transformer 架构：稠密解码器模型（GPT-4 级、LLaMA、Mistral、Falcon）和编码器—解码器模型（T5
+              级）。它不支持 Mamba 状态空间模型、纯循环网络等非 Transformer 架构。Sohu 的专用化意味着，任何采用它的客户都在芯片可用寿命内押注 Transformer 范式。
+
+
+              截至 Q1 2026，Sohu 还不是量产芯片。公司称 TSMC 4N 工艺节点的流片正在推进，但尚未公开展示工程样片。产品规格书、裸片照片、第三方基准测试都没有发布。etched.com/sohu 的产品页返回
+              404 错误。Etched 目前可见的商业产品资产只有：公司主页（etched.com）、融资公告（$120M Series A，June 2024），以及两位创始人在 Google 的职业经历。
+            claimRefs: []
+          - type: table
+            tableRef: TE001
+            claimRefs: []
+          - type: table
+            tableRef: TE002
+            claimRefs: []
+          - type: figure
+            figureRef: FE001
+            claimRefs:
+              - CE001
+              - CE002
+              - CE005
+              - CE008
+              - CE016
+              - CE029
+      - number: '5.2'
+        title: 架构——硬化的 Transformer 注意力硅片
+        blocks:
+          - type: paragraph
+            body: >
+              Etched 的核心架构判断是：Transformer 注意力操作——Vaswani 等人在 "Attention Is All You
+              Need"（2017）中提出的缩放点积多头自注意力——足够稳定，也足够占计算主导地位，值得被永久编码进硅片。传统 GPU 用 CUDA 内核（包括 FlashAttention 优化变体）在通用 SIMD
+              计算单元上计算注意力。Sohu 的注意力引擎用硬连线逻辑门取代这条可编程路径；芯片出厂后，这些逻辑门的功能就无法更改。
+
+
+              内存架构是第二个关键设计维度。现代 LLM 推理的瓶颈不是原始算力，而是内存带宽：每生成一个 token，都要从 DRAM 读取完整 KV-cache 和模型权重。Sohu 几乎肯定集成 High
+              Bandwidth Memory（HBM）堆栈来解决这一点，路径类似 NVIDIA H100（HBM3）和 Groq LPU（以 SRAM 为主）。具体 HBM 代际和堆栈数量尚未披露。HBM
+              带宽决定芯片每秒可解码多少 token，这也是客户最能感知的核心性能指标。
+
+
+              硬连线注意力引擎带来实质性的架构取舍：它把注意力计算的硅片效率推到最高，但也永久排除了对未来可能成为主流架构的支持。Mamba 和其他状态空间模型是最显眼的替代范式；这些架构用线性递归取代注意力，无法在 Sohu
+              的注意力引擎上运行。因此，Etched 做的是高信念押注：在 Sohu 的商业生命周期内，Transformer 注意力仍会主导 LLM 推理；这段生命周期通常从首次量产起算 3-5 年。
+            claimRefs: []
+          - type: table
+            tableRef: TE003
+            claimRefs: []
+          - type: figure
+            figureRef: FE002
+            claimRefs:
+              - CE001
+              - CE005
+              - CE008
+              - CE025
+              - CE030
+      - number: '5.3'
+        title: 制造、成熟度与技术依赖
+        blocks:
+          - type: paragraph
+            body: >
+              Sohu 面向 TSMC 4N 工艺节点设计。4N 属于 4nm 级先进节点，晶体管密度和能效适合 AI 推理芯片。TSMC 4N 是 N4
+              工艺家族的客户定制变体，要求客户与晶圆厂建立关系，并承诺相当规模的最低晶圆量。领先 TSMC 产能竞争激烈；NVIDIA、AMD、Apple、Qualcomm 等大客户拥有优先配额。Etched 是没有 TSMC
+              量产历史的初创公司，必须以新客户身份谈判晶圆配额，通常要接受更小批量和更长交期。
+
+
+              截至 Q1 2026，芯片制造成熟度仍处于硅前阶段：公司称流片正在推进，但尚未确认。先进节点上的新架构首版硅片天然带有设计落硅风险：行业文献称，复杂数字 ASIC 不返工的首版成功率为
+              50-70%，一次返工会额外增加 6-12 个月和 $5-15M NRE 成本。工程样片尚未公开展示。
+
+
+              TSMC 之外的关键技术依赖包括：HBM 供应（集中在 SK Hynix、Micron、Samsung）、先进封装（HBM 需要 CoWoS 式集成，而 TSMC 的该产能本身也受限），以及 EDA
+              工具链授权（Cadence、Synopsys）。每一项依赖都可能成为供应链单点故障。Etched 体量小，相比已经签有优先协议的超大规模云厂商自研芯片项目（Amazon Trainium、Google
+              TPU、Microsoft Maia），可能在配额上处于劣势。
+            claimRefs: []
+          - type: figure
+            figureRef: FE003
+            claimRefs:
+              - CE003
+              - CE011
+              - CE016
+              - CE021
+              - CE027
+      - number: '5.4'
+        title: 软件栈、SDK 与开发者界面
+        blocks:
+          - type: paragraph
+            body: >
+              截至 Q1 2026，Etched 没有发布开发者 SDK、API 文档、集成指南或模型兼容矩阵。没有任何公开软件产物，是商业部署角度最重大的产品就绪缺口。企业推理客户至少需要三样东西：模型转换工具（把
+              HuggingFace 格式检查点加载到芯片上）、推理运行时（处理请求批处理和 token 调度）、以及兼容 OpenAI 格式端点的服务 API（事实上的推理 API 标准）。
+
+
+              HuggingFace Transformers 库是 Transformer 模型分发和推理的主导生态框架。任何商用 AI 推理芯片都必须接入 HuggingFace
+              模型中心格式（SafeTensors、config.json schema），让客户无需手工转换即可运行标准 LLaMA、Mistral、Falcon 检查点。Etched 尚未披露其编译器是直接吃
+              HuggingFace 模型格式，还是需要单独转换步骤。
+
+
+              推理芯片的开发者采用通常沿着一条清晰路径推进：面向开发者的文档 → 开源 SDK → 首个参考部署 → 生态工具。Etched 目前在第零步：没有 SDK、没有文档、没有参考实现。Groq 已经随 LPU
+              推出开发者可访问的云 API 和公开基准数据，说明开发者界面是关键商业加速器。Etched 缺少开发者界面，显示公司先抓硅片、后抓软件——在流片阶段这是合理优先级——但会推迟客户采用，首版硅片之后收入兑现还要再多
+              6-12 个月。
+            claimRefs: []
+          - type: table
+            tableRef: TE004
+            claimRefs: []
+      - number: '5.5'
+        title: 路线图、差异化与技术风险
+        blocks:
+          - type: paragraph
+            body: >
+              Etched 的差异化逻辑建立在三项主张上：（1）硬连线 Transformer 注意力在推理负载上相对 NVIDIA H100 带来 10×
+              吞吐；（2）这种性能优势会转化为超大规模云厂商推理运营商实质性更低的每 token 成本；（3）Transformer 架构会长期占优，足以证明单一架构 ASIC 投资合理。截至 Q1
+              2026，这三项主张都没有得到独立验证。
+
+
+              最大技术风险是架构锁定。如果非 Transformer 架构——Mamba、RWKV 或未来循环变体——拿到显著市场份额，Sohu 会比折旧周期允许的速度更快过时。领域专用芯片的历史（早期 AI 训练芯片、基于
+              FPGA 的推理加速器、第一代神经形态芯片）说明，写进硅片的架构押注可能在一个设计代际内变成搁浅资产。Etched 的赌注异常集中：不只是
+              Transformer，而是把具体注意力操作硬连线进硅片，没有可编程后备路径。
+
+
+              除了当前 Sohu 流片，产品路线图完全没有被刻画。第二代芯片尚未宣布，产品家族也未披露（例如仅推理 vs. 微调、数据中心 vs.
+              边缘）。这对于流片阶段公司可以理解，但也是额外风险因子：客户要做供应承诺，就需要看见下一代路线图，才有理由长期采用一个平台。即使首版硅片按期成功，Etched 路线图不透明仍是商业风险。
+            claimRefs: []
+          - type: table
+            tableRef: TE005
+            claimRefs: []
+          - type: figure
+            figureRef: FE004
+            claimRefs:
+              - CE001
+              - CE003
+              - CE004
+              - CE005
+              - CE018
+              - CE019
+      - number: '5.6'
+        title: 图表
+        blocks:
+          - type: callout
+            title: 架构锁定是决定性的技术风险
+            body: >-
+              Sohu 的硬连线 Transformer 注意力既是性能优势，也是生存风险。如果任何非 Transformer 架构（Mamba、RWKV 或未来混合架构）在 Sohu 达到规模量产前拿下 LLM
+              推理负载的显著份额，芯片就在主市场过时。领域专用芯片历史表明，单一架构押注可能在一个产品代际内变成搁浅资产。不同于可用软件更新重配负载的 GPU 在位者，Sohu 的架构出厂后就是永久的。
+            calloutType: risk
+            claimRefs:
+              - CE012
+              - CE014
+              - CE036
+              - CE037
+          - type: callout
+            title: 没有量产芯片、没有 SDK、没有客户：三个零
+            body: >-
+              截至 Q1 2026，Etched 没有量产芯片，没有公开 SDK 或文档，也没有宣布客户或设计定点。这符合一家距离首笔收入还有 18-24
+              个月、尚未流片的半导体初创公司的状态——但也意味着所有商业假设（性能主张、每 token 成本优势、模型兼容性）都完全基于公司口径的预测，没有独立验证。尽调必须把所有技术主张视为假设，直到首版硅片完成基准测试。
+            calloutType: risk
+            claimRefs:
+              - CE004
+              - CE005
+              - CE018
+              - CE019
+              - CE028
+  - number: 6
+    title: 客户情况
+    sections:
+      - number: '6.1'
+        title: 客户群分层与目标买家
+        blocks:
+          - type: paragraph
+            body: >
+              Etched 的 Sohu 芯片瞄准 AI 推理芯片买家。这个群体很窄：他们以足够大规模运行基于 Transformer 的大语言模型，GPU 成本已经成为实质性运营开支。主要买家画像是每年在
+              Transformer 推理 GPU 计算上花费超过 $50 million 的公司里的基础设施 VP 或 ML 平台负责人。截至 Q1 2026，全球大约有 50-200
+              家公司符合这一画像，集中在三层：（1）OpenAI、Anthropic、Mistral 等前沿 AI 实验室，在消费者互联网规模运行自研 Transformer
+              模型；（2）AWS、Google、Microsoft 等超大规模云厂商，把 LLM 推理 API 作为商业产品；（3）Together AI、Anyscale、Perplexity AI
+              等推理即服务平台，为商业开发者运行开源 Transformer 模型。
+
+
+              这个分层由 Transformer 负载性质定义，而不是行业垂直。任何大规模运行自回归 Transformer 解码器推理的组织——无论是 AI 原生公司、提供 LLM API
+              的超大规模云厂商，还是部署自研模型的大企业——都是潜在 Sohu 客户。主要运行 Transformer 编码器负载的组织（embedding、分类、BERT
+              级模型）优先级更低，因为硬连线硅片的注意力计算优势在单次编码器推理上不如自回归解码明显。
+
+
+              Etched 可触达买家第一波高度集中在美国：OpenAI、Anthropic、Together AI、Anyscale、Scale AI、Perplexity 都总部在美国。Cohere（加拿大）和
+              Mistral（法国）是公开已知具备推理规模的少数一线国际潜在客户。这种集中度对销售动作有利——账户更少、地理上更容易触达——但如果美国监管环境或出口管制框架限制芯片供应关系，也会带来风险。
+            claimRefs:
+              - CU001
+              - CU002
+              - CU003
+              - CU018
+          - type: table
+            tableRef: TU001
+            claimRefs:
+              - CU003
+              - CU006
+              - CU007
+              - CU008
+              - CU009
+              - CU011
+          - type: figure
+            figureRef: FU001
+            claimRefs:
+              - CU012
+              - CU013
+              - CU026
+      - number: '6.2'
+        title: 采用轨迹与当前牵引
+        blocks:
+          - type: paragraph
+            body: >
+              截至 Q1 2026，Etched 客户牵引为零。公司没有披露任何客户、活跃评估、签署的
+              LOI、设计定点，或具名工程简报接收方。对于硅片尚未公开展示的芯片初创公司，这属于基线状态：潜在客户无法对不存在的量产样片做基准测试；没有实物样片可供技术验证时，采购团队也不太可能签署硬件评估协议。
+
+
+              AI 推理芯片初创公司的采用轨迹通常分为五个阶段：（1）硅前认知和面向潜在客户的工程简报，（2）首版硅片交付和保密性能基准测试，（3）与 1-3
+              个已承诺设计定点客户做试点部署，（4）量产爬坡和具名客户公告，（5）生态扩张。基于公开证据，Etched 尚未以任何可公开确认的形式进入阶段 1。截至 Q1
+              2026，公司没有宣布工程简报、样片可用时间表或任何客户参与计划。
+
+
+              对比来看，Groq 在硬件出货前就围绕其架构建设开发者社区，并提供早期基准测试访问，从而开始客户参与。Cerebras 也早在商业可用前就向超大规模云客户做简报。按这些类比衡量，Etched
+              的采用轨迹落后：公司已融资 $120 million，但尚未拿出任何公开证据证明客户参与活动。假设 2025-2026 年按期完成流片、H1 2027 交付首版硅片，首笔收入最早也只能合理落在 H2 2027 到
+              2028；前提是首版硅片交付后还要经过 12-24 个月评估周期。
+            claimRefs:
+              - CU012
+              - CU013
+              - CU020
+              - CU024
+              - CU029
+          - type: table
+            tableRef: TU002
+            claimRefs:
+              - CU012
+              - CU013
+              - CU024
+              - CU029
+          - type: figure
+            figureRef: FU002
+            claimRefs:
+              - CU001
+              - CU018
+              - CU020
+      - number: '6.3'
+        title: 具名客户证据——缺席与类比证明
+        blocks:
+          - type: paragraph
+            body: >
+              截至 Q1 2026，Etched 没有具名客户、设计定点或公开确认的评估伙伴。Etched 自身在「具名客户证明」表中的所有客户格都是占位，代表潜在市场目标，而不是实际商业关系。对一家成立 2
+              年以上、Series A 后 12 个月以上的公司来说，这并不常见：大多数处于类似融资阶段的推理芯片公司，至少会具名一个评估伙伴，或宣布开发者访问计划。
+
+
+              可比推理芯片公司的类比客户证明存在，也有参考价值。Groq 的案例研究页显示，AI 原生推理平台——包括 Etched 瞄准的同规模、同类型公司——会在每 token
+              性能经济性足够有吸引力时采用专用推理硬件。Groq 列出的客户案例运行面向生产消费产品的大规模 Transformer 推理，验证了买家群体存在，也愿意采用非 GPU 推理硬件。AWS Inferentia
+              案例，包括 Stability AI（图像生成推理）和 Quora（Poe 聊天机器人推理），表明采用定制推理硅片的公司可在相近吞吐水平下，相比 GPU 推理实现 40-70% 成本下降。
+
+
+              这些类比证明对验证买家行为假设有价值——即当每 token 成本经济性被证明后，AI 原生公司会采用推理 ASIC——但并不验证 Etched 本身。关键缺口是 Etched 特定客户信号完全缺失：没有
+              LOI、没有 NDA 评估协议、没有工程简报、没有设计定点。Groq 的 G2 评价提供了开发者层面反馈，确认推理芯片采用是真实的，性能基准测试会驱动开发者采用决策。Etched 目前没有等价开发者信号，没有
+              SDK，也没有公开基准测试数据。
+            claimRefs:
+              - CU001
+              - CU004
+              - CU005
+              - CU021
+              - CU027
+              - CU028
+              - CU029
+          - type: table
+            tableRef: TU003
+            claimRefs:
+              - CU001
+              - CU004
+              - CU005
+              - CU006
+              - CU021
+          - type: figure
+            figureRef: FU003
+            claimRefs:
+              - CU004
+              - CU005
+              - CU021
+              - CU027
+              - CU028
+      - number: '6.4'
+        title: 留存、扩张与集中度风险
+        blocks:
+          - type: paragraph
+            body: >
+              Etched 没有客户，因此无法直接衡量留存和流失指标。不过，推理芯片采用的结构性经济性强烈偏向高留存。一家 AI 公司若要重构服务栈、模型编译器和部署管线，让它们跑在 Sohu 硬件上——估计需要 2-5
+              名专职工程师投入 3-6 个月——再切回 GPU 基础设施或替代 ASIC 时，切换成本相当于 12-18 个月的重新工程化。这会形成类似云基础设施的结构性锁定，只是不带数据可携性摩擦。
+
+
+              如果性能得到验证，推理芯片赛道的扩张经济性有利。AWS Inferentia 案例显示，采用定制推理硅片的客户通常会在首次部署后 12 个月内扩容，原因是每次推理成本更低，从而支撑更高推理量。Together
+              AI 和 Anyscale 若成为 Etched 潜在客户，Sohu 容量大概率会随其整体 LLM 推理增长而扩张；开源模型质量提升、推理成本下降，预计会显著拉动这类增长。
+
+
+              集中度风险是 Etched 近期最严重的结构性问题。当前客户为零，因此第一个客户会贡献初始收入的 100%。即使早期有 3-5 个客户，任何单一客户占首年收入 25-35%
+              的情景也会带来极端集中度风险。如果该客户减少用量——因为战略转向离开 Transformer 模型、竞争对手提供更好经济性，或其自身融资受挫——Etched
+              会在没有多元化缓冲的情况下遭遇收入冲击。Graphcore 的失败部分源于客户集中：少数大客户推迟或取消部署，造成连锁收入缺口。Etched 从第一批量产开始就必须优先分散客户。
+            claimRefs:
+              - CU019
+              - CU025
+              - CU033
+              - CU035
+              - CU036
+              - CU037
+          - type: table
+            tableRef: TU004
+            claimRefs:
+              - CU025
+              - CU005
+              - CU021
+          - type: table
+            tableRef: TU005
+            claimRefs:
+              - CU019
+              - CU014
+              - CU013
+              - CU037
+          - type: figure
+            figureRef: FU004
+            claimRefs: []
+      - number: '6.5'
+        title: 客户结论——尽调阻断项
+        blocks:
+          - type: paragraph
+            body: >
+              Etched 的客户尽调结论，在本报告中明确是最高严重级别的阻断项。Etched 是一家尚无收入、尚无硅片的公司，公开具名客户关系为零，供客户评估的公开基准测试为零，供开发者试验的 SDK
+              为零，设计定点为零。任何客户信号的缺失并非由保密策略解释——公司已在 June 2024 公开宣布 $120 million Series A——而是反映公司确实仍处于商业化前阶段。
+
+
+              来自 Groq（案例研究显示 AI 原生推理平台采用）和 AWS Inferentia（超大规模云客户采用 ASIC
+              的证明）的类比证据，在市场层面验证了买家行为假设。这些类比确认推理芯片买家群体存在，有预算和采购能力采用非 GPU 推理硬件，并会在每 token 成本经济性被证明后这样做。但这种市场层面证明并不降低
+              Etched 的公司特定客户风险，后者仍然关键。
+
+
+              客户章节的关键尽调问题是：（1）Etched 是否已进入任何 NDA 约束下的评估协议，即便只是非正式？（2）Etched 已向哪些公司在工程层面介绍 Sohu
+              架构？（3）公司对首个客户关闭日期和首笔收入日期的估计是什么？（4）是否有任何公司表达过书面兴趣，愿意在首版硅片性能达标后签署量产供应协议？在这些问题拿到可验证证据前，客户章节就是阻断性尽调风险，任何投资委员会都不应忽视。Graphcore
+              先例——一家融资超过 $700M 的芯片初创公司，未能把强工程证明转化为规模客户采用——直接警示了 Etched 面临的客户开发难度。
+            claimRefs:
+              - CU001
+              - CU014
+              - CU015
+              - CU037
+  - number: 7
+    title: 风险
+    sections:
+      - number: '7.1'
+        title: 技术与架构风险
+        blocks:
+          - type: paragraph
+            body: >
+              Etched 的首要技术风险，是其架构押注不可逆。Sohu ASIC 把 Transformer 注意力机制直接硬编码进硅片：多头注意力、key-value caching、softmax
+              计算的连线都在硬件中物理实现。一旦提交流片——在 TSMC N3/N4 工艺节点，估计价格为 $50–200 million——如果 Transformer 范式在 Sohu
+              实现商业收入前被实质性替代，就没有软件层面的补救路径。
+
+
+              架构替代风险不是假设。Mamba（结构化状态空间模型）和 RWKV 已在语言建模基准测试上展现出与 Transformer 竞争的性能，同时去掉了 KV-cache；而 KV-cache 正是 Sohu
+              硅片被优化来加速的数据结构。Mixtral 8x7B 等 Mixture-of-Experts（MoE）模型也显示，大规模推理可以用与稠密解码器 Transformer 根本不同的计算图实现。如果 SSM 或
+              MoE 架构在 4–6 年内获得超大规模云厂商的生产采用，Sohu 硅片就会在架构上搁浅，除非完全重新设计，否则没有恢复路径。
+
+
+              架构风险之外，High Bandwidth Memory（HBM）供应链集中在 SK Hynix、Samsung、Micron 三家；相比 NVIDIA 和 AMD，AI
+              芯片初创公司在配额队列中几乎没有议价权。HBM3E 供应受限会拖慢 Sohu 量产，不管流片是否成功。TSMC 本身也是单点依赖：如果台海升级、地震或其他不可抗力冲击 TSMC，就没有具备足够产能的替代
+              N3/N4 晶圆厂。最后，首次 ASIC 设计经常在首版硅片上错过 PPA（power, performance, area）目标；一次重新流片会增加 12–18 个月和 $20–50 million 额外成本。
+            claimRefs:
+              - CR001
+              - CR002
+              - CR003
+              - CR004
+              - CR005
+              - CR006
+              - CR007
+              - CR008
+          - type: table
+            tableRef: TR001
+            claimRefs:
+              - CR001
+              - CR002
+              - CR003
+              - CR004
+              - CR005
+              - CR007
+              - CR008
+          - type: figure
+            figureRef: FR002
+            claimRefs:
+              - CR005
+              - CR008
+              - CR012
+              - CR019
+              - CR033
+              - CR034
+              - CR035
+              - CR036
+              - CR038
+          - type: figure
+            figureRef: FR003
+            claimRefs:
+              - CR001
+              - CR003
+              - CR004
+              - CR005
+              - CR007
+      - number: '7.2'
+        title: 监管、地缘政治与法律风险
+        blocks:
+          - type: paragraph
+            body: >
+              Etched 处在三条不同法律和监管风险向量的交点。第一，美国 Bureau of Industry and Security（BIS）根据 Export Administration
+              Regulations（EAR）执行出口管制，要求先进半导体物项出口取得许可证。BIS Entity List 限制向数百个受关注主体出口；任何向国际客户销售 Sohu 芯片的行为，都需要核验 Entity
+              List，并可能提交出口许可申请。October 2023 Federal Register 收紧半导体制造物项出口管制的规则，也对先进逻辑芯片供应链施加限制，影响 TSMC 制造芯片流向受限司法辖区客户的方式。
+
+
+              第二，CHIPS and Science Act（2022）提供最高 $52 billion 半导体制造激励，但任何接受 CHIPS Act 资金的公司都要承担限制，包括 10
+              年内不得在受关注国家实质性扩张先进芯片制造。Etched 本身未必寻求直接 CHIPS Act 资金，但其制造伙伴 TSMC 会；与获得 CHIPS 资助的晶圆厂签供应协议，会带来合规义务，可能限制 Etched
+              服务某些国际客户的能力。
+
+
+              第三，IP 和专利敞口带来法律风险。NVIDIA 已表现出对半导体竞争对手提起专利诉讼的意愿；Arm Holdings 广泛授权其 ISA 和微架构，任何纳入 Arm 处理器核心的芯片都需要有效授权协议。如果
+              Sohu 纳入任何基于 Arm 的控制核心（复杂 ASIC 中很常见），Etched 就承担持续 Arm 授权义务。商业秘密风险也偏高：从 NVIDIA、Meta 或 Google 加入 Etched
+              的工程师，可能面对前雇主的 IP 挪用指控。EU AI Act（2024）引入第四个监管维度：其关于通用 AI（GPAI）模型合规的条款会影响 Etched
+              的目标客户，并可能为推理基础设施层带来间接芯片合规要求。
+            claimRefs:
+              - CR009
+              - CR010
+              - CR011
+              - CR012
+              - CR013
+              - CR014
+              - CR015
+              - CR016
+              - CR017
+              - CR018
+              - CR019
+          - type: table
+            tableRef: TR002
+            claimRefs:
+              - CR009
+              - CR010
+              - CR011
+              - CR012
+              - CR013
+              - CR014
+              - CR015
+              - CR016
+              - CR017
+          - type: figure
+            figureRef: FR001
+            claimRefs:
+              - CR001
+              - CR009
+              - CR020
+              - CR027
+              - CR033
+      - number: '7.3'
+        title: 竞争替代与过时风险
+        blocks:
+          - type: paragraph
+            body: >
+              Etched 面临的竞争风险比多数芯片初创公司更严峻，因为主要竞争对手 NVIDIA 既拥有主导市场地位，又有多代路线图，不断抬高 Sohu 必须跨过的性能门槛。NVIDIA Blackwell 架构（H100
+              后继，2024–2025 推出）较 Hopper 级硅片带来 2–4× 推理吞吐提升。预计 2026–2027 的 Rubin 架构还会进一步拉大领先。Etched 要赢得客户，Sohu
+              需要的不是某一个时间点的性能优势，而是跨越整个 NVIDIA 路线图的持续优势；如果 Sohu 流片哪怕滑后一代，这个要求都会更难，因为 Sohu 要追的差距会变大。
+
+
+              NVIDIA 之外，AMD MI300X/MI325X 芯片已拿下有意义的 AI 推理市场份额，尤其是在运行开源模型的推理即服务平台中。AMD 相比 NVIDIA 价格更低的位置，对 Etched 形成双向价格
+              / 性能挤压：NVIDIA 设定性能天花板，AMD 设定成本地板。超大规模云厂商自用硅片项目——Google TPU v6（Trillium）、AWS Trainium 2、Microsoft Maia
+              100——会绕开 Etched 最有价值潜在客户所在的市场；如果超大规模云厂商把自有推理负载全部转向自研硅片，Etched 的可触达市场会收缩到推理即服务平台和不能自研芯片的企业 ML 团队。
+
+
+              直接 AI 推理 ASIC 竞争对手 Groq（LPU）和 Cerebras（CS-3）已经量产，有真实客户和公开性能基准测试。Etched
+              进入的是一个至少已有两个直接硬件类比对象的市场；它们在客户关系和量产经验上领先 2–3 年。Graphcore 的失败——技术架构强，但没有持续商业牵引——是最有启发性的先例：专用 AI
+              芯片公司如果在资本耗尽前无法把架构优势转化为客户承诺，往往会失败，不管技术本身多强。
+            claimRefs:
+              - CR020
+              - CR021
+              - CR022
+              - CR023
+              - CR024
+              - CR025
+              - CR026
+          - type: table
+            tableRef: TR003
+            claimRefs:
+              - CR020
+              - CR021
+              - CR022
+              - CR023
+              - CR024
+              - CR025
+              - CR026
+      - number: '7.4'
+        title: 执行、团队与运营风险
+        blocks:
+          - type: paragraph
+            body: >
+              即便按芯片初创公司的标准看，Etched 的执行风险也异常高。公司试图用约 30 人团队打造世界首颗量产 Transformer 推理 ASIC；组织层面没有既往流片记录，CEO Gavin Uberti 年仅
+              23 岁，也没有芯片走向量产的经验。团队中有曾在 NVIDIA、Meta、Google 工作的工程师，提供了相关领域经验，但这支团队是否具备执行多年期全栈 ASIC 项目的组织能力——从 RTL 设计到
+              DFT、物理设计、TSMC PDK 集成，再到首版硅片点亮调试——尚未在这种规模上公开证明。
+
+
+              ASIC 开发周期带来结构性执行时间线风险。从提交流片到首版硅片返回约需 6–9 个月；从首版硅片到量产还需要 12–18 个月。如果 Etched 在 2025–2026 年流片（考虑 2024 Series
+              A，这是最可能窗口），首笔收入现实上最早也不会早于 H2 2027——而且前提是首版硅片达到性能目标，SDK 开发完成，客户评估在硅片交付后 6–12 个月内完成。
+
+
+              软件 / SDK 执行风险尤其被低估。Graphcore 失败很大程度上由 SDK 不成熟驱动，客户无法高效把模型移植到 Graphcore 架构。Etched 截至 Q1 2026 没有披露
+              SDK、编译器、软件栈或开发者计划。为 Sohu 构建高性能 MLIR/XLA 编译器后端或定制 SDK，是多年工程工作，且需要一支技能不同于硬件团队的软件团队。只做硬件、假设客户会自助采用
+              SDK，对一家没有既有生态关系的芯片初创公司不是可行商业路径。
+            claimRefs:
+              - CR027
+              - CR028
+              - CR029
+              - CR030
+              - CR031
+              - CR032
+          - type: table
+            tableRef: TR004
+            claimRefs:
+              - CR027
+              - CR028
+              - CR029
+              - CR030
+              - CR031
+              - CR032
+          - type: figure
+            figureRef: FR004
+            claimRefs:
+              - CR033
+              - CR034
+              - CR035
+              - CR036
+              - CR037
+              - CR038
+      - number: '7.5'
+        title: 财务与投资风险
+        blocks:
+          - type: paragraph
+            body: >
+              Etched 的财务风险由三项因素叠加主导：（1）资本强度极高且时点不确定；（2）当前收入为零，最好也要到 H2 2027 前才可能看见首笔收入；（3）自 2023 年以来，除 AI
+              超大规模云厂商支持的公司外，融资市场对深科技硬件投资的胃口已经下降。
+
+
+              在 TSMC N3/N4 工艺节点开发 ASIC，单次流片总项目成本估计为 $50–200 million，取决于掩膜版数量、设计复杂度和所需验证迭代次数。这笔成本会在向客户交付任何芯片前就被投入。Etched
+              的 $120 million Series A 按典型硅前烧钱速度（每月 $3–6 million）可提供约 18–36
+              个月现金跑道，但这条跑道可能不足以覆盖从流片到首版硅片、客户评估和设计定点的桥段，尤其是如果流片需要一次或多次重新流片。
+
+
+              在任何产品收入实现前，Etched 必须融资 Series B，这让公司的财务生存完全依赖 VC 市场条件；而利率、AI 投资情绪、初创公司融资倍数都不确定。如果 2026–2027 年 AI
+              支出增长放缓或暂停，Etched 瞄准的推理芯片市场可能收缩，既降低客户采用新硬件的意愿，也削弱投资人资助尚无收入芯片初创公司的胃口。收入集中度风险也很严重：即便 Etched 进入量产，最初 3–5
+              个客户也可能贡献初始收入的 60–80%，对任何单一客户的用量下调或退出形成极端敞口。
+            claimRefs:
+              - CR033
+              - CR034
+              - CR035
+              - CR036
+              - CR037
+              - CR038
+              - CR039
+              - CR040
+          - type: table
+            tableRef: TR005
+            claimRefs:
+              - CR033
+              - CR034
+              - CR035
+              - CR036
+              - CR037
+              - CR038
+      - number: '7.6'
+        title: 图表
+        blocks:
+          - type: callout
+            title: 架构锁定不可逆，并取决于市场时点
+            body: >-
+              硬编码的仅支持 Transformer 架构既是 Etched 的主要性能差异化，也是其生存风险。一旦提交流片，公司的商业可行性就完全取决于：在芯片 5–8 年商业寿命内，Transformer
+              架构仍是主导推理范式。如果这一假设失败，没有软件补丁路径。
+            calloutType: insight
+            claimRefs:
+              - CR001
+              - CR002
+              - CR003
+          - type: callout
+            title: 运营 2 年多仍无设计定点或客户，是阻断性尽调信号
+            body: >-
+              截至 Q1 2026，Etched 宣布客户为零、设计定点为零、签署 LOI 为零、公开具名评估伙伴为零——公司成立已超过两年，Series A 后也已十二个月。Graphcore 先例表明，即便有大量融资，专用
+              AI 芯片公司也可能无法把强架构转化为商业牵引。
+            calloutType: insight
+            claimRefs:
+              - CR026
+              - CR027
+              - CR040
+          - type: callout
+            title: 尽调必须确认流片时间表、烧钱速度和至少一个具名评估伙伴
+            body: >-
+              投资前，尽调必须验证：（1）当前流片时间表和迄今 NRE 承诺；（2）月度烧钱速度和现金跑道预测；（3）是否有任何公司在 NDA 下收到过硅前工程 briefing；（4）Arm
+              授权是否到位。这四个数据点决定财务和商业风险是否落在可接受范围内。
+            calloutType: insight
+            claimRefs:
+              - CR033
+              - CR034
+              - CR035
+              - CR036
+  - number: 8
+    title: 估值
+    sections:
+      - number: '8.1'
+        title: 投资逻辑与反向逻辑
+        blocks:
+          - type: paragraph
+            body: >
+              Etched 的投资逻辑建立在一个不可分散的单一架构押注上：未来五到八年，Transformer 解码器架构仍将主导大语言模型推理；并且只针对这一负载设计的专用硅片，在推理时能相对通用 GPU 带来 10×
+              或更高的成本性能优势。如果两个条件都成立，随着超大规模云厂商优化 token 成本而不是训练时灵活性，Etched 可能在推理 ASIC 市场拿下不成比例的份额。
+
+
+              反向逻辑同样集中。截至 Q2 2026，Etched 收入为零、客户为零、设计定点为零，也没有交付首版硅片。CEO 23
+              岁，没有既往流片记录。公司的可触达市场只有在多项条件同时成立时才存在：架构假设成立、TSMC 流片不发生昂贵 respin 且成功、至少一个超大规模云客户在竞争对手追平差距前评估 Sohu。Graphcore
+              失败模式——技术架构更强、商业牵引不足、最终困境退出——是 AI 芯片行业最适用的警示类比。任何按情景加权的分析，都必须正面处理这些执行要求同时成功的叠加概率。
+            claimRefs:
+              - CV001
+              - CV002
+              - CV003
+              - CV004
+              - CV039
+              - CV040
+              - CV041
+              - CV042
+          - type: table
+            tableRef: TV002
+            claimRefs:
+              - CV040
+              - CV041
+          - type: table
+            tableRef: TV004
+            claimRefs:
+              - CV001
+              - CV002
+              - CV004
+          - type: figure
+            figureRef: FV001
+            claimRefs:
+              - CV039
+              - CV040
+              - CV041
+      - number: '8.2'
+        title: 可比公司与先例交易分析
+        blocks:
+          - type: paragraph
+            body: >
+              对一家尚无收入、只做 Transformer 推理 ASIC 的初创公司，没有直接可比的上市公司。最接近的公开可比对象是 Marvell Technology——其面向超大规模云厂商的定制 AI ASIC 业务在
+              2025 财年产生约 $1.6 billion 收入，EV/Revenue 为 10–15×——以及 Broadcom，其 AI 定制硅片和网络业务在整体市值中维持 18–20× EV/Revenue
+              溢价。NVIDIA 仍是理想化标杆，AI 基础设施收入约 25× EV/Revenue，但其多元化护城河和软件栈（CUDA）与 Etched 单产品、尚无收入的画像在结构上不可比。
+
+
+              在可比私人阶段同行中，Cerebras 于 September 2024 提交 IPO，隐含估值 $7–8 billion，尽管商业客户有限，说明 AI 芯片初创公司可以维持较高私人估值。Groq 在 2024
+              年初融资 $640 million，隐含估值约 $2.5 billion，但 Groq 已有生产 LPU 部署和付费客户，风险已显著低于 Etched。Intel 于 December 2019 以约 $2
+              billion 收购 Habana Labs，是尚无收入 AI 芯片初创公司收购的主要正面数据点，不过 2026 年 AI 芯片格局比 2019 年竞争明显更激烈。
+            claimRefs:
+              - CV005
+              - CV006
+              - CV007
+              - CV008
+              - CV026
+              - CV027
+              - CV028
+              - CV029
+              - CV030
+              - CV037
+              - CV038
+          - type: table
+            tableRef: TV001
+            claimRefs:
+              - CV001
+              - CV003
+              - CV005
+              - CV009
+          - type: figure
+            figureRef: FV002
+            claimRefs:
+              - CV015
+              - CV016
+              - CV017
+      - number: '8.3'
+        title: 情景分析——乐观、基准与悲观情景
+        blocks:
+          - type: paragraph
+            body: >
+              乐观情景给 Etched 15–20% 概率：在 TSMC N4 首版硅片一次通过、无需重新流片；到 H2 2027 至少确认一个超大规模云客户设计定点；到 2028 年达到 $200–300 million
+              合同收入或确认收入。套用与早期 Marvell AI ASIC 可比对象一致的 10–15× EV/Revenue 倍数，企业价值隐含为 $3–5 billion，相当于在估计 $600–800 million
+              入场价上实现 4–7× 回报。
+
+
+              基准情景（40–50% 概率）假设首版硅片交付，但至少出现一次重大性能短板或集成挑战，初始只有一个客户设计定点，2028 年收入轨迹为 $100–150 million。按 4–6× EV/Revenue
+              做风险调整，企业价值隐含为 $800 million 至 $1.5 billion——低于领投 Series A 投资人 10× 回报门槛。悲观情景（30–40% 概率）涵盖流片失败、需要硅片重新流片、Mamba
+              或 SSM 采用导致架构过时，或到 2026 年底无法关闭 Series B。结果是以 $200–500 million 困境退出，相当于 Series A 资本基数亏损。Cerebras 自身经验说明，没有
+              IPO 动能也可能维持私人估值，但很脆弱；Graphcore 从 $2.8 billion 峰值到困境收购，是下行参考点。
+            claimRefs:
+              - CV013
+              - CV014
+              - CV015
+              - CV016
+              - CV017
+              - CV018
+              - CV019
+              - CV020
+              - CV021
+          - type: table
+            tableRef: TV003
+            claimRefs:
+              - CV015
+              - CV016
+              - CV017
+          - type: figure
+            figureRef: FV003
+            claimRefs:
+              - CV028
+              - CV030
+              - CV039
+      - number: '8.4'
+        title: 资本结构、回报要求与退出路径
+        blocks:
+          - type: paragraph
+            body: >
+              Etched 在 June 2024 融资 $120 million Series A，由 Positive Sum 领投，Primary Venture Partners
+              共同投资。投后估值未公开披露。根据这种规模硬件公司典型 Series A 稀释规范，分析师估计投后估值在 $600–800 million 区间，隐含约 15–20% 新股稀释。在这一入场价格下，领投方至少需要
+              10× 回报才能达到标准创投基金回报目标，对应退出企业价值 $6–8 billion。本分析没有任何情景在基准概率权重下达到这一门槛；只有在 2024 年水平的退出倍数维持不变时，乐观情景才达到。
+
+
+              最可能的退出路径是被超大规模云厂商——AWS、Google、Microsoft 或 Apple——战略收购，或被有 AI ASIC 敞口的半导体公司——Broadcom、Marvell 或
+              Qualcomm——收购。IPO 最早也不太可能早于 H2 2028；Cerebras IPO 推迟说明，即便已有生产部署，AI 芯片公司上市也很困难。尚无收入硬件公司的历史创投基准率很冷峻：不到 10% 能实现
+              10× 或更高回报；多数会在 Series A 后五年内经历减记或困境退出，因此应对预测情景施加高折现率。概率加权期望值约 $800–1,100 million，仅略高于估计 $700 million
+              入场区间中点；对于高于基准入场价的新仓位，风险补偿不足。
+            claimRefs:
+              - CV009
+              - CV010
+              - CV011
+              - CV012
+              - CV022
+              - CV023
+              - CV024
+              - CV025
+              - CV042
+          - type: figure
+            figureRef: FV004
+            claimRefs:
+              - CV009
+              - CV011
+              - CV012
+      - number: '8.5'
+        title: 退出准备度、终止触发器与投资结论
+        blocks:
+          - type: paragraph
+            body: >
+              三个明确的投资逻辑破裂触发器，定义了任何现有仓位必须退出、任何潜在投资都必须拒绝的条件，不论入场价格如何。第一，TSMC N4 流片失败或计划外中止会把企业价值压到接近零；在没有功能芯片的困境情景下，IP
+              价值低于 $100 million。第二，如果 Mamba、RWKV 或任何 SSM 家族架构在 Sohu 商业发布前，在任一前三大超大规模云厂商处获得确认的生产推理部署，仅支持 Transformer
+              的差异化就会在没有恢复路径的情况下被消除。第三，如果 Etched 无法在 Series A 完成后 24 个月内，以 $800 million 或更高估值关闭 Series
+              B，投资人担忧将释放即将陷入困境的信号。
+
+
+              投资决策前还必须解决三个最终尽调问题。必须披露 Series A 投后估值和股权结构表，以确定入场价格、稀释基线和清算优先权堆叠。必须提供月度烧钱速度、带里程碑日期的流片时间表、累计 TSMC NRE
+              支付，以验证现金跑道和 Series B 时点。必须披露任何已签 LOI、评估协议、客户管线数据或 NDA 下简报接收方，以支撑商业逻辑。投资结论是：隐含估值高于 $1.5 billion 时为条件性负面；在
+              $800 million 或以下时为条件性观察，但前提是 Series B 关闭、流片完成，并确认首个客户设计定点。
+            claimRefs:
+              - CV031
+              - CV032
+              - CV033
+              - CV034
+              - CV035
+              - CV036
+          - type: table
+            tableRef: TV005
+            claimRefs:
+              - CV031
+              - CV032
+              - CV033
+          - type: table
+            tableRef: TV006
+            claimRefs:
+              - CV034
+              - CV035
+              - CV036
+      - number: '8.6'
+        title: 图表
+        blocks:
+          - type: callout
+            title: Graphcore 类比——架构强，商业牵引弱
+            body: >-
+              Graphcore 融资超过 $700 million，达到基准测试优于对手的架构性能，并一度维持 $2.8 billion 峰值估值，但在未实现商业规模的情况下于 2023–2024 年陷入严重下滑。其 IPU
+              软件栈从未达到企业级成熟度。Etched 与 Graphcore 共享所有结构性风险：第一次做芯片的公司、专用架构、无收入、依赖超大规模云采用，而这种采用从未在 Graphcore 身上实现。押注
+              Graphcore 技术资质而非商业进展的投资人，经历了近乎全额减记。
+            calloutType: insight
+            claimRefs:
+              - CV006
+              - CV017
+              - CV021
+          - type: callout
+            title: 条件性负面：高溢价入场下，概率加权 EV 不足
+            body: >-
+              $800 million 至 $1.1 billion 的概率加权预期企业价值，几乎只能覆盖估计 $600–800 million 入场区间中点。任何高于 $1.5 billion
+              的隐含投后估值下，按当前情景分析，投资的期望值为负。高溢价入场要转为正期望值，唯一路径是大幅提高乐观情景概率——这需要首版硅片交付、客户 LOI 或 Series B 牵引的证据，而截至 Q2 2026
+              公开信息中并不存在。
+            calloutType: insight
+            claimRefs:
+              - CV040
+              - CV041
+          - type: callout
+            title: Marvell 和 Broadcom 是最可能的战略收购方
+            body: >-
+              如果 Etched 实现首版硅片，并拿下哪怕一个超大规模云客户设计定点，Marvell Technology 和 Broadcom 就是结构上最有动机的收购方：两家公司都有成熟的超大规模云定制 ASIC
+              业务，都需要扩展 Transformer 推理 IP 组合，也都有整合 Sohu 架构的技术团队。$1.5–3 billion 的收购——位于基准到乐观过渡区间内——会显著改变 Etched
+              投资人的回报，并且对任一收购方都有战略合理性。这条路径是基准情景结果下最可信的退出场景。
+            calloutType: insight
+            claimRefs:
+              - CV024
+              - CV027
+              - CV030
+tables:
+  - id: TO001
+    title: Etched 快照 KPI 表
+    columns:
+      - 指标
+      - 值 / 状态
+      - 日期
+      - 置信度
+      - 备注 / 缺口
+    rows:
+      - - 估值
+        - ~$1B
+        - Jun 2024
+        - 中
+        - 第三方报道；未经审计
+      - - 累计融资
+        - $120M
+        - Jun 2024
+        - 高
+        - 多家媒体来源确认 Series A 金额
+      - - 阶段
+        - Series A 轮
+        - Jun 2024
+        - 高
+        - 投资人与媒体确认
+      - - 收入运行率
+        - null
+        - '-'
+        - unknown
+        - 尚无收入；未披露
+      - - 年经常性收入（ARR）
+        - null
+        - '-'
+        - unknown
+        - 尚无收入
+      - - 毛利率
+        - null
+        - '-'
+        - unknown
+        - 尚无产品销售
+      - - 员工数
+        - null
+        - '-'
+        - unknown
+        - 未公开披露
+      - - 成立时间
+        - '2022'
+        - '-'
+        - 高
+        - 公司披露；各来源一致
+      - - 总部
+        - Cupertino, CA
+        - '-'
+        - 高
+        - 公司官网披露
+      - - 产品阶段
+        - 开发中（尚未流片）
+        - '2024'
+        - 中
+        - 公司披露；尚未确认硅片
+      - - 宣称吞吐量（Sohu）
+        - 500,000 tokens/sec
+        - Jun 2024
+        - 低
+        - 公司声称；尚未独立验证
+      - - H100 吞吐量（对比）
+        - ~20,000 tokens/sec
+        - Jun 2024
+        - 中
+        - 公司声称；第三方背景口径
+      - - 宣称性能优势
+        - 较 H100 高 25x
+        - Jun 2024
+        - 低
+        - 公司声称；尚未独立验证
+      - - 芯片架构
+        - ASIC（仅 Transformer）
+        - '-'
+        - 高
+        - 公司披露；核心产品逻辑
+      - - 投资方
+        - 投资方：Primary Venture Partners, Positive Sum
+        - Jun 2024
+        - 中
+        - 媒体报道；完整股权结构表未披露
+      - - 客户数
+        - null
+        - '-'
+        - unknown
+        - 未披露客户
+    notes: 收入、利润率、员工数和客户指标均为空值，因为 Etched 尚未产生收入。性能指标来自公司声称，尚未验证。估值来自媒体报道， 并非审计口径。
+    claimRefs:
+      - CO001
+      - CO002
+      - CO003
+      - CO004
+      - CO005
+      - CO006
+      - CO007
+      - CO008
+      - CO009
+      - CO018
+      - CO032
+      - CO033
+  - id: TO002
+    title: 管理层与创始人表
+    columns:
+      - 人物
+      - 职务
+      - 背景
+      - 创始人
+      - 核心人物依赖
+    rows:
+      - - Gavin Uberti
+        - CEO 兼联合创始人
+        - 曾任 Microsoft Research；具备 AI 系统和硬件背景
+        - 是
+        - 关键——CEO，也是公司公众代表
+      - - Chris Zhu
+        - CTO 兼联合创始人
+        - 硬件设计和 AI 研究
+        - 是
+        - 关键——负责芯片设计的技术领导
+      - - Robert Winslow
+        - 联合创始人
+        - 未公开披露
+        - 是
+        - 未知——具体职责未公开
+    notes: 除联合创始人外，董事会构成和其他高管未公开披露。公司仍处早期，创始团队规模小，核心人物依赖度高。
+    enumerationScope:
+      coverage: exhaustive
+      basis: >-
+        All publicly identified Etched co-founders based on company website, press releases, and news coverage through
+        2024
+    claimRefs:
+      - CO010
+      - CO011
+      - CO012
+      - CO041
+  - id: TO003
+    title: 利益相关方或投资方图谱
+    columns:
+      - 利益相关方
+      - 类型
+      - 角色 / 位置
+      - 经济 / 控制重要性
+      - 尽调核查事项
+    rows:
+      - - Gavin Uberti
+        - 创始人
+        - CEO；负责战略和融资
+        - 关键
+        - 核查技术背景和过往工作；评估核心人物风险
+      - - Chris Zhu
+        - 创始人
+        - CTO；负责芯片架构和工程
+        - 关键
+        - 核查芯片设计经验和团队深度
+      - - Robert Winslow
+        - 创始人
+        - 职责未公开披露
+        - 重要
+        - 确认具体技术或业务贡献
+      - - Primary Venture Partners
+        - 领投方
+        - Series A 投资方；报道中点名，推定为领投
+        - 高
+        - 确认持股比例、董事席位和治理权利
+      - - Positive Sum
+        - 投资方
+        - Series A 参与方
+        - 高
+        - 确认持股比例和投资逻辑一致性
+      - - TSMC（推定）
+        - 晶圆代工伙伴
+        - 基于制程节点要求推定的芯片制造伙伴
+        - 关键
+        - 确认代工协议、流片排期和良率预期
+      - - HBM 供应商（Samsung/SK Hynix）
+        - 组件供应商
+        - AI 芯片性能需要高带宽内存
+        - 高
+        - 核查供应协议、定价和配额
+      - - 未知天使 / 种子投资方
+        - 投资方
+        - Series A 前融资未披露
+        - Unknown
+        - 识别所有种子轮参与方及其权利
+    notes: 完整股权结构表、董事会构成和治理权利未公开披露。晶圆代工和内存供应商关系基于行业标准推断，Etched 尚未确认。
+    enumerationScope:
+      coverage: partial
+      basis: >-
+        Known stakeholders from Series A press coverage and inference from semiconductor industry norms; full investor
+        register and board composition not publicly disclosed
+    claimRefs:
+      - CO003
+      - CO009
+      - CO010
+      - CO011
+      - CO012
+      - CO018
+      - CO021
+  - id: TO004
+    title: 里程碑表
+    columns:
+      - 日期
+      - 事件
+      - 类型
+      - 金额 / 估值 / 状态
+      - 参与方
+      - 影响
+    rows:
+      - - '2022'
+        - Etched 在 Cupertino, CA 成立
+        - 成立
+        - '-'
+        - 创始人：Gavin Uberti, Chris Zhu, Robert Winslow
+        - 公司成立；启动 Transformer ASIC 押注
+      - - 2022–2023
+        - 进入隐身开发阶段
+        - 产品
+        - 未披露
+        - 创始团队
+        - 开展 Sohu 芯片架构设计和早期 RTL 工作；未公开披露
+      - - 2022–2023
+        - 种子 / 种子前融资（未确认）
+        - 融资
+        - 未披露
+        - 未知投资方
+        - Series A 前资本；细节未公开
+      - - 2023–2024
+        - 团队扩张，Sohu 架构定型
+        - 扩张
+        - 未披露
+        - Etched 工程团队
+        - 补齐芯片设计、ML 系统关键人才；架构锁定
+      - - '2024-06-26'
+        - 宣布 $120M Series A
+        - 融资
+        - $120M / 估值 ~$1B
+        - 投资方：Primary Venture Partners, Positive Sum
+        - 跻身独角兽；为流片和量产提供资金
+      - - '2024-06-26'
+        - 公开发布 Sohu 芯片
+        - 产品
+        - 宣称 500K tokens/sec（未验证）
+        - Etched
+        - 首次公开披露产品；获得广泛媒体报道
+      - - '2024-06-26'
+        - 行业媒体集中报道
+        - 合作
+        - n/a
+        - 媒体来源：Bloomberg, Reuters, Wired, Fortune, TechCrunch
+        - 一线媒体给出强信号背书；提升可见度
+      - - 2024-至今
+        - 芯片继续开发，推进流片
+        - 产品
+        - 未披露
+        - Etched 工程团队
+        - 商业可行性的关键路径；流片日期未公开
+      - - 2024-2026
+        - 未发现不利事件、诉讼或监管行动
+        - 不利事项
+        - 未发现
+        - '-'
+        - 公开记录干净；治理 / 法律历史未披露，但未浮现红旗
+    notes: 开发阶段里程碑（第 2–4 行）的日期基于公司年龄和典型芯片开发周期估算。种子前融资细节未确认。流片和量产里程碑日期未公开披露。
+    enumerationScope:
+      coverage: partial
+      basis: >-
+        Key milestones reconstructed from founding date, Series A announcement (June 2024), and public press coverage;
+        internal milestones, pre-seed details, and post-2024 technical events not publicly disclosed
+    claimRefs:
+      - CO001
+      - CO003
+      - CO005
+      - CO006
+      - CO037
+      - CO040
+  - id: TM001
+    title: 市场定义表
+    columns:
+      - 市场层级
+      - 定义
+      - Etched 定位
+      - 纳入 / 排除
+      - 关键备注
+    rows:
+      - - AI 芯片总市场
+        - 用于 AI 训练、推理和边缘的所有芯片
+        - 广义市场背景
+        - 作为背景纳入
+        - 2023 年约 $53B；CAGR 30-40%
+      - - AI 训练市场
+        - 用于训练神经网络模型的芯片
+        - 不计入 TAM
+        - 排除——Sohu 不加速训练
+        - 由 NVIDIA A100/H100 主导；不是 Etched 目标市场
+      - - AI 推理市场
+        - 在生产环境服务已训练模型的芯片
+        - SAM；Etched 主要目标
+        - 纳入
+        - 增长最快的细分市场；由 LLM API 需求拉动
+      - - Transformer 推理市场
+        - 专门面向 Transformer 模型的推理
+        - Etched 直接 TAM
+        - 纳入——Sohu 为 Transformer 硬编码
+        - 当前商业 LLM 推理工作负载约 80-90%
+      - - 非 Transformer AI 推理
+        - SSM、RNN、CNN、混合模型的推理
+        - 不计入 Sohu TAM
+        - 排除——Sohu 无法运行非 Transformer 模型
+        - 架构风险：如果 SSM 取代 Transformer，该市场可能扩大
+      - - 边缘 AI / 端侧 AI
+        - 移动、IoT、嵌入式设备上的推理
+        - 排除
+        - 排除——Sohu 瞄准数据中心规模
+        - 客户和形态不同
+      - - 云端 AI 基础设施
+        - 超大规模云厂商的数据中心 AI 计算
+        - 主要商业化目标
+        - 纳入
+        - AWS、Google、Azure、Oracle——主要买家
+    notes: 市场边界定义基于公开分析师研究和 Etched 披露的产品范围。Transformer 推理份额根据当前 LLM 部署模式估算，可能变化。
+    claimRefs:
+      - CM001
+      - CM002
+      - CM003
+      - CM004
+  - id: TM002
+    title: TAM/SAM/SOM 或规模测算表
+    columns:
+      - 规模层级
+      - 估算区间
+      - 年份
+      - 置信度
+      - 方法
+      - 关键假设
+    rows:
+      - - AI 芯片总市场（TAM）
+        - $53B–$80B
+        - '2023'
+        - 中
+        - 分析师共识中值
+        - 包括训练 + 推理 + 边缘；NVIDIA 占多数
+      - - AI 芯片总市场（TAM 预测）
+        - $300B–$500B
+        - '2030'
+        - 低
+        - 分析师 CAGR 预测
+        - CAGR 约 30-40%；不确定性区间宽
+      - - AI 推理细分市场（SAM 基准）
+        - $20B–$30B
+        - 2024E
+        - 低
+        - 估计推理占 AI 芯片市场约 40%
+        - 2024 年后，推理增长快于训练
+      - - AI 推理细分市场（SAM 预测）
+        - $100B–$200B
+        - 2028-2030E
+        - 低
+        - 外推推理份额增长
+        - 假设推理达到 AI 芯片总支出的 50%+
+      - - Transformer 推理 ASIC（SAM 调整后）
+        - $80B–$180B
+        - 2028-2030E
+        - 低
+        - 推理 SAM 中 Transformer 份额 80-90%
+        - 取决于架构稳定性
+      - - Etched SOM（第 1-2 年）
+        - <$100M
+        - 2026-2027E
+        - 低
+        - 试点项目；0.01-0.05% 市场份额
+        - 假设流片成功并跑通超大规模云厂商试点
+      - - Etched SOM（第 3-5 年）
+        - $50M–$1B
+        - 2027-2030E
+        - 很低
+        - 0.05-1% 推理市场份额
+        - 需要量产规模和生态支持
+    notes: >-
+      所有数字均来自行业分析师报告（IDC、Gartner、Grand View Research）的第三方估算，或由分析师推导。不确定性区间宽， 反映市场早期和 Etched 尚未产生收入。「很低」置信度表示对一家尚无收入公司的 3
+      年以上 SOM 预测。
+    claimRefs:
+      - CM006
+      - CM007
+      - CM008
+      - CM009
+      - CM010
+      - CM011
+  - id: TM003
+    title: 细分市场 / 买家图谱
+    columns:
+      - 买家层级
+      - 示例
+      - 推理规模
+      - 成本敏感度
+      - 对 NVIDIA 依赖
+      - 采用可能性
+      - 销售周期
+    rows:
+      - - Tier 1——超大规模云厂商
+        - AWS, Google, Azure, Oracle
+        - 每天数十亿
+        - 高——TCO 驱动资本开支决策
+        - 很高——大规模 H100 集群
+        - 中低（认证周期长）
+        - 18-36 个月
+      - - Tier 2——AI 原生公司
+        - OpenAI, Anthropic, Cohere, Mistral
+        - 每天数亿
+        - 很高——推理是最大运营开支
+        - 高——NVIDIA 是主要供应商
+        - 中（成本压力）
+        - 12-24 个月
+      - - Tier 3——推理平台
+        - Together AI, Anyscale, Replicate
+        - 每天数百万至数十亿
+        - 高
+        - 中——灵活性更高
+        - 中高（愿意试验）
+        - 6-18 个月
+      - - Tier 4——企业
+        - 运行私有 LLM 的大型银行、电信运营商、零售商
+        - 每天数百万
+        - 中
+        - 中低
+        - 低（风险规避）
+        - 24-36+ 个月
+      - - Tier 5——研究机构
+        - 大学、国家实验室、研究组织
+        - 不固定
+        - 低至中
+        - 低至中
+        - 中（技术好奇心）
+        - 12-24 个月
+    notes: 销售周期估算只用于说明一家新芯片公司的进入节奏；考虑到 Etched 仍是初创公司，且没有量产芯片历史，实际周期可能更长。
+    claimRefs:
+      - CM012
+      - CM013
+      - CM014
+      - CM015
+  - id: TM004
+    title: 增长驱动因素与约束表
+    columns:
+      - 因素
+      - 类型
+      - 对 Etched 影响
+      - 量级
+      - 时间范围
+    rows:
+      - - LLM 采用增长
+        - 驱动因素
+        - 扩大整体推理算力需求
+        - 高
+        - 当前–2028
+      - - GPU 推理成本压力
+        - 驱动因素
+        - 让 Etched 成本优势更有吸引力
+        - 高
+        - 当前
+      - - 超大规模云厂商分散 NVIDIA 依赖
+        - 驱动因素
+        - 激发采购方对替代方案的兴趣
+        - 中
+        - 2025-2027
+      - - 实时 AI 应用增长
+        - 驱动因素
+        - 延迟要求利好专用芯片
+        - 中
+        - 2025-2028
+      - - 能源 / 功率密度约束
+        - 驱动因素
+        - 更高每瓦性能对数据中心有价值
+        - 中
+        - 当前–2027
+      - - CUDA 生态切换成本
+        - 约束
+        - 客户采用新芯片的摩擦很高
+        - 很高
+        - 持续
+      - - Transformer 架构稳定性风险
+        - 约束
+        - SSM / 混合架构采用可能侵蚀 Etched 的总可用市场（TAM）
+        - 高
+        - 2025-2028
+      - - 创业公司芯片成熟度风险
+        - 约束
+        - 相较 NVIDIA，良率和可靠性存疑
+        - 高
+        - 当前–2026
+      - - 超大规模云厂商销售周期长
+        - 约束
+        - 18-36 个月认证限制近期收入
+        - 高
+        - 当前–2027
+      - - 芯片生产资本强度
+        - 约束
+        - 需要大批量承诺才能跑出规模经济
+        - 高
+        - 2026-2028
+      - - 模型效率提升
+        - 约束 / 驱动因素
+        - 模型更高效会降低每次查询的算力需求
+        - 中
+        - 2025-2028
+    notes: 影响幅度为分析师基于行业动态的估计；没有可用的专有研究数据。
+    claimRefs:
+      - CM018
+      - CM019
+      - CM020
+      - CM021
+      - CM022
+      - CM023
+      - CM024
+  - id: TP001
+    title: 竞争对手画像表
+    columns:
+      - 竞争对手
+      - 类别
+      - 估计融资 / 规模
+      - 目标客群
+      - 差异化
+      - 关键限制
+    rows:
+      - - NVIDIA (H100/H200/Blackwell)
+        - GPU 既有龙头
+        - $3.7T 市值；主导地位
+        - 所有 AI 工作负载
+        - CUDA 生态、规模、信任
+        - 成本高；通用型；未针对推理优化
+      - - AMD (MI300X)
+        - GPU 挑战者
+        - $200B+ 市值；AI 份额在增长
+        - 推理 + 训练
+        - ROCm 开源；Microsoft 合作
+        - CUDA 生态短板；软件成熟度滞后
+      - - Google TPU v5e（推理 TPU）
+        - 超大规模云厂商自用
+        - 内部项目；不对外销售
+        - Google Cloud 推理
+        - 与 Gemini 深度集成；规模化成本效率
+        - 不向外部买家开放；仅内部使用
+      - - AWS Inferentia2
+        - 超大规模云厂商自用
+        - 内部项目；EC2 Inf2 实例
+        - AWS 工作负载推理
+        - 在 AWS 上运行 Llama 级模型时成本低于 H100
+        - 仅限 AWS 生态；模型覆盖有限
+      - - Microsoft Maia 100
+        - 超大规模云厂商自用
+        - 内部项目（2023 年发布）
+        - Azure AI 推理
+        - 针对 OpenAI 工作负载优化
+        - 早期阶段；不对外开放
+      - - Groq (LPU)
+        - 推理创业公司
+        - ~$1.1B+ 融资
+        - 低延迟推理 API
+        - 确定性延迟；GroqCloud API
+        - 批量吞吐较低；通用架构
+      - - Cerebras (WSE-3)
+        - 训练 / 推理创业公司
+        - ~$720M 融资
+        - 企业 + 政府
+        - 晶圆级；大内存带宽
+        - 成本和制造复杂度高；非推理专用
+      - - SambaNova Systems
+        - 企业 AI 创业公司
+        - ~$1.2B 融资
+        - 企业 AI 部署
+        - 可重构数据流；企业 SDK
+        - 云分发有限；生态较小
+      - - Tenstorrent
+        - AI 芯片创业公司
+        - $700M+ 融资（2024）
+        - 边缘 + 云端 AI
+        - RISC-V 开放架构；Jim Keller 领军
+        - 早期阶段；尚未确认大规模生产部署
+      - - Graphcore (IPU)
+        - AI 芯片（已被收购）
+        - 2023 年被 SoftBank 收购（~$120M）
+        - 研究 + 企业 AI
+        - 面向图计算的 IPU 架构
+        - 商业化失败；架构与 Transformer 主导格局错配
+      - - Etched (Sohu)
+        - Transformer 专用 ASIC
+        - $120M 融资；称已流片
+        - 大规模 Transformer 推理
+        - 面向 Transformer 固化的硅芯片；声称吞吐提升 10×
+        - 量产未验证；仅覆盖 Transformer；早期阶段
+    notes: >-
+      融资数据来自公开披露和新闻报道；市值截至 2024 年末 / 2025 年初。NVIDIA/AMD 市值为近似值。内部项目（Google TPU、AWS Inferentia、Maia）没有公开融资披露；
+      因此标为内部项目。所有「差异化」和「限制」判断均基于已发布规格与独立报道作分析评估。
+    enumerationScope:
+      coverage: exhaustive
+      basis: >-
+        All known AI inference accelerator competitors across: (1) GPU incumbents (NVIDIA, AMD), (2) hyperscaler
+        internal programs (Google, AWS, Microsoft), (3) purpose-built inference startups (Groq, Cerebras, SambaNova,
+        Tenstorrent), (4) acquired/pivoted (Graphcore), and (5) Etched itself for reference. Coverage is exhaustive for
+        funded/active programs with >$100M investment or material market presence.
+  - id: TP002
+    title: 功能 / 能力矩阵
+    columns:
+      - 能力
+      - NVIDIA H100
+      - Groq LPU
+      - Cerebras WSE-3
+      - AMD MI300X
+      - Etched Sohu
+    rows:
+      - - Transformer 推理支持
+        - 是
+        - 是
+        - 是
+        - 是
+        - 是（原生固化）
+      - - 非 Transformer 模型支持
+        - 是（完整）
+        - 是
+        - 是
+        - 是（完整）
+        - 否（仅 Transformer）
+      - - 训练支持
+        - 是（完整）
+        - 有限
+        - 是（主攻方向）
+        - 是（正在扩展）
+        - 否（仅推理）
+      - - 云端可用性
+        - 所有主流云
+        - GroqCloud API
+        - Cerebras Cloud
+        - AWS、Azure、GCP
+        - 不可用（预量产）
+      - - 本地部署
+        - 是
+        - 是（专用机架）
+        - 是（CS-3 设备）
+        - 是
+        - 是（计划中）
+      - - CUDA/PyTorch 兼容性
+        - 原生 CUDA
+        - Groq SDK（JAX/PyTorch 通过桥接）
+        - Cerebras SDK（定制）
+        - ROCm（PyTorch/JAX）
+        - 定制 SDK（计划中）
+      - - 批量推理吞吐
+        - 高
+        - 中（延迟优化）
+        - 高
+        - 高
+        - 很高（声称 10×）
+      - - 内存容量
+        - 80GB HBM3
+        - 192MB 片上 SRAM
+        - 44GB 片上 SRAM
+        - 192GB HBM3
+        - 未知（未披露）
+      - - 生产部署参考
+        - 数千个
+        - GroqCloud 用户（公开）
+        - 企业客户（有限）
+        - 增长中（Azure 等）
+        - 无（预量产）
+      - - 软件生态成熟度
+        - 成熟（10 年以上）
+        - 早期（2022+）
+        - 早期（2016+）
+        - 增长中（ROCm 2+）
+        - 发布前
+    notes: >-
+      矩阵基于截至 2026 年 Q1 的公开规格和独立技术报道。「未知」单元格表示规格未披露； 「预量产」反映 Etched 仍未商业化。Groq 的内存数字体现其片上 SRAM 设计思路。
+      能力对比仅作方向性判断；采购时需对照最新供应商文档验证。
+  - id: TP003
+    title: 定价 / 套餐对比
+    columns:
+      - 竞争对手
+      - 定价模式
+      - 指示性单价 / API 成本
+      - 合约结构
+      - 给 Etched 的启示
+    rows:
+      - - NVIDIA H100（本地部署）
+        - 硬件采购
+        - $25-35K/台（2024 现货；$15K+ 标价）
+        - 现货、合约或云端加价
+        - Etched 要竞争，3 年折旧周期下 TCO 必须更低
+      - - 云端 NVIDIA（H100 SXM5）
+        - 云实例
+        - $2-4/hr/GPU（主流云，2024）
+        - 按需或预留（1-3 年）
+        - Etched 必须证明相对按需 H100 的每 token 成本优势
+      - - AMD MI300X
+        - 硬件采购 + 云端
+        - $10-15K/台估计；Azure 实例 ~$1.5-2.5/hr
+        - 类似 NVIDIA；更便宜
+        - AMD 的价格压力削弱 Etched 基于价格的差异化
+      - - Groq (GroqCloud)
+        - API（token / 请求）
+        - 公开价：$0.27/1M tokens（Llama 3-70B，2024）
+        - 按量付费 + 企业档位
+        - Groq API 定价是 H100 推理优化替代品的基准
+      - - Cerebras Cloud
+        - API（token / 请求）
+        - 与 Groq 有竞争力；企业定价不一
+        - 企业协议
+        - 企业 ACV 未知；可能是定制交易
+      - - Google TPU v5e（GCP 云实例）
+        - 云实例
+        - ~$1.6/hr/芯片（GCP v5e）
+        - 按需或 1-3 年承诺使用
+        - 内部自用；不是外部销售的直接竞争对手
+      - - AWS Inferentia2
+        - 云实例
+        - $0.76/hr/芯片（EC2 Inf2）
+        - 按需、预留、Savings Plans
+        - 在 AWS 内具备成本竞争力；外部买家必须与 H100 云端方案对比评估
+      - - Etched Sohu
+        - 硬件采购（计划中）
+        - 未披露；目标：Transformer 推理 TCO <0.1× H100
+        - OEM + 企业直销（计划中）
+        - 价格未定；要成功，必须在每 token 成本上相对 H100 基准有足够吸引力
+    notes: >-
+      定价数据来自公开云定价页面和新闻报道；H100 现货市场价格在 2023-2024 年大幅波动。 所有数字均为指示性，且对日期敏感。Groq API 定价截至 2024 年末，来自官方定价页。 Etched
+      定价未披露；「目标」代表基于 $120M 融资背景的分析师预期。
+  - id: TP004
+    title: 护城河耐久度 / 竞争风险登记表
+    columns:
+      - 护城河主张
+      - 威胁
+      - 严重性
+      - 缓释措施或尽调问题
+    rows:
+      - - 面向 Transformer 注意力固化的 ASIC 吞吐
+        - NVIDIA 推出注意力性能更强的推理优化 SKU（NVL、Blackwell）
+        - 高
+        - 量产硅片可用后，将 Etched 与 H200/Blackwell B200 的每瓦注意力吞吐做基准测试
+      - - 声称吞吐较 H100 高 10×
+        - 主张未验证；NVIDIA/AMD 会靠架构改进和软件（FlashAttention、 量化）缩小差距
+        - 高
+        - 要求第三方对量产 Sohu 硅片做基准测试；对照最新 NVIDIA TensorRT-LLM 优化验证
+      - - Transformer 专用 ASIC 的先发者
+        - 无护城河：一旦市场验证这条路径，NVIDIA、AMD 或资金充足的新进入者可凭更大资源复制
+        - 中
+        - 评估专利组合；判断注意力固化相对通用先有技术是否可专利化
+      - - TSMC 4N 流片投入
+        - 竞争对手使用同一家晶圆厂；完成流片不保证量产良率或成本竞争力
+        - 中
+        - 核验流片状态；索取良率目标和每片晶圆成本预测
+      - - Etched SDK 与软件生态
+        - SDK 尚不可用；CUDA 生态护城河反过来压制 Etched
+        - 高
+        - 审查 SDK 路线图；评估框架兼容计划（PyTorch、JAX、vLLM）；检查是否有任何 OSS 贡献或早期访问计划
+      - - 抵御模型演进的架构护城河
+        - Mamba/SSM/MoE 架构拿到更多推理份额；Transformer 专用芯片过时
+        - 中高
+        - 审查模型架构趋势数据；评估 Etched 对混合 Transformer-SSM 模型的公开应对方案
+      - - Graphcore IPU 先例（反向）
+        - Graphcore 凭差异化架构融资 $700M+，未跑出商业规模，最终以 ~$120M 出售
+        - 高（反向数据）
+        - 研究 Graphcore 失败模式；评估 Etched 的 GTM 计划是否解决 Graphcore 曾遇到的分发和 软件生态壁垒
+    notes: >-
+      风险登记表基于公开竞争对手披露、独立 AI 芯片行业报道和历史先例作分析评估。严重性评级： 高 = 若不解决，可能实质损害 Etched 市场机会；中 = 执行得当即可管理；低 = 仅需监测。 所有严重性评级都需对照
+      Etched 内部技术路线图验证。
+  - id: TI001
+    title: 收入来源表
+    columns:
+      - 收入来源
+      - 机制
+      - 单位
+      - 当前状态
+      - 收入质量
+      - 尽调问题
+    rows:
+      - - 硬件芯片销售（Sohu）
+        - 直接销售 Sohu 推理芯片
+        - $/芯片或 $/晶圆配额
+        - 尚不可用（预量产）
+        - 低 — 硬件收入确认波动大，资本强度高
+        - 确认流片时间线；取得单位成本目标；询问 TSMC 供货协议条款
+      - - 芯片系统 / 机架销售
+        - 可能销售基于 Sohu 的服务器机架或推理设备
+        - $/机架或 $/节点
+        - 未宣布
+        - 低 — 仍属推测；需要搭建供应链
+        - 询问 Etched 计划只卖芯片还是完整系统；检查服务器集成成本 BOQ
+      - - 云端 API 推理（潜在）
+        - 使用 Sohu 芯片的云端推理 API（类似 GroqCloud）
+        - $/token 或 $/请求
+        - 未宣布
+        - 若落地则中 — 可重复、可扩展
+        - 询问 Etched 是否计划做 GroqCloud 等价产品；云端建设需要大量追加资本
+      - - 软件 / SDK 授权
+        - 授权 Etched SDK 或推理优化工具链
+        - TBD
+        - 未宣布；SDK 尚不可用
+        - 低 — SDK 的 IP 防御力不清楚
+        - 判断 SDK 将开源还是商业化；评估 IP 策略
+    notes: >-
+      所有收入来源都只是前瞻假设。截至 2026 年 Q1，Etched 尚未产生收入。收入来源分析基于类似半导体和 AI 芯片创业公司的模式（NVIDIA、Groq、Cerebras）。硬件芯片销售是主要假设收入来源；
+      其他均为推测性附加收入。
+  - id: TI002
+    title: 定价 / 货币化表
+    columns:
+      - 定价项目
+      - 标价 vs. 实际成交
+      - 指示性区间
+      - 来源 / 可比对象
+      - 尽调问题
+    rows:
+      - - Sohu 芯片平均售价（ASP）
+        - 未披露
+        - 估计 $5,000-$20,000/芯片（可比公司）
+        - NVIDIA H100 约 $15-35K/颗；Groq LPU 机架折合约 $5K/LPU
+        - 索取 Etched 内部定价模型；对照 TSMC 成本和目标毛利率验证
+      - - NVIDIA H100 市场参考价
+        - 标价：约 $30K；成交价：$15-35K，取决于渠道
+        - $15-35K/chip
+        - NVIDIA 官方定价 + 媒体报道
+        - 作为 Etched ASP 目标的基准；Etched 必须在 Transformer 推理上给出显著更低的 TCO
+      - - Groq GroqCloud API 费率
+        - 公开价：Llama 3-70B 为 $0.27/1M tokens
+        - 区间：$0.27-$0.80/1M tokens
+        - Groq 官方定价页（2024）
+        - 推理每 token 成本的基准；Etched 必须证明经济性相当或更好
+      - - AWS Inferentia2 实例成本
+        - 按需：每芯片 $0.76/hr；预留价更低
+        - $0.45-$0.76/hr/芯片
+        - AWS EC2 定价页（2024）
+        - 超大规模云厂商规模下的低成本推理参考；Etched 必须在本地部署每 token 成本上打败它
+    notes: Sohu 定价完全基于同类半导体产品估算。竞品价格反映截至 2024 年底的公开定价页。所有价格都可能变化。Etched 尚未披露 ASP 目标。
+  - id: TI003
+    title: 单位经济性表
+    columns:
+      - 指标
+      - 数值或状态
+      - 置信度
+      - 重要性
+      - 尽调问题
+    rows:
+      - - 每晶圆成本（TSMC 4N）
+        - 未知 — 估计 $15,000-$20,000/晶圆
+        - 低（估计）
+        - 决定良率和封装前的每裸片成本
+        - 索取 TSMC 协议条款；询问每晶圆成本承诺和分配量
+      - - 裸片面积（Sohu 芯片）
+        - 未知 — 未披露
+        - Unknown
+        - 决定每片晶圆可切芯片数和每芯片总成本
+        - 索取裸片面积规格；参考可比 ASIC 设计估算
+      - - 良率（一代）
+        - 未知 — 先进制程估计 50-70%
+        - 低（估计）
+        - 直接影响每颗良品芯片成本和毛利率
+        - 向 Etched 索取良率目标；对标可比一代 ASIC 良率
+      - - 规模化目标毛利率
+        - 未知 — 估计 40-70%
+        - 低（估计）
+        - NVIDIA 达到 70-75%；Etched 一代因 NRE 摊销，可能更低
+        - 索取财务模型；如有，参照 Groq/Cerebras 投资人材料对标
+      - - NRE 成本（流片 + 设计）
+        - Sohu 设计总投入估计 $20-50M
+        - 低（估计）
+        - 按销量摊销；决定盈亏平衡所需最低销量
+        - 向 Etched 询问 NRE 总支出；对照流片里程碑预算验证
+      - - 目标 ASP
+        - 未知 — 估计 $5,000-$20,000/芯片
+        - 低（估计）
+        - 单位收入和利润；定价必须相对 NVIDIA 有竞争力
+        - 索取定价模型；询问客户 RFQ 或 LOI 定价讨论
+      - - CAC / 销售周期
+        - 未知 — 超大规模云厂商销售周期估计 12-24 个月
+        - 低（估计）
+        - 企业半导体获客成本高，需要大量销售工程投入
+        - 询问销售团队结构；确认是否已有 LOI 或评估协议
+    notes: 所有单位经济性截至 2026 年 Q1 都是估计或不可得。Etched 尚未产生收入，也未披露任何财务运营指标。估计基于同类半导体行业基准。每个空值在承销前都需要具体尽调请求。
+  - id: TI004
+    title: 资本充足性表
+    columns:
+      - 项目
+      - 数值 / 状态
+      - 置信度
+      - 备注
+    rows:
+      - - 累计融资额
+        - $120M（Series A，2024 年 6 月）
+        - 高
+        - 公开披露；多家媒体确认 Series A 金额
+      - - 账上现金（估计 2026 年 Q1）
+        - 未知 — 估计剩余 $30-70M
+        - 低（估计）
+        - 取决于 2024 年 6 月以来实际烧钱速度；无公开披露
+      - - 月度烧钱速度（估计）
+        - 估计 $3-8M/月
+        - 低（估计）
+        - 按同阶段半导体初创公司估算；假设约 50-100 名员工
+      - - 2024 年 6 月融资完成后的现金跑道
+        - 估计 15-40 个月，取决于烧钱速度
+        - 低（估计）
+        - $5M/月：24 个月（到 2026 年中）；$3M/月：40 个月（到 2027 年底）
+      - - 下一轮融资触发点
+        - 量产硅片里程碑 + 客户 LOI
+        - 中
+        - 2026 年 Q3-Q4 可能需要融 Series B，为量产提供资金
+      - - 估计下一轮融资需求
+        - 估计 $200-500M Series B
+        - 低（估计）
+        - 基于 Groq/Cerebras 从研发到首款产品的资本消耗模式
+      - - 债务 / 项目融资
+        - 未披露
+        - Unknown
+        - 未公开披露债务额度或政府补助
+    notes: 所有估计来自同类半导体初创公司的烧钱速度和资本消耗模式。Etched 尚未披露现金余额、烧钱速度或资产负债表。这些估计应由财务尽调拿到的实际数据替换。
+  - id: TI005
+    title: 公开财务缺口表
+    columns:
+      - 缺失指标
+      - 对投资判断的影响
+      - 尽调路径
+    rows:
+      - - 收入运行率 / ARR
+        - 没有任何牵引数据，无法评估收入质量
+        - 向公司索取；无公开来源
+      - - 当前现金余额和烧钱速度
+        - 没有实际现金数据，无法评估现金跑道或持续经营风险
+        - 向公司索取 2025 年 Q4 或 2026 年 Q1 银行流水 / 管理账
+      - - TSMC 晶圆成本和产能分配条款
+        - 缺少这项数据，无法计算每芯片成本或毛利率
+        - 向公司索取 TSMC 采购协议或条款清单
+      - - 裸片面积和良率目标
+        - 没有芯片规格，无法验证单位经济性或每 token 成本主张
+        - 索取芯片平面图或面积估算；询问投资人材料中的良率目标
+      - - 客户 LOI 或设计定点
+        - 尚无商业验证；所有远期收入都属推测
+        - 要求公司提供任何已签署的 LOI、评估协议或 POC 协议
+      - - 详细股权结构表和期权池
+        - 没有完整股权结构表，无法评估稀释或员工股权
+        - 索取完整股权结构表；检查除 Series A 外是否还有 SAFE 或可转债
+      - - 年度运营费用拆分
+        - 缺少成本结构，无法建模回本周期或资金充足性
+        - 索取管理账或投资人报告包
+      - - NRE 和流片预算实际值 vs. 计划
+        - 没有预算跟踪，无法判断 $120M 是否足够
+        - 向公司索取里程碑预算跟踪；与流片状态对比
+    notes: 这张表列出截至 2026 年 Q1 公开来源拿不到的全部财务指标。Etched 是未产生收入的私营公司，没有公开财务披露。所有项目都需要公司提供数据，或由第三方估算。
+  - id: TE001
+    title: 产品模块 / 资产矩阵
+    columns:
+      - 模块 / 资产
+      - 类型
+      - 开发状态
+      - 差异化
+      - 用户 / 买方
+      - 尽调缺口
+    rows:
+      - - Sohu ASIC
+        - 硬件芯片
+        - 公司称流片在推进；尚无量产硅片（2026 年 Q1）
+        - Transformer 注意力硬编码；公司称推理吞吐量为 H100 的 10 倍
+        - 超大规模云厂商推理运营方、大型 AI-native 公司
+        - 确认流片完成；索取裸片规格和首批硅片时间表
+      - - Transformer 注意力引擎（硅模块）
+        - 固化逻辑电路
+        - 公司称设计已完成；硅片尚未验证
+        - 固定功能注意力消除 GPU kernel 开销；注意力计算延迟最低
+        - 芯片架构师和推理平台团队
+        - 索取平面图或模块图；确认 multi-head attention 头数和 SRAM 容量
+      - - HBM 内存子系统
+        - 内存接口
+        - 设计中（推断）；代际和堆叠数量未披露
+        - 面向模型权重和 KV-cache 的高带宽 DRAM；带宽决定 tokens/sec 上限
+        - 推理平台工程师
+        - 确认 HBM 代际（HBM3/HBM3E）、堆叠数量和带宽目标；索取内存架构规格
+      - - 模型推理编译器
+        - 软件工具链
+        - 早期阶段；无公开发布
+        - 将标准 Transformer checkpoint（HuggingFace 格式）转换为 Sohu 执行图
+        - 部署模型的 ML 工程师
+        - 索取编译器架构；确认能否摄取 HuggingFace SafeTensors；索取模型覆盖清单
+      - - 推理运行时 / 服务层
+        - 系统软件
+        - 早期阶段；无公开文档
+        - 管理 token 调度、请求批处理和多用户推理服务中的 KV-cache 分配
+        - 推理平台运营方
+        - 索取系统软件路线图；确认是否支持 OpenAI 兼容 API 端点；询问 KV-cache 淘汰策略
+      - - 开发者 SDK
+        - 软件接口
+        - 尚不可用；无文档
+        - 低 — 没有 SDK，会让 Etched 相对工具链成熟的 GPU 既有厂商处于劣势
+        - 应用开发者、ML 工程师
+        - 索取 SDK 访问和时间表；确认预期采用开源还是商业许可模式；询问 HuggingFace / vLLM 集成
+    notes: 截至 2026 年 Q1 的模块成熟度评估。所有软件资产仍未发布；所有硅片资产仍未量产。状态判断基于缺少公开 SDK、文档或工程样片公告。Sohu 芯片主张基于 etched.com 上的公司定位和投资人媒体报道。
+  - id: TE002
+    title: 工作流 / 用例表
+    columns:
+      - 用例
+      - 模型架构
+      - 推理模式
+      - Sohu 契合度
+      - 限制 / 约束
+      - 评估
+    rows:
+      - - LLM 聊天机器人 / 对话式 AI
+        - Transformer 解码器（GPT、LLaMA、Mistral 类）
+        - 自回归 token 生成；顺序解码
+        - 高 — 硬编码注意力非常适合顺序自回归解码；KV-cache 访问模式适配 HBM
+        - 仅支持 Transformer；不支持 SSM 或混合模型
+        - 主要目标用例；技术适配度最高
+      - - 代码生成（Copilot 类工具）
+        - Transformer 解码器，长上下文
+        - 自回归解码，8K-100K+ 上下文窗口
+        - 高 — 长上下文工作负载中注意力计算占比高；硬编码注意力随上下文扩展更有利
+        - 长上下文 KV-cache 需要大 HBM 容量；堆叠数量和淘汰策略很关键
+        - 契合度强；长上下文是 Sohu 架构甜点区
+      - - 文本向量嵌入生成
+        - Transformer 编码器（BERT、RoBERTa 类）
+        - 单次前向传播；无自回归解码
+        - 中 — 注意力固化仍可降低编码器计算成本，但完整吞吐收益需要解码工作负载
+        - 相比 GPU 差异化较弱；FlashAttention 已针对编码器推理高度优化
+        - 契合度中等；不是主要工作负载，但可支持
+      - - 多模态推理（视觉-语言）
+        - Transformer 编码器 + 解码器；交叉注意力
+        - 编码后解码混合流程；模态之间使用交叉注意力
+        - 中低 — 交叉注意力层随架构变化；Sohu 注意力引擎必须支持交叉注意力模式
+        - 多模态交叉注意力设计因模型而异；兼容性未确认
+        - 契合度不确定；需要逐模型验证
+      - - 专家混合 Transformer 推理（Mixtral 类）
+        - 稀疏 MoE Transformer
+        - 稀疏路由 + 注意力；每个 token 只激活部分专家
+        - 低 — 注意力可加速，但稀疏 MoE 路由开销发生在主机侧；尚未确认支持 MoE
+        - MoE token 路由可能无法加速；门控计算不在硬连线注意力引擎内
+        - 契合度有限；MoE 路由瓶颈很可能在主机 CPU
+      - - 非 Transformer SSM 推理（Mamba、RWKV）
+        - 状态空间模型或循环架构
+        - 基于递归；无点积注意力
+        - 不支持 — Sohu 仅面向 Transformer；SSM 需要不同计算原语
+        - 架构层面不兼容；Mamba 使用选择性状态空间，没有注意力运算
+        - 排除用例；确认与 Sohu 设计不兼容
+    notes: >-
+      用例契合度按 Etched 声称的 Transformer-only 架构评估。MoE 和 SSM 限制来自硬连线 Transformer 注意力设计的推断，Etched 尚未确认。实际模型兼容性需要公司提供 SDK
+      和模型兼容性矩阵。
+  - id: TE003
+    title: 技术 / 运营架构表
+    columns:
+      - 架构层
+      - 技术 / 组件
+      - Etched 实现
+      - 关键依赖 / 风险
+      - 状态
+    rows:
+      - - 计算基底
+        - 硬连线 ASIC 逻辑（不可编程）
+        - 组合逻辑和时序逻辑门固定承载 Transformer 多头自注意力；没有 SIMD 或可编程 ALU 单元
+        - 架构锁定：流片后无法适配；未来 Transformer 修订或新架构都需要重新流片
+        - 设计阶段（公司声称）
+      - - 制程节点
+        - TSMC 4N（4nm 级先进节点）
+        - 公司称使用 TSMC 4N；该前沿节点为 AI ASIC 提供高晶体管密度和能效
+        - TSMC 产能受超大规模云厂商需求挤压；初创客户交期更长、晶圆批量更小
+        - 流片中（公司声称，未独立确认）
+      - - 内存接口
+        - HBM（High Bandwidth Memory）— 代际未披露
+        - 外部 HBM 堆叠与 Sohu 裸片共同封装；提供自回归推理必需的模型权重和 KV-cache 带宽
+        - HBM 供应掌握在 SK Hynix、Micron、Samsung 手中；初创公司的分配优先级低于超大规模云厂商承诺
+        - 设计中（推断；Etched 未披露）
+      - - 先进封装
+        - CoWoS 或同等方案（推断）
+        - TSMC 4N + HBM 集成很可能需要在硅中介层上堆叠 HBM 裸片；具体封装类型未披露
+        - TSMC CoWoS 产能已超额预订；超大规模云厂商优先；Etched 分配量未确认
+        - 未确认；未披露
+      - - 主机互连
+        - PCIe Gen 5（推断）
+        - 标准 x16 PCIe 服务器插槽，负责主机 CPU 与芯片通信，以及模型权重和输出的 DMA 传输
+        - 长上下文模型的 KV-cache 很大，主机互连带宽可能限制 prefill 吞吐
+        - 未确认；未披露
+      - - 编译器 / 软件运行时
+        - 自研工具链（未发布）
+        - 自定义模型编译器将 Transformer 图转换为 Sohu 优化执行格式；推理运行时处理批处理和调度；尚未宣布第三方 LLVM/MLIR 后端
+        - 没有现成开源编译器路径；Etched 工程团队必须开发并维护整套软件栈
+        - 早期阶段；无公开发布
+    notes: >-
+      架构评估基于 Etched 声称的 Transformer-only ASIC 路线和类似 AI 芯片架构（Groq LPU、Google TPU、AWS
+      Trainium）。HBM、封装和互连规格来自行业常态推断——Etched 尚未发布技术规格。TSMC 4N 说法来自公司，未独立确认。
+  - id: TE004
+    title: 信任 / 质量 / 合规表
+    columns:
+      - 维度
+      - 状态 / 主张
+      - 可得证据
+      - 风险等级
+      - 尽调路径
+    rows:
+      - - 硅片质量（量产前）
+        - 截至 2026 年 Q1 尚无量产硅片；首版硅片尚未验证
+        - 无证据 — 未公开展示或宣布工程样片
+        - 高 — ASIC 首次成功率通常为 50-70%；首版硅片是芯片开发中风险最高的里程碑
+        - 索取流片确认和首版硅片预计交付日期；向设计团队索取 DFM 签核文件
+      - - 制程节点合规（TSMC 4N）
+        - 公司声称使用 TSMC 4N；无第三方确认
+        - Etched 网站和投资人媒体报道提到 TSMC 4N；TSMC 不公布客户芯片清单
+        - 中 — TSMC 4N 是成熟制程；主要风险是产能分配，而非制程可靠性
+        - 在 NDA 下索取 TSMC 代工协议条款清单或制造采购订单；确认产能分配
+      - - IP 许可和自由实施
+        - Transformer 注意力算法是开放的（学术源头）；标准单元库和 PHY IP 可能需要授权
+        - 未披露 IP 纠纷或诉讼；Vaswani et al.（2017）论文是公开可访问的学术成果，处于公共领域
+        - 低-中 — ARM 或 Synopsys 标准单元库授权属常见安排；尚未发现已知 IP 冲突
+        - 确认标准单元 IP 供应商和授权条款；围绕 ASIC 架构主张做自由实施检索
+      - - 供应链韧性
+        - Etched 未披露 HBM、封装和基板供应链
+        - 未宣布供应协议；HBM 市场供给紧张，全球供应商有限
+        - 高 — HBM 和 CoWoS 产能已超额预订；初创公司的分配优先级排在超大规模云厂商之后
+        - 索取 HBM 供应商意向书或分配协议；确认封装合作伙伴身份；评估供应多元化选项
+      - - 安全和数据隐私
+        - Etched 未提供安全架构或模型 IP 保护文档
+        - Etched 未发布安全白皮书、认证或技术披露
+        - 中 — 推理芯片处理敏感模型权重；企业客户需要确认权重隔离和安全启动
+        - 索取安全架构简报；确认芯片设计中的内存加密支持、安全启动和模型 IP 保护控制
+      - - 监管和出口合规
+        - 未披露监管文件或合规认证；未产生收入的初创公司通常不需要
+        - 无不利监管信号；美国半导体出口管制（ECCN）适用于出口到特定司法辖区的先进 AI 芯片
+        - 低-中 — TSMC 4N 芯片可能落入 EAR/ECCN 3E001；出口到受限司法辖区需要 BIS 许可
+        - 确认 Sohu 芯片 ECCN 分类；客户出货前核验是否符合美国半导体出口管制规定
+    notes: 截至 2026 年 Q1 的信任与合规评估。所有硅片质量判断都处于量产前阶段，必然带有推测。IP、安全和监管评估基于使用 TSMC 先进节点的 ASIC 初创公司行业常态。Etched 未公开披露任何不利监管、诉讼或质量事件。
+  - id: TE005
+    title: 路线图 / 发布 / 开发阶段表
+    columns:
+      - 里程碑
+      - 估计目标
+      - 状态
+      - 关键依赖
+      - 风险等级
+    rows:
+      - - 架构设计冻结
+        - 估计 2023 年 H2 至 2024 年 H1
+        - 已完成（由流片主张推断）
+        - EDA 综合、时序收敛、设计规则检查（DRC）签核、IP 授权
+        - 低 — 既然公司称流片正在推进，可假设已完成
+      - - 流片（TSMC 4N）
+        - 估计 2025 年 H1 至 H2
+        - 进行中（公司声称）；未独立确认
+        - TSMC 晶圆分配、DFM 合规、掩膜版制作（$5-15M NRE）
+        - 高 — 新工艺节点首次流片是风险最高的设计里程碑；尚无第三方确认
+      - - 首版硅片 / 工程样片
+        - 估计 H2 2025 至 Q2 2026
+        - 尚未宣布；截至 Q1 2026 可能仍在等待
+        - 完成流片；TSMC 晶圆加工（8-16 周）；组装与封装
+        - 高 — 首版硅片失败率为 30-50%；截至 Q1 2026 尚无工程样片演示
+      - - 设计验证与基准测试
+        - 估计 Q2 至 Q3 2026
+        - 尚未开始；依赖首版硅片可用
+        - 工程样片可用；测试框架；基准模型套件；SDK 最小可行实现
+        - 极高 — 验证会暴露良率、性能和硅片 bug；重新流片会增加 6-12 个月
+      - - 客户评估计划
+        - 估计 Q3 2026 至 Q1 2027
+        - 尚未宣布；未点名评估伙伴
+        - 交付工程样片；推理编译器；客户 NDA；评估服务器基础设施
+        - 极高 — 未宣布客户或评估协议；若需要重新流片，时间线会拉长
+      - - 量产爬坡
+        - 估计 2027 及以后
+        - 尚未宣布；未披露量产承诺
+        - 量产硅片验证；TSMC 量产晶圆承诺；HBM 供应协议；客户采购订单
+        - 极高 — 取决于所有此前里程碑；量产前需要 Series B 资金
+    notes: >-
+      所有时间线估计都是分析性预测，基于 TSMC 先进节点芯片开发惯例和可比 AI ASIC 项目（Groq、Cerebras、Amazon Trainium）。 Etched
+      尚未发布官方产品路线图。估计日期假设无需重新流片；单次重新流片会把后续每个里程碑推迟 6-12 个月。
+  - id: TU001
+    title: 客户分群表
+    columns:
+      - 客户分群
+      - 代表公司
+      - 推断年 GPU 支出
+      - Transformer 推理需求
+      - Etched Sohu 匹配度
+      - 估计销售周期
+    rows:
+      - - 前沿 AI 实验室
+        - 前沿实验室：OpenAI、Anthropic、Mistral、xAI
+        - $100M–$1B+
+        - 极高 — 自研 Transformer 解码器推理达到消费者 Web 规模
+        - 高 — 核心目标；若 10x 吞吐量主张得到验证，这类客户受益最大
+        - 首版硅片后 18-30 个月
+      - - 超大规模云厂商 LLM API 团队
+        - 云厂商：AWS（Bedrock/Inferentia）、Google（Gemini API/TPU）、Microsoft（Azure OpenAI）
+        - $1B+（内部推理）
+        - 极高 — 商业 LLM 推理 API 需要尽可能低的每 token 成本
+        - 中 — 已有自有芯片项目（Trainium、TPU、Maia），降低采用外部 ASIC 的紧迫性
+        - 24-36 个月；与内部芯片路线图竞争
+      - - 推理即服务平台
+        - 平台方：Together AI、Anyscale、Perplexity AI
+        - $20M–$200M
+        - 高 — 开源 Transformer 模型推理是核心产品
+        - 高 — 对价格最敏感；最有动力降低每 token 成本
+        - 首版硅片交付后 12-24 个月
+      - - 企业 LLM 应用厂商
+        - 企业应用厂商：Cohere、Scale AI、Hugging Face
+        - $10M–$100M
+        - 中高 — 企业 RAG、向量嵌入和 API 产品需要推理
+        - 中 — 工作负载组合不一；向量嵌入对注意力计算的依赖较低
+        - 12-24 个月；需要软件集成支持
+      - - 研究实验室和学术机构
+        - Meta AI Research、Allen Institute、国家实验室
+        - $10M–$500M
+        - 中 — 推理用于研究评估，但训练主导支出
+        - 中低 — 推理在算力中的占比较低；Sohu 不加速训练
+        - 不是近期主要目标
+    notes: >-
+      支出估计基于公开融资、竞争对手 API 提供商披露的推理定价，以及行业报道讨论的计算预算中推理成本占比。 Etched
+      没有确认任何客户关系；所有分群条目都是潜在目标。超大规模云厂商的「内部推理」支出数据不能与第三方推理支出直接比较，只代表内部成本分摊。销售周期估计假设 H2 2026 至 H1 2027 可获得首批量产硅片。
+    claimRefs:
+      - CU003
+      - CU006
+      - CU007
+      - CU008
+      - CU009
+      - CU011
+  - id: TU002
+    title: 客户增长 / 采用轨迹表
+    columns:
+      - 阶段
+      - 时间线（预计）
+      - 客户数
+      - 收入阶段
+      - 所需关键里程碑
+      - 主要风险
+    rows:
+      - - 阶段 0：硅片前 / 无客户接触
+        - 当前 — Q1 2026
+        - '0'
+        - 收入前
+        - 尚未达成；未披露客户信号
+        - 首版硅片延迟；无法向潜在买家证明芯片性能
+      - - 阶段 1：工程简报和 NDA 评估
+        - Q2 2026 – Q4 2026（预计）
+        - 披露 0 个
+        - 收入前
+        - 交付首版硅片；NDA 下的基准数据；至少 1 份已签评估协议
+        - 未点名评估伙伴；芯片到 2026 年底可能仍无法用于演示
+      - - 阶段 2：试点 / 设计导入客户
+        - H1 2027 – H2 2027（预计）
+        - 1–3
+        - 收入前或首份合同
+        - 具名设计导入客户愿意将 Sohu 接入生产栈；SDK 可用
+        - 架构不兼容；软件集成摩擦；竞争对手替代方案
+      - - 阶段 3：量产爬坡和首笔收入
+        - 2028（预计）
+        - 3–10
+        - 首笔收入（可能是 NRE + 量产芯片合同）
+        - 具名公开客户公告；晶圆量产承诺；供应链锁定
+        - 收入集中；单一客户 = 爬坡初期收入的 >50%
+      - - 阶段 4：生态扩张
+        - 2029+
+        - 10+
+        - 经常性芯片 + 支持收入
+        - SDK 生态；第三方集成；阶段 3 客户复购；公开基准领先
+        - 如果非 Transformer 范式在阶段 4 前获得采用，架构会过时
+    notes: >-
+      所有时间线预测都从公开芯片开发周期（TSMC 4N 从流片到首版硅片 = 设计冻结后 18-24 个月）、类比推理芯片公司的时间线（Groq、Cerebras、AWS Inferentia），以及 Etched
+      披露的融资时间线（2024 年 6 月 Series A）推断而来。 Etched 没有披露任何已确认的里程碑或时间线。客户数是不确定性很高的估计。这张表给出的是一条合理的采用轨迹，不是已承诺预测。
+    claimRefs:
+      - CU012
+      - CU013
+      - CU024
+      - CU029
+  - id: TU003
+    title: 具名客户证明表
+    columns:
+      - 公司 / 平台
+      - 客户类别
+      - 证据类型
+      - 推理 ASIC 采用证据
+      - 对 Etched 的适用性
+    rows:
+      - - AWS Inferentia 用户（Stability AI、Quora、Sprinklr）
+        - AI 应用公司 — 图像生成、聊天机器人推理、企业 NLP
+        - 客户证明（AWS 案例研究）
+        - Stability AI 和 Quora 将 AWS Inferentia2（Inf2）用于生产推理；在吞吐量相当时，两家公司称相较同等 GPU 实例类型成本降低 40-70%
+        - 直接类比：买方原型相同，都是推理支出很高的 AI 公司；TCO 被验证后愿意采用定制推理 ASIC，验证了 Etched 的目标买方分群
+      - - Groq Inference API 客户（推理平台、AI 原生应用）
+        - 推理即服务平台；AI 原生开发者
+        - 客户证明（Groq 案例研究页面）
+        - Groq 案例研究显示，AI 原生公司和推理平台正在采用 Groq LPU，处理对延迟和吞吐敏感的 Transformer 推理工作负载
+        - 直接类比：买方分群与 Etched 目标相同；Groq 证明，当 token 吞吐跑赢 GPU 替代方案时，推理平台愿意为专用推理硬件付费
+      - - OpenAI（潜在 — 无 Etched 接触）
+        - 前沿 AI 实验室 — 全球已知最大的 Transformer 推理运营方
+        - 由公开规模披露推断
+        - OpenAI 以消费者 Web 规模运营 GPT-4 级模型（数亿用户）；按算力成本评论估计，年推理支出为 $1B+；若性能得到验证，10x 吞吐会带来收益
+        - 潜在目标 — 价值最高；未披露任何 Etched 接触；需要谈判多年供应承诺
+      - - Anthropic（潜在 — 无 Etched 接触）
+        - 前沿 AI 实验室 — Claude 模型面向消费者和企业
+        - 由公开规模和融资披露推断
+        - Anthropic 在 2024-2025 年从 Google 和 Amazon 获得 $7.3B+ 融资；Claude API 推理是核心产品；Transformer 推理成本对单位经济性很关键
+        - 潜在目标 — tier-1；未披露任何 Etched 接触；AWS 投资可能让供应链偏向 Trainium/Inferentia
+      - - 无 Etched 特定客户（实际）
+        - N/A — 缺失记录
+        - 观测到没有证据
+        - 截至 Q1 2026，Etched 在任何公开沟通中都没有披露客户、LOI、具名评估伙伴或工程简报接收方
+        - 尽调缺口：这张表中每一条 Etched 特定行都是假设；只有类比公司行（AWS Inferentia、Groq）能作为推理 ASIC 买方分群的已确认客户证明
+    notes: >-
+      这张表记录 Etched 特定客户证明的缺失，并提供可比推理芯片公司的类比证据。所有标注为「潜在」或「类比」的行都不是 Etched 客户。 截至 Q1 2026，Etched 公开确认的客户关系为 0。AWS
+      案例研究数字（成本降低 40-70%）来自已发布案例研究，应由 AWS 或客户直接独立验证。Groq 案例研究细节来自 groq.com/case-studies/（访问于 2026-05-18）。
+    enumerationScope:
+      coverage: partial
+      basis: >-
+        Enumeration covers publicly confirmed inference ASIC customers (Groq, AWS Inferentia) and named potential Etched
+        customers (OpenAI, Anthropic); excludes confidential evaluations, NDA-governed engagements, and unlisted
+        potential customers. No Etched-specific customer rows exist; coverage is structurally partial because Etched has
+        zero disclosed customers.
+      relatedTableRefs: []
+    claimRefs:
+      - CU001
+      - CU004
+      - CU005
+      - CU006
+      - CU021
+  - id: TU004
+    title: 留存 / 重复使用 / 满意度表
+    columns:
+      - 指标
+      - 行业类比 / 基准
+      - Etched 状态
+      - 结构性展望
+      - 尽调询问
+    rows:
+      - - 净留存率（NRR）
+        - AWS Inferentia：未披露 NRR，但客户会在 12 个月内扩容；Groq：推理 API 客户 NRR 估计 >100%
+        - 不适用 — 零客户
+        - 结构上有利：推理芯片一旦集成完成，工作负载粘性很强；若芯片有竞争力，推理量扩张意味着 NRR >100%
+        - 要求 Etched 提供 NRR 模型预测；询问其计划如何锁定多年供应协议
+      - - 总留存率（GRR）/ 流失
+        - 推理芯片一旦接入生产，流失率很低（切换成本 = 12-18 个月重新工程化）；AWS Inferentia：未公开披露流失率
+        - 不适用 — 零客户
+        - 接入后结构上流失率低；风险在于客户没有完成集成（试点阶段中止）
+        - 询问计划中的合同结构：最低采购量承诺、照付不议条款、NDA 评估条款
+      - - 客户满意度 / NPS
+        - Groq：开发者社区在 G2 上报告满意度较高（评论强调相较 GPU 替代方案速度更快）；AWS Inferentia：客户案例研究报告 ROI 为正
+        - 不适用 — 没有开发者访问、SDK，也没有面向开发者的基准数据
+        - 未知：Etched 没有提供开发者访问、公开 API 或可供独立评估的基准数据；开发者满意度无法衡量
+        - 要求提供 SDK 路线图和开发者访问时间线；询问首个公开基准何时发布
+      - - 合同期限与续约模式
+        - 推理芯片供应协议通常是带采购量承诺的 2-3 年合同；超大规模云厂商芯片项目通常是 5 年以上关系
+        - 不适用 — 尚未签署合同
+        - 结构性模式有利：长合同期限降低流失风险；但 Etched 必须先拿下首份合同，留存指标才有意义
+        - 要求提供任何评估协议草案或条款清单结构
+      - - 队列留存（时间序列）
+        - Groq 或 Cerebras 没有可用数据（私营公司）；AWS Inferentia 未公开披露队列数据
+        - 不适用 — 不存在客户队列
+        - 没有至少 2 个跨时间段客户队列，就无法建模
+        - 所有队列单元格均为 null — 见留存 / 重复使用队列图；拿下首批客户后，提供任何内部建模
+    notes: >-
+      所有留存指标都是基于推理芯片类比公司（Groq、AWS Inferentia、Cerebras）的结构性评估。Etched 没有任何特定留存数据，因为客户为 0。 满意度信号来自 Groq 的 G2
+      评论（作为推理芯片开发者情绪代理）和 AWS 客户案例研究。一旦首批客户上线，这张表应完全替换为 Etched 的实际客户留存数据。
+    claimRefs:
+      - CU025
+      - CU005
+      - CU021
+  - id: TU005
+    title: 扩张与集中度风险表
+    columns:
+      - 风险因素
+      - 风险等级
+      - 理由
+      - 缓解路径
+    rows:
+      - - 收入启动时客户集中度
+        - 严重
+        - Etched 带着零客户进入量产；首个客户 = 收入的 100%；即使早期采用者达到 3 个，只要任何一个客户贡献首年收入 >33%，集中度仍然极高
+        - 首次晶圆投片前签署 ≥3 份有约束力的评估合同；与不同分群的多家买方谈判供应承诺，分散风险
+      - - 单一架构把客户挡在门外
+        - 高
+        - Sohu 只加速 Transformer attention；运行 MoE、SSM（Mamba）或混合架构的客户无法采用 Sohu，除非非 attention 层回退到 GPU
+        - 扩大模型兼容清单；披露哪些模型家族可完全加速、哪些只能部分加速；为非 attention 层开发回退调度
+      - - 长评估周期导致收入延迟
+        - 高
+        - 芯片评估周期长达 12-24 个月，即使流片按计划完成，收入最早也要到 2027 年才出现；每延迟一个月都会加大融资现金跑道风险
+        - 签署带里程碑付款的早期 LOI；提供预付款激励；用更强基准测试和预构建集成脚本缩短评估周期
+      - - 超大规模云厂商偏好自有芯片
+        - 中高
+        - AWS Trainium、Google TPU、Microsoft Maia 意味着头部超大规模云厂商可能更愿意内部开发定制推理芯片，而不是采用初创公司的芯片；三大潜在客户被移除后，可触达市场缩小
+        - 把推理即服务平台（Together AI、Anyscale、Perplexity）作为第一波主要客户；将 Sohu 定位为无法承担自有芯片项目公司的替代方案
+      - - SDK / 软件生态不成熟
+        - 中
+        - >-
+          Groq 和 Cerebras 的软件生态领先 1-3 年；客户需要兼容 HuggingFace 的编译器、兼容 vLLM 的 serving，以及兼容 OpenAI API 的端点；截至 Q1 2026，Etched
+          没有公开 SDK
+        - 在首版硅片之前或同时优先交付 SDK 和开发者工具；开源关键集成层以加速生态采用；招聘有经验的 ML 系统软件工程师
+    notes: >-
+      风险评级是定性评估，基于对推理芯片初创公司动态、类比公司轨迹（Groq、Cerebras、Graphcore）以及 Etched 当前披露位置的分析。 Etched
+      没有披露任何已确认的风险缓解措施。所有缓解路径都是从类比分析得出的建议，不是 Etched 已确认计划。
+    claimRefs:
+      - CU019
+      - CU014
+      - CU013
+      - CU037
+  - id: TR001
+    title: 技术与架构风险登记表
+    columns:
+      - 风险
+      - 概率
+      - 影响
+      - 时间范围
+      - 缓解状态
+      - 残余严重性
+    rows:
+      - - Transformer 架构过时 — 被 Mamba/RWKV/MoE 替代
+        - 中
+        - 严重
+        - 3–7 年
+        - 无 — 架构已硬编码进硅片
+        - 严重
+      - - ASIC 不可编程 — 流片后没有软件补丁路径
+        - N/A
+        - 高
+        - 流片后立即
+        - 设计阶段靠微代码层缓解（未验证）
+        - 高
+      - - TSMC PPA 目标未达，需要重新流片
+        - 中
+        - 高
+        - 18–24 个月
+        - 保守设计裕度；第三方 DFT 评审
+        - 中
+      - - HBM 供应受限 — 依赖 SK Hynix / Samsung / Micron
+        - 中
+        - 高
+        - 6–18 个月
+        - 多供应商设计；尚无确认的分配优先级
+        - 高
+      - - TSMC 地缘政治中断 — 台湾海峡升级
+        - 低
+        - 严重
+        - 1–5 年
+        - 收入前没有可行的近期缓解方案
+        - 高
+      - - ASIC 设计周期长 — 从流片到量产需 18–24 个月
+        - 高
+        - 高
+        - 持续
+        - 并行 RTL 轨道；按里程碑控制烧钱
+        - 高
+    notes: 概率反映作者基于公开来源作出的定性评估。影响评级是相对判断，不是精算结论。时间范围指风险一旦触发，会在什么时候显现。
+    claimRefs:
+      - CR001
+      - CR002
+      - CR003
+      - CR004
+      - CR005
+      - CR007
+      - CR008
+  - id: TR002
+    title: 监管 / 法律风险登记表
+    columns:
+      - 风险
+      - 法规 / 主管机构
+      - 司法辖区
+      - 可能性
+      - 严重性
+      - 缓解
+      - 残余敞口
+    rows:
+      - - 美国出口管制限制 Sohu 芯片销往非盟友市场
+        - EAR / BIS Entity List
+        - 美国
+        - 中
+        - 高
+        - 出口许可证申请；Entity List 筛查计划
+        - 中
+      - - CHIPS Act 对 TSMC 供应协议的限制，限制客户接入
+        - CHIPS and Science Act 2022（芯片与科学法案）
+        - 美国
+        - 低
+        - 中
+        - 遵守 CHIPS Act 护栏条款；未直接寻求联邦资金
+        - 低
+      - - EU AI Act 对 GPAI 的合规要求间接影响芯片基础设施
+        - EU AI Act 2024
+        - 欧盟
+        - 中
+        - 中
+        - 监控 EU AI Act 实施法案；客户层面合规
+        - 低
+      - - BIS Entity List 扩大，限制特定 TSMC/Etched 供应关系
+        - EAR Part 744 / BIS Entity List（实体清单规则）
+        - 美国
+        - 低
+        - 高
+        - 持续监控 Entity List；法律顾问审查
+        - 中
+      - - NVIDIA 或 Arm Holdings 对 Sohu 设计提出专利侵权主张
+        - 美国专利法；Arm Holdings 许可协议
+        - 美国
+        - 中
+        - 高
+        - 自由实施分析；Arm 授权协议已到位
+        - 中
+      - - 前 NVIDIA/Meta/Google 工程师引发商业秘密主张
+        - 美国商业秘密法（DTSA）
+        - 美国
+        - 低
+        - 中
+        - IP 转让协议；入职法律审查
+        - 低
+    notes: 可能性评级反映作者基于公开来源的推断；不构成直接法律意见。残余敞口假设标准合规计划已经到位。
+    enumerationScope:
+      coverage: exhaustive
+      basis: >-
+        Enumerated from publicly known US export control regulations (EAR/BIS), CHIPS Act text, EU AI Act provisions,
+        and semiconductor IP litigation precedents as of May 2026.
+    claimRefs:
+      - CR009
+      - CR010
+      - CR011
+      - CR012
+      - CR013
+      - CR014
+      - CR015
+      - CR016
+      - CR017
+  - id: TR003
+    title: 竞争替代与过时风险登记表
+    columns:
+      - 竞争对手 / 威胁
+      - 威胁路径
+      - 时间范围
+      - 可能性
+      - 严重性
+      - Etched 缓解
+    rows:
+      - - NVIDIA Blackwell / Rubin（B200、R100 路线图）
+        - GPU 推理每代持续提升 2–4×，抬高 Sohu 必须跨过的性能门槛
+        - 2025–2027
+        - 极高
+        - 高
+        - Sohu 必须在 Transformer 解码上保持 >10× 每美元吞吐优势，才能支撑客户采用
+      - - AMD MI300X / MI325X 推理芯片
+        - 开源模型推理的竞争性定价削弱成本差异化
+        - 2025–2026
+        - 高
+        - 中
+        - 瞄准 AMD 不具竞争力的延迟敏感用例
+      - - Google TPU v6 / AWS Trainium 2 / Microsoft Maia 100（超大规模云厂商自有芯片）
+        - 超大规模云厂商自建推理 ASIC，绕开初创推理芯片市场
+        - 2025–2027
+        - 高
+        - 高
+        - 瞄准无法自建自有芯片的非超大规模云厂商推理平台
+      - - Groq LPU / Cerebras CS-3（直接推理 ASIC 竞争对手）
+        - 已落地量产客户和公开基准的推理 ASIC 领先 2–3 年
+        - 2025–2026
+        - 中
+        - 中
+        - 在标准基准测试中证明 Sohu 相比 LPU 和 CS-3 有更高的每美元 tokens/sec
+      - - Mamba / RWKV / MoE 架构迁移使仅支持 Transformer 的芯片过时
+        - 模型架构范式变化让 Sohu 的核心价值主张失效
+        - 2026–2030
+        - 中
+        - 严重
+        - 没有可行缓释手段；需要完整重做 ASIC 设计并推出新一代产品
+      - - Tenstorrent RISC-V AI 芯片（半灵活架构）
+        - 半可编程替代方案比 Etched 的固定架构更灵活
+        - 2026–2028
+        - 低
+        - 中
+        - Sohu 在 Transformer 工作负载上的性能优势仍是关键差异点
+    notes: 威胁可能性反映截至 2026 年 Q1 的公开竞争情报。严重性评级假设威胁出现时 Etched 尚未实现生产收入。
+    claimRefs:
+      - CR020
+      - CR021
+      - CR022
+      - CR023
+      - CR024
+      - CR025
+      - CR026
+  - id: TR004
+    title: 执行与团队风险登记表
+    columns:
+      - 风险
+      - 类别
+      - 概率
+      - 影响
+      - 缓释状态
+      - 剩余严重性
+    rows:
+      - - 团队首次设计 ASIC——组织层面没有流片记录
+        - 技术 / 组织
+        - 中
+        - 高
+        - 经验丰富的外部芯片设计顾问；TSMC PDK 支持
+        - 高
+      - - CEO（Gavin Uberti，23 岁）此前没有芯片量产经验
+        - 领导力
+        - 中
+        - 高
+        - 董事会监督；资深投资人；技术联合创始人参与
+        - 中
+      - - 约 30 人的小团队承担全栈 ASIC 开发
+        - 产能 / 人才
+        - 高
+        - 高
+        - 流片前必须跑通主动招聘管线
+        - 高
+      - - SDK / 软件栈尚不存在；未宣布编译器或开发者计划
+        - 产品 / 软件
+        - 高
+        - 高
+        - SDK 开发必须与硬件并行；存在 Graphcore 类比风险
+        - 严重
+      - - 18–24 个月设计到量产周期导致收入空窗，烧钱继续累积
+        - 时间线 / 财务
+        - 中
+        - 高
+        - 管理现金跑道；按里程碑控支出；计划 Series B 融资
+        - 高
+      - - 关键工程师前雇主提出商业秘密或 IP 侵占主张
+        - 法律 / 人力
+        - 低
+        - 中
+        - IP 转让协议；入职法律审查；外部律师
+        - 低
+    notes: 概率评级是基于公开信息的定性推断；未获得 Etched 内部数据。剩余严重性假设已落实标准专业缓释措施。
+    claimRefs:
+      - CR027
+      - CR028
+      - CR029
+      - CR030
+      - CR031
+      - CR032
+  - id: TR005
+    title: 财务与现金跑道风险登记表
+    columns:
+      - 情景
+      - 触发因素
+      - 概率
+      - 财务影响
+      - 剩余敞口
+    rows:
+      - - TSMC N3/N4 上的 ASIC 流片成本超支
+        - 最终流片 NRE 超过 $100M，而基准情景为 $50M；需要多套掩模
+        - 中
+        - 首版硅片前需要额外 $50–150M 资金
+        - 高
+      - - Series B 融资失败，或延迟到现金跑道之外
+        - AI 融资市场收缩；缺少设计赢单；没有可给投资人看的硅片样品
+        - 中
+        - 首笔收入前，公司可能必须停止运营或缩小规模
+        - 严重
+      - - 流片后首版硅片需要重制
+        - 首版硅片未达到 PPA 规格；时序收敛失败；良率低于阈值
+        - 中
+        - 延误 12–18 个月；新增 $20–50M NRE 成本；现金跑道可能耗尽
+        - 高
+      - - AI 推理市场增速放缓
+        - 企业生成式 AI 支出回落；GPU 成本下降削弱 Sohu 成本优势
+        - 低
+        - TAM 收缩；推理 ASIC 初创公司的利润率被挤压
+        - 中
+      - - 首年客户收入集中——3–5 家客户中有一家缩减采购量
+        - 首个客户退出，或转向不再使用 Transformer 模型推理
+        - 中
+        - 首年收入短缺 25–50%；运营连续性风险
+        - 高
+    notes: 财务影响估计基于行业类比（Graphcore、Groq）和公开 TSMC 节点定价估计。未获得 Etched 内部财务数据。
+    claimRefs:
+      - CR033
+      - CR034
+      - CR035
+      - CR036
+      - CR037
+      - CR038
+  - id: TV001
+    title: 可比估值表
+    enumerationScope:
+      coverage: exhaustive
+      basis: >-
+        Covers all publicly known AI chip companies with reported valuation or market capitalisation data and relevant
+        precedent M&A transactions used in this valuation analysis as of May 2026; includes both public semiconductor
+        incumbents and private AI inference startup analogues relevant to the comparable company analysis for Etched
+        Sohu.
+    columns:
+      - 公司
+      - 阶段
+      - 隐含估值 / 市值
+      - 企业价值 / 收入倍数
+      - 主要相关性
+      - 与 Etched 对比的局限
+    rows:
+      - - NVIDIA
+        - '上市公司（NASDAQ: NVDA）'
+        - ~$3T（2024）
+        - ~25× LTM
+        - AI 芯片主导地位的理想参照
+        - 多元化 GPU+CUDA 护城河；并非只做推理；规模大得多
+      - - Marvell Technology
+        - '上市公司（NASDAQ: MRVL）'
+        - ~$80–100B（2024）
+        - ~10–15× AI ASIC 收入
+        - 最接近量产阶段的定制 AI ASIC 可比公司
+        - Marvell 有付费超大规模云厂商客户；Etched 收入为零
+      - - Broadcom
+        - '上市公司（NASDAQ: AVGO）'
+        - ~$700B（2024）
+        - ~18–20× AI 芯片隐含倍数
+        - 面向超大规模云厂商的大规模定制芯片
+        - Broadcom 的收入覆盖网络 + ASIC；不适合作为初创公司可比对象
+      - - Qualcomm
+        - '上市公司（NASDAQ: QCOM）'
+        - ~$150B（2024）
+        - ~7–9× 半导体收入
+        - 无晶圆厂芯片公司的估值倍数下限参照
+        - 以移动业务为中心；没有直接的推理 ASIC 业务
+      - - Cerebras / Groq（私有公司）
+        - Series C–D，IPO 前
+        - $2.5B（Groq，2024）；$7–8B（Cerebras，隐含 IPO）
+        - N/A（无公开收入）
+        - 披露估值的私有阶段 AI 芯片同行
+        - 两者都有生产部署；Etched 连首版硅片也没有
+      - - Habana Labs（2019 年被 Intel 收购）
+        - 收购时仍未产生收入
+        - ~$2B 收购价
+        - N/A（退出时无收入）
+        - AI 芯片初创公司 M&A 的主要先例交易
+        - 2019 年案例；当时 AI 芯片竞争远不如现在激烈
+    notes: >-
+      上市公司估值为截至 2024 年末的大致市值；EV/Revenue 倍数为作者根据公开申报文件和分析师共识估算。私有阶段估值来自公开报道的融资轮或 IPO 文件。与 Etched 对比时，需要在可比倍数基础上打 40–60%
+      折扣，以反映其尚未产生收入、单一架构集中度和执行风险。
+    claimRefs:
+      - CV001
+      - CV003
+      - CV005
+      - CV009
+  - id: TV002
+    title: 建议摘要表
+    columns:
+      - 入场条件
+      - 隐含投后估值
+      - 建议立场
+      - 概率加权企业价值
+      - 关键限定条件
+    rows:
+      - - 有吸引力的入场
+        - ≤$800M
+        - 有条件观察——Series B 完成后重新评估
+        - $800M–1.1B
+        - 以完成流片和拿下首个客户为前提重新评估
+      - - 边际入场
+        - $800M–1.5B
+        - 放弃——风险调整后回报不足
+        - $800M–1.1B
+        - 安全边际不足；概率加权 EV 仅略高于入场估值
+      - - 无吸引力的入场
+        - '>$1.5B'
+        - 坚决放弃——基于现有信息，期望价值为负
+        - $800M–1.1B
+        - 任何现实情景权重下都预期亏损；三项否决触发器已触发
+    notes: >-
+      概率加权 EV 来自乐观情景（15–20% × $3–5B）+ 基准情景（40–50% × $800M–1.5B）+ 悲观情景（30–40% × $200–500M）。投后入场条件假设未来融资轮；实际 Series A
+      投后估值未披露。本立场不构成投资建议。
+    claimRefs:
+      - CV040
+      - CV041
+  - id: TV003
+    title: 乐观 / 基准 / 悲观情景表
+    columns:
+      - 情景
+      - 概率
+      - 关键假设
+      - 2028 年收入估计
+      - 退出 EV/Revenue
+      - 隐含退出企业价值
+    rows:
+      - - 乐观
+        - 15–20%
+        - 首版硅片一次通过；2027 年 H2 前拿下 ≥1 个超大规模云厂商设计赢单；Transformer 架构保持主导
+        - $200–300M
+        - 10–15×
+        - $3–5B
+      - - 基准
+        - 40–50%
+        - 交付首版硅片；性能不及预期或集成延迟；1 个初始客户；Series B 完成
+        - $100–150M
+        - 4–6×
+        - $800M–1.5B
+      - - 悲观
+        - 30–40%
+        - 流片失败或重制；架构被替代；Series B 融不到；困境退出
+        - <$50M 或为零
+        - <5× 或困境估值
+        - $200–500M
+    notes: 概率是作者基于可比 AI 芯片初创公司的基准成功率（Graphcore、Cerebras）校准后的定性估计。收入估计是示意性情景分析，不是公司预测。退出倍数假设 2024 年水平的 AI 芯片板块情绪持续。
+    claimRefs:
+      - CV015
+      - CV016
+      - CV017
+  - id: TV004
+    title: 投资逻辑 / 反向逻辑表
+    columns:
+      - 维度
+      - 乐观逻辑
+      - 反向逻辑
+      - 证据权重
+    rows:
+      - - 架构锁定效应
+        - Transformer 架构已经证明耐用；第一代硬编码芯片在推理时捕捉切换成本护城河
+        - Mamba / RWKV / SSM 替代方案具备无 KV cache 优势；任何范式迁移都会让 Sohu 永久失去着力点
+        - 混合——Transformers 目前占主导，但 SSM 证据在增加
+      - - 团队执行
+        - MIT/OpenAI 背景；AI / 硬件积累深；年轻意味着行动更快、承诺周期更长
+        - CEO 23 岁且没有流片历史；约 30 人团队做全栈 ASIC，按历史经验偏小
+        - 弱——没有流片记录可验证执行力
+      - - 市场时点
+        - $120M 融资踩在推理成本压力峰值；超大规模云厂商有强动机采用更便宜的推理芯片
+        - NVIDIA Blackwell/Rubin 路线图每 2 年缩小性能差距；优势窗口可能很短
+        - 混合——时点说得通，但竞争时钟走得很快
+      - - 资本效率
+        - 聚焦单一架构，减少固件和软件复杂度；运营支出低于更宽平台的竞争者
+        - TSMC N4 ASIC 流片仅 NRE 就要 $50–200M；任何产品收入前还需要 Series B
+        - 负面——资本密集风险高，且在 Series A 阶段没有缓释
+    notes: 证据权重是作者基于公开信息的定性判断。“混合”表示正反两侧都有证据；“弱”或“负面”表示在公司当前发展阶段，反向逻辑证据明显强于投资逻辑证据。
+    claimRefs:
+      - CV001
+      - CV002
+      - CV004
+  - id: TV005
+    title: 逻辑破裂与否决触发器表
+    columns:
+      - 触发器
+      - 类别
+      - 信号事件
+      - 紧迫度
+      - 必要动作
+    rows:
+      - - 首版硅片失败或流片中止
+        - 执行 / 硬件
+        - TSMC 报告流片被拒、PPA 严重不达标，或功能硅片交付前出现计划外重制
+        - 立即
+        - 退出持仓；困境情景下 IP 价值 <$100M；业务没有收入路径
+      - - Transformer 架构被替代
+        - 技术 / 市场
+        - 任一前三大超大规模云厂商（Google、AWS、Microsoft）宣布在生产推理中部署 Mamba/SSM/MoE，替换推理层的 Transformer 解码器
+        - 1 个季度内
+        - 退出持仓；Sohu 核心差异化被消除，且没有恢复路径
+      - - 无法以可行估值完成 Series B
+        - 财务 / 现金跑道
+        - Etched 未能在 Series A 交割后 24 个月内以 ≥$800M 投后估值完成 Series B（截止：2026 年中）
+        - 截止日期后 6 个月内
+        - 重新评估；资本跑道耗尽意味着被迫出售或关停
+    notes: 否决触发器是作者参考可比 AI 芯片初创公司失败案例（Graphcore）和标准风投风险管理定义的阈值。它们是监测指标，不是机械卖出规则；每一项都需要在发生时结合当时背景重新评估。
+    claimRefs:
+      - CV031
+      - CV032
+      - CV033
+  - id: TV006
+    title: 最终尽调追问表
+    columns:
+      - 追问事项
+      - 优先级
+      - 必要性
+      - 未解决风险
+    rows:
+      - - Series A 投后估值，以及包含完整期权池和清算优先权堆叠的股权结构表
+        - P0——阻塞
+        - 没有这些，无法评估入场价格、稀释基线和优先权负担
+        - 无法判断任何入场价格是否提供正的风险调整后回报
+      - - 月度烧钱速度、流片里程碑计划、截至目前累计 TSMC NRE 支付额，以及预计现金耗尽日期
+        - P0——阻塞
+        - 现金跑道验证和 Series B 时点完全取决于烧钱速度与 NRE 节奏
+        - 现金跑道可能短于假设；Series B 时间线可能压到 12 个月以内
+      - - 任何已签署 LOI、评估协议、NDA 下工程简报接收方，或客户管线数据
+        - P1——重大
+        - 商业逻辑没有公开证据；即便是非约束性 LOI，也会实质改变概率权重
+        - 没有客户管线信号，无法验证任何乐观情景概率
+      - - TSMC 代工协议条款——节点选择（N4 vs N3）、NRE 支付计划、产能分配优先级，以及任何优先分配权条款
+        - P1——重大
+        - 代工锁定和 NRE 结构决定资本需求和执行可选性
+        - 无法评估 $120M 是否足够撑到首版硅片交付
+    notes: P0 项是任何投资决策的前置条件；P1 项是签署 term sheet 前必须获得的信息。四项都涉及 Etched 需要在 data room 披露的非公开信息；截至研究日期，没有任何一项公开可得。
+    claimRefs:
+      - CV034
+      - CV035
+      - CV036
+figures:
+  - id: FO001
+    title: Etched 公司里程碑时间线
+    type: timeline
+    layout: standard
+    summary: 从创立（2022）到 Series A 与 Sohu 发布（2024 年 6 月），再到持续开发的关键里程碑。
+    data:
+      items:
+        - label: 创立
+          date: '2022-01-01'
+          detail: Etched 由 Gavin Uberti、Chris Zhu 和 Robert Winslow 在 Cupertino, CA 注册成立，使命是打造 Transformer 原生 AI 芯片。
+          tone: positive
+          claimRefs:
+            - CO001
+            - CO002
+            - CO010
+        - label: 隐身开发
+          date: '2022-07-01'
+          detail: 团队隐身搭建 Sohu ASIC 架构；这一阶段没有公开披露。
+          tone: neutral
+          claimRefs:
+            - CO005
+            - CO015
+        - label: 架构定型
+          date: '2023-06-01'
+          detail: Sohu 芯片架构完成设计，把 Transformer 操作硬编码以最大化推理吞吐。
+          tone: positive
+          claimRefs:
+            - CO005
+            - CO031
+        - label: $120M Series A
+          date: '2024-06-26'
+          detail: Etched 从 Primary Venture Partners 和 Positive Sum 获得 $120M 融资，估值约 $1B。
+          tone: positive
+          claimRefs:
+            - CO003
+            - CO004
+            - CO009
+        - label: Sohu 发布
+          date: '2024-06-26'
+          detail: Sohu 芯片公开发布，宣称吞吐量 500,000 tokens/sec，相比 H100 有 25x 优势。
+          tone: positive
+          claimRefs:
+            - CO005
+            - CO006
+            - CO016
+        - label: 媒体报道
+          date: '2024-06-27'
+          detail: Bloomberg、Reuters、Wired、Fortune 和 TechCrunch 报道 Series A 与 Sohu 发布。
+          tone: positive
+          claimRefs:
+            - CO037
+        - label: 持续开发
+          date: '2025-01-01'
+          detail: Sohu 芯片开发仍在继续；流片日期和量产时间线未公开披露。
+          tone: neutral
+          claimRefs:
+            - CO008
+            - CO034
+    approximationNotes: 开发阶段日期（隐身、架构）基于公司年龄和典型芯片时间线估计；确切日期未披露。
+    claimRefs:
+      - CO001
+      - CO003
+      - CO005
+      - CO006
+      - CO037
+  - id: FO002
+    title: Etched 公司快照逻辑
+    type: flow
+    layout: standard
+    summary: Etched 的身份、产品、资本和依赖关系如何连接。
+    data:
+      nodes:
+        - id: founders
+          label: 创始团队
+          detail: Gavin Uberti（CEO）、Chris Zhu（CTO）、Robert Winslow——AI / 硬件积累深
+        - id: capital
+          label: $120M Series A 资本
+          detail: 资金来自 Primary Venture Partners 和 Positive Sum；支撑芯片开发和团队扩张
+        - id: sohu
+          label: Sohu ASIC 芯片
+          detail: 专为 Transformer 推理打造的 ASIC；宣称 500K tokens/sec；仍在开发中
+        - id: transformer
+          label: 押注 Transformer 架构
+          detail: 核心逻辑：Transformers 主导 AI；专用芯片赢在成本 / 性能
+        - id: hyperscalers
+          label: 目标客户
+          detail: 大规模运行 LLM 推理的云端超大规模厂商和大型企业
+        - id: tsmc
+          label: TSMC（假定代工厂）
+          detail: 需要先进制程节点制造，才能拿到有竞争力的芯片性能
+        - id: competitors
+          label: 竞争格局
+          detail: NVIDIA H100/H200、Google TPU、AMD MI300X、Groq、Cerebras——都在争夺推理工作负载
+      edges:
+        - from: founders
+          to: sohu
+          label: 设计并制造
+        - from: capital
+          to: sohu
+          label: 资助开发
+        - from: transformer
+          to: sohu
+          label: 定义架构
+        - from: sohu
+          to: hyperscalers
+          label: 销售推理产能
+        - from: tsmc
+          to: sohu
+          label: 代工制造
+        - from: competitors
+          to: hyperscalers
+          label: 争夺相同客户
+    claimRefs:
+      - CO003
+      - CO005
+      - CO009
+      - CO010
+      - CO019
+      - CO021
+  - id: FO003
+    title: Etched 快照 KPI
+    type: kpi
+    layout: standard
+    summary: 截至研究日期，Etched 的关键性能和状态指标。
+    data:
+      items:
+        - label: Series A 融资
+          value: $120M
+          unit: USD
+          detail: 2024 年 6 月宣布；由 Primary Venture Partners 和 Positive Sum 领投
+        - label: 报道估值
+          value: ~$1B
+          unit: USD
+          detail: Series A 时由 Bloomberg 和新闻稿报道
+        - label: 创立
+          value: '2022'
+          unit: Year
+          detail: Cupertino, CA；创始人 Gavin Uberti、Chris Zhu、Robert Winslow
+        - label: 宣称吞吐量
+          value: 500,000
+          unit: tokens/sec
+          detail: Sohu ASIC 公司宣称指标；未经独立验证
+        - label: 宣称相对 H100 优势
+          value: 25x
+          unit: speedup
+          detail: 公司宣称的 Transformer 推理性能优势；未经验证
+        - label: 收入状态
+          value: Pre-revenue
+          unit: null
+          detail: 没有付费客户；截至研究日期，产品仍在开发中
+        - label: 客户数量
+          value: 0 disclosed
+          unit: null
+          detail: 未公开宣布客户承诺
+    approximationNotes: 估值和性能数据来自公司披露或媒体报道；未经独立审计或验证。
+    claimRefs:
+      - CO003
+      - CO004
+      - CO006
+      - CO007
+      - CO008
+      - CO016
+      - CO033
+  - id: FM001
+    title: AI 芯片市场规模金字塔
+    type: pyramid
+    layout: standard
+    summary: Etched 可触达 AI 推理市场从 TAM 到 SAM 再到 SOM 的层级。
+    data:
+      items:
+        - label: AI 芯片总市场（TAM）
+          detail: $53B–$80B（2023）；预计 2030 年 $300B–$500B
+        - label: AI 推理细分市场（SAM）
+          detail: $20B–$30B（2024E）；预计 2028-2030 年 $100B–$200B
+        - label: Transformer 推理 ASIC（调整后 SAM）
+          detail: $80B–$180B（2028-2030E）；假设 Transformer 份额 80-90%
+        - label: Etched SOM（近期）
+          detail: <$100M（2026-2027E）；早期超大规模云厂商试点和试点项目
+        - label: Etched SOM（5 年）
+          detail: $50M–$1B（2027-2030E）；0.05-1% 捕获情景
+    approximationNotes: 所有数字都是分析师估计，区间不确定性很大；SOM 预测仅作示意性情景分析。
+    claimRefs:
+      - CM006
+      - CM007
+      - CM008
+      - CM009
+      - CM010
+      - CM011
+  - id: FM002
+    title: AI 推理市场规模估计区间
+    type: range
+    layout: standard
+    summary: 不同时间维度下 AI 推理市场规模的区间估算，并附不确定性带。
+    data:
+      items:
+        - label: AI 推理市场 2024E
+          low: 20
+          mid: 25
+          high: 35
+          unit: USD Billion
+          detail: 根据分析师共识估算；推理约占总规模 $60B 的 AI 芯片市场 40%
+        - label: AI 推理市场 2026E
+          low: 40
+          mid: 65
+          high: 90
+          unit: USD Billion
+          detail: 由 35-45% 年复合增长率（CAGR）外推；区间很宽，反映不确定性
+        - label: AI 推理市场 2028E
+          low: 80
+          mid: 130
+          high: 200
+          unit: USD Billion
+          detail: 远期预测；假设 LLM 增长仍占主导
+        - label: 2026E 推理中的 Transformer 占比
+          low: 65
+          mid: 80
+          high: 90
+          unit: '% of inference'
+          detail: 推理工作负载中基于 Transformer 的占比；取决于 SSM / 混合架构采用情况
+        - label: Etched 2028E 收入潜力
+          low: 0
+          mid: 200
+          high: 1000
+          unit: USD Million
+          detail: 情景区间很宽，从 0%（失败）到 0.5-1% 市场份额（乐观成功）
+    approximationNotes: 所有区间都是分析师构建的估算；未使用专有市场研究。Etched 的收入区间尤其带有推测性。
+    claimRefs:
+      - CM007
+      - CM008
+      - CM009
+      - CM010
+      - CM011
+  - id: FM003
+    title: AI 推理买家分群图
+    type: matrix
+    layout: standard
+    summary: 按 Etched 采用可能性和 NVIDIA 生态依赖度划分买家分群矩阵。
+    data:
+      columns:
+        - 低 NVIDIA 依赖
+        - 中 NVIDIA 依赖
+        - 高 NVIDIA 依赖
+      rows:
+        - label: 成本敏感度极高
+          values:
+            - 推理平台（Together AI、Anyscale）
+            - AI 原生扩张期公司（Cohere、Mistral）
+            - 大型 AI 原生公司（OpenAI、Anthropic）
+        - label: 成本敏感度高
+          values:
+            - 研究机构 / 实验室
+            - 中型 AI SaaS 公司
+            - 超大规模云厂商（AWS、GCP、Azure）
+        - label: 成本敏感度中
+          values:
+            - 有 AI 项目的大学
+            - 垂直领域 AI 公司
+            - 大型企业（银行、电信运营商）
+    notes: 矩阵按成本敏感度（Y 轴）和 NVIDIA 生态锁定（X 轴）映射买家分群。Etched 最适合早期切入左上象限：成本敏感度高、NVIDIA 依赖较低。超大规模云厂商体量最大，但最难打进去。
+    claimRefs:
+      - CM012
+      - CM013
+      - CM014
+      - CM015
+      - CM016
+  - id: FM004
+    title: Etched 采用漏斗
+    type: funnel
+    layout: standard
+    summary: Etched 芯片从市场认知到生产部署的阶段，并估算各阶段流失。
+    data:
+      items:
+        - label: 总潜在买家（超大规模云厂商 + AI 原生公司 + 推理平台）
+          value: 100
+          detail: 所有大规模运行 Transformer 推理的组织
+        - label: 知道 Etched（销售已触达）
+          value: 30
+          detail: 已经评估过 Etched 推介和芯片规格的公司
+        - label: 技术上合格（通过初步评估）
+          value: 15
+          detail: 工作负载基于 Transformer、且规模足以支持评估的买家
+        - label: 试点 / 测试阶段
+          value: 5
+          detail: 正在推理栈中主动测试 Sohu 的组织
+        - label: 设计定点（承诺采购）
+          value: 2
+          detail: 已签署采购订单或 Sohu 生产批量供应协议
+        - label: 生产部署
+          value: 1
+          detail: Sohu 芯片已大规模投入生产环境
+    approximationNotes: 该漏斗现阶段是假设；Etched 未披露客户管线或设计定点。每个阶段转换都需要完成芯片生产里程碑。数值代表相对阶段规模（100 = 总潜在池）。
+    claimRefs:
+      - CM015
+      - CM016
+      - CM017
+  - id: FP001
+    title: 竞争定位图
+    type: quadrant
+    layout: standard
+    summary: AI 推理芯片在两条轴上的竞争定位：推理专用化程度（从通用到 Transformer 专用）和生态成熟度（从早期到成熟）。
+    data:
+      points:
+        - label: NVIDIA H100
+          x: 2
+          'y': 9
+          detail: 通用 GPU，CUDA 生态成熟；事实标准
+        - label: AMD MI300X
+          x: 3
+          'y': 7
+          detail: GPU 挑战者，ROCm 生态在成长；可用于推理
+        - label: Groq LPU
+          x: 5
+          'y': 4
+          detail: 面向推理优化的 LPU；延迟确定性；生态在成长
+        - label: Cerebras WSE-3
+          x: 4
+          'y': 5
+          detail: 晶圆级处理器；训练 + 推理；生态有限
+        - label: Google TPU v5e（推理 TPU）
+          x: 6
+          'y': 8
+          detail: 面向推理优化的 TPU；绑定 Google Cloud；在 Google 内部较成熟
+        - label: AWS Inferentia2
+          x: 6
+          'y': 7
+          detail: 面向 AWS 工作负载优化的推理芯片；EC2 可用；生态有限
+        - label: SambaNova
+          x: 5
+          'y': 3
+          detail: 可重构数据流；聚焦企业；生态早期
+        - label: Tenstorrent
+          x: 4
+          'y': 2
+          detail: 基于 RISC-V 的 AI 芯片；开放架构；尚未产生收入
+        - label: Graphcore IPU
+          x: 5
+          'y': 3
+          detail: 差异化 IPU；以大幅折价被收购；商业化失败
+        - label: Etched Sohu
+          x: 10
+          'y': 1
+          detail: 仅支持 Transformer 的 ASIC；专用化程度最高；尚未量产；生态极少
+    xAxisLabel: 推理专用化程度（1=通用，10=仅 Transformer）
+    yAxisLabel: 生态成熟度（1=尚未发布，10=完全成熟）
+    notes: >-
+      轴向分数是基于公开产品文档和独立报道的序数/分析估计，不是实测指标。NVIDIA 生态成熟度反映 15+ 年 CUDA 开发和集成。Etched 作为唯一仅支持 Transformer 的
+      ASIC，被放在最高专用化程度（10）。生态成熟度为 1，反映其尚未量产。
+    claimRefs:
+      - CP001
+      - CP003
+      - CP005
+      - CP010
+      - CP011
+      - CP018
+  - id: FP002
+    title: 功能广度 / 能力图
+    type: matrix
+    layout: standard
+    summary: 从关键推理采购标准出发，对比 Etched 与主要竞争对手的能力覆盖矩阵。
+    data:
+      columns:
+        - NVIDIA H100
+        - Groq LPU
+        - Cerebras WSE-3
+        - Etched Sohu
+      rows:
+        - label: Transformer 推理
+          values:
+            - 全面支持
+            - 全面支持
+            - 全面支持
+            - 原生固化
+        - label: 非 Transformer 模型
+          values:
+            - 全面支持
+            - 全面支持
+            - 全面支持
+            - 不支持
+        - label: 批量吞吐
+          values:
+            - 高
+            - 中
+            - 高
+            - 很高（据称）
+        - label: 云可用性
+          values:
+            - 所有主要云
+            - GroqCloud API
+            - Cerebras Cloud
+            - 不可用
+        - label: 软件生态
+          values:
+            - 成熟（CUDA）
+            - 早期（Groq SDK）
+            - 早期（CSX SDK）
+            - 尚未发布
+        - label: 生产部署
+          values:
+            - 数千个以上
+            - GroqCloud 用户
+            - 企业客户
+            - None
+        - label: 本地部署选项
+          values:
+            - 是
+            - 是（机架）
+            - 是（CS-3）
+            - 是（计划中）
+    notes: 矩阵基于截至 2026 年 Q1 的公开产品规格和独立报道。Etched 的「很高（据称）」反映 10× 吞吐主张尚未经过量产硅片验证。单元格是定性评估；买家采购前必须验证供应商当前文档。
+    claimRefs:
+      - CP001
+      - CP002
+      - CP003
+      - CP004
+      - CP008
+      - CP009
+      - CP010
+      - CP011
+      - CP014
+  - id: FP003
+    title: 护城河 / 就绪度 KPI
+    type: kpi
+    layout: standard
+    summary: Etched 相对于现有龙头和初创竞争对手的关键竞争就绪度指标。
+    data:
+      items:
+        - label: 已融资金额
+          value: $120M
+          detail: Etched 截至 2024 年累计融资；远低于 Groq（$1.1B+）、Cerebras（$720M+）、SambaNova（$1.2B+）
+          tone: neutral
+        - label: 量产状态
+          value: Pre-production (TSMC 4N tape-out claimed)
+          detail: 截至 2026 年尚未交付量产硅片；据称已完成流片，但公开信息无法验证
+          tone: negative
+        - label: NVIDIA 被挑战的市场份额
+          value: ~0% (pre-revenue)
+          detail: Etched 尚未进入市场；NVIDIA 持有 AI 加速器市场 80-90%+
+          tone: negative
+        - label: 据称 Transformer 吞吐优势
+          value: 10× vs H100 (unverified)
+          detail: Etched 声称 token 吞吐相较 H100 达 10×；没有第三方基准测试
+          tone: neutral
+        - label: 软件生态就绪度
+          value: Pre-launch
+          detail: 没有公开 SDK；框架兼容性（PyTorch、JAX、vLLM）尚未展示
+          tone: negative
+        - label: 客户参考
+          value: None public
+          detail: 截至 2026 年没有公布量产客户或设计定点
+          tone: negative
+        - label: 关键反向先例：Graphcore
+          value: Raised $700M+, sold for ~$120M
+          detail: Graphcore 做出了差异化 AI 芯片架构，但未能实现商业规模，2023 年以约 $120M 被 SoftBank 收购
+          tone: negative
+    notes: KPI 基于截至 2026 年 Q1 的公开披露和独立报道。NVIDIA 市占率估计来自半导体行业分析；Etched 量产状态来自公开表述。所有「据称」数值都需要用量产硬件验证。
+    claimRefs:
+      - CP002
+      - CP007
+      - CP016
+      - CP017
+      - CP018
+      - CP019
+      - CP020
+  - id: FI001
+    title: 收入模型桥
+    type: flow
+    layout: standard
+    summary: 流程图展示 Etched 如何把客户推理工作负载转化为硬件收入，并最终形成毛利。
+    data:
+      nodes:
+        - id: n1
+          label: 客户推理需求
+          detail: 超大规模云厂商 / AI 原生公司大规模运行 Transformer 推理
+          tone: neutral
+        - id: n2
+          label: Etched 芯片评估
+          detail: 客户用单 token 成本经济性把 Sohu 芯片与 NVIDIA H100 对比评估
+          tone: neutral
+        - id: n3
+          label: 设计定点 / LOI
+          detail: 客户承诺批量采购；初始批次条款进入谈判
+          tone: positive
+        - id: n4
+          label: 芯片生产与交付
+          detail: TSMC 制造晶圆；Etched 组装芯片并发货给客户
+          tone: neutral
+        - id: n5
+          label: 硬件收入确认
+          detail: 芯片交付时点确认收入（ASC 606 一次性时点确认）
+          tone: positive
+        - id: n6
+          label: 毛利（COGS 后）
+          detail: 收入减去晶圆成本、封装、良率损失和摊销后的 NRE
+          tone: positive
+      edges:
+        - from: n1
+          to: n2
+          label: 单 token 成本基准推动评估
+        - from: n2
+          to: n3
+          label: 12-24 个月销售周期
+        - from: n3
+          to: n4
+          label: 批量采购触发晶圆承诺
+        - from: n4
+          to: n5
+          label: 按合同条款准时交付
+        - from: n5
+          to: n6
+          label: 扣除 COGS 后的毛利
+    approximationNotes: 收入流程是假设；未披露客户 LOI 或生产合同。流程基于相似半导体硬件商业模式。
+    claimRefs:
+      - CI001
+      - CI003
+      - CI005
+      - CI006
+  - id: FI002
+    title: 单位经济模型桥
+    type: flow
+    layout: standard
+    summary: 从芯片成本到客户单 token 成本的关键单位经济输入简化流程，展示 TSMC 晶圆成本到推理定价的链条。
+    data:
+      nodes:
+        - id: n1
+          label: TSMC 晶圆成本
+          detail: 估计 4N 节点每片晶圆 $15,000-$20,000（实际未披露）
+          tone: neutral
+        - id: n2
+          label: 裸片良率与每片晶圆芯片数
+          detail: 裸片尺寸 × 良率 → 每片晶圆芯片数（未披露；决定单裸片成本）
+          tone: neutral
+        - id: n3
+          label: 封装与测试成本
+          detail: OSAT（外包半导体封装测试）每颗芯片增加约 $20-50
+          tone: neutral
+        - id: n4
+          label: 单颗芯片成本（COGS）
+          detail: 晶圆成本 ÷ 每片晶圆良品芯片数 + 封装 + 摊销后的 NRE
+          tone: neutral
+        - id: n5
+          label: ASP（平均售价）
+          detail: 目标：基于相对 H100 的竞争定位，每颗芯片 $5,000-$20,000
+          tone: positive
+        - id: n6
+          label: 毛利率
+          detail: 估计规模化后 40-70%；在放量前低于 NVIDIA（70-75%）
+          tone: neutral
+    approximationNotes: 除晶圆成本可比项外，所有输入都是未披露估计。该桥仅是说明性模型。实际 COGS 和 ASP 需要公司提供数据。裸片尺寸是最关键缺失输入。
+    claimRefs:
+      - CI008
+      - CI009
+      - CI010
+      - CI011
+  - id: FI003
+    title: 财务估算区间
+    type: range
+    layout: standard
+    summary: 乐观/基准/悲观情景下关键财务指标区间：烧钱速度、现金跑道、下一轮融资规模和目标芯片 ASP。
+    data:
+      items:
+        - label: 月度烧钱速度（估计）
+          low: 3
+          mid: 5
+          high: 8
+          unit: USD millions/month
+          detail: 基于半导体初创公司员工数和 EDA 授权常规；实际未披露
+        - label: 2024 年 6 月起现金跑道（估计，月）
+          low: 15
+          mid: 24
+          high: 40
+          unit: months
+          detail: 高烧钱速度：15 个月（约 Q3 2025）；中位：24 个月（约 2026 年中）；低位：40 个月（约 2027 年末）
+        - label: 所需下一轮融资规模（估计）
+          low: 150
+          mid: 300
+          high: 500
+          unit: USD millions
+          detail: 基于 Groq/Cerebras 资本消耗；量产和 GTM 需要 Series B 轮
+        - label: 目标芯片 ASP（估计）
+          low: 5000
+          mid: 12000
+          high: 20000
+          unit: USD per chip
+          detail: 基于 NVIDIA H100 可比项和所需毛利率估算的区间；未披露
+    approximationNotes: 所有区间都是基于可比半导体初创公司财务模式的分析估算。Etched 未披露任何财务运营数据。低/中/高代表保守/基准/激进情景。
+    claimRefs:
+      - CI012
+      - CI013
+      - CI014
+      - CI015
+      - CI016
+  - id: FI004
+    title: 资本强度 / 现金流图
+    type: waterfall
+    layout: standard
+    summary: Etched $120M Series A 资金从交割到首笔量产收入的部署瀑布示意。
+    data:
+      items:
+        - label: Series A 轮融资
+          value: 120
+          detail: 2024 年 6 月交割；Series A 总额 $120M
+          tone: positive
+        - label: 芯片设计与 EDA（NRE）
+          value: -25
+          detail: 估计芯片设计成本：工程团队 + EDA 授权 + 24 个月 IP 授权
+          tone: negative
+        - label: 流片与掩膜成本
+          value: -15
+          detail: 估计 TSMC 4N 流片 NRE：掩膜版 + 首次晶圆穿梭流片
+          tone: negative
+        - label: 运营费用（24 个月）
+          value: -55
+          detail: G&A、销售、营销、设施，估计非芯片支出约 $2.3M/月
+          tone: negative
+        - label: 晶圆生产（首批）
+          value: -20
+          detail: 为首批客户交付采购初始生产晶圆
+          tone: negative
+        - label: 首笔收入时估计现金
+          value: 5
+          detail: 首颗芯片交付时估计剩余现金；Series B 前缓冲极小
+          tone: negative
+    approximationNotes: 瀑布图是基于类似半导体初创公司资本部署模式的说明性情景。所有数字都是估计。实际分配未知。如果没有额外融资或早于假设的收入，期末现金为负的情景是可能的。
+    claimRefs:
+      - CI014
+      - CI015
+      - CI016
+      - CI017
+      - CI018
+      - CI019
+  - id: FE001
+    title: 产品架构图
+    type: stack
+    layout: standard
+    summary: Sohu 芯片产品架构分层图，从客户应用层一直到 TSMC 硅代工厂，展示 Etched 自己掌控的组件和外部依赖。
+    data:
+      layers:
+        - label: 客户应用层
+          detail: LLM 聊天机器人、代码生成、向量嵌入和企业推理应用在客户基础设施上运行；Sohu 通过主机 API 返回推理结果
+          modules:
+            - LLM 推理工作负载
+            - 企业 AI 应用
+            - 推理 API 消费方
+        - label: 模型框架层
+          detail: HuggingFace Transformers、PyTorch、vLLM —— 模型分发和加载框架；Etched 编译器必须接入这些框架，以支持标准 checkpoint 格式
+          modules:
+            - HuggingFace Transformers Hub
+            - PyTorch 模型 checkpoint
+            - SafeTensors / ONNX 格式
+        - label: Etched 编译器层
+          detail: 自研模型编译器：将 Transformer checkpoint 转换为 Sohu 执行图；把注意力层映射到硬连线硅块；尚未发布，无公开文档
+          modules:
+            - 模型图编译器（未发布）
+            - 内核融合与布局优化器
+            - 量化和精度处理（未确认）
+        - label: 推理运行时层
+          detail: 自研推理服务运行时：管理请求批处理、KV-cache 分配和主机-芯片 I/O；尚未发布，无公开文档
+          modules:
+            - 请求调度器（未发布）
+            - KV-cache 管理器（未发布）
+            - OpenAI 兼容 API 服务器（未确认）
+        - label: Sohu ASIC 硅层
+          detail: TSMC 4N ASIC，带硬连线 Transformer 多头注意力引擎、HBM 内存接口和 PCIe 主机互连；截至 2026 年 Q1 正在流片
+          modules:
+            - 硬连线注意力引擎
+            - HBM 内存控制器（代际未披露）
+            - PCIe Gen 5 主机接口（推断）
+        - label: TSMC 代工层
+          detail: TSMC 4N（4nm 级）工艺节点制造；晶圆由 TSMC 先进晶圆厂生产；CoWoS 先进封装用于 HBM 集成
+          modules:
+            - 4N 工艺节点
+            - CoWoS 先进封装（推断）
+            - 晶圆分选与良率测试
+    approximationNotes: 编译器、运行时和 SDK 层尚未发布，且没有公开文档。HBM 代际、封装类型和主机互连均根据 AI 芯片行业常规推断——Etched 未披露。该堆栈反映基于现有证据的预期架构，不是已确认产品资产。
+    claimRefs:
+      - CE001
+      - CE002
+      - CE005
+      - CE008
+      - CE016
+      - CE029
+  - id: FE002
+    title: 客户工作流 / 操作流程
+    type: flow
+    layout: standard
+    summary: Sohu 芯片上的端到端推理工作流：从客户模型导入，经 Etched 编译器和运行时，到返回推理输出，说明硬连线注意力引擎如何嵌入服务栈。
+    data:
+      nodes:
+        - id: n1
+          label: 客户模型导入
+          detail: 客户将 Transformer checkpoint（LLaMA、Mistral、GPT 类）以 HuggingFace SafeTensors 格式载入 Etched 编译器进行转换
+          tone: neutral
+        - id: n2
+          label: Etched 编译器（图转换）
+          detail: 编译器将 Transformer 计算图转换为 Sohu 优化执行格式；把多头注意力层映射到硬连线硅块
+          tone: neutral
+        - id: n3
+          label: 推理运行时初始化
+          detail: 运行时通过 PCIe DMA 将编译后的模型加载到 Sohu 芯片；为模型权重分配 HBM，并初始化会话 KV-cache
+          tone: neutral
+        - id: n4
+          label: 推理请求（token 预填充）
+          detail: 客户提交提示词；运行时执行预填充阶段——硬连线引擎计算完整输入序列上的注意力，并在 HBM 中填充 KV-cache
+          tone: positive
+        - id: n5
+          label: 自回归解码（硬连线注意力）
+          detail: Sohu 硬连线注意力引擎从 HBM 读取 KV-cache，并以完整硬件速度计算下一个 token 的注意力，没有软件内核调度开销
+          tone: positive
+        - id: n6
+          label: 返回输出 token 流
+          detail: 解码后的 token 通过 PCIe 返回主机 CPU；运行时将 token 流式传给调用方；自回归循环重复，直到 EOS token 或达到最大长度
+          tone: positive
+      edges:
+        - from: n1
+          to: n2
+          label: HuggingFace checkpoint 进入编译器
+        - from: n2
+          to: n3
+          label: 编译后的执行图进入运行时
+        - from: n3
+          to: n4
+          label: 模型已加载，可推理
+        - from: n4
+          to: n5
+          label: KV-cache 已填充，解码循环开始
+        - from: n5
+          to: n6
+          label: token 已解码，返回调用方
+        - from: n6
+          to: n5
+          label: 请求下一个 token（自回归循环）
+    approximationNotes: 工作流是假设——基于预期推理芯片操作模型；Etched 未发布编译器或运行时文档。编译器和运行时步骤尚未发布。边标签反映使用 HBM 支撑的 KV-cache 的 Transformer 解码器模型标准推理服务流程。
+    claimRefs:
+      - CE001
+      - CE005
+      - CE008
+      - CE025
+      - CE030
+  - id: FE003
+    title: 关键依赖图
+    type: dag
+    layout: standard
+    summary: Etched Sohu 芯片项目关键外部依赖的 DAG，从硅代工和内存供应延伸到软件框架和客户部署。
+    data:
+      nodes:
+        - id: d1
+          label: TSMC 代工（4N）
+          detail: TSMC 4N 工艺节点；唯一已确认的代工依赖；提供晶圆制造、良率和流片 NRE 服务
+          tone: neutral
+        - id: d2
+          label: HBM 供应商（SK Hynix / Micron）
+          detail: 用于芯片共同封装的 HBM3/HBM3E 内存堆栈；供应集中在 2-3 家供应商手中，且超大规模云厂商优先获得配额
+          tone: neutral
+        - id: d3
+          label: EDA 工具链（Cadence / Synopsys）
+          detail: 用于 RTL 综合、布局布线、时序收敛、DRC/LVS 验证的电子设计自动化软件；年度授权成本 $5-10M+
+          tone: neutral
+        - id: d4
+          label: IP 核（ARM / Synopsys DesignWare）
+          detail: 从 IP 供应商授权的标准单元库、PCIe PHY IP、HBM 控制器 IP；嵌入 ASIC 设计，流片必需
+          tone: neutral
+        - id: d5
+          label: TSMC CoWoS 先进封装
+          detail: Chip-on-Wafer-on-Substrate 或等效封装，用于 HBM-on-interposer 集成；TSMC 产能受限，且超大规模云厂商优先
+          tone: neutral
+        - id: d6
+          label: Sohu ASIC（流片）
+          detail: Etched 制造的芯片，集成硬连线注意力引擎、HBM 接口和主机 PCIe；截至 2026 年 Q1 正在流片
+          tone: positive
+        - id: d7
+          label: 模型框架（HuggingFace / PyTorch）
+          detail: 开源模型分发和 checkpoint 格式生态；Etched 编译器必须接入 HuggingFace SafeTensors 和 config 格式
+          tone: neutral
+        - id: d8
+          label: 客户推理部署
+          detail: 客户将 Sohu 集成进推理服务器基础设施；需要可用的编译器、运行时和 SDK；截至 2026 年 Q1 未宣布客户
+          tone: positive
+      edges:
+        - from: d1
+          to: d6
+          label: 制造晶圆
+        - from: d2
+          to: d6
+          label: 供应 HBM 堆栈
+        - from: d3
+          to: d6
+          label: EDA 工具支撑设计
+        - from: d4
+          to: d6
+          label: IP 核嵌入硅片
+        - from: d5
+          to: d6
+          label: 将芯片与 HBM 封装
+        - from: d6
+          to: d8
+          label: 芯片发往客户
+        - from: d7
+          to: d8
+          label: 用于推理的模型 checkpoint
+        - from: d6
+          to: d7
+          label: 编译器必须支持框架格式
+    approximationNotes: >-
+      HBM 供应商、封装类型和 IP 核供应商根据 AI ASIC 行业常规推断——Etched 未披露具体供应商。EDA 供应商和 IP 授权是这类 TSMC 代工 ASIC 的标准配置。客户部署节点代表 SDK
+      可用后的预期结果，不是已确认部署。
+    claimRefs:
+      - CE003
+      - CE011
+      - CE016
+      - CE021
+      - CE027
+  - id: FE004
+    title: 产品成熟度 / 能力图
+    type: matrix
+    layout: standard
+    summary: Sohu 芯片模块的能力成熟度矩阵，从架构设计到量产可用分为四个成熟阶段评估。
+    data:
+      columns:
+        - 架构设计
+        - 硅片原型
+        - SDK / 工具
+        - 量产就绪
+      rows:
+        - label: Transformer 注意力引擎
+          values:
+            - 完成（据称已设计）
+            - 尚未（等待流片）
+            - 不可用
+            - 不可用
+        - label: HBM 内存子系统
+          values:
+            - 设计中（据称）
+            - 尚未
+            - 不可用
+            - 不可用
+        - label: 模型推理编译器
+          values:
+            - 早期阶段（尚未发布）
+            - 尚未
+            - 预发布 / 未发布
+            - 不可用
+        - label: 开发者 SDK / API
+          values:
+            - 计划中（未确认）
+            - N/A
+            - 不可用
+            - 不可用
+        - label: 主机 PCIe 集成
+          values:
+            - 设计中（推断）
+            - 尚未
+            - 不可用
+            - 不可用
+        - label: 多芯片 / 机架级扩展
+          values:
+            - 未披露
+            - N/A
+            - 无可用信息
+            - 无可用信息
+    approximationNotes: 成熟度评估基于截至 2026 年 Q1 未见公开 SDK、文档或工程样片公告。硅模块设计阶段主张来自公司陈述， 尚未得到独立确认。所有软件模块均处于预发布阶段。矩阵反映公开资料能够支撑的最乐观评估。
+    claimRefs:
+      - CE001
+      - CE003
+      - CE004
+      - CE005
+      - CE018
+      - CE019
+  - id: FU001
+    title: 客户旅程图
+    type: journey-map
+    layout: wide
+    summary: AI 推理芯片买方评估 Etched 的 Sohu 芯片时，从首次认知到多年扩张的八阶段旅程。
+    data:
+      nodes:
+        - label: 认知与发现
+          detail: 潜在客户从媒体报道、投资人网络转介或 AI 基础设施会议了解 Etched；公开 SDK 或基准数据缺位， 难以拉动开发者主动发现。
+          tone: neutral
+        - label: 技术简报（Etched 发起）
+          detail: Etched 团队在 NDA 下向客户工程团队介绍 Sohu 架构和 10x 吞吐量主张；客户拿不到实物硬件， 也跑不了自己的基准测试。
+          tone: warning
+        - label: 架构兼容性检查
+          detail: 客户的 ML 团队评估生产负载是否适配 Transformer（仅解码器、编码器-解码器）；MoE 和 SSM 负载这一关可能过不了。
+          tone: neutral
+        - label: 基准测试 / 概念验证
+          detail: 客户在 Sohu 工程样片上跑代表性推理负载；对比 tokens/second、cost/token 和当前 H100 部署的延迟； 前提是 Etched 交付实物芯片。
+          tone: warning
+        - label: 采购与法务审查
+          detail: 客户谈判采购量承诺、供货 SLA、定价和 IP 所有权条款；法务审查会把周期拉长 3–6 个月； 超大规模云厂商还需要 SOC 2 / 安全审查。
+          tone: neutral
+        - label: 硬件集成与 SDK 开发
+          detail: 客户工程师改造服务栈：模型编译器、KV-cache 管理、批处理调度器和 API 端点都要跑在 Sohu 硬件上； 估计耗时 3–6 个月，需要 2–5 名专职工程师。
+          tone: risk
+        - label: 生产部署
+          detail: 客户将线上推理流量路由到 Sohu 硬件；在生产负载下测量真实吞吐量、可靠性和单 token 成本。
+          tone: neutral
+        - label: 扩张与复购
+          detail: 推理量增长后，客户追加订购 Sohu 产能；同时评估 Gen-2 路线图，决定是否做多年平台承诺； 集成切换成本高，留存预计偏高。
+          tone: positive
+    approximationNotes: 旅程阶段和时间估计来自类比推理芯片公司的采用模式（Groq、AWS Inferentia、Cerebras）。 Etched 未披露任何客户旅程细节。各阶段估计耗时 1–4 个月，全周期合计 12–24 个月。
+    claimRefs:
+      - CU012
+      - CU013
+      - CU026
+  - id: FU002
+    title: 采用 / 部署漏斗
+    type: funnel
+    layout: standard
+    summary: 截至 2026 年 Q1，Etched 从发现到生产的漏斗——所有处于“工程简报”及以下的管线阶段均无确认条目。
+    data:
+      items:
+        - label: 年度 GPU 支出 >$50M 的公司（TAM）
+          value: 200
+        - label: 已知晓 Etched（按媒体报道触达估计）
+          value: 100
+        - label: 收到工程简报或发生技术接触（估计）
+          value: 20
+        - label: 活跃技术评估管线（已确认）
+          value: 0
+        - label: 签署 NDA 评估协议（已确认）
+          value: 0
+        - label: 收到工程样片 / 获得基准测试权限
+          value: 0
+        - label: 生产部署客户
+          value: 0
+    approximationNotes: >-
+      TAM 估计为 200 家公司，基于公开融资数据和代表性 AI 公司推理定价推断 GPU 支出门槛。 知晓度估计为 100 家，基于 2024 年 6 月 Series A 公告的媒体触达。工程简报估计为 20 家，
+      带有推测性；Etched 未披露客户接触数据。基于未见任何公开客户披露，“活跃技术评估”及以下所有已确认数量均为零。
+    claimRefs:
+      - CU001
+      - CU018
+      - CU020
+  - id: FU003
+    title: 客户验证矩阵
+    type: matrix
+    layout: wide
+    summary: Groq LPU、AWS Inferentia 和 Etched Sohu 在商业就绪度六个维度上的客户验证对比评分卡。
+    data:
+      columns:
+        - Groq LPU（类比）
+        - AWS Inferentia（类比）
+        - Etched Sohu（实际）
+      rows:
+        - label: 是否存在具名客户
+          values:
+            - 是——已发布案例研究
+            - 是——Stability AI、Quora、Sprinklr 案例研究
+            - 否——披露客户为零
+        - label: 是否发布生产案例研究
+          values:
+            - 是——groq.com/case-studies
+            - 是——aws.amazon.com 案例研究
+            - 否——无
+        - label: 开发者 API / 硬件访问
+          values:
+            - 是——GroqCloud 开发者 API（免费层）
+            - 是——Inf2 EC2 实例（按需）
+            - 否——无开发者访问，无 SDK
+        - label: 已发布性能基准
+          values:
+            - 是——已发布 tokens/sec；第三方验证
+            - 是——案例研究披露 cost/token 和吞吐量
+            - 未验证——只有 10x H100 主张；无第三方数据
+        - label: 是否产生收入
+          values:
+            - 是——推理 API 商业产品
+            - 是——EC2 Inf2 可计费实例
+            - 否——收入前阶段
+        - label: 客户满意度信号
+          values:
+            - 正向——G2 评价；开发者社区 NPS
+            - 正向——AWS 案例研究 ROI 数据；客户证言
+            - 无可用信息——无开发者访问或反馈
+    approximationNotes: >-
+      Groq 和 AWS Inferentia 数据来自公开可访问的案例研究和 G2 评价（访问于 2026-05-18）。 Etched Sohu 条目反映公开证据缺位，不代表内部活动不存在。Graphcore
+      先例（基准强、商业结果差）未纳入此处， 但应作为反向类比考虑。
+    claimRefs:
+      - CU004
+      - CU005
+      - CU021
+      - CU027
+      - CU028
+  - id: FU004
+    title: 留存 / 复购队列
+    type: matrix
+    layout: standard
+    summary: Etched 推理芯片客户留存队列分析——Etched 客户为零，因此所有单元格均为 null；类比占位行仅作背景。
+    data:
+      columns:
+        - 30 天留存
+        - 90 天留存
+        - 180 天留存
+        - 365 天留存
+      rows:
+        - label: Etched 队列 1（无客户——全部为 null）
+          values:
+            - null
+            - null
+            - null
+            - null
+        - label: 类比：Groq 推理 API（估计）
+          values:
+            - null
+            - null
+            - null
+            - null
+        - label: 类比：AWS Inferentia 部署（估计）
+          values:
+            - null
+            - null
+            - null
+            - null
+    approximationNotes: >-
+      所有单元格均为 null。截至 2026 年 Q1，Etched 客户为零；不存在留存数据。Groq 和 AWS Inferentia 的类比行同样为 null，因为两家公司都未公开披露队列级留存数据。如果 Etched
+      接入首批客户，实际 30 天 / 90 天留存指标应替代这些 null。 结构性分析显示，一旦完成完整硬件集成，由于切换成本锁定，留存可能非常高（>90%）。
+  - id: FR001
+    title: 风险严重性矩阵
+    type: matrix
+    layout: wide
+    summary: 截至 2026 年 Q1，Etched 五个主要风险簇在概率、影响、速度和残余敞口上的比较严重性矩阵。
+    data:
+      columns:
+        - 技术
+        - 监管-法律
+        - 竞争
+        - 执行-团队
+        - 财务
+      rows:
+        - label: 概率
+          values:
+            - 中
+            - 中
+            - 高
+            - 高
+            - 中
+        - label: 影响
+          values:
+            - 致命
+            - 高
+            - 高
+            - 高
+            - 致命
+        - label: 显现速度（季度）
+          values:
+            - 慢
+            - 慢
+            - 快
+            - 快
+            - 快
+        - label: 残余敞口
+          values:
+            - 致命
+            - 中
+            - 高
+            - 高
+            - 致命
+    approximationNotes: 严重性评级由作者基于公开来源编码；它们是相对判断，不是精算结果。技术残余敞口评为致命， 因为一旦流片承诺落地，架构就不可逆。
+    claimRefs:
+      - CR001
+      - CR009
+      - CR020
+      - CR027
+      - CR033
+  - id: FR002
+    title: 风险时间线
+    type: timeline
+    layout: wide
+    summary: Etched 从 Series A（2024 年 6 月）到预计首次收入（2027 年 H2）期间的关键风险里程碑和触发因素。
+    data:
+      items:
+        - label: Series A 完成——融资 $120M
+          date: '2024-06-01'
+          detail: Etched 完成由 Primary Venture Partners 和 Positive Sum 领投的 $120M Series A。 在流片前 $3–6M/月的烧钱速度下，约提供 24–36 个月现金跑道。
+          tone: neutral
+          claimRefs:
+            - CR033
+        - label: BIS 2023 年 10 月出口管制规则
+          date: '2023-11-01'
+          detail: Federal Register 规则收紧半导体制造出口管制，对开展国际销售的美国关联芯片公司施加新义务。 Etched 若向非盟友市场销售 Sohu，必须遵守这些要求。
+          tone: negative
+          claimRefs:
+            - CR012
+        - label: EU AI Act 生效
+          date: '2024-08-01'
+          detail: EU AI Act 已颁布；GPAI 模型提供商的合规要求按分阶段时间表生效。Etched 的目标客户若运行 GPAI 模型， 将面对可能约束芯片基础设施采购的合规义务。
+          tone: negative
+          claimRefs:
+            - CR019
+        - label: 流片提交目标（估计）
+          date: '2025-12-01'
+          detail: 估计的流片提交窗口，基于 Series A 时间线和典型 ASIC 开发周期。将锁定 $50–200M NRE 成本。 若 PPA 失手，需要重新流片，时间增加 12–18 个月，成本增加 $20–50M。
+          tone: negative
+          claimRefs:
+            - CR005
+            - CR034
+        - label: TSMC 首片硅回片（估计）
+          date: '2026-09-01'
+          detail: 预计首片硅在流片提交后约 6–9 个月交付。客户基准测试阶段由此启动——这是公开验证 Sohu 性能主张的第一次机会。
+          tone: neutral
+          claimRefs:
+            - CR008
+            - CR034
+        - label: 现金跑道耗尽前需完成 Series B
+          date: '2026-12-01'
+          detail: 必须在 $120M Series A 现金跑道耗尽前完成 Series B 融资。结果取决于首片硅性能、 AI 融资市场环境，以及是否已宣布任何设计导入。
+          tone: negative
+          claimRefs:
+            - CR035
+            - CR036
+        - label: 首次生产收入（乐观情景）
+          date: '2027-06-01'
+          detail: 最早可行的首次收入日期：取决于流片成功、首片硅通过、客户在硅片交付后 6–12 个月内完成评估， 并启动生产爬坡。距离 Series A 约 36 个月。
+          tone: neutral
+          claimRefs:
+            - CR034
+            - CR038
+    claimRefs:
+      - CR005
+      - CR008
+      - CR012
+      - CR019
+      - CR033
+      - CR034
+      - CR035
+      - CR036
+      - CR038
+  - id: FR003
+    title: 技术迁移风险图
+    type: dag
+    layout: wide
+    summary: 有向无环图，展示架构替代风险（Mamba/MoE 采用）如何沿 Sohu 价值链传导至收入风险和融资结果。
+    data:
+      nodes:
+        - id: mamba-adoption
+          label: Mamba / SSM 采用激增
+          detail: 状态空间模型在生产规模上证明性能达到或超过 Transformer 质量，减少受注意力计算约束的推理负载占比。
+        - id: moe-diffusion
+          label: MoE 架构成为默认选择
+          detail: Mixture-of-Experts 模型（如 Mixtral）取代稠密 Transformer 解码器，成为主导 LLM 架构， 推理计算图随之改变，Sohu 无法加速。
+        - id: transformer-share-falls
+          label: 仅 Transformer 负载下降
+          detail: SSM 和 MoE 模型获得采用后，纯稠密 Transformer 解码器推理在总推理计算中的占比下降。
+        - id: sohu-tam-contracts
+          label: Sohu 可服务市场收缩
+          detail: Sohu 的性能优势完全来自硬编码的 Transformer 注意力机制；当总推理市场中适配负载占比收缩， 这一优势能覆盖的市场也缩小。
+        - id: tape-out-committed
+          label: 已承诺流片（不可逆）
+          detail: Etched 为硬编码 Transformer 架构投入 $50–200M 流片 NRE，硅设计由此锁定，软件层没有补救路径。
+        - id: redesign-required
+          label: 需要完整 ASIC 重新设计
+          detail: 如果 Transformer 范式在收入到来前转移，Etched 必须废弃 Sohu，并从 RTL 开始设计新 ASIC——耗时 3–4 年、 成本 $100–400M。
+        - id: revenue-risk
+          label: 收入风险显现
+          detail: Sohu TAM 变窄，加上资本已押注在搁浅架构上，可能导致公司在现金跑道耗尽前无法取得首次收入。
+        - id: down-round-or-wind-down
+          label: 降估值融资或公司清盘
+          detail: 架构搁浅且没有收入，Etched 无法按上一轮条款完成 Series B，将面对降估值融资、清盘或困境收购。
+      edges:
+        - from: mamba-adoption
+          to: transformer-share-falls
+          label: 加速
+        - from: moe-diffusion
+          to: transformer-share-falls
+          label: 加速
+        - from: transformer-share-falls
+          to: sohu-tam-contracts
+          label: 压缩 TAM
+        - from: tape-out-committed
+          to: redesign-required
+          label: 排除补救
+        - from: sohu-tam-contracts
+          to: revenue-risk
+          label: 触发
+        - from: redesign-required
+          to: revenue-risk
+          label: 时间线延长 3–4 年
+        - from: revenue-risk
+          to: down-round-or-wind-down
+          label: 导致
+    claimRefs:
+      - CR001
+      - CR003
+      - CR004
+      - CR005
+      - CR007
+  - id: FR004
+    title: 财务压力情景
+    type: range
+    layout: wide
+    summary: Etched 现金跑道、流片成本和融资需求关键财务参数的低 / 基准 / 高情景区间。
+    data:
+      items:
+        - label: ASIC 流片 NRE 成本
+          low: 20
+          mid: 75
+          high: 200
+          unit: $M
+          detail: 反映 N3/N4 节点掩膜组成本；低端假设一次流片成功，高端假设多掩膜验证外加一次 $50M 重新流片。
+        - label: 月度烧钱速度（流片前）
+          low: 2
+          mid: 4
+          high: 7
+          unit: $M/month
+          detail: 由团队薪酬、TSMC NRE 押金、IP 授权费和工具成本驱动；随员工数增长和流片进度扩大。
+        - label: $120M 融资后的剩余现金跑道
+          low: 8
+          mid: 20
+          high: 36
+          unit: months
+          detail: 低端假设烧钱速度高且流片成本大；高端假设支出保守且流片落在较低 NRE 区间。
+        - label: 所需 Series B 融资
+          low: 100
+          mid: 200
+          high: 500
+          unit: $M
+          detail: 必须覆盖流片（若 Series A 未资助）、首片硅点亮调试、SDK 开发、客户评估支持和首次收入前的生产爬坡 NRE。
+        - label: 从流片到首次收入的月份
+          low: 9
+          mid: 18
+          high: 36
+          unit: months
+          detail: 低端假设首片硅成功、客户快速评估、无重新流片；高端假设一次重新流片加上延长的 12–24 个月客户采购周期。
+    claimRefs:
+      - CR033
+      - CR034
+      - CR035
+      - CR036
+      - CR037
+      - CR038
+  - id: FV001
+    title: 投资建议逻辑
+    type: flow
+    layout: wide
+    summary: 从 Series A 背景到可比公司、情景权重和否决触发项筛查，最终推导投资结论的决策链。
+    data:
+      nodes:
+        - id: n1
+          label: Series A 完成（$120M，估计投后 $600–800M）
+          detail: 2024 年 6 月；Positive Sum 领投，Primary Venture Partners 跟投；投后估值未披露
+        - id: n2
+          label: 可比公司分析
+          detail: Marvell 10–15×、Broadcom 18–20×、NVIDIA 25×；Habana Labs $2B 先例；应用 40–60% 折价
+        - id: n3
+          label: 情景加权
+          detail: 乐观 15–20%（$3–5B）；基准 40–50%（$800M–1.5B）；悲观 30–40%（$200–500M）
+        - id: n4
+          label: 概率加权 EV：$800M–1.1B
+          detail: 仅略高于估计入场中点（$700M）；超过 $1.5B 时风险补偿不足
+        - id: n5
+          label: 三项否决触发项筛查
+          detail: 硅片失败 / 架构替代 / Series B 失败——任一项触发退出
+        - id: n6
+          label: 投资结论
+          detail: 估值 >$1.5B 时条件性负面；≤$800M 可条件性跟踪，等待 Series B、流片和首个设计导入
+      edges:
+        - from: n1
+          to: n2
+          label: 提供基准依据
+        - from: n2
+          to: n3
+          label: 校准倍数
+        - from: n3
+          to: n4
+          label: 产出 EV 估计
+        - from: n4
+          to: n5
+          label: 用于检验
+        - from: n5
+          to: n6
+          label: 导出
+    claimRefs:
+      - CV039
+      - CV040
+      - CV041
+  - id: FV002
+    title: 估值 / 回报区间
+    type: range
+    layout: wide
+    summary: 悲观、基准、乐观情景下企业价值区间与估计 Series A 入场点对比，单位为百万美元。
+    data:
+      items:
+        - label: 悲观情景退出（30–40% 概率）
+          low: 200
+          mid: 350
+          high: 500
+          unit: M USD
+          detail: 流片失败、重新流片或困境收购；Graphcore 类比
+        - label: Series A 入场估计
+          low: 600
+          mid: 700
+          high: 800
+          unit: M USD
+          detail: 分析师估计的投后估值；Etched 未公开披露
+        - label: 基准情景退出（40–50% 概率）
+          low: 800
+          mid: 1150
+          high: 1500
+          unit: M USD
+          detail: 首片硅交付；一个初始客户；按预计 2028 年收入计 4–6× EV/Revenue
+        - label: 乐观情景退出（15–20% 概率）
+          low: 3000
+          mid: 4000
+          high: 5000
+          unit: M USD
+          detail: 首片硅通过；2027 年 H2 获得超大规模云厂商设计导入；基于 $200–300M 收入计 10–15× EV/Revenue
+    claimRefs:
+      - CV015
+      - CV016
+      - CV017
+  - id: FV003
+    title: 估值敏感性
+    type: bar
+    layout: standard
+    summary: 隐含退出 EV（以 $B 计）对关键价值驱动里程碑的敏感性，从基准情景延伸到上行情景。
+    data:
+      items:
+        - label: 基准（无额外上行）
+          value: 1.15
+          detail: 40–50% 概率；单一客户；4–6× EV/Revenue
+        - label: 首片硅通过且无重新流片
+          value: 2
+          detail: 消除流片风险；降低 Series B 风险；倍数扩张至约 8×
+        - label: 确认超大规模云厂商设计导入
+          value: 3
+          detail: 改写商业逻辑；可比 Habana Labs 被收购前状态；约 10× EV/Revenue
+        - label: 收入获取为基准的 2×
+          value: 4.2
+          detail: 两个或更多客户；收入运行率接近 $200M；倍数重估至 12–14×
+        - label: IPO / 溢价收购情景
+          value: 5.5
+          detail: 在完整 Marvell 可比倍数下的乐观情景；需要公开市场或战略溢价
+    claimRefs:
+      - CV028
+      - CV030
+      - CV039
+  - id: FV004
+    title: 投资 KPI
+    type: kpi
+    layout: standard
+    summary: 面向 IC 的关键投资指标，汇总 Etched 的估值画像、回报测算和情景结果。
+    data:
+      items:
+        - label: Series A 融资
+          value: $120M
+          unit: USD
+          detail: 2024 年 6 月完成；Positive Sum 领投，Primary Venture Partners 跟投
+        - label: 估计投后估值（Series A）
+          value: $600–800M
+          unit: USD
+          detail: 基于典型稀释规范的分析师估计；未公开披露
+        - label: 乐观情景退出 EV
+          value: $3–5B
+          unit: USD
+          detail: 15–20% 概率；首片硅通过 + 2027 年 H2 获得超大规模云厂商设计导入
+        - label: 基准情景退出 EV
+          value: $800M–1.5B
+          unit: USD
+          detail: 40–50% 概率；首片硅遇到挑战；单一初始客户
+        - label: 悲观情景退出 EV
+          value: $200–500M
+          unit: USD
+          detail: 30–40% 概率；Graphcore 类比的困境或流片失败
+        - label: 概率加权 EV
+          value: $800M–1.1B
+          unit: USD
+          detail: 乐观 / 基准 / 悲观情景加权均值；仅略高于 Series A 中点入场
+        - label: 实现 10× 回报所需最低退出
+          value: $6–8B
+          unit: USD
+          detail: 主投 VC 基于 $600–800M 投后实现 10× 回报所需退出；只有乐观尾部情景能达到
+        - label: 结论
+          value: Conditional Negative >$1.5B
+          unit: null
+          detail: ≤$800M 条件性跟踪；>$1.5B 坚决放弃；三项否决触发项需监控
+    claimRefs:
+      - CV009
+      - CV011
+      - CV012
+appendices: []
+bibliography:
+  sourceRefs:
+    - SO001
+    - SO002
+    - SO003
+    - SO004
+    - SO005
+    - SO006
+    - SO007
+    - SO008
+    - SO009
+    - SO010
+    - SO011
+    - SO012
+    - SO013
+    - SO014
+    - SO015
+    - SO016
+    - SO017
+    - SO018
+    - SO019
+    - SO020
+    - SO021
+    - SO022
+    - SO023
+    - SO024
+    - SO025
+    - SO026
+    - SO027
+    - SO028
+    - SO029
+    - SO030
+    - SO031
+    - SO032
+    - SO033
+    - SO034
+    - SO035
+    - SM001
+    - SM002
+    - SM003
+    - SM004
+    - SM005
+    - SM006
+    - SM007
+    - SM008
+    - SM009
+    - SM010
+    - SM011
+    - SM012
+    - SM013
+    - SM014
+    - SM015
+    - SM016
+    - SM017
+    - SM018
+    - SM019
+    - SM020
+    - SM021
+    - SM022
+    - SM023
+    - SM024
+    - SM025
+    - SM026
+    - SM027
+    - SM028
+    - SM029
+    - SM030
+    - SM031
+    - SM032
+    - SM033
+    - SM034
+    - SM035
+    - SP001
+    - SP002
+    - SP003
+    - SP004
+    - SP005
+    - SP006
+    - SP007
+    - SP008
+    - SP009
+    - SP010
+    - SP011
+    - SP012
+    - SP013
+    - SP014
+    - SP015
+    - SP016
+    - SP017
+    - SP018
+    - SP019
+    - SP020
+    - SP021
+    - SP022
+    - SP023
+    - SP024
+    - SP025
+    - SP026
+    - SI001
+    - SI002
+    - SI003
+    - SI004
+    - SI005
+    - SI006
+    - SI007
+    - SI008
+    - SI009
+    - SI010
+    - SI011
+    - SI012
+    - SI013
+    - SI014
+    - SI015
+    - SI016
+    - SI017
+    - SI018
+    - SI019
+    - SI020
+    - SI021
+    - SI022
+    - SI023
+    - SI024
+    - SI025
+    - SI026
+    - SI027
+    - SI028
+    - SI029
+    - SI030
+    - SI031
+    - SE001
+    - SE002
+    - SE003
+    - SE004
+    - SE005
+    - SE006
+    - SE007
+    - SE008
+    - SE009
+    - SE010
+    - SE011
+    - SE012
+    - SE013
+    - SE014
+    - SE015
+    - SE016
+    - SE017
+    - SE018
+    - SE019
+    - SE020
+    - SE021
+    - SE022
+    - SE023
+    - SE024
+    - SE025
+    - SE026
+    - SU001
+    - SU002
+    - SU003
+    - SU004
+    - SU005
+    - SU006
+    - SU007
+    - SU008
+    - SU009
+    - SU010
+    - SU011
+    - SU012
+    - SU013
+    - SU014
+    - SU015
+    - SU016
+    - SU017
+    - SU018
+    - SU019
+    - SU020
+    - SU021
+    - SU022
+    - SU023
+    - SU024
+    - SU025
+    - SR001
+    - SR002
+    - SR003
+    - SR004
+    - SR005
+    - SR006
+    - SR007
+    - SR008
+    - SR009
+    - SR010
+    - SR011
+    - SR012
+    - SR013
+    - SR014
+    - SR015
+    - SR016
+    - SR017
+    - SR018
+    - SR019
+    - SR020
+    - SR021
+    - SR022
+    - SR023
+    - SR024
+    - SR025
+    - SR026
+    - SR027
+    - SR028
+    - SR029
+    - SR030
+    - SR031
+    - SR032
+    - SR033
+    - SR034
+    - SV001
+    - SV002
+    - SV003
+    - SV004
+    - SV005
+    - SV006
+    - SV007
+    - SV008
+    - SV009
+    - SV010
+    - SV011
+    - SV012
+    - SV013
+    - SV014
+    - SV015
+    - SV016
+    - SV017
+    - SV018
+    - SV019
+    - SV020
+    - SV021
+    - SV022
+    - SV023
+    - SV024
+    - SV025
+    - SV026
+    - SV027
+    - SV028
+    - SV029
+    - SV030
+    - SV031
+    - SV032
+disclaimer: 本报告仅供参考。所有归因于 Etched 的性能主张均来自公司陈述，未经过独立验证。估值估计是示意性的情景分析， 不构成投资建议。关于半导体市场、AI 架构趋势和 Etched 商业轨迹的前瞻性陈述存在重大不确定性。
