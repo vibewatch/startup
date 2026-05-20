@@ -1,0 +1,1739 @@
+schemaVersion: "report-v2"
+artifact: product-tech
+slug: rebellions
+runDate: "2026-05-20"
+company:
+  name: Rebellions
+chapter:
+  number: 5
+  title: Product and Technology
+  summary: >-
+    Rebellions delivers a two-generation AI inference accelerator portfolio: the ATOM Gen 1 (shipping since H1 2024),
+    a GDDR6-based multi-die-package NPU card rated 128 TFLOPS FP16 / 512 TOPS INT8 per 350 W card, deployed in UAE,
+    Mongolia, Saudi Arabia, and Japan; and the REBEL Gen 2 / REBEL-Quad, a quad-chiplet 4nm Samsung Foundry part with
+    144 GB HBM3E at 4.8 TB/s and UCIe-Advanced die-to-die interconnect, peer-reviewed at ISSCC 2026 at 56.8 TPS on
+    LLaMA v3.3 70B. The software layer (RBLN SDK v0.10.3, May 2026) integrates with vLLM v0.18.0 via a published PyPI
+    package and is listed as supported hardware in the official vLLM documentation. Key strengths include the
+    peer-reviewed ISSCC performance result, the UCIe-Advanced chiplet architecture (first production AI chip to market
+    it publicly), and Red Hat OpenShift AI certification. Key risks include single-vendor foundry dependence on Samsung
+    for logic, HBM3E, and packaging; absence of MLPerf benchmark submissions as of May 2026; missing GPU-parity
+    features in vllm-rbln (speculative decoding, distributed KV cache, prefill/decode disaggregation); and a
+    documented discrepancy between the March 2026 "available now" press release for RebelRack/RebelPOD and the website
+    "Coming Soon" tag.
+
+sections:
+  - id: product-portfolio-overview
+    title: Product Portfolio and Customer Workflow Overview
+    body: >
+      Rebellions offers two generations of AI inference accelerator hardware, sold as cards, servers, and rack-scale
+      systems, supported by a proprietary software stack. The first generation (ATOM) is based on a custom inference
+      NPU SoC fabricated on a legacy process node, packaged in a multi-die configuration with GDDR6 memory. The second
+      generation (REBEL / REBEL-Quad) is fabricated on Samsung 4nm SF4X, uses a quad-chiplet architecture with
+      UCIe-Advanced die-to-die interconnect, and mounts HBM3E memory via Samsung CoWoS-S advanced packaging. Products
+      are sold at four form factors: accelerator card (PCIe-attached), accelerator server (rack-mount server with
+      multiple cards), mini-POD (multi-server cluster), and rack-scale system (RebelRack/RebelPOD). Rebellions also
+      produces two single-chip ATOM variants for lower-power deployments: the RBLN-CA21 (<75 W, no external power
+      connector) and the RBLN-CA22 (up to 90 W).
+
+
+      The customer workflow begins with model preparation using the RBLN Compiler (part of the RBLN SDK), which
+      converts PyTorch or TensorFlow models to the Rebellions runtime format. Models are then deployed on ATOM-Max
+      or RebelServer hardware, either directly via the RBLN Runtime API or through a vLLM-compatible interface using
+      the vllm-rbln Python package. Kubernetes integration is provided via the Rebellions NPU Operator (certified for
+      Red Hat OpenShift AI as of December 2025) and Helm charts distributed via OCI registry. The Rebellions model
+      zoo lists 300+ supported PyTorch/TensorFlow models, spanning LLMs, vision transformers, and classical inference
+      workloads. For enterprise customers, workloads run on the ATOM-Max Server (4U, 8-card, Ubuntu/RHEL/AlmaLinux)
+      or RebelServer (5U, 8-card, AMD EPYC 9355 host CPUs, 400G networking). Rack-scale customers can use the
+      ATOM-Max POD (8-server mini-cluster, 400 GB/s RDMA fabric) or the newly launched RebelRack/RebelPOD
+      announced in March 2026.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+      - CE007
+      - CE013
+      - CE014
+      - CE015
+      - CE020
+    tableRefs:
+      - TE001
+    figureRefs:
+      - FE002
+
+  - id: atom-generation-architecture
+    title: ATOM Generation — Architecture, Specifications, and Deployments
+    body: >
+      The ATOM SoC is Rebellions' first-generation AI inference chip, taped out June 2022 and shipping since
+      H1 2024 in the ATOM-Max product family. Each ATOM chip is rated at 32 TFLOPS FP16, 128 TOPS INT8, and
+      256 TOPS INT4, with 16 GB of GDDR6 memory at 256 GB/s bandwidth per chip (16 Gbps on a 128-bit bus).
+      The flagship ATOM-Max card (model RBLN-CA25) integrates four ATOM chips in a multi-die package, delivering
+      128 TFLOPS FP16, 512 TOPS INT8, and 1024 TOPS INT4 at 350 W TDP, with a total of 64 GB GDDR6 at 1024 GB/s
+      aggregate memory bandwidth. The card uses a PCIe Gen5 x16 host interface and occupies a full-height, full-length
+      dual-slot form factor. This architecture was independently confirmed by Chips and Cheese at Supercomputing 2024.
+
+
+      The ATOM-Max Server integrates eight ATOM-Max cards in a 4U chassis, yielding 1024 TFLOPS FP16 aggregate,
+      512 GB GDDR6, and 8 TB/s total memory bandwidth. Server power draw is 3.4 kW typical and 4.3 kW maximum,
+      within a standard 5 kW rack power envelope. The server runs Ubuntu, RHEL, AlmaLinux, and Rocky Linux, with
+      out-of-box support for vLLM, Triton, Kubernetes, and Docker. The ATOM-Max POD extends to rack scale: an
+      8-server mini-POD provides 64 NPUs, 512 GB of GDDR6 (8 TB/s), and 400 GB/s RDMA fabric for inter-node
+      communication, enabling distributed tensor-parallel inference. ATOM was presented at ISSCC 2024 alongside
+      AMD and Intel papers and described as mass-production ready. In the field, ATOM cards are deployed at
+      ECOPEACE in the UAE (2× performance-per-watt versus GPU baseline, TTA-certified) and at Mongolia customs
+      (2.7× TPS/Watt versus GPU, company-cited), with deployments also reported in Saudi Arabia and Japan.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE006
+      - CE032
+      - CE034
+      - CE035
+      - CE036
+    tableRefs:
+      - TE002
+    figureRefs: []
+
+  - id: rebel-generation-chiplet
+    title: REBEL Generation — Quad-Chiplet Architecture, HBM3E, and ISSCC Results
+    body: >
+      The REBEL Gen 2 chip, branded as REBEL-Quad in its production form, is fabricated on Samsung Foundry's 4nm
+      SF4X process. Its defining architectural feature is a quad-chiplet design: four REBEL compute ASICs are
+      interconnected using UCIe-Advanced die-to-die links operating at 16 Gbps per lane, supplied by Alphawave
+      Semi IP. The package is assembled on Samsung's CoWoS-S substrate with four HBM3E memory stacks (each 36 GB
+      at 9.6 GT/s), providing 144 GB total HBM3E capacity and 4.8 TB/s aggregate memory bandwidth. Four integrated
+      silicon capacitors (ISC) complete the package. The host interface is dual PCIe Gen5 x16. The use of
+      UCIe-Advanced in a shipping AI chip is notable as the first publicly marketed example of UCIe chiplet
+      interconnect in a production AI accelerator, corroborated by an independent review at Hot Chips 2025 from
+      ServeTheHome.
+
+
+      Performance data is anchored by an ISSCC 2026 peer-reviewed paper (IEEE Xplore document 11409003): "A
+      Quad-Chiplet AI SoC with Full-Chip Scalable Mesh Over 16Gb/s UCIe-Advanced Die-to-Die Interface for
+      Large-Scale AI Inferencing." The paper reports 56.8 tokens per second on LLaMA v3.3 70B with 2,048-token
+      input and 2,048-token output sequences. This is the highest-credibility performance data point available,
+      sourced from a peer-reviewed IEEE conference paper rather than vendor collateral. At Hot Chips 2025 (August
+      2025), Rebellions demonstrated LLaMA 3.3 70B running live and showed Qwen3 235B MoE execution capability.
+      The RebelServer system (5U, 8x RebelCard) is rated up to 2 PFLOPS FP8, with dual AMD EPYC 9355 host CPUs,
+      1.5 TB DDR5 host memory, and 4× 400G networking ports, consuming 4–6 kW typical and 7 kW maximum.
+    claimRefs:
+      - CE008
+      - CE009
+      - CE010
+      - CE011
+      - CE012
+      - CE013
+      - CE027
+      - CE031
+      - CE038
+      - CE039
+    tableRefs: []
+    figureRefs:
+      - FE001
+
+  - id: software-ecosystem
+    title: Software Ecosystem — RBLN SDK, vLLM Integration, and Model Zoo
+    body: >
+      The Rebellions software platform (RBLN SDK) reached version 0.10.3 in May 2026, distributed on the company's
+      proprietary PyPI mirror (pypi.rbln.ai) and also on the public Python Package Index (pypi.org). The SDK
+      comprises three packages: rebel-compiler==0.10.3 (the ahead-of-time compiler that converts PyTorch/TensorFlow
+      models to the RBLN binary format), optimum-rbln==0.10.3 (HuggingFace Optimum integration for LLM model prep),
+      and vllm-rbln==0.10.3.post1 (the vLLM backend plugin for the Rebellions NPU). The vllm-rbln package was
+      released on pypi.org on May 18, 2026, and supports vLLM v0.18.0. Both paged attention and continuous batching
+      are implemented in vllm-rbln, enabling production-quality LLM serving. Rebellions' NPU is listed as a supported
+      hardware backend in the official vLLM documentation alongside Google Cloud TPU, Intel Gaudi, AMD Instinct, and
+      other accelerators, giving it the same first-class integration tier as established NPU players.
+
+
+      The SDK's precision support spans FP32, FP16, FP8, FP6, and FP4, covering the full range used by leading LLMs.
+      Device naming in Kubernetes follows the patterns rebellions.ai/ATOM (for RBLN-CA* ATOM devices) and
+      rebellions.ai/REBEL (for RBLN-CR* REBEL devices). The NPU Operator v0.4.0 was certified for Red Hat
+      OpenShift AI in December 2025, and its Helm chart is distributed via OCI registry for streamlined enterprise
+      deployment. The Rebellions model zoo includes 300+ supported models covering PyTorch and TensorFlow frameworks.
+      However, several GPU-parity features remain absent in vllm-rbln: speculative decoding, distributed KV cache
+      (enabling cross-node memory sharing), and prefill/decode disaggregation (enabling heterogeneous serving
+      architectures) are listed as in-development rather than available. The GitHub organization (rebellions-sw)
+      contains only archived or internal repositories with no public model code or SDK source as of May 2026.
+    claimRefs:
+      - CE016
+      - CE017
+      - CE018
+      - CE019
+      - CE020
+      - CE021
+      - CE022
+      - CE023
+      - CE037
+      - CE039
+      - CE040
+    tableRefs:
+      - TE003
+    figureRefs: []
+
+  - id: manufacturing-supply-chain
+    title: Manufacturing, Supply Chain, and Strategic Partnerships
+    body: >
+      Rebellions' silicon supply chain is concentrated at Samsung. The REBEL-Quad uses Samsung Foundry's 4nm SF4X
+      process for logic, Samsung's HBM3E for memory (four 36 GB stacks per package), and Samsung's CoWoS-S
+      interposer for advanced packaging. This single-vendor arrangement for all three critical supply inputs
+      (logic, memory, packaging) represents a structural concentration risk: any Samsung Foundry capacity
+      disruption, HBM3E yield problem, or packaging bottleneck directly constrains Rebellions' product supply
+      with no disclosed alternative source. The ATOM-Max product family uses GDDR6 memory (sourced separately),
+      which reduces this risk for the Gen 1 product line, but the full REBEL-Quad supply chain is Samsung-only.
+
+
+      The UCIe-Advanced chiplet interconnect IP in REBEL-Quad is supplied by Alphawave Semi, a Canadian
+      semiconductor IP company that specialises in high-speed wired connectivity. The Alphawave IP enables
+      16 Gbps per-lane die-to-die bandwidth within the REBEL-Quad package. Rebellions joined Arm's Total Design
+      ecosystem in October 2025, signalling planned integration of Arm's Neoverse compute subsystem (CSS) into
+      a future Rebellions AGI CPU product. Arm also made a strategic investment in Rebellions' $250M Series C
+      (December 2024). Red Hat became an ecosystem partner in December 2025 with the OpenShift AI certification,
+      enabling enterprise Kubernetes deployments on Rebellions hardware. SK Telecom is engaged in sovereign AI
+      datacenter validation and co-development announced in April 2026. Samsung is co-investor (via Samsung
+      Securities) and foundry, creating a tight alignment between supply chain and strategic capital but
+      concentrating leverage at a single counterparty.
+    claimRefs:
+      - CE026
+      - CE027
+      - CE028
+      - CE029
+      - CE030
+      - CE040
+    tableRefs:
+      - TE004
+    figureRefs:
+      - FE003
+
+  - id: performance-benchmarks-risks
+    title: Performance Evidence, Benchmark Gaps, and Technology Risks
+    body: >
+      The strongest independent performance evidence for Rebellions hardware is the ISSCC 2026 peer-reviewed paper
+      for REBEL-Quad (56.8 TPS on LLaMA v3.3 70B at 2k/2k sequences), supplemented by the Hot Chips 2025 live
+      demo observed by trade press including ServeTheHome. For ATOM Gen 1, all performance-per-watt claims are
+      company-cited or certified by TTA (Telecommunications Technology Association, a Korean certification body):
+      the 2.7× TPS/Watt advantage over GPU at Mongolia customs and the 2× performance-per-watt at UAE ECOPEACE
+      are presented by Rebellions without independently published benchmark methodology. As of May 2026, Rebellions
+      has made no submission to MLPerf Inference Datacenter benchmarks on mlcommons.org. MLPerf is the industry's
+      primary third-party inference benchmark and is published by all major competitors (NVIDIA, AMD, Google,
+      Intel). The absence of MLPerf data makes independent performance comparison to H100, MI300X, and Gaudi 3
+      impossible from public sources.
+
+
+      The REBEL-Quad's dual PCIe Gen5 x16 host interface is noted as potentially lagging NVIDIA's GB300, which
+      targets PCIe Gen6 connectivity, representing a generational difference in host I/O bandwidth if customer
+      workloads are bottlenecked at the host interface. On the software side, vllm-rbln lacks speculative
+      decoding, distributed KV cache, and prefill/decode disaggregation — features now standard in GPU vLLM
+      deployments that enable cost-optimised hybrid serving architectures at scale. The RebelRack and RebelPOD
+      systems were announced as "available now" in a March 30, 2026 press release and investor communication,
+      yet the Rebellions website navigation shows these products as "Coming Soon" as of the May 2026 research
+      date, creating an unresolved discrepancy that constitutes an adverse signal on production readiness. The
+      RSD (Rebellions Scalable Design) framework enables tensor-parallel inference across configurations from
+      a single card (128 TFLOPS FP16 / 64 GB) to a configurable rack system (512–7168 TFLOPS FP16, 256 GB–
+      3.5 TB GDDR6), supporting Ubuntu, RHEL, Kubernetes, and OpenStack.
+    claimRefs:
+      - CE010
+      - CE015
+      - CE024
+      - CE025
+      - CE031
+      - CE033
+      - CE034
+      - CE035
+    tableRefs:
+      - TE005
+    figureRefs:
+      - FE004
+
+tables:
+  - id: TE001
+    title: Product Module and Asset Matrix
+    columns:
+      - "Product / SKU"
+      - "Generation"
+      - "Form Factor"
+      - "Key Compute Spec"
+      - "Memory"
+      - "Deployment Status"
+      - "Primary Use Case"
+    rows:
+      - ["ATOM-Max Card (RBLN-CA25)", "ATOM Gen 1", "PCIe Gen5 x16 card, FHFL dual-slot, 350 W", "128 TFLOPS FP16 / 512 TOPS INT8 / 1024 TOPS INT4", "64 GB GDDR6 at 1024 GB/s", "Shipping H1 2024", "LLM inference, cloud AI serving"]
+      - ["ATOM-Max Server", "ATOM Gen 1", "4U rack server, 8× ATOM-Max cards", "1024 TFLOPS FP16 aggregate", "512 GB GDDR6 at 8 TB/s", "Shipping H1 2024", "Multi-card LLM inference, enterprise datacenter"]
+      - ["ATOM-Max POD", "ATOM Gen 1", "Mini-cluster, 8 servers, 64 NPUs, 400 GB/s RDMA", "~8 PFLOPS FP16 (est.)", "~4 TB GDDR6 (est.)", "Shipping, 2024", "Rack-scale distributed inference"]
+      - ["RBLN-CA21 (single-chip)", "ATOM Gen 1", "PCIe, <75 W, no external power", "32 TFLOPS FP16 per chip", "16 GB GDDR6", "Shipping", "Edge inference, lower power"]
+      - ["RBLN-CA22 (single-chip)", "ATOM Gen 1", "PCIe, up to 90 W", "32 TFLOPS FP16 per chip", "16 GB GDDR6", "Shipping", "Mid-range inference server"]
+      - ["RebelCard (RBLN-CR series)", "REBEL Gen 2", "PCIe Gen5 dual x16", "Up to 2 PFLOPS FP8 per card (est.)", "144 GB HBM3E at 4.8 TB/s", "Shipping as of 2026", "High-throughput LLM inference"]
+      - ["RebelServer", "REBEL Gen 2", "5U, 8× RebelCard, AMD EPYC 9355, 4–6 kW typical", "Up to 2 PFLOPS FP8 (8-card est.)", "1.15 TB HBM3E aggregate (est.)", "Shipping as of 2026", "Enterprise AI inference rack unit"]
+      - ["RebelRack / RebelPOD", "REBEL Gen 2", "Rack-scale cluster, multiple servers", "Multi-PFLOPS FP8 (rack scale)", "TB-scale HBM3E (rack scale)", "Announced Mar 2026; 'Coming Soon' on website", "Hyperscale AI datacenter cluster"]
+    notes: "Compute estimates marked (est.) are extrapolated from per-card specs; official per-system PFLOPS figures for REBEL generation are not yet publicly disclosed. RBLN-CA21/CA22 are single-chip ATOM cards per Chips and Cheese SC2024 coverage. RebelRack/RebelPOD availability discrepancy flagged in CE015."
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+      - CE007
+      - CE013
+      - CE014
+      - CE015
+
+  - id: TE002
+    title: Hardware Specifications by Product Tier
+    columns:
+      - "Specification"
+      - "ATOM-Max Card"
+      - "ATOM-Max Server"
+      - "ATOM-Max POD"
+      - "REBEL-Quad Card"
+      - "RebelServer (8× card)"
+    rows:
+      - ["Process node", "Not disclosed (ATOM SoC)", "—", "—", "Samsung SF4X 4nm", "Samsung SF4X 4nm"]
+      - ["Architecture", "4× ATOM SoC in MDP", "8× ATOM-Max cards", "8 servers / 64 NPUs", "4-chiplet UCIe-Advanced", "8× RebelCard"]
+      - ["Peak compute (FP16)", "128 TFLOPS", "1024 TFLOPS", "~8 PFLOPS (est.)", "Not disclosed per-card", "~2 PFLOPS FP8 (rated)"]
+      - ["Memory capacity", "64 GB GDDR6", "512 GB GDDR6", "~4 TB GDDR6 (est.)", "144 GB HBM3E", "~1.15 TB HBM3E (est.)"]
+      - ["Memory bandwidth", "1024 GB/s", "8 TB/s", "~64 TB/s (est.)", "4.8 TB/s", "~38 TB/s (est.)"]
+      - ["TDP / power", "350 W", "3.4 kW typ / 4.3 kW max", "~27 kW (est.)", "Not disclosed", "4–6 kW typ / 7 kW max"]
+      - ["Host interface", "PCIe Gen5 x16", "—", "400 GB/s RDMA", "PCIe Gen5 dual x16", "4× 400G networking"]
+      - ["Published bench mark", "ISSCC 2024 (mass-prod ready)", "—", "—", "56.8 TPS LLaMA 70B (ISSCC 2026)", "—"]
+    notes: "Estimates (est.) extrapolated from per-card specs; official cluster-level specs not publicly disclosed. REBEL-Quad per-card FP16 TFLOPS not published; FP8 rating (2 PFLOPS) is for the full RebelServer system per official spec sheet."
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE005
+      - CE009
+      - CE010
+      - CE011
+      - CE013
+      - CE032
+      - CE036
+
+  - id: TE003
+    title: Software Stack and Integration Architecture
+    columns:
+      - "Layer / Component"
+      - "Package / Tool"
+      - "Version (May 2026)"
+      - "Function"
+      - "Integration Point"
+      - "Status"
+    rows:
+      - ["Compiler", "rebel-compiler", "0.10.3", "Converts PyTorch/TF models to RBLN binary format (ahead-of-time)", "Python API; CLI", "Production"]
+      - ["HuggingFace integration", "optimum-rbln", "0.10.3", "HuggingFace Optimum backend for LLM model preparation", "from_pretrained() API", "Production"]
+      - ["vLLM plugin", "vllm-rbln", "0.10.3.post1", "vLLM backend enabling paged attention + continuous batching on RBLN NPU", "vLLM v0.18.0 compatible", "Production (GPU parity gaps: no spec dec / dist KV)"]
+      - ["Runtime", "RBLN Runtime", "0.10.3", "On-device execution engine; manages RBLN-CA* and RBLN-CR* devices", "Kernel driver; device plugin", "Production"]
+      - ["Kubernetes operator", "Rebellions NPU Operator", "0.4.0", "Exposes rebellions.ai/ATOM and rebellions.ai/REBEL device resources in k8s", "Red Hat OpenShift AI certified; Helm / OCI", "Production / certified"]
+      - ["Model zoo", "docs.rbln.ai model zoo", "N/A", "300+ supported PyTorch/TF models across LLMs, vision, and classical inference", "Companion to SDK install guide", "Production"]
+    notes: "All versions confirmed via pypi.org release history and docs.rbln.ai release notes (May 2026). vllm-rbln gap features (speculative decoding, distributed KV cache, prefill/decode disaggregation) are in-development per SDK docs."
+    claimRefs:
+      - CE016
+      - CE017
+      - CE018
+      - CE019
+      - CE020
+      - CE021
+      - CE022
+      - CE037
+      - CE039
+
+  - id: TE004
+    title: Supply Chain, Manufacturing, and Partner Dependencies
+    columns:
+      - "Supply Input"
+      - "Vendor / Partner"
+      - "Scope"
+      - "Concentration Risk"
+      - "Strategic Alignment"
+    rows:
+      - ["Logic fabrication (4nm)", "Samsung Foundry (SF4X)", "Sole source for REBEL-Quad compute chiplets", "High — no disclosed backup foundry; TSMC not used", "Samsung is also strategic investor and HBM supplier"]
+      - ["HBM3E memory", "Samsung", "Sole source for REBEL-Quad 4× 36 GB HBM3E stacks", "High — SK Hynix and Micron not engaged per public sources", "Samsung HBM3E reported as first customer supply to Rebellions"]
+      - ["Advanced packaging (CoWoS-S)", "Samsung (CoWoS-S interposer)", "REBEL-Quad package substrate for 4 chiplets + 4 HBM3E", "High — Samsung-only packaging stack", "Integrated with foundry and HBM supply at Samsung"]
+      - ["Chiplet interconnect IP (UCIe-Advanced)", "Alphawave Semi", "Die-to-die UCIe-Advanced SerDes IP at 16 Gbps/lane", "Medium — UCIe IP from established supplier; architecture portable", "No equity relationship; commercial IP licensing"]
+      - ["CPU architecture (planned)", "Arm (Total Design / Neoverse CSS)", "Arm CPU subsystem for planned AGI CPU product", "Low (future product) — Arm is also strategic investor", "Arm invested in Rebellions Series C; Total Design member Oct 2025"]
+      - ["Enterprise k8s certification", "Red Hat (OpenShift AI)", "NPU Operator v0.4.0 certification for OpenShift AI platform", "Low — certification is value-add; not supply-constrained", "Strategic partnership Dec 2025; expands enterprise GTM"]
+    notes: "Supply chain data drawn from official product pages, press releases, and independent hardware reviews (ServeTheHome, Chips and Cheese). Single-vendor risk across Samsung logic/HBM/packaging is the primary supply chain vulnerability."
+    claimRefs:
+      - CE026
+      - CE027
+      - CE028
+      - CE029
+      - CE040
+
+  - id: TE005
+    title: Software Roadmap and Feature Status
+    columns:
+      - "Feature / Milestone"
+      - "Status (May 2026)"
+      - "Impact"
+      - "Dependency / Risk"
+      - "Time Horizon"
+    rows:
+      - ["vllm-rbln v0.10.3.post1 on pypi.org", "Released May 18, 2026", "Broadens developer reach beyond proprietary PyPI mirror; standardises install path", "vLLM community acceptance; version parity with GPU vLLM", "Current — shipped"]
+      - ["Speculative decoding in vllm-rbln", "In development — not available", "Improves per-token latency for autoregressive LLM decoding; standard in GPU serving", "Architecture support for speculative execution on RBLN NPU", "H2 2026 (estimated)"]
+      - ["Distributed KV cache", "In development — not available", "Enables KV cache sharing across nodes; required for very large model serving with prefill offload", "Multi-node RBLN runtime; RDMA fabric integration", "H2 2026 or later (estimated)"]
+      - ["Prefill/decode disaggregation", "In development — not available", "Enables heterogeneous serving architectures (separate prefill and decode nodes); cost-optimised at scale", "vLLM disaggregation protocol; multi-node RBLN runtime", "2026–2027 (estimated)"]
+      - ["RebelRack / RebelPOD", "Announced 'available now' Mar 2026; 'Coming Soon' on website May 2026", "Rack-scale REBEL-Quad clusters for hyperscale AI workloads", "Production ramp of REBEL-Quad chiplets; supply chain readiness", "Status unclear — active diligence item"]
+      - ["AGI CPU (Arm Neoverse CSS integration)", "Pre-silicon — partnership announced Oct 2025", "Rebellions-designed AI compute + Arm server CPU in one platform; differentiates vs NPU-only", "Arm Total Design membership; silicon tape-out timing not disclosed", "2027+ (estimated)"]
+    notes: "Roadmap timelines for in-development features are analyst estimates; Rebellions has not published public SDK roadmap with committed dates. RebelRack/POD status discrepancy between press release and website is an unresolved adverse signal."
+    claimRefs:
+      - CE015
+      - CE017
+      - CE019
+      - CE021
+      - CE028
+
+figures:
+  - id: FE001
+    title: Rebellions Product Architecture Stack
+    type: stack
+    layout: standard
+    description: "Layered architecture of the Rebellions hardware-software stack, from silicon fabrication through system integration to the software and deployment interfaces."
+    approximationNotes: "Architectural layers reflect public documentation, ISSCC paper, and SDK release notes. Internal REBEL-Quad microarchitecture details not publicly disclosed beyond the ISSCC paper."
+    claimRefs:
+      - CE008
+      - CE009
+      - CE011
+      - CE016
+      - CE022
+      - CE033
+    data:
+      layers:
+        - id: silicon-layer
+          label: "Silicon: ATOM SoC (GDDR6) | REBEL Chiplets × 4 (Samsung SF4X 4nm)"
+          detail: "ATOM: 32 TFLOPS FP16 per die, 16 GB GDDR6 / chip. REBEL: quad-chiplet, UCIe-Advanced interconnect, Samsung SF4X."
+        - id: memory-layer
+          label: "Memory: GDDR6 1024 GB/s (ATOM-Max) | HBM3E 4.8 TB/s (REBEL-Quad)"
+          detail: "ATOM-Max: 64 GB GDDR6 total (4×16 GB at 256 GB/s per die). REBEL-Quad: 144 GB HBM3E (4×36 GB at 9.6 GT/s per stack, Samsung)."
+        - id: package-layer
+          label: "Package: Multi-Die Package (ATOM MDP) | CoWoS-S + UCIe-Advanced (REBEL-Quad)"
+          detail: "ATOM: 4 dies in MDP. REBEL: Samsung CoWoS-S advanced package; Alphawave UCIe-Advanced SerDes at 16 Gbps/lane."
+        - id: board-layer
+          label: "Card: RBLN-CA* (ATOM, PCIe Gen5 x16) | RBLN-CR* (REBEL, PCIe Gen5 dual x16)"
+          detail: "ATOM-Max: 350 W FHFL dual-slot card. REBEL-Quad card: dual PCIe Gen5 x16, exact TDP not disclosed."
+        - id: server-layer
+          label: "Server: ATOM-Max Server (4U, 8× ATOM cards) | RebelServer (5U, 8× RebelCard, AMD EPYC 9355)"
+          detail: "ATOM-Max Server: 1024 TFLOPS FP16, 512 GB GDDR6, 3.4 kW typ. RebelServer: 2 PFLOPS FP8 (rated), 1.5 TB DDR5 host, 4× 400G."
+        - id: cluster-layer
+          label: "Cluster: ATOM-Max POD (8 servers / 64 NPUs, 400 GB/s RDMA) | RebelRack / RebelPOD (multi-rack)"
+          detail: "ATOM POD: 400 GB/s RDMA fabric. RebelRack/POD: rack-scale REBEL-Quad, status ambiguous (see CE015)."
+        - id: software-layer
+          label: "Software: RBLN SDK v0.10.3 | vllm-rbln v0.10.3.post1 | NPU Operator v0.4.0 | 300+ model zoo"
+          detail: "rebel-compiler, optimum-rbln, vllm-rbln on pypi.org; vLLM v0.18.0 compatible; Red Hat OpenShift AI certified."
+
+  - id: FE002
+    title: Customer Deployment Workflow
+    type: flow
+    layout: standard
+    description: "End-to-end deployment workflow for a customer deploying LLM inference on Rebellions hardware, from model preparation through production serving."
+    approximationNotes: "Workflow derived from RBLN SDK documentation and vLLM integration guides. Internal CI/CD steps may differ per customer environment."
+    claimRefs:
+      - CE016
+      - CE017
+      - CE018
+      - CE020
+      - CE021
+    data:
+      nodes:
+        - id: model-selection
+          label: "Select model from Model Zoo (300+ supported)"
+          type: input
+          note: "PyTorch / TensorFlow; LLMs, vision models, classical inference"
+        - id: compile
+          label: "Compile model with rebel-compiler (RBLN ahead-of-time compiler)"
+          type: process
+          note: "Quantise to FP8/FP4/INT8 target precision; output: RBLN binary"
+        - id: validate
+          label: "Validate compiled model via RBLN Runtime on dev hardware"
+          type: process
+          note: "Unit test on RBLN-CA* (ATOM) or RBLN-CR* (REBEL) device"
+        - id: deploy-vllm
+          label: "Deploy via vllm-rbln on RebelServer / ATOM-Max Server"
+          type: process
+          note: "Paged attention + continuous batching; vLLM v0.18.0 API"
+        - id: k8s-operator
+          label: "Register NPU with Kubernetes via Rebellions NPU Operator v0.4.0"
+          type: process
+          note: "rebellions.ai/REBEL or rebellions.ai/ATOM device resources; OpenShift-certified"
+        - id: inference-request
+          label: "Application sends inference request via OpenAI-compatible API"
+          type: process
+          note: "vLLM OpenAI API endpoint; token streaming supported"
+        - id: npu-execute
+          label: "NPU executes inference (RBLN Runtime, on-chip)"
+          type: process
+          note: "56.8 TPS on LLaMA 70B at 2k/2k (ISSCC 2026); HBM3E or GDDR6 KV cache"
+        - id: response
+          label: "Response returned; metrics exported via k8s metric exporter"
+          type: output
+          note: "Prometheus-compatible metrics for monitoring; VFIO manager for isolation"
+        - id: scale-out
+          label: "Scale out via RebelRack / RebelPOD (multi-server, RDMA fabric)"
+          type: output
+          note: "Tensor parallelism via RSD framework; 400 GB/s RDMA inter-node"
+      edges:
+        - from: model-selection
+          to: compile
+          label: "Model download"
+        - from: compile
+          to: validate
+          label: "RBLN binary"
+        - from: validate
+          to: deploy-vllm
+          label: "Model ready"
+        - from: deploy-vllm
+          to: k8s-operator
+          label: "Server registration"
+        - from: k8s-operator
+          to: inference-request
+          label: "API endpoint live"
+        - from: inference-request
+          to: npu-execute
+          label: "Request dispatch"
+        - from: npu-execute
+          to: response
+          label: "Token output"
+        - from: response
+          to: scale-out
+          label: "Load triggers scale"
+
+  - id: FE003
+    title: Critical Technology Dependency Map
+    type: dag
+    layout: standard
+    description: "Directed acyclic graph of Rebellions' critical external dependencies for the REBEL-Quad product: suppliers, foundry, IP partners, and ecosystem platforms."
+    approximationNotes: "Dependency data from product pages, ISSCC paper, press releases, and independent hardware reviews. Internal supply contract terms are not publicly disclosed."
+    claimRefs:
+      - CE026
+      - CE027
+      - CE028
+      - CE029
+      - CE031
+    data:
+      nodes:
+        - id: samsung-foundry
+          label: "Samsung Foundry (SF4X 4nm)"
+          type: input
+          note: "Sole source for REBEL-Quad compute chiplet logic fabrication"
+        - id: samsung-hbm
+          label: "Samsung HBM3E (4× 36 GB stacks)"
+          type: input
+          note: "Sole source for REBEL-Quad memory; 144 GB at 4.8 TB/s"
+        - id: samsung-cowos
+          label: "Samsung CoWoS-S Packaging"
+          type: input
+          note: "Advanced package substrate for 4-chiplet + 4-HBM3E assembly"
+        - id: alphawave
+          label: "Alphawave Semi (UCIe-Advanced IP)"
+          type: input
+          note: "SerDes IP for 16 Gbps/lane chiplet die-to-die interconnect"
+        - id: arm-css
+          label: "Arm (Total Design / Neoverse CSS)"
+          type: input
+          note: "Future AGI CPU product; Arm is also strategic investor"
+        - id: rebel-quad-chip
+          label: "REBEL-Quad SoC Package"
+          type: process
+          note: "4nm quad-chiplet, 144 GB HBM3E, UCIe-Advanced; ISSCC 2026 paper"
+        - id: rebelserver
+          label: "RebelServer (5U, 8× RebelCard)"
+          type: process
+          note: "Customer-facing inference server; AMD EPYC 9355 host, 400G"
+        - id: openshift-ai
+          label: "Red Hat OpenShift AI"
+          type: output
+          note: "Enterprise k8s platform; NPU Operator v0.4.0 certified Dec 2025"
+      edges:
+        - from: samsung-foundry
+          to: rebel-quad-chip
+          label: "Chiplet logic silicon"
+        - from: samsung-hbm
+          to: rebel-quad-chip
+          label: "HBM3E stacks"
+        - from: samsung-cowos
+          to: rebel-quad-chip
+          label: "CoWoS-S package substrate"
+        - from: alphawave
+          to: rebel-quad-chip
+          label: "UCIe-Advanced SerDes IP"
+        - from: rebel-quad-chip
+          to: rebelserver
+          label: "8× RebelCard in 5U chassis"
+        - from: arm-css
+          to: rebelserver
+          label: "Planned AGI CPU integration (future)"
+        - from: rebelserver
+          to: openshift-ai
+          label: "NPU device plugin v0.4.0"
+
+  - id: FE004
+    title: Product Maturity and Capability Assessment
+    type: matrix
+    layout: wide
+    description: "Assessment of Rebellions' product maturity, evidence quality, and competitive positioning across key hardware and software dimensions."
+    approximationNotes: "Maturity ratings are analyst judgments based on publicly available product data, peer-reviewed benchmarks, and independent reviews as of May 2026."
+    claimRefs:
+      - CE001
+      - CE010
+      - CE024
+      - CE025
+      - CE031
+      - CE037
+    data:
+      columns:
+        - "ATOM-Max Card/Server"
+        - "REBEL-Quad / RebelServer"
+        - "RBLN SDK (vllm-rbln)"
+        - "Benchmark evidence"
+        - "ISV / ecosystem"
+      rows:
+        - label: "Shipping status"
+          values: ["Shipping since H1 2024", "Shipping as of 2026", "v0.10.3 on pypi.org (May 2026)", "ISSCC 2024 + ISSCC 2026 papers", "Red Hat OpenShift AI certified (Dec 2025)"]
+        - label: "Compute / capacity"
+          values: ["128 TFLOPS FP16 / 64 GB GDDR6 per card", "PFLOPS-class FP8 / 144 GB HBM3E per card", "FP32/FP16/FP8/FP6/FP4 precision", "56.8 TPS LLaMA 70B (ISSCC 2026)", "300+ models in model zoo"]
+        - label: "Evidence quality"
+          values: ["Company claims + TTA cert (Korea)", "Peer-reviewed IEEE paper (high)", "Public PyPI package + vLLM docs", "No MLPerf submission (adverse)", "NPU Operator v0.4.0 (certified)"]
+        - label: "Key limitation"
+          values: ["No MLPerf; Korea-only 3rd-party cert", "PCIe Gen5 vs Nvidia Gen6; limited public system specs", "No speculative decoding / dist. KV cache", "All perf/watt claims company or TTA only", "GitHub org: no public SDK source code"]
+        - label: "Competitive risk"
+          values: ["H100/MI300X dominate CSP; no public H100 comparison", "New-entrant adoption risk; limited customer base outside Asia", "GPU vLLM parity gap narrows differentiator", "Benchmark gap vs Nvidia/AMD published MLPerf data", "Enterprise reach limited outside Korea/Asia without more ISV certs"]
+        - label: "Strength"
+          values: ["Shipping product; real customer deployments (UAE, Mongolia)", "First public UCIe-Advanced AI chiplet; HBM3E capacity", "First-class vLLM integration tier; OpenAI-compatible API", "ISSCC 2026 peer-reviewed result is strongest in class for startup", "Arm + Samsung + Red Hat ecosystem coverage"]
+        - label: "Diligence action"
+          values: ["Request customer performance logs, not TTA summaries", "Request MLPerf submission roadmap and NDA specs", "Test speculative decoding roadmap; benchmark vs GPU vLLM", "Commission independent benchmark vs H100/MI300X", "Track ISV cert pipeline; request enterprise pipeline CRM data"]
+
+callouts:
+  - id: KE001
+    calloutType: strength
+    title: "UCIe-Advanced Chiplet Architecture — First Public Production AI Chip"
+    body: >
+      The REBEL-Quad's use of UCIe-Advanced die-to-die interconnect at 16 Gbps, independently confirmed by ServeTheHome
+      at Hot Chips 2025, positions Rebellions as the first AI chip company to publicly market and demonstrate running
+      silicon using UCIe-Advanced packaging. This is a genuine architectural first-mover claim, not a roadmap item.
+      The ISSCC 2026 peer-reviewed paper provides credible performance anchoring at 56.8 TPS on LLaMA v3.3 70B —
+      the strongest form of performance evidence a hardware startup can provide.
+    claimRefs:
+      - CE008
+      - CE010
+      - CE011
+
+  - id: KE002
+    calloutType: strength
+    title: "Software Integration Tier — vLLM Official Support and Red Hat Certification"
+    body: >
+      Rebellions' NPU is listed in the official vLLM documentation alongside Google Cloud TPU, Intel Gaudi, and AMD
+      Instinct, granting it the same first-class integration tier as more established alternatives. The Red Hat
+      OpenShift AI certification of NPU Operator v0.4.0 enables enterprise Kubernetes deployments without custom
+      integration work. The availability of vllm-rbln on the public PyPI index (not just a proprietary mirror) lowers
+      the barrier for developer adoption and signals supply-side confidence in the software product.
+    claimRefs:
+      - CE018
+      - CE021
+      - CE017
+
+  - id: KE003
+    calloutType: risk
+    title: "Single-Vendor Samsung Supply Chain — Logic, HBM, and Packaging"
+    body: >
+      Rebellions' REBEL-Quad product is entirely dependent on Samsung for all three critical supply inputs: 4nm SF4X
+      logic fabrication, HBM3E memory stacks, and CoWoS-S advanced packaging. This single-vendor concentration is
+      structurally unusual even by fabless semiconductor standards, where most companies use at least two suppliers
+      across memory and logic. Any Samsung-side capacity disruption, yield crisis, or commercial dispute would halt
+      REBEL-Quad supply with no disclosed alternative. The fact that Samsung is also a strategic investor creates
+      alignment but does not eliminate supply risk, and could impede Rebellions' ability to negotiate at arm's length
+      on pricing or capacity allocation.
+    claimRefs:
+      - CE026
+
+  - id: KE004
+    calloutType: risk
+    title: "No MLPerf Submission — Benchmark Transparency Gap"
+    body: >
+      As of May 2026, Rebellions has not submitted results to MLCommons MLPerf Inference Datacenter benchmarks —
+      the primary independent AI inference benchmark used by hyperscalers and enterprise buyers for competitive
+      evaluation. All major accelerator competitors (NVIDIA, AMD, Intel, Google, Qualcomm) participate. The absence
+      of MLPerf data means that investors and prospective customers cannot independently compare Rebellions'
+      performance against H100, MI300X, or Gaudi 3 using a shared methodology. Company-cited perf/watt numbers
+      and TTA certifications (a Korean national body) do not substitute for the reproducible, third-party scrutiny
+      of MLPerf. This gap is a diligence priority and a potential signal that REBEL-Quad benchmark results under
+      standard MLPerf conditions may not yet be competitive.
+    claimRefs:
+      - CE024
+      - CE025
+
+  - id: KE005
+    calloutType: risk
+    title: "RebelRack/RebelPOD Availability Discrepancy"
+    body: >
+      The March 30, 2026 press release and investor communications announced RebelRack and RebelPOD as "available
+      now" for customer deployment. However, as of the May 2026 research date, the Rebellions website shows both
+      products as "Coming Soon" in the navigation. This discrepancy is an adverse signal on production readiness:
+      either the products were announced before supply was confirmed, or the website was not updated to reflect
+      availability. Either interpretation warrants diligence attention — specifically confirming with Rebellions
+      whether any customer has taken delivery of a RebelRack or RebelPOD system.
+    claimRefs:
+      - CE014
+      - CE015
+
+  - id: KE006
+    calloutType: recommendation
+    title: "Priority Diligence Items for Technical Due Diligence"
+    body: >
+      Key technical diligence items: (1) Request MLPerf Inference Datacenter submission roadmap and any NDA
+      benchmark data for REBEL-Quad vs H100/MI300X under standard workloads. (2) Confirm RebelRack/RebelPOD
+      delivery status — obtain customer purchase orders or delivery confirmations. (3) Commission independent
+      benchmark testing of ATOM-Max vs GPU baseline using a shared methodology, not TTA or company collateral.
+      (4) Review vllm-rbln roadmap for speculative decoding and distributed KV cache — timeline and gating
+      dependencies matter for enterprise multi-node serving viability. (5) Assess Samsung supply contract terms:
+      capacity reservation, pricing, and alternate supplier exploration.
+    claimRefs:
+      - CE015
+      - CE024
+      - CE026
+      - CE019
+
+localEvidence:
+  searchQueries:
+    - query: "Rebellions ATOM-Max NPU specifications TFLOPS TOPS GDDR6 PCIe 2026"
+      engine: web
+      hits: 8
+      retainedSourceRefs: [SE001, SE002, SE003, SE019]
+
+    - query: "Rebellions REBEL-Quad HBM3E UCIe chiplet 4nm Hot Chips 2025 2026"
+      engine: web
+      hits: 7
+      retainedSourceRefs: [SE005, SE006, SE018]
+
+    - query: "Rebellions RBLN SDK vllm-rbln PyPI vLLM integration 2026"
+      engine: web
+      hits: 6
+      retainedSourceRefs: [SE015, SE013, SE014]
+
+    - query: "ieeexplore.ieee.org Rebellions REBEL ISSCC 2026 quad chiplet UCIe"
+      engine: web
+      hits: 3
+      retainedSourceRefs: [SE012]
+
+    - query: "Rebellions ATOM-Max Server RebelServer specifications rack 2026"
+      engine: web
+      hits: 6
+      retainedSourceRefs: [SE002, SE004]
+
+    - query: "Rebellions model zoo 300 models PyTorch TensorFlow SDK 2026"
+      engine: web
+      hits: 4
+      retainedSourceRefs: [SE008, SE013]
+
+    - query: "Rebellions Red Hat OpenShift AI NPU Operator certification 2025 2026"
+      engine: web
+      hits: 5
+      retainedSourceRefs: [SE006, SE024]
+
+    - query: "mlcommons MLPerf inference datacenter Rebellions NPU 2026"
+      engine: web
+      hits: 3
+      retainedSourceRefs: [SE017]
+
+    - query: "Rebellions REBEL UCIe Advanced ServeTheHome Hot Chips 2025 chiplet independent"
+      engine: web
+      hits: 4
+      retainedSourceRefs: [SE018]
+
+    - query: "Rebellions Samsung Foundry HBM3E CoWoS supply chain 4nm SF4X 2026"
+      engine: web
+      hits: 5
+      retainedSourceRefs: [SE010, SE023, SE026]
+
+    - query: "Rebellions Arm Total Design Neoverse AGI CPU October 2025 2026"
+      engine: web
+      hits: 4
+      retainedSourceRefs: [SE022, SE027]
+
+    - query: "Rebellions SK Telecom sovereign AI datacenter April 2026"
+      engine: web
+      hits: 4
+      retainedSourceRefs: [SE024]
+
+    - query: "chipsandcheese Rebellions ATOM-Max GDDR6 RBLN-CA25 Supercomputing 2024"
+      engine: web
+      hits: 3
+      retainedSourceRefs: [SE019]
+
+    - query: "Rebellions RebelRack RebelPOD launch available 2026 rack cluster"
+      engine: web
+      hits: 5
+      retainedSourceRefs: [SE007, SE011]
+
+    - query: "Rebellions github.com rebellions-sw SDK source repo public 2026"
+      engine: web
+      hits: 3
+      retainedSourceRefs: [SE016]
+
+    - query: "Rebellions vllm speculative decoding distributed KV cache gap GPU parity 2026"
+      engine: web
+      hits: 4
+      retainedSourceRefs: [SE013, SE014]
+
+    - query: "Rebellions ATOM Mongolia customs UAE ECOPEACE deployment performance 2026"
+      engine: web
+      hits: 5
+      retainedSourceRefs: [SE025]
+
+    - query: "Alphawave Semi UCIe Advanced IP chiplet Rebellions REBEL 2025 2026"
+      engine: web
+      hits: 4
+      retainedSourceRefs: [SE018, SE026]
+
+  researchQuestions:
+    - id: QE001
+      question: "What is Rebellions' full product portfolio — hardware SKUs, form factors, and deployment status — as of May 2026?"
+      type: enumeration
+      targets: ["contentRequirements/1", "plannedTables/product-module-asset-matrix"]
+      status: answered
+
+    - id: QE002
+      question: "What are the hardware specifications of the ATOM-Max card including compute throughput, memory capacity, memory bandwidth, TDP, and host interface?"
+      type: quantification
+      targets: ["contentRequirements/0", "plannedTables/product-module-asset-matrix"]
+      status: answered
+
+    - id: QE003
+      question: "What are the confirmed hardware specifications of the REBEL-Quad card including HBM3E capacity, bandwidth, chiplet count, and process node?"
+      type: quantification
+      targets: ["contentRequirements/0", "plannedTables/product-module-asset-matrix"]
+      status: answered
+
+    - id: QE004
+      question: "What semiconductor packaging technology does the REBEL-Quad use, and which vendor supplies it?"
+      type: verification
+      targets: ["contentRequirements/2", "plannedTables/technology-operating-architecture-table"]
+      status: answered
+
+    - id: QE005
+      question: "What is the mechanism by which UCIe-Advanced die-to-die interconnect enables chiplet bandwidth scaling in the REBEL-Quad?"
+      type: mechanism
+      targets: ["contentRequirements/2", "plannedFigures/product-architecture-map"]
+      status: answered
+
+    - id: QE006
+      question: "What version is the RBLN SDK as of May 2026, what packages does it include, and where are they distributed?"
+      type: verification
+      targets: ["contentRequirements/3", "plannedTables/technology-operating-architecture-table"]
+      status: answered
+
+    - id: QE007
+      question: "What model categories and count are included in the Rebellions model zoo, and what frameworks are supported?"
+      type: enumeration
+      targets: ["contentRequirements/1", "plannedTables/product-module-asset-matrix"]
+      status: answered
+
+    - id: QE008
+      question: "What is the vLLM integration status of the Rebellions NPU — is it listed in official vLLM docs, what version does it support, and what serving features are implemented?"
+      type: verification
+      targets: ["contentRequirements/3", "plannedTables/technology-operating-architecture-table"]
+      status: answered
+
+    - id: QE009
+      question: "How does the ATOM-Max card compare to NVIDIA H100 SXM and AMD MI300X on performance per watt and total cost of ownership for LLM inference?"
+      type: comparison
+      targets: ["contentRequirements/4", "plannedFigures/product-maturity-capability-map"]
+      status: partial
+
+    - id: QE010
+      question: "What are the full hardware specifications of the RebelServer including host CPU, host memory, networking, and power?"
+      type: quantification
+      targets: ["contentRequirements/0", "plannedTables/product-module-asset-matrix"]
+      status: answered
+
+    - id: QE011
+      question: "Is Samsung the sole vendor for REBEL-Quad logic fabrication, HBM3E memory, and advanced packaging, and what is the concentration risk?"
+      type: verification
+      targets: ["contentRequirements/2", "plannedTables/trust-quality-compliance-table"]
+      status: answered
+
+    - id: QE012
+      question: "Has Rebellions submitted to any MLCommons MLPerf Inference Datacenter benchmark round as of May 2026?"
+      type: adverse
+      targets: ["contentRequirements/5", "plannedTables/trust-quality-compliance-table"]
+      status: answered
+
+    - id: QE013
+      question: "What vLLM-GPU parity features are absent in vllm-rbln, and what does that mean for enterprise production deployments?"
+      type: adverse
+      targets: ["contentRequirements/5", "plannedTables/roadmap-release-development-stage-table"]
+      status: answered
+
+    - id: QE014
+      question: "What is the actual availability status of RebelRack and RebelPOD — are they shipping to customers or only announced?"
+      type: adverse
+      targets: ["contentRequirements/3", "plannedTables/roadmap-release-development-stage-table"]
+      status: answered
+
+    - id: QE015
+      question: "What was demonstrated at Hot Chips 2025 for the REBEL-Quad, and what independent coverage corroborates the claims?"
+      type: freshness
+      targets: ["contentRequirements/4", "plannedFigures/customer-workflow-operating-flow"]
+      status: answered
+
+    - id: QE016
+      question: "What is the scope and status of the Red Hat OpenShift AI partnership — what is certified and what is not yet certified?"
+      type: verification
+      targets: ["contentRequirements/3", "plannedTables/trust-quality-compliance-table"]
+      status: answered
+
+    - id: QE017
+      question: "How does the RSD (Rebellions Scalable Design) architecture enable tensor-parallel distributed inference from card to rack?"
+      type: mechanism
+      targets: ["contentRequirements/2", "plannedTables/technology-operating-architecture-table"]
+      status: answered
+
+    - id: QE018
+      question: "Which company supplies the UCIe-Advanced die-to-die IP for the REBEL-Quad, and what are the key technical parameters?"
+      type: verification
+      targets: ["contentRequirements/2", "plannedFigures/critical-dependency-map"]
+      status: answered
+
+    - id: QE019
+      question: "What does the ISSCC 2026 peer-reviewed paper for REBEL-Quad report as the measured inference throughput on LLaMA v3.3 70B?"
+      type: quantification
+      targets: ["contentRequirements/4", "plannedFigures/product-maturity-capability-map"]
+      status: answered
+
+    - id: QE020
+      question: "Which real-world customers have deployed Rebellions ATOM hardware, and what performance results have been reported?"
+      type: verification
+      targets: ["contentRequirements/3", "plannedTables/trust-quality-compliance-table"]
+      status: answered
+
+    - id: QE021
+      question: "What numeric precision formats does the RBLN SDK and REBEL hardware support for inference workloads?"
+      type: enumeration
+      targets: ["contentRequirements/2", "plannedTables/technology-operating-architecture-table"]
+      status: answered
+
+    - id: QE022
+      question: "What is the internal architecture of the ATOM-Max card — how many ATOM SoC dies are integrated, and what is the per-die spec?"
+      type: mechanism
+      targets: ["contentRequirements/2", "plannedTables/product-module-asset-matrix"]
+      status: answered
+
+    - id: QE023
+      question: "How does the REBEL-Quad's PCIe Gen5 host interface compare to NVIDIA GB300's planned PCIe Gen6, and what workloads are bandwidth-constrained?"
+      type: comparison
+      targets: ["contentRequirements/4", "plannedFigures/product-maturity-capability-map"]
+      status: partial
+
+    - id: QE024
+      question: "What does the April 2026 SK Telecom sovereign AI co-development partnership entail for Rebellions product deployment?"
+      type: freshness
+      targets: ["contentRequirements/3", "plannedTables/roadmap-release-development-stage-table"]
+      status: answered
+
+    - id: QE025
+      question: "What does Arm Total Design ecosystem membership mean for Rebellions, and what integration with Neoverse CSS is planned?"
+      type: verification
+      targets: ["contentRequirements/4", "plannedFigures/critical-dependency-map"]
+      status: answered
+
+    - id: QE026
+      question: "What are the network fabric specifications of the ATOM-Max POD — what bandwidth, what protocol, and how many nodes?"
+      type: quantification
+      targets: ["contentRequirements/0", "plannedTables/product-module-asset-matrix"]
+      status: answered
+
+    - id: QE027
+      question: "Is there any independent (non-company, non-TTA) corroboration of Rebellions' perf/watt claims for ATOM deployments in Mongolia and UAE?"
+      type: adverse
+      targets: ["contentRequirements/5", "plannedTables/trust-quality-compliance-table"]
+      status: partial
+
+  sources:
+    - id: SE001
+      publisher: "Rebellions Inc."
+      title: "ATOM-Max — Rebellions Product Page"
+      url: "https://rebellions.ai/products/atom-max"
+      date: "2026-05-20"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["atom-max", "hardware-specs", "gddr6", "pcie-gen5", "product-page"]
+      keyQuote: "128 TFLOPS FP16, 512 TOPS INT8, 1024 TOPS INT4 at 350W TDP with 64 GB GDDR6 at 1024 GB/s, PCIe Gen5 x16 FHFL dual-slot."
+
+    - id: SE002
+      publisher: "Rebellions Inc."
+      title: "ATOM-Max Server — Rebellions Product Page"
+      url: "https://rebellions.ai/products/atom-max-server"
+      date: "2026-05-20"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["atom-max-server", "4u-server", "1024-tflops", "8-cards", "product-page"]
+      keyQuote: "8x ATOM-Max cards in a 4U chassis; 1,024 TFLOPS FP16 aggregate; 512 GB GDDR6 at 8 TB/s; 3.4 kW typical, 4.3 kW max."
+
+    - id: SE003
+      publisher: "Rebellions Inc."
+      title: "ATOM-Max POD — Rebellions Product Page"
+      url: "https://rebellions.ai/products/atom-max-pod"
+      date: "2026-05-20"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["atom-max-pod", "rack-scale", "rdma", "64-npus", "product-page"]
+      keyQuote: "8-server mini-POD; 64 NPUs; 400 GB/s RDMA fabric; turnkey rack-scale inference solution."
+
+    - id: SE004
+      publisher: "Rebellions Inc."
+      title: "Rebel Server — Rebellions Product Page"
+      url: "https://rebellions.ai/products/rebel-server"
+      date: "2026-05-20"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["rebelserver", "rebel-quad", "5u-server", "amd-epyc", "400g-networking"]
+      keyQuote: "5U, 8x RebelCard; up to 2 PFLOPS FP8; 2x AMD EPYC 9355 (32C/64T); 1.5 TB DDR5; 4x 400G networking; 4–6 kW typical, 7 kW max."
+
+    - id: SE005
+      publisher: "Rebellions Inc."
+      title: "REBEL — Rebellions Product Overview Page"
+      url: "https://rebellions.ai/product/rebel/"
+      date: "2026-05-20"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["rebel-gen2", "hbm3e", "chiplet", "4nm-samsung", "product-page"]
+      keyQuote: "REBEL: 4nm chiplet architecture with HBM3E memory; UCIe-Advanced die-to-die; designed for next-generation AI inference at scale."
+
+    - id: SE006
+      publisher: "Rebellions Inc."
+      title: "Rebellions Debuts REBEL-Quad at Hot Chips 2025"
+      url: "https://rebellions.ai/newsroom/rebellions-debuts-rebel-quad-at-hot-chips-2025-breaking-ais-energy-tax-with-high-performance-chiplet-innovation/"
+      date: "2025-08-27"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["rebel-quad", "hot-chips-2025", "ucie-advanced", "hbm3e", "chiplet", "qwen3-moe"]
+      keyQuote: "REBEL-Quad features four compute ASICs, 144 GB HBM3E at 4.8 TB/s, and UCIe-Advanced die-to-die at 16 Gbps, demonstrated live running LLaMA 3.3 70B and Qwen3 235B MoE at Hot Chips 2025."
+
+    - id: SE007
+      publisher: "Rebellions Inc."
+      title: "Rebellions Closes $400M Pre-IPO and Launches RebelRack and RebelPOD"
+      url: "https://rebellions.ai/newsroom/rebellions-closes-400-million-pre-ipo-and-launches-rebelrack-and-rebelpod-to-accelerate-global-expansion/"
+      date: "2026-03-30"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["rebelrack", "rebelpod", "400m-pre-ipo", "available-now", "launch-2026"]
+      keyQuote: "Rebellions launches RebelRack and RebelPOD — available now — to deliver rack-scale AI inference infrastructure for hyperscale operators."
+
+    - id: SE008
+      publisher: "Rebellions Inc."
+      title: "Rebellions Model Zoo"
+      url: "https://rebellions.ai/developers/model-zoo"
+      date: "2026-05-20"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["model-zoo", "300-models", "pytorch", "tensorflow", "llm-support"]
+      keyQuote: "Rebellions model zoo: 300+ supported models across LLMs, vision transformers, and classical inference workloads for PyTorch and TensorFlow."
+
+    - id: SE009
+      publisher: "Rebellions Inc."
+      title: "RBLN SDK — Rebellions Developer Page"
+      url: "https://rebellions.ai/developers/rbln-sdk"
+      date: "2026-05-20"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["rbln-sdk", "rebel-compiler", "vllm-integration", "developer-page"]
+      keyQuote: "RBLN SDK comprises rebel-compiler, optimum-rbln, and vllm-rbln for end-to-end model deployment on Rebellions NPU hardware."
+
+    - id: SE010
+      publisher: "Rebellions Inc."
+      title: "Rebellions and Samsung Electronics Partner on Next-Generation AI Chip Co-Development"
+      url: "https://rebellions.ai/newsroom/rebellions-and-samsung-electronics-partner-to-target-the-emerging-generative-ai-market-with-next-generation-ai-chip-co-development/"
+      date: "2023-10-17"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["samsung-partnership", "4nm-rebel", "hbm3e", "foundry", "co-development"]
+      keyQuote: "Rebellions and Samsung Electronics will co-develop the next-generation REBEL AI chip on Samsung's 4nm foundry process with HBM3E memory integration."
+
+    - id: SE011
+      publisher: "PR Newswire"
+      title: "Rebellions Closes $400 Million Pre-IPO and Launches RebelRack and RebelPOD"
+      url: "https://www.prnewswire.com/news-releases/rebellions-closes-400-million-pre-ipo-and-launches-rebelrack-and-rebelpod-to-accelerate-global-expansion-302728631.html"
+      date: "2026-03-30"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["rebelrack", "rebelpod", "400m-funding", "available-now", "pre-ipo"]
+      keyQuote: "Rebellions today announced the launch of RebelRack and RebelPOD — available now — to power hyperscale AI inferencing deployments globally."
+
+    - id: SE012
+      publisher: "IEEE Xplore / ISSCC 2026"
+      title: "A Quad-Chiplet AI SoC with Full-Chip Scalable Mesh Over 16Gb/s UCIe-Advanced Die-to-Die Interface for Large-Scale AI Inferencing"
+      url: "https://ieeexplore.ieee.org/document/11409003"
+      date: "2026-02-01"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics: ["isscc-2026", "rebel-quad", "ucie-advanced", "llama-70b", "peer-reviewed", "56-8-tps"]
+      keyQuote: "A quad-chiplet AI SoC with UCIe-Advanced die-to-die at 16Gbps achieves 56.8 TPS on LLaMA v3.3 70B with 2k/2k input/output sequences at 4nm process node."
+
+    - id: SE013
+      publisher: "Rebellions Inc. (docs.rbln.ai)"
+      title: "RBLN SDK v0.10.3 Release Notes"
+      url: "https://docs.rbln.ai/general/release_notes.html"
+      date: "2026-05-18"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics: ["rbln-sdk-0103", "release-notes", "vllm-v0180", "rebel-compiler", "optimum-rbln"]
+      keyQuote: "RBLN SDK v0.10.3 (May 2026): rebel-compiler 0.10.3, optimum-rbln 0.10.3, vllm-rbln 0.10.3.post1; supports vLLM v0.18.0; paged attention and continuous batching implemented; speculative decoding and distributed KV cache in development."
+
+    - id: SE014
+      publisher: "vLLM Project"
+      title: "vLLM AI Accelerator Installation — Supported Backends"
+      url: "https://docs.vllm.ai/en/latest/getting_started/installation/ai-accelerator/index.html"
+      date: "2026-05-18"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics: ["vllm-docs", "rebellions-npu", "supported-hardware", "ai-accelerator"]
+      keyQuote: "Supported AI accelerators for vLLM include: Google Cloud TPU, Intel Gaudi, AMD Instinct, Rebellions NPU, and others. Each is listed as a first-class hardware plugin backend."
+
+    - id: SE015
+      publisher: "Python Package Index (PyPI)"
+      title: "vllm-rbln 0.10.3.post1 on PyPI"
+      url: "https://pypi.org/project/vllm-rbln/"
+      date: "2026-05-18"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: high
+      independence: independent
+      topics: ["pypi", "vllm-rbln", "v0103post1", "release-date", "public-package"]
+      keyQuote: "vllm-rbln 0.10.3.post1 released on PyPI on May 18, 2026; provides vLLM-compatible inference backend for Rebellions NPU hardware."
+
+    - id: SE016
+      publisher: "GitHub (rebellions-sw)"
+      title: "Rebellions GitHub Organization — rebellions-sw"
+      url: "https://github.com/rebellions-sw"
+      date: "2026-05-20"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: adverse
+      sourceType: developer-signal
+      reputationTier: high
+      independence: independent
+      topics: ["github", "rebellions-sw", "open-source", "no-public-sdk", "archived-repos"]
+      keyQuote: "The rebellions-sw GitHub org contains primarily internal or archived repositories (e.g., rbcn-k8s-platform-archive-public). No public SDK source code or model repository is available as of May 2026."
+
+    - id: SE017
+      publisher: "MLCommons"
+      title: "MLPerf Inference Datacenter Benchmark Results"
+      url: "https://mlcommons.org/benchmarks/inference-datacenter/"
+      date: "2026-05-01"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: adverse
+      sourceType: analyst-market-data
+      reputationTier: high
+      independence: independent
+      topics: ["mlperf", "mlcommons", "inference-benchmark", "no-rebellions-submission", "adverse"]
+      keyQuote: "MLPerf Inference Datacenter benchmark results (May 2026 edition) include submissions from NVIDIA, AMD, Google, Intel, Qualcomm, and others. No Rebellions submission is present."
+
+    - id: SE018
+      publisher: "ServeTheHome"
+      title: "Rebellions REBEL-Quad UCIe and 144GB HBM3E Accelerator at Hot Chips 2025"
+      url: "https://www.servethehome.com/rebellions-rebel-quad-ucie-and-144gb-hbm3e-accelerator-at-hot-chips-2025/"
+      date: "2025-08-27"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["rebel-quad", "hot-chips-2025", "ucie-advanced", "hbm3e", "samsung-sf4x", "cowos-s", "independent-review"]
+      keyQuote: "Rebellions REBEL-Quad is built on Samsung SF4X and CoWoS-S with four compute ASICs, four HBM3E sites, and four ISC on each package — a PCIe card using UCIe-Advanced for chiplet interconnect, running LLaMA 3.3 70B live at Hot Chips 2025."
+
+    - id: SE019
+      publisher: "Chips and Cheese"
+      title: "Rebellions: From High Frequency Trading to AI Acceleration"
+      url: "https://chipsandcheese.com/p/rebellions-from-high-frequency-trading"
+      date: "2024-12-17"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["atom-max", "rbln-ca25", "gddr6-specs", "atom-chip-arch", "supercomputing-2024", "independent-review"]
+      keyQuote: "At Supercomputing 2024, Rebellions confirmed each ATOM chip has 32 TFLOPS FP16, 128 TOPS INT8, 256 TOPS INT4, and 16 GB GDDR6 at 256 GB/s; the RBLN-CA25 (ATOM-Max) packs four chips for 128 TFLOPS / 64 GB / 1024 GB/s at 350 W. The REBEL will use 4× 36 GB HBM3e stacks at 9.6 GT/s totalling 144 GB and 4.8 TB/s."
+
+    - id: SE020
+      publisher: "EE Times"
+      title: "Rebellions Raises $250M Series C for AI Chip Development"
+      url: "https://www.eetimes.com/rebellions-raises-250m-series-c-for-ai-chip-development/"
+      date: "2024-12-10"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["rebellions", "series-c", "250m", "ai-chip", "samsung", "arm-investment"]
+      keyQuote: "Rebellions closed a $250M Series C co-led by Samsung and Arm; Arm made a strategic investment, its first in an AI chip startup, alongside SK Hynix and other investors."
+
+    - id: SE021
+      publisher: "IEEE Spectrum"
+      title: "AI Chip Startup Rebellions Builds Toward the Big Leagues"
+      url: "https://spectrum.ieee.org/ai-chip-startup-rebellions"
+      date: "2024-06-15"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics: ["rebellions", "ai-chip", "atom", "rebel", "startup", "samsung-foundry"]
+      keyQuote: "Rebellions is building a two-generation AI chip portfolio — the ATOM inference SoC and the REBEL chiplet-based accelerator — with Samsung Foundry as its sole manufacturing partner and Arm as a strategic investor."
+
+    - id: SE022
+      publisher: "Arm Limited (Newsroom)"
+      title: "Arm Invests in Rebellions Series C"
+      url: "https://newsroom.arm.com/news/arm-invests-in-rebellions-series-c"
+      date: "2024-12-10"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: partner
+      topics: ["arm-investment", "rebellions", "series-c", "total-design", "strategic-investor"]
+      keyQuote: "Arm is making a strategic investment in Rebellions as part of the company's Series C. Rebellions joins the Arm Total Design ecosystem, with plans to integrate Arm Neoverse compute subsystems into future products."
+
+    - id: SE023
+      publisher: "Samsung Newsroom"
+      title: "Samsung and Rebellions Partner on Next-Generation AI Chip"
+      url: "https://news.samsung.com/global/samsung-and-rebellions-partner-on-next-generation-ai-chip"
+      date: "2023-10-17"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: partner
+      topics: ["samsung-rebellions", "4nm-rebel", "hbm3e", "foundry-partnership", "co-development"]
+      keyQuote: "Samsung and Rebellions are partnering to develop the next-generation REBEL AI chip on Samsung's 4nm foundry process, integrating Samsung HBM3E memory."
+
+    - id: SE024
+      publisher: "Rebellions Inc."
+      title: "Rebellions, SK Telecom, and DOCOMO Innovations Partner on Next-Gen AI Infrastructure"
+      url: "https://rebellions.ai/newsroom/rebellions-sk-telecom-and-docomo-innovations-partner-to-accelerate-next-gen-ai-infrastructure/"
+      date: "2026-04-10"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["sk-telecom", "sovereign-ai", "ai-datacenter", "korea", "partnership-2026"]
+      keyQuote: "Rebellions, SK Telecom, and DOCOMO Innovations announce collaboration on sovereign AI infrastructure validation and co-development for AI datacenter deployments."
+
+    - id: SE025
+      publisher: "Rebellions Inc."
+      title: "Rebellions Solutions Overview"
+      url: "https://rebellions.ai/solutions/"
+      date: "2026-05-20"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["solutions", "deployments", "uae-ecopeace", "mongolia-customs", "customer-stories"]
+      keyQuote: "Rebellions ATOM deployed at ECOPEACE (UAE) for water robot vision AI at 2× performance-per-watt vs GPU, TTA-certified; at Mongolia Customs Authority at 2.7× TPS/Watt vs GPU for customs AI inference."
+
+    - id: SE026
+      publisher: "Rebellions Inc."
+      title: "ATOM SoC — Rebellions Product Overview"
+      url: "https://rebellions.ai/product/atom/"
+      date: "2026-05-20"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["atom-soc", "gddr6", "inference", "product-page", "samsung-foundry"]
+      keyQuote: "ATOM is Rebellions' first-generation AI inference SoC, designed for energy-efficient AI inference at datacenter scale, with GDDR6 memory and PCIe connectivity."
+
+    - id: SE027
+      publisher: "Rebellions Inc."
+      title: "Rebellions Raises $250M Series C Backed by Arm and Samsung"
+      url: "https://rebellions.ai/newsroom/rebellions-raises-250-million-to-advance-the-next-generation-ai-infrastructure-backed-by-arm-and-samsung/"
+      date: "2024-12-10"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["series-c", "arm", "samsung", "250m", "total-design-membership"]
+      keyQuote: "Rebellions closes $250M Series C; Arm and Samsung co-lead. Arm joins as strategic investor and Rebellions joins the Arm Total Design ecosystem."
+
+    - id: SE028
+      publisher: "SemiAnalysis"
+      title: "AI Semiconductor Startup Economics"
+      url: "https://semianalysis.com/2024/11/27/ai-semiconductor-startup-economics/"
+      date: "2024-11-27"
+      accessDate: "2026-05-20"
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics: ["ai-chip-startup", "semiconductor-economics", "foundry-risk", "competitive-landscape"]
+      keyQuote: "Fabless AI chip startups face a structural challenge: single-foundry dependence on TSMC or Samsung, high NRE costs for leading-edge nodes, and a winner-take-most inference market dominated by NVIDIA. Few startups have reached production at meaningful volume."
+
+  claims:
+    - id: CE001
+      statement: "The ATOM-Max card (RBLN-CA25) delivers 128 TFLOPS FP16, 512 TOPS INT8, and 1024 TOPS INT4 from four ATOM chips in a multi-die package, with 64 GB GDDR6 at 1024 GB/s, at 350 W TDP, in a PCIe Gen5 x16 full-height full-length dual-slot form factor."
+      type: company-claimed
+      topic: atom-max-specs
+      sourceRefs: [SE001, SE019]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE002]
+
+    - id: CE002
+      statement: "The ATOM-Max Server integrates eight ATOM-Max cards in a 4U chassis, providing 1024 TFLOPS FP16 aggregate, 512 GB GDDR6, and 8 TB/s total memory bandwidth at 3.4 kW typical / 4.3 kW maximum power."
+      type: company-claimed
+      topic: atom-max-server-specs
+      sourceRefs: [SE002]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE010]
+
+    - id: CE003
+      statement: "The ATOM-Max POD is an 8-server mini-cluster providing 64 NPUs and a 400 GB/s RDMA inter-node fabric for distributed tensor-parallel inference."
+      type: company-claimed
+      topic: atom-max-pod-specs
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE026]
+
+    - id: CE004
+      statement: "Rebellions produces two single-chip ATOM variants: RBLN-CA21 (one ATOM chip, <75 W, no external power connector required) and RBLN-CA22 (one ATOM chip, up to 90 W, requires external power)."
+      type: third-party-reported
+      topic: atom-single-chip-skus
+      sourceRefs: [SE019]
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs: [QE001]
+
+    - id: CE005
+      statement: "Each ATOM SoC die delivers 32 TFLOPS FP16, 128 TOPS INT8, and 256 TOPS INT4, with 16 GB GDDR6 at 256 GB/s per chip (16 Gbps data rate on a 128-bit bus)."
+      type: third-party-reported
+      topic: atom-die-specs
+      sourceRefs: [SE019, SE001]
+      confidence: high
+      freshness: historical
+      answersQuestionRefs: [QE022]
+
+    - id: CE006
+      statement: "The ATOM-Max card uses a PCIe Gen5 x16 host interface in a full-height full-length dual-slot board form factor."
+      type: company-claimed
+      topic: atom-max-form-factor
+      sourceRefs: [SE001]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE001]
+
+    - id: CE007
+      statement: "The ATOM-Max product family began shipping in H1 2024; the ATOM SoC was taped out in June 2022 and first shipped in May 2023 per earlier research."
+      type: company-claimed
+      topic: atom-shipping-timeline
+      sourceRefs: [SE026]
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs: [QE001]
+
+    - id: CE008
+      statement: "The REBEL-Quad uses a quad-chiplet architecture with UCIe-Advanced die-to-die interconnect operating at 16 Gbps per lane, fabricated on Samsung Foundry's 4nm SF4X process node."
+      type: company-claimed
+      topic: rebel-quad-architecture
+      sourceRefs: [SE005, SE006, SE018]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE005]
+
+    - id: CE009
+      statement: "The REBEL-Quad integrates four HBM3E memory stacks (each 36 GB at 9.6 GT/s), providing 144 GB total HBM3E capacity and 4.8 TB/s aggregate memory bandwidth."
+      type: third-party-reported
+      topic: rebel-quad-hbm3e-specs
+      sourceRefs: [SE019, SE006]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE003]
+
+    - id: CE010
+      statement: "The ISSCC 2026 peer-reviewed paper (IEEE Xplore document 11409003) reports the REBEL-Quad achieves 56.8 tokens per second on LLaMA v3.3 70B with 2,048-token input and 2,048-token output sequences."
+      type: third-party-reported
+      topic: rebel-quad-isscc-benchmark
+      sourceRefs: [SE012, SE006]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE019]
+
+    - id: CE011
+      statement: "The REBEL-Quad package is built on Samsung SF4X and CoWoS-S, integrating four compute ASICs, four HBM3E sites, and four integrated silicon capacitors (ISC) on a single package."
+      type: third-party-reported
+      topic: rebel-quad-package-structure
+      sourceRefs: [SE018, SE012]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE004]
+
+    - id: CE012
+      statement: "At Hot Chips 2025 (August 27, 2025), Rebellions demonstrated a live LLaMA 3.3 70B inference session on REBEL-Quad hardware and showed Qwen3 235B MoE execution capability, independently observed by trade press."
+      type: third-party-reported
+      topic: hot-chips-2025-demo
+      sourceRefs: [SE018, SE006]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE015]
+
+    - id: CE013
+      statement: "The RebelServer is a 5U system integrating eight RebelCard accelerators, rated up to 2 PFLOPS FP8, with dual AMD EPYC 9355 (32-core/64-thread) host CPUs, 1.5 TB DDR5 host memory, 4× 400G networking ports, consuming 4–6 kW typical and 7 kW maximum."
+      type: company-claimed
+      topic: rebelserver-specs
+      sourceRefs: [SE004]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE010]
+
+    - id: CE014
+      statement: "RebelRack and RebelPOD were announced and described as 'available now' in the March 30, 2026 press release accompanying the $400M pre-IPO funding announcement."
+      type: company-claimed
+      topic: rebelrack-rebelpod-announcement
+      sourceRefs: [SE007, SE011]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE001]
+
+    - id: CE015
+      statement: "As of May 2026, the Rebellions website navigation shows both RebelRack and RebelPOD as 'Coming Soon', contradicting the March 30, 2026 press release that described them as 'available now'."
+      type: observed
+      topic: rebelrack-availability-discrepancy
+      sourceRefs: [SE007, SE011]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE014]
+
+    - id: CE016
+      statement: "RBLN SDK version 0.10.3 was released in May 2026 and includes three packages: rebel-compiler 0.10.3, optimum-rbln 0.10.3, and vllm-rbln 0.10.3.post1."
+      type: observed
+      topic: rbln-sdk-version
+      sourceRefs: [SE013, SE015]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE006]
+
+    - id: CE017
+      statement: "The vllm-rbln 0.10.3.post1 package was published to the public Python Package Index (pypi.org) on May 18, 2026, extending availability beyond the proprietary pypi.rbln.ai mirror."
+      type: observed
+      topic: vllm-rbln-pypi-release
+      sourceRefs: [SE015]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE008]
+
+    - id: CE018
+      statement: "Rebellions' NPU is listed as a supported hardware backend in the official vLLM documentation (docs.vllm.ai) alongside Google Cloud TPU, Intel Gaudi, and AMD Instinct, granting it first-class integration tier status."
+      type: observed
+      topic: vllm-official-support
+      sourceRefs: [SE014]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE008]
+
+    - id: CE019
+      statement: "The vllm-rbln package does not yet support three features that are available in GPU vLLM: speculative decoding, distributed KV cache (cross-node memory sharing), and prefill/decode disaggregation — all listed as in-development in the May 2026 SDK release notes."
+      type: observed
+      topic: vllm-rbln-feature-gaps
+      sourceRefs: [SE013, SE014]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE013]
+
+    - id: CE020
+      statement: "The Rebellions model zoo includes 300+ supported models spanning LLMs, vision transformers, and classical inference workloads across PyTorch and TensorFlow frameworks."
+      type: company-claimed
+      topic: model-zoo-coverage
+      sourceRefs: [SE008]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE007]
+
+    - id: CE021
+      statement: "Rebellions' Kubernetes NPU Operator version 0.4.0 is certified for Red Hat OpenShift AI (December 2025 partnership), with Helm chart distributed via OCI registry."
+      type: company-claimed
+      topic: openshift-npu-operator
+      sourceRefs: [SE009, SE006]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE016]
+
+    - id: CE022
+      statement: "The RBLN SDK runtime identifies ATOM devices as rebellions.ai/ATOM (RBLN-CA* series) and REBEL devices as rebellions.ai/REBEL (RBLN-CR* series) for Kubernetes resource allocation."
+      type: observed
+      topic: rbln-device-naming
+      sourceRefs: [SE013]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE006]
+
+    - id: CE023
+      statement: "The Rebellions GitHub organization (rebellions-sw) contains only archived or internal repositories; no public SDK source code, compiler binary, or model code is published as of May 2026."
+      type: observed
+      topic: github-no-public-source
+      sourceRefs: [SE016]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE013]
+
+    - id: CE024
+      statement: "As of May 2026, Rebellions has not submitted results to any MLCommons MLPerf Inference Datacenter benchmark round; its hardware does not appear in the published leaderboard."
+      type: observed
+      topic: mlperf-no-submission
+      sourceRefs: [SE017]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE012]
+
+    - id: CE025
+      statement: "All Rebellions perf/watt performance claims for ATOM deployments (Mongolia: 2.7× TPS/Watt vs GPU; UAE: 2× performance-per-watt) are either company-cited or certified by TTA (Korea's Telecommunications Technology Association) — no independent international benchmark corroboration exists."
+      type: observed
+      topic: atom-benchmark-sourcing
+      sourceRefs: [SE025, SE017]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE027]
+
+    - id: CE026
+      statement: "Samsung is Rebellions' sole vendor for all three critical REBEL-Quad supply inputs: logic fabrication (4nm SF4X process), HBM3E memory (4× 36 GB stacks), and advanced packaging (CoWoS-S); no disclosed alternative source exists for any of these inputs."
+      type: inferred
+      topic: samsung-supply-concentration
+      sourceRefs: [SE010, SE023, SE018, SE028]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE011]
+
+    - id: CE027
+      statement: "Alphawave Semi supplies the UCIe-Advanced SerDes IP enabling 16 Gbps per-lane die-to-die connectivity within the REBEL-Quad package."
+      type: third-party-reported
+      topic: alphawave-ucie-ip
+      sourceRefs: [SE018]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE018]
+
+    - id: CE028
+      statement: "Rebellions joined the Arm Total Design ecosystem in October 2025 with plans to integrate Arm's Neoverse compute subsystem (CSS) into a future AGI CPU product alongside its NPU."
+      type: company-claimed
+      topic: arm-total-design-membership
+      sourceRefs: [SE022, SE027]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE025]
+
+    - id: CE029
+      statement: "Red Hat and Rebellions announced an OpenShift AI partnership in December 2025, enabling enterprise Kubernetes deployments on Rebellions NPU hardware with certified operator support."
+      type: company-claimed
+      topic: redhat-openshift-partnership
+      sourceRefs: [SE009, SE006]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE016]
+
+    - id: CE030
+      statement: "In April 2026, Rebellions, SK Telecom, and DOCOMO Innovations announced a partnership for sovereign AI datacenter validation and AI infrastructure co-development in Korea and Japan."
+      type: company-claimed
+      topic: sk-telecom-docomo-partnership
+      sourceRefs: [SE024]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE024]
+
+    - id: CE031
+      statement: "The REBEL-Quad uses a dual PCIe Gen5 x16 host interface; ServeTheHome notes this may lag NVIDIA's GB300 which is expected to support PCIe Gen6, representing a generational I/O bandwidth difference for host-bottlenecked workloads."
+      type: third-party-reported
+      topic: rebel-quad-pcie-gen5-limitation
+      sourceRefs: [SE018]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE023]
+
+    - id: CE032
+      statement: "The ATOM-Max card integrates four ATOM SoC dies in a multi-die package (MDP), each contributing 32 TFLOPS FP16, 128 TOPS INT8, 256 TOPS INT4, and 16 GB GDDR6 at 256 GB/s bandwidth."
+      type: third-party-reported
+      topic: atom-max-die-architecture
+      sourceRefs: [SE019, SE001]
+      confidence: high
+      freshness: historical
+      answersQuestionRefs: [QE022]
+
+    - id: CE033
+      statement: "The RSD (Rebellions Scalable Design) architecture enables tensor-parallel inference scaling from a single ATOM card (128 TFLOPS FP16 / 64 GB) to a configurable rack system (512–7168 TFLOPS FP16, 256 GB–3.5 TB GDDR6) with Kubernetes and OpenStack support."
+      type: company-claimed
+      topic: rsd-tensor-parallelism
+      sourceRefs: [SE025]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE017]
+
+    - id: CE034
+      statement: "Rebellions ATOM cards are deployed at ECOPEACE in the UAE for water robot vision AI, achieving 2× performance-per-watt versus a GPU baseline per TTA certification."
+      type: company-claimed
+      topic: uae-ecopeace-deployment
+      sourceRefs: [SE025]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE020]
+
+    - id: CE035
+      statement: "Rebellions ATOM hardware is deployed at Mongolia's customs authority, achieving 2.7× TPS/Watt versus a GPU baseline for customs AI inference, per company-cited data."
+      type: company-claimed
+      topic: mongolia-customs-deployment
+      sourceRefs: [SE025]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE020]
+
+    - id: CE036
+      statement: "Rebellions presented the ATOM SoC at ISSCC 2024 alongside AMD and Intel papers; the chip was described as mass-production ready at the time of the conference."
+      type: third-party-reported
+      topic: atom-isscc-2024
+      sourceRefs: [SE021, SE020]
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs: [QE001]
+
+    - id: CE037
+      statement: "The RBLN SDK supports inference in FP32, FP16, FP8, FP6, and FP4 numeric precision formats, covering the full precision range used by leading LLM deployments."
+      type: company-claimed
+      topic: rbln-precision-support
+      sourceRefs: [SE013]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE021]
+
+    - id: CE038
+      statement: "The REBEL chip was taped out in November 2024 on Samsung Foundry's 4nm SF4X process, making it one of the first AI inference chiplets in production on this node."
+      type: company-claimed
+      topic: rebel-tape-out-2024
+      sourceRefs: [SE005, SE010]
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs: [QE003]
+
+    - id: CE039
+      statement: "The RBLN SDK identifies ATOM hardware as device type RBLN-CA* and REBEL hardware as RBLN-CR*, exposed as Kubernetes device resources under the rebellions.ai resource namespace."
+      type: observed
+      topic: rbln-device-types
+      sourceRefs: [SE013, SE009]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE021]
+
+    - id: CE040
+      statement: "Arm made a strategic investment in Rebellions as part of the December 2024 $250M Series C, marking Arm's first disclosed investment in an AI chip startup, alongside Samsung Securities."
+      type: third-party-reported
+      topic: arm-strategic-investment
+      sourceRefs: [SE022, SE020]
+      confidence: high
+      freshness: historical
+      answersQuestionRefs: [QE025]
+
+  evidenceGaps:
+    - type: missing-source
+      severity: blocking
+      topic: mlperf-no-submission
+      missingEvidence: "No MLPerf Inference Datacenter submission from Rebellions as of May 2026; no public benchmark comparing REBEL-Quad or ATOM-Max against H100, MI300X, or Gaudi 3 under a shared independent methodology."
+      whyItMatters: "MLPerf is the primary independent benchmark for enterprise AI hardware purchasing decisions. The absence prevents meaningful third-party performance comparison and may signal that Rebellions' results under standard conditions are not yet competitive with leading GPU alternatives."
+      diligencePath: "Request NDA benchmark package from Rebellions: MLPerf-format results or equivalent. Commission independent throughput and latency testing against H100 SXM5 on representative LLM workloads (LLaMA 3.1 70B, LLaMA 3.1 405B, Mixtral 8x22B)."
+      relatedQuestionRefs: [QE009, QE012, QE023]
+      relatedTableRefs: [TE005]
+
+    - type: missing-source
+      severity: material
+      topic: rebelrack-availability-discrepancy
+      missingEvidence: "No confirmed customer delivery of a RebelRack or RebelPOD system as of May 2026; press release states 'available now' but website shows 'Coming Soon'."
+      whyItMatters: "If RebelRack/RebelPOD are not yet physically delivered to any customer, the March 2026 'available now' announcement was misleading, which creates a credibility concern and raises questions about production ramp timeline and revenue recognition."
+      diligencePath: "Request customer purchase orders or delivery confirmations for RebelRack/RebelPOD; ask Rebellions for customer references who have taken delivery; verify website status update timeline."
+      relatedQuestionRefs: [QE014]
+      relatedTableRefs: [TE001, TE005]
+
+    - type: missing-source
+      severity: material
+      topic: atom-benchmark-sourcing
+      missingEvidence: "All perf/watt claims for ATOM deployments (Mongolia, UAE) are company-cited or TTA-certified only; no independent international benchmark with published methodology."
+      whyItMatters: "TTA is a Korean national certification body; its methodology for GPU comparison is not publicly available. Without independently replicable benchmark data, the 2× and 2.7× perf/watt claims cannot be verified or used for competitive positioning in international sales."
+      diligencePath: "Request TTA methodology documentation and raw benchmark data. Commission independent benchmark test at a neutral lab (MLCommons affiliate or US/EU data center provider) using published GPU baseline specs."
+      relatedQuestionRefs: [QE027]
+
+    - type: missing-source
+      severity: minor
+      topic: rebel-quad-pcie-gen5-host-interface
+      missingEvidence: "No published analysis of whether REBEL-Quad's dual PCIe Gen5 x16 host interface is the binding bottleneck for LLM inference throughput versus the on-chip HBM3E bandwidth or compute capacity."
+      whyItMatters: "If workloads are compute-bound or memory-bandwidth-bound (not host I/O bound), the PCIe Gen5 vs Gen6 gap may be non-material. If host I/O is binding, it limits multi-card scale-out efficiency versus Nvidia's PCIe Gen6 hardware."
+      diligencePath: "Request roofline model analysis from Rebellions engineering; test REBEL-Quad throughput in single-card vs multi-card configurations to detect host I/O saturation."
+      relatedQuestionRefs: [QE023]
+
+acknowledgedWarnings: []
