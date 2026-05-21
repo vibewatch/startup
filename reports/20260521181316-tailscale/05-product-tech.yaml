@@ -1,0 +1,2957 @@
+{
+  "schemaVersion": "report-v2",
+  "artifact": "product-tech",
+  "slug": "tailscale",
+  "runDate": "2026-05-21",
+  "company": {
+    "name": "Tailscale"
+  },
+  "chapter": {
+    "number": 5,
+    "title": "Product & Technology",
+    "summary": "Tailscale's core product is an identity-first mesh connectivity platform built on WireGuard, a managed coordination plane, and relay fallbacks that keep most traffic off the vendor cloud data path. By 2026-05-21 the surface extends well beyond a business VPN into SSH, Kubernetes, subnet routing, exit nodes, Serve/Funnel, posture, logging, AI-governance tooling, and a PAM expansion path through Border0, but the tradeoff is clear: Tailscale is strongest at secure connectivity and lightweight policy, not at full inline inspection, and several newer modules still carry pre-GA or integration risk."
+  },
+  "sections": [
+    {
+      "id": "product-definition-and-customer-jobs",
+      "title": "Product definition and the customer jobs Tailscale actually serves",
+      "body": "Tailscale's public product surface starts from a simpler promise than most legacy VPN or SSE stacks: connect the right user, device, or workload to the right resource with identity and encryption first, then add routing or governance features only where needed. The docs define the core unit as a tailnet, a private network of users, devices, and resources, and the product page stretches that same model across remote workforce access, multi-cloud and on-prem infrastructure, CI/CD runners, edge devices, and AI workloads. That framing matters because it explains why Tailscale can look like several products at once. In one deployment it is a direct replacement for a centralized remote-access VPN; in another it is secure SSH and Kubernetes access; in another it is a private service-sharing layer or a gateway for AI model access. The current commercial packaging reinforces that breadth: the pricing page now treats peer connectivity, subnet routers, exit nodes, SSH, Kubernetes, Funnel, device posture, logging, and Aperture as parts of one platform rather than disconnected add-ons. The bullish read is that the company keeps expanding the number of jobs it can solve without abandoning the same identity-first networking core. The more skeptical read is that it is still fundamentally a connectivity platform, so buyers wanting full inline traffic inspection, DLP, or browser-isolation controls still need complementary tooling.",
+      "claimRefs": [
+        "CE001",
+        "CE002",
+        "CE006",
+        "CE007",
+        "CE011",
+        "CE019",
+        "CE021",
+        "CE023",
+        "CE024",
+        "CE025",
+        "CE051",
+        "CE052"
+      ],
+      "tableRefs": [
+        "TE001",
+        "TE002"
+      ],
+      "figureRefs": [
+        "FE002"
+      ]
+    },
+    {
+      "id": "how-the-network-actually-works",
+      "title": "How the network actually works: WireGuard, coordination, NAT traversal, DERP, and policy",
+      "body": "The technical core is a split between a cryptographic data plane and a managed coordination plane. Tailscale says device-to-device traffic is encrypted with WireGuard, while its coordination service exchanges public keys, peer information, and DERP maps so nodes can find each other. The product therefore tries to make a direct path first: devices authenticate, receive policy and peer metadata, attempt NAT traversal, and then talk point to point whenever the network allows it. DERP exists for the hard cases. The DERP docs are unusually explicit that relay servers mainly help negotiate connections and only carry encrypted WireGuard packets when direct paths and peer relays are unavailable. That architecture is the core reason Tailscale differentiates itself from traditional centralized VPNs: most user-plane traffic is not hairpinned through a vendor choke point, so latency and throughput can be better and there are fewer always-on bottlenecks. The control plane still matters, however. Tailscale documents that existing point-to-point connectivity can survive a coordination outage, but administrative changes, fresh peer discovery, and some relay optimizations still depend on control-plane correctness. Policy is similarly centralized even though traffic is usually not. The tailnet policy file holds ACLs, grants, device posture rules, SSH rules, auto-approvers, tags, and DERP-map customization, which makes access control auditable and programmable but also means policy mistakes or overly broad grants can have real blast radius.",
+      "claimRefs": [
+        "CE003",
+        "CE004",
+        "CE005",
+        "CE008",
+        "CE009",
+        "CE010",
+        "CE030",
+        "CE031",
+        "CE032",
+        "CE033",
+        "CE034",
+        "CE035",
+        "CE052",
+        "CE053"
+      ],
+      "tableRefs": [
+        "TE003"
+      ],
+      "figureRefs": [
+        "FE001",
+        "FE003"
+      ]
+    },
+    {
+      "id": "module-surface-and-platform-expansion",
+      "title": "Module surface and platform expansion beyond the original business-VPN wedge",
+      "body": "The module map shows a company steadily moving up-stack from secure connectivity into adjacent control surfaces. Tailscale SSH is the cleanest example: instead of distributing and revoking SSH keys manually, admins can rely on tailnet identity, check-mode reauthentication, and recording policies, with Tailscale intercepting tailnet-originated SSH on port 22. The Kubernetes Operator broadens the platform further by turning Tailscale identity into private Kubernetes API access, internal application publishing, and in-cluster connector resources for subnet routers, exit nodes, app connectors, and SSH recorder nodes. Subnet routers and exit nodes handle the classic bridge use cases that pure mesh networking cannot: extending access to unmanaged networks and forcing all traffic through a selected egress point when a workflow still needs full-tunnel behavior. Serve and Funnel then expose the application-sharing layer, with Serve staying private to the tailnet and Funnel using public relay infrastructure for internet-facing exposure. Device posture, flow logs, config audit logs, and Tailnet Lock add the controls enterprises expect around who can connect and how changes are traced. The 2026 expansion path is even broader. Aperture tries to make Tailscale the identity and control gateway for AI usage, while Border0 gives the company a route into more protocol-aware privileged access management. The opportunity is obvious: reuse the same identity and connectivity foundation across more security jobs. The risk is also obvious: the further Tailscale stretches away from connectivity and into AI governance or PAM, the more buyers will judge it against deeper incumbent suites rather than against legacy VPNs alone.",
+      "claimRefs": [
+        "CE012",
+        "CE013",
+        "CE014",
+        "CE015",
+        "CE016",
+        "CE017",
+        "CE018",
+        "CE020",
+        "CE021",
+        "CE022",
+        "CE026",
+        "CE027",
+        "CE028",
+        "CE036",
+        "CE037",
+        "CE038",
+        "CE039",
+        "CE040",
+        "CE041",
+        "CE042",
+        "CE043",
+        "CE054"
+      ],
+      "tableRefs": [
+        "TE005"
+      ],
+      "figureRefs": [
+        "FE004"
+      ]
+    },
+    {
+      "id": "trust-operations-and-technical-risks",
+      "title": "Trust model, operational maturity, and the technical risks a buyer still has to own",
+      "body": "Tailscale's trust story is materially better than a pure marketing surface, but it is not risk-free. The security page and logging docs are strong on first principles: end-to-end WireGuard encryption, private keys staying on nodes, Tailnet Lock to reduce trust in the coordination service, public security policies, SOC 2 Type II, flow logs that exclude traffic contents, and configuration audit logs that are on by default. That is a real control posture. So is the company's willingness to publish detailed bulletins and a clear incident-disclosure policy. But the 2026 advisories also clarify where the product can fail. TS-2026-002 involved the local web interface and could let an authorized-but-underprivileged peer clear exit-node or subnet-route settings; TS-2026-001 affected the macOS AlwaysOn MDM helper service and allowed elevated command execution in a narrow deployment slice. Older records such as the FreeBSD Tailscale SSH privilege bug show that platform-specific edge cases do happen. Reliability has a similar duality. Tailscale's point-to-point design reduces dependence on a central traffic hub, and DERP regions fail over, yet hard-NAT scenarios still rely on relay infrastructure and operational status pages still exist because managed coordination and relay systems can fail. The biggest strategic tradeoff is functional breadth. Because Tailscale usually does not decrypt or inspect traffic, it preserves privacy and performance, but it is not a full substitute for the inspection-heavy controls many large SSE or SASE programs buy. The product is strongest when the job is secure reachability plus identity-aware policy; it is weaker when the job is centralized content inspection, deep inline governance, or fully mature PAM workflows without any roadmap caveats.",
+      "claimRefs": [
+        "CE027",
+        "CE029",
+        "CE030",
+        "CE032",
+        "CE034",
+        "CE046",
+        "CE047",
+        "CE048",
+        "CE049",
+        "CE050",
+        "CE051",
+        "CE052",
+        "CE055"
+      ],
+      "tableRefs": [
+        "TE004"
+      ],
+      "figureRefs": []
+    }
+  ],
+  "tables": [
+    {
+      "id": "TE001",
+      "title": "Product module / asset matrix",
+      "columns": [
+        "Module",
+        "Primary user / job",
+        "Status / maturity",
+        "Technical foundation",
+        "Differentiation",
+        "Limitation / diligence gap"
+      ],
+      "rows": [
+        [
+          "Core tailnet connectivity",
+          "IT, security, DevOps, developers",
+          "GA / mature",
+          "WireGuard mesh, coordination service, NAT traversal, DERP fallback",
+          "Usually keeps the user data plane off the vendor cloud and works across heterogeneous networks",
+          "Tailscale does not publish a public direct-vs-relay traffic mix"
+        ],
+        [
+          "Tailnet policy, ACLs, and grants",
+          "Network and security admins",
+          "GA; grants are the forward path",
+          "HuJSON policy file with groups, tags, IP sets, postures, auto-approvers, tests",
+          "Centralized deny-by-default policy can cover network and app layers",
+          "Still not a replacement for full inline SWG/CASB/DLP controls"
+        ],
+        [
+          "Tailscale SSH",
+          "Infra and platform teams",
+          "GA",
+          "Port-22 interception, node keys, check mode, session recording",
+          "Removes most SSH key-distribution toil while staying identity-based",
+          "Platform limits and prior SSH-specific vulnerabilities mean buyers still need patch discipline"
+        ],
+        [
+          "Kubernetes Operator",
+          "Platform engineering",
+          "GA",
+          "API proxy, ingress/egress proxies, Connector CRD, S3-compatible session recording",
+          "Private Kubernetes access without public API exposure or separate cluster credentials",
+          "HA expansion is still a work in progress for some proxy modes"
+        ],
+        [
+          "Subnet routers",
+          "IT and network operations",
+          "GA",
+          "Route advertisement, approval workflows, default SNAT, HA patterns",
+          "Brings unmanaged devices and whole VPCs/LANs behind the same identity model",
+          "Gateway management and route hygiene add complexity versus direct clients"
+        ],
+        [
+          "Exit nodes",
+          "Remote workforce and security teams",
+          "GA",
+          "Default-route advertisement, client opt-in, approval flow, destination logging on higher tiers",
+          "Lets Tailscale satisfy classic full-tunnel VPN and geo-egress jobs",
+          "Adds egress latency and moves traffic onto customer-managed relay devices"
+        ],
+        [
+          "Serve / Funnel",
+          "Developers and platform teams",
+          "Serve mature; Funnel still beta in docs",
+          "HTTPS cert automation, identity headers, public relay and TCP proxy for Funnel",
+          "Fast private or public sharing built on the same tailnet identity layer",
+          "Public exposure still requires port, bandwidth, and lifecycle discipline"
+        ],
+        [
+          "Device posture + logging",
+          "Security and compliance teams",
+          "GA, with richer paid-tier entitlements",
+          "Posture attributes, flow logs, audit logs, SIEM streaming",
+          "Brings continuous verification and auditability into connectivity decisions",
+          "Advanced posture signals and destination logging are plan-gated"
+        ],
+        [
+          "Aperture AI governance",
+          "Platform, security, and AI teams",
+          "Pre-GA / experimental",
+          "Identity-authenticated gateway, centralized provider credentials, hooks/guardrails",
+          "Moves API keys out of laptops, CI, and agent runtimes into a controllable gateway",
+          "Docs and launch posts still position the product as pre-GA rather than production-proven"
+        ],
+        [
+          "Border0-backed PAM expansion",
+          "Infra and security teams",
+          "Integration stage",
+          "Protocol-aware controls, session visibility, approvals, recording, DB/K8s/RDP/VNC workflows",
+          "Expands Tailscale from network-layer reachability toward application-layer privileged access",
+          "Official messaging still frames deeper native integration as roadmap, not completed product"
+        ]
+      ],
+      "notes": "Status reflects public evidence as of 2026-05-21; 'pre-GA' and 'integration stage' are used where Tailscale's own surfaces stop short of full GA claims.",
+      "claimRefs": [
+        "CE001",
+        "CE010",
+        "CE012",
+        "CE014",
+        "CE015",
+        "CE016",
+        "CE017",
+        "CE019",
+        "CE021",
+        "CE022",
+        "CE025",
+        "CE026",
+        "CE027",
+        "CE036",
+        "CE037",
+        "CE039",
+        "CE042"
+      ]
+    },
+    {
+      "id": "TE002",
+      "title": "Workflow / use-case table",
+      "columns": [
+        "User job",
+        "Legacy / current workflow",
+        "Tailscale solution",
+        "Claimed benefit",
+        "Key limitation / tradeoff"
+      ],
+      "rows": [
+        [
+          "Reach internal apps and servers from anywhere",
+          "Hairpin through a centralized VPN concentrator",
+          "Direct tailnet connectivity or an exit node when full-tunnel is needed",
+          "Lower latency and fewer bottlenecks when direct paths work",
+          "Not a full inline inspection stack by itself"
+        ],
+        [
+          "Expose unmanaged subnets or cloud VPCs",
+          "Build peering, bastions, or install agents everywhere",
+          "Subnet router advertises routes into the tailnet",
+          "Extends identity-based access to legacy or unmanaged networks",
+          "Route approval, SNAT choices, and HA design become admin work"
+        ],
+        [
+          "Secure all public internet traffic for travel or compliance",
+          "Traditional full-tunnel VPN",
+          "Exit node routes default traffic through a chosen device",
+          "Satisfies VPN-style egress and geography requirements",
+          "Central egress adds latency and node-operations burden"
+        ],
+        [
+          "Administer hosts and clusters",
+          "SSH keys, public API endpoints, separate kubeconfig secrets",
+          "Tailscale SSH and Kubernetes API proxy",
+          "Identity-based access, recording options, and private API reachability",
+          "Still requires disciplined policy design and current client versions"
+        ],
+        [
+          "Share an internal or public-facing service quickly",
+          "Ad-hoc reverse proxy or public tunnel tool",
+          "Serve for tailnet-only access; Funnel for internet-facing access",
+          "Fast HTTPS sharing with identity context on private paths",
+          "Funnel remains beta and public exposure has fixed bandwidth and port limits"
+        ],
+        [
+          "Control AI model access without key sprawl",
+          "API keys copied into local env files, CI, and agent runtimes",
+          "Aperture gateway centralizes keys and ties requests to Tailscale identity",
+          "Central audit, spend controls, and guardrails at the gateway",
+          "Public evidence still shows an experimental rather than broadly proven deployment base"
+        ]
+      ],
+      "notes": "This table compares Tailscale's operating pattern against the workflow it is displacing, not against a single competitor product SKU.",
+      "claimRefs": [
+        "CE006",
+        "CE007",
+        "CE012",
+        "CE015",
+        "CE017",
+        "CE019",
+        "CE021",
+        "CE022",
+        "CE039",
+        "CE041",
+        "CE051",
+        "CE052"
+      ]
+    },
+    {
+      "id": "TE003",
+      "title": "Technology / operating architecture table",
+      "columns": [
+        "Layer / component",
+        "Role",
+        "Plane",
+        "Key dependency",
+        "Primary risk / tradeoff"
+      ],
+      "rows": [
+        [
+          "Identity provider",
+          "Authenticates users and carries MFA / context into tailnet login",
+          "Control",
+          "External IdP availability and policy hygiene",
+          "Tailscale inherits IdP strength and outages"
+        ],
+        [
+          "Coordination service",
+          "Shares public keys, peer info, DERP map, and policy-derived discovery data",
+          "Control",
+          "Tailscale-managed backend",
+          "Existing sessions can persist without it, but admin changes and fresh discovery depend on it"
+        ],
+        [
+          "Tailnet policy file",
+          "Defines ACLs, grants, postures, SSH rules, tags, tests, and route approvals",
+          "Control",
+          "Admin correctness and review process",
+          "Mis-scoped grants or stale policy tests can widen blast radius"
+        ],
+        [
+          "WireGuard peers",
+          "Encrypt and carry device-to-device traffic",
+          "Data",
+          "Client health, key management, endpoint reachability",
+          "Platform-specific client bugs still matter because security is pushed to endpoints"
+        ],
+        [
+          "Direct NAT-traversed UDP path",
+          "Preferred path for most traffic",
+          "Data",
+          "Public internet conditions and local firewall behavior",
+          "The exact public direct-success rate is not disclosed"
+        ],
+        [
+          "Peer relay",
+          "Uses a tailnet device to relay traffic before falling back to DERP",
+          "Data",
+          "Customer-provisioned relay-capable nodes",
+          "Requires deliberate provisioning and capacity planning"
+        ],
+        [
+          "DERP relay network",
+          "Negotiates paths and relays encrypted traffic when direct paths fail",
+          "Data fallback",
+          "Tailscale-managed global relay footprint",
+          "Hard-NAT traffic depends on relay health and proximity"
+        ],
+        [
+          "Extension services",
+          "SSH, Kubernetes, Serve/Funnel, logging, Aperture, and PAM expansion reuse the same identity foundation",
+          "Mixed",
+          "Feature-specific services and product maturity",
+          "Broader surface area means more versioning, entitlement, and integration complexity"
+        ]
+      ],
+      "notes": "The architecture separates what Tailscale usually keeps in the control plane from what actually carries customer traffic in the data plane.",
+      "claimRefs": [
+        "CE003",
+        "CE008",
+        "CE009",
+        "CE010",
+        "CE031",
+        "CE032",
+        "CE034",
+        "CE035",
+        "CE052",
+        "CE053"
+      ]
+    },
+    {
+      "id": "TE004",
+      "title": "Trust / quality / compliance table",
+      "columns": [
+        "Control / signal",
+        "Public status",
+        "Scope",
+        "Operational value",
+        "Residual gap / risk"
+      ],
+      "rows": [
+        [
+          "End-to-end WireGuard encryption",
+          "Documented",
+          "Peer traffic and DERP-relayed traffic",
+          "Keeps Tailscale out of cleartext data paths",
+          "Prevents inline content inspection and pushes trust to endpoints"
+        ],
+        [
+          "Tailnet Lock",
+          "Documented",
+          "Node-key trust model",
+          "Reduces trust in the coordination server for peer-key distribution",
+          "Requires correct local state handling and version hygiene"
+        ],
+        [
+          "SSO / MFA inheritance",
+          "Documented",
+          "User authentication",
+          "Lets teams reuse existing IdP controls instead of another credential silo",
+          "IdP outages or weak upstream policies still flow through"
+        ],
+        [
+          "SOC 2 Type II",
+          "Documented",
+          "Service controls",
+          "Provides an external compliance signal for security, availability, and confidentiality",
+          "Certification does not prove feature-level maturity for every module"
+        ],
+        [
+          "Security bulletins + incident policy",
+          "Documented",
+          "Clients and managed backend",
+          "Makes remediation expectations and disclosure thresholds explicit",
+          "Requires customers to track versions and act quickly on advisories"
+        ],
+        [
+          "Configuration audit logs",
+          "GA and default-on",
+          "Tailnet config changes",
+          "Improves change tracing and auditor visibility",
+          "Does not replace deeper protocol/session audit for every workflow"
+        ],
+        [
+          "Network flow logs / log streaming",
+          "Available on paid tiers",
+          "Connection metadata, not traffic contents",
+          "Supports SIEM ingestion and incident forensics without packet payloads",
+          "Limited if a buyer wants inline inspection or content DLP evidence"
+        ],
+        [
+          "Device posture",
+          "Documented and plan-tiered",
+          "Access conditions based on device state",
+          "Adds continuous verification and conditional access",
+          "Richer signals require paid entitlements and external integrations"
+        ],
+        [
+          "Public status / outage visibility",
+          "Public status page plus third-party aggregation",
+          "Managed service operations",
+          "Improves operator awareness during incidents",
+          "Hard-NAT cases and control-plane dependencies still create managed-service risk"
+        ],
+        [
+          "PAM session visibility via Border0",
+          "Announced / integration-stage",
+          "SSH, Kubernetes, DB, remote admin workflows",
+          "Promising step toward stronger privileged-access audit trails",
+          "Still not fully native or fully proven in public Tailscale deployments"
+        ]
+      ],
+      "notes": "Rows distinguish between controls that already exist in GA form and those that remain roadmap or tier-gated extensions.",
+      "claimRefs": [
+        "CE027",
+        "CE028",
+        "CE029",
+        "CE030",
+        "CE046",
+        "CE047",
+        "CE048",
+        "CE049",
+        "CE050",
+        "CE051"
+      ]
+    },
+    {
+      "id": "TE005",
+      "title": "Roadmap / release / development-stage table",
+      "columns": [
+        "Date / stage",
+        "Feature or milestone",
+        "Public status",
+        "What changed",
+        "Implication"
+      ],
+      "rows": [
+        [
+          "2026-05-18",
+          "Client release v1.98.2",
+          "Released",
+          "GitHub releases show active shipping cadence through mid-May 2026",
+          "The platform is shipping frequently enough that version currency matters operationally"
+        ],
+        [
+          "2026-05",
+          "TS-2026-002 remediation in 1.98.0+",
+          "Released security fix",
+          "Fixed web-interface grant-bypass issue affecting exit-node and subnet-route settings",
+          "Admins managing remote nodes need current clients to avoid policy bypass risk"
+        ],
+        [
+          "2026-04",
+          "Pricing v4",
+          "Live",
+          "Business plans moved to clearer seat-based packaging with more self-serve features",
+          "Product breadth is now more visible and easier to buy without sales intervention"
+        ],
+        [
+          "2026-04",
+          "Aperture self-serve",
+          "Pre-GA / experimental",
+          "AI gateway became self-serve and positioned as early alpha with centralized key control",
+          "AI governance is strategically important but still early in maturity"
+        ],
+        [
+          "2026-03",
+          "Border0 joins Tailscale",
+          "Announced / integration underway",
+          "Tailscale bought Border0 to deepen PAM and application-layer access controls",
+          "Privileged-access ambitions are real, but integration risk remains"
+        ],
+        [
+          "2026-02",
+          "Aperture launch coverage with partners",
+          "Open alpha coverage",
+          "Independent coverage highlighted partners such as Oso, Cerbos, Apollo Research, and Cribl plus coding-agent support",
+          "Shows Tailscale aiming beyond connectivity into AI control and ecosystem hooks"
+        ],
+        [
+          "GA milestone",
+          "Configuration audit logs",
+          "Generally available",
+          "Audit-log feature is available in the admin console and API and enabled by default",
+          "Core enterprise governance is moving from add-on to table stakes"
+        ],
+        [
+          "GA milestone",
+          "Kubernetes Operator",
+          "Generally available",
+          "Operator matured from beta into a production-oriented access and connectivity layer",
+          "Kubernetes is now a mainstream rather than experimental workload surface for Tailscale"
+        ]
+      ],
+      "notes": "This release table mixes dated 2026 milestones with still-relevant GA milestones when they explain current product maturity on 2026-05-21.",
+      "claimRefs": [
+        "CE014",
+        "CE023",
+        "CE028",
+        "CE036",
+        "CE039",
+        "CE042",
+        "CE043",
+        "CE045",
+        "CE046",
+        "CE055"
+      ]
+    }
+  ],
+  "figures": [
+    {
+      "id": "FE001",
+      "title": "Product architecture map",
+      "type": "stack",
+      "layout": "wide",
+      "summary": "Tailscale layers identity, policy, coordination, and extensions above a mostly direct WireGuard data plane with relay fallbacks.",
+      "data": {
+        "layers": [
+          {
+            "id": "l1",
+            "label": "Identity and admin layer",
+            "detail": "External IdP login, admin console, API, and plan entitlements decide who can join and who can administer the tailnet."
+          },
+          {
+            "id": "l2",
+            "label": "Policy and trust layer",
+            "detail": "The tailnet policy file, grants, ACLs, posture rules, auto-approvers, SSH rules, and Tailnet Lock define what is allowed and how keys are trusted."
+          },
+          {
+            "id": "l3",
+            "label": "Coordination layer",
+            "detail": "Tailscale's coordination service exchanges public keys, peer metadata, and DERP maps so nodes can discover one another."
+          },
+          {
+            "id": "l4",
+            "label": "Connectivity layer",
+            "detail": "WireGuard peers try direct NAT-traversed UDP first, then peer relays, then DERP as encrypted fallback when direct paths fail."
+          },
+          {
+            "id": "l5",
+            "label": "Access and routing extensions",
+            "detail": "SSH, Kubernetes proxying, subnet routers, exit nodes, Serve, Funnel, and app/workload connectors all reuse the same identity-aware network fabric."
+          },
+          {
+            "id": "l6",
+            "label": "Observability and expansion layer",
+            "detail": "Flow logs, config audit logs, Aperture, and Border0/PAM expansion sit above the connectivity substrate to add governance and audit depth."
+          }
+        ]
+      },
+      "approximationNotes": null,
+      "claimRefs": [
+        "CE003",
+        "CE008",
+        "CE009",
+        "CE021",
+        "CE027",
+        "CE030",
+        "CE031",
+        "CE039"
+      ]
+    },
+    {
+      "id": "FE002",
+      "title": "Customer workflow / operating flow",
+      "type": "flow",
+      "layout": "wide",
+      "summary": "A typical Tailscale workflow authenticates identity first, distributes policy and keys, then prefers a direct path before invoking feature-specific access layers.",
+      "data": {
+        "nodes": [
+          {
+            "id": "w1",
+            "label": "Authenticate user or device",
+            "type": "input",
+            "detail": "A user signs in through an external identity provider or a tagged device joins the tailnet."
+          },
+          {
+            "id": "w2",
+            "label": "Join the tailnet",
+            "type": "process",
+            "detail": "The device receives a tailnet identity, private Tailscale IP, and applicable policy state."
+          },
+          {
+            "id": "w3",
+            "label": "Exchange keys and peer metadata",
+            "type": "process",
+            "detail": "The coordination service shares public keys, peer details, and DERP map information."
+          },
+          {
+            "id": "w4",
+            "label": "Attempt direct path",
+            "type": "decision",
+            "detail": "Clients try to establish an encrypted WireGuard path across NAT and firewalls without manual port forwarding."
+          },
+          {
+            "id": "w5",
+            "label": "Fallback if needed",
+            "type": "process",
+            "detail": "If direct reachability fails, traffic can use a peer relay first and DERP only as last encrypted resort."
+          },
+          {
+            "id": "w6",
+            "label": "Apply feature-specific controls",
+            "type": "process",
+            "detail": "SSH, Kubernetes, subnet routing, exit nodes, Serve/Funnel, posture, logs, or Aperture add workflow-specific behavior."
+          },
+          {
+            "id": "w7",
+            "label": "Observe and audit",
+            "type": "output",
+            "detail": "Admins review logs, audit trails, and policy outcomes while end users keep using the service."
+          }
+        ],
+        "edges": [
+          {
+            "from": "w1",
+            "to": "w2"
+          },
+          {
+            "from": "w2",
+            "to": "w3"
+          },
+          {
+            "from": "w3",
+            "to": "w4"
+          },
+          {
+            "from": "w4",
+            "to": "w5"
+          },
+          {
+            "from": "w5",
+            "to": "w6"
+          },
+          {
+            "from": "w6",
+            "to": "w7"
+          }
+        ]
+      },
+      "approximationNotes": null,
+      "claimRefs": [
+        "CE002",
+        "CE005",
+        "CE008",
+        "CE011",
+        "CE021",
+        "CE031",
+        "CE052"
+      ]
+    },
+    {
+      "id": "FE003",
+      "title": "Critical dependency map",
+      "type": "dag",
+      "layout": "wide",
+      "summary": "Tailscale's strongest benefits come from direct WireGuard connectivity, but they still depend on external identity, managed coordination, public-network reachability, and feature-specific extensions.",
+      "data": {
+        "nodes": [
+          {
+            "id": "d1",
+            "label": "External identity provider",
+            "detail": "SSO and MFA posture depend on the customer's chosen IdP and its availability."
+          },
+          {
+            "id": "d2",
+            "label": "Tailscale coordination service",
+            "detail": "Distributes public keys, peer metadata, and DERP maps and backs admin changes."
+          },
+          {
+            "id": "d3",
+            "label": "Public internet and NAT conditions",
+            "detail": "Direct reachability depends on real-world firewall and NAT behavior outside Tailscale's direct control."
+          },
+          {
+            "id": "d4",
+            "label": "WireGuard-capable endpoints",
+            "detail": "Client correctness and version hygiene matter because encryption and policy enforcement sit on endpoints."
+          },
+          {
+            "id": "d5",
+            "label": "Peer relay-capable tailnet nodes",
+            "detail": "Customer-provisioned relay nodes can reduce DERP dependence for difficult paths."
+          },
+          {
+            "id": "d6",
+            "label": "DERP relay network",
+            "detail": "Managed relay regions absorb hard-NAT traffic when direct or peer-relay paths fail."
+          },
+          {
+            "id": "d7",
+            "label": "Feature-specific services",
+            "detail": "SSH, Kubernetes, exit nodes, Serve/Funnel, Aperture, and Border0-backed PAM add differentiated workflows on top."
+          }
+        ],
+        "edges": [
+          {
+            "from": "d1",
+            "to": "d2",
+            "label": "auth context"
+          },
+          {
+            "from": "d2",
+            "to": "d4",
+            "label": "keys + policy"
+          },
+          {
+            "from": "d3",
+            "to": "d4",
+            "label": "reachability"
+          },
+          {
+            "from": "d4",
+            "to": "d5",
+            "label": "optional relay"
+          },
+          {
+            "from": "d4",
+            "to": "d6",
+            "label": "fallback relay"
+          },
+          {
+            "from": "d2",
+            "to": "d6",
+            "label": "DERP map"
+          },
+          {
+            "from": "d4",
+            "to": "d7",
+            "label": "extension workloads"
+          }
+        ]
+      },
+      "approximationNotes": "The dependency map focuses on public dependencies that change product behavior or risk; it does not try to enumerate every internal service behind Tailscale's managed backend.",
+      "claimRefs": [
+        "CE031",
+        "CE032",
+        "CE034",
+        "CE035",
+        "CE046",
+        "CE047",
+        "CE052",
+        "CE053"
+      ]
+    },
+    {
+      "id": "FE004",
+      "title": "Product maturity / capability map",
+      "type": "matrix",
+      "layout": "wide",
+      "summary": "The public evidence base shows the connectivity core as mature, while AI governance and native PAM remain earlier and less proven.",
+      "data": {
+        "columns": [
+          "Connectivity depth",
+          "Policy / control depth",
+          "Operational maturity",
+          "Audit / visibility depth",
+          "Evidence confidence"
+        ],
+        "rows": [
+          {
+            "label": "Core tailnet mesh",
+            "values": [
+              {
+                "label": "high",
+                "tone": "positive",
+                "detail": "WireGuard mesh, NAT traversal, and DERP are heavily documented."
+              },
+              {
+                "label": "medium",
+                "tone": "warning",
+                "detail": "Policy is strong for connectivity but not a full inspection suite."
+              },
+              {
+                "label": "high",
+                "tone": "positive",
+                "detail": "Core networking is clearly mature and actively released."
+              },
+              {
+                "label": "medium",
+                "tone": "warning",
+                "detail": "Metadata logs exist, but content inspection is intentionally absent."
+              },
+              {
+                "label": "high",
+                "tone": "positive",
+                "detail": "Backed by docs, security pages, and release cadence."
+              }
+            ]
+          },
+          {
+            "label": "SSH + Kubernetes access",
+            "values": [
+              {
+                "label": "high",
+                "tone": "positive",
+                "detail": "Strong fit for infra access and cluster reachability."
+              },
+              {
+                "label": "high",
+                "tone": "positive",
+                "detail": "Identity and policy mapping are explicit."
+              },
+              {
+                "label": "medium-high",
+                "tone": "positive",
+                "detail": "SSH is mature; Kubernetes operator is GA but still expanding HA features."
+              },
+              {
+                "label": "high",
+                "tone": "positive",
+                "detail": "Recording and session visibility are documented in parts of the stack."
+              },
+              {
+                "label": "medium-high",
+                "tone": "positive",
+                "detail": "Well supported by official docs and GA announcements."
+              }
+            ]
+          },
+          {
+            "label": "Subnet / exit routing",
+            "values": [
+              {
+                "label": "medium",
+                "tone": "warning",
+                "detail": "Useful bridge pattern rather than pure endpoint mesh."
+              },
+              {
+                "label": "medium",
+                "tone": "warning",
+                "detail": "Policy and approvals exist, but route design matters."
+              },
+              {
+                "label": "high",
+                "tone": "positive",
+                "detail": "GA and broadly documented across platforms."
+              },
+              {
+                "label": "medium",
+                "tone": "warning",
+                "detail": "Destination logging is tier-gated and limited to specific scenarios."
+              },
+              {
+                "label": "high",
+                "tone": "positive",
+                "detail": "Evidence is detailed and current."
+              }
+            ]
+          },
+          {
+            "label": "Serve / Funnel",
+            "values": [
+              {
+                "label": "medium",
+                "tone": "warning",
+                "detail": "Useful sharing layer rather than core mesh primitive."
+              },
+              {
+                "label": "medium",
+                "tone": "warning",
+                "detail": "Identity headers help privately; public paths have fewer controls."
+              },
+              {
+                "label": "medium",
+                "tone": "warning",
+                "detail": "Serve is stable, Funnel docs still label beta."
+              },
+              {
+                "label": "low-medium",
+                "tone": "risk",
+                "detail": "Visibility exists mostly through broader logs rather than deep per-request governance."
+              },
+              {
+                "label": "medium",
+                "tone": "warning",
+                "detail": "Public documentation is clear but feature limits remain."
+              }
+            ]
+          },
+          {
+            "label": "Aperture AI governance",
+            "values": [
+              {
+                "label": "medium",
+                "tone": "warning",
+                "detail": "Leverages tailnet identity rather than network transport depth."
+              },
+              {
+                "label": "high",
+                "tone": "positive",
+                "detail": "Gateway guardrails and centralized credentials are explicit."
+              },
+              {
+                "label": "low",
+                "tone": "risk",
+                "detail": "Official surfaces still present it as experimental and pre-GA."
+              },
+              {
+                "label": "medium",
+                "tone": "warning",
+                "detail": "Usage tracking and audit are central to the pitch."
+              },
+              {
+                "label": "medium",
+                "tone": "warning",
+                "detail": "Credible official docs exist, but production proof is still thin."
+              }
+            ]
+          },
+          {
+            "label": "Native PAM expansion",
+            "values": [
+              {
+                "label": "medium",
+                "tone": "warning",
+                "detail": "Border0 adds app-layer access workflows on top of the tailnet."
+              },
+              {
+                "label": "medium-high",
+                "tone": "positive",
+                "detail": "Session visibility and approvals deepen control depth."
+              },
+              {
+                "label": "low-medium",
+                "tone": "risk",
+                "detail": "Acquisition is real, but native convergence remains in progress."
+              },
+              {
+                "label": "high",
+                "tone": "positive",
+                "detail": "The eventual value is mostly about stronger visibility and recording."
+              },
+              {
+                "label": "medium",
+                "tone": "warning",
+                "detail": "Evidence supports direction, not a fully landed integrated product."
+              }
+            ]
+          }
+        ]
+      },
+      "approximationNotes": "Maturity labels reflect public evidence quality and Tailscale's own stage language, not internal roadmap certainty.",
+      "claimRefs": [
+        "CE014",
+        "CE019",
+        "CE021",
+        "CE022",
+        "CE036",
+        "CE037",
+        "CE039",
+        "CE041",
+        "CE042",
+        "CE055"
+      ]
+    }
+  ],
+  "callouts": [
+    {
+      "calloutType": "strength",
+      "title": "Data-plane efficiency is the core moat",
+      "body": "Tailscale's clearest technical advantage versus legacy VPNs is that its managed cloud is usually the coordination layer, not the permanent packet path, so latency and bottleneck risk can be lower when direct paths succeed.",
+      "claimRefs": [
+        "CE006",
+        "CE031",
+        "CE032",
+        "CE052"
+      ]
+    },
+    {
+      "calloutType": "risk",
+      "title": "Connectivity-first is not inspection-first",
+      "body": "Because Tailscale does not normally decrypt traffic, it preserves privacy and performance but still leaves gaps for buyers who need SWG, CASB, DLP, or other heavy inline inspection controls.",
+      "claimRefs": [
+        "CE027",
+        "CE051"
+      ]
+    },
+    {
+      "calloutType": "insight",
+      "title": "AI governance and PAM are the strategic stretch",
+      "body": "Aperture and Border0 show Tailscale trying to turn identity-first networking into a broader control plane, but both areas still have more roadmap and maturity risk than the core mesh platform.",
+      "claimRefs": [
+        "CE036",
+        "CE037",
+        "CE039",
+        "CE042",
+        "CE043"
+      ]
+    }
+  ],
+  "localEvidence": {
+    "searchQueries": [
+      {
+        "query": "Find direct URLs for current 2026 Tailscale product and technology sources covering pricing, architecture, or product launches, especially official docs, changelog, or trusted technical coverage.",
+        "engine": "web_search",
+        "hits": 10,
+        "retainedSourceRefs": [
+          "SE001",
+          "SE002",
+          "SE003",
+          "SE004",
+          "SE005",
+          "SE006",
+          "SE007",
+          "SE008",
+          "SE009",
+          "SE010",
+          "SE011",
+          "SE012",
+          "SE013",
+          "SE014",
+          "SE015",
+          "SE016",
+          "SE018",
+          "SE019",
+          "SE020",
+          "SE024",
+          "SE025",
+          "SE026",
+          "SE027",
+          "SE028",
+          "SE029",
+          "SE030",
+          "SE031"
+        ]
+      },
+      {
+        "query": "Find direct URLs for Tailscale 2026 security advisories, breaches, incidents, outages, or status-page events, prioritizing official disclosures and trusted security coverage.",
+        "engine": "web_search",
+        "hits": 10,
+        "retainedSourceRefs": [
+          "SE021",
+          "SE022",
+          "SE023",
+          "SE034",
+          "SE035",
+          "SE036",
+          "SE037"
+        ]
+      },
+      {
+        "query": "Find direct URLs for Tailscale 2026 leadership, partnerships, roadmap, Border0 acquisition integration, or Aperture AI governance launch coverage, prioritizing official announcements and trusted coverage.",
+        "engine": "web_search",
+        "hits": 10,
+        "retainedSourceRefs": [
+          "SE017",
+          "SE018",
+          "SE027",
+          "SE031",
+          "SE032",
+          "SE033"
+        ]
+      }
+    ],
+    "researchQuestions": [
+      {
+        "id": "QE001",
+        "question": "What customer workflows does Tailscale publicly say its platform covers on 2026-05-21?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/0",
+          "plannedTables/product-module-asset-matrix"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE002",
+        "question": "How does the tailnet operate as the core container for users, devices, and resources?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/2",
+          "plannedFigures/product-architecture-map"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE003",
+        "question": "How does Tailscale use WireGuard and what cryptographic properties come with that design?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/2",
+          "plannedFigures/product-architecture-map"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE004",
+        "question": "How does Tailscale establish connectivity across NAT and firewalls without manual port forwarding?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/2",
+          "plannedFigures/customer-workflow-operating-flow"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE005",
+        "question": "What exactly do DERP servers do and when are they in the customer traffic path?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/2",
+          "plannedTables/technology-operating-architecture-table"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE006",
+        "question": "How is Tailscale technically different from a traditional centralized VPN?",
+        "type": "comparison",
+        "targets": [
+          "contentRequirements/4",
+          "plannedTables/workflow-use-case-table"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE007",
+        "question": "What tradeoffs does Tailscale make versus inspection-heavy SSE or SASE products?",
+        "type": "adverse",
+        "targets": [
+          "contentRequirements/4",
+          "plannedTables/trust-quality-compliance-table"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE008",
+        "question": "What policy objects live inside the tailnet policy file today?",
+        "type": "enumeration",
+        "targets": [
+          "contentRequirements/5",
+          "plannedTables/technology-operating-architecture-table"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE009",
+        "question": "Are grants now the preferred policy model over ACLs, and why?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/5",
+          "plannedTables/technology-operating-architecture-table"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE010",
+        "question": "How does Tailscale SSH replace or reduce SSH-key management while preserving access controls?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/1",
+          "plannedTables/product-module-asset-matrix"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE011",
+        "question": "What production use cases does the Kubernetes Operator cover today?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/1",
+          "plannedTables/product-module-asset-matrix"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE012",
+        "question": "What role do subnet routers play relative to direct-client deployment?",
+        "type": "comparison",
+        "targets": [
+          "contentRequirements/1",
+          "plannedTables/workflow-use-case-table"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE013",
+        "question": "How do exit nodes differ from subnet routers in deployment and security posture?",
+        "type": "comparison",
+        "targets": [
+          "contentRequirements/1",
+          "plannedTables/workflow-use-case-table"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE014",
+        "question": "What do Serve and Funnel do, and where do their privacy boundaries differ?",
+        "type": "comparison",
+        "targets": [
+          "contentRequirements/1",
+          "plannedFigures/customer-workflow-operating-flow"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE015",
+        "question": "What device posture signals and plan entitlements are public in 2026?",
+        "type": "freshness",
+        "targets": [
+          "contentRequirements/5",
+          "plannedTables/trust-quality-compliance-table"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE016",
+        "question": "What logging and audit surfaces exist for admins and SIEM teams?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/5",
+          "plannedTables/trust-quality-compliance-table"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE017",
+        "question": "What is publicly available today for Aperture and AI-governance workflows?",
+        "type": "freshness",
+        "targets": [
+          "contentRequirements/3",
+          "plannedTables/product-module-asset-matrix"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE018",
+        "question": "How do Aperture guardrails enforce or weaken policy in practice?",
+        "type": "adverse",
+        "targets": [
+          "contentRequirements/5",
+          "plannedTables/trust-quality-compliance-table"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE019",
+        "question": "What does Border0 add to Tailscale's PAM roadmap?",
+        "type": "freshness",
+        "targets": [
+          "contentRequirements/3",
+          "plannedTables/roadmap-release-development-stage-table"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE020",
+        "question": "What recent releases or milestones show product velocity through 2026?",
+        "type": "freshness",
+        "targets": [
+          "contentRequirements/3",
+          "plannedTables/roadmap-release-development-stage-table"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE021",
+        "question": "How open is Tailscale's codebase and release cadence for practitioners?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/4",
+          "plannedTables/roadmap-release-development-stage-table"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE022",
+        "question": "What reliability assurances and residual control-plane dependencies does Tailscale disclose?",
+        "type": "adverse",
+        "targets": [
+          "contentRequirements/3",
+          "plannedFigures/critical-dependency-map"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE023",
+        "question": "What current security and compliance controls are publicly documented?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/5",
+          "plannedTables/trust-quality-compliance-table"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE024",
+        "question": "What recent security advisories or outages complicate the product trust story in 2026?",
+        "type": "adverse",
+        "targets": [
+          "contentRequirements/5",
+          "plannedTables/trust-quality-compliance-table"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE025",
+        "question": "What share of production traffic falls back to DERP or peer relays instead of direct paths?",
+        "type": "quantification",
+        "targets": [
+          "contentRequirements/2",
+          "plannedFigures/critical-dependency-map"
+        ],
+        "status": "partial"
+      },
+      {
+        "id": "QE026",
+        "question": "How much of Border0's capability is already native inside Tailscale rather than a roadmap promise?",
+        "type": "comparison",
+        "targets": [
+          "contentRequirements/3",
+          "plannedFigures/product-maturity-capability-map"
+        ],
+        "status": "partial"
+      },
+      {
+        "id": "QE027",
+        "question": "Is there public production-reference evidence showing broad Aperture deployment beyond early launch partners?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/3",
+          "plannedFigures/product-maturity-capability-map"
+        ],
+        "status": "partial"
+      }
+    ],
+    "sources": [
+      {
+        "id": "SE001",
+        "publisher": "Tailscale",
+        "title": "What is Tailscale? · Tailscale Docs",
+        "url": "https://tailscale.com/docs/concepts/what-is-tailscale",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "product-definition",
+          "legacy-vpn",
+          "tailnet",
+          "use-cases"
+        ],
+        "keyQuote": "Tailscale is a Zero Trust identity-based connectivity platform that replaces your legacy VPN, SASE, and PAM."
+      },
+      {
+        "id": "SE002",
+        "publisher": "Tailscale",
+        "title": "About WireGuard · Tailscale Docs",
+        "url": "https://tailscale.com/docs/concepts/wireguard",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "wireguard",
+          "encryption"
+        ]
+      },
+      {
+        "id": "SE003",
+        "publisher": "Tailscale",
+        "title": "DERP servers · Tailscale Docs",
+        "url": "https://tailscale.com/docs/reference/derp-servers",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "derp",
+          "nat-traversal",
+          "relay",
+          "control-plane"
+        ],
+        "keyQuote": "When a direct connection isn't possible Tailscale first attempts to use any available peer relays in the tailnet."
+      },
+      {
+        "id": "SE004",
+        "publisher": "Tailscale",
+        "title": "What is a tailnet? · Tailscale Docs",
+        "url": "https://tailscale.com/docs/concepts/tailnet",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "tailnet",
+          "dns",
+          "ip-addressing"
+        ],
+        "keyQuote": "A Tailscale network (known as a tailnet) is a secure, interconnected collection of users, devices, and resources."
+      },
+      {
+        "id": "SE005",
+        "publisher": "Tailscale",
+        "title": "Tailnet policy file · Tailscale Docs",
+        "url": "https://tailscale.com/docs/features/tailnet-policy-file",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "policy-file",
+          "acl",
+          "grants",
+          "posture",
+          "ssh"
+        ],
+        "keyQuote": "The tailnet policy file is a centralized human JSON (HuJSON) configuration file that stores parameters, policies, and settings for your Tailscale network."
+      },
+      {
+        "id": "SE006",
+        "publisher": "Tailscale",
+        "title": "Grants vs. ACLs · Tailscale Docs",
+        "url": "https://tailscale.com/docs/reference/grants-vs-acls",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "grants",
+          "acl",
+          "policy-depth"
+        ],
+        "keyQuote": "Grants are feature complete with ACLs, which means they have all the capabilities of ACLs."
+      },
+      {
+        "id": "SE007",
+        "publisher": "Tailscale",
+        "title": "Tailscale SSH · Tailscale Docs",
+        "url": "https://tailscale.com/docs/features/tailscale-ssh",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "ssh",
+          "identity",
+          "session-recording"
+        ],
+        "keyQuote": "Tailscale SSH lets Tailscale manage the authentication and authorization of SSH connections in your tailnet."
+      },
+      {
+        "id": "SE008",
+        "publisher": "Tailscale",
+        "title": "Deploy exit nodes and subnet routers on Kubernetes · Tailscale Docs",
+        "url": "https://tailscale.com/docs/features/kubernetes-operator/how-to/connector",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "kubernetes-operator",
+          "connector",
+          "subnet-routers",
+          "exit-nodes"
+        ]
+      },
+      {
+        "id": "SE009",
+        "publisher": "Tailscale",
+        "title": "Subnet routers · Tailscale Docs",
+        "url": "https://tailscale.com/docs/features/subnet-routers",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "subnet-routers",
+          "network-bridge",
+          "snat",
+          "ha"
+        ],
+        "keyQuote": "Subnet routers let you extend your Tailscale network to include devices that don't or can't run the Tailscale client."
+      },
+      {
+        "id": "SE010",
+        "publisher": "Tailscale",
+        "title": "Exit nodes (route all traffic) · Tailscale Docs",
+        "url": "https://tailscale.com/docs/features/exit-nodes",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "exit-nodes",
+          "full-tunnel-vpn",
+          "destination-logging"
+        ],
+        "keyQuote": "When you route all traffic through an exit node, you're effectively using default routes, similar to how you would if you were using a typical VPN."
+      },
+      {
+        "id": "SE011",
+        "publisher": "Tailscale",
+        "title": "Tailscale Funnel · Tailscale Docs",
+        "url": "https://tailscale.com/docs/features/tailscale-funnel",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "funnel",
+          "public-sharing",
+          "relay"
+        ],
+        "keyQuote": "Tailscale Funnel lets you route traffic from the broader internet to a local service running on a device in your Tailscale network."
+      },
+      {
+        "id": "SE012",
+        "publisher": "Tailscale",
+        "title": "Tailscale Serve · Tailscale Docs",
+        "url": "https://tailscale.com/docs/features/tailscale-serve",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "serve",
+          "identity-headers",
+          "private-sharing"
+        ],
+        "keyQuote": "Serve traffic includes identity headers when serving traffic from your tailnet using Tailscale Serve."
+      },
+      {
+        "id": "SE013",
+        "publisher": "Tailscale",
+        "title": "Device posture management · Tailscale Docs",
+        "url": "https://tailscale.com/docs/features/device-posture",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "device-posture",
+          "mdm",
+          "edr",
+          "conditional-access"
+        ],
+        "keyQuote": "Device posture is a mechanism to measure how secure or trustworthy a device is."
+      },
+      {
+        "id": "SE014",
+        "publisher": "Tailscale",
+        "title": "Logging overview · Tailscale Docs",
+        "url": "https://tailscale.com/docs/features/logging",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "logging",
+          "flow-logs",
+          "audit-logs",
+          "siem"
+        ],
+        "keyQuote": "Network flow logs strictly do not contain any information about client operations or contents of network traffic."
+      },
+      {
+        "id": "SE015",
+        "publisher": "Tailscale",
+        "title": "Get started with Aperture · Tailscale Docs",
+        "url": "https://tailscale.com/docs/aperture/get-started",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "aperture",
+          "ai-governance",
+          "llm-providers"
+        ],
+        "keyQuote": "Aperture supports OpenAI, Anthropic, Google Gemini, OpenRouter, Amazon Bedrock, Vertex AI, and OpenAI-compatible APIs."
+      },
+      {
+        "id": "SE016",
+        "publisher": "Tailscale",
+        "title": "Guardrails · Tailscale Docs",
+        "url": "https://tailscale.com/docs/aperture/guardrails",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "aperture",
+          "guardrails",
+          "hooks",
+          "fail-open"
+        ],
+        "keyQuote": "The fail_policy setting on each hook definition controls what happens when Aperture cannot reach a guardrail endpoint... fail_open (default)."
+      },
+      {
+        "id": "SE017",
+        "publisher": "Tailscale",
+        "title": "Border0 joins Tailscale - FAQs",
+        "url": "https://tailscale.com/resources/border0-and-tailscale-faq",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "border0",
+          "pam",
+          "session-visibility"
+        ],
+        "keyQuote": "Border0 is designed for infrastructure access workflows and visibility, including support for common access patterns such as SSH and Kubernetes access, remote admin workflows (RDP and VNC), database access controls, session recording, and command or query visibility."
+      },
+      {
+        "id": "SE018",
+        "publisher": "Tailscale",
+        "title": "Border0 is joining Tailscale",
+        "url": "https://tailscale.com/blog/border0-joins-tailscale",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "border0",
+          "pam",
+          "tsnet",
+          "roadmap"
+        ],
+        "keyQuote": "Tailscale started with secure connectivity... Border0 brings protocol-aware controls, session visibility, approval workflows."
+      },
+      {
+        "id": "SE019",
+        "publisher": "Tailscale",
+        "title": "Tailscale pricing update: clearer plans, more value",
+        "url": "https://tailscale.com/blog/pricing-v4",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "pricing",
+          "seat-based-pricing",
+          "self-serve-features"
+        ],
+        "keyQuote": "We're moving to simple, predictable seat-based pricing for business plans."
+      },
+      {
+        "id": "SE020",
+        "publisher": "Tailscale",
+        "title": "Tailscale pricing",
+        "url": "https://tailscale.com/pricing",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "pricing",
+          "plan-features",
+          "tagged-resources",
+          "ephemeral-resources"
+        ],
+        "keyQuote": "$0 for up to 6 users ... $8 per user, per month ... $18 per user, per month."
+      },
+      {
+        "id": "SE021",
+        "publisher": "Tailscale",
+        "title": "Security | Tailscale",
+        "url": "https://tailscale.com/security",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "security",
+          "wireguard",
+          "tailnet-lock",
+          "soc2"
+        ],
+        "keyQuote": "Your data is end-to-end encrypted and transmitted point-to-point. Your devices' private encryption keys never leave their respective nodes."
+      },
+      {
+        "id": "SE022",
+        "publisher": "Tailscale",
+        "title": "Security Bulletins · Tailscale",
+        "url": "https://tailscale.com/security-bulletins",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "adverse",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "security-bulletins",
+          "vulnerabilities",
+          "ts-2026-002",
+          "ts-2026-001"
+        ],
+        "keyQuote": "TS-2026-002 ... ACL capability bypass in the Tailscale client's web interface."
+      },
+      {
+        "id": "SE023",
+        "publisher": "Tailscale",
+        "title": "Incident disclosure and notification policy",
+        "url": "https://tailscale.com/security-policies/incident-disclosure",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "incident-disclosure",
+          "security-policy",
+          "managed-backend"
+        ],
+        "keyQuote": "Both the client software and our managed backend infrastructure (i.e. coordination server) are in scope for this policy."
+      },
+      {
+        "id": "SE024",
+        "publisher": "Tailscale",
+        "title": "Tailscale Status",
+        "url": "https://status.tailscale.com/",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "status-page",
+          "operations"
+        ]
+      },
+      {
+        "id": "SE025",
+        "publisher": "Tailscale",
+        "title": "Tailscale changelog",
+        "url": "https://tailscale.com/changelog",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "changelog",
+          "release-cadence"
+        ]
+      },
+      {
+        "id": "SE026",
+        "publisher": "Tailscale",
+        "title": "Configuration Audit Logs Now Generally Available in Tailscale",
+        "url": "https://tailscale.com/blog/config-audit-logging-ga",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "audit-logs",
+          "governance"
+        ],
+        "keyQuote": "Configuration audit logs are enabled by default on all tailnets, and cannot be disabled."
+      },
+      {
+        "id": "SE027",
+        "publisher": "Tailscale",
+        "title": "Tailscale Kubernetes Operator generally available for simple, secure K8s access",
+        "url": "https://tailscale.com/blog/k8s-operator-ga",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "kubernetes-operator",
+          "ga",
+          "session-recording"
+        ],
+        "keyQuote": "Thousands of organizations have adopted it, including for use in production environments."
+      },
+      {
+        "id": "SE028",
+        "publisher": "Tailscale",
+        "title": "Aperture by Tailscale is now self-serve: Centralized AI access, usage, and spend",
+        "url": "https://tailscale.com/blog/aperture-self-serve",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "aperture",
+          "self-serve",
+          "ai-keys",
+          "pre-ga"
+        ],
+        "keyQuote": "Aperture shifts API keys out of application environments and into a gateway designed to manage them, while tying every request to identity."
+      },
+      {
+        "id": "SE029",
+        "publisher": "GitHub",
+        "title": "GitHub - tailscale/tailscale: The easiest, most secure way to use WireGuard and 2FA.",
+        "url": "https://github.com/tailscale/tailscale",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "developer-signal",
+        "reputationTier": "high",
+        "independence": "company",
+        "topics": [
+          "open-source",
+          "tailscaled",
+          "cli"
+        ],
+        "keyQuote": "This repository contains the majority of Tailscale's open source code."
+      },
+      {
+        "id": "SE030",
+        "publisher": "GitHub",
+        "title": "Releases · tailscale/tailscale",
+        "url": "https://github.com/tailscale/tailscale/releases",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "developer-signal",
+        "reputationTier": "high",
+        "independence": "company",
+        "topics": [
+          "releases",
+          "version-cadence"
+        ],
+        "keyQuote": "v1.98.2 ... 18 May 14:06."
+      },
+      {
+        "id": "SE031",
+        "publisher": "WireGuard",
+        "title": "Protocol & Cryptography - WireGuard",
+        "url": "https://www.wireguard.com/protocol/",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "technical-docs",
+        "reputationTier": "high",
+        "independence": "independent",
+        "topics": [
+          "wireguard",
+          "noise_ik",
+          "cryptography"
+        ],
+        "keyQuote": "WireGuard uses the Noise_IK handshake from Noise ... All packets are sent over UDP."
+      },
+      {
+        "id": "SE032",
+        "publisher": "SiliconANGLE",
+        "title": "Secure networking startup Tailscale launches identity-linked governance for AI tools and agents",
+        "url": "https://siliconangle.com/2026/02/17/secure-networking-startup-tailscale-launches-identity-linked-governance-ai-tools-agents/",
+        "date": "2026-02-17",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "news",
+        "reputationTier": "medium",
+        "independence": "independent",
+        "topics": [
+          "aperture",
+          "ai-governance",
+          "partners"
+        ],
+        "keyQuote": "Tailscale is working with partners such as Oso, Cerbos, Apollo Research PBC and Cribl Inc."
+      },
+      {
+        "id": "SE033",
+        "publisher": "BetaKit",
+        "title": "Tailscale makes first acquisition with Border0 purchase",
+        "url": "https://betakit.com/tailscale-makes-first-acquisition-with-border0-purchase/",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "news",
+        "reputationTier": "medium",
+        "independence": "independent",
+        "topics": [
+          "border0",
+          "acquisition",
+          "pam"
+        ],
+        "keyQuote": "Border0 adds deeper application-layer access and authorization on top of that foundation."
+      },
+      {
+        "id": "SE034",
+        "publisher": "Techcouver",
+        "title": "Philosophies Aligned, Vancouver Startup Border0 Joins Toronto's Tailscale",
+        "url": "https://techcouver.com/2026/03/18/aligned-vancouver-startup-border0-tailscale/",
+        "date": "2026-03-18",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "news",
+        "reputationTier": "medium",
+        "independence": "independent",
+        "topics": [
+          "border0",
+          "roadmap",
+          "pam"
+        ],
+        "keyQuote": "Over time, we'll pull these capabilities closer into the Tailscale experience and build out a more native Tailscale PAM offering."
+      },
+      {
+        "id": "SE035",
+        "publisher": "StatusGator",
+        "title": "Tailscale Status. Check if Tailscale is down or having an outage.",
+        "url": "https://statusgator.com/services/tailscale",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "adverse",
+        "sourceType": "other",
+        "reputationTier": "medium",
+        "independence": "independent",
+        "topics": [
+          "outages",
+          "status",
+          "operations"
+        ],
+        "keyQuote": "The last officially acknowledged outage was on May 8, 2026."
+      },
+      {
+        "id": "SE036",
+        "publisher": "OpenCVE",
+        "title": "Tailscale CVEs and Security Vulnerabilities",
+        "url": "https://app.opencve.io/cve/?vendor=tailscale",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "adverse",
+        "sourceType": "other",
+        "reputationTier": "medium",
+        "independence": "independent",
+        "topics": [
+          "cves",
+          "vulnerabilities",
+          "security-surface"
+        ]
+      },
+      {
+        "id": "SE037",
+        "publisher": "NIST National Vulnerability Database",
+        "title": "NVD - CVE-2023-28436",
+        "url": "https://nvd.nist.gov/vuln/detail/CVE-2023-28436",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "adverse",
+        "sourceType": "other",
+        "reputationTier": "high",
+        "independence": "independent",
+        "topics": [
+          "cve-2023-28436",
+          "tailscale-ssh",
+          "freebsd"
+        ],
+        "keyQuote": "A vulnerability identified in the implementation of Tailscale SSH ... allows commands to be run with a higher privilege group ID than that specified in Tailscale SSH access rules."
+      },
+      {
+        "id": "SE038",
+        "publisher": "CVE Program",
+        "title": "Common vulnerabilities and Exposures (CVE)",
+        "url": "https://www.cve.org/CVERecord?id=CVE-2023-28436",
+        "accessDate": "2026-05-21",
+        "accessStatus": "ok",
+        "stance": "adverse",
+        "sourceType": "other",
+        "reputationTier": "high",
+        "independence": "independent",
+        "topics": [
+          "cve-record",
+          "cve-2023-28436"
+        ]
+      }
+    ],
+    "claims": [
+      {
+        "id": "CE001",
+        "statement": "Tailscale's docs describe the company as an identity-based connectivity platform for remote teams, multi-cloud environments, CI/CD pipelines, edge and IoT devices, and AI workloads.",
+        "type": "company-claimed",
+        "topic": "product-definition",
+        "sourceRefs": [
+          "SE001"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE001"
+        ]
+      },
+      {
+        "id": "CE002",
+        "statement": "Tailscale defines a tailnet as a private, secure collection of users, devices, and resources that is inaccessible from the public internet.",
+        "type": "company-claimed",
+        "topic": "tailnet",
+        "sourceRefs": [
+          "SE004"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE001",
+          "QE002"
+        ]
+      },
+      {
+        "id": "CE003",
+        "statement": "Tailscale says its device-to-device connections use WireGuard for end-to-end encryption.",
+        "type": "company-claimed",
+        "topic": "wireguard-architecture",
+        "sourceRefs": [
+          "SE001",
+          "SE002",
+          "SE021"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE003"
+        ]
+      },
+      {
+        "id": "CE004",
+        "statement": "WireGuard's protocol uses the Noise_IK handshake over UDP and rotates session keys to provide forward secrecy.",
+        "type": "observed",
+        "topic": "wireguard-architecture",
+        "sourceRefs": [
+          "SE031"
+        ],
+        "confidence": "medium",
+        "freshness": "historical",
+        "answersQuestionRefs": [
+          "QE003"
+        ]
+      },
+      {
+        "id": "CE005",
+        "statement": "Tailscale says authenticated devices can usually connect across NAT and firewalls without manual port forwarding or complex firewall rules.",
+        "type": "company-claimed",
+        "topic": "nat-traversal",
+        "sourceRefs": [
+          "SE001"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE004"
+        ]
+      },
+      {
+        "id": "CE006",
+        "statement": "Tailscale positions direct peer-to-peer paths as lower-latency and less bottleneck-prone than centralized VPN gateways.",
+        "type": "company-claimed",
+        "topic": "legacy-vpn-tradeoff",
+        "sourceRefs": [
+          "SE001"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE006"
+        ]
+      },
+      {
+        "id": "CE007",
+        "statement": "Tailscale can emulate a traditional full-tunnel VPN by routing traffic through an exit node.",
+        "type": "company-claimed",
+        "topic": "exit-nodes",
+        "sourceRefs": [
+          "SE001",
+          "SE010"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE006",
+          "QE013"
+        ]
+      },
+      {
+        "id": "CE008",
+        "statement": "Tailscale says its coordination service exchanges public keys and metadata while private keys remain on the local device.",
+        "type": "company-claimed",
+        "topic": "control-plane",
+        "sourceRefs": [
+          "SE003",
+          "SE021"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE002",
+          "QE003"
+        ]
+      },
+      {
+        "id": "CE009",
+        "statement": "The tailnet policy file centrally manages ACLs, grants, tags, groups, IP sets, posture rules, SSH rules, auto-approvers, and DERP-map settings.",
+        "type": "company-claimed",
+        "topic": "policy-engine",
+        "sourceRefs": [
+          "SE005"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE008"
+        ]
+      },
+      {
+        "id": "CE010",
+        "statement": "Tailscale says grants are deny-by-default like ACLs but extend policy to application-layer capabilities, while ACLs remain network-layer only and are no longer the path for new features.",
+        "type": "company-claimed",
+        "topic": "policy-engine",
+        "sourceRefs": [
+          "SE006"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE009"
+        ]
+      },
+      {
+        "id": "CE011",
+        "statement": "Tailnets assign devices Tailscale IP addresses in the CGNAT range and DNS names used for features such as MagicDNS and HTTPS.",
+        "type": "company-claimed",
+        "topic": "tailnet",
+        "sourceRefs": [
+          "SE004"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE002"
+        ]
+      },
+      {
+        "id": "CE012",
+        "statement": "Tailscale SSH intercepts tailnet-originated port 22 traffic and uses Tailscale identities and node keys instead of distributing user-managed SSH keys.",
+        "type": "company-claimed",
+        "topic": "ssh",
+        "sourceRefs": [
+          "SE007"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE010"
+        ]
+      },
+      {
+        "id": "CE013",
+        "statement": "Tailscale SSH supports check-mode reauthentication, session recording, and policy-based revocation, but its server component is limited to Linux and the open-source macOS variant.",
+        "type": "company-claimed",
+        "topic": "ssh",
+        "sourceRefs": [
+          "SE007"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE010"
+        ]
+      },
+      {
+        "id": "CE014",
+        "statement": "Tailscale's Kubernetes Operator is generally available, and the GA announcement says thousands of organizations have already adopted it, including in production.",
+        "type": "company-claimed",
+        "topic": "kubernetes-operator",
+        "sourceRefs": [
+          "SE027"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE011"
+        ]
+      },
+      {
+        "id": "CE015",
+        "statement": "Tailscale says its Kubernetes API server proxy routes cluster access over private Tailscale connectivity without requiring a public API endpoint or separate cluster credentials.",
+        "type": "company-claimed",
+        "topic": "kubernetes-operator",
+        "sourceRefs": [
+          "SE008",
+          "SE027"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE011"
+        ]
+      },
+      {
+        "id": "CE016",
+        "statement": "The Kubernetes Connector CRD can host subnet routers, exit nodes, app connectors, and SSH session recorder nodes inside a cluster.",
+        "type": "company-claimed",
+        "topic": "kubernetes-operator",
+        "sourceRefs": [
+          "SE008",
+          "SE027"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE011"
+        ]
+      },
+      {
+        "id": "CE017",
+        "statement": "Subnet routers extend a tailnet to devices and networks that cannot run the Tailscale client, but Tailscale says direct client installation still provides the best security and performance.",
+        "type": "company-claimed",
+        "topic": "subnet-routers",
+        "sourceRefs": [
+          "SE009"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE012"
+        ]
+      },
+      {
+        "id": "CE018",
+        "statement": "Subnet routers use route advertisement and approval, default to source NAT, and support high-availability patterns, which adds gateway-management overhead absent from direct mesh peers.",
+        "type": "inferred",
+        "topic": "subnet-routers",
+        "sourceRefs": [
+          "SE009"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE012"
+        ]
+      },
+      {
+        "id": "CE019",
+        "statement": "Exit nodes route default internet traffic through a selected device, making Tailscale behave like a typical VPN for public traffic rather than only overlay traffic.",
+        "type": "company-claimed",
+        "topic": "exit-nodes",
+        "sourceRefs": [
+          "SE010"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE006",
+          "QE013"
+        ]
+      },
+      {
+        "id": "CE020",
+        "statement": "Exit node destination logging is only available on Premium and Enterprise plans and requires log streaming, while Android exit nodes are described as userspace and not performant for most cases.",
+        "type": "company-claimed",
+        "topic": "exit-nodes",
+        "sourceRefs": [
+          "SE010",
+          "SE014"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE013"
+        ]
+      },
+      {
+        "id": "CE021",
+        "statement": "Serve keeps services private to the tailnet and can inject identity and app-capability headers, whereas Funnel exposes a local service to the public internet through relay servers and a TCP proxy.",
+        "type": "company-claimed",
+        "topic": "serve-funnel",
+        "sourceRefs": [
+          "SE011",
+          "SE012"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE014"
+        ]
+      },
+      {
+        "id": "CE022",
+        "statement": "Funnel docs still label the feature beta and note TLS-only operation, fixed ports, and non-configurable bandwidth limits.",
+        "type": "company-claimed",
+        "topic": "serve-funnel",
+        "sourceRefs": [
+          "SE011"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE014"
+        ]
+      },
+      {
+        "id": "CE023",
+        "statement": "Tailscale's April 2026 pricing update moved self-serve business plans from usage-based billing to predictable seat-based pricing and added more self-serve features such as SCIM, device posture, user-management APIs, and webhooks.",
+        "type": "company-claimed",
+        "topic": "pricing-packaging",
+        "sourceRefs": [
+          "SE019",
+          "SE020"
+        ],
+        "confidence": "high",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QE015",
+          "QE020"
+        ]
+      },
+      {
+        "id": "CE024",
+        "statement": "The pricing page lists Personal free up to six users, Standard at $8 per user per month, Premium at $18 per user per month, enterprise custom pricing, and separate tagged-resource and ephemeral-resource allowances.",
+        "type": "company-claimed",
+        "topic": "pricing-packaging",
+        "sourceRefs": [
+          "SE020"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE001",
+          "QE015"
+        ]
+      },
+      {
+        "id": "CE025",
+        "statement": "The pricing page shows Tailscale's current platform surface extending beyond VPN replacement into SSH, Kubernetes ingress and egress, Funnel, Aperture, device posture, logging, CI/CD, and workload connectivity.",
+        "type": "company-claimed",
+        "topic": "platform-surface",
+        "sourceRefs": [
+          "SE020"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE001"
+        ]
+      },
+      {
+        "id": "CE026",
+        "statement": "Device posture combines default host and Tailscale-version attributes with optional geolocation, custom attributes, and third-party MDM or EDR integrations to gate access.",
+        "type": "company-claimed",
+        "topic": "device-posture",
+        "sourceRefs": [
+          "SE013",
+          "SE005"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE015"
+        ]
+      },
+      {
+        "id": "CE027",
+        "statement": "Tailscale documents central log collection for agents, network flow logs without traffic contents, configuration audit logs, and SIEM log streaming.",
+        "type": "company-claimed",
+        "topic": "logging-audit",
+        "sourceRefs": [
+          "SE014",
+          "SE026"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE016",
+          "QE023"
+        ]
+      },
+      {
+        "id": "CE028",
+        "statement": "Configuration audit logs are generally available, enabled by default, and exposed in both the admin console and the API.",
+        "type": "company-claimed",
+        "topic": "logging-audit",
+        "sourceRefs": [
+          "SE014",
+          "SE026"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE016",
+          "QE020"
+        ]
+      },
+      {
+        "id": "CE029",
+        "statement": "Tailscale's security page says the service offers SSO and MFA inheritance, directional default-deny ACLs, multiple admin roles, Tailnet Lock, and SOC 2 Type II certification.",
+        "type": "company-claimed",
+        "topic": "security-controls",
+        "sourceRefs": [
+          "SE021"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE023"
+        ]
+      },
+      {
+        "id": "CE030",
+        "statement": "Tailnet Lock is designed to reduce trust in the coordination service by requiring node keys to be signed by trusted nodes before peers accept them.",
+        "type": "company-claimed",
+        "topic": "tailnet-lock",
+        "sourceRefs": [
+          "SE021",
+          "SE022"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE023"
+        ]
+      },
+      {
+        "id": "CE031",
+        "statement": "Tailscale says DERP servers negotiate connections and then relay traffic only when direct paths and peer relays are unavailable.",
+        "type": "company-claimed",
+        "topic": "derp-relay",
+        "sourceRefs": [
+          "SE003"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE004",
+          "QE005",
+          "QE022",
+          "QE025"
+        ]
+      },
+      {
+        "id": "CE032",
+        "statement": "Tailscale says DERP relays blindly forward already encrypted WireGuard packets and cannot decrypt customer traffic.",
+        "type": "company-claimed",
+        "topic": "derp-relay",
+        "sourceRefs": [
+          "SE003",
+          "SE021"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE005",
+          "QE007",
+          "QE022"
+        ]
+      },
+      {
+        "id": "CE033",
+        "statement": "Tailscale publishes DERP regions across North America, Europe, Asia, Africa, South America, and the Middle East, with most regions having at least three servers.",
+        "type": "company-claimed",
+        "topic": "derp-relay",
+        "sourceRefs": [
+          "SE003"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE005",
+          "QE022"
+        ]
+      },
+      {
+        "id": "CE034",
+        "statement": "Tailscale says existing point-to-point connectivity can continue if the coordination service is unavailable, but new administrative changes and some relay optimizations still depend on the control plane.",
+        "type": "inferred",
+        "topic": "control-plane-dependency",
+        "sourceRefs": [
+          "SE003",
+          "SE021"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE022"
+        ]
+      },
+      {
+        "id": "CE035",
+        "statement": "Running a custom DERP server is an advanced operation that sacrifices some control-plane optimizations and certain cross-tailnet features.",
+        "type": "company-claimed",
+        "topic": "derp-relay",
+        "sourceRefs": [
+          "SE003"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE025"
+        ]
+      },
+      {
+        "id": "CE036",
+        "statement": "Tailscale's Border0 announcement says the company is expanding from network reachability toward protocol-aware controls, session visibility, approval workflows, and deeper privileged access management.",
+        "type": "company-claimed",
+        "topic": "border0-pam",
+        "sourceRefs": [
+          "SE017",
+          "SE018"
+        ],
+        "confidence": "high",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QE019",
+          "QE026"
+        ]
+      },
+      {
+        "id": "CE037",
+        "statement": "Border0's FAQ says current workflows include SSH and Kubernetes access, RDP and VNC, database controls, session recording, and command or query visibility, but native Tailscale convergence is still described as something that will come over time.",
+        "type": "company-claimed",
+        "topic": "border0-pam",
+        "sourceRefs": [
+          "SE017"
+        ],
+        "confidence": "medium",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QE019",
+          "QE026"
+        ]
+      },
+      {
+        "id": "CE038",
+        "statement": "Independent coverage describes Border0 as adding application-layer access and authorization on top of Tailscale's network-layer identity and connectivity foundation.",
+        "type": "third-party-reported",
+        "topic": "border0-pam",
+        "sourceRefs": [
+          "SE033",
+          "SE034"
+        ],
+        "confidence": "medium",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QE019",
+          "QE026"
+        ]
+      },
+      {
+        "id": "CE039",
+        "statement": "Aperture routes AI requests through a Tailscale-authenticated gateway instead of distributing provider API keys across laptops, CI, and agent runtimes.",
+        "type": "company-claimed",
+        "topic": "aperture",
+        "sourceRefs": [
+          "SE015",
+          "SE028"
+        ],
+        "confidence": "high",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QE017"
+        ]
+      },
+      {
+        "id": "CE040",
+        "statement": "Aperture supports major hosted model APIs including OpenAI, Anthropic, Gemini, OpenRouter, Bedrock, and Vertex AI.",
+        "type": "company-claimed",
+        "topic": "aperture",
+        "sourceRefs": [
+          "SE015"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE017"
+        ]
+      },
+      {
+        "id": "CE041",
+        "statement": "Aperture guardrails are synchronous pre-request hooks that can allow, block, or modify requests, but the default hook failure mode is fail_open unless an admin switches it to fail_closed.",
+        "type": "company-claimed",
+        "topic": "aperture-guardrails",
+        "sourceRefs": [
+          "SE016"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE018"
+        ]
+      },
+      {
+        "id": "CE042",
+        "statement": "Official Aperture surfaces still present the product as pre-GA and experimental rather than generally available.",
+        "type": "company-claimed",
+        "topic": "aperture",
+        "sourceRefs": [
+          "SE015",
+          "SE028"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE017",
+          "QE027"
+        ]
+      },
+      {
+        "id": "CE043",
+        "statement": "SiliconANGLE reported that Aperture launched with partners including Oso, Cerbos, Apollo Research, and Cribl and with support for coding agents such as Claude Code, Codex, and Gemini CLI.",
+        "type": "third-party-reported",
+        "topic": "aperture",
+        "sourceRefs": [
+          "SE032"
+        ],
+        "confidence": "medium",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QE017",
+          "QE027"
+        ]
+      },
+      {
+        "id": "CE044",
+        "statement": "The GitHub repository contains most of Tailscale's open-source code, including tailscaled and the CLI, but excludes some GUI wrappers and the mobile GUI code.",
+        "type": "observed",
+        "topic": "developer-signal",
+        "sourceRefs": [
+          "SE029"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE021"
+        ]
+      },
+      {
+        "id": "CE045",
+        "statement": "GitHub releases show active shipping cadence through 2026-05-18 with v1.98.2, following v1.96.x in March and v1.94.x in January and February.",
+        "type": "observed",
+        "topic": "developer-signal",
+        "sourceRefs": [
+          "SE025",
+          "SE030"
+        ],
+        "confidence": "high",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QE020",
+          "QE021"
+        ]
+      },
+      {
+        "id": "CE046",
+        "statement": "TS-2026-002 fixed a bug that let a malicious tailnet node with web-interface access clear exit-node and subnet-route settings on another node despite missing grants.",
+        "type": "company-claimed",
+        "topic": "security-bulletins",
+        "sourceRefs": [
+          "SE022"
+        ],
+        "confidence": "medium",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QE020",
+          "QE024"
+        ]
+      },
+      {
+        "id": "CE047",
+        "statement": "TS-2026-001 fixed a privilege-escalation flaw in the macOS tssentineld service used for AlwaysOn MDM deployments.",
+        "type": "company-claimed",
+        "topic": "security-bulletins",
+        "sourceRefs": [
+          "SE022"
+        ],
+        "confidence": "medium",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QE024"
+        ]
+      },
+      {
+        "id": "CE048",
+        "statement": "Tailscale's incident-disclosure policy says both client software and managed backend infrastructure are in scope and that public bulletins are issued when user action is needed or the company cannot confirm that no users were affected.",
+        "type": "company-claimed",
+        "topic": "incident-response",
+        "sourceRefs": [
+          "SE023"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE023"
+        ]
+      },
+      {
+        "id": "CE049",
+        "statement": "StatusGator reported Tailscale was operational on 2026-05-21 and listed the last officially acknowledged outage as 2026-05-08.",
+        "type": "third-party-reported",
+        "topic": "outages",
+        "sourceRefs": [
+          "SE035"
+        ],
+        "confidence": "low",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QE022",
+          "QE024"
+        ]
+      },
+      {
+        "id": "CE050",
+        "statement": "OpenCVE and NVD still list older Tailscale issues, including the FreeBSD Tailscale SSH privilege bug CVE-2023-28436, showing that platform-specific flaws have existed in the product surface.",
+        "type": "third-party-reported",
+        "topic": "security-history",
+        "sourceRefs": [
+          "SE036",
+          "SE037",
+          "SE038"
+        ],
+        "confidence": "medium",
+        "freshness": "historical",
+        "answersQuestionRefs": [
+          "QE024"
+        ]
+      },
+      {
+        "id": "CE051",
+        "statement": "Because Tailscale encrypts traffic end to end and avoids vendor-side decryption even on DERP, it does not natively provide the full SWG, CASB, or DLP inspection stack typical of heavier SSE or SASE suites.",
+        "type": "inferred",
+        "topic": "sase-tradeoff",
+        "sourceRefs": [
+          "SE006",
+          "SE021",
+          "SE020"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE007"
+        ]
+      },
+      {
+        "id": "CE052",
+        "statement": "Tailscale's strength over legacy VPNs is that the vendor cloud is usually a coordination plane rather than the normal packet path, but the architecture still depends on control-plane correctness, relay availability for hard-NAT scenarios, and customer-managed gateway nodes for some workflows.",
+        "type": "inferred",
+        "topic": "architecture-tradeoff",
+        "sourceRefs": [
+          "SE003",
+          "SE009",
+          "SE010",
+          "SE021"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE006",
+          "QE007",
+          "QE022"
+        ]
+      },
+      {
+        "id": "CE053",
+        "statement": "Peer relays can offer lower latency and lower egress cost than DERP, but customers must provision appropriate tailnet devices to use them.",
+        "type": "company-claimed",
+        "topic": "peer-relay",
+        "sourceRefs": [
+          "SE003"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE005",
+          "QE025"
+        ]
+      },
+      {
+        "id": "CE054",
+        "statement": "Serve identity and app-capability headers are only available for tailnet traffic, while Funnel traffic is public and does not carry those identity headers.",
+        "type": "company-claimed",
+        "topic": "serve-funnel",
+        "sourceRefs": [
+          "SE011",
+          "SE012"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE014"
+        ]
+      },
+      {
+        "id": "CE055",
+        "statement": "The current release and bulletin trail shows Tailscale shipping quickly, but it also means buyers in sensitive environments need disciplined upgrade processes to avoid web-interface, SSH, or client-specific exposure.",
+        "type": "inferred",
+        "topic": "operations-risk",
+        "sourceRefs": [
+          "SE022",
+          "SE025",
+          "SE030"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE020"
+        ]
+      }
+    ],
+    "evidenceGaps": [
+      {
+        "type": "missing-source",
+        "severity": "material",
+        "topic": "relay-usage-rates",
+        "missingEvidence": "A public direct-versus-peer-relay-versus-DERP traffic distribution by deployment size, network type, or geography.",
+        "whyItMatters": "Without real path-mix data, it is impossible to quantify how often customers actually experience Tailscale's best-case direct-path architecture versus relay fallbacks.",
+        "diligencePath": "Ask management for anonymized netcheck or fleet telemetry showing direct-connect success rates, relay fallback rates, and the impact of peer relays across representative enterprise environments.",
+        "relatedQuestionRefs": [
+          "QE025"
+        ],
+        "relatedTableRefs": [
+          "TE003"
+        ]
+      },
+      {
+        "type": "private-evidence-only",
+        "severity": "material",
+        "topic": "border0-native-integration",
+        "missingEvidence": "A public capability map separating what is already native inside Tailscale from what still runs as Border0-branded or separately integrated functionality.",
+        "whyItMatters": "The acquisition expands the story meaningfully, but public buyers cannot yet tell how much PAM depth is product reality versus roadmap intent.",
+        "diligencePath": "Request a product walkthrough, SKU map, and customer reference using integrated Tailscale-plus-Border0 workflows in production.",
+        "relatedQuestionRefs": [
+          "QE026"
+        ],
+        "relatedTableRefs": [
+          "TE001",
+          "TE005"
+        ]
+      },
+      {
+        "type": "private-evidence-only",
+        "severity": "material",
+        "topic": "aperture-production-proof",
+        "missingEvidence": "Production customer references, deployment counts, and renewal or expansion proof for Aperture beyond launch partners and early testers.",
+        "whyItMatters": "Aperture is strategically important to the product expansion thesis, but its commercial and operational maturity are not yet visible from public evidence alone.",
+        "diligencePath": "Request customer references, paid-conversion data, and security architecture reviews from organizations using Aperture in live workflows, not just pilots or alpha programs.",
+        "relatedQuestionRefs": [
+          "QE027"
+        ],
+        "relatedTableRefs": [
+          "TE001",
+          "TE005"
+        ]
+      }
+    ]
+  }
+}
