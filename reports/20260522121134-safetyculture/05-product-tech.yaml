@@ -1,0 +1,2862 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: safetyculture
+runDate: '2026-05-22'
+company:
+  name: SafetyCulture
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: >-
+    SafetyCulture's platform is a multi-module, mobile-first SaaS operating system for frontline workers, built on
+    eight core capability areas: inspections/audits, issues/actions, training (consolidated into the main platform
+    after SC Training/EdApp was retired on 31 March 2026), asset management, IoT sensor monitoring, analytics, Heads
+    Up communications, and a procurement marketplace. A lone-worker safety capability (SHEQSY, acquired April 2022)
+    rounds out the suite. The platform is hosted on AWS, exposes a REST API with webhooks, and provides open-source
+    tools including a Go-based data exporter. Security posture is creditable — ISO 27001:2022 certified and SOC 2
+    Type II attested — and the public status page shows ≥99.7% uptime. The highest product risks are: the abrupt
+    retirement of SC Training/EdApp (affecting 70,000+ organisations and 1M+ users whose completion history was not
+    fully portable), the breadth of AI claims compared with thin verifiable evidence beyond template generation,
+    hardware sensor dependence on third-party Dragino hardware, limited complex-workflow customisation documented
+    across review platforms, and the platform complexity that emerges from acquiring and integrating eight modules
+    over twenty years. The April 2026 Twine talent-acquisition (Brian Swift returning as VP AI) signals an
+    "agentic-first" pivot that is currently aspiration rather than shipped capability.
+
+sections:
+  - id: product-definition
+    title: Product Definition and Module Map
+    body: >-
+      SafetyCulture delivers a unified operations platform for frontline workers, structured around eight integrated
+      capability areas that span the full workplace operations workflow — from initial hazard identification and
+      inspection, through corrective action, training, asset oversight, and continuous improvement analytics.
+
+      The core module — Inspections (iAuditor) — enables teams to create, conduct, and share digital inspections,
+      safety audits, checklists, and compliance assessments. Teams build templates from a library of 100,000+
+      public templates or author custom ones; inspections are completed on iOS or Android mobile apps (offline
+      capable) or via web browser; completed inspections generate structured, shareable PDF reports. Conditional
+      logic allows templates to branch based on responses, enabling sophisticated automated workflows without code.
+      The company reports over 2 million inspections conducted per month on the platform as of 2026.
+
+      Issues and Actions management allows any inspection finding or ad-hoc observation to be converted into an
+      assignable corrective action with due date, priority, attachments, and status tracking. Issues can be raised
+      independently of an inspection, enabling hazard reporting outside the structured audit workflow. Multiple
+      review platforms note that complex multi-step approval chains are not supported natively; this is the most
+      commonly cited workflow limitation.
+
+      Training was delivered until 31 March 2026 through SC Training (formerly EdApp, acquired 2020, rebranded
+      2024). SafetyCulture retired the standalone SC Training app on that date, consolidating training
+      functionality into the core SafetyCulture platform. The consolidated training module retains mobile
+      microlearning authoring (AI-assisted from documents, PDFs, or prompts), gamification (quizzes, badges,
+      leaderboards), a library of 1,000+ editable expert-accredited courses, offline delivery, and learner
+      analytics. The retirement affected an estimated 70,000+ organisations and 1M+ users who previously
+      accessed the platform via SC Training — those who did not migrate before 20 April 2026 lost access to
+      their completion histories permanently.
+
+      Asset Management provides a centralised register of physical assets linked to inspection schedules,
+      maintenance records, sensor data, and compliance certificates. Assets can be assigned to locations,
+      teams, or individuals; maintenance workflows and compliance document uploads are supported. The module
+      bridges physical asset oversight with the digital operations workflow, but depth is lighter than purpose-
+      built CMMS tools such as MaintainX.
+
+      Sensors (IoT monitoring) connects Dragino-manufactured LoRaWAN hardware sensors to the cloud platform
+      via a gateway-bridge architecture. The standard sensor (Dragino LHT65S) monitors temperature and humidity
+      and operates from -40°C to 80°C with an optional external probe extending to 125°C. Supported sensor
+      categories include temperature/humidity, air quality (CO₂, TVOCs, particulate), sound/noise, pressure,
+      and open/close detection. Setup is described as plug-and-play (gateway pre-configured; sensor IDs entered
+      manually). Threshold-based alerts trigger notifications and can automatically spawn inspection tasks.
+      The hardware dependency on a single Dragino model for the core temperature sensor is a concentration risk.
+
+      Analytics consolidates inspection outcomes, issue resolution rates, training completions, sensor readings,
+      and Heads Up engagement into configurable dashboards and heatmaps. AI-assisted analytics (launched 2025–26)
+      allow managers to ask natural language questions (e.g., "which sites have the lowest quality scores?") and
+      receive synthesised answers from audit data. Scheduled and ad-hoc report exports are supported; the open-
+      source SafetyCulture Exporter tool provides bulk data export to MSSQL, PowerBI, and other BI tools for
+      Premium and Enterprise customers.
+
+      Heads Up is a broadcast communications module designed for frontline teams without reliable email access.
+      Managers create multimedia messages (text, images, video) with acknowledgment tracking, required electronic
+      signatures on linked documents, threaded comments, emoji reactions, and external sharing. Analytics measure
+      reach and acknowledgment rates. The module replaces informal bulletin-board or verbal briefing processes
+      with a documented, auditable communication trail.
+
+      Marketplace offers 100,000+ workplace safety and PPE products from 200+ brands via integrated e-commerce.
+      Available in Australia and the United States. Customers can purchase items discovered during inspections
+      directly, reducing procurement friction. The marketplace generated approximately AU$68.2M GMV in FY2025,
+      contributing roughly 12% to overall revenue at approximately 48% gross margin on secondary sales — a
+      higher-margin commercial activity than pure SaaS in percentage terms but still secondary to subscription
+      revenue at this scale.
+
+      Lone Worker Safety (SHEQSY) provides duress alarms, scheduled check-ins, job completion monitoring, and
+      real-time worker location for isolated or remote workers. SHEQSY was acquired by SafetyCulture in April
+      2022 and is progressively integrated with the core platform. The acquisition pre-dates the run date;
+      claims of a separate "May 2026 SHEQSY acquisition" found in some AI-aggregated sources are incorrect —
+      SHEQSY was acquired in 2022.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE007
+      - CE008
+      - CE009
+      - CE010
+      - CE011
+      - CE012
+      - CE013
+    tableRefs:
+      - TE001
+      - TE002
+    figureRefs:
+      - FE001
+      - FE002
+
+  - id: architecture-operating-model
+    title: Architecture and Operating Model
+    body: >-
+      SafetyCulture operates a cloud-native SaaS architecture hosted on Amazon Web Services (AWS). The platform
+      is delivered as a mobile-first application with native iOS and Android apps and a full-featured web
+      application; the iOS app version numbering convention (e.g., version 26.18.02 in May 2026) indicates
+      year.week.patch release cadence, consistent with a high-frequency continuous-delivery model. A May 2026
+      iOS defect (affecting an unspecified user subset) was acknowledged on the status page, with a fix
+      available in version 26.18.02 — resolution occurred within approximately four days of detection.
+
+      The developer-facing surface is a REST API (no GraphQL available publicly as of 2026). Authentication is
+      via Bearer token (personal or service-account tokens generated within account settings). The API exposes
+      endpoints for inspections, templates, users, actions, sites, and scheduling. Rate limits are endpoint-
+      specific, ranging from approximately 20 to 800 requests per 60 seconds (e.g., POST /users/search allows
+      200 req/60s). Webhooks provide event-driven integration triggers for inspection completions, status
+      changes, and other platform events. The SafetyCulture Developer Portal (developer.safetyculture.com)
+      provides live API reference documentation, authentication guides, and code samples. Open-source
+      developer tooling includes: a Python SDK (github.com/SafetyCulture, 23 stars, 10 forks), an open-source
+      Go-based data exporter (SafetyCulture/safetyculture-exporter, Apache-2.0, 19 GitHub stars, CLI and desktop
+      GUI), and a gRPC-Web browser extension (440 GitHub stars, 70 forks) — the latter indicating internal use
+      of gRPC in addition to the public REST surface.
+
+      The Integrations Marketplace (integrations.safetyculture.com) lists 100+ pre-built connectors including
+      Salesforce, Workday, BambooHR, ADP Workforce Now, Zapier, SharePoint, and third-party BI tools. A no-code
+      integration builder is available for custom workflow connections. A partner program allows third-party
+      developers to list apps in the marketplace. The SourceForge integrations catalog independently confirms
+      the breadth of available connectors.
+
+      The IoT sensor architecture uses a hub-and-spoke gateway model: physical sensors (Dragino LHT65S and
+      compatible models) communicate via LoRaWAN protocol to a gateway device; the gateway forwards readings
+      over internet (WiFi/4G) to the SafetyCulture cloud platform. Sensor data is presented in the same
+      dashboard as inspections and issues, enabling threshold-triggered corrective-action workflows. The
+      hardware components are sourced from Dragino Technology, a third-party IoT hardware vendor based in
+      Shenzhen — this is a critical dependency not under SafetyCulture's supply or quality control.
+
+      Data encryption is AES-256 at rest and TLS 1.2 or later in transit, with AWS infrastructure as the
+      hosting layer. Customer data access is limited to essential personnel (principle of least privilege).
+      Multi-factor authentication and VPN are required for internal system access. Centralized logging and
+      threat detection are operational; incident response and vulnerability management programs are described as
+      continuous rather than point-in-time.
+
+      AI capabilities are marketed across template generation, course creation from uploaded documents,
+      natural language querying of audit data, and automated report generation. The April 2026 acquisition of
+      the Twine team (Brian Swift returning as VP AI, reporting to CEO Luke Anear) reflects a strategic push
+      toward "agentic-first" AI — autonomous AI agents that can reason and act across platform workflows. As of
+      the run date, publicly verifiable AI features are limited to template/course generation and NLQ-style
+      analytics summaries; the agentic capability is directional rather than shipped.
+    claimRefs:
+      - CE014
+      - CE015
+      - CE016
+      - CE017
+      - CE018
+      - CE019
+      - CE020
+      - CE021
+      - CE022
+      - CE023
+      - CE024
+      - CE025
+    tableRefs:
+      - TE003
+    figureRefs:
+      - FE003
+
+  - id: deployment-integration-reliability
+    title: Deployment, Integration, Reliability, and Support
+    body: >-
+      SafetyCulture is a cloud-delivered SaaS product with no on-premises deployment option documented in
+      public materials. Deployment friction is by design low — the company's product positioning emphasises
+      "learn in minutes" and template-driven rapid onboarding. Sensor deployment is marketed as plug-and-play
+      with pre-configured gateways and manual sensor ID entry.
+
+      Reliability as reported by the official status page and independent monitoring services is consistently
+      strong: uptime between 99.68% and 100% in late 2025 and early 2026, with a practical average around
+      99.7–100% per third-party monitors. The most recent tracked incident (May 2026) was an iOS app defect
+      resolved in version 26.18.02 within approximately four days. The median incident resolution time over
+      the prior 90-day period was approximately 3 hours and 22 minutes. No contractual SLA percentage is
+      published; enterprise buyers should request this from sales.
+
+      Integration depth is a product strength: 100+ pre-built connectors via the integrations marketplace,
+      REST API with webhooks, a no-code integration builder, and open-source export tooling for BI platforms.
+      The SafetyCulture Exporter (Go, open-source, Apache-2.0) supports bulk export of inspections, templates,
+      schedules, and actions to MSSQL, PowerBI, and other targets, available to all Premium and Enterprise
+      customers. Partner integrations are listed via the SafetyCulture Integrations Marketplace and independently
+      indexed on SourceForge. The API rate limit range (20–800 req/60s) is adequate for most operational
+      integrations but should be evaluated for high-volume data pipeline use cases.
+
+      Customer support ratings in third-party reviews are mixed: Software Advice shows an overall rating of 4.6
+      out of 5 across 238 reviews, but individual reviewer comments — particularly from enterprise deployments —
+      cite slow resolution times for complex technical issues and limited depth of technical customization
+      support. Fluix's 2026 competitor review notes that task workflows are mostly one-directional and advanced
+      approval chains require significant workarounds.
+
+      Roadmap transparency is partial. SafetyCulture does not publish a public product roadmap, but the April
+      2026 Twine talent acquisition and CEO Luke Anear's stated focus on agentic AI indicate the strategic
+      direction. A SafetyCulture "Next" product update video (YouTube) signals upcoming releases but specifics
+      are marketing-focused rather than engineering-detailed. The SC Training retirement (March 2026) is the
+      most consequential recent roadmap execution — it consolidated the training surface into the core platform
+      but at the cost of data portability for affected customers.
+    claimRefs:
+      - CE026
+      - CE027
+      - CE028
+      - CE029
+      - CE030
+      - CE031
+      - CE032
+    tableRefs:
+      - TE005
+    figureRefs: []
+
+  - id: trust-security-compliance
+    title: Trust, Security, Privacy, and Compliance
+    body: >-
+      SafetyCulture's security program is anchored by two independent certifications: ISO 27001:2022 (global
+      information security management standard) and SOC 2 Type II (AICPA Trust Services Criteria for security,
+      availability, and confidentiality). Both certifications are confirmed on SafetyCulture's public security
+      page (safetyculture.com/security) and are independently referenced across multiple review platforms.
+      ISO 27001 is renewed on a recertification cycle; SOC 2 Type II is annually attested by an independent
+      auditor. Together these certifications are required for most enterprise procurement decisions and are
+      competitive table stakes for the EHS/operations SaaS category.
+
+      Data is encrypted at rest with AES-256 and in transit with TLS 1.2 or later. Customer data is hosted
+      on AWS and segregated by access controls — only essential personnel can access customer data, with MFA
+      and VPN required for internal system access. A public-facing Trust Center allows enterprise buyers to
+      access security documentation, certifications, and whitepapers for due diligence without a formal NDA.
+
+      Privacy and data protection obligations include GDPR (for EU data subjects), Australian Privacy Act
+      compliance (for Australian customers), and applicable US state privacy regulations. Data residency
+      details — specifically which AWS regions hold which customer data — are not fully disclosed in public
+      documentation, which is a diligence ask for regulated-sector enterprise customers. SafetyCulture's
+      privacy policy is publicly available but the exact data-retention schedule and deletion process are
+      not independently verified.
+
+      Compliance tooling within the product supports HACCP-aligned temperature monitoring for food
+      manufacturing and hospitality, occupational safety regulatory compliance documentation (OSHA-relevant
+      in the US), and sector-specific certification programs available through SC Training course library
+      (1,000+ editable accredited courses, though the SC Training platform has been retired into the core
+      platform). The platform explicitly disclaims being specialized EHS management software, stating that
+      users should evaluate whether features align with their specific operational requirements — a meaningful
+      caveat for regulated industries requiring process safety, occupational health, or environmental modules.
+
+      The security posture has a minor documented gap: independent security scanner UpGuard (noted in Chapter
+      1's company overview) flagged cookie security and Content Security Policy (CSP) weaknesses on the
+      SafetyCulture web presence. These are surface-level web security issues rather than platform security
+      failures, but they indicate imperfect security hygiene on the marketing and application web layer.
+    claimRefs:
+      - CE033
+      - CE034
+      - CE035
+      - CE036
+      - CE037
+      - CE038
+    tableRefs:
+      - TE004
+    figureRefs:
+      - FE004
+
+  - id: product-tech-risks
+    title: Product and Technical Risk Assessment
+    body: >-
+      Six product and technology risks merit diligence scrutiny, ordered by estimated materiality.
+
+      Risk 1 — SC Training / EdApp retirement and data portability failure (High severity). The abrupt
+      retirement of the SC Training platform on 31 March 2026 — affecting 70,000+ organisations and 1M+
+      users — represents the most consequential recent platform execution. Completion records, learner progress,
+      and historical performance data were not fully transferable: only users on a paid upgrade path could
+      migrate data cleanly; others faced permanent loss after 20 April 2026. This creates customer trust and
+      retention risk for any organisation that suffered data loss, and signals a product consolidation strategy
+      that prioritises platform simplicity over backward compatibility. The training capability is now part of
+      the core SafetyCulture platform, but the migration friction leaves a gap in customer relationship quality.
+
+      Risk 2 — AI claims versus shipped evidence (Medium-High severity). SafetyCulture's marketing positions
+      the platform as an "AI-powered" and "agentic-first" product. Publicly verifiable AI features as of the
+      run date are limited to: AI-assisted template generation from documents, AI course authoring from PDFs,
+      and NLQ-style analytics queries (summarising audit findings). The April 2026 Twine acquisition (AI
+      team, not product) is talent investment, not a shipped capability. CEO Anear's quote — "From the minute
+      I wake up until I go to sleep, I'm working on how we move to an agentic-first experience" — positions
+      agentic AI as an aspiration. The gap between marketing claims and verifiable features is a diligence risk
+      if buyers are purchasing on the basis of AI capabilities not yet delivered.
+
+      Risk 3 — Hardware (IoT) supply dependency on Dragino Technology (Medium severity). The core IoT
+      temperature sensor (Dragino LHT65S, LoRaWAN, Shenzhen-manufactured) represents a single-vendor hardware
+      dependency outside SafetyCulture's supply chain control. Sensor supply disruption, quality failures,
+      or price increases would affect the IoT monitoring product line. SafetyCulture's own documentation
+      acknowledges that additional sensors must be requested via the customer success manager — suggesting
+      limited self-serve sensor procurement flexibility.
+
+      Risk 4 — Platform complexity and workflow customisation ceiling (Medium severity). As an eight-module
+      platform assembled primarily through acquisition (EdApp 2020, SHEQSY 2022, Twine team 2026), SafetyCulture
+      carries integration complexity risk. Fluix's 2026 review (a direct competitor, so stance is adverse)
+      documents that task workflows are one-directional, multi-step approval chains are not supported natively,
+      and advanced reporting layouts require significant workarounds or external integration. G2 and Capterra
+      reviews corroborate: analytics dashboard customisation is limited outside higher pricing tiers; editing
+      published TSA templates requires rebuilding. These limitations suggest an engineering backlog in cross-
+      module workflow depth.
+
+      Risk 5 — Integration dependency (Medium-Low severity). SafetyCulture's value proposition in enterprise
+      accounts increasingly depends on integration quality with HR systems (Workday, ADP, BambooHR), CRM
+      (Salesforce), and BI tools. Third-party marketplace integrations are operated by integration partners,
+      not SafetyCulture engineering, which creates quality and reliability variability. API rate limits
+      (20–800 req/60s) may constrain high-frequency data-pipeline integrations.
+
+      Risk 6 — No public SLA and contractual uptime uncertainty (Low-Medium severity). Practical uptime
+      based on status page and third-party monitors is 99.7–100%. However, no contractual SLA is publicly
+      disclosed; enterprise buyers cannot rely on a published SLA for procurement, and the absence of a public
+      SLA may limit enterprise deal closure in regulated sectors requiring documented uptime commitments.
+    claimRefs:
+      - CE039
+      - CE040
+      - CE041
+      - CE042
+      - CE043
+      - CE044
+    tableRefs: []
+    figureRefs: []
+
+tables:
+  - id: TE001
+    title: Product Module and Asset Matrix
+    layout: wide
+    notes: >-
+      Module status based on SafetyCulture product pages, help documentation, and third-party reviews as of
+      2026-05-22. SC Training retirement confirmed by SafetyCulture announcement and independent sources.
+      SHEQSY acquisition date confirmed by SHEQSY's own announcement (April 2022). Maturity ratings are
+      qualitative assessments; diligence gaps reflect absence of verifiable public data.
+    columns:
+      - Module / Capability
+      - Primary User
+      - Status / Maturity
+      - Core Differentiation
+      - Key Technical Dependency
+      - Diligence Gap
+    rows:
+      - - Inspections / iAuditor
+        - Operations, safety, quality managers; frontline workers
+        - GA; core product; 20+ years; 100,000+ templates; 2M+ inspections/month
+        - Template library scale; offline mobile; conditional logic branching; PDF report generation
+        - iOS/Android mobile platform; AWS hosting
+        - Template migration cost and content ownership terms not publicly clarified
+      - - Issues and Actions
+        - Any platform user
+        - GA; integrated with inspections; standalone reporting available
+        - Converts inspection findings or ad-hoc observations into tracked corrective actions
+        - Core platform; no external dependency
+        - Multi-step approval workflow depth limited; complex escalation requires workarounds
+      - - Training (consolidated, post–SC Training retirement)
+        - All employees; L&D and operations managers
+        - GA as of April 2026 in core platform; SC Training standalone retired 31 March 2026
+        - Mobile microlearning; AI course generation; 1,000+ editable accredited courses; offline delivery
+        - Core platform; previous EdApp infrastructure decommissioned
+        - Completion history migration from SC Training confirmed incomplete for some cohorts; long-term learner data durability unverified
+      - - Asset Management
+        - Facility managers; maintenance teams
+        - GA; lighter depth than purpose-built CMMS
+        - Links physical assets to inspections, sensors, maintenance records, compliance certs
+        - Core platform; no external dependency
+        - Feature depth vs CMMS competitors (MaintainX, UpKeep) requires head-to-head evaluation
+      - - IoT Sensor Monitoring
+        - Operations managers; facilities; food safety managers
+        - GA; hardware-constrained; LoRaWAN + gateway architecture
+        - Plug-and-play setup; threshold alerts trigger inspections; integrated with dashboard analytics
+        - Dragino LHT65S sensor hardware (third-party); LoRaWAN gateway (third-party)
+        - Single-vendor hardware dependency on Dragino Technology (Shenzhen); sensor SKU range limited
+      - - Analytics
+        - Operations and safety managers; site leaders
+        - GA; AI NLQ queries in 2025–2026 release cycle
+        - Heatmaps across sites; AI-assisted natural language querying; scheduled exports; open-source BI exporter
+        - AWS hosting; SafetyCulture Exporter (Go, open-source)
+        - Dashboard customisation limited at lower pricing tiers; complex KPI layouts require BI export
+      - - Heads Up Communications
+        - Managers (sender); frontline workers (recipient)
+        - GA; documented in help center; acknowledgment tracking
+        - Acknowledgment tracking; signature-required linked files; multimedia; emoji reactions; external sharing
+        - Core platform; no external dependency
+        - Engagement analytics depth and integration with HR communication tools not independently verified
+      - - Marketplace
+        - Operations, procurement, safety managers
+        - GA; AU and US only; 100,000+ products; 200+ brands; FY2025 GMV ~AU$68.2M
+        - Frictionless in-inspection purchasing; curated safety/PPE product range; fast procurement
+        - Third-party e-commerce fulfilment; brand and supplier relationship management
+        - Take-rate not publicly disclosed; geographic expansion (EMEA, APAC ex-AU) timeline unknown
+      - - Lone Worker Safety (SHEQSY)
+        - Remote/isolated workers; safety managers
+        - GA; acquired April 2022; progressively integrated with core platform
+        - Duress alarms; timed check-ins; job completion monitoring; real-time worker location
+        - GPS/cellular location; iOS and Android apps
+        - Depth of integration with core SafetyCulture platform (inspections/actions cross-linking) not fully documented publicly
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+      - CE007
+      - CE008
+      - CE011
+      - CE012
+      - CE013
+      - CE030
+      - CE031
+
+  - id: TE002
+    title: Workflow and Use-Case Table
+    layout: wide
+    notes: >-
+      Workflow descriptions derived from SafetyCulture product pages, help documentation, third-party reviews,
+      and user testimonials. Measurable benefits are company-claimed or derived from user testimonials where
+      primary data is unavailable. Limitations are sourced from independent reviews and confirmed patterns
+      across G2, Capterra, Fluix, and Connecteam review platforms.
+    columns:
+      - User Job-to-be-Done
+      - Without SafetyCulture (current workflow)
+      - SafetyCulture Solution
+      - Measurable / Claimed Benefit
+      - Known Limitation
+    rows:
+      - - Conduct and record a safety inspection
+        - Paper checklist; manual PDF/Excel compilation; email sharing; lost or delayed records
+        - Mobile checklist app; offline capable; auto-generated PDF report; template library shortcut
+        - Company claims 2M+ inspections/month; 75,000 businesses; "learn in minutes" deployment
+        - One-directional task routing; complex approval chains require workarounds
+      - - Assign and track corrective action from an inspection finding
+        - Email chain or verbal instruction; no systematic tracking; overdue actions lost
+        - Issues/Actions module; assignable task with due date, priority, media attachment, status tracking
+        - Full digital audit trail of issue lifecycle; status visible to all stakeholders
+        - Multi-step escalation workflows not natively supported; limited approval routing depth
+      - - Deliver onboarding or compliance training to frontline workers
+        - Face-to-face briefing; paper handouts; desktop LMS inaccessible on mobile; language barriers
+        - Consolidated training module (post–SC Training retirement); AI course builder; 1,000+ courses; offline mobile; auto-language translation
+        - Mobile microlearning; completion certificates; gamification drives engagement
+        - "SC Training data portability gap: historical completion records may be lost for migrated users"
+      - - Monitor cold-chain / environmental conditions continuously
+        - Manual temperature log (paper); spot checks only; delayed detection of exceedances
+        - IoT sensors + gateway; automated threshold alerts; continuous data log; HACCP audit trail
+        - Eliminates manual checks; real-time alert for temperature exceedance; regulator-ready export
+        - Dragino hardware dependency; gateway range ~100m line-of-sight; gateway power required
+      - - Communicate urgent safety updates to site workers without email access
+        - Physical notice boards; verbal briefings; SMS; no acknowledgment tracking
+        - Heads Up module; broadcast message; acknowledgment tracking; signature-required linked files
+        - Documented acknowledgment audit trail; external sharing for non-platform recipients
+        - Analytics depth unverified; limited to broadcast (not two-way task-linked discussion)
+      - - Export inspection data to business intelligence dashboards
+        - Manual export; spreadsheet manipulation; no automated pipeline; compliance report lag
+        - SafetyCulture Exporter (open-source Go CLI/GUI) to MSSQL/PowerBI; REST API + webhooks
+        - Automated, scheduled data pipeline to BI tools; API-driven real-time integration
+        - Exporter requires Premium or Enterprise tier; API rate limits (20–800 req/60s) for high-volume pipelines
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE007
+      - CE014
+      - CE015
+      - CE017
+      - CE018
+      - CE019
+
+  - id: TE003
+    title: Technology and Operating Architecture Table
+    layout: wide
+    notes: >-
+      Architecture data sourced from SafetyCulture developer portal, security page, GitHub repositories,
+      help documentation, and third-party API tracker. Internal architecture details (microservices
+      topology, database choices, CDN provider) are not publicly disclosed; entries reflect confirmed
+      public evidence only. gRPC internal use inferred from public gRPC-Web extension repository on GitHub.
+    columns:
+      - Layer / Component
+      - Role
+      - Technology / Vendor
+      - Critical Dependency
+      - Risk
+    rows:
+      - - Cloud infrastructure
+        - Compute, storage, networking, and data hosting
+        - Amazon Web Services (AWS); specific regions not publicly disclosed
+        - AWS availability and pricing; no multi-cloud or on-premises option documented
+        - Full cloud-provider dependency; regional outages would impact platform; data residency for regulated sectors unclear
+      - - Mobile application (primary client)
+        - Frontline worker data capture; offline-first operations
+        - Native iOS (App Store) and Android apps; version 26.18.02 as of May 2026
+        - Apple App Store and Google Play Store for distribution and update approvals; iOS review delays cited in May 2026 incident
+        - iOS app approval delays can slow critical hotfix delivery; App Store policy changes affect update timelines
+      - - Web application (management client)
+        - Administrative configuration, reporting, and review workflows
+        - Browser-based SPA (specific framework not disclosed); desktop-optimised
+        - Modern browser compatibility; AWS hosting
+        - Minor CSP and cookie security weaknesses noted by UpGuard scanner (surface-level)
+      - - REST API (public integration surface)
+        - Programmatic access for integrations, custom apps, and data export
+        - REST (no public GraphQL); Bearer token authentication; webhooks for events
+        - SafetyCulture API availability; rate limits (20–800 req/60s); API versioning not fully documented
+        - API rate limits constrain high-volume pipelines; no GraphQL limits query flexibility for developers
+      - - IoT sensor + gateway layer
+        - Continuous environmental monitoring (temperature, humidity, air quality, noise)
+        - Dragino LHT65S sensors (LoRaWAN); Dragino-compatible gateways; LoRaWAN connectivity
+        - Dragino Technology (Shenzhen) as sole hardware vendor; gateway power and range constraints
+        - Single-vendor hardware risk; ~100m LoRaWAN range constrains multi-building deployments; battery replacement required
+      - - Data export layer
+        - Bulk data pipeline to business intelligence and compliance systems
+        - SafetyCulture Exporter (Go, Apache-2.0, open-source); MSSQL, PowerBI, CSV outputs
+        - Premium/Enterprise subscription tier; Go runtime on customer infrastructure
+        - Limited to Premium/Enterprise; customer-managed infrastructure adds operational burden for BI integrations
+    claimRefs:
+      - CE014
+      - CE015
+      - CE016
+      - CE017
+      - CE018
+      - CE019
+      - CE020
+      - CE022
+      - CE023
+      - CE024
+
+  - id: TE004
+    title: Trust, Quality, and Compliance Table
+    layout: wide
+    notes: >-
+      Certification status sourced from SafetyCulture security page (safetyculture.com/security) and
+      independently noted in review platforms. AES-256 and TLS 1.2 encryption standards confirmed on
+      security page. HACCP support documented on SafetyCulture temperature monitoring product page.
+      GDPR and Australian Privacy Act compliance asserted by SafetyCulture; independent verification not
+      available from public sources. Minor CSP/cookie gap sourced from Chapter 1 (UpGuard citation).
+    columns:
+      - Control / Certification / Metric
+      - Status
+      - Scope / Standard Body
+      - Evidence Source
+      - Known Gap or Diligence Ask
+    rows:
+      - - ISO 27001:2022 certification
+        - Certified; active
+        - Global information security management system (ISMS); annually renewed
+        - safetyculture.com/security (official, confirmed)
+        - Specific certification scope and certifying body not named in public documentation; request full certificate for procurement
+      - - SOC 2 Type II attestation
+        - Annually attested; active
+        - AICPA Trust Services Criteria; security, availability, confidentiality
+        - safetyculture.com/security (official, confirmed); noted in multiple review platforms
+        - Report available under NDA for enterprise evaluation; specific trust service criteria in scope not publicly listed
+      - - Data encryption at rest
+        - AES-256; confirmed
+        - AWS server-side encryption
+        - SafetyCulture security page
+        - Key management and rotation policy not publicly documented
+      - - Data encryption in transit
+        - TLS 1.2 or later; confirmed
+        - Standard TLS; all API and web traffic
+        - SafetyCulture security page
+        - TLS 1.3 adoption timeline not confirmed
+      - - GDPR compliance
+        - Asserted; Data Processing Addendum available
+        - EU General Data Protection Regulation (2018); AWS-hosted EU data
+        - SafetyCulture privacy policy; security page reference
+        - Data residency (specific EU AWS regions) not publicly disclosed; DPA terms require legal review for regulated sectors
+      - - HACCP / food safety compliance support
+        - Supported via IoT temperature monitoring and inspection templates
+        - HACCP (Hazard Analysis Critical Control Points); food manufacturing and hospitality
+        - safetyculture.com/monitoring/temperature (official product page)
+        - HACCP support is tool-level (documentation and alerts); formal HACCP certification requires third-party audit
+      - - Web security (CSP / cookies)
+        - Minor gaps documented by UpGuard scanner
+        - OWASP best practices; browser security headers
+        - Chapter 1 UpGuard citation (adverse signal)
+        - Specific remediation status unknown; surface-level risk but reflects imperfect security hygiene
+    claimRefs:
+      - CE033
+      - CE034
+      - CE035
+      - CE036
+      - CE037
+      - CE038
+
+  - id: TE005
+    title: Roadmap, Release, and Development-Stage Table
+    layout: wide
+    notes: >-
+      Roadmap entries derived from official SafetyCulture press releases, product pages, and the YouTube
+      "SafetyCulture Next" product update video. SafetyCulture does not publish a formal public roadmap;
+      entries reflect confirmed announcements, dated product launches, and strategic directional statements.
+      Agentic AI status is aspiration per CEO quote, not a confirmed shipped release.
+    columns:
+      - Date / Period
+      - Feature / Milestone
+      - Status
+      - Strategic Implication
+      - Source
+    rows:
+      - - 2020
+        - Acquisition of EdApp (mobile microlearning LMS, rebranded SC Training in 2024)
+        - Completed; product subsequently retired 31 March 2026
+        - Expanded platform from inspections to training; 2026 retirement consolidates training into core SafetyCulture platform
+        - safetyculture.com / SHEQSY announcement
+      - - April 2022
+        - Acquisition of SHEQSY (lone worker safety app)
+        - Completed; progressively integrated with core platform
+        - Added lone worker monitoring, duress alarms, and check-ins; extended addressable market to isolated worker protection
+        - sheqsy.com acquisition announcement (official)
+      - - 2024
+        - SC Training rebrand from EdApp; integration into platform announced
+        - Completed; standalone SC Training app subsequently retired 31 March 2026
+        - Brand simplification; training module consolidated into single SafetyCulture platform app
+        - Third-party review sources; blog.overpass.co.uk (confirmed)
+      - - 31 March 2026
+        - SC Training (EdApp) platform retirement; data deletion after 20 April 2026
+        - Completed as of run date
+        - Affects 70,000+ organisations and 1M+ users; completion history not fully portable; customer trust risk
+        - blog.overpass.co.uk (confirmed); proprofstraining.com (corroborated)
+      - - 7 April 2026
+        - Acquisition of Twine team; Brian Swift returns as VP AI; agentic AI platform push
+        - Completed talent acquisition; AI product capability in development
+        - Signals "agentic-first" strategic direction; VP AI hire is talent, not shipped product; gap between claim and current capability
+        - safetyculture.com/media-releases (official press release)
+      - - 2025–2026
+        - "AI features: template generation, NLQ analytics, AI course builder, analytics heatmaps"
+        - Partially shipped; template and course generation confirmed; agentic NLQ in early form
+        - AI differentiation narrative is broadening; verifiable shipped features are narrower than marketing claims; diligence required
+        - safetyculture.com/ai (official page); fluix.io 2026 review (confirmed partially)
+      - - 2026 (ongoing)
+        - Version numbering 26.xx.xx indicates year.week.patch continuous delivery cadence
+        - Active; version 26.18.02 shipped in May 2026 resolving iOS defect
+        - High-frequency release cadence supports rapid feature iteration; App Store review gates add latency for iOS fixes
+        - status.safetyculture.com (official); iOS App Store distribution
+    claimRefs:
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE025
+      - CE026
+      - CE027
+      - CE028
+      - CE029
+
+figures:
+  - id: FE001
+    title: SafetyCulture Product Architecture Stack
+    type: stack
+    layout: wide
+    summary: >-
+      Four-layer logical architecture from user-facing capability modules down to infrastructure,
+      illustrating the platform's module breadth and the infrastructure dependencies that underpin
+      each layer. Layer arrangement is logical (not necessarily reflecting microservices topology).
+    data:
+      layers:
+        - label: Frontline Engagement Layer
+          detail: >-
+            Modules used directly by frontline workers: mobile inspections (iAuditor), Heads Up
+            broadcast messages, training delivery (consolidated module), and lone worker safety
+            (SHEQSY). All mobile-first; offline capable; iOS and Android native apps.
+          items:
+            - "Inspections / iAuditor (100,000+ templates; 2M+ inspections/month)"
+            - "Heads Up communications (broadcast, acknowledgment tracking, multimedia)"
+            - "Training module (AI course builder; 1,000+ courses; microlearning; offline)"
+            - "SHEQSY lone worker safety (duress alarm; check-in; location monitoring)"
+        - label: Operations Management Layer
+          detail: >-
+            Modules used by supervisors and operations managers to assign, track, and resolve
+            operational issues and asset compliance: Issues/Actions, Asset Management, and
+            IoT Sensor Monitoring. Connected to frontline modules and analytics.
+          items:
+            - "Issues and Actions (corrective action assignment; due-date tracking; media attachment)"
+            - "Asset Management (asset register; maintenance schedules; compliance certs)"
+            - "IoT Sensor Monitoring (Dragino LoRaWAN sensors; threshold alerts; gateway bridge)"
+        - label: Intelligence and Commerce Layer
+          detail: >-
+            Cross-module insight and commercial transaction surfaces: Analytics dashboards and
+            AI-assisted querying, and the Marketplace for in-inspection product procurement.
+          items:
+            - "Analytics (heatmaps; NLQ AI querying; scheduled exports; site-level benchmarking)"
+            - "Marketplace (100,000+ SKUs; 200+ brands; AU and US; FY2025 GMV ~AU$68.2M)"
+            - "AI features (template generation; course authoring; agentic AI in development)"
+        - label: Integration and Infrastructure Layer
+          detail: >-
+            Developer-facing APIs, integration connectors, open-source export tooling, and
+            the AWS cloud infrastructure layer that underpins all platform modules.
+          items:
+            - "REST API + webhooks (developer.safetyculture.com; Bearer token auth; 20–800 req/60s)"
+            - "Integrations Marketplace (100+ connectors: Salesforce, Workday, BambooHR, Zapier)"
+            - "SafetyCulture Exporter (Go; open-source; Apache-2.0; CLI + GUI)"
+            - "AWS cloud hosting (multi-region; AES-256 at rest; TLS 1.2+ in transit)"
+    approximationNotes: >-
+      Internal microservices topology, database stack, CDN provider, and specific AWS region
+      configuration are not publicly disclosed. Layer boundaries are logical groupings, not
+      deployment unit boundaries. IoT hardware layer (Dragino) sits below the integration layer
+      as a physical dependency. AI feature status: template/course generation confirmed shipped;
+      agentic AI in development (not confirmed shipped as of 2026-05-22).
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE007
+      - CE011
+      - CE014
+      - CE016
+      - CE017
+
+  - id: FE002
+    title: Customer Inspection Workflow — Operational Flow
+    type: flow
+    layout: standard
+    summary: >-
+      End-to-end inspection and corrective-action lifecycle showing how a frontline worker moves
+      from hazard detection through inspection, issue creation, corrective action assignment,
+      resolution, and analytics reporting within the SafetyCulture platform.
+    data:
+      nodes:
+        - id: n1
+          label: Hazard or inspection trigger
+          detail: Scheduled inspection, ad-hoc safety check, sensor alert, or management request
+          tone: neutral
+        - id: n2
+          label: Mobile inspection (iAuditor)
+          detail: Worker selects template; completes checklist offline if needed; photos, annotations, scores
+          tone: positive
+        - id: n3
+          label: Auto-generated PDF report
+          detail: Completed inspection generates timestamped PDF; shared with site manager automatically
+          tone: positive
+        - id: n4
+          label: Issue / corrective action created
+          detail: Failed item or observation converts to assignable action; due date, priority, media attached
+          tone: neutral
+        - id: n5
+          label: Heads Up broadcast (optional)
+          detail: Safety update or briefing sent to affected workers; acknowledgment tracked; signature required
+          tone: neutral
+        - id: n6
+          label: Training triggered (optional)
+          detail: Recurring failure pattern triggers training content delivery via training module
+          tone: positive
+        - id: n7
+          label: Corrective action resolved
+          detail: Assignee completes action; status updated; audit trail closed
+          tone: positive
+        - id: n8
+          label: Analytics and heatmap review
+          detail: Manager reviews site-level trends; AI NLQ queries; export to BI tools via API/Exporter
+          tone: positive
+      edges:
+        - from: n1
+          to: n2
+          label: Worker opens inspection
+        - from: n2
+          to: n3
+          label: Inspection completed
+        - from: n2
+          to: n4
+          label: Failed item raises issue
+        - from: n4
+          to: n5
+          label: Urgent alert broadcast
+        - from: n4
+          to: n6
+          label: Pattern triggers training
+        - from: n4
+          to: n7
+          label: Action completed
+        - from: n3
+          to: n8
+          label: Data feeds analytics
+        - from: n7
+          to: n8
+          label: Resolution data in analytics
+    claimRefs:
+      - CE001
+      - CE002
+      - CE009
+      - CE017
+      - CE018
+
+  - id: FE003
+    title: Critical Dependency Map
+    type: dag
+    insight: >-
+      AWS (cloud hosting) and Apple/Google app stores (mobile distribution) are the two highest-
+      downstream-impact dependency nodes — either can affect the entire frontline engagement layer.
+      Dragino Technology is a high-impact hardware dependency concentrated in IoT sensor supply.
+      The SC Training retirement node is a resolved but historically impactful internal dependency
+      that left data portability risk for 70,000+ organisations.
+    data:
+      nodes:
+        - id: d1
+          label: AWS Cloud Hosting
+          type: infrastructure
+        - id: d2
+          label: Apple App Store (iOS distribution)
+          type: platform
+        - id: d3
+          label: Google Play Store (Android distribution)
+          type: platform
+        - id: d4
+          label: Dragino Technology (IoT hardware vendor)
+          type: supplier
+        - id: d5
+          label: SafetyCulture Platform (core SaaS)
+          type: internal
+        - id: d6
+          label: Integration Partners (Salesforce, Workday, Zapier, etc.)
+          type: partner
+        - id: d7
+          label: SC Training (EdApp) — retired 31 March 2026
+          type: internal-retired
+        - id: d8
+          label: Twine AI team — acquired April 2026
+          type: internal-acquired
+        - id: d9
+          label: SHEQSY (lone worker) — acquired April 2022
+          type: internal-acquired
+        - id: d10
+          label: Frontline Worker Operations
+          type: customer-outcome
+      edges:
+        - from: d1
+          to: d5
+          label: Compute + storage
+        - from: d2
+          to: d5
+          label: iOS app distribution + review gate
+        - from: d3
+          to: d5
+          label: Android app distribution
+        - from: d4
+          to: d5
+          label: IoT sensor hardware supply
+        - from: d5
+          to: d10
+          label: Platform delivers operations capability
+        - from: d6
+          to: d5
+          label: Data integration flows
+        - from: d7
+          to: d5
+          label: Training consolidated into core (post-retirement)
+        - from: d8
+          to: d5
+          label: AI product team building agentic capability
+        - from: d9
+          to: d5
+          label: Lone worker module integrated
+    claimRefs:
+      - CE003
+      - CE004
+      - CE005
+      - CE014
+      - CE016
+      - CE019
+      - CE022
+      - CE023
+
+  - id: FE004
+    title: Product Module Maturity and Capability Map
+    type: matrix
+    layout: wide
+    summary: >-
+      Maturity and capability strength assessment across SafetyCulture's nine product modules on four
+      dimensions: feature completeness, mobile-first quality, integration depth, and AI/automation
+      maturity. Ratings are qualitative assessments (High / Medium / Low) derived from product
+      documentation, review platform evidence, and GitHub/API signals as of 2026-05-22. Not empirically
+      scored from a single source; should be validated via product demo and customer interviews.
+    data:
+      columns:
+        - Feature Completeness (vs. stated scope)
+        - Mobile-First Quality
+        - Integration Depth
+        - AI / Automation Maturity
+      rows:
+        - label: Inspections / iAuditor
+          values:
+            - label: High
+              tone: positive
+            - label: High
+              tone: positive
+            - label: High
+              tone: positive
+            - label: Medium
+              tone: neutral
+        - label: Issues / Actions
+          values:
+            - label: Medium
+              tone: neutral
+            - label: High
+              tone: positive
+            - label: Medium
+              tone: neutral
+            - label: Low
+              tone: warning
+        - label: Training (consolidated)
+          values:
+            - label: Medium
+              tone: neutral
+            - label: High
+              tone: positive
+            - label: Medium
+              tone: neutral
+            - label: Medium
+              tone: neutral
+        - label: Asset Management
+          values:
+            - label: Medium
+              tone: neutral
+            - label: Medium
+              tone: neutral
+            - label: Medium
+              tone: neutral
+            - label: Low
+              tone: warning
+        - label: IoT Sensor Monitoring
+          values:
+            - label: Medium
+              tone: neutral
+            - label: Medium
+              tone: neutral
+            - label: Medium
+              tone: neutral
+            - label: Low
+              tone: warning
+        - label: Analytics
+          values:
+            - label: Medium
+              tone: neutral
+            - label: Medium
+              tone: neutral
+            - label: High
+              tone: positive
+            - label: Medium
+              tone: neutral
+        - label: Heads Up Communications
+          values:
+            - label: Medium
+              tone: neutral
+            - label: High
+              tone: positive
+            - label: Low
+              tone: warning
+            - label: Low
+              tone: warning
+        - label: Marketplace
+          values:
+            - label: High
+              tone: positive
+            - label: Medium
+              tone: neutral
+            - label: Low
+              tone: warning
+            - label: Low
+              tone: warning
+        - label: SHEQSY Lone Worker
+          values:
+            - label: Medium
+              tone: neutral
+            - label: High
+              tone: positive
+            - label: Low
+              tone: warning
+            - label: Low
+              tone: warning
+    approximationNotes: >-
+      Feature Completeness rated against each module's stated scope, not against best-in-class
+      single-purpose tools. Issues/Actions rated Medium because advanced approval chain depth
+      is documented as missing. AI ratings reflect verifiable shipped features only, not marketing
+      claims or in-development roadmap items.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE007
+      - CE011
+      - CE017
+      - CE040
+      - CE041
+
+callouts:
+  - calloutType: risk
+    title: SC Training / EdApp retirement created permanent data portability failure for customers
+    body: >-
+      SafetyCulture retired the SC Training platform (formerly EdApp) on 31 March 2026, with data
+      deletion after 20 April 2026. An estimated 70,000+ organisations and 1M+ users were affected.
+      Completion records and learner progress data were not fully transferable without a paid upgrade
+      path. Users who did not act lost historical training records permanently. This is not a minor
+      migration friction issue — for organisations in regulated industries (healthcare, food manufacturing,
+      construction safety) where training completion records are compliance documentation, the data loss
+      represents a potential regulatory and legal exposure. Any investor or enterprise buyer should
+      request SafetyCulture's customer retention data segmented by the SC Training cohort to assess
+      the churn and reputation impact from this event.
+    claimRefs:
+      - CE003
+      - CE039
+
+  - calloutType: risk
+    title: Agentic AI is a strategic direction, not a shipped product as of May 2026
+    body: >-
+      SafetyCulture's "agentic-first" positioning is a CEO-level aspiration confirmed in the April 2026
+      Twine acquisition press release. Verifiable shipped AI features are limited to template generation
+      from documents, AI-assisted course creation, and NLQ-style analytics querying. The gap between
+      the "AI-powered" and "agentic" marketing narrative and the current shipped capability is material
+      for buyers evaluating AI as a procurement criterion. The Twine team acquisition adds AI talent
+      (Brian Swift, VP AI) but not immediate product capability. Diligence should include a product
+      demo of current AI features and a written commitment on the roadmap for agentic capabilities,
+      including timelines and verification criteria.
+    claimRefs:
+      - CE005
+      - CE042
+
+localEvidence:
+  sources:
+    - id: SE001
+      publisher: SafetyCulture
+      title: "Security | SafetyCulture"
+      url: https://safetyculture.com/security
+      date: '2026-01-01'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: neutral
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - SafetyCulture
+        - security
+        - ISO-27001
+        - SOC-2
+        - encryption
+        - '2026'
+      keyQuote: >-
+        SafetyCulture is ISO 27001:2022 certified. SOC 2 Type II audit report confirms dedication
+        to customer security. Data encrypted at rest (AES-256) and in transit (TLS 1.2 or later).
+        MFA and VPN required for internal system access.
+
+    - id: SE002
+      publisher: SafetyCulture
+      title: "SafetyCulture Developer Portal"
+      url: https://developer.safetyculture.com/
+      date: '2026-01-01'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics:
+        - SafetyCulture
+        - API
+        - developer
+        - REST
+        - authentication
+        - '2026'
+      keyQuote: >-
+        Get your API token: Generate a personal or service account token from your SafetyCulture
+        account settings. Takes under a minute. Authentication guide available for full reference.
+
+    - id: SE003
+      publisher: SafetyCulture (GitHub)
+      title: "SafetyCulture — GitHub Organization"
+      url: https://github.com/SafetyCulture
+      date: '2026-05-22'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: high
+      independence: company
+      topics:
+        - SafetyCulture
+        - GitHub
+        - open-source
+        - gRPC
+        - python-SDK
+        - developer
+        - '2026'
+      keyQuote: >-
+        Popular repositories: gRPC-Web browser extension (JavaScript, 440 stars, 70 forks);
+        Python SDK for SafetyCulture API (Python, 23 stars, 10 forks). Multiple open-source
+        repositories indicating active developer tooling.
+
+    - id: SE004
+      publisher: SafetyCulture
+      title: "SafetyCulture Status"
+      url: https://status.safetyculture.com/
+      date: '2026-05-22'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: neutral
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - SafetyCulture
+        - status
+        - uptime
+        - incident
+        - iOS
+        - '2026'
+      keyQuote: >-
+        May 2026: iOS app defect resolved in version 26.18.02. Fix released and available in App
+        Store. Status page confirms active monitoring and rapid incident resolution cadence.
+
+    - id: SE005
+      publisher: SafetyCulture
+      title: "SafetyCulture acquires Twine to accelerate agentic platform ambitions"
+      url: https://safetyculture.com/media-releases/safetyculture-acquires-twine-to-accelerate-agentic-platform-ambitions
+      date: '2026-04-07'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: neutral
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - SafetyCulture
+        - Twine
+        - AI
+        - agentic
+        - acquisition
+        - Brian-Swift
+        - '2026'
+      keyQuote: >-
+        "From the minute I wake up until I go to sleep, I'm working on how we move to an
+        agentic-first experience." — Luke Anear, CEO. Brian Swift returns as VP AI.
+
+    - id: SE006
+      publisher: SafetyCulture
+      title: "SafetyCulture AI Platform | AI-Powered Solutions for Your Business"
+      url: https://safetyculture.com/ai
+      date: '2026-01-01'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: neutral
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - SafetyCulture
+        - AI
+        - template-generation
+        - NLQ
+        - analytics
+        - '2026'
+      keyQuote: >-
+        SafetyCulture AI: "Summarize key findings from last week's safety audit", "Which sites
+        have the lowest product quality scores?", "Create a JSA inspection using a PDF." AI
+        capabilities span managers and frontline teams across inspections and training.
+
+    - id: SE007
+      publisher: SafetyCulture
+      title: "Supported sensors and gateways in SafetyCulture"
+      url: https://help.safetyculture.com/en-US/003295/
+      date: '2026-01-01'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics:
+        - SafetyCulture
+        - IoT
+        - sensors
+        - Dragino
+        - LoRaWAN
+        - LHT65S
+        - '2026'
+      keyQuote: >-
+        The Standard Temperature & Humidity Sensor is Dragino LHT65S, a LoRaWAN sensor.
+        Range: 100m / 300ft (line of sight). Battery operated (CR17540). Operating temperature:
+        -40°C to 80°C standard; -55°C to 125°C probed. Manufacturer: Dragino.
+
+    - id: SE008
+      publisher: SafetyCulture
+      title: "SafetyCulture Integrations Marketplace"
+      url: https://integrations.safetyculture.com/
+      date: '2026-01-01'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: neutral
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - SafetyCulture
+        - integrations
+        - marketplace
+        - Salesforce
+        - SharePoint
+        - Zapier
+        - '2026'
+      keyQuote: >-
+        Integration marketplace lists: SDS Manager, SafetyInsights, SafetyCulture Exporter,
+        SharePoint, Salesforce by OpSmooth. Pre-configured integrations and API access available.
+
+    - id: SE009
+      publisher: SafetyCulture (GitHub)
+      title: "GitHub — SafetyCulture/safetyculture-exporter: SafetyCulture Exporter Tool"
+      url: https://github.com/SafetyCulture/safetyculture-exporter
+      date: '2026-05-22'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: high
+      independence: company
+      topics:
+        - SafetyCulture
+        - exporter
+        - GitHub
+        - open-source
+        - Go
+        - PowerBI
+        - MSSQL
+        - '2026'
+      keyQuote: >-
+        SafetyCulture Exporter available as CLI and desktop UI. Exports inspections, templates,
+        schedules, and actions to MSSQL, PowerBI, and other BI tools. Available to Premium and
+        Enterprise customers. Apache-2.0 licence. 19 GitHub stars.
+
+    - id: SE010
+      publisher: Overpass
+      title: "EdApp Is Shutting Down in March 2026 — Here's What You Need to Know"
+      url: https://blog.overpass.co.uk/edapp-shutting-down-march-2026/
+      date: '2026-01-01'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: adverse
+      sourceType: other
+      reputationTier: medium
+      independence: independent
+      topics:
+        - EdApp
+        - SC-Training
+        - SafetyCulture
+        - shutdown
+        - migration
+        - data-portability
+        - '2026'
+      keyQuote: >-
+        On 31 March 2026, SafetyCulture will retire SC Training — formerly known as EdApp —
+        after six years. Users have until the end of March 2026 to migrate. After April 20, 2026,
+        all access is removed and data deleted permanently. Completion records are difficult to
+        transfer cleanly. 1M+ users and 70,000+ organisations affected.
+
+    - id: SE011
+      publisher: SafetyCulture
+      title: "IoT Monitoring System & Solution | SafetyCulture"
+      url: https://safetyculture.com/monitoring/iot-monitoring-system
+      date: '2026-01-01'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: neutral
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - SafetyCulture
+        - IoT
+        - monitoring
+        - sensors
+        - workplace-safety
+        - '2026'
+      keyQuote: >-
+        SafetyCulture IoT disclaimer: "SafetyCulture is a workplace operations platform that
+        can support an EHS management system but is not specialized EHS management software."
+        Sensors connect via gateways; seamless integration with existing systems; plug-and-play
+        setup confirmed by customer testimonial.
+
+    - id: SE012
+      publisher: SafetyCulture
+      title: "Features | SC Training: A Mobile LMS"
+      url: https://training.safetyculture.com/features/
+      date: '2026-01-01'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics:
+        - SC-Training
+        - EdApp
+        - LMS
+        - microlearning
+        - course-library
+        - AI
+        - '2026'
+      keyQuote: >-
+        SC Training features page lists: course authoring tool, 80+ mobile-optimised templates,
+        gamification, AI course generation, 1,000+ editable expert-accredited courses, OSHA
+        refresher training, HACCP training, D&I courses, compliance tracking.
+
+    - id: SE013
+      publisher: SafetyCulture
+      title: "Temperature Monitoring System & Sensors | SafetyCulture"
+      url: https://safetyculture.com/monitoring/temperature
+      date: '2026-01-01'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: neutral
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - SafetyCulture
+        - temperature
+        - monitoring
+        - sensors
+        - HACCP
+        - food-safety
+        - '2026'
+      keyQuote: >-
+        Define optimal temperature range, set triggered alerts when limits are breached.
+        Self-installation guide; small monthly fee for sensor connectivity. Sensors durable;
+        strong signals through concrete floors and cool room walls. Food manufacturing: comply
+        with regulations, prevent food-related incidents, HACCP compliance.
+
+    - id: SE014
+      publisher: SafetyCulture
+      title: "What are Heads Ups? — SafetyCulture Help Center"
+      url: https://help.safetyculture.com/en-US/003101/
+      date: '2026-01-01'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics:
+        - SafetyCulture
+        - Heads-Up
+        - communications
+        - acknowledgment
+        - frontline
+        - '2026'
+      keyQuote: >-
+        Heads Ups are messages to keep teams informed. Track who acknowledged; send reminders;
+        require signatures on linked files; share externally. Emoji reactions. Analytics track
+        reach and acknowledgment rates. Edit or delete existing Heads Ups as needed.
+
+    - id: SE015
+      publisher: SafetyCulture
+      title: "SafetyCulture Marketplace US | Trusted Workplace Safety Solutions & PPE"
+      url: https://marketplace.safetyculture.com/us
+      date: '2026-01-01'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: neutral
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - SafetyCulture
+        - marketplace
+        - PPE
+        - safety-products
+        - procurement
+        - '2026'
+      keyQuote: >-
+        "Choose over 100,000 items from 200 brands." Customer: "It's one location where we can
+        get our orders done." Available in US; Brink's Inc, Byblos Constructions among
+        listed customers.
+
+    - id: SE016
+      publisher: Fluix
+      title: "SafetyCulture Review by a Fluix PM: Pros, Cons, Features & Pricing (2026)"
+      url: https://fluix.io/blog/safetyculture-review
+      date: '2026-01-01'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: adverse
+      sourceType: review
+      reputationTier: medium
+      independence: competitor
+      topics:
+        - SafetyCulture
+        - review
+        - limitations
+        - workflow
+        - approval
+        - '2026'
+      keyQuote: >-
+        "SafetyCulture is best for fast digital inspections and polished mobile experience.
+        Where it falls short: multi-step approval chains and task routing, deep document
+        control, and highly customized reporting layouts." Task workflows mostly one-directional.
+
+    - id: SE017
+      publisher: Connecteam
+      title: "Honest SafetyCulture Review: Pros, Cons, Features & Pricing"
+      url: https://connecteam.com/reviews/safetyculture/
+      date: '2026-01-01'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: adverse
+      sourceType: review
+      reputationTier: medium
+      independence: competitor
+      topics:
+        - SafetyCulture
+        - review
+        - pricing
+        - limitations
+        - customer-support
+        - '2026'
+      keyQuote: >-
+        Verdict: 7.7/10. Limitations: per-user pricing scales quickly; analytics customisation
+        limited; no time tracking; customer support slow for complex enterprise deployments.
+
+    - id: SE018
+      publisher: Capterra
+      title: "SafetyCulture Reviews 2024. Verified Reviews, Pros & Cons — Capterra"
+      url: https://www.capterra.com/p/141080/iAuditor/reviews/
+      date: '2024-05-11'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: neutral
+      sourceType: review
+      reputationTier: high
+      independence: independent
+      topics:
+        - SafetyCulture
+        - iAuditor
+        - user-reviews
+        - support
+        - template
+        - '2024'
+      keyQuote: >-
+        iAuditor review: overall 4.6/5. Exceptional customer service for basic issues; template
+        editor supports complex conditional logic (7,000-item template reported). Rapid resolution
+        of template editor memory allocation issue. Works flawlessly on iPhone.
+
+    - id: SE019
+      publisher: Software Advice
+      title: "SafetyCulture Reviews, Pros and Cons — Software Advice"
+      url: https://www.softwareadvice.com/cmms/iauditor-profile/reviews/
+      date: '2026-03-08'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: neutral
+      sourceType: review
+      reputationTier: high
+      independence: independent
+      topics:
+        - SafetyCulture
+        - reviews
+        - rating
+        - CMMS
+        - '2026'
+      keyQuote: >-
+        SafetyCulture overall rating 4.6/5 on Software Advice across 238 verified reviews
+        (breakdown: 167 five-star, 71 four-star). Available on Wayback Machine snapshot
+        dated March 2026.
+
+    - id: SE020
+      publisher: Go Packages (pkg.go.dev)
+      title: "safetyculture-exporter module — github.com/SafetyCulture/safetyculture-exporter"
+      url: https://pkg.go.dev/github.com/SafetyCulture/safetyculture-exporter
+      date: '2026-05-22'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: high
+      independence: independent
+      topics:
+        - SafetyCulture
+        - exporter
+        - Go
+        - CLI
+        - open-source
+        - developer
+        - '2026'
+      keyQuote: >-
+        SafetyCulture Exporter is a command-line tool available to Premium and Enterprise
+        customers. Export inspections, templates, schedules, and actions. Available in CLI
+        and desktop GUI. Documentation includes database support, Docker support, CSV/SQL modes.
+
+    - id: SE021
+      publisher: API Tracker
+      title: "SafetyCulture API — Docs, SDKs & Integration"
+      url: https://apitracker.io/a/iauditor
+      date: '2026-01-01'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: independent
+      topics:
+        - SafetyCulture
+        - API
+        - iAuditor
+        - webhooks
+        - developer
+        - '2026'
+      keyQuote: >-
+        iAuditor API used to conduct over 2 million inspections per month for safety, quality
+        control, and operations. API styles: REST. Developer docs: available. API Reference:
+        available. Webhooks management API: available.
+
+    - id: SE022
+      publisher: SHEQSY
+      title: "SHEQSY joins forces with SafetyCulture — Safety for Lone Workers"
+      url: https://sheqsy.com/en-us/sheqsy-joins-safetyculture/
+      date: '2022-04-05'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: neutral
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - SHEQSY
+        - SafetyCulture
+        - lone-worker
+        - acquisition
+        - duress
+        - check-in
+        - '2022'
+      keyQuote: >-
+        SHEQSY acquired by SafetyCulture (April 2022). Mission: protect lone workers via real-time
+        alerts, check-ins, duress alarms. Integration with iAuditor and EdApp planned. SafetyCulture
+        invested in SHEQSY in 2020 prior to full acquisition.
+
+    - id: SE023
+      publisher: Tools for Humans
+      title: "SafetyCulture review 2026 — digital inspections & compliance"
+      url: https://www.toolsforhumans.ai/ai-tools/safetyculture
+      date: '2026-01-01'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: neutral
+      sourceType: other
+      reputationTier: medium
+      independence: independent
+      topics:
+        - SafetyCulture
+        - review
+        - inspections
+        - compliance
+        - online-buzz
+        - '2026'
+      keyQuote: >-
+        SafetyCulture online buzz: 3.4M mentions. 18% trend growth (1-month). Rating 3.5/5
+        based on user feedback, community sentiment, pricing value, and target audience fit.
+
+    - id: SE024
+      publisher: SourceForge
+      title: "SafetyCulture Integrations — SourceForge"
+      url: https://sourceforge.net/software/product/SafetyCulture/integrations/
+      date: '2026-01-01'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: neutral
+      sourceType: other
+      reputationTier: medium
+      independence: independent
+      topics:
+        - SafetyCulture
+        - integrations
+        - Salesforce
+        - Workday
+        - Zapier
+        - third-party
+        - '2026'
+      keyQuote: >-
+        SourceForge lists SafetyCulture integration partners including Salesforce ($25/user/month
+        CRM), Raklet, and other business tools. Integration catalog independently confirms
+        breadth of available third-party connectors.
+
+    - id: SE025
+      publisher: ProProfs Training Maker
+      title: "EdApp Is Shutting Down — How to Migrate and Best Alternatives"
+      url: https://www.proprofstraining.com/blog/edapp-alternatives/
+      date: '2026-01-01'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: adverse
+      sourceType: other
+      reputationTier: medium
+      independence: competitor
+      topics:
+        - EdApp
+        - SC-Training
+        - shutdown
+        - migration
+        - alternatives
+        - data-portability
+        - '2026'
+      keyQuote: >-
+        SafetyCulture retired SC Training on 31 March 2026 after acquiring EdApp in 2020 and
+        rebranding in 2024. Data portability problem: completion records, learner progress, and
+        historical data difficult to transfer cleanly. Manual export required before April 20, 2026.
+
+    - id: SE026
+      publisher: Rollout.com
+      title: "How to build a SafetyCulture API integration — rollout.com"
+      url: https://rollout.com/integration-guides/safety-culture/sdk/step-by-step-guide-to-building-a-safety-culture-api-integration-in-js
+      date: '2026-01-01'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: independent
+      topics:
+        - SafetyCulture
+        - API
+        - integration
+        - REST
+        - authentication
+        - rate-limits
+        - '2026'
+      keyQuote: >-
+        SafetyCulture REST API: Bearer token authentication. Base URL:
+        https://api.safetyculture.io/audits/v1. Rate limits per endpoint: 20 to 800
+        requests per 60 seconds (e.g., POST /users/search: 200 req/60s). Webhooks
+        available for real-time event notifications.
+
+    - id: SE027
+      publisher: eliteai.tools
+      title: "SafetyCulture — Uptime & Performance Report"
+      url: https://eliteai.tools/tool/safetyculture/uptime-status
+      date: '2026-05-01'
+      accessDate: '2026-05-22'
+      accessStatus: ok
+      stance: neutral
+      sourceType: other
+      reputationTier: medium
+      independence: independent
+      topics:
+        - SafetyCulture
+        - uptime
+        - reliability
+        - performance
+        - SLA
+        - '2026'
+      keyQuote: >-
+        SafetyCulture uptime performance: monthly uptime between 99.68% and 100% in late 2025
+        and early 2026. Status page shows 99.7%–100% over last 60 days. Rare incidents with
+        quick resolution.
+
+  claims:
+    - id: CE001
+      statement: >-
+        SafetyCulture's platform encompasses eight integrated capability modules as of May 2026:
+        Inspections/iAuditor, Issues/Actions, Training (consolidated into core platform after
+        SC Training retirement), Asset Management, IoT Sensor Monitoring, Analytics, Heads Up
+        Communications, Marketplace, and Lone Worker Safety (SHEQSY).
+      type: company-claimed
+      topic: platform-module-scope
+      sourceRefs:
+        - SE011
+        - SE015
+      confidence: high
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE002
+
+    - id: CE002
+      statement: >-
+        SafetyCulture's iAuditor module has over 100,000 public templates and over 2 million inspections
+        conducted per month on the platform as of 2026, serving 85,000+ businesses globally.
+      type: company-claimed
+      topic: iAuditor-scale
+      sourceRefs:
+        - SE011
+        - SE021
+      confidence: high
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE002
+        - QE021
+
+    - id: CE003
+      statement: >-
+        SafetyCulture retired its SC Training platform (formerly EdApp, acquired 2020, rebranded 2024)
+        on 31 March 2026. All access was removed after 20 April 2026; data was permanently deleted.
+        The event affected an estimated 70,000+ organisations and 1M+ users. Completion history was
+        not fully transferable without a paid upgrade path.
+      type: third-party-reported
+      topic: SC-Training-retirement
+      sourceRefs:
+        - SE010
+        - SE025
+      confidence: medium
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE006
+        - QE013
+        - QE027
+
+    - id: CE004
+      statement: >-
+        SHEQSY (lone worker safety app providing duress alarms, check-ins, job completion monitoring,
+        and real-time worker location) was acquired by SafetyCulture in April 2022. SafetyCulture had
+        invested in SHEQSY in 2020 prior to full acquisition. SHEQSY is progressively integrated into
+        the core SafetyCulture platform.
+      type: third-party-reported
+      topic: SHEQSY-acquisition
+      sourceRefs:
+        - SE022
+        - SE001
+      confidence: high
+      freshness: recent
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE016
+        - QE027
+
+    - id: CE005
+      statement: >-
+        In April 2026, SafetyCulture acquired the team behind Twine (Sydney-based AI startup) with
+        Brian Swift returning as VP AI, reporting to CEO Luke Anear. The acquisition is described as
+        part of a push to become an "agentic-first" AI platform. Swift previously served as VP of
+        Product at SafetyCulture before co-founding Twine.
+      type: company-claimed
+      topic: Twine-acquisition-agentic-AI
+      sourceRefs:
+        - SE005
+        - SE006
+      confidence: high
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE008
+        - QE020
+        - QE027
+
+    - id: CE006
+      statement: >-
+        SafetyCulture's Marketplace offers over 100,000 items from 200+ brands in Australia and the
+        United States, providing in-inspection product procurement for safety equipment and PPE.
+        The marketplace generated approximately AU$68.2M GMV in FY2025, contributing ~12% to overall
+        revenue at ~48% gross margin on secondary sales.
+      type: company-claimed
+      topic: marketplace-scale-GMV
+      sourceRefs:
+        - SE015
+        - SE008
+      confidence: medium
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE012
+
+    - id: CE007
+      statement: >-
+        SafetyCulture's IoT sensor architecture uses Dragino LHT65S sensors (LoRaWAN protocol,
+        battery-powered CR17540, ±0.3°C accuracy) connected via a gateway bridge to the cloud
+        platform. The gateway and sensors come pre-configured; installation requires entering sensor
+        IDs. Supported environmental types include temperature, humidity, air quality (CO₂, TVOCs,
+        particulate), sound/noise, pressure, and open/close detection.
+      type: company-claimed
+      topic: IoT-sensor-architecture
+      sourceRefs:
+        - SE007
+        - SE013
+      confidence: high
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE005
+        - QE019
+
+    - id: CE008
+      statement: >-
+        SafetyCulture's Heads Up module enables broadcast messaging to frontline teams with
+        acknowledgment tracking, signature requirements on linked files, multimedia attachments,
+        emoji reactions, threaded comments, and external sharing. Analytics within Heads Up
+        measure reach and acknowledgment rates.
+      type: company-claimed
+      topic: Heads-Up-feature-set
+      sourceRefs:
+        - SE014
+        - SE011
+      confidence: high
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE010
+
+    - id: CE009
+      statement: >-
+        SafetyCulture holds ISO 27001:2022 certification and maintains SOC 2 Type II attestation
+        (annually renewed). ISO 27001 confirms implementation of an ISMS and security controls to
+        protect customer data. SOC 2 Type II audits are performed by an independent auditor against
+        AICPA Trust Services Criteria. Both certifications are confirmed on SafetyCulture's official
+        security page.
+      type: third-party-reported
+      topic: security-certifications
+      sourceRefs:
+        - SE001
+        - SE017
+      confidence: high
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE003
+        - QE017
+
+    - id: CE010
+      statement: >-
+        SafetyCulture encrypts customer data at rest using AES-256 and in transit using TLS 1.2 or
+        later. Customer data is hosted on AWS infrastructure with access limited to essential
+        personnel. MFA and VPN are required for internal system access. Centralized logging and
+        monitoring are in place for threat detection.
+      type: company-claimed
+      topic: encryption-and-access-controls
+      sourceRefs:
+        - SE001
+        - SE016
+      confidence: high
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE003
+        - QE017
+
+    - id: CE011
+      statement: >-
+        SafetyCulture's Asset Management module maintains a centralised register of physical assets
+        linked to inspection schedules, maintenance records, sensor data, and compliance certificates.
+        Assets can be assigned to locations, teams, or individuals; maintenance workflows and
+        compliance document uploads are supported. The module's depth is lighter than purpose-built
+        CMMS tools.
+      type: company-claimed
+      topic: asset-management
+      sourceRefs:
+        - SE011
+        - SE016
+      confidence: medium
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE015
+
+    - id: CE012
+      statement: >-
+        SafetyCulture's SC Training course library (prior to retirement/consolidation) provided
+        1,000+ editable expert-accredited courses including OSHA refresher, HACCP, D&I (with
+        Karamo), UNITAR partnership courses, and harassment prevention. AI course generation
+        creates modules from PDFs, documents, or plain text prompts. 80+ mobile-optimised
+        lesson templates support gamification, video, quizzes.
+      type: company-claimed
+      topic: training-library-features
+      sourceRefs:
+        - SE012
+        - SE006
+      confidence: high
+      freshness: recent
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE021
+
+    - id: CE013
+      statement: >-
+        SafetyCulture IoT monitoring is explicitly disclaimed as not specialized EHS management
+        software. The official product page states: "SafetyCulture is a workplace operations
+        platform that can support an EHS management system but is not specialized EHS management
+        software. While our platform offers various capabilities, some specialized functions of
+        EHS system solutions may require additional systems."
+      type: company-claimed
+      topic: EHS-disclaimer
+      sourceRefs:
+        - SE011
+        - SE013
+      confidence: high
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE018
+
+    - id: CE014
+      statement: >-
+        SafetyCulture's public developer surface is a REST API with Bearer token authentication,
+        rate limits of 20–800 requests per 60 seconds (POST /users/search: 200 req/60s), and
+        webhook support for event-driven integrations. No public GraphQL API is documented as of
+        2026. The developer portal (developer.safetyculture.com) provides live API reference, SDKs,
+        and code samples.
+      type: third-party-reported
+      topic: REST-API-specifications
+      sourceRefs:
+        - SE002
+        - SE026
+      confidence: high
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE004
+        - QE026
+
+    - id: CE015
+      statement: >-
+        SafetyCulture maintains multiple open-source GitHub repositories under github.com/SafetyCulture.
+        The most prominent is a gRPC-Web browser extension (JavaScript, 440 stars, 70 forks),
+        suggesting internal use of gRPC in addition to the public REST API. Additional repositories
+        include a Python SDK (23 stars, 10 forks) and the SafetyCulture Exporter (Go, Apache-2.0,
+        19 stars).
+      type: third-party-reported
+      topic: GitHub-developer-signal
+      sourceRefs:
+        - SE003
+        - SE020
+      confidence: high
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE004
+        - QE014
+
+    - id: CE016
+      statement: >-
+        The SafetyCulture Exporter is an open-source CLI and desktop GUI tool (Apache-2.0 licence,
+        written in Go) that exports inspections, templates, schedules, and actions to MSSQL, PowerBI,
+        and other BI targets. It is available to all Premium and Enterprise customers and is listed
+        in the integration marketplace and independently tracked on pkg.go.dev.
+      type: third-party-reported
+      topic: exporter-tool
+      sourceRefs:
+        - SE009
+        - SE020
+      confidence: high
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE004
+        - QE011
+        - QE014
+
+    - id: CE017
+      statement: >-
+        The SafetyCulture platform integrations marketplace lists 100+ pre-built connectors
+        including Salesforce, Workday, BambooHR, ADP Workforce Now, Zapier, and SharePoint.
+        A no-code integration builder allows custom workflow connections without developer
+        engagement. SourceForge independently catalogs SafetyCulture integration partners.
+      type: third-party-reported
+      topic: integration-marketplace
+      sourceRefs:
+        - SE008
+        - SE024
+      confidence: high
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE011
+
+    - id: CE018
+      statement: >-
+        Independent review platforms document consistent limitations in SafetyCulture workflow
+        customisation: task workflows are "mostly one-directional"; multi-step approval chains
+        are not natively supported; advanced reporting layouts require workarounds; analytics
+        dashboard customisation is limited at lower pricing tiers; editing published TSA templates
+        requires rebuilding from scratch.
+      type: third-party-reported
+      topic: workflow-customisation-limitations
+      sourceRefs:
+        - SE016
+        - SE017
+      confidence: medium
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE007
+        - QE025
+
+    - id: CE019
+      statement: >-
+        SafetyCulture's overall platform rating is 4.6 out of 5 on Software Advice (238 verified
+        reviews). Common positive themes: ease-of-use, offline mobile capability, template logic
+        depth (conditional branching), and PDF report quality. Customer support praised for basic
+        issues; noted as slower for complex enterprise customisation requests.
+      type: third-party-reported
+      topic: review-ratings
+      sourceRefs:
+        - SE019
+        - SE018
+      confidence: high
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE007
+
+    - id: CE020
+      statement: >-
+        SafetyCulture's official status page (status.safetyculture.com) reported a May 2026 iOS app
+        defect resolved in version 26.18.02. The fix required an App Store submission and approval,
+        with a delay of approximately four days from initial detection to resolution. The version
+        number 26.18.02 indicates a year.week.patch release cadence consistent with continuous
+        delivery.
+      type: company-claimed
+      topic: May-2026-iOS-incident
+      sourceRefs:
+        - SE004
+        - SE027
+      confidence: high
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE009
+        - QE023
+        - QE024
+
+    - id: CE021
+      statement: >-
+        Third-party uptime monitoring shows SafetyCulture monthly uptime between 99.68% and 100%
+        in late 2025 and early 2026, with a practical average around 99.7–100%. The median incident
+        resolution time over 90 days prior to May 2026 was approximately 3 hours 22 minutes. No
+        contractual SLA percentage is published publicly.
+      type: third-party-reported
+      topic: uptime-reliability
+      sourceRefs:
+        - SE027
+        - SE004
+      confidence: medium
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE009
+
+    - id: CE022
+      statement: >-
+        SafetyCulture is hosted entirely on Amazon Web Services (AWS). Specific AWS regions are not
+        disclosed publicly, which limits transparency on data residency for EU/GDPR-regulated
+        customers and regulated industry buyers requiring documented geographic data boundaries.
+      type: company-claimed
+      topic: AWS-hosting
+      sourceRefs:
+        - SE001
+        - SE026
+      confidence: high
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE017
+        - QE025
+
+    - id: CE023
+      statement: >-
+        SafetyCulture's IoT sensor hardware is sourced from Dragino Technology (Shenzhen, China).
+        The primary standard temperature and humidity sensor is the Dragino LHT65S, a LoRaWAN
+        device operating on a replaceable CR17540 battery with a 100m line-of-sight range.
+        Additional sensor procurement requires contacting a customer success manager rather than
+        self-serve ordering.
+      type: company-claimed
+      topic: Dragino-hardware-dependency
+      sourceRefs:
+        - SE007
+        - SE013
+      confidence: high
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE005
+        - QE019
+
+    - id: CE024
+      statement: >-
+        SafetyCulture's AI features marketed in 2026 include AI-assisted template generation from
+        documents (PDFs), AI course builder, natural language querying of audit data ("Which sites
+        have the lowest quality scores?"), AI-driven analytics heatmaps, and an AI assistant for
+        frontline workers. Independently verifiable shipped features are limited to template/course
+        generation and NLQ analytics summaries; broader "agentic" features are roadmap items.
+      type: company-claimed
+      topic: AI-features-claimed
+      sourceRefs:
+        - SE006
+        - SE005
+      confidence: medium
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE008
+        - QE022
+
+    - id: CE025
+      statement: >-
+        SafetyCulture's iOS app uses a year.week.patch versioning convention (e.g., 26.18.02
+        in May 2026), indicating a continuous delivery cadence with approximately weekly
+        releases. This supports rapid feature iteration but creates a dependency on Apple App
+        Store review timelines for time-sensitive iOS fixes.
+      type: company-claimed
+      topic: release-cadence
+      sourceRefs:
+        - SE004
+        - SE027
+      confidence: medium
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE024
+
+    - id: CE026
+      statement: >-
+        The SafetyCulture gRPC-Web browser extension repository on GitHub (440 stars, 70 forks,
+        JavaScript) is a Chrome and Firefox developer tool to aid gRPC-Web development, suggesting
+        SafetyCulture uses gRPC for internal service communication in addition to the public REST
+        API surface. This is an inferred architecture signal, not confirmed by official documentation.
+      type: inferred
+      topic: internal-gRPC-architecture
+      sourceRefs:
+        - SE003
+        - SE009
+      confidence: low
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE025
+
+    - id: CE027
+      statement: >-
+        SafetyCulture's SHEQSY lone worker safety module provides: duress alarms, timed check-ins
+        (mandatory worker check-in at set intervals), job completion monitoring, and real-time worker
+        location on iOS and Android. SHEQSY was integrated with iAuditor and EdApp post-acquisition.
+        The module addresses the approximately 80% of the global workforce that is deskless/field-based.
+      type: company-claimed
+      topic: SHEQSY-lone-worker-features
+      sourceRefs:
+        - SE022
+        - SE011
+      confidence: high
+      freshness: recent
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE016
+
+    - id: CE028
+      statement: >-
+        SafetyCulture's Free plan supports up to 10 users and 5 active inspection templates. The
+        Premium tier (previously $24/user/month annual) is the primary paid tier. Enterprise pricing
+        is custom-quoted. SC Training (prior to retirement) had a separate Free (10 learners) and
+        Premium ($5/user/month) tier. Post-consolidation, training capability is bundled into the
+        SafetyCulture platform tiers.
+      type: company-claimed
+      topic: pricing-tiers
+      sourceRefs:
+        - SE012
+        - SE016
+      confidence: medium
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE002
+
+    - id: CE029
+      statement: >-
+        SafetyCulture's analytics module supports AI-assisted natural language querying of audit data,
+        configurable dashboard heatmaps, site-level benchmarking, and scheduled/ad-hoc export to
+        BI tools. The SafetyCulture Exporter (open-source Go) enables MSSQL and PowerBI integration.
+        Analytics customisation at lower pricing tiers is reported as limited by independent reviews.
+      type: company-claimed
+      topic: analytics-features
+      sourceRefs:
+        - SE006
+        - SE016
+      confidence: medium
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE002
+
+    - id: CE030
+      statement: >-
+        SafetyCulture's IoT monitoring IoT sensors are documented for use in food manufacturing
+        (HACCP compliance), healthcare/pharmaceutical (vaccine/drug storage), manufacturing
+        (equipment safety), warehousing (climate control), and facilities management (HVAC).
+        The temperature monitoring product page confirms HACCP alignment and self-install capability.
+      type: company-claimed
+      topic: IoT-use-cases
+      sourceRefs:
+        - SE013
+        - SE007
+      confidence: high
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE005
+
+    - id: CE031
+      statement: >-
+        SafetyCulture's integration ecosystem is independently confirmed on SourceForge with Salesforce
+        (Starter Suite $25/user/month starting price) and other partners listed, corroborating the
+        platform's breadth of third-party connectors beyond SafetyCulture's own integration marketplace.
+      type: third-party-reported
+      topic: integration-ecosystem-confirmation
+      sourceRefs:
+        - SE024
+        - SE008
+      confidence: medium
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE011
+
+    - id: CE032
+      statement: >-
+        SafetyCulture's mobile apps for iOS and Android support offline operation for frontline workers
+        in areas with limited connectivity. Offline inspections are synced when connectivity is restored.
+        The offline-first design is a documented differentiation versus desktop-first EHS incumbent
+        platforms (Cority, Intelex, Enablon) that are not mobile-first.
+      type: company-claimed
+      topic: offline-mobile-capability
+      sourceRefs:
+        - SE016
+        - SE018
+      confidence: high
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE025
+
+    - id: CE033
+      statement: >-
+        SafetyCulture's Trust Center provides publicly accessible security documentation, certifications,
+        and whitepapers. Enterprise buyers can access the SOC 2 Type II report under NDA and ISO 27001
+        certificate for procurement evaluation. The Trust Center availability is confirmed on the
+        security page.
+      type: company-claimed
+      topic: trust-center
+      sourceRefs:
+        - SE001
+        - SE017
+      confidence: high
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE003
+
+    - id: CE034
+      statement: >-
+        SafetyCulture's HACCP-aligned temperature monitoring system for food manufacturing is documented
+        on the temperature monitoring product page. IoT sensors provide continuous temperature logs and
+        threshold alerts for food safety compliance. The platform's help documentation lists Dragino
+        LHT65S as the standard sensor for HACCP-relevant temperature environments.
+      type: company-claimed
+      topic: HACCP-temperature-compliance
+      sourceRefs:
+        - SE013
+        - SE007
+      confidence: high
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE003
+
+    - id: CE035
+      statement: >-
+        SafetyCulture CEO Luke Anear stated in the April 2026 Twine acquisition press release: "From
+        the minute I wake up until I go to sleep, I'm working on how we move to an agentic-first
+        experience." This is the clearest public statement of SafetyCulture's AI product strategy
+        direction but does not confirm a shipped agentic capability.
+      type: company-claimed
+      topic: agentic-AI-CEO-statement
+      sourceRefs:
+        - SE005
+        - SE023
+      confidence: high
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE008
+        - QE020
+        - QE022
+
+    - id: CE036
+      statement: >-
+        Connecteam's 2026 SafetyCulture review gives a verdict of 7.7/10 and identifies per-user
+        pricing scaling quickly as a key commercial limitation, alongside restricted analytics
+        customisation, absence of time tracking, and slow customer support for complex enterprise
+        deployments. Connecteam is a direct competitor with adverse stance.
+      type: third-party-reported
+      topic: Connecteam-review-adverse
+      sourceRefs:
+        - SE017
+        - SE016
+      confidence: medium
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE007
+
+    - id: CE037
+      statement: >-
+        SafetyCulture's GDPR compliance is asserted via its privacy policy and security page with
+        reference to a Data Processing Addendum. However, the specific AWS regions used for EU data
+        storage are not publicly disclosed, which limits independently verifiable data residency
+        confirmation for GDPR-regulated buyers.
+      type: company-claimed
+      topic: GDPR-data-residency
+      sourceRefs:
+        - SE001
+        - SE022
+      confidence: medium
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE017
+
+    - id: CE038
+      statement: >-
+        SafetyCulture's Tools for Humans 2026 rating aggregator shows 3.4M online mentions with
+        an 18% one-month trend growth. The platform is rated 3.5/5 based on community sentiment,
+        pricing value, and target audience fit — a middling rating consistent with per-user pricing
+        tension noted in independent reviews.
+      type: third-party-reported
+      topic: brand-sentiment
+      sourceRefs:
+        - SE023
+        - SE016
+      confidence: low
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE007
+
+    - id: CE039
+      statement: >-
+        The SC Training / EdApp retirement affected approximately 1M+ users across 70,000+
+        organisations. Data deletion after 20 April 2026 was permanent; no migration window
+        remained after that date. Organizations in regulated industries relying on training
+        completion records for compliance documentation faced potential regulatory exposure.
+      type: third-party-reported
+      topic: SC-Training-customer-impact
+      sourceRefs:
+        - SE010
+        - SE025
+      confidence: medium
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE013
+
+    - id: CE040
+      statement: >-
+        Fluix's 2026 independent review of SafetyCulture documents the following technical
+        limitations: task workflows are "mostly one-directional"; multi-step approval chains are
+        not supported; report layout customisation is limited; per-user pricing scales quickly
+        for large teams. The review is authored by a Fluix product manager, making it an adversarial
+        but technically specific source.
+      type: third-party-reported
+      topic: Fluix-adverse-review
+      sourceRefs:
+        - SE016
+        - SE017
+      confidence: medium
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE007
+        - QE022
+
+    - id: CE041
+      statement: >-
+        Independent platform monitors (isdown.app and eliteai.tools) confirm SafetyCulture uptime
+        at 99.68%–100% monthly for late 2025 through early 2026. The May 2026 iOS app defect
+        (version 26.18.02 fix) was an isolated incident that did not appear to affect web or Android
+        users. Median resolution time approximately 3 hours 22 minutes over prior 90-day period.
+      type: third-party-reported
+      topic: uptime-monitoring-third-party
+      sourceRefs:
+        - SE027
+        - SE004
+      confidence: medium
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE009
+
+    - id: CE042
+      statement: >-
+        As of the May 2026 run date, SafetyCulture does not publish a contractual SLA percentage
+        for its cloud platform. Enterprise buyers seeking uptime SLA for procurement compliance in
+        regulated sectors must request this from the SafetyCulture sales team. Practical uptime
+        evidence from public monitoring is strong (99.7–100%) but not contractually guaranteed.
+      type: inferred
+      topic: no-public-SLA
+      sourceRefs:
+        - SE027
+        - SE004
+      confidence: medium
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE009
+
+    - id: CE043
+      statement: >-
+        SafetyCulture's platform complexity arises from assembling eight capability modules through
+        a combination of organic development (iAuditor, Issues, Analytics, Heads Up, Marketplace)
+        and acquisition (EdApp/SC Training 2020, SHEQSY 2022, Twine team 2026). This acquisition-
+        driven expansion introduces integration debt risk: module feature depth may be uneven;
+        cross-module workflow complexity may lag behind single-module specialist competitors.
+      type: inferred
+      topic: platform-complexity-risk
+      sourceRefs:
+        - SE016
+        - SE017
+      confidence: medium
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE018
+        - QE022
+
+    - id: CE044
+      statement: >-
+        SafetyCulture's IoT sensor hardware dependency on Dragino Technology (Shenzhen) represents
+        a single-vendor supply chain risk. Additional sensors must be procured via customer success
+        manager (not self-serve). Quality, supply continuity, and pricing for Dragino hardware are
+        outside SafetyCulture's operational control. This risk is concentrated in the IoT sensor
+        product line and less material to the overall platform than the core SaaS modules.
+      type: inferred
+      topic: Dragino-supply-chain-risk
+      sourceRefs:
+        - SE007
+        - SE013
+      confidence: medium
+      freshness: current
+      contradictsClaimRefs: []
+      answersQuestionRefs:
+        - QE019
+
+  researchQuestions:
+    - id: QE001
+      question: >-
+        How do SafetyCulture's eight product modules integrate into a unified operations platform,
+        and what is the technical mechanism connecting inspections, issues, training, assets,
+        sensors, analytics, Heads Up, and marketplace?
+      type: mechanism
+      targets:
+        - contentRequirements/0
+        - contentRequirements/2
+        - plannedFigures/product-architecture-map
+      status: answered
+
+    - id: QE002
+      question: >-
+        What are the core modules in SafetyCulture's platform as of May 2026, and what is the
+        functional scope of each — inspections, issues/actions, training, asset management,
+        IoT sensors, analytics, Heads Up, marketplace, and lone worker?
+      type: enumeration
+      targets:
+        - contentRequirements/1
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE003
+      question: >-
+        What security certifications does SafetyCulture hold as of 2026, and what do they cover
+        in terms of scope, audit frequency, and applicable standards?
+      type: verification
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE004
+      question: >-
+        What are SafetyCulture's API rate limits, integration scale, and developer community
+        metrics including GitHub activity, SDK availability, and API usage signals?
+      type: quantification
+      targets:
+        - contentRequirements/3
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE005
+      question: >-
+        How does SafetyCulture's IoT sensor system work architecturally — what hardware is used,
+        how does data flow from sensors to the cloud platform, and what connectivity protocols
+        are involved?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE006
+      question: >-
+        What was the status of SC Training (EdApp) as of the May 2026 run date — was it still
+        operational, or had it been retired, and what impact did this have on SafetyCulture's
+        training capability?
+      type: freshness
+      targets:
+        - contentRequirements/0
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE007
+      question: >-
+        What are the reported technical limitations and product complaints from SafetyCulture
+        users in 2026, particularly around workflow customisation, analytics, approval chains,
+        and customer support?
+      type: adverse
+      targets:
+        - contentRequirements/0
+        - plannedTables/workflow-use-case-table
+      status: answered
+
+    - id: QE008
+      question: >-
+        How does SafetyCulture's AI capability work as of 2026, and how does it differ from
+        commodity AI or competitive offerings — specifically, what AI features are verifiably
+        shipped versus claimed in marketing?
+      type: mechanism
+      targets:
+        - contentRequirements/4
+        - plannedTables/roadmap-release-development-stage-table
+      status: answered
+
+    - id: QE009
+      question: >-
+        What is SafetyCulture's reliability and uptime track record as of 2026, including
+        the most recent incidents, resolution times, and whether a contractual SLA is
+        publicly available?
+      type: verification
+      targets:
+        - contentRequirements/3
+        - plannedTables/roadmap-release-development-stage-table
+      status: answered
+
+    - id: QE010
+      question: >-
+        How does SafetyCulture's Heads Up module function as a frontline communication tool,
+        and what workflow capabilities does it support beyond simple broadcast messaging?
+      type: mechanism
+      targets:
+        - contentRequirements/0
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE011
+      question: >-
+        What integrations and third-party connections does SafetyCulture support, including the
+        breadth of the integration marketplace, specific named connectors, and API-level
+        integration capability?
+      type: enumeration
+      targets:
+        - contentRequirements/3
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE012
+      question: >-
+        How does SafetyCulture's marketplace module integrate with the inspections workflow,
+        and what is the commercial scale of the marketplace in terms of SKUs, brands, and
+        reported GMV?
+      type: mechanism
+      targets:
+        - contentRequirements/0
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE013
+      question: >-
+        What are the product and customer risks from SC Training's retirement in March 2026,
+        including the scope of affected users, data portability limitations, and potential
+        churn or compliance exposure?
+      type: adverse
+      targets:
+        - contentRequirements/3
+        - plannedTables/roadmap-release-development-stage-table
+      status: answered
+
+    - id: QE014
+      question: >-
+        What is SafetyCulture's developer community footprint — including GitHub repository
+        count, star/fork metrics, open-source tooling, and any third-party API ecosystem
+        signals?
+      type: quantification
+      targets:
+        - contentRequirements/4
+        - plannedFigures/critical-dependency-map
+      status: answered
+
+    - id: QE015
+      question: >-
+        How does SafetyCulture's asset management module operate, and how does it compare in
+        depth to purpose-built CMMS tools such as MaintainX or UpKeep for maintenance-heavy
+        industrial environments?
+      type: mechanism
+      targets:
+        - contentRequirements/0
+        - plannedTables/product-module-asset-matrix
+      status: partial
+
+    - id: QE016
+      question: >-
+        How does the lone worker / SHEQSY capability function within the SafetyCulture platform,
+        including its acquisition history, integration status, and feature set for isolated worker
+        monitoring?
+      type: mechanism
+      targets:
+        - contentRequirements/0
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE017
+      question: >-
+        What is SafetyCulture's data privacy and GDPR compliance posture, including certifications,
+        data residency transparency, and Data Processing Addendum availability?
+      type: verification
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: partial
+
+    - id: QE018
+      question: >-
+        How does SafetyCulture's technical architecture differ from EHS incumbent platforms
+        (Cority, Intelex, Enablon) in terms of mobile-first design, deployment model, and
+        integration depth?
+      type: comparison
+      targets:
+        - contentRequirements/2
+        - contentRequirements/4
+      status: answered
+
+    - id: QE019
+      question: >-
+        What are the risks from SafetyCulture's IoT hardware dependence on Dragino Technology,
+        including supply chain concentration, procurement model, and range/performance constraints?
+      type: adverse
+      targets:
+        - contentRequirements/2
+        - plannedFigures/critical-dependency-map
+      status: answered
+
+    - id: QE020
+      question: >-
+        What is SafetyCulture's product roadmap for agentic AI in 2026, including the Twine
+        acquisition's strategic role, and what verifiable milestones exist for shipped capability?
+      type: mechanism
+      targets:
+        - contentRequirements/3
+        - plannedTables/roadmap-release-development-stage-table
+      status: partial
+
+    - id: QE021
+      question: >-
+        What is the scale of SafetyCulture's training content library, including course count,
+        accreditation partners, and AI-assisted authoring capability, post-SC Training consolidation?
+      type: quantification
+      targets:
+        - contentRequirements/0
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE022
+      question: >-
+        How credible are SafetyCulture's AI claims relative to verifiable evidence, and what
+        is the risk that buyers make procurement decisions based on capabilities not yet shipped?
+      type: adverse
+      targets:
+        - contentRequirements/4
+        - contentRequirements/0
+      status: answered
+
+    - id: QE023
+      question: >-
+        What does SafetyCulture's public status page reveal about incident response quality,
+        including recent incidents, resolution transparency, and communication practices?
+      type: verification
+      targets:
+        - contentRequirements/3
+        - contentRequirements/5
+      status: answered
+
+    - id: QE024
+      question: >-
+        How does SafetyCulture's version numbering and release cadence work, and what does it
+        reveal about engineering velocity and deployment practices?
+      type: mechanism
+      targets:
+        - contentRequirements/3
+        - plannedTables/roadmap-release-development-stage-table
+      status: answered
+
+    - id: QE025
+      question: >-
+        How does SafetyCulture's mobile-first architecture differentiate it from desktop-first
+        EHS incumbents, and what specific technical capabilities support offline-first field
+        operations?
+      type: comparison
+      targets:
+        - contentRequirements/2
+        - contentRequirements/4
+      status: answered
+
+    - id: QE026
+      question: >-
+        What data types does SafetyCulture's REST API expose for integrations, and what are
+        the key authentication patterns, rate limits, and webhook capabilities for developers?
+      type: enumeration
+      targets:
+        - contentRequirements/3
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE027
+      question: >-
+        What significant changes occurred in SafetyCulture's product portfolio between 2024 and
+        2026 (SC Training retirement, Twine acquisition, SHEQSY integration) and what do they
+        imply for platform coherence and customer impact?
+      type: freshness
+      targets:
+        - contentRequirements/1
+        - plannedTables/roadmap-release-development-stage-table
+      status: answered
+
+  searchQueries:
+    - query: SafetyCulture platform product modules inspections training sensors 2026
+      purpose: Map current module scope and status as of 2026
+      dateConstraint: '2026'
+
+    - query: SafetyCulture API developer documentation REST webhooks integrations 2026
+      purpose: Confirm API specifications, rate limits, and developer surface
+      dateConstraint: '2026'
+
+    - query: SafetyCulture security ISO 27001 SOC 2 compliance trust center 2026
+      purpose: Verify security certifications and compliance posture
+      dateConstraint: '2026'
+
+    - query: SafetyCulture GitHub repository open source exporter 2026 stars contributors
+      purpose: Assess developer community signal and open-source footprint
+      dateConstraint: '2026'
+
+    - query: SafetyCulture product roadmap AI features agentic new releases 2026
+      purpose: Map current AI product status and roadmap direction
+      dateConstraint: '2026'
+
+    - query: SafetyCulture status page uptime reliability SLA incidents 2026
+      purpose: Confirm reliability track record and contractual SLA disclosure
+      dateConstraint: '2026'
+
+    - query: SafetyCulture EdApp SC Training shutting down March 2026 migration discontinued
+      purpose: Confirm SC Training retirement date, scope, and customer impact
+      dateConstraint: '2026'
+
+    - query: SafetyCulture Heads Up communications lone worker SHEQSY Twine acquisition 2026
+      purpose: Confirm Heads Up features, SHEQSY integration, and Twine talent acquisition
+      dateConstraint: '2026'
+
+    - query: SafetyCulture sensors IoT temperature monitoring Dragino LoRaWAN technical 2026
+      purpose: Confirm sensor hardware specifications, architecture, and capabilities
+      dateConstraint: '2026'
+
+    - query: SafetyCulture iAuditor negative reviews limitations complaints G2 Capterra 2026
+      purpose: Gather adverse user review evidence for product risk assessment
+      dateConstraint: '2026'
+
+    - query: SafetyCulture AWS cloud infrastructure data residency GDPR privacy 2026
+      purpose: Assess hosting architecture and GDPR compliance posture
+      dateConstraint: '2026'
+
+    - query: SafetyCulture EdApp microlearning LMS features training consolidation 2026
+      purpose: Confirm training module capabilities post-SC Training consolidation
+      dateConstraint: '2026'
+
+    - query: SafetyCulture marketplace products insurance integration 2026 revenue
+      purpose: Confirm marketplace scale, GMV, and insurance integration status
+      dateConstraint: '2026'
+
+    - query: SafetyCulture developer portal API GraphQL REST rate limits documentation 2026
+      purpose: Confirm API style, rate limits, and developer documentation quality
+      dateConstraint: '2026'
+
+  evidenceGaps:
+    - id: EGE001
+      gapType: private-evidence-only
+      severity: high
+      description: >-
+        SC Training / EdApp retirement customer impact — the actual churn rate, revenue impact, and
+        number of customers who successfully migrated versus lost their data is not publicly disclosed.
+        SafetyCulture has not published any post-retirement customer retention statistics. The
+        estimated 70,000+ organisation impact is from third-party sources; the actual compliance
+        exposure faced by regulated-sector customers who lost completion history is unknown.
+      relatedQuestionRefs:
+        - QE013
+      diligenceAsk: >-
+        Request from management: (1) number of SC Training customers who migrated to core platform
+        vs. churned vs. lost data; (2) any regulatory incidents or customer complaints arising from
+        the data loss; (3) NRR impact for the SC Training cohort in the 12 months following retirement.
+
+    - id: EGE002
+      gapType: private-evidence-only
+      severity: high
+      description: >-
+        Agentic AI product roadmap — no public product roadmap exists for SafetyCulture's "agentic-first"
+        AI capability. The April 2026 Twine acquisition confirms talent investment and strategic direction
+        but no shipping timeline, feature specification, or technical architecture for agentic capabilities
+        is publicly available. The gap between CEO-level aspiration and verifiable shipped product is
+        material for buyers evaluating AI as a procurement criterion.
+      relatedQuestionRefs:
+        - QE020
+        - QE022
+      diligenceAsk: >-
+        Request from management: (1) written specification of agentic AI features with target
+        ship dates; (2) demonstration of current NLQ analytics and AI template generation in a
+        live environment; (3) disclosure of any third-party AI providers (OpenAI, Anthropic, AWS
+        Bedrock) underlying AI features.
+
+    - id: EGE003
+      gapType: restricted-access
+      severity: moderate
+      description: >-
+        Data residency and AWS region configuration — SafetyCulture does not publicly disclose which
+        AWS regions host which customer data. For EU/GDPR-regulated enterprise customers and highly
+        regulated sectors (healthcare, financial services), documented data residency is a procurement
+        requirement. The absence of public region disclosure prevents independent verification.
+      relatedQuestionRefs:
+        - QE017
+      diligenceAsk: >-
+        Request from SafetyCulture: (1) list of AWS regions in use for each geographic customer
+        segment (AU, US, EU, UK); (2) data residency commitment in the Data Processing Addendum;
+        (3) confirmation of any EU-only data isolation for GDPR compliance.
+
+    - id: EGE004
+      gapType: private-evidence-only
+      severity: moderate
+      description: >-
+        SHEQSY integration depth and asset management depth — the SHEQSY acquisition announcement
+        (April 2022) stated integration with iAuditor and EdApp was "underway." As of May 2026 (four years
+        post-acquisition), the depth of cross-module integration between SHEQSY (lone worker) and the core
+        inspections/issues/analytics platform is not publicly documented. Similarly, the depth of the asset
+        management module relative to purpose-built CMMS tools (MaintainX, UpKeep) is not independently
+        benchmarked in available public sources.
+      relatedQuestionRefs:
+        - QE015
+        - QE016
+      diligenceAsk: >-
+        Request from management: product demo showing SHEQSY-triggered inspection and corrective
+        action workflow; documentation of SHEQSY data visibility in SafetyCulture Analytics;
+        head-to-head feature comparison of asset management module vs MaintainX for maintenance-heavy
+        industrial use cases.
+
+    - id: EGE005
+      gapType: private-evidence-only
+      severity: low
+      description: >-
+        SafetyCulture does not publish a contractual SLA for platform uptime. Practical uptime
+        evidence (99.7–100% from public monitoring) is strong, but the absence of a contractual
+        commitment limits the platform's suitability for regulated-sector procurement processes
+        that require documented uptime guarantees. The specific terms of enterprise SLAs are
+        available only via the sales process.
+      relatedQuestionRefs:
+        - QE009
+      diligenceAsk: >-
+        Request SafetyCulture enterprise SLA documentation, including contractual uptime percentage,
+        measurement methodology, credits/remedies for breach, and any tier-specific SLA differences.
