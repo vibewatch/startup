@@ -58,11 +58,17 @@ function parseArgs(argv) {
 function folderDigest(dir) {
   const hash = createHash('sha1').update(CHECK_VERSION).update('\0');
   let entries;
-  try { entries = readdirSync(dir).sort(); } catch { return null; }
+  try { entries = readdirSync(dir).sort(); } catch (err) {
+    console.warn(`[check:reports] could not read directory ${dir}: ${err.message}`);
+    return null;
+  }
   for (const name of entries) {
     if (!name.endsWith('.yaml')) continue;
     hash.update(name).update('\0');
-    try { hash.update(readFileSync(join(dir, name))); } catch { hash.update('<<unreadable>>'); }
+    try { hash.update(readFileSync(join(dir, name))); } catch (err) {
+      console.warn(`[check:reports] could not read ${join(dir, name)}: ${err.message}`);
+      hash.update('<<unreadable>>');
+    }
     hash.update('\0');
   }
   return hash.digest('hex');
@@ -73,8 +79,11 @@ function loadCache() {
   try {
     const raw = JSON.parse(readFileSync(CACHE_FILE, 'utf8'));
     if (raw?.version === CHECK_VERSION && raw.folders && typeof raw.folders === 'object') return raw.folders;
-  } catch {
-    // Missing or unreadable cache: fall through and re-validate everything.
+    console.warn(`[check:reports] cache version mismatch or invalid structure; re-validating all reports.`);
+  } catch (err) {
+    if (err.code !== 'ENOENT') {
+      console.warn(`[check:reports] could not load cache (${err.code ?? err.message}); re-validating all reports.`);
+    }
   }
   return {};
 }
