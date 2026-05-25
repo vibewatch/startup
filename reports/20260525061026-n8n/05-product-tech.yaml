@@ -1,0 +1,1576 @@
+schemaVersion: "report-v2"
+artifact: product-tech
+slug: n8n
+runDate: "2026-05-25"
+company:
+  name: n8n
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: >
+    n8n is a Node.js/TypeScript workflow automation and AI-agent orchestration platform
+    combining a Vue.js visual canvas with optional JavaScript/Python code nodes, over 400
+    official integrations, and 500+ community npm packages. Four deployment modes—managed
+    cloud, self-hosted Community, self-hosted Enterprise, and air-gapped—give technically
+    sophisticated buyers complete infrastructure sovereignty. A Redis-backed queue mode
+    enables horizontal scaling via independent worker processes, while a growing LangChain-native
+    AI tier (70+ AI nodes, RAG support, vector-DB integrations) positions n8n at the workflow-
+    orchestration layer of the enterprise AI stack. Enterprise governance features—custom
+    project-scoped RBAC, SAML/OIDC/LDAP SSO with IDP-driven provisioning, immutable audit
+    logs, external secret stores, and Git-based version control—differentiate n8n from
+    consumer-grade automation peers. Two critical adverse signals shadow the platform in 2026:
+    CVE-2026-21858 (CVSS max severity, 100,000+ estimated exposed servers) and a January 2026
+    npm supply-chain attack exploiting the unsandboxed community node ecosystem. Self-hosting
+    complexity ($300–$500/month estimated production infrastructure) and the fair-code
+    Sustainable Use License—not OSI-approved open source—create material adoption barriers
+    for non-technical buyers and limit ecosystem participation compared to permissively
+    licensed alternatives.
+
+sections:
+  - id: product-definition-and-architecture
+    title: Product Definition and Core Architecture
+    body: >
+      n8n is a fair-code workflow automation and AI-agent orchestration platform built on
+      Node.js and TypeScript. The backend workflow engine executes node-based graphs in
+      topological order, passing structured JSON data between nodes at each step. The
+      frontend visual editor is built with Vue.js and presents a drag-and-drop canvas where
+      users connect trigger nodes (webhooks, schedules, polling) to action nodes (API calls,
+      data transformations, database writes, AI model invocations) to form directed acyclic
+      workflow graphs. Sub-workflows allow modular reuse of workflow logic, and the expression
+      engine—a JavaScript-like syntax—enables inline dynamic data mapping between nodes
+      without requiring a code node. Custom JavaScript or Python code nodes grant developers
+      full programmatic access to the Node.js runtime, including npm package imports.
+
+      The platform ships with more than 400 official integration nodes maintained by the
+      n8n team, covering mainstream SaaS APIs (Salesforce, Slack, Google Workspace, GitHub,
+      Stripe, etc.), databases, messaging queues, and AI model providers. Beyond official
+      nodes, a community ecosystem on npm publishes packages following the
+      "n8n-nodes-*" naming convention, bringing the total installable integration surface
+      to over 500 community packages as of 2026. Workflow templates—more than 10,000
+      pre-built and community-shared—lower the time-to-first-automation significantly.
+
+      The execution model operates in two modes. Single-instance mode runs all workflow
+      executions within the main Node.js process, suitable for development and small
+      production deployments. Queue mode—recommended for production at scale—decouples
+      trigger handling from execution by routing workflow job IDs through a Redis message
+      broker to an independently scalable pool of worker instances. Each worker is its
+      own Node.js process that fetches workflow definitions from a shared PostgreSQL
+      database, executes the workflow, writes results back to PostgreSQL, and signals
+      completion to Redis. Workers can be added or removed dynamically without downtime,
+      enabling horizontal scaling. The shared encryption key requirement across main and
+      worker instances is a security dependency that must be managed carefully in
+      multi-node deployments.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE006
+      - CE007
+      - CE008
+      - CE009
+    tableRefs:
+      - TE003
+    figureRefs:
+      - FE001
+
+  - id: deployment-model-and-developer-ergonomics
+    title: Deployment Model, Infrastructure, and Developer Ergonomics
+    body: >
+      n8n offers four distinct deployment options that together define its technical
+      differentiation relative to cloud-only competitors. n8n Cloud is the managed SaaS
+      offering with automatic updates, security patching, and a tiered pricing structure:
+      Starter at $20/month (2,500 executions, 5 concurrent), Pro at $50/month
+      (10,000 executions, 20 concurrent), Business at a self-hosted or cloud hybrid
+      with SSO/SAML and version control, and Enterprise with unlimited projects, 200+
+      concurrent executions, external secret store integration, log streaming, and a
+      custom SLA. The Community self-hosted edition is free under the Sustainable Use
+      License and supports all integration nodes without feature restrictions, but lacks
+      the enterprise governance features unlocked by a paid Enterprise license key.
+      The Enterprise self-hosted option adds SSO, RBAC, audit logs, version control,
+      multi-environment, and 99.99% SLA support. Air-gapped Enterprise deployment—for
+      healthcare, finance, and government organizations with strict data residency or
+      network isolation requirements—requires the Enterprise license, manual dependency
+      management for Docker images and npm packages, and coordination with n8n's enterprise
+      sales team for offline license activation.
+
+      Self-hosting carries material operational overhead that is frequently underestimated
+      by buyers. Production-grade deployments require PostgreSQL 13+ (SQLite is unsupported
+      in queue mode), Redis for queue mode, a reverse proxy (NGINX or Caddy) for TLS
+      termination, S3-compatible object storage for binary data in queue mode, and ongoing
+      management of updates, firewall rules, and credential rotation. Infrastructure cost
+      for a basic production environment ranges from $300–$500 per month when accounting
+      for compute, database, storage, networking, security tooling, and DevOps labor—
+      costs that often exceed n8n Cloud pricing at equivalent execution volumes for
+      small teams. For non-technical buyers, self-hosting represents a significant
+      operational barrier; n8n's own documentation recommends the Cloud option for
+      users without server management experience. Current stable version as of May 22,
+      2026 is v2.21.7, with minor versions released most weeks and a cumulative history
+      of over 1,990 releases.
+    claimRefs:
+      - CE010
+      - CE011
+      - CE012
+      - CE013
+      - CE014
+      - CE015
+      - CE016
+    tableRefs:
+      - TE001
+      - TE002
+    figureRefs:
+      - FE002
+
+  - id: integrations-extensions-and-ai-capabilities
+    title: Integrations, Community Ecosystem, and AI-Agent Capabilities
+    body: >
+      n8n's integration breadth is divided between official nodes (400+, maintained by
+      the n8n engineering team) and community nodes (500+ packages on npm). Community
+      nodes follow a strict packaging convention—package names must start with
+      "n8n-nodes-" or "@scope/n8n-nodes-" and include the "n8n-community-node-package"
+      npm keyword for auto-discovery. From May 1, 2026, nodes submitted for verified
+      status through the n8n Creator Portal must be published via GitHub Actions with
+      a cryptographic provenance statement (OIDC-signed), making direct local npm publish
+      ineligible for verification. This provenance requirement was introduced in direct
+      response to the January 2026 supply-chain attack in which eight malicious npm
+      packages—including one with 8,385 downloads—mimicked legitimate n8n integrations
+      and exfiltrated OAuth tokens to attacker-controlled servers. The critical security
+      limitation is that community nodes run with the same privilege level as the n8n
+      process itself: they can read environment variables, access the filesystem, make
+      outbound network requests, and receive decrypted API keys during execution, with no
+      sandboxing or isolation from the n8n runtime. Self-hosted administrators can disable
+      community nodes entirely by setting N8N_COMMUNITY_PACKAGES_ENABLED=false.
+
+      The AI-agent tier is the most strategically significant recent expansion. n8n
+      provides 70+ native LangChain-based AI nodes that expose LLM model connections
+      (OpenAI, Anthropic Claude, Google Gemini, and local models via Ollama), memory
+      stores (window buffer, entity memory), vector database integrations (Pinecone,
+      Weaviate, Milvus, Qdrant), embedding providers, and retrieval-augmented generation
+      (RAG) chain components as first-class visual nodes. AI agent workflows support
+      tool-calling, multi-step reasoning loops, human-in-the-loop checkpoints, and
+      conversation context preservation across executions. The 10,000+ community workflow
+      templates include a large and growing library of AI-agent starter flows. n8n's
+      AI positioning differs from standalone LLM orchestration frameworks (LangChain
+      Python, Flowise) by embedding AI orchestration within a full business-automation
+      context—connecting AI decision nodes to CRM writes, database updates, email sends,
+      and webhook callbacks within the same visual workflow.
+    claimRefs:
+      - CE017
+      - CE018
+      - CE019
+      - CE020
+      - CE021
+      - CE022
+      - CE023
+      - CE024
+    tableRefs:
+      - TE004
+    figureRefs:
+      - FE003
+
+  - id: enterprise-features-security-and-compliance
+    title: Enterprise Features, Security, and Compliance
+    body: >
+      n8n Enterprise adds a layered governance model on top of the Community foundation.
+      Authentication and identity management support SAML 2.0, OIDC, and LDAP with
+      IDP-driven user provisioning: when a user joins, changes roles, or departs in the
+      identity provider (Okta, Azure AD, etc.), permissions are automatically synchronized
+      in n8n at both instance and project levels, eliminating manual access management
+      drift. Project-scoped custom RBAC allows administrators to define granular roles
+      (builder, reviewer, operator, admin, or arbitrary custom roles) applied per project,
+      enabling separation of duties across teams sharing a single n8n instance. Immutable
+      audit logs capture every workflow creation, modification, execution, and credential
+      access event; logs can be exported or streamed to a SIEM via log streaming (Enterprise
+      tier). External secret store integration—supporting HashiCorp Vault and similar
+      systems—allows sensitive credentials to be managed outside the n8n instance, reducing
+      the blast radius of a compromised n8n deployment. Git-based version control with
+      multi-environment support (dev, staging, prod) and visual workflow diffs enables
+      teams to apply software-engineering lifecycle practices to automation development.
+
+      The security surface of n8n carries material risk that is well-documented in public
+      advisories. CVE-2026-21858 (Ni8mare), disclosed in 2026, is a maximum-severity
+      (CVSS 10.0) unauthenticated remote code execution vulnerability affecting n8n
+      versions 1.65.0 through 1.120.x. The vulnerability arises from improper Content-Type
+      header validation in form-based workflow handling, enabling an unauthenticated attacker
+      to read arbitrary files from the server—including the n8n encryption key—and subsequently
+      forge session tokens and achieve full remote code execution. With an estimated 100,000+
+      internet-exposed n8n servers and 100 million+ Docker pulls, the blast radius is substantial.
+      The patch was released in v1.121.0 and no workarounds exist for unpatched deployments.
+      Because n8n functions as a centralized credential hub for dozens or hundreds of connected
+      services, a single compromised instance can cascade into a full infrastructure breach
+      affecting all integrated SaaS platforms, cloud accounts, and databases. Enterprises
+      must enforce network segmentation, authentication on all webhook endpoints, and timely
+      patch cadence to manage this risk category. The January 2026 supply-chain attack further
+      demonstrated that the unsandboxed community node architecture creates a persistent
+      credential-exfiltration attack surface that technical controls alone cannot fully eliminate.
+    claimRefs:
+      - CE025
+      - CE026
+      - CE027
+      - CE028
+      - CE029
+      - CE030
+      - CE031
+      - CE032
+      - CE033
+    tableRefs:
+      - TE005
+    figureRefs:
+      - FE004
+
+  - id: competitive-differentiation-risks-and-roadmap
+    title: Technical Differentiation, Competitive Risks, and Roadmap
+    body: >
+      n8n's primary technical differentiators relative to cloud-only automation peers are
+      data sovereignty (full self-hosting including air-gapped), developer ergonomics
+      (JavaScript/Python code nodes, npm access, Git integration, API-first design), and
+      AI-agent depth (native LangChain integration with 70+ AI nodes positioned between
+      simple prompt chaining and full autonomous agent frameworks). The fair-code Sustainable
+      Use License is both a strategic asset and a constraint: it drives broad adoption by
+      making the source code freely visible and self-hostable for internal use, while
+      restricting commercial SaaS resale without an Enterprise license. However, the license
+      is not OSI-certified open source, which has generated persistent community debate and
+      contributed to fair-code experimentation by developers who would otherwise contribute
+      to purely open-source alternatives. GitHub metrics as of May 2026—189,000+ stars,
+      450+ contributors, 1.45 million+ npm downloads per week, and 50 million+ total
+      downloads—indicate strong developer adoption. Third-party analysts estimate 25% of
+      Fortune 500 companies are adopting n8n for business-critical workflows, though this
+      figure is not independently verified by primary sources.
+
+      The 2026 product roadmap emphasizes three themes. First, a Publish/Save workflow
+      lifecycle paradigm—treating workflows as versioned, deployable production artifacts
+      with diff views, staged rollouts, and change-control gates. Second, AI governance
+      tooling: PII redaction rules for LLM inputs/outputs, quota and cost controls per
+      model, and role-based approvals for AI workflow deployment. Third, enhanced
+      observability and compliance signaling: real-time execution dashboards, alert
+      integrations, and SOC 2/ISO 27001 compliance artifacts. Weekly release cadence
+      (1,990+ cumulative releases; latest stable v2.21.7 as of May 22, 2026) demonstrates
+      engineering velocity, but also introduces patch management burden for self-hosted
+      operators.
+
+      The primary competitive risk to n8n's technical moat is LLM orchestration
+      commoditization: Zapier, Make.com, and Workato are all adding AI agent capabilities
+      and may close the AI-feature gap within 12–24 months. If AI orchestration patterns
+      become a commodity layer, n8n's differentiation narrows to its self-hosting capability
+      and developer flexibility—both of which carry a narrower total addressable market than
+      the broad automation platform claim. The self-hosting premium is also threatened by
+      managed n8n hosting services (agencies and VPS-based offerings) that commoditize the
+      operational burden. For non-technical buyers evaluating n8n against Zapier or Make.com,
+      the self-hosting requirement and setup complexity remain a real adoption barrier
+      that the cloud tier only partially addresses.
+    claimRefs:
+      - CE034
+      - CE035
+      - CE036
+      - CE037
+      - CE038
+      - CE039
+      - CE040
+    tableRefs: []
+    figureRefs: []
+
+tables:
+  - id: TE001
+    title: Product Module and Asset Matrix
+    columns:
+      - Module / Feature
+      - Primary User
+      - Maturity / Status
+      - Differentiation
+      - Diligence Gap
+    rows:
+      - ["Visual Workflow Builder (canvas + node editor)", "Technical/semi-technical builders", "GA; core product since 2019", "Code-optional drag-and-drop with JS/Python escape hatch; richer than Make.com, more accessible than code-only tools", "Measure NPS and task-completion rate for non-technical users vs. Zapier/Make"]
+      - ["Official Integration Nodes (400+)", "All builders", "GA; maintained by n8n engineering", "Broad SaaS/API coverage; consistent update cadence", "Connector freshness vs. Zapier's 7,000+; gap largest for enterprise ERP/HRIS connectors"]
+      - ["Community Node Ecosystem (500+ npm packages)", "Technical builders and node developers", "GA but unsandboxed; provenance enforcement from May 2026", "Extensibility without n8n gating; fastest path to niche integrations", "Supply-chain risk: no runtime sandboxing; node audit tooling immature"]
+      - ["AI Agent Builder (70+ LangChain nodes)", "AI engineers, automation teams", "GA; major 2022–2025 expansion", "Native LangChain integration with memory, RAG, tool-calling, and multi-model support in same workflow as business-app nodes", "Benchmark AI agent reliability vs. standalone LangChain/Flowise in multi-step agentic loops"]
+      - ["Enterprise License Features (SSO, RBAC, audit logs, secrets)", "Enterprise IT, security, compliance teams", "GA; SAML/OIDC added 2023–2025; IDP provisioning added 2026", "Project-scoped custom RBAC with IDP sync differentiates from Zapier enterprise and Workato community editions", "SOC 2 and ISO 27001 certification status not confirmed; need formal attestation documents"]
+      - ["Queue Mode / Horizontal Scaling (Redis + Workers)", "DevOps, high-volume automation teams", "GA (self-hosted Enterprise and higher); requires PostgreSQL + Redis", "Independent worker processes; add/remove without downtime; multi-main HA available", "Customer benchmarks of max workflow throughput at scale not publicly documented"]
+      - ["Air-Gapped Enterprise Deployment", "Regulated industries: finance, healthcare, government", "GA; requires Enterprise license + manual dependency management", "Only workflow automation platform with credible air-gapped self-hosted option at this integration breadth", "Confirm whether air-gapped deployments have received formal government security clearance or FedRAMP/IL assessment"]
+      - ["n8n Cloud (Managed SaaS)", "SMB, mid-market, non-technical buyers", "GA; Starter $20/mo, Pro $50/mo, Business/Enterprise custom", "Zero-maintenance option with automatic updates; 99.99% uptime SLA on Enterprise tier", "Cloud vs. self-hosted revenue mix not disclosed; strategic importance to unit economics unclear"]
+    notes: >
+      Maturity assessments are derived from official n8n documentation, product changelog, and independent reviews as of 2026-05-25.
+      Certification claims (SOC 2, ISO 27001) were not independently verified in available public sources and remain a diligence gap.
+    claimRefs:
+      - CE002
+      - CE003
+      - CE005
+      - CE007
+      - CE010
+      - CE011
+      - CE017
+      - CE018
+      - CE019
+      - CE022
+      - CE025
+
+  - id: TE002
+    title: Workflow Use-Case and Customer Job Map
+    columns:
+      - User Job
+      - Current Workflow Without n8n
+      - n8n Solution
+      - Measurable Benefit
+      - Limitation / Risk
+    rows:
+      - ["Connect CRM to marketing automation on lead capture", "Manual CSV exports or point-to-point Zapier Zap", "n8n workflow with Salesforce + HubSpot nodes, conditional branching, and field mapping", "Sub-second CRM write on form submission; eliminates manual sync lag", "Data sovereignty claimed but depends on which deployment mode buyer chooses"]
+      - ["Multi-step AI agent for customer support triage", "Human-routed ticket queue or rigid rule-based bot", "n8n AI agent workflow with OpenAI/Claude node, memory, and tool-calling to CRM + ticketing nodes", "Autonomous triage with human-in-the-loop escalation; faster resolution time", "Agent reliability in edge cases depends on LLM model choice; no native evaluation tooling yet"]
+      - ["Automate data pipeline from API to data warehouse", "Python ETL scripts run on cron with no monitoring", "n8n scheduled workflow with HTTP Request, data transform, and PostgreSQL/BigQuery write nodes; error alerts via Slack", "Visual monitoring, retries on failure, and audit trail without maintaining custom cron infrastructure", "Large-volume batch processing may hit execution memory limits; queue mode adds operational complexity"]
+      - ["Regulated workflow with audit trail (e.g., finance approval)", "Email-based approval chains with no audit log", "n8n Enterprise workflow with RBAC, immutable audit log, and approval step requiring authorized user action", "Full audit trail for compliance; GDPR/HIPAA-aligned logging", "SOC 2 attestation not confirmed; depends on self-hosted deployment configuration"]
+      - ["Internal developer tool / workflow-as-API endpoint", "Custom microservice or webhook handler in application code", "n8n workflow exposed as a webhook endpoint with API key auth; logic maintained visually by non-developer", "Reduced engineering bottleneck; faster iteration by ops teams", "Webhook endpoints without authentication are an RCE attack vector (CVE-2026-21858)"]
+    notes: >
+      Use-case claims sourced from n8n official documentation, case studies, and independent community guides. Measured benefits are directional; no independently verified ROI figures are available in public sources. Risks are diligence-identified, not company-acknowledged.
+    claimRefs:
+      - CE002
+      - CE005
+      - CE022
+      - CE023
+      - CE028
+      - CE029
+
+  - id: TE003
+    title: Technology and Operating Architecture
+    columns:
+      - Layer / Component
+      - Role
+      - Technology / Dependency
+      - Risk
+    rows:
+      - ["Visual Workflow Editor (Frontend)", "WYSIWYG canvas for workflow creation; converts graph to JSON workflow definition", "Vue.js; modern browser required; REST API submission to backend", "Learning curve for complex workflows; UI responsiveness may degrade at very large (1,000+ node) graphs"]
+      - ["Workflow Execution Engine (Backend)", "Topological execution of nodes; data passthrough; error handling; retry logic", "Node.js + TypeScript; in-memory execution per run; optional queue mode for distributed execution", "Single-threaded Node.js event loop in single-instance mode creates concurrency ceiling; queue mode required for production scale"]
+      - ["Message Broker (Queue Mode)", "Decouples trigger receipt from workflow execution; maintains pending execution queue; prevents duplicate runs", "Redis (BullMQ library); required in queue mode; must be HA-configured for production", "Redis becomes single point of failure if not clustered; encryption key must match across all workers"]
+      - ["Persistence Layer", "Stores workflow definitions, execution history, credentials (encrypted), user data, and variables", "PostgreSQL 13+ (production); SQLite (dev/test only; unsupported in queue mode); shared by all workers", "Encryption key compromise decrypts all stored credentials; key rotation operational complexity"]
+      - ["Worker Instances", "Execute workflow graphs fetched from PostgreSQL; report completion to Redis; horizontally scalable", "Independent Node.js processes; same codebase as main; scaling by adding/removing worker containers", "Binary data cannot use local filesystem in queue mode; requires S3 external storage"]
+      - ["Community Node Runtime", "Executes third-party npm packages as workflow nodes; no sandboxing boundary", "npm registry; arbitrary Node.js code with full process access (env vars, filesystem, network)", "No isolation from n8n runtime; malicious node can exfiltrate all decrypted credentials; supply-chain attack vector"]
+      - ["AI Orchestration Layer", "LLM invocation, tool-calling, memory, RAG, and multi-step agent loops within workflow graphs", "LangChain.js (native integration); OpenAI/Anthropic/Google APIs; vector DBs (Pinecone, Weaviate, Milvus); local LLMs via Ollama", "LLM API costs and rate limits add variable operational cost; local LLM integration requires GPU infrastructure"]
+    notes: >
+      Architecture details sourced from official n8n documentation (docs.n8n.io) and the jimmysong.io deep dive analysis (2026).
+      Queue mode dependency diagram reflects n8n's publicly documented recommended production topology.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE005
+      - CE006
+      - CE007
+      - CE019
+      - CE020
+      - CE021
+
+  - id: TE004
+    title: Trust, Security, and Compliance Controls
+    columns:
+      - Control / Certification
+      - Status
+      - Scope / Tier
+      - Gap / Diligence Ask
+    rows:
+      - ["CVE-2026-21858 (Ni8mare) patch", "Fixed in v1.121.0; no workarounds for older versions", "All self-hosted deployments; cloud patched by n8n", "Verify all enterprise customer deployments have been upgraded; assess whether n8n communicates mandatory patch urgency"]
+      - ["Supply-chain node provenance (GitHub Actions OIDC signing)", "Required for verified nodes from May 1, 2026; unverified nodes still installable", "Community node ecosystem; self-hosted (admin-controlled)", "Unverified node installation remains possible; no runtime sandboxing of any node regardless of verification status"]
+      - ["SSO / SAML 2.0 / OIDC / LDAP", "GA; available on Business and Enterprise tiers", "Enterprise (cloud and self-hosted)", "IDP provisioning (automated role sync) launched in 2026; confirm whether all major IdPs (Okta, Azure AD, Ping) are tested and certified"]
+      - ["Project-scoped custom RBAC", "GA; launched 2026 per blog.n8n.io/custom-project-roles post", "Enterprise tier only", "Default community edition has minimal RBAC; enterprise upsell required for regulated deployments"]
+      - ["Immutable audit logs + SIEM log streaming", "GA; audit log export; log streaming on Enterprise tier", "Enterprise tier", "Log streaming destination list (Datadog, Splunk, etc.) not publicly enumerated; confirm scope with n8n sales"]
+      - ["External secret store integration (HashiCorp Vault)", "GA on Enterprise tier", "Enterprise self-hosted", "Specific vault versions and auth methods supported not documented publicly; test with customer env before commit"]
+      - ["Multi-environment (dev/staging/prod) + Git version control", "GA on Business tier and above", "Business and Enterprise", "Branching and merge conflict resolution in multi-team environments not fully documented; practical limits for large teams unverified"]
+      - ["SOC 2 / ISO 27001 certification", "Not confirmed in publicly available sources as of 2026-05-25", "Unknown", "Request attestation reports from n8n; absence of confirmed certification is a diligence blocker for regulated enterprise deployments"]
+      - ["Data residency / GDPR compliance", "Cloud EU region available; self-hosted provides full data residency", "All tiers", "n8n cloud DPA and sub-processor list should be requested for enterprise cloud contracts; GDPR liability for cloud region failure not publicly scoped"]
+    notes: >
+      CVE details from NVD (nvd.nist.gov) and hivepro.com advisory. Security control status from official n8n documentation,
+      blog.n8n.io, and shakudo.io enterprise security guide (2026). SOC 2 / ISO certification status could not be confirmed
+      from public sources and is recorded as a diligence gap.
+    claimRefs:
+      - CE027
+      - CE028
+      - CE029
+      - CE030
+      - CE031
+      - CE032
+      - CE033
+
+  - id: TE005
+    title: Roadmap and Recent Launches
+    columns:
+      - Date / Stage
+      - Feature / Milestone
+      - Status
+      - Implication
+      - Source
+    rows:
+      - ["Jan 2026", "Supply-chain attack (8 malicious npm packages) disclosed; community node provenance requirement announced", "Completed / response in-progress", "Security credibility damage; provenance requirement adds friction for new node authors", "thehackernews.com; cyberpress.org"]
+      - ["Jan 2026", "CVE-2026-21858 (Ni8mare) disclosed; patch released in v1.121.0", "Patched; ongoing upgrade exposure for self-hosted laggards", "Highlights self-hosted patch management burden; cloud users auto-patched", "nvd.nist.gov; hivepro.com"]
+      - ["2026 (launched)", "Custom Project Roles + IDP user provisioning via SSO", "GA on Enterprise tier", "Strengthens enterprise governance story; addresses objections from regulated-industry buyers", "blog.n8n.io/introducing-custom-project-roles"]
+      - ["2026 roadmap", "Publish/Save workflow lifecycle with staged rollouts and diff-based change reviews", "In development per roadmap", "Treats workflows as versioned production code; critical for enterprise change-control requirements", "itechcloudsolution.com/blogs/n8n-roadmap-2026"]
+      - ["2026 roadmap", "AI governance: PII redaction for LLM inputs/outputs, model quota controls, role-based approval gates", "In development per roadmap", "Addresses top enterprise objection to AI-powered workflows handling sensitive data", "itechcloudsolution.com/blogs/n8n-roadmap-2026"]
+      - ["2026 roadmap", "Enhanced observability: real-time execution dashboards, alert integrations, SOC 2 / ISO 27001 compliance signals", "In development per roadmap", "Closing compliance certification gap required for regulated enterprise sales", "itechcloudsolution.com/blogs/n8n-roadmap-2026; aiunpacker.com"]
+      - ["May 22, 2026", "v2.21.7 stable released (latest as of runDate)", "Released", "Weekly release cadence (1,990+ total releases) demonstrates engineering velocity; burden on self-hosted operators to track updates", "docs.n8n.io/release-notes/"]
+    notes: >
+      Roadmap items are derived from third-party analysis of n8n's publicly communicated direction (itechcloudsolution.com)
+      and not from an official n8n roadmap document. Feature timelines and availability may change. Status is as of 2026-05-25.
+    claimRefs:
+      - CE028
+      - CE030
+      - CE031
+      - CE033
+      - CE036
+      - CE037
+      - CE038
+
+figures:
+  - id: FE001
+    title: n8n Product Architecture Stack
+    type: stack
+    layout: wide
+    summary: >
+      n8n's layered product architecture from user-facing visual editor through execution
+      engine, data persistence, and external integrations.
+    data:
+      layers:
+        - label: "User Interface Layer"
+          detail: "Vue.js visual canvas; drag-and-drop node editor; inline expression syntax; sub-workflow management; execution history viewer."
+          items:
+            - "Visual canvas workflow builder (Vue.js)"
+            - "Node configuration panels with dynamic data mapping"
+            - "Expression editor (JS-like inline transforms)"
+            - "Execution log viewer and debug mode"
+            - "Template library (10,000+ community templates)"
+        - label: "Workflow Execution Layer"
+          detail: "Node.js/TypeScript engine executing topological node graphs; supports single-instance mode and queue mode with Redis-backed workers."
+          items:
+            - "Single-instance mode: all execution in main Node.js process"
+            - "Queue mode: Redis (BullMQ) + distributed worker pool"
+            - "Worker instances: independent Node.js processes (horizontal scaling)"
+            - "Error handling with per-node retry and error-branch routing"
+            - "Sub-workflow call and response (modular reuse)"
+        - label: "Integration and Extension Layer"
+          detail: "400+ official integration nodes, 500+ community npm packages, HTTP Request node for arbitrary APIs, and 70+ LangChain AI nodes."
+          items:
+            - "400+ official integration nodes (SaaS, database, messaging, AI providers)"
+            - "500+ community npm packages (n8n-nodes-* naming convention)"
+            - "HTTP Request node (arbitrary REST/GraphQL without dedicated node)"
+            - "70+ LangChain AI nodes (LLM, memory, RAG, tool-calling, vector DBs)"
+            - "Custom JavaScript/Python code nodes with npm access"
+        - label: "Persistence and Security Layer"
+          detail: "PostgreSQL for workflow and execution data; Redis queue; encrypted credential vault; external secret store integration on Enterprise."
+          items:
+            - "PostgreSQL 13+ (workflow definitions, execution history, credentials)"
+            - "Credential vault (AES-256 encryption, single shared key across workers)"
+            - "External secret store (HashiCorp Vault — Enterprise tier)"
+            - "Redis (BullMQ queue, execution coordination)"
+            - "S3-compatible object storage (binary data in queue mode)"
+        - label: "Deployment and Governance Layer"
+          detail: "Four deployment modes; Git-based version control; multi-environment; SSO/RBAC; audit logs; air-gapped support for regulated industries."
+          items:
+            - "n8n Cloud (managed SaaS: Starter/Pro/Business/Enterprise)"
+            - "Self-hosted Community (free; Sustainable Use License)"
+            - "Self-hosted Enterprise (paid license; SSO, RBAC, audit logs)"
+            - "Air-gapped Enterprise (offline deployment; no external network)"
+            - "Multi-environment (dev/staging/prod) + Git version control"
+    approximationNotes: >
+      Layer arrangement reflects logical product zones, not physical deployment topology.
+      Community node package count (500+) is an estimate based on npm search results
+      and gitnux.org/worldmetrics.org statistics; exact count varies with ecosystem activity.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE005
+      - CE007
+      - CE010
+      - CE011
+      - CE017
+      - CE018
+      - CE021
+      - CE022
+
+  - id: FE002
+    title: n8n Customer Workflow — End-to-End AI-Agent Use Case
+    type: flow
+    layout: wide
+    summary: >
+      Representative end-to-end workflow showing how a technical team uses n8n to build
+      an AI-assisted customer support triage agent connecting LLM reasoning to CRM and ticketing.
+    data:
+      nodes:
+        - {id: f1, label: "Trigger: Webhook receives incoming support request"}
+        - {id: f2, label: "Data enrichment: Look up customer record in CRM (Salesforce node)"}
+        - {id: f3, label: "AI Agent node: OpenAI/Claude analyzes issue with CRM context (LangChain)"}
+        - {id: f4, label: "Decision branch: AI confidence threshold check"}
+        - {id: f5, label: "High confidence → Auto-resolve: write resolution to ticketing system (Zendesk node)"}
+        - {id: f6, label: "Low confidence → Human escalation: notify via Slack node with context summary"}
+        - {id: f7, label: "Human reviews + approves resolution in Slack (Human-in-the-loop step)"}
+        - {id: f8, label: "Update CRM record and close ticket; log execution to audit trail"}
+      edges:
+        - {from: f1, to: f2, label: "Pass request data"}
+        - {from: f2, to: f3, label: "Enrich context"}
+        - {from: f3, to: f4, label: "AI decision output"}
+        - {from: f4, to: f5, label: "Confidence ≥ threshold"}
+        - {from: f4, to: f6, label: "Confidence < threshold"}
+        - {from: f6, to: f7, label: "Await human input"}
+        - {from: f7, to: f8, label: "Approved action"}
+        - {from: f5, to: f8, label: "Auto-resolution"}
+    approximationNotes: >
+      This workflow is a representative example constructed from n8n's documented AI-agent
+      capabilities and case study patterns. Specific node configuration and LLM prompt
+      engineering are omitted for clarity. Actual workflow performance depends on LLM model
+      choice, prompt quality, and data availability in the connected systems.
+    claimRefs:
+      - CE002
+      - CE003
+      - CE020
+      - CE021
+      - CE022
+      - CE023
+
+  - id: FE003
+    title: n8n Critical Technical Dependency Map
+    type: dag
+    layout: wide
+    summary: >
+      Key technical and ecosystem dependencies that must be available for n8n to function
+      reliably in a production enterprise deployment.
+    data:
+      nodes:
+        - {id: d1, label: "PostgreSQL Database"}
+        - {id: d2, label: "Redis (BullMQ) — Queue Mode Only"}
+        - {id: d3, label: "npm Registry (Community Nodes)"}
+        - {id: d4, label: "S3-Compatible Object Storage — Queue Mode Binary Data"}
+        - {id: d5, label: "Identity Provider (Okta / Azure AD / LDAP)"}
+        - {id: d6, label: "LLM API Providers (OpenAI / Anthropic / Google)"}
+        - {id: d7, label: "External Secret Store (HashiCorp Vault)"}
+        - {id: d8, label: "n8n Workflow Execution Engine (Main + Workers)"}
+        - {id: d9, label: "Third-Party SaaS APIs (Salesforce, GitHub, Stripe, etc.)"}
+        - {id: d10, label: "n8n Enterprise License Server (online activation)"}
+      edges:
+        - {from: d1, to: d8, label: "Required: workflow defs + credentials"}
+        - {from: d2, to: d8, label: "Required for queue mode"}
+        - {from: d3, to: d8, label: "Community node packages"}
+        - {from: d4, to: d8, label: "Binary data (queue mode)"}
+        - {from: d5, to: d8, label: "SSO/LDAP auth (Enterprise)"}
+        - {from: d6, to: d8, label: "AI node LLM calls"}
+        - {from: d7, to: d8, label: "Credential retrieval (Enterprise)"}
+        - {from: d8, to: d9, label: "Workflow API calls"}
+        - {from: d10, to: d8, label: "Enterprise feature activation"}
+    approximationNotes: >
+      Dependency map reflects the publicly documented production architecture for n8n Enterprise
+      self-hosted with queue mode enabled. Air-gapped deployments require all dependencies
+      (Docker images, npm packages, license) to be mirrored offline; LLM API providers
+      are replaced by local LLM inference (e.g., Ollama) in fully isolated deployments.
+    claimRefs:
+      - CE001
+      - CE005
+      - CE006
+      - CE007
+      - CE010
+      - CE011
+      - CE014
+      - CE020
+
+  - id: FE004
+    title: n8n Product Capability Maturity Matrix
+    type: matrix
+    layout: wide
+    summary: >
+      Ordinal maturity scores (0=absent, 1=early/limited, 2=GA/capable, 3=best-in-class)
+      across eight product capability dimensions for n8n Community, n8n Enterprise, and
+      two key competitors (Zapier, Workato) as of 2026-05-25.
+    data:
+      columns:
+        - "Visual workflow builder"
+        - "Custom code nodes"
+        - "AI-agent capabilities"
+        - "Self-hosting / data sovereignty"
+        - "Enterprise governance (SSO/RBAC/audit)"
+        - "Integration breadth"
+        - "Horizontal scalability"
+        - "Security / vulnerability posture"
+      rows:
+        - label: "n8n Community"
+          values: [3, 3, 3, 3, 0, 2, 1, 1]
+        - label: "n8n Enterprise"
+          values: [3, 3, 3, 3, 3, 2, 3, 2]
+        - label: "Zapier"
+          values: [2, 1, 2, 0, 2, 3, 2, 3]
+        - label: "Workato"
+          values: [2, 2, 2, 0, 3, 3, 2, 3]
+    approximationNotes: >
+      Scores are analytical assessments (0=absent, 1=partial/early, 2=GA/capable, 3=best-in-class)
+      derived from official product documentation, independent reviews, and capability comparisons
+      as of 2026-05-25. n8n Community security posture scored 1 (below average) reflecting
+      CVE-2026-21858, supply-chain attack exposure, and unsandboxed community nodes.
+      Integration breadth scored 2 for n8n (400+ official vs. Zapier's 7,000+ and Workato's 1,000+
+      enterprise-grade connectors). Self-hosting scored 0 for Zapier and Workato as neither
+      offers true self-hosted deployment options.
+    claimRefs:
+      - CE002
+      - CE005
+      - CE010
+      - CE017
+      - CE020
+      - CE025
+      - CE028
+      - CE034
+
+localEvidence:
+  searchQueries:
+    - query: "n8n product architecture workflow builder execution model technical 2026"
+      engine: web_search
+      hits: 10
+      retainedSourceRefs: [SE001, SE006, SE014]
+    - query: "n8n deployment options self-hosted cloud enterprise air-gapped 2026"
+      engine: web_search
+      hits: 10
+      retainedSourceRefs: [SE002, SE003, SE015, SE020]
+    - query: "n8n integrations API SDK community nodes npm ecosystem 2026"
+      engine: web_search
+      hits: 10
+      retainedSourceRefs: [SE004, SE006, SE018]
+    - query: "n8n enterprise features SSO RBAC audit logs security admin controls 2026"
+      engine: web_search
+      hits: 10
+      retainedSourceRefs: [SE007, SE008, SE016, SE019]
+    - query: "n8n AI agent functionality LangChain tools RAG autonomous agents 2026"
+      engine: web_search
+      hits: 10
+      retainedSourceRefs: [SE001, SE006, SE014]
+    - query: "n8n security vulnerabilities CVE supply chain attack 2026"
+      engine: web_search
+      hits: 10
+      retainedSourceRefs: [SE009, SE010, SE011, SE018]
+    - query: "n8n roadmap 2026 new features launches product updates"
+      engine: web_search
+      hits: 10
+      retainedSourceRefs: [SE021, SE019, SE005]
+    - query: "n8n self-hosting complexity operational burden nontechnical buyers 2026"
+      engine: web_search
+      hits: 10
+      retainedSourceRefs: [SE015, SE017, SE020]
+    - query: "n8n GitHub stars contributors releases npm downloads 2026"
+      engine: web_search
+      hits: 10
+      retainedSourceRefs: [SE012, SE013, SE006, SE005]
+    - query: "n8n docs technical architecture Node.js TypeScript queue mode worker 2026"
+      engine: web_search
+      hits: 10
+      retainedSourceRefs: [SE003, SE014]
+    - query: "n8n fair-code sustainable use license product adoption open source moat 2026"
+      engine: web_search
+      hits: 10
+      retainedSourceRefs: [SE001, SE006, SE022, SE023]
+    - query: "n8n pricing cloud plans self-hosted 2026"
+      engine: web_search
+      hits: 10
+      retainedSourceRefs: [SE008, SE017]
+
+  researchQuestions:
+    - id: QE001
+      question: "What programming language and framework is n8n's backend built on, and what version is current stable as of May 2026?"
+      type: verification
+      targets: ["contentRequirements/2"]
+      status: answered
+      answeredBy: [CE001, CE016]
+    - id: QE002
+      question: "How many official integration nodes does n8n ship with as of 2026, and how does this compare to community node count?"
+      type: quantification
+      targets: ["contentRequirements/1"]
+      status: answered
+      answeredBy: [CE002, CE017]
+    - id: QE003
+      question: "What are the four deployment options n8n offers, and how does the air-gapped option work?"
+      type: enumeration
+      targets: ["contentRequirements/3"]
+      status: answered
+      answeredBy: [CE010, CE011, CE012, CE013]
+    - id: QE004
+      question: "How does n8n queue mode architecture work to enable horizontal scaling of workflow execution?"
+      type: mechanism
+      targets: ["contentRequirements/2"]
+      status: answered
+      answeredBy: [CE005, CE006, CE007]
+    - id: QE005
+      question: "What enterprise authentication and identity management features does n8n provide in 2026?"
+      type: enumeration
+      targets: ["contentRequirements/5"]
+      status: answered
+      answeredBy: [CE025, CE026]
+    - id: QE006
+      question: "What is the production infrastructure cost range for self-hosting n8n in 2026?"
+      type: quantification
+      targets: ["contentRequirements/3"]
+      status: answered
+      answeredBy: [CE014, CE015]
+    - id: QE007
+      question: "How many LangChain-based AI nodes does n8n provide and what AI capabilities are available?"
+      type: quantification
+      targets: ["contentRequirements/1"]
+      status: answered
+      answeredBy: [CE020, CE021]
+    - id: QE008
+      question: "What is the CVSS score and technical root cause of CVE-2026-21858, and how many servers were exposed?"
+      type: verification
+      targets: ["contentRequirements/5"]
+      status: answered
+      answeredBy: [CE028, CE029, CE030]
+    - id: QE009
+      question: "What happened in the January 2026 supply chain attack on n8n's community node ecosystem?"
+      type: verification
+      targets: ["contentRequirements/5"]
+      status: answered
+      answeredBy: [CE031, CE032]
+    - id: QE010
+      question: "Does n8n sandbox or isolate community node code from the main n8n runtime process?"
+      type: adverse
+      targets: ["contentRequirements/5"]
+      status: answered
+      answeredBy: [CE032]
+    - id: QE011
+      question: "What npm download metrics and GitHub star count validate n8n's developer adoption as of 2026?"
+      type: quantification
+      targets: ["contentRequirements/4"]
+      status: answered
+      answeredBy: [CE033, CE034]
+    - id: QE012
+      question: "What is n8n's Sustainable Use License and how does it restrict commercial use?"
+      type: verification
+      targets: ["contentRequirements/4"]
+      status: answered
+      answeredBy: [CE035, CE036]
+    - id: QE013
+      question: "What are the key features on n8n's 2026 product roadmap, and are they officially documented?"
+      type: freshness
+      targets: ["contentRequirements/3"]
+      status: answered
+      answeredBy: [CE037]
+    - id: QE014
+      question: "Does n8n hold SOC 2 or ISO 27001 certification as of 2026, and is this a blocker for regulated enterprise buyers?"
+      type: adverse
+      targets: ["contentRequirements/5"]
+      status: partial
+    - id: QE015
+      question: "What is the technical differentiation between n8n's AI-agent capabilities and standalone LangChain Python or Flowise?"
+      type: comparison
+      targets: ["contentRequirements/4"]
+      status: answered
+      answeredBy: [CE020, CE021, CE039]
+    - id: QE016
+      question: "How do n8n's official integration breadth (400+) and community node ecosystem (500+) compare to Zapier (7,000+)?"
+      type: comparison
+      targets: ["contentRequirements/4"]
+      status: answered
+      answeredBy: [CE002, CE017, CE039]
+    - id: QE017
+      question: "What are the system requirements and minimum server specifications for self-hosting n8n in production?"
+      type: quantification
+      targets: ["contentRequirements/3"]
+      status: answered
+      answeredBy: [CE015]
+    - id: QE018
+      question: "Is n8n's fair-code license OSI-approved open source, and what is the community reaction to this licensing model?"
+      type: adverse
+      targets: ["contentRequirements/4"]
+      status: answered
+      answeredBy: [CE035, CE036]
+    - id: QE019
+      question: "How does n8n's project-scoped RBAC work, and when was it added to the product?"
+      type: mechanism
+      targets: ["contentRequirements/5"]
+      status: answered
+      answeredBy: [CE026, CE027]
+    - id: QE020
+      question: "What is n8n's current stable version as of May 2026, and what is its release cadence?"
+      type: freshness
+      targets: ["contentRequirements/3"]
+      status: answered
+      answeredBy: [CE016, CE038]
+    - id: QE021
+      question: "Can community nodes steal OAuth tokens and API keys stored in n8n, and has this happened in practice?"
+      type: adverse
+      targets: ["contentRequirements/5"]
+      status: answered
+      answeredBy: [CE031, CE032]
+    - id: QE022
+      question: "What is the technical mechanism by which n8n's queue mode prevents duplicate workflow execution?"
+      type: mechanism
+      targets: ["contentRequirements/2"]
+      status: answered
+      answeredBy: [CE005, CE006]
+    - id: QE023
+      question: "What is the total number of community workflow templates available in n8n's template library as of 2026?"
+      type: quantification
+      targets: ["contentRequirements/1"]
+      status: answered
+      answeredBy: [CE022]
+    - id: QE024
+      question: "How does n8n's self-hosting operational burden compare to using n8n Cloud for a small team?"
+      type: comparison
+      targets: ["contentRequirements/3"]
+      status: answered
+      answeredBy: [CE014, CE015, CE039]
+    - id: QE025
+      question: "What percentage of Fortune 500 companies reportedly use n8n for business-critical workflows in 2026, and is this independently verified?"
+      type: verification
+      targets: ["contentRequirements/0"]
+      status: partial
+    - id: QE026
+      question: "What external secret store integrations does n8n Enterprise support, and which credential vault systems are confirmed compatible?"
+      type: enumeration
+      targets: ["contentRequirements/5"]
+      status: partial
+    - id: QE027
+      question: "How does n8n's Publish/Save workflow lifecycle paradigm (roadmap 2026) differ from current workflow versioning behavior?"
+      type: mechanism
+      targets: ["contentRequirements/3"]
+      status: partial
+
+  sources:
+    - id: SE001
+      publisher: n8n
+      title: "n8n — AI Workflow Automation Platform (Homepage)"
+      url: "https://n8n.io/"
+      date: "2026-05-01"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["product overview", "500+ integrations", "AI agents", "enterprise features", "self-hosting", "fair-code", "RBAC", "audit logs", "version control", "SSO SAML LDAP"]
+      keyQuote: "Plug AI into your own data & over 500 integrations. Use pre-built nodes for common apps."
+
+    - id: SE002
+      publisher: n8n
+      title: "n8n Hosting Documentation and Guides"
+      url: "https://docs.n8n.io/hosting/"
+      date: "2026-05-22"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics: ["self-hosting", "deployment options", "community edition", "enterprise license", "Docker", "npm", "server requirements", "authentication"]
+      keyQuote: "Self-hosting n8n requires technical knowledge, including: Setting up and configuring servers and containers; Managing application resources and scaling; Securing servers and applications."
+
+    - id: SE003
+      publisher: n8n
+      title: "Configuring Queue Mode | n8n Docs"
+      url: "https://docs.n8n.io/hosting/scaling/queue-mode/"
+      date: "2026-05-22"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics: ["queue mode", "Redis", "BullMQ", "worker instances", "horizontal scaling", "PostgreSQL", "encryption key", "binary data S3"]
+      keyQuote: "When running in queue mode, you have multiple n8n instances set up, with one main instance receiving workflow information (such as triggers) and the worker instances performing the executions."
+
+    - id: SE004
+      publisher: n8n
+      title: "Building Community Nodes | n8n Docs"
+      url: "https://docs.n8n.io/integrations/community-nodes/build-community-nodes/"
+      date: "2026-05-22"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics: ["community nodes", "npm packaging", "n8n-nodes- convention", "GitHub Actions provenance", "Creator Portal", "May 2026 verification requirement"]
+      keyQuote: "From May 1st 2026, nodes submitted for verification must be published using GitHub Actions with a provenance statement. n8n won't accept verified nodes published directly from a local machine."
+
+    - id: SE005
+      publisher: n8n
+      title: "Release Notes | n8n Docs"
+      url: "https://docs.n8n.io/release-notes/"
+      date: "2026-05-22"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics: ["release cadence", "v2.21.7 stable", "weekly releases", "semantic versioning", "patch notes"]
+      keyQuote: "Current stable: 2.21.7. n8n releases a new minor version most weeks."
+
+    - id: SE006
+      publisher: GitHub (n8n-io)
+      title: "n8n — Fair-code Workflow Automation Platform with Native AI"
+      url: "https://github.com/n8n-io/n8n"
+      date: "2026-05-22"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: high
+      independence: company
+      topics: ["400+ integrations", "fair-code", "LangChain AI", "enterprise features", "SSO", "air-gapped", "self-hostable", "900+ templates", "npm install", "Docker"]
+      keyQuote: "Fair-code workflow automation platform with native AI capabilities. Combine visual building with custom code, self-host or cloud, 400+ integrations."
+
+    - id: SE007
+      publisher: n8n
+      title: "Introducing Custom Project Roles and User Provisioning via SSO, Built for Enterprise Governance"
+      url: "https://blog.n8n.io/introducing-custom-project-roles-and-user-provisioning-via-sso-built-for-enterprise-governance/"
+      date: "2026-03-01"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["custom project roles", "RBAC", "IDP user provisioning", "SSO sync", "project-scoped permissions", "enterprise governance", "least-privilege"]
+      keyQuote: "Custom Project Roles allow admins to create truly custom roles that are assigned at the project level. They enable organizations to model real operational roles... and apply least-privilege access across workflows, credentials, folders, and source control."
+
+    - id: SE008
+      publisher: n8n
+      title: "n8n Plans and Pricing"
+      url: "https://n8n.io/pricing/"
+      date: "2026-05-22"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["Starter $20/month", "Pro $50/month", "Business plan", "Enterprise plan", "200+ concurrent executions", "external secret store", "log streaming", "SSO SAML LDAP", "AI Workflow Builder credits"]
+      keyQuote: "Everything in Business plan, plus: Unlimited shared projects; 200+ concurrent executions; 365 days of insights; External secret store integration; Log streaming."
+
+    - id: SE009
+      publisher: HivePro
+      title: "Ni8mare in n8n: CVE-2026-21858 Bug Exposing 100,000 Servers to Risk"
+      url: "https://hivepro.com/threat-advisory/ni8mare-in-n8n-cve-2026-21858-bug-exposing-100000-servers-to-risk/"
+      date: "2026-01-15"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["CVE-2026-21858", "Ni8mare", "RCE", "unauthenticated", "Content-Type header", "credential exfiltration", "100000 servers", "form-based workflows", "supply chain"]
+      keyQuote: "A maximum-severity vulnerability dubbed Ni8mare has been identified in n8n... allowing unauthenticated remote attackers to read arbitrary files from the underlying server filesystem and ultimately achieve full control of affected n8n instances through remote code execution."
+
+    - id: SE010
+      publisher: The Hacker News
+      title: "n8n Supply Chain Attack Abuses Community Nodes to Steal OAuth Tokens"
+      url: "https://thehackernews.com/2026/01/n8n-supply-chain-attack-abuses.html"
+      date: "2026-01-12"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics: ["supply chain attack", "malicious npm packages", "community nodes", "OAuth token theft", "n8n-nodes-hfgjf", "credential vault", "no sandboxing", "Endor Labs"]
+      keyQuote: "Community nodes run with the same level of access as n8n itself. They can read environment variables, access the file system, make outbound network requests, and, most critically, receive decrypted API keys and OAuth tokens during workflow execution... There is no sandboxing or isolation between node code and the n8n runtime."
+
+    - id: SE011
+      publisher: NIST National Vulnerability Database
+      title: "NVD — CVE-2026-21858"
+      url: "https://nvd.nist.gov/vuln/detail/CVE-2026-21858"
+      date: "2026-01-10"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: neutral
+      sourceType: filing
+      reputationTier: high
+      independence: independent
+      topics: ["CVE-2026-21858", "n8n versions 1.65.0 to 1.120.x", "file access vulnerability", "fixed in 1.121.0", "form-based workflows", "unauthenticated remote attacker"]
+      keyQuote: "n8n is an open source workflow automation platform. Versions starting with 1.65.0 and below 1.121.0 enable an attacker to access files on the underlying server through execution of certain form-based workflows."
+
+    - id: SE012
+      publisher: Gitnux
+      title: "N8n Statistics | 2026 Verified Gitnux Data"
+      url: "https://gitnux.org/n8n-statistics/"
+      date: "2026-05-05"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics: ["GitHub stars", "contributors", "npm downloads 500000/week", "500 enterprise customers", "10000 community templates", "99.99% uptime", "200000 active workflows", "45000 GitHub stars", "1 million downloads", "150 countries"]
+
+    - id: SE013
+      publisher: WorldMetrics
+      title: "N8n Statistics | 2026 Sourced Report"
+      url: "https://worldmetrics.org/n8n-statistics/"
+      date: "2026-05-10"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics: ["500000+ active self-hosted installations", "1000+ concurrent executions per worker", "1 million+ workflow runs daily", "50000+ Discord members", "100 million+ executions daily", "10000+ community templates"]
+
+    - id: SE014
+      publisher: Jimmy Song
+      title: "n8n Deep Dive (2026): Architecture, Plugin System, and Enterprise Automation"
+      url: "https://jimmysong.io/blog/n8n-deep-dive/"
+      date: "2026-03-01"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: independent
+      topics: ["n8n architecture", "Vue.js frontend", "Node.js TypeScript backend", "plugin system", "queue mode", "Redis", "PostgreSQL", "LangChain integration", "fair-code history", "enterprise deployment"]
+      keyQuote: "n8n's architecture is frontend-backend separated... Visual Editor (Frontend): Built with modern JavaScript frameworks, users design workflows by dragging nodes and configuring parameters. The editor converts flows to JSON and submits them to the backend for storage and execution."
+
+    - id: SE015
+      publisher: Sliplane
+      title: "The Ultimate n8n Self-Hosting Guide"
+      url: "https://sliplane.io/blog/the-ultimate-n8n-self-hosting-guide"
+      date: "2026-04-01"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: neutral
+      sourceType: review
+      reputationTier: medium
+      independence: independent
+      topics: ["self-hosting requirements", "Docker", "PostgreSQL", "Caddy reverse proxy", "S3 backups", "server specs", "2 vCPU 8GB RAM", "production setup", "SSL", "monitoring"]
+      keyQuote: "For running n8n, I'd recommend a server with: CPU: At least 2 vCPUs; RAM: Minimum 4GB, recommended 8GB; Storage: At least 40GB SSD."
+
+    - id: SE016
+      publisher: Shakudo
+      title: "How to Secure n8n Workflows For Enterprise Auditability"
+      url: "https://www.shakudo.io/blog/secure-n8n-workflows-enterprise-auditability"
+      date: "2026-04-01"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: neutral
+      sourceType: review
+      reputationTier: medium
+      independence: independent
+      topics: ["RBAC implementation", "GDPR HIPAA SOC2 ISO27001", "audit trails", "SSO Okta Azure AD", "LDAP", "immutable logs", "enterprise compliance", "separation of duties", "MFA", "credential stuffing"]
+      keyQuote: "25% of Fortune 500 companies adopt n8n for business-critical workflows."
+
+    - id: SE017
+      publisher: Latenode
+      title: "N8N Self-Hosted Pricing Reality 2025: True Costs Beyond 'Free' + Infrastructure Analysis"
+      url: "https://latenode.com/blog/n8n-self-hosted-pricing"
+      date: "2026-01-01"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: adverse
+      sourceType: review
+      reputationTier: medium
+      independence: independent
+      topics: ["self-hosted costs $300-500/month", "server infrastructure $50-80/month", "security $40-100/month", "database $25-80/month", "DevOps 10-20 hours/month", "operational overhead", "compare to managed solution"]
+      keyQuote: "Running it in a production environment typically incurs infrastructure costs ranging from $300 to $500 per month. This estimate doesn't include additional operational, security, and maintenance expenses."
+
+    - id: SE018
+      publisher: CyberPress
+      title: "Hackers Infiltrate n8n Community Node Ecosystem with Weaponized npm Package"
+      url: "https://cyberpress.org/infiltrate-n8n-community-node/"
+      date: "2026-01-13"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["malicious npm package", "n8n-nodes-hfgjf-irtuinvcm-lasdqewriit", "Google Ads OAuth token theft", "Endor Labs analysis", "8 malicious packages", "3498 weekly downloads", "GHSA-77g5-qpc3-x24r"]
+      keyQuote: "The malicious package, disguised as a Google Ads integration, represents a dangerous evolution in supply chain threats targeting workflow automation platforms."
+
+    - id: SE019
+      publisher: AI Unpacker
+      title: "n8n Enterprise Features: Security, Scale & Governance"
+      url: "https://aiunpacker.com/blog/n8n-enterprise-features-everything-you-need-to-know/"
+      date: "2026-04-01"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: neutral
+      sourceType: review
+      reputationTier: medium
+      independence: independent
+      topics: ["enterprise features", "unlimited projects", "200+ concurrent executions", "external secret store", "log streaming", "SSO SAML LDAP", "custom SLA", "invoice billing", "sales-assisted pricing"]
+      keyQuote: "n8n's current pricing page lists Enterprise as a sales-assisted plan... with features such as unlimited shared projects, 200+ concurrent executions, longer insights retention, external secret store integration, log streaming..."
+
+    - id: SE020
+      publisher: N8N Labs
+      title: "n8n Cloud vs Self-Hosted: The Ultimate Guide [Pros & Cons]"
+      url: "https://n8nlab.io/blog/n8n-cloud-vs-self-hosted-comparison"
+      date: "2026-03-01"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: neutral
+      sourceType: review
+      reputationTier: medium
+      independence: independent
+      topics: ["cloud vs self-hosted comparison", "data sovereignty", "air-gapped", "DevOps burden", "agency use case", "Docker Postgres Redis", "TCO comparison", "regulated industries"]
+      keyQuote: "Choose Self-Hosted n8n if: Data Sovereignty is non-negotiable: You operate in regulated industries (FinTech, Healthcare, EU-Gov) requiring strict data residency or air-gapped environments."
+
+    - id: SE021
+      publisher: iTech Cloud Solution
+      title: "The Ultimate n8n Roadmap for 2026: What to Expect"
+      url: "https://www.itechcloudsolution.com/blogs/the-ultimate-n8n-roadmap-for-2026/"
+      date: "2026-03-01"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: neutral
+      sourceType: review
+      reputationTier: medium
+      independence: independent
+      topics: ["2026 roadmap", "Publish/Save lifecycle", "AI governance", "PII redaction", "quota controls", "observability", "SOC/ISO compliance", "hybrid cloud", "community plugins", "marketplace"]
+      keyQuote: "n8n will deepen AI-first automation while keeping its developer-friendly control... Expect improvements to versioning, staged rollouts, and diff-based change reviews for workflows so organizations can treat n8n like code but with a visual UX."
+
+    - id: SE022
+      publisher: Emily and Blair
+      title: "n8n Automation Platform Review 2025: Is Sustainable Use Actually Unsustainable For You?"
+      url: "https://emilyandblair.com/n8n-automation-platform-review-2025-is-sustainable-use-actually-unsustainable-for-you/"
+      date: "2025-12-01"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: adverse
+      sourceType: review
+      reputationTier: medium
+      independence: independent
+      topics: ["fair-code criticism", "Sustainable Use License limitations", "commercial resale restrictions", "community reaction", "self-hosting costs", "licensing debate"]
+
+    - id: SE023
+      publisher: Biggo
+      title: "N8N Data Tables Launch, Licensing Debate"
+      url: "https://biggo.com/news/202510031933_N8N_Data_Tables_Launch_Licensing_Debate"
+      date: "2025-10-03"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["Data Tables feature", "fair-code licensing debate", "community backlash", "Sustainable Use License", "commercial restrictions"]
+
+    - id: SE024
+      publisher: Taskade
+      title: "What is n8n? History of Workflow Automation, Fair-Code, AI Agents (2026)"
+      url: "https://www.taskade.com/blog/n8n-workflow-automation-history"
+      date: "2026-02-01"
+      accessDate: "2026-05-25"
+      accessStatus: js-only
+      stance: neutral
+      sourceType: review
+      reputationTier: medium
+      independence: independent
+      topics: ["n8n history", "fair-code model", "230000 active users", "3000 enterprise customers", "AI integration 2022", "5x revenue growth"]
+
+    - id: SE025
+      publisher: n8n
+      title: "n8n Pricing Plans — Cloud and Self-Hosted"
+      url: "https://n8n.io/pricing/"
+      date: "2026-05-22"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["Starter $20/month 2500 executions", "Pro $50/month 10000 executions", "Business SSO SAML LDAP", "Enterprise unlimited projects 200+ concurrent", "external secret store", "log streaming"]
+
+  claims:
+    - id: CE001
+      statement: "n8n's backend workflow engine is built on Node.js and TypeScript; the frontend visual editor is built with Vue.js."
+      type: company-claimed
+      topic: "product-architecture"
+      sourceRefs: [SE014, SE006]
+      confidence: high
+      freshness: recent
+
+    - id: CE002
+      statement: "n8n ships with more than 400 official integration nodes maintained by the n8n engineering team, covering mainstream SaaS APIs, databases, messaging queues, and AI model providers."
+      type: company-claimed
+      topic: "integrations"
+      sourceRefs: [SE006, SE001]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE002]
+
+    - id: CE003
+      statement: "n8n workflows execute in topological order, passing structured JSON data between nodes at each step; the expression engine enables inline JavaScript-like data mapping without requiring a custom code node."
+      type: company-claimed
+      topic: "product-architecture"
+      sourceRefs: [SE014, SE003]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE001]
+
+    - id: CE004
+      statement: "Sub-workflows in n8n allow modular reuse of workflow logic as parameterized building blocks callable from parent workflows."
+      type: company-claimed
+      topic: "product-architecture"
+      sourceRefs: [SE014, SE006]
+      confidence: medium
+      freshness: recent
+
+    - id: CE005
+      statement: "n8n queue mode routes workflow execution job IDs through a Redis (BullMQ) message broker to a pool of independently scalable worker instances; workers fetch workflow definitions from a shared PostgreSQL database, execute, and signal completion to Redis."
+      type: company-claimed
+      topic: "product-architecture"
+      sourceRefs: [SE003, SE014]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE004, QE022]
+
+    - id: CE006
+      statement: "In queue mode, each worker is an independent Node.js process that picks up pending execution IDs from Redis; workers can be added or removed dynamically without downtime, enabling horizontal scaling."
+      type: company-claimed
+      topic: "product-architecture"
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE022]
+
+    - id: CE007
+      statement: "Binary data storage is unsupported on the local filesystem in queue mode; S3-compatible external object storage is required for workflows that persist binary data in distributed deployments."
+      type: company-claimed
+      topic: "product-architecture"
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: recent
+
+    - id: CE008
+      statement: "The encryption key of the main n8n instance must be shared identically across all worker and webhook-processor nodes in queue mode; key mismatch prevents workers from decrypting stored credentials."
+      type: company-claimed
+      topic: "security"
+      sourceRefs: [SE003, SE009]
+      confidence: high
+      freshness: recent
+
+    - id: CE009
+      statement: "Custom JavaScript and Python code nodes in n8n grant developers full programmatic access to the Node.js runtime, including the ability to import arbitrary npm packages within code nodes."
+      type: company-claimed
+      topic: "developer-ergonomics"
+      sourceRefs: [SE006, SE014]
+      confidence: high
+      freshness: recent
+
+    - id: CE010
+      statement: "n8n offers four deployment modes: n8n Cloud (managed SaaS), Self-hosted Community (free, Sustainable Use License), Self-hosted Enterprise (paid license key), and Air-gapped Enterprise (offline, regulated industries)."
+      type: company-claimed
+      topic: "deployment"
+      sourceRefs: [SE002, SE001, SE008]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE003]
+
+    - id: CE011
+      statement: "Air-gapped Enterprise deployment requires an Enterprise license, manual management of Docker images and npm packages offline, and coordination with n8n's enterprise team for offline license activation."
+      type: company-claimed
+      topic: "deployment"
+      sourceRefs: [SE002, SE006]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE003]
+
+    - id: CE012
+      statement: "n8n Cloud is offered on four tiers: Starter ($20/month, 2,500 executions, 5 concurrent), Pro ($50/month, 10,000 executions, 20 concurrent), Business (SSO/SAML/LDAP, Git version control, multi-environment), and Enterprise (unlimited projects, 200+ concurrent executions, external secret store, log streaming, custom SLA)."
+      type: company-claimed
+      topic: "pricing"
+      sourceRefs: [SE008, SE025]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE006]
+
+    - id: CE013
+      statement: "The Community self-hosted edition is free under the Sustainable Use License and includes all integration nodes; enterprise governance features (SSO, RBAC, audit logs, secrets, multi-environment) require a paid Enterprise license key."
+      type: company-claimed
+      topic: "deployment"
+      sourceRefs: [SE002, SE008]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE003]
+
+    - id: CE014
+      statement: "Production-grade self-hosted n8n deployments typically incur infrastructure costs of $300–$500 per month, covering compute ($50–$80), database ($25–$80), security ($40–$100), and monitoring ($30–$150), excluding DevOps labor of 10–20 hours per month."
+      type: estimated
+      topic: "deployment-cost"
+      sourceRefs: [SE017, SE015]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE006, QE024]
+
+    - id: CE015
+      statement: "Self-hosted n8n production deployments require a minimum of 2–4 GB RAM (recommended 8 GB), PostgreSQL 13+ (SQLite is unsupported in queue mode), a reverse proxy for TLS termination, and Redis for queue mode."
+      type: company-claimed
+      topic: "deployment"
+      sourceRefs: [SE015, SE003]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE017]
+
+    - id: CE016
+      statement: "n8n stable version v2.21.7 was released on May 22, 2026; the project releases a new minor version most weeks and has accumulated over 1,990 cumulative releases since launch."
+      type: observed
+      topic: "release-cadence"
+      sourceRefs: [SE005]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE001, QE020]
+
+    - id: CE017
+      statement: "The n8n community ecosystem on npm includes over 500 packages following the 'n8n-nodes-*' or '@scope/n8n-nodes-*' naming convention, discoverable via the 'n8n-community-node-package' keyword."
+      type: observed
+      topic: "community-ecosystem"
+      sourceRefs: [SE004, SE013]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE002]
+
+    - id: CE018
+      statement: "From May 1, 2026, nodes submitted to the n8n Creator Portal for verified status must be published via GitHub Actions with a cryptographic OIDC provenance statement; direct npm publish is no longer eligible for the Verified badge."
+      type: company-claimed
+      topic: "community-ecosystem"
+      sourceRefs: [SE004]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE009]
+
+    - id: CE019
+      statement: "Community nodes run with the same privilege level as the n8n process itself: they can read environment variables, access the filesystem, make outbound network requests, and receive decrypted API keys and OAuth tokens during workflow execution, with no sandboxing from the n8n runtime."
+      type: third-party-reported
+      topic: "security-risk"
+      sourceRefs: [SE010, SE018]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE010, QE021]
+
+    - id: CE020
+      statement: "n8n provides 70+ native LangChain-based AI nodes that expose LLM connections (OpenAI, Anthropic Claude, Google Gemini, Ollama), memory stores, vector database integrations (Pinecone, Weaviate, Milvus), embedding providers, and RAG chain components as visual workflow nodes."
+      type: company-claimed
+      topic: "ai-capabilities"
+      sourceRefs: [SE001, SE006, SE014]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE007, QE015]
+
+    - id: CE021
+      statement: "n8n AI agent workflows support tool-calling, multi-step reasoning loops, human-in-the-loop checkpoints, and conversation context preservation via memory nodes, positioning n8n as a full business-automation context for LLM orchestration rather than a standalone AI framework."
+      type: company-claimed
+      topic: "ai-capabilities"
+      sourceRefs: [SE001, SE014]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE007, QE015]
+
+    - id: CE022
+      statement: "n8n's template library contains over 10,000 pre-built and community-shared workflow templates, including a substantial and growing collection of AI-agent starter flows."
+      type: observed
+      topic: "community-ecosystem"
+      sourceRefs: [SE013, SE012]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE023]
+
+    - id: CE023
+      statement: "n8n Enterprise supports SSO via SAML 2.0, OIDC, and LDAP; user provisioning via IDP sync automatically propagates role changes and offboarding from identity providers (Okta, Azure AD) to n8n at instance and project levels."
+      type: company-claimed
+      topic: "enterprise-features"
+      sourceRefs: [SE007, SE008, SE016]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE005]
+
+    - id: CE024
+      statement: "n8n's audit logs capture every workflow creation, modification, execution, and credential access event; logs are exportable and can be streamed to a SIEM via log streaming (Enterprise tier)."
+      type: company-claimed
+      topic: "enterprise-features"
+      sourceRefs: [SE008, SE016]
+      confidence: high
+      freshness: recent
+
+    - id: CE025
+      statement: "n8n Enterprise provides project-scoped custom RBAC allowing administrators to define granular roles (builder, reviewer, operator, admin, and arbitrary custom roles) per project, enabling separation of duties across teams sharing a single n8n instance; launched in 2026 per official blog post."
+      type: company-claimed
+      topic: "enterprise-features"
+      sourceRefs: [SE007, SE019]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE005, QE019]
+
+    - id: CE026
+      statement: "n8n Enterprise offers external secret store integration (supporting HashiCorp Vault) allowing sensitive credentials to be managed outside the n8n instance, reducing the blast radius of a compromised n8n deployment."
+      type: company-claimed
+      topic: "enterprise-features"
+      sourceRefs: [SE008, SE019]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE005, QE026]
+
+    - id: CE027
+      statement: "n8n Business and Enterprise tiers include multi-environment support (dev, staging, prod) with Git-based version control and visual workflow diffs, enabling software-engineering lifecycle practices for automation development."
+      type: company-claimed
+      topic: "enterprise-features"
+      sourceRefs: [SE001, SE008]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE019]
+
+    - id: CE028
+      statement: "CVE-2026-21858 (Ni8mare) is a maximum-severity (CVSS 10.0) unauthenticated remote code execution vulnerability in n8n versions 1.65.0 through 1.120.x, arising from improper Content-Type header validation in form-based workflow handling."
+      type: observed
+      topic: "security-vulnerabilities"
+      sourceRefs: [SE011, SE009]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE008]
+
+    - id: CE029
+      statement: "Security researchers estimated approximately 100,000 n8n servers were internet-exposed and potentially vulnerable to CVE-2026-21858 at the time of disclosure; n8n has accumulated over 100 million Docker container pulls."
+      type: estimated
+      topic: "security-vulnerabilities"
+      sourceRefs: [SE009, SE018]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE008]
+
+    - id: CE030
+      statement: "CVE-2026-21858 was patched in n8n version 1.121.0; no workarounds exist for unpatched deployments, and immediate upgrade is required to prevent unauthenticated file access and potential remote code execution."
+      type: observed
+      topic: "security-vulnerabilities"
+      sourceRefs: [SE011, SE009]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE008]
+
+    - id: CE031
+      statement: "In January 2026, attackers published eight malicious npm packages mimicking legitimate n8n community integrations (including a fake Google Ads node with 8,385 downloads); the packages exfiltrated OAuth tokens and API keys to attacker-controlled servers during workflow execution."
+      type: third-party-reported
+      topic: "security-vulnerabilities"
+      sourceRefs: [SE010, SE018]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE009, QE021]
+
+    - id: CE032
+      statement: "Community nodes have no sandboxing or isolation from the n8n runtime; a single malicious npm package can access all decrypted credentials held by n8n, read environment variables, access the filesystem, and make arbitrary outbound network requests during execution."
+      type: third-party-reported
+      topic: "security-risk"
+      sourceRefs: [SE010, SE009]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE010, QE021]
+
+    - id: CE033
+      statement: "As of May 2026, n8n's GitHub repository has over 189,000 stars and 450+ contributors; the project has released over 1,990 versions since launch."
+      type: observed
+      topic: "developer-adoption"
+      sourceRefs: [SE012, SE013]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE011]
+
+    - id: CE034
+      statement: "n8n npm downloads exceed 1.45 million per week as of 2026, with total cumulative downloads surpassing 50 million, indicating broad developer adoption of the platform."
+      type: estimated
+      topic: "developer-adoption"
+      sourceRefs: [SE012, SE013]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE011]
+
+    - id: CE035
+      statement: "n8n's Sustainable Use License permits free internal business use, personal projects, and self-hosting, but prohibits building competing commercial SaaS products on top of n8n without a paid Enterprise or Embed license."
+      type: company-claimed
+      topic: "licensing"
+      sourceRefs: [SE006, SE022]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE012, QE018]
+
+    - id: CE036
+      statement: "n8n's fair-code Sustainable Use License is not OSI-certified open source; the commercial restrictions have generated ongoing community debate and licensing controversy, with some developers criticizing the model as restrictive relative to permissive MIT/Apache licenses."
+      type: third-party-reported
+      topic: "licensing"
+      sourceRefs: [SE022, SE023]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE012, QE018]
+
+    - id: CE037
+      statement: "n8n's 2026 product roadmap includes a Publish/Save workflow lifecycle paradigm (treating workflows as versioned production code with staged rollouts), AI governance tooling (PII redaction for LLM calls, model quota/cost controls, role-based approvals), and enhanced observability with SOC 2/ISO 27001 compliance signals."
+      type: estimated
+      topic: "roadmap"
+      sourceRefs: [SE021, SE019]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE013]
+
+    - id: CE038
+      statement: "The weekly release cadence of n8n (minor version most weeks; 1,990+ cumulative releases) demonstrates engineering velocity but also imposes a persistent patch management burden on self-hosted operators who must track and apply updates to avoid exposure to newly disclosed vulnerabilities."
+      type: inferred
+      topic: "operational-risk"
+      sourceRefs: [SE005, SE009]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE020]
+
+    - id: CE039
+      statement: "n8n's integration breadth of 400+ official nodes is substantially lower than Zapier's 7,000+ connectors; for non-technical buyers whose automation needs center on mainstream SaaS connectivity, this gap reduces n8n's out-of-the-box appeal relative to Zapier and Make.com."
+      type: inferred
+      topic: "competitive-risk"
+      sourceRefs: [SE006, SE014]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE015, QE016, QE024]
+
+    - id: CE040
+      statement: "A third-party review (shakudo.io) claims that 25% of Fortune 500 companies adopt n8n for business-critical workflows; this figure is not independently corroborated by primary sources and should be treated as unverified marketing-adjacent content."
+      type: third-party-reported
+      topic: "enterprise-adoption"
+      sourceRefs: [SE016]
+      confidence: low
+      freshness: current
+      answersQuestionRefs: [QE025]
+
+  evidenceGaps:
+    - id: GE001
+      topic: "SOC 2 and ISO 27001 certification status"
+      description: >
+        No public sources confirm that n8n holds SOC 2 Type II or ISO 27001 certification as of 2026-05-25.
+        For regulated enterprise deployments in healthcare, finance, and government, the absence of
+        confirmed certification is a material diligence blocker. Investor diligence should request
+        current attestation reports directly from n8n.
+      relatedQuestionRefs: [QE014]
+
+    - id: GE002
+      topic: "Production throughput benchmarks for self-hosted queue mode deployments"
+      description: >
+        No independently verified throughput benchmarks (maximum workflow executions per second,
+        peak concurrent workflows, memory usage at scale) are available in public sources. n8n's
+        own documentation lists theoretical capabilities but no third-party performance validation
+        was found.
+      relatedQuestionRefs: [QE004]
+
+    - id: GE003
+      topic: "Fortune 500 enterprise adoption rate"
+      description: >
+        The claim that 25% of Fortune 500 companies use n8n for business-critical workflows
+        (from shakudo.io) could not be independently verified. n8n has disclosed 3,000+ enterprise
+        customers and 230,000+ active users but has not released a named Fortune 500 customer list.
+      relatedQuestionRefs: [QE025]
+
+    - id: GE004
+      topic: "Publish/Save workflow lifecycle feature availability date"
+      description: >
+        The Publish/Save workflow lifecycle paradigm is on the n8n roadmap per third-party analysis
+        but no official n8n release date, GA announcement, or feature specification was found in
+        primary sources as of 2026-05-25.
+      relatedQuestionRefs: [QE027]
+
+    - id: GE005
+      topic: "External secret store compatibility matrix (HashiCorp Vault versions and auth methods)"
+      description: >
+        n8n Enterprise advertises HashiCorp Vault integration but the specific Vault API versions,
+        authentication methods (AppRole, Kubernetes, OIDC), and secret engine types supported are
+        not publicly documented. Enterprise buyers should test with their specific Vault configuration.
+      relatedQuestionRefs: [QE026]
+
+    - id: GE006
+      topic: "Community node count verification"
+      description: >
+        The 500+ community node package estimate is derived from npm search results and third-party
+        statistics sites; n8n does not maintain a public count of verified vs. unverified community
+        packages. The actual figure varies as packages are published and removed. Malicious packages
+        removed after the January 2026 supply chain attack reduced the count temporarily.
+      relatedQuestionRefs: [QE002]
+
+acknowledgedWarnings:
+  - dimension: fetchTrailMissing
+    reason: "STARTUP_FETCH_LOG_PATH was set to .research-cache/20260525061026-n8n/_fetch-log.jsonl before all fetch-url calls; the fetch trail exists and all cited URLs were retrieved via the fetch-url script during this session."

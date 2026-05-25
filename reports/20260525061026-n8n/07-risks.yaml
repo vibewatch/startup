@@ -1,0 +1,1883 @@
+schemaVersion: "report-v2"
+artifact: risks
+slug: n8n
+runDate: "2026-05-25"
+company:
+  name: n8n
+chapter:
+  number: 7
+  title: Risks
+  summary: >
+    n8n in 2026 carries a layered, mutually reinforcing risk profile that spans security,
+    licensing, competitive, financial, and people dimensions. On the security side, the
+    platform disclosed five critical CVEs (CVSS 9.4–10.0) in a 60-day window between
+    January and February 2026, including Ni8mare (CVE-2026-21858, CVSS 10.0), an
+    unauthenticated RCE that exposed an estimated 100,000 self-hosted servers; a January 2026
+    npm supply-chain attack exfiltrating stored OAuth tokens; and a December 2025 patch
+    bypass (CVE-2026-25049). Cisco Talos documented 686% growth in weaponized n8n webhook
+    URLs for malware delivery through March 2026. These incidents are particularly damaging
+    because n8n functions as a centralized credential vault for all integrated systems—a
+    single compromised instance can cascade into a full infrastructure breach. The fair-code
+    Sustainable Use License is not OSI-approved open source; community backlash, fork
+    discussions, and licensing ambiguity for service providers represent a persistent
+    adoption barrier. SAP's strategic investment and plans to embed n8n inside Joule Studio
+    create both a major growth catalyst and a single-partner concentration risk. Jan Oberhauser
+    remains the sole founder, the platform's public face, and by his own admission a succession
+    candidate post-IPO—key person risk is elevated. Financial opacity (no public filings,
+    revenue estimates vary by 4× across sources) impedes independent diligence. Competitive
+    risk from Microsoft Power Automate's bundled pricing and Zapier's integration breadth is
+    material. Each risk has identified mitigants and concrete diligence asks; four kill-criteria
+    triggers are defined for thesis-breaking events.
+
+sections:
+  - id: security-supply-chain-product-risk
+    title: Security, Supply-Chain, and Product Risk
+    body: >
+      n8n's position as a centralized automation hub—storing API keys, OAuth tokens, database
+      credentials, and cloud access tokens for every integrated service—creates an extraordinarily
+      high blast radius for any successful attack. In the ten weeks between November 2025 and
+      February 2026, n8n disclosed five critical security vulnerabilities (CVSS 9.4–10.0),
+      representing an unprecedented concentration of maximum-severity findings for a single
+      platform in a short window.
+
+      CVE-2026-21858 ("Ni8mare", CVSS 10.0), disclosed January 7, 2026, is an unauthenticated
+      remote code execution vulnerability rooted in a Content-Type confusion flaw in n8n's
+      webhook handler. By sending a crafted HTTP request, an unauthenticated attacker can: read
+      arbitrary files from the server (including the SQLite database and encryption key stored at
+      /home/node/.n8n/config); forge administrator session tokens; and achieve full RCE by
+      creating a workflow with an Execute Command node. Cyera Research Labs estimated over 100,000
+      internet-exposed n8n servers were vulnerable. The patch was released in v1.121.0 on
+      November 18, 2025; no workaround exists for unpatched deployments. Picus Security confirmed
+      the full attack chain step-by-step, noting that the blast radius includes all credentials
+      stored in the n8n instance. Three additional critical CVEs (CVE-2025-68613, CVSS 9.9;
+      CVE-2025-68668 "N8scape", CVSS 9.9; CVE-2026-21877, CVSS 10.0) were disclosed in the
+      same period, all enabling authenticated or unauthenticated code execution under varying
+      conditions.
+
+      CVE-2026-25049 (CVSS 9.4), disclosed February 5, 2026, bypassed the December 2025 patch
+      for CVE-2025-68613. Pillar Security researchers warned that successful exploitation could
+      grant full server control—including interception of OpenAI, Anthropic, and AWS credentials
+      in real time—and that n8n Cloud's multi-tenant architecture could allow cross-tenant data
+      access. The Register reported n8n maintainers confirmed: "An authenticated user with
+      permission to create or modify workflows could abuse crafted expressions in workflow
+      parameters to trigger unintended system command execution on the host running n8n." The
+      patch bypass within three months of the original fix suggests architectural, not merely
+      implementation, security debt.
+
+      In May 2026, three further critical CVEs (CVE-2026-44789 prototype pollution via HTTP
+      Request node leading to RCE; CVE-2026-44790 Git node argument injection; CVE-2026-44791
+      XML node patch bypass) were disclosed via GitHub Security Advisories, all impactable by
+      low-privileged authenticated users with workflow-editing permissions. These affect versions
+      prior to 1.123.43, 2.20.7, and 2.22.1.
+
+      The January 2026 npm supply-chain attack added a separate attack vector. Endor Labs
+      discovered malicious npm packages disguised as legitimate n8n community nodes (e.g., Google
+      Ads connectors) that collected OAuth tokens and API keys from n8n's credential store and
+      exfiltrated them to C2 servers. There is no pre-publication review of npm packages, and all
+      installed community nodes run with full access to the workflow environment, including
+      decrypted API credentials. n8n introduced cryptographic provenance requirements for verified
+      nodes from May 2026, but unverified nodes remain installable. Endor Labs noted: "Even
+      though the malicious packages we know have been disabled in the last few hours, the attacks
+      may continue and evolve going forward."
+
+      Cisco Talos, in an April 2026 threat intelligence report, documented that the volume of
+      emails containing weaponized n8n webhook URLs in March 2026 was approximately 686% higher
+      than in January 2025. Threat actors exploit n8n's legitimate webhook infrastructure to
+      deliver malware, conduct device fingerprinting, and bypass security filters—since the payloads
+      appear to originate from a trusted n8n domain. JieGou's technical commentary noted that
+      n8n's governance architecture gap (absence of quantitative governance scoring, regulatory
+      compliance mapping, department-scoped policies, and SOC 2-structured audit evidence) means
+      security incidents cannot be adequately governed by the platform's current tooling alone.
+    claimRefs:
+      - CR001
+      - CR002
+      - CR003
+      - CR004
+      - CR005
+      - CR006
+      - CR007
+      - CR008
+      - CR009
+      - CR010
+      - CR011
+    tableRefs:
+      - TR002
+    figureRefs:
+      - FR001
+
+  - id: licensing-governance-legal-risk
+    title: Licensing, Open-Source Governance, and Legal Risk
+    body: >
+      n8n's Sustainable Use License (SUL) is a proprietary fair-code license that is not OSI
+      (Open Source Initiative) approved. While source code is publicly visible and internal
+      business use is permitted without restriction, the SUL prohibits commercial SaaS resale,
+      white-labeling, and embedding n8n as the core of a commercial service without an Enterprise
+      or Embed license. This licensing model has generated persistent community friction since the
+      2022 transition from Apache 2.0 + Commons Clause. The n8n blog acknowledged at the time
+      that the previous arrangement "created some ambiguity and confusion" and that the new SUL was
+      designed to draw "a clearer line"—but in practice, community members continue to debate
+      gray-area scenarios.
+
+      The October 2025 Data Tables feature launch reignited a community licensing debate documented
+      on Biggo. Critics argued that fair-source licensing "lacks the protections of true open source
+      software" and voiced concern about future "rug pulls" where features become paywalled or
+      pricing models change unilaterally. The debate drove some users to evaluate Node-RED (Apache
+      2.0), Windmill.dev, ActivePieces, and Tracecat as true FOSS alternatives. Community forum
+      activity on n8n.io confirms ongoing confusion about SUL vs. commercial license boundaries for
+      agency and MSP use cases—scenarios where a developer builds n8n workflows for paying clients.
+      n8n's official licensing FAQ acknowledges the ambiguity and directs users to email license@n8n.io
+      for clarification, indicating edge cases cannot be resolved from published documentation alone.
+
+      The governance architecture gap is a separate but related risk. JieGou's February 2026 analysis
+      noted that n8n's HITL (human-in-the-loop) feature is "layer 1 of 11" governance primitives and
+      lacks quantitative governance scoring, EU AI Act mapping, NIST AI RMF mapping, graduated
+      autonomy controls, budget limits per agent, threat detection (prompt injection, data exfiltration),
+      and SOC 2-structured audit evidence. In February 2026, n8n disclosed 21+ security vulnerabilities
+      including 7 critical CVEs; CVE-2026-25049 bypassed the December 2025 fix within three months—
+      a sign of architectural security debt that governance tooling cannot compensate for.
+
+      From a legal and regulatory perspective, n8n GmbH (registered in Berlin, Germany) and its UK
+      subsidiary (Companies House filing history confirmed) are subject to GDPR requirements applicable
+      to all EU/UK data processors. Customers who self-host n8n are data controllers responsible for
+      their own compliance; n8n's status as a SaaS vendor means cloud customers rely on n8n's DPA and
+      sub-processor list. No SOC 2 or ISO 27001 certification has been publicly confirmed for n8n Cloud
+      as of the runDate; the 2026 roadmap targets these certifications but formal attestation documents
+      are not publicly available. The absence of these certifications creates a procurement blocker
+      for regulated-industry enterprise buyers who require vendor certification as a pre-condition.
+    claimRefs:
+      - CR012
+      - CR013
+      - CR014
+      - CR015
+      - CR016
+      - CR017
+      - CR018
+      - CR019
+      - CR020
+    tableRefs:
+      - TR001
+    figureRefs: []
+
+  - id: competitive-platform-dependency-ai-hype-risk
+    title: Competitive Risk, Platform Dependency, and AI Hype Risk
+    body: >
+      n8n's competitive position faces pressure from three directions simultaneously: well-resourced
+      incumbents extending their automation capabilities; new open-source and fair-code entrants;
+      and the strategic concentration risk introduced by the SAP partnership.
+
+      Microsoft Power Automate is bundled free inside Microsoft 365 E3/E5 licenses, which creates
+      a zero-marginal-cost automation alternative for any organization already on the Microsoft stack.
+      Power Automate's December 2025 update added AI Builder capabilities and deeper Copilot Studio
+      integration, allowing non-technical users to create automations via natural language. Zapier
+      maintains over 7,000 integrations versus n8n's 400+ official nodes, and its no-code UX has a
+      significantly lower adoption barrier for non-technical buyers. Workato targets enterprise iPaaS
+      with formal SOC 2 Type II and ISO 27001 certifications, giving it a compliance advantage over
+      n8n for regulated-industry buyers. These incumbents have greater sales infrastructure, partner
+      ecosystems, and certifications than n8n, limiting the latter's addressable market among
+      enterprise buyers who weight vendor risk management.
+
+      The SAP strategic investment (May 2026, $5.2B valuation) embeds n8n natively inside SAP
+      Joule Studio, positioning n8n as the automation layer for SAP's 300,000 enterprise customers.
+      This partnership is both the single largest commercial catalyst in n8n's history and the largest
+      concentration risk. Any deterioration in the SAP relationship—strategic misalignment, SAP's
+      acquisition of a competing orchestration platform, or integration quality failures—could
+      eliminate or materially reduce a pipeline that represents a substantial portion of n8n's
+      enterprise TAM expansion. SAP customers building workflows inside Joule Studio will have
+      their automations tied to SAP BTP infrastructure, creating exit-friction that may benefit
+      SAP at n8n's expense in future contract negotiations. n8n's official blog acknowledged that
+      "a lot more is coming" on the SAP partnership front, suggesting financial terms and deeper
+      dependencies are not yet fully disclosed.
+
+      AI feature hype is an acute risk in the 2026 environment. n8n's investor narrative centers
+      on being the "AI orchestration layer" and the "Excel of AI"—claims that helped drive a 10×
+      revenue increase and a $2.5B valuation. The Cisco Talos April 2026 report documented that
+      the same AI agent capabilities that attract enterprise buyers also enable sophisticated
+      threat actors to build automated malware delivery and phishing systems with low technical
+      barriers. Over-reliance on agentic automation without adequate guardrails introduces black-box
+      operational risk: when LLM-driven agents autonomously triage, respond, and act, hallucination
+      or prompt injection can cause undetected compliance failures. Sequoia Capital's podcast
+      interview noted that "around 75% of customers now use AI features," implying the product's
+      value thesis is heavily weighted toward AI—making it sensitive to LLM commoditization and
+      any deterioration in the AI investment climate. Make.com, Workato, and Zapier are all adding
+      native LLM orchestration capabilities; if AI workflow features become a commodity layer within
+      12–18 months, n8n's premium differentiation narrows to self-hosting and developer flexibility,
+      which serve a smaller TAM than the full automation platform claim.
+
+      Self-hosting complexity is a structural adoption barrier. Sliplane's self-hosting guide
+      documents that a production deployment requires PostgreSQL 13+, Redis (BullMQ), a reverse
+      proxy, S3-compatible storage for binary data in queue mode, TLS configuration, and ongoing
+      patch cadence across all components. The infrastructure cost is estimated at $300–$500/month
+      for a basic production environment, often exceeding n8n Cloud equivalent pricing. n8n's own
+      documentation recommends Cloud for users without server management experience, implying the
+      company is aware that a material portion of its self-hosting user base is operating below
+      recommended security and reliability standards.
+    claimRefs:
+      - CR021
+      - CR022
+      - CR023
+      - CR024
+      - CR025
+      - CR026
+      - CR027
+      - CR028
+      - CR029
+      - CR030
+    tableRefs:
+      - TR003
+    figureRefs:
+      - FR003
+
+  - id: financial-opacity-founder-execution-risk
+    title: Financial Opacity, Founder Dependency, and Execution Risk
+    body: >
+      n8n is a private company with no obligation to publish audited financial statements. Revenue
+      estimates across independent sources range from ~$40M to $169.6M ARR for 2025–2026—a 4×
+      discrepancy that illustrates the opacity problem. Sacra's canonical model estimates $40M ARR
+      for early 2025; Growjo and CompWorth cite figures up to $170M based on employee-count models.
+      n8n's CEO Jan Oberhauser confirmed revenues are "ripping" in a December 2025 interview but
+      has not published audited figures. The 2025 annual filing at UK Companies House has not yet
+      been submitted as of the runDate (May 2026), consistent with UK filing timelines but providing
+      no incremental independent verification. Without disclosed financials, unit economics (CAC,
+      LTV, gross margin by segment, burn rate) cannot be independently verified. Sacra estimates
+      >75% gross margins, consistent with SaaS norms, but this is a model assumption rather than
+      a disclosed figure.
+
+      The headcount expansion from ~109 employees in 2024 to 800+ in 2026—a 7× increase—implies
+      a burn rate that may materially exceed recognized revenue in the near term. Total capital
+      raised is approximately $240M (through Series C) plus SAP's undisclosed strategic investment.
+      If headcount growth has been primarily funded by the Series C ($180M, October 2025), and
+      payroll for 800 employees at market rates in Berlin/SF/remote exceeds $80–100M/year before
+      R&D, GTM, and infrastructure costs, the company's runway is estimated at 18–30 months from
+      the Series C close—contingent on revenue acceleration covering the delta. Revenue growth
+      has been exceptional (10× in 2025), but the comparator base was low, and the trajectory
+      cannot be independently verified. Any deceleration in ARR growth or increase in competitive
+      pricing pressure could shorten effective runway.
+
+      Jan Oberhauser is the company's sole founder, public face, and strategic decision-maker. In
+      a December 2025 interview with tech.eu, Oberhauser explicitly acknowledged succession risk:
+      "I am honestly aware that probably at some point post IPO, maybe at some point it would make
+      sense for somebody else." Sequoia Capital's investment podcast confirmed the company's AI
+      pivot, community strategy, and competitive moat were all shaped by Oberhauser's singular
+      vision. His background in visual effects (not enterprise software) means the executive team's
+      institutional depth in B2B SaaS scaling—sales leadership, enterprise compliance, international
+      GTM, and capital markets preparation—has not been independently assessed. If Oberhauser were
+      to depart, face health issues, or lose focus, the platform's narrative and strategic execution
+      could be materially impaired during a critical enterprise-adoption phase.
+
+      GTM and customer concentration risk is partially obscured by the opacity. n8n's cloud channel
+      mix is estimated as 55% cloud subscriptions, 30% enterprise self-hosted licenses, and 15%
+      OEM/embedded partnerships (Sacra). The SAP embedded partnership, while not publicly sized,
+      likely represents a disproportionate future revenue share given the scale of SAP's enterprise
+      customer base. Heavy concentration in one strategic partner creates bilateral negotiation risk;
+      SAP has both the leverage and the incentive to renegotiate terms as n8n's revenue dependency
+      on the partnership grows. Enterprise customer count (~1,400 as of May 2026) is encouraging,
+      but average contract value, top-10 customer concentration, churn by segment, and NRR are
+      not disclosed. The Felicis profile noted the "bottom-up builder-to-enterprise" go-to-market
+      is the intended flywheel, but the conversion efficiency at the top end is unverifiable.
+    claimRefs:
+      - CR031
+      - CR032
+      - CR033
+      - CR034
+      - CR035
+      - CR036
+      - CR037
+      - CR038
+      - CR039
+      - CR040
+    tableRefs:
+      - TR004
+    figureRefs:
+      - FR002
+
+  - id: mitigations-kill-criteria-diligence-asks
+    title: Mitigations, Kill Criteria, and Diligence Asks
+    body: >
+      Despite the severity of the risk profile, each major risk category has identifiable mitigants
+      and investable monitoring indicators. The security risk is structurally manageable through
+      network segmentation (air-gapping the n8n instance from the public internet), enforcing
+      authentication on all webhook endpoints, disabling community nodes via
+      N8N_COMMUNITY_PACKAGES_ENABLED=false where not required, and implementing regular patch
+      cadence aligned with n8n's weekly release cycle. The introduction of cryptographic provenance
+      requirements for verified community nodes (from May 2026) partially addresses the supply-chain
+      vector, though unverified nodes remain installable. Enterprise deployments should integrate
+      n8n credentials with HashiCorp Vault or equivalent external secret stores to limit the blast
+      radius of an instance compromise. Formal SOC 2 and ISO 27001 certifications—on n8n's 2026
+      roadmap—would provide a third-party verification of control maturity that partially mitigates
+      the compliance gap.
+
+      For licensing risk, the key mitigant is contractual clarity: enterprise buyers should obtain
+      a written commercial or Enterprise license agreement specifying permitted use, avoiding reliance
+      on fair-code community interpretations. Service providers (agencies, MSPs) building client-facing
+      automations must secure an Embed license. The risk of a rug pull—unilateral license tightening—
+      is limited by the reputational cost to n8n of alienating its developer community but cannot
+      be contractually prevented in the absence of explicit licensing commitments.
+
+      Governance risk can be monitored via n8n's public security advisory cadence (GitHub Security
+      Advisories), SOC 2 attestation progress, and community forum tone. A kill trigger would be
+      a pattern of critical CVEs without architectural remediation (four or more CVSS 9+ CVEs in
+      a 12-month window with no sandboxing improvement), suggesting systemic rather than incidental
+      security debt.
+
+      Founder and key-person risk is partially mitigated by Sequoia, Accel, and Felicis board
+      presence, which typically drives succession planning conversations. Investors should diligence
+      the depth of the CTO, CPO, VP Engineering, and VP Sales roles, asking for organizational charts,
+      direct-report tenures, and succession plans. A kill trigger would be a voluntary departure by
+      Oberhauser without a disclosed, credible successor during the 24-month post-Series C scaling phase.
+
+      Financial opacity is mitigable only through data-room access. Required diligence items include:
+      audited or reviewed income statements and balance sheets for FY2024 and FY2025; ARR and NRR
+      by segment (cloud, enterprise self-hosted, OEM); top-10 customer revenue concentration; burn
+      rate and runway calculation at current and target headcount; and SAP partnership financial terms
+      (revenue guarantee, exclusivity clauses, termination provisions). A kill criterion is a burn
+      multiple above 2.5× at current revenue scale with no credible path to below 1.5× within 18 months.
+
+      SAP dependency risk can be monitored through SAP integration milestone delivery (Q3 2026
+      announced GA date), public SAP enterprise adoption metrics, and n8n's disclosed OEM revenue
+      percentage. A kill trigger would be a SAP partnership restructuring, acquisition of a competing
+      automation platform by SAP, or public dispute over embedding terms—any of which would remove
+      the thesis-defining growth catalyst.
+    claimRefs:
+      - CR041
+      - CR042
+      - CR043
+      - CR044
+      - CR045
+    tableRefs:
+      - TR005
+    figureRefs: []
+
+tables:
+  - id: TR001
+    title: Regulatory / legal risk register
+    columns:
+      - Risk / Rule / Case
+      - Jurisdiction
+      - Status
+      - Likelihood
+      - Severity
+      - Mitigation
+      - Residual Exposure
+      - Diligence Path
+    rows:
+      - ["Sustainable Use License — SaaS resale prohibition; no OSI approval", "Global / EU / US", "Active; enforced contractually since March 2022", "Medium — gray-area scenarios common in agency/MSP channel", "High — loss of commercial deployment rights if breached; community fragmentation", "Obtain written commercial or Embed license; avoid reliance on community interpretations", "Medium — SUL ambiguity not resolvable from published docs; email escalation required", "Request n8n's standard commercial license agreement; confirm permitted use in writing; ask for historical enforcement actions"]
+      - ["GDPR / EU data-processor obligations (n8n Cloud customers)", "EU / EEA / UK", "Ongoing compliance obligation; n8n Cloud DPA exists", "Low for cloud (DPA in place); Medium for self-hosted (customer is controller)", "High — regulatory fines up to 4% of global annual turnover for serious GDPR breaches", "Review n8n Cloud DPA; evaluate sub-processor list; implement data-residency controls", "Medium — sub-processor list not publicly current; workflow credential handling is GDPR-sensitive", "Request current Data Processing Agreement, sub-processor list, and GDPR breach notification procedures from n8n"]
+      - ["Absence of SOC 2 / ISO 27001 certification for n8n Cloud", "US / EU (enterprise procurement)", "In progress per 2026 roadmap; no formal attestation published as of 2026-05-25", "High — many enterprise procurement processes require vendor certification", "High — procurement blocker for regulated industries (finance, healthcare, government)", "n8n 2026 roadmap targets SOC 2 and ISO 27001; timelines and scope not confirmed", "High — absence creates hard disqualification in many RFPs; competitors (Workato) already certified", "Request formal attestation evidence or committed timeline from n8n; evaluate risk against deployment sensitivity"]
+      - ["CVE disclosure obligations and coordinated vulnerability reporting", "Global (CVSS/NVD)", "n8n is actively reporting via GitHub Security Advisories and NVD; five critical CVEs disclosed in 60-day window Jan–Feb 2026", "High — ongoing; architectural complexity creates recurring vulnerability surface", "Critical — unauthenticated RCE (CVSS 10.0) enables full instance takeover", "Maintain current n8n version; subscribe to security advisories; enforce network segmentation", "High — patch-bypass (CVE-2026-25049) within 3 months of original fix signals architectural debt", "Require n8n to provide penetration test results and code audit status; confirm architectural remediation plans for webhook handling and expression evaluation"]
+      - ["UK Companies Act filing obligations (n8n Ltd subsidiary)", "United Kingdom", "Filing history confirmed at Companies House; current annual filing not yet due", "Low — routine compliance obligation", "Low — administrative penalty only for late filing", "Automated monitoring of Companies House filings", "Low — no material legal exposure from routine filing", "Review Companies House filings for material changes to officer composition, charges, or resolutions"]
+    notes: >
+      Ordered by severity. Severity ratings are assessments based on publicly available evidence
+      as of 2026-05-25. GDPR and SOC 2 findings represent structural gaps, not confirmed violations.
+    enumerationScope:
+      coverage: exhaustive
+      basis: >
+        All regulatory and legal risks were enumerated by reviewing n8n GmbH's published Sustainable
+        Use License (SR009), GDPR/DPA obligations per official n8n Cloud documentation (SR017), NVD
+        CVE disclosure records (SR011), and UK Companies House filings (SR026). Five risk categories
+        were identified as the complete set of active regulatory and legal exposures as of 2026-05-25.
+    claimRefs:
+      - CR012
+      - CR013
+      - CR014
+      - CR015
+      - CR016
+      - CR017
+    sourceRefs:
+      - SR009
+      - SR011
+      - SR004
+      - SR026
+      - SR017
+
+  - id: TR002
+    title: Operational, Security, and Supply-Chain Risk Register
+    columns:
+      - Failure Mode
+      - Likelihood
+      - Severity
+      - Mitigation Maturity
+      - Residual Exposure
+      - Unresolved Gap
+    rows:
+      - ["Unauthenticated RCE via CVE-2026-21858 (Ni8mare) — full instance takeover, all credentials at risk", "High for unpatched instances; confirmed active exploitation", "Critical — CVSS 10.0; 100,000+ servers estimated exposed", "Patch released v1.121.0; no workaround for unpatched; network segmentation recommended", "High — self-hosted operators may lag on patch cadence; air-gapped deployments require manual updates", "Patch bypass (CVE-2026-25049) within 3 months indicates structural webhook handling debt; provenance enforcement not retroactive"]
+      - ["npm supply-chain attack via malicious community nodes exfiltrating OAuth tokens", "Medium — active attack documented January 2026; provenance enforcement partial from May 2026", "Critical — all credentials stored in n8n exposed to exfiltration; no runtime sandboxing", "Cryptographic provenance for verified nodes from May 2026; N8N_COMMUNITY_PACKAGES_ENABLED=false disables all community nodes", "High — unverified nodes still installable; provenance does not prevent runtime access to credentials by legitimate-appearing malicious node", "No runtime sandboxing isolating community node execution from n8n credential store; audit tooling for installed node code is operator responsibility"]
+      - ["Platform abuse for phishing/malware delivery via n8n webhooks", "High — 686% increase in malicious n8n webhook emails (Talos, March 2026 vs Jan 2025)", "Medium for n8n (reputational damage); High for customers using webhooks without authentication", "n8n has no real-time abuse detection or webhook authentication enforcement by default", "Medium — continued abuse damages n8n brand association with malware delivery; enterprise buyers may restrict webhook use", "No platform-level abuse detection or rate-limiting on free webhook accounts; legitimate-appearing n8n domains used as cover"]
+      - ["Authenticated RCE via expression evaluation (CVE-2026-25049, CVE-2026-44789/44790/44791)", "Medium — requires workflow editing permissions; low-privileged authenticated exploit", "High — CVSS 9.4; full server control, cross-tenant data access risk in Cloud multi-tenant", "Patches released; require n8n version upgrades; expression evaluation architectural debt flagged", "Medium for patched instances; High for unpatched enterprise self-hosted that lag on update cadence", "Expression evaluation sandbox is not fully hardened; future bypass variants likely given pattern"]
+      - ["Self-hosting misconfiguration — internet-exposed instances, unpatched deployments, weak credentials", "High — default Docker Compose deployment exposes port 5678 without authentication in some tutorials", "High — easily discoverable via Shodan; default configuration may lack HTTPS, authentication, or network restriction", "n8n documentation recommends authentication on all instances; official guide requires reverse proxy", "High — community documentation inconsistency; non-expert operators commonly underconfigure security", "No automated hardening checks in community edition; security audit of self-hosted configuration requires operator initiative"]
+      - ["Binary dependency and community node breakage after n8n core updates", "Medium — weekly release cadence with occasional breaking changes in node interfaces", "Medium — workflow breakage for dependent automations; potential for silent failure in multi-step agents", "n8n maintains changelog and community node compatibility guidelines; versioned node APIs planned", "Medium — community nodes have no SLA or maintenance commitment; abandoned nodes create long-term reliability risk", "No formal deprecation policy or compatibility guarantee for community node API surface; discovery of broken nodes post-upgrade is reactive"]
+    notes: >
+      Ordered by severity. Likelihood and severity reflect evidence from public security advisories, threat
+      intelligence reports, and community documentation as of 2026-05-25.
+    claimRefs:
+      - CR001
+      - CR002
+      - CR003
+      - CR004
+      - CR005
+      - CR006
+      - CR007
+      - CR008
+      - CR009
+      - CR010
+      - CR011
+    sourceRefs:
+      - SR001
+      - SR002
+      - SR003
+      - SR006
+      - SR007
+      - SR014
+
+  - id: TR003
+    title: Partner and Dependency Risk Register
+    columns:
+      - Dependency
+      - Counterparty
+      - Role
+      - Concentration
+      - Failure Scenario
+      - Severity
+      - Mitigation
+      - Residual Exposure
+    rows:
+      - ["SAP Joule Studio strategic investment and embedding", "SAP SE", "Strategic investor, OEM partner, distribution channel for 300,000 SAP enterprise customers", "High — SAP relationship represents the single largest announced growth catalyst; financial terms undisclosed", "SAP acquires competing automation platform; SAP-n8n integration fails to achieve GA by Q3 2026; SAP renegotiates favorable revenue terms as dependency grows", "Critical — SAP relationship could represent 20–40% of enterprise TAM expansion; termination removes thesis-defining catalyst", "n8n multi-channel strategy (direct cloud, direct self-hosted, community) provides partial baseline independence", "High — concentration risk grows as SAP integration deepens; contractual exclusivity terms not disclosed"]
+      - ["npm ecosystem for community node delivery and discovery", "npm Inc. (GitHub/Microsoft)", "Package registry and discovery infrastructure for 500+ community nodes", "Medium — all community node installs route through npm; malicious package incidents confirmed", "npm registry abuse (as observed January 2026); package name-squatting; npm CDN outage disrupting node installation", "High — supply chain attacks use npm as primary vector; no alternative community node registry", "Cryptographic provenance enforcement from May 2026; N8N_COMMUNITY_PACKAGES_ENABLED=false for high-security deployments", "High — architectural dependency on npm's trust model; no runtime sandboxing regardless of provenance"]
+      - ["AI model providers (OpenAI, Anthropic, Google Gemini)", "OpenAI, Anthropic, Google", "LLM and embedding API providers powering 75%+ of n8n's AI-feature usage", "Medium — n8n is model-agnostic by design; customers choose provider", "Provider API breaking changes; rate limit changes; pricing increases; service outages disrupting agentic workflows", "Medium — n8n's model-agnostic design provides switching flexibility; risk shifts to customers", "n8n's provider-agnostic architecture (any LLM connectable) is a designed mitigant", "Low — provider lock-in is at customer level, not n8n level; n8n is not financially dependent on AI provider relationships"]
+      - ["Cloud infrastructure providers (AWS, GCP, Azure) for n8n Cloud", "AWS (primary), GCP, Azure", "Compute, storage, database, networking for n8n Cloud managed SaaS", "Medium — multi-cloud deployment claimed but primary provider concentration typical", "AWS us-east-1 regional outage causing n8n Cloud downtime; cloud provider pricing changes", "Medium — n8n Cloud SLA includes 99.99% Enterprise uptime commitment; standard cloud risk", "Multi-region deployment for Enterprise tier; standard cloud resilience best practices", "Low-medium — industry-standard cloud dependency risk; n8n Cloud SLA provides contractual recourse"]
+      - ["Key technical contributors and open-source community", "GitHub community of 450+ contributors and 189,000+ stars", "Bug fixes, community nodes, templates, documentation, integrations", "Low — contributor base is broad; no single contributor dominates", "Core contributor departure or community fracture over licensing; fork materializing with significant adoption", "Medium — community fragmentation reduces organic growth; successful fork captures developer mindshare", "Fair-code licensing preserves source visibility; n8n has significant brand recognition", "Medium — Sustainable Use License creates ongoing fork-motivation for developers wanting permissive licensing"]
+    notes: >
+      Ordered by severity. SAP concentration risk is assessed as highest given the asymmetric impact on the
+      investment thesis. npm dependency risk is assessed as High due to confirmed 2026 supply-chain incident.
+    claimRefs:
+      - CR023
+      - CR024
+      - CR025
+      - CR026
+      - CR027
+      - CR028
+    sourceRefs:
+      - SR010
+      - SR002
+      - SR023
+      - SR008
+      - SR004
+
+  - id: TR004
+    title: People and Execution Risk Register
+    columns:
+      - Role / Function
+      - Dependency or Gap
+      - Likelihood
+      - Severity
+      - Mitigation
+      - Diligence Path
+    rows:
+      - ["Jan Oberhauser — sole founder, CEO, strategic decision-maker, public face", "All major strategy, product vision, AI pivot, community trust, and investor narrative tied to sole founder; no named co-founder or public succession plan", "Low-medium — Oberhauser is 42, healthy; voluntary departure most likely trigger", "Critical — loss of founder would impair company narrative, community trust, and AI product direction at inflection point", "Sequoia/Accel/Felicis board engagement drives succession planning; Oberhauser has acknowledged post-IPO succession; executive team building underway", "Request org chart, CTO/CPO/VP Sales direct-report tenures, and board succession plan; assess depth of second-tier leadership; ask Oberhauser directly about 3-year personal plans"]
+      - ["Enterprise sales and go-to-market leadership", "Scaling from developer-community to Fortune 500 enterprise sales requires different capabilities; no named VP Sales, CCO, or CRO publicly identified", "Medium — typical scale-up gap; bottom-up sales motion has limits at enterprise contract sizes", "High — inability to scale enterprise sales would limit revenue potential and justify valuation compression", "SAP partnership provides enterprise distribution without direct sales force requirement; community-led growth supplement", "Request named commercial leadership, quota-carrying AE headcount, average enterprise deal cycle, and win rates vs. Workato and Make.com"]
+      - ["Security engineering and incident response capacity", "Five critical CVEs in 60 days; patch bypass within 3 months suggests security engineering bandwidth constraints; 800+ employee count does not indicate dedicated security team size", "High — continued high CVE cadence suggests structural security debt accumulating faster than it is retired", "High — another CVSS 10 unauthenticated RCE with delayed patch would cause material customer churn and press damage", "Provenance enforcement for community nodes; architectural security roadmap promised in advisory disclosures", "Request size and charter of security engineering team; external penetration test schedule and most recent report; PSIRT (Product Security Incident Response Team) existence and SLA commitments"]
+      - ["Engineering scaling and team integration after 7× headcount growth", "Headcount expanded from ~109 to 800+ in 18 months; rapid hiring creates onboarding, culture, and quality-control risk; weekly release cadence could amplify integration errors", "Medium — standard hyper-growth execution risk; mitigated by strong engineering culture", "Medium — code quality regression or accelerating technical debt could slow feature velocity or increase security incidents", "n8n's GitHub metrics (189,000 stars, active contributor base) suggests engineering attractiveness; weekly release suggests functioning CI/CD", "Request attrition rate for engineers hired in 2025; ask for post-merger integration plan for acquired capabilities if any; review GitHub commit velocity and issue backlog aging"]
+      - ["Finance and regulatory compliance leadership", "Private company with no disclosed CFO, General Counsel, or compliance officer in public profiles; 2026 headcount growth requires institutional financial controls", "Medium — typical gap at late Series C stage; SAP strategic investment may accelerate institutional maturity", "Medium — absence of formal financial controls could delay IPO readiness or create audit complications", "Investor board oversight partially compensates; SAP partnership implies financial due diligence was completed", "Request existence and tenure of CFO and General Counsel; ask for most recent board-reviewed financial statements; confirm existence of internal audit or external auditor relationship"]
+    notes: >
+      Ordered by severity. Information on executive team composition is derived from public profiles and news
+      coverage as of 2026-05-25; n8n does not publish a full executive team page.
+    claimRefs:
+      - CR034
+      - CR035
+      - CR036
+      - CR037
+      - CR038
+    sourceRefs:
+      - SR005
+      - SR008
+      - SR020
+      - SR021
+
+  - id: TR005
+    title: Mitigation and Kill Criteria Table
+    columns:
+      - Risk
+      - Monitorable Trigger
+      - Threshold / Event
+      - Action Implication
+    rows:
+      - ["Chronic security debt / recurring critical CVEs", "GitHub Security Advisories, NVD CVE feed for n8n", "4 or more CVSS 9+ CVEs in any rolling 12-month window without architectural remediation of webhook/expression evaluation attack surfaces", "Thesis-break: systemic security debt at n8n's scale as credential hub is an existential customer-trust risk; exit or pass investment"]
+      - ["SAP partnership failure or restructuring", "SAP Joule Studio GA milestone (Q3 2026), SAP n8n public adoption announcements, SAP annual report mentions", "SAP delays GA beyond Q4 2026, announces competitive acquisition (e.g., buys Workato/Make.com), or renegotiates publicly disclosed unfavorable revenue terms", "Thesis-impair: SAP was the valuation-doubling catalyst; loss removes primary enterprise growth driver; reassess entry multiple"]
+      - ["Founder departure during critical scaling phase", "Public announcement, LinkedIn profile changes, SEC-equivalent European filing, press coverage", "Oberhauser announces departure or long-term leave within 24 months of Series C close without publicly named, credible successor from within executive team", "Thesis-break: solo-founder exit during enterprise transition inflection point; material risk to sales momentum and investor confidence"]
+      - ["Revenue deceleration to below 2× YoY growth with burn multiple above 2.5×", "Data-room access: monthly ARR, net new ARR, burn rate; or Sacra/analyst estimate updates", "ARR growth falls below 2× YoY on reported or estimated basis while burn multiple exceeds 2.5×; or two consecutive quarters of ARR deceleration without cost restructuring", "Thesis-impair: at $2.5B–$5.2B valuation, growth deceleration dramatically compresses multiple; forces reassessment of exit timeline and return case"]
+      - ["Successful n8n fork with significant community adoption", "GitHub star count for known fork projects (Activepieces, Windmill.dev), community forum tone, developer survey results", "Any fork project crosses 30,000 GitHub stars while citing n8n licensing as departure motivation within 18 months", "Thesis-risk: community fragmentation reduces organic growth flywheel; monitor but not immediate thesis-break unless accompanied by enterprise customer defections"]
+    notes: >
+      Kill criteria thresholds are defined based on the investment thesis that n8n's value derives from
+      security-critical enterprise deployment, SAP-channel expansion, and founder-led AI product vision.
+      Triggers are observable via public signals (CVE feeds, press, GitHub) or data-room indicators.
+    claimRefs:
+      - CR041
+      - CR042
+      - CR043
+      - CR044
+      - CR045
+    sourceRefs:
+      - SR001
+      - SR010
+      - SR005
+      - SR018
+      - SR004
+
+figures:
+  - id: FR001
+    title: n8n Risk Heatmap — Likelihood vs. Severity
+    type: matrix
+    layout: wide
+    summary: >
+      Heatmap of n8n's primary risks positioned by likelihood (x-axis) and severity (y-axis),
+      showing the concentration of high-severity risks in the security and platform-dependency
+      quadrants.
+    data:
+      columns:
+        - "High Likelihood"
+        - "Medium Likelihood"
+        - "Low Likelihood"
+      rows:
+        - label: "Critical Severity"
+          values:
+            - "CVE-2026-21858 Ni8mare unauthenticated RCE (CVSS 10.0); npm supply-chain attack exfiltrating OAuth tokens; Founder/key-person departure (Jan Oberhauser sole founder)"
+            - "SAP partnership failure or restructuring; Authenticated RCE via expression evaluation (CVE-2026-25049)"
+            - ""
+        - label: "High Severity"
+          values:
+            - "Platform abuse for malware/phishing via n8n webhooks (686% email growth); Self-hosting misconfiguration; Enterprise sales scaling gap"
+            - "Financial opacity: unverifiable burn rate and ARR; Competitive displacement (Microsoft Power Automate bundled; Zapier breadth); Security engineering bandwidth constraints"
+            - "GDPR / EU regulatory action; SOC 2 / ISO 27001 absence blocking regulated-industry procurement"
+        - label: "Medium Severity"
+          values:
+            - "AI hype risk: LLM feature commoditization within 12–18 months; Sustainable Use License fork materializing; npm registry abuse"
+            - ""
+            - "AI model provider API changes disrupting agentic workflows; Engineering quality regression from 7× headcount growth"
+        - label: "Low Severity"
+          values:
+            - ""
+            - ""
+            - "UK Companies Act filing delays; Cloud infrastructure provider concentration (AWS)"
+    claimRefs:
+      - CR001
+      - CR002
+      - CR003
+      - CR005
+      - CR021
+      - CR023
+      - CR031
+      - CR034
+
+  - id: FR002
+    title: Risk Transmission Map — How n8n Risks Flow to Revenue and Valuation
+    type: dag
+    layout: wide
+    summary: >
+      Directed acyclic graph showing how n8n's primary risk categories transmit to downstream
+      impacts on revenue, customers, valuation, and operations.
+    data:
+      nodes:
+        - id: "security-cve"
+          label: "Critical CVE Cluster\n(Ni8mare + 4 additional)"
+        - id: "supply-chain"
+          label: "npm Supply-Chain Attack\n(OAuth exfiltration)"
+        - id: "platform-abuse"
+          label: "Platform Abuse\n(Talos: 686% webhook email growth)"
+        - id: "licensing-ambiguity"
+          label: "Sustainable Use License\nAmbiguity / Backlash"
+        - id: "founder-risk"
+          label: "Sole Founder\nKey-Person Risk"
+        - id: "sap-dependency"
+          label: "SAP Partnership\nConcentration"
+        - id: "financial-opacity"
+          label: "Financial Opacity\n(4× revenue estimate range)"
+        - id: "customer-trust"
+          label: "Enterprise Customer Trust\nImpairment"
+        - id: "revenue-impact"
+          label: "Revenue\nDeceleration"
+        - id: "competitive-displacement"
+          label: "Competitive Displacement\n(Microsoft, Zapier)"
+        - id: "valuation-compression"
+          label: "Valuation\nCompression"
+        - id: "community-fragmentation"
+          label: "Community / Developer\nFragmentation"
+      edges:
+        - from: "security-cve"
+          to: "customer-trust"
+          label: "enterprise procurement blocks"
+        - from: "supply-chain"
+          to: "customer-trust"
+          label: "credential breach erodes trust"
+        - from: "platform-abuse"
+          to: "customer-trust"
+          label: "brand association with malware"
+        - from: "customer-trust"
+          to: "revenue-impact"
+          label: "churn / delayed deals"
+        - from: "licensing-ambiguity"
+          to: "community-fragmentation"
+          label: "fork motivation"
+        - from: "community-fragmentation"
+          to: "revenue-impact"
+          label: "reduces bottom-up growth flywheel"
+        - from: "founder-risk"
+          to: "revenue-impact"
+          label: "AI strategy impairment"
+        - from: "sap-dependency"
+          to: "revenue-impact"
+          label: "partnership failure removes catalyst"
+        - from: "financial-opacity"
+          to: "valuation-compression"
+          label: "limits investor confidence"
+        - from: "revenue-impact"
+          to: "valuation-compression"
+          label: "multiple compression"
+        - from: "competitive-displacement"
+          to: "revenue-impact"
+          label: "TAM erosion"
+    claimRefs:
+      - CR001
+      - CR012
+      - CR023
+      - CR031
+      - CR034
+      - CR038
+      - CR040
+
+  - id: FR003
+    title: n8n Critical Dependency Map
+    type: dag
+    layout: wide
+    summary: >
+      Map of n8n's critical external dependencies across security infrastructure, commercial
+      partnerships, AI model providers, community ecosystem, and regulatory environment.
+    data:
+      nodes:
+        - id: "n8n-core"
+          label: "n8n Platform Core"
+        - id: "sap"
+          label: "SAP SE\n(Strategic Investor, OEM)"
+        - id: "npm-registry"
+          label: "npm Registry\n(Community Node Infrastructure)"
+        - id: "openai-anthropic"
+          label: "OpenAI / Anthropic / Google\n(LLM Providers)"
+        - id: "aws-cloud"
+          label: "AWS / GCP / Azure\n(n8n Cloud Infrastructure)"
+        - id: "sequoia-accel"
+          label: "Sequoia / Accel / Felicis\n(Lead Investors / Board)"
+        - id: "jan-oberhauser"
+          label: "Jan Oberhauser\n(Sole Founder / CEO)"
+        - id: "github-community"
+          label: "GitHub Community\n(450+ contributors, 189K stars)"
+        - id: "nist-nvd"
+          label: "NIST / NVD\n(CVE Disclosure Framework)"
+        - id: "gdpr-regulators"
+          label: "EU / UK Data Regulators\n(GDPR, ICO)"
+        - id: "enterprise-customers"
+          label: "1,400+ Enterprise Customers\n(SAP, Vodafone, Microsoft)"
+      edges:
+        - from: "n8n-core"
+          to: "sap"
+          label: "embedded in Joule Studio; strategic investment; critical growth channel"
+        - from: "n8n-core"
+          to: "npm-registry"
+          label: "community node distribution; supply-chain attack surface"
+        - from: "n8n-core"
+          to: "openai-anthropic"
+          label: "AI feature value depends on LLM API availability; 75%+ customers use AI"
+        - from: "n8n-core"
+          to: "aws-cloud"
+          label: "n8n Cloud compute, storage, DB; 99.99% SLA dependent"
+        - from: "jan-oberhauser"
+          to: "n8n-core"
+          label: "sole founder; product vision, AI strategy, community trust, investor narrative"
+        - from: "sequoia-accel"
+          to: "n8n-core"
+          label: "capital, board governance, succession planning"
+        - from: "github-community"
+          to: "n8n-core"
+          label: "500+ community nodes; templates; organic marketing"
+        - from: "n8n-core"
+          to: "gdpr-regulators"
+          label: "n8n Cloud processes customer data; GDPR DPA required"
+        - from: "nist-nvd"
+          to: "n8n-core"
+          label: "CVE tracking; security advisory framework; public disclosure of 5 critical CVEs in 60 days"
+        - from: "n8n-core"
+          to: "enterprise-customers"
+          label: "credential vault for all integrated systems; blast radius of compromise is total"
+    claimRefs:
+      - CR023
+      - CR024
+      - CR025
+      - CR026
+      - CR034
+      - CR038
+
+localEvidence:
+  searchQueries:
+    - query: "n8n security vulnerabilities CVE 2026 critical risk supply chain attack"
+      engine: web_search
+      hits: 10
+      retainedSourceRefs: [SR001, SR002, SR003, SR006, SR007, SR011, SR012, SR013]
+    - query: "n8n licensing fair-code Sustainable Use License commercial restrictions 2025 2026"
+      engine: web_search
+      hits: 8
+      retainedSourceRefs: [SR009, SR015, SR016, SR030]
+    - query: "n8n Jan Oberhauser founder key person risk single founder dependency 2026"
+      engine: web_search
+      hits: 8
+      retainedSourceRefs: [SR005, SR008, SR020, SR021]
+    - query: "n8n SAP integration dependency platform risk joule studio 2026"
+      engine: web_search
+      hits: 10
+      retainedSourceRefs: [SR010, SR023, SR024]
+    - query: "n8n financial risk revenue opacity burn rate private company 2026"
+      engine: web_search
+      hits: 8
+      retainedSourceRefs: [SR018, SR022]
+    - query: "n8n competitive risk Microsoft Power Automate Zapier threat 2026"
+      engine: web_search
+      hits: 8
+      retainedSourceRefs: [SR028, SR029]
+    - query: "n8n open source governance risk community fork abandonment 2026"
+      engine: web_search
+      hits: 8
+      retainedSourceRefs: [SR004, SR015]
+    - query: "n8n self-hosting complexity enterprise deployment challenges 2026"
+      engine: web_search
+      hits: 6
+      retainedSourceRefs: [SR025, SR017]
+    - query: "n8n AI hype risk agentic automation overvaluation 2026"
+      engine: web_search
+      hits: 6
+      retainedSourceRefs: [SR006, SR008, SR022]
+
+  researchQuestions:
+    - id: QR001
+      question: "What is the CVSS score and attack vector of CVE-2026-21858 (Ni8mare), and how many servers were estimated to be exposed?"
+      type: adverse
+      targets: ["contentRequirements/2"]
+      status: answered
+      answeredBy: [CR001, CR002]
+      adverseIntent: true
+
+    - id: QR002
+      question: "How does the CVE-2026-25049 patch bypass demonstrate architectural security debt in n8n's expression evaluation?"
+      type: verification
+      targets: ["contentRequirements/2"]
+      status: answered
+      answeredBy: [CR003, CR004]
+      adverseIntent: true
+
+    - id: QR003
+      question: "What were the attack methods and credential exfiltration outcomes of the January 2026 npm supply-chain attack on n8n?"
+      type: adverse
+      targets: ["contentRequirements/2"]
+      status: answered
+      answeredBy: [CR005, CR006]
+      adverseIntent: true
+
+    - id: QR004
+      question: "What percentage growth in malicious n8n webhook emails did Cisco Talos document, and over what time period?"
+      type: quantification
+      targets: ["contentRequirements/2"]
+      status: answered
+      answeredBy: [CR007]
+      adverseIntent: true
+
+    - id: QR005
+      question: "What restrictions does n8n's Sustainable Use License impose on commercial SaaS resale and white-labeling?"
+      type: verification
+      targets: ["contentRequirements/1"]
+      status: answered
+      answeredBy: [CR012, CR013]
+
+    - id: QR006
+      question: "What is the community reaction to n8n's fair-code licensing, and are there credible open-source alternatives gaining traction?"
+      type: comparison
+      targets: ["contentRequirements/2"]
+      status: answered
+      answeredBy: [CR014, CR015]
+
+    - id: QR007
+      question: "What governance primitives does n8n currently provide, and what does the JieGou analysis identify as the gap versus comprehensive AI governance?"
+      type: verification
+      targets: ["contentRequirements/1"]
+      status: answered
+      answeredBy: [CR016, CR017]
+
+    - id: QR008
+      question: "Has n8n achieved SOC 2 Type II or ISO 27001 certification for its cloud offering as of 2026-05-25?"
+      type: adverse
+      targets: ["contentRequirements/2"]
+      status: answered
+      answeredBy: [CR018]
+      adverseIntent: true
+
+    - id: QR009
+      question: "What is the financial and strategic scale of the SAP partnership, and when is Joule Studio GA scheduled?"
+      type: verification
+      targets: ["contentRequirements/4"]
+      status: answered
+      answeredBy: [CR023, CR024]
+
+    - id: QR010
+      question: "How does Microsoft Power Automate's bundled pricing create a zero-cost competitive threat to n8n in Microsoft-stack enterprises?"
+      type: comparison
+      targets: ["contentRequirements/4"]
+      status: answered
+      answeredBy: [CR021]
+
+    - id: QR011
+      question: "What is the integration breadth gap between n8n's 400+ official nodes and Zapier's 7,000+ integrations, and does this constrain n8n's TAM?"
+      type: quantification
+      targets: ["contentRequirements/4"]
+      status: answered
+      answeredBy: [CR022]
+
+    - id: QR012
+      question: "What proportion of n8n customers use AI features as of 2026, and how does this create AI-hype-cycle valuation risk?"
+      type: quantification
+      targets: ["contentRequirements/4"]
+      status: answered
+      answeredBy: [CR028, CR029]
+
+    - id: QR013
+      question: "What is the estimated infrastructure cost for a production-grade self-hosted n8n deployment, and does this create an adoption barrier?"
+      type: quantification
+      targets: ["contentRequirements/3"]
+      status: answered
+      answeredBy: [CR030]
+
+    - id: QR014
+      question: "What is the range of independent revenue estimates for n8n in 2025–2026, and what explains the 4× discrepancy?"
+      type: quantification
+      targets: ["contentRequirements/5"]
+      status: answered
+      answeredBy: [CR031, CR032]
+      adverseIntent: true
+
+    - id: QR015
+      question: "What does n8n's headcount growth from ~109 to 800+ employees in 18 months imply for burn rate and runway?"
+      type: quantification
+      targets: ["contentRequirements/5"]
+      status: answered
+      answeredBy: [CR033]
+
+    - id: QR016
+      question: "What did Jan Oberhauser publicly say about his own succession and the post-IPO CEO role?"
+      type: verification
+      targets: ["contentRequirements/5"]
+      status: answered
+      answeredBy: [CR034, CR035]
+
+    - id: QR017
+      question: "Is Jan Oberhauser n8n's sole founder, and how does this compare to typical Series C-stage companies with respect to leadership depth?"
+      type: comparison
+      targets: ["contentRequirements/5"]
+      status: answered
+      answeredBy: [CR034, CR036]
+
+    - id: QR018
+      question: "What is the estimated channel mix (cloud vs. enterprise self-hosted vs. OEM) for n8n's revenue, and what does SAP concentration imply?"
+      type: quantification
+      targets: ["contentRequirements/5"]
+      status: answered
+      answeredBy: [CR038, CR039]
+
+    - id: QR019
+      question: "What kill criteria and thesis-break triggers exist for the SAP partnership concentration risk?"
+      type: enumeration
+      targets: ["contentRequirements/5"]
+      status: answered
+      answeredBy: [CR042]
+
+    - id: QR020
+      question: "What kill criteria exist for the founder key-person risk, and what monitoring indicators can be used?"
+      type: enumeration
+      targets: ["contentRequirements/5"]
+      status: answered
+      answeredBy: [CR043]
+
+    - id: QR021
+      question: "What security mitigations are available for self-hosted n8n deployments against CVE-2026-21858 and community node supply-chain attacks?"
+      type: enumeration
+      targets: ["contentRequirements/5"]
+      status: answered
+      answeredBy: [CR041]
+
+    - id: QR022
+      question: "What does the CVE-2026-21858 content-type confusion attack chain reveal about n8n's webhook architecture trust model?"
+      type: mechanism
+      targets: ["contentRequirements/2"]
+      status: answered
+      answeredBy: [CR001, CR002, CR003]
+
+    - id: QR023
+      question: "How does n8n's role as a centralized credential vault amplify the blast radius of any single security compromise?"
+      type: mechanism
+      targets: ["contentRequirements/2"]
+      status: answered
+      answeredBy: [CR009, CR010]
+
+    - id: QR024
+      question: "What is the diligence ask for confirming n8n's current security engineering capacity and architectural remediation plan?"
+      type: enumeration
+      targets: ["contentRequirements/5"]
+      status: answered
+      answeredBy: [CR041, CR045]
+
+    - id: QR025
+      question: "How do the SAP strategic investment terms (revenue guarantees, exclusivity clauses, termination provisions) affect the concentration risk assessment?"
+      type: verification
+      targets: ["contentRequirements/4"]
+      status: unresolved
+      notes: "SAP partnership financial terms are not publicly disclosed; require data-room access"
+
+    - id: QR026
+      question: "Has n8n published a Data Processing Agreement (DPA) for cloud customers, and is the sub-processor list current as of 2026-05-25?"
+      type: verification
+      targets: ["contentRequirements/1"]
+      status: answered
+      answeredBy: [CR019]
+      notes: "n8n Cloud DPA is confirmed present (SR017 documents GDPR compliance); current sub-processor list is not independently verifiable from public sources — a specific diligence ask is required"
+
+    - id: QR027
+      question: "What is n8n's ARR by segment (cloud, enterprise self-hosted, OEM/embedded), and what is the top-10 customer revenue concentration?"
+      type: quantification
+      targets: ["contentRequirements/5"]
+      status: unresolved
+      notes: "Segment-level ARR not disclosed publicly; requires data-room access; Sacra estimates channel mix only"
+
+    - id: QR028
+      question: "What is the NRR (net revenue retention) by customer segment for n8n's enterprise and cloud tiers?"
+      type: quantification
+      targets: ["contentRequirements/5"]
+      status: unresolved
+      notes: "NRR not disclosed in any public source; key diligence metric for retention quality and expansion efficiency"
+
+    - id: QR029
+      question: "Is there an external penetration test report for n8n Cloud, and what was the most recent third-party security audit date?"
+      type: verification
+      targets: ["contentRequirements/2"]
+      status: unresolved
+      notes: "No public penetration test results found; required as diligence item given critical CVE pattern"
+
+    - id: QR030
+      question: "What is the depth and tenure of n8n's second-tier executive leadership (CTO, CPO, VP Engineering, VP Sales), and do these roles exist as named individuals?"
+      type: verification
+      targets: ["contentRequirements/4"]
+      status: answered
+      answeredBy: [CR036]
+      notes: "No named CTO, CPO, or VP Sales identified in public profiles as of 2026-05-25; this absence itself is the finding and a material key-person risk factor"
+
+    - id: QR031
+      question: "Has n8n faced any intellectual property disputes or patent claims from competitors or prior employers of founders?"
+      type: verification
+      targets: ["contentRequirements/1"]
+      status: answered
+      notes: "No public IP disputes or patent claims found in any public source as of 2026-05-25; the absence of discovered disputes is the answer; routine data-room confirmation still warranted"
+
+    - id: QR032
+      question: "What is n8n's formal incident response and patch SLA commitment for critical CVEs, and has it been met in the 2025–2026 disclosure cycle?"
+      type: verification
+      targets: ["contentRequirements/2"]
+      status: partial
+      answeredBy: [CR008]
+      notes: "CVE-2026-21858 patched 6 weeks after researcher disclosure; CVE-2026-25049 bypass suggests incomplete architectural fix; formal SLA not published"
+
+    - id: QR033
+      question: "To what extent do the May 2026 CVEs (CVE-2026-44789/44790/44791) represent new attack vectors vs. variations of previously patched expression evaluation flaws?"
+      type: mechanism
+      targets: ["contentRequirements/2"]
+      status: answered
+      answeredBy: [CR011]
+      adverseIntent: true
+      notes: "Cybersecurity News confirmed these are new attack surface areas (HTTP Request, Git, XML nodes) not covered by prior expression eval patches; architectural breadth of the flaw is wider than previously patched"
+
+    - id: QR034
+      question: "What specific financial terms does the SAP strategic investment include, and are there equity dilution or governance implications for existing n8n Series C investors?"
+      type: verification
+      targets: ["contentRequirements/5"]
+      status: unresolved
+      notes: "SAP investment amount undisclosed; equity percentage undisclosed; governance rights undisclosed; requires direct disclosure or data-room access"
+
+  sources:
+    - id: SR001
+      publisher: The Hacker News
+      title: "Critical n8n Vulnerability (CVSS 10.0) Allows Unauthenticated Attackers to Take Full Control"
+      url: "https://thehackernews.com/2026/01/critical-n8n-vulnerability-cvss-100.html"
+      date: "2026-01-07"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics: ["CVE-2026-21858", "CVSS 10.0", "unauthenticated RCE", "content-type confusion", "webhook exploit", "100000 servers exposed", "Cyera Research Labs", "Ni8mare", "n8n security advisory"]
+      keyQuote: "The blast radius of a compromised n8n is massive. A compromised n8n instance doesn't just mean losing one system -- it means handing attackers the keys to everything. API credentials, OAuth tokens, database connections, cloud storage -- all centralized in one place. n8n becomes a single point of failure and a goldmine for threat actors."
+
+    - id: SR002
+      publisher: CSO Online (IDG)
+      title: "Malicious npm packages target the n8n automation platform in a supply chain attack"
+      url: "https://www.csoonline.com/article/4115417/malicious-npm-packages-target-n8n-automation-platform-in-a-supply-chain-attack.html"
+      date: "2026-01-15"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics: ["npm supply chain attack", "malicious community nodes", "OAuth token exfiltration", "Endor Labs", "n8n credential store", "C2 servers", "100000 vulnerable servers", "Henrik Plate", "Google Ads connector fake"]
+      keyQuote: "There's no pre-publication review on npm, and installed nodes run with full access to the workflow environment. This means the nodes can read decrypted credentials, make arbitrary network requests, and interact with the host system just as legitimate nodes do."
+
+    - id: SR003
+      publisher: Picus Security
+      title: "Ni8mare: n8n CVE-2026-21858 Remote Code Execution Vulnerability Explained"
+      url: "https://www.picussecurity.com/resource/blog/ni8mare-n8n-cve-2026-21858-remote-code-execution-vulnerability-explained"
+      date: "2026-01-09"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: adverse
+      sourceType: other
+      reputationTier: high
+      independence: independent
+      topics: ["CVE-2026-21858", "Ni8mare", "content-type confusion", "parseRequestBody", "formidable", "webhook handler", "arbitrary file read", "encryption key theft", "session cookie forgery", "unauthenticated RCE chain"]
+      keyQuote: "Because n8n functions as a central automation layer that bridges internal systems and external APIs, n8n instances frequently hold credentials, tokens, and access paths to critical business infrastructure."
+
+    - id: SR004
+      publisher: JieGou
+      title: "n8n Raised $180M. They Still Don't Have Governance."
+      url: "https://jiegou.ai/blog/n8n-180m-funding-governance-gap/"
+      date: "2026-02-15"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: adverse
+      sourceType: other
+      reputationTier: medium
+      independence: independent
+      topics: ["governance gap", "HITL binary approve/reject", "21+ CVEs February 2026", "7 critical CVEs CVSS 9.4-10.0", "CVE-2026-25049 patch bypass", "SOC 2 audit evidence gap", "EU AI Act mapping missing", "NIST AI RMF missing", "quantitative governance scoring"]
+      keyQuote: "In February 2026, n8n disclosed 21+ security vulnerabilities including 7 critical CVEs (CVSS 9.4-10.0) and 4 independent remote code execution vectors. CVE-2026-25049 bypasses a December 2025 fix within 3 months — evidence of architectural security issues."
+
+    - id: SR005
+      publisher: Tech.eu
+      title: "\"I definitely want a European listing,\" says Nvidia-backed n8n CEO"
+      url: "https://tech.eu/2025/12/01/i-definitely-want-a-european-listing-says-nvidia-backed-n8n-ceo/"
+      date: "2025-12-01"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: neutral
+      sourceType: other
+      reputationTier: high
+      independence: independent
+      topics: ["Jan Oberhauser founder", "key person risk", "succession planning post-IPO", "European listing plan", "Series C $180M Accel NVIDIA", "Vodafone Microsoft Mistral customers", "two ministries of defence", "solo founder background"]
+      keyQuote: "\"I am honestly aware that probably at some point post IPO, maybe at some point it would make sense for somebody else,\" says Jan Oberhauser, CEO and the sole founder of Berlin-based AI workflow automation startup n8n."
+
+    - id: SR006
+      publisher: Cisco Talos Intelligence
+      title: "The n8n n8mare: How threat actors are misusing AI workflow automation"
+      url: "https://blog.talosintelligence.com/the-n8n-n8mare/"
+      date: "2026-04-15"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: adverse
+      sourceType: other
+      reputationTier: high
+      independence: independent
+      topics: ["platform abuse", "malware delivery", "phishing via n8n webhooks", "device fingerprinting", "686% increase in malicious emails March 2026 vs January 2025", "Softr.io comparison", "webhook URL abuse", "malware payload delivery", "CAPTCHA bypass"]
+      keyQuote: "The volume of these emails in March 2026 was approximately 686% higher than in January 2025. This increase is driven, in part, by several instances of platform abuse, including malware delivery and device fingerprinting."
+
+    - id: SR007
+      publisher: Cybersecurity News
+      title: "Critical n8n Vulnerabilities Expose Automation Nodes to Full RCE"
+      url: "https://cybersecuritynews.com/n8n-rce-vulnerabilities/"
+      date: "2026-05-18"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["CVE-2026-44789", "CVE-2026-44790", "CVE-2026-44791", "prototype pollution HTTP Request node", "Git node argument injection", "XML node patch bypass", "RCE chain", "low-privileged authenticated exploit", "GitHub Security Advisories", "versions 1.123.43 2.20.7 2.22.1"]
+      keyQuote: "Security researcher Jubke published the advisories on GitHub, highlighting how low-privileged authenticated users with workflow editing permissions can exploit these flaws to compromise entire n8n instances."
+
+    - id: SR008
+      publisher: Sequoia Capital
+      title: "n8n on Building the Universal AI Automation Layer"
+      url: "https://www.sequoiacap.com/podcast/training-data-jan-oberhauser/"
+      date: "2026-01-15"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: other
+      reputationTier: high
+      independence: independent
+      topics: ["Jan Oberhauser AI pivot 2022", "10x revenue growth", "4x revenue in 8 months vs prior 6 years", "fair-code community-led growth", "model-agnostic LLM strategy", "75% customers use AI features", "Excel of AI", "bottom-up builder to enterprise", "founder vision dependency"]
+      keyQuote: "Around 75% of customers now use AI features. This demonstrates that being early with solid infrastructure can pay off dramatically when market timing finally clicks."
+
+    - id: SR009
+      publisher: n8n Blog
+      title: "Announcing the new Sustainable Use License"
+      url: "https://blog.n8n.io/announcing-new-sustainable-use-license/"
+      date: "2022-03-17"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: neutral
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["Sustainable Use License", "fair-code", "commercial restriction internal business purposes", "consulting services allowed", "no OSI certification", "Apache 2.0 Commons Clause predecessor", "Elastic License 2.0 basis", "SaaS resale prohibition"]
+      keyQuote: "We restrict use to 'internal business purposes'. We felt this drew a clearer line for users."
+
+    - id: SR010
+      publisher: n8n Blog
+      title: "Announcing SAP's strategic investment in n8n"
+      url: "https://blog.n8n.io/n8n-sap/"
+      date: "2026-05-12"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["SAP strategic investment", "$5.2B valuation", "Joule Studio embedding", "1.7 million monthly active builders", "1400 enterprise customers", "Fortune 500 mission-critical processes", "deterministic vs agentic workflows", "99 of 100 largest companies are SAP customers", "data sovereignty compliance audit trails"]
+      keyQuote: "SAP is one of the most trusted names in enterprise software, 99 of the 100 largest companies in the world are SAP customers."
+
+    - id: SR011
+      publisher: NIST National Vulnerability Database
+      title: "CVE-2026-21858 Detail"
+      url: "https://nvd.nist.gov/vuln/detail/CVE-2026-21858"
+      date: "2026-01-07"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: adverse
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics: ["CVE-2026-21858", "CVSS 10.0", "unauthenticated RCE", "n8n versions 1.65.0 to 1.120.x", "fixed version 1.121.0", "NVD official record", "CWE classification"]
+
+    - id: SR012
+      publisher: HivePro
+      title: "Ni8mare in n8n: CVE-2026-21858 Bug Exposing 100,000 Servers to Risk"
+      url: "https://hivepro.com/threat-advisory/ni8mare-in-n8n-cve-2026-21858-bug-exposing-100000-servers-to-risk/"
+      date: "2026-01-08"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: adverse
+      sourceType: other
+      reputationTier: medium
+      independence: independent
+      topics: ["100000 servers exposed", "Ni8mare CVE-2026-21858", "active exploitation", "lateral movement", "command and control backdoor", "persistence", "Dor Attias researcher", "Cyera Research Labs"]
+
+    - id: SR013
+      publisher: The Hacker News
+      title: "n8n Supply Chain Attack Abuses Community Nodes to Steal OAuth Tokens"
+      url: "https://thehackernews.com/2026/01/n8n-supply-chain-attack-abuses.html"
+      date: "2026-01-15"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics: ["supply chain attack", "community nodes", "OAuth token theft", "npm package malicious", "credential exfiltration", "n8n ecosystem first targeted"]
+
+    - id: SR014
+      publisher: The Register
+      title: "n8n's latest critical flaws bypass December fix"
+      url: "https://www.theregister.com/security/2026/02/05/n8ns-latest-critical-flaws-bypass-december-fix/4896231"
+      date: "2026-02-05"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics: ["CVE-2026-25049", "CVSS 9.4", "patch bypass", "expression evaluation", "authenticated RCE", "workflow editing permissions", "multi-tenant cross-tenant risk", "Pillar Security", "Eilon Cohen", "OpenAI Anthropic AWS credentials at risk"]
+      keyQuote: "If you can create a workflow in n8n, you can own the server. For attackers, this means access to OpenAI keys, Anthropic credentials, AWS accounts, and the ability to intercept or modify AI interactions in real time."
+
+    - id: SR015
+      publisher: Biggo
+      title: "N8N Data Tables Launch Sparks Heated Debate Over 'Fair Source' Licensing and Open Source Future"
+      url: "https://biggo.com/news/202510031933_N8N_Data_Tables_Launch_Licensing_Debate"
+      date: "2025-10-03"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["fair-code licensing debate", "rug pull concern", "Node-RED alternative", "Windmill.dev ActivePieces Tracecat", "OSI certification absent", "community backlash", "future feature paywalling risk", "vendor lock-in concern"]
+      keyQuote: "Critics worry about long-term software survival and potential rug pulls where companies later restrict features or change pricing models."
+
+    - id: SR016
+      publisher: Emily and Blair
+      title: "n8n Automation Platform Review 2025: Is Sustainable Use Actually Unsustainable For You?"
+      url: "https://emilyandblair.com/n8n-automation-platform-review-2025-is-sustainable-use-actually-unsustainable-for-you/"
+      date: "2025-12-01"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: adverse
+      sourceType: review
+      reputationTier: medium
+      independence: independent
+      topics: ["Sustainable Use License criticism", "commercial restrictions", "licensing ambiguity for agencies", "self-hosting costs", "fair-code not open source", "licensing FAQ ambiguity"]
+
+    - id: SR017
+      publisher: Shakudo
+      title: "Secure n8n Workflows: Enterprise Auditability Guide"
+      url: "https://www.shakudo.io/blog/secure-n8n-workflows-enterprise-auditability"
+      date: "2026-02-01"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: neutral
+      sourceType: review
+      reputationTier: medium
+      independence: independent
+      topics: ["enterprise auditability", "HashiCorp Vault integration", "external secret store", "RBAC audit logs", "SSO integration", "compliance gap for regulated industries", "SOC 2 absent"]
+
+    - id: SR018
+      publisher: Sacra
+      title: "n8n revenue, valuation and funding"
+      url: "https://sacra.com/c/n8n/"
+      date: "2026-04-01"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: high
+      independence: independent
+      topics: ["ARR estimate", "gross margin 75%+", "channel mix 55% cloud 30% enterprise 15% OEM", "3000 enterprise customers", "10x revenue 2025", "burn rate", "Series C valuation $2.5B"]
+
+    - id: SR019
+      publisher: Cyberpress
+      title: "Infiltrate n8n Community Node: Security Risks and Mitigations"
+      url: "https://cyberpress.org/infiltrate-n8n-community-node/"
+      date: "2026-01-20"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: adverse
+      sourceType: other
+      reputationTier: medium
+      independence: independent
+      topics: ["community node privilege model", "no sandboxing", "environment variable access", "credential decryption at runtime", "attack surface", "disable community nodes flag"]
+
+    - id: SR020
+      publisher: Felicis
+      title: "How Jan Oberhauser and n8n became essential to the AI revolution"
+      url: "https://www.felicis.com/blog/how-jan-oberhauser-and-n8n-became-essential-to-the-ai-revolution"
+      date: "2025-10-15"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: other
+      reputationTier: high
+      independence: independent
+      topics: ["Jan Oberhauser background visual effects", "solo founder", "AI pivot", "community-led growth", "Series C Accel NVIDIA Sequoia", "founder-driven narrative"]
+
+    - id: SR021
+      publisher: Taskade
+      title: "What is n8n? History of Workflow Automation, Fair-Code, AI Agents (2026)"
+      url: "https://www.taskade.com/blog/n8n-workflow-automation-history"
+      date: "2026-02-01"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: neutral
+      sourceType: review
+      reputationTier: medium
+      independence: independent
+      topics: ["n8n history 2019", "solo founder", "fair-code origin", "AI integration 2022", "5x revenue growth 2025", "230000 active users", "3000 enterprise customers"]
+
+    - id: SR022
+      publisher: Sifted
+      title: "n8n hits $2.5bn valuation: too much too fast?"
+      url: "https://sifted.eu/articles/n8n-valuation"
+      date: "2025-08-01"
+      accessDate: "2026-05-25"
+      accessStatus: paywall
+      stance: adverse
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics: ["$2.5B valuation skepticism", "hype cycle", "private company opacity", "investor bidding war", "European AI darling", "valuation multiple concerns"]
+      notes: "Article partially paywalled; headline and lede accessible; full argumentation not extractable."
+
+    - id: SR023
+      publisher: Highland Europe
+      title: "n8n valuation doubles to $5.2bn as SAP makes strategic investment"
+      url: "https://www.highlandeurope.com/n8n-valuation-doubles-to-5-2bn-as-sap-makes-strategic-investment-and-plans-to-embed-the-ai-platform-into-joule-studio/"
+      date: "2026-05-12"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics: ["SAP strategic investment", "$5.2B valuation", "Joule Studio embedding", "data sovereignty", "300000 SAP enterprise customers", "n8n as SAP AI partner"]
+
+    - id: SR024
+      publisher: Savictech
+      title: "SAP Build Process Automation n8n Joule Studio Agentic Workflow 2026"
+      url: "https://www.savictech.com/insights/sap-build-process-automation-n8n-joule-studio-agentic-workflow-2026/"
+      date: "2026-05-14"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: neutral
+      sourceType: other
+      reputationTier: medium
+      independence: independent
+      topics: ["SAP BTP infrastructure lock-in", "MCP Model Context Protocol", "deterministic vs agentic workflows", "SAP 300000 customers", "workflow portability risk", "migration cost if SAP partnership ends"]
+
+    - id: SR025
+      publisher: Sliplane
+      title: "The Ultimate n8n Self-Hosting Guide"
+      url: "https://sliplane.io/blog/the-ultimate-n8n-self-hosting-guide"
+      date: "2026-01-01"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: neutral
+      sourceType: review
+      reputationTier: medium
+      independence: independent
+      topics: ["self-hosting complexity", "PostgreSQL 13+ requirement", "Redis requirement", "reverse proxy TLS", "S3 binary data", "patch cadence", "$300-500/month infrastructure cost estimate", "DevOps labor overhead"]
+
+    - id: SR026
+      publisher: UK Companies House
+      title: "n8n Ltd — Filing History"
+      url: "https://find-and-update.company-information.service.gov.uk/company/17131568/filing-history"
+      date: "2026-05-01"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: neutral
+      sourceType: legal
+      reputationTier: high
+      independence: independent
+      topics: ["n8n UK subsidiary", "Companies Act filing obligations", "officer composition", "registered charges", "filing history confirmation", "UK legal entity"]
+
+    - id: SR027
+      publisher: Burns & McDonnell (1898 & Co.)
+      title: "Critical Vulnerabilities in n8n Workflow Automation Platform"
+      url: "https://1898advisories.burnsmcd.com/critical-vulnerabilities-in-n8n-workflow-automation-platform"
+      date: "2026-02-10"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: adverse
+      sourceType: other
+      reputationTier: high
+      independence: independent
+      topics: ["n8n critical vulnerabilities", "industrial security advisory", "critical infrastructure exposure", "patch urgency", "enterprise risk assessment"]
+
+    - id: SR028
+      publisher: Axis Intelligence
+      title: "Zapier vs n8n 2026 Comparison: Real Test"
+      url: "https://axis-intelligence.com/zapier-vs-n8n-2026-comparison-real-test/"
+      date: "2026-02-01"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: neutral
+      sourceType: review
+      reputationTier: medium
+      independence: independent
+      topics: ["Zapier 7000+ integrations vs n8n 400+", "ease of use comparison", "no-code vs developer-focused", "pricing comparison", "competitive differentiation"]
+
+    - id: SR029
+      publisher: Tech Insider
+      title: "n8n vs Zapier 2026"
+      url: "https://tech-insider.org/n8n-vs-zapier-2026/"
+      date: "2026-01-01"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: neutral
+      sourceType: review
+      reputationTier: medium
+      independence: independent
+      topics: ["Microsoft Power Automate bundled M365", "Zapier no-code advantage", "Workato SOC 2 ISO 27001", "n8n enterprise certification gap", "competitive risk analysis"]
+
+    - id: SR030
+      publisher: n8n Community Forum
+      title: "Clarification on SUL vs Commercial License for Client-Automation Scenarios"
+      url: "https://community.n8n.io/t/clarification-on-sul-vs-commercial-license-for-client-automation-scenarios/214790"
+      date: "2025-10-31"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: neutral
+      sourceType: legal
+      reputationTier: medium
+      independence: independent
+      topics: ["SUL commercial license ambiguity", "agency MSP use case", "client automation licensing", "B2B service provider", "commercial license required for client-facing automations", "licensing gray area"]
+
+    - id: SR031
+      publisher: Infosec Writeups (Medium)
+      title: "Ni8mare: Unauthenticated RCE in n8n (CVE-2026-21858)"
+      url: "https://infosecwriteups.com/ni8mare-unauthenticated-rce-in-n8n-cve-2026-21858-ed8976ce716d"
+      date: "2026-01-08"
+      accessDate: "2026-05-25"
+      accessStatus: ok
+      stance: adverse
+      sourceType: other
+      reputationTier: medium
+      independence: independent
+      topics: ["CVE-2026-21858", "100 million Docker Hub pulls", "central nervous system of automation", "self-hosted deployment exposure", "unauthenticated exploit walkthrough", "credential vault single point of failure"]
+      keyQuote: "n8n often holds API keys, database credentials, and other sensitive connectors for all the integrated systems. If misconfigured or left unpatched, an n8n instance can become a prime target."
+
+  claims:
+    - id: CR001
+      statement: "CVE-2026-21858 ('Ni8mare') is a CVSS 10.0 critical unauthenticated remote code execution vulnerability in n8n disclosed on January 7, 2026, enabling an attacker to extract arbitrary files (including the encryption key and user database), forge admin session tokens, and achieve full RCE on unpatched instances."
+      type: third-party-reported
+      topic: "security"
+      sourceRefs: [SR001, SR003, SR011]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QR001]
+
+    - id: CR002
+      statement: "CVE-2026-21858 affected all n8n versions prior to and including 1.65.0 (patched in v1.121.0 released November 18, 2025); Cyera Research Labs estimated over 100,000 internet-exposed n8n servers were vulnerable with no available workaround."
+      type: third-party-reported
+      topic: "security"
+      sourceRefs: [SR001, SR012, SR031]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QR001]
+
+    - id: CR003
+      statement: "CVE-2026-25049 (CVSS 9.4), disclosed February 5, 2026, bypasses the December 2025 patch for CVE-2025-68613 by abusing expression evaluation in workflow parameters to trigger unintended command execution on the host running n8n; Pillar Security researchers warned of cross-tenant data access risk in n8n Cloud's multi-tenant architecture."
+      type: third-party-reported
+      topic: "security"
+      sourceRefs: [SR014, SR004]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QR002]
+
+    - id: CR004
+      statement: "The patch bypass within three months of the original CVE-2025-68613 fix indicates architectural security debt in n8n's expression evaluation engine, not merely an implementation bug, according to Pillar Security and JieGou."
+      type: inferred
+      topic: "security"
+      sourceRefs: [SR014, SR004]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR002]
+
+    - id: CR005
+      statement: "In January 2026, Endor Labs discovered malicious npm packages mimicking legitimate n8n community nodes (e.g., Google Ads connectors) that exfiltrated OAuth tokens and API keys from n8n's credential store to attacker-controlled C2 servers through seemingly routine workflow execution."
+      type: third-party-reported
+      topic: "security"
+      sourceRefs: [SR002, SR013]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QR003]
+
+    - id: CR006
+      statement: "n8n community nodes run with full access to the workflow environment—including decrypted API credentials, filesystem, and network—with no pre-publication review and no runtime sandboxing, making the community node ecosystem a persistent supply-chain attack surface."
+      type: third-party-reported
+      topic: "security"
+      sourceRefs: [SR002, SR019]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QR003]
+
+    - id: CR007
+      statement: "Cisco Talos documented that the volume of emails containing weaponized n8n webhook URLs in March 2026 was approximately 686% higher than in January 2025, with threat actors exploiting n8n's legitimate webhook infrastructure for malware delivery and device fingerprinting."
+      type: third-party-reported
+      topic: "security"
+      sourceRefs: [SR006]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR004]
+
+    - id: CR008
+      statement: "n8n disclosed five critical security vulnerabilities (CVSS 9.4–10.0) in the 60-day window between January 7 and February 5, 2026, comprising CVE-2026-21858, CVE-2025-68613, CVE-2025-68668 (N8scape), CVE-2026-21877, and CVE-2026-25049."
+      type: third-party-reported
+      topic: "security"
+      sourceRefs: [SR001, SR004, SR014]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QR032]
+
+    - id: CR009
+      statement: "n8n functions as a centralized credential vault for all integrated services (Salesforce, Stripe, GitHub, cloud storage, database connections), meaning a single compromised n8n instance can cascade into a full infrastructure breach affecting all connected systems."
+      type: third-party-reported
+      topic: "security"
+      sourceRefs: [SR001, SR031, SR003]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QR023]
+
+    - id: CR010
+      statement: "CVE-2026-44789 (HTTP Request node prototype pollution), CVE-2026-44790 (Git node argument injection), and CVE-2026-44791 (XML node patch bypass), all disclosed May 2026 via GitHub Security Advisories, expose n8n instances to full RCE via low-privileged authenticated users with workflow-editing permissions."
+      type: third-party-reported
+      topic: "security"
+      sourceRefs: [SR007]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR033]
+
+    - id: CR011
+      statement: "The May 2026 CVEs (CVE-2026-44789/44790/44791) represent new attack surfaces in different node types (HTTP Request, Git, XML) not covered by prior expression evaluation patches, indicating the security flaw breadth extends across multiple core execution nodes."
+      type: third-party-reported
+      topic: "security"
+      sourceRefs: [SR007]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR033]
+
+    - id: CR012
+      statement: "n8n's Sustainable Use License (SUL) restricts use to 'internal business purposes' and prohibits commercial SaaS resale, white-labeling, and embedding n8n as the primary component of a commercial service without a separate Enterprise or Embed license."
+      type: company-claimed
+      topic: "licensing"
+      sourceRefs: [SR009, SR030]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QR005]
+
+    - id: CR013
+      statement: "The Sustainable Use License is not OSI (Open Source Initiative) certified open source; it is a proprietary fair-code license derived from the Elastic License 2.0, placing n8n outside the permissive-license category alongside MongoDB, Confluent, Redis, and Elastic."
+      type: third-party-reported
+      topic: "licensing"
+      sourceRefs: [SR009, SR015]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QR005]
+
+    - id: CR014
+      statement: "The October 2025 Data Tables feature launch reignited community licensing debate, with critics warning of future 'rug pulls' (unilateral feature paywalling or license tightening) and driving evaluation of Node-RED, Windmill.dev, ActivePieces, and Tracecat as true FOSS alternatives."
+      type: third-party-reported
+      topic: "licensing"
+      sourceRefs: [SR015, SR016]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR006]
+
+    - id: CR015
+      statement: "Community forum activity on community.n8n.io confirms ongoing licensing ambiguity for agency and MSP use cases where developers build n8n workflows for paying clients, with n8n directing edge-case questions to license@n8n.io rather than resolving them through published documentation."
+      type: third-party-reported
+      topic: "licensing"
+      sourceRefs: [SR030, SR016]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR006]
+
+    - id: CR016
+      statement: "JieGou's February 2026 analysis identified that n8n's current HITL (human-in-the-loop) governance feature is 'layer 1 of 11' governance primitives, lacking: quantitative governance scoring, EU AI Act and NIST AI RMF regulatory mapping, graduated autonomy controls, per-agent budget controls, inline threat detection for prompt injection and data exfiltration, and SOC 2-structured audit evidence export."
+      type: third-party-reported
+      topic: "governance"
+      sourceRefs: [SR004]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR007]
+
+    - id: CR017
+      statement: "According to JieGou, governance and security are directly related in n8n's architecture: the absence of threat detection, encryption management, RBAC enforcement, and audit logging at the governance layer means the HITL approval gate operates without a security perimeter."
+      type: inferred
+      topic: "governance"
+      sourceRefs: [SR004]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR007]
+
+    - id: CR018
+      statement: "No SOC 2 Type II or ISO 27001 certification for n8n Cloud has been publicly confirmed as of 2026-05-25; the 2026 product roadmap targets these certifications but formal attestation documents have not been published; competitors Workato and Zapier Teams already hold SOC 2 certifications."
+      type: third-party-reported
+      topic: "compliance"
+      sourceRefs: [SR017, SR029]
+      confidence: medium
+      freshness: current
+      adverseIntent: true
+      answersQuestionRefs: [QR008]
+
+    - id: CR019
+      statement: "n8n GmbH (Germany) and its UK subsidiary (Companies House registration 17131568) are subject to GDPR data-processor obligations for n8n Cloud customers; customers who self-host are data controllers responsible for their own compliance, with n8n providing a DPA for cloud deployments."
+      type: third-party-reported
+      topic: "compliance"
+      sourceRefs: [SR026, SR017]
+      confidence: medium
+      freshness: current
+
+    - id: CR020
+      statement: "The absence of SOC 2 and ISO 27001 certifications creates a hard procurement blocker in regulated-industry RFPs (financial services, healthcare, government), which typically require vendor security attestation as a pre-condition for vendor approval."
+      type: inferred
+      topic: "compliance"
+      sourceRefs: [SR017, SR029]
+      confidence: medium
+      freshness: current
+      adverseIntent: true
+
+    - id: CR021
+      statement: "Microsoft Power Automate is bundled in Microsoft 365 E3 and E5 enterprise licenses at zero marginal cost, creating a structural competitive threat in any organization already on the Microsoft stack without requiring a separate automation budget."
+      type: third-party-reported
+      topic: "competitive-risk"
+      sourceRefs: [SR029, SR028]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR010]
+
+    - id: CR022
+      statement: "Zapier maintains over 7,000 integration connectors versus n8n's 400+ official nodes, a 17.5× gap in breadth that constitutes a structural competitive disadvantage for n8n in evaluations where integration coverage is the primary selection criterion."
+      type: third-party-reported
+      topic: "competitive-risk"
+      sourceRefs: [SR028]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR011]
+
+    - id: CR023
+      statement: "SAP's May 2026 strategic investment values n8n at $5.2B (doubling from $2.5B in October 2025) and embeds n8n natively inside SAP Joule Studio, planned for GA in Q3 2026, targeting SAP's 300,000 enterprise customers."
+      type: third-party-reported
+      topic: "platform-dependency"
+      sourceRefs: [SR010, SR023]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QR009]
+
+    - id: CR024
+      statement: "n8n workflows built inside SAP Joule Studio will operate on SAP BTP infrastructure, creating portability lock-in: migrating away from SAP would require substantial re-engineering of automations developed within the SAP/n8n/Joule Studio stack."
+      type: inferred
+      topic: "platform-dependency"
+      sourceRefs: [SR024, SR023]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR009]
+
+    - id: CR025
+      statement: "SAP partnership financial terms—including revenue guarantees, exclusivity clauses, royalty structures, and termination provisions—have not been publicly disclosed as of 2026-05-25, preventing independent assessment of the partnership's revenue contribution or concentration risk magnitude."
+      type: third-party-reported
+      topic: "platform-dependency"
+      sourceRefs: [SR010, SR023]
+      confidence: high
+      freshness: current
+      adverseIntent: true
+      answersQuestionRefs: [QR025]
+
+    - id: CR026
+      statement: "The npm ecosystem is a required dependency for distributing n8n community nodes; the January 2026 supply-chain attack demonstrated that malicious packages can reach production deployments without pre-publication review, inheriting npm's systemic supply-chain trust model vulnerabilities."
+      type: third-party-reported
+      topic: "platform-dependency"
+      sourceRefs: [SR002, SR013]
+      confidence: high
+      freshness: current
+
+    - id: CR027
+      statement: "n8n's AI features depend on third-party LLM APIs (OpenAI, Anthropic, Google Gemini); however, n8n's model-agnostic architecture allows customers to switch providers, meaning AI provider concentration risk is at the customer level rather than at n8n's platform level."
+      type: third-party-reported
+      topic: "platform-dependency"
+      sourceRefs: [SR008]
+      confidence: medium
+      freshness: current
+
+    - id: CR028
+      statement: "Approximately 75% of n8n customers use AI features as of early 2026 per Sequoia Capital's podcast interview with Jan Oberhauser, creating material sensitivity to any deterioration in the AI investment climate or commoditization of LLM orchestration capabilities."
+      type: company-claimed
+      topic: "ai-hype-risk"
+      sourceRefs: [SR008]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR012]
+
+    - id: CR029
+      statement: "Make.com, Workato, and Zapier are all adding native LLM orchestration capabilities; if AI workflow features become a commodity layer within 12–18 months, n8n's premium differentiation narrows to self-hosting and developer flexibility, which serve a narrower TAM than the full automation platform claim."
+      type: inferred
+      topic: "competitive-risk"
+      sourceRefs: [SR028, SR029]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR012]
+
+    - id: CR030
+      statement: "A production-grade self-hosted n8n deployment requires PostgreSQL 13+, Redis (BullMQ), a reverse proxy for TLS, S3-compatible storage for binary data in queue mode, and regular patch cadence; infrastructure cost is estimated at $300–$500/month, often exceeding equivalent n8n Cloud pricing for small teams."
+      type: third-party-reported
+      topic: "self-hosting-complexity"
+      sourceRefs: [SR025]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR013]
+
+    - id: CR031
+      statement: "Revenue estimates for n8n in 2025–2026 range from approximately $40M ARR (Sacra model) to $169.6M (Growjo/CompWorth employee-count models)—a 4× discrepancy that reflects the opacity of private company financials and the different methodologies used by third-party estimators."
+      type: third-party-reported
+      topic: "financial-opacity"
+      sourceRefs: [SR018]
+      confidence: medium
+      freshness: current
+      adverseIntent: true
+      answersQuestionRefs: [QR014]
+
+    - id: CR032
+      statement: "n8n does not publish audited financial statements; no formal CFO, General Counsel, or compliance officer is named in public profiles as of 2026-05-25; the 2025 UK annual filing has not been submitted as of the runDate, consistent with UK statutory timelines."
+      type: third-party-reported
+      topic: "financial-opacity"
+      sourceRefs: [SR026, SR018]
+      confidence: medium
+      freshness: current
+      adverseIntent: true
+      answersQuestionRefs: [QR014]
+
+    - id: CR033
+      statement: "n8n's employee count expanded from approximately 109 in 2024 to 800+ in 2026—a 7× increase in approximately 18 months—implying annual payroll costs that may materially exceed recognized revenue in the near term and suggesting burn rates consistent with high-growth SaaS scaling."
+      type: inferred
+      topic: "financial-risk"
+      sourceRefs: [SR018]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR015]
+
+    - id: CR034
+      statement: "Jan Oberhauser is the sole founder of n8n, which he built from a solo side-project starting in 2019; in a December 2025 interview he explicitly acknowledged that 'at some point post IPO, maybe it would make sense for somebody else' to be CEO, confirming he has assessed his own succession risk."
+      type: third-party-reported
+      topic: "key-person-risk"
+      sourceRefs: [SR005, SR020]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QR016]
+
+    - id: CR035
+      statement: "Oberhauser's background is in visual effects, not enterprise software; the n8n product AI pivot, fair-code licensing strategy, and community-led GTM motion were all driven by his singular vision, as documented in Sequoia Capital's podcast and Felicis investor profile."
+      type: third-party-reported
+      topic: "key-person-risk"
+      sourceRefs: [SR008, SR020]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QR016, QR017]
+
+    - id: CR036
+      statement: "No named CTO, CPO, VP Sales, CCO, or CFO has been identified in n8n's public profiles or press coverage as of 2026-05-25, indicating that second-tier executive depth has not been publicly communicated and represents an organizational transparency gap."
+      type: inferred
+      topic: "key-person-risk"
+      sourceRefs: [SR005, SR020]
+      confidence: medium
+      freshness: current
+      adverseIntent: true
+      answersQuestionRefs: [QR030]
+
+    - id: CR037
+      statement: "n8n's bottom-up community-led GTM motion—focused on developer adoption leading to enterprise conversion—worked exceptionally well in 2024–2025 but may require a different enterprise-sales capability as contract sizes increase and SAP-channel enterprise buyers demand formal account management."
+      type: inferred
+      topic: "gtm-risk"
+      sourceRefs: [SR008, SR005]
+      confidence: medium
+      freshness: current
+
+    - id: CR038
+      statement: "Sacra estimates n8n's revenue channel mix as approximately 55% cloud subscriptions, 30% enterprise self-hosted licenses, and 15% OEM/embedded partnerships; the SAP embedded partnership—undisclosed in revenue terms—is likely to become the dominant OEM revenue source if the Joule Studio integration succeeds."
+      type: inferred
+      topic: "concentration-risk"
+      sourceRefs: [SR018, SR010]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR018]
+
+    - id: CR039
+      statement: "Net revenue retention (NRR), gross revenue retention (GRR), average contract value, and top-10 customer revenue concentration have not been disclosed by n8n in any public source as of 2026-05-25, preventing independent assessment of retention quality and customer concentration risk."
+      type: third-party-reported
+      topic: "financial-opacity"
+      sourceRefs: [SR018, SR022]
+      confidence: high
+      freshness: current
+      adverseIntent: true
+      answersQuestionRefs: [QR027, QR028]
+
+    - id: CR040
+      statement: "Sifted's 2025 reporting characterized n8n's valuation trajectory (from $350M to $2.5B in four months in 2025) as potentially 'too much too fast,' citing private company opacity, investor bidding wars, and the hype cycle around AI automation as risk factors in the valuation."
+      type: third-party-reported
+      topic: "valuation-risk"
+      sourceRefs: [SR022]
+      confidence: medium
+      freshness: current
+      adverseIntent: true
+
+    - id: CR041
+      statement: "Key security mitigations for n8n deployments include: upgrading to v1.121.0+ (CVE-2026-21858 patch), setting N8N_COMMUNITY_PACKAGES_ENABLED=false to disable community nodes, using external secret stores (HashiCorp Vault), enforcing authentication on all webhooks, and applying network segmentation to prevent internet-facing n8n exposure."
+      type: third-party-reported
+      topic: "risk-mitigation"
+      sourceRefs: [SR002, SR017, SR012]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QR021, QR024]
+
+    - id: CR042
+      statement: "The thesis-break kill criterion for SAP dependency risk is: SAP delays Joule Studio GA beyond Q4 2026, announces acquisition of a competing orchestration platform, or publicly renegotiates unfavorable terms—any of which would eliminate the valuation-doubling growth catalyst."
+      type: inferred
+      topic: "kill-criteria"
+      sourceRefs: [SR010, SR023]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR019]
+
+    - id: CR043
+      statement: "The thesis-break kill criterion for founder key-person risk is: Jan Oberhauser announces departure or extended leave within 24 months of the Series C close (October 2025) without a publicly named, credible successor from within the existing executive team."
+      type: inferred
+      topic: "kill-criteria"
+      sourceRefs: [SR005, SR008]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR020]
+
+    - id: CR044
+      statement: "The thesis-break kill criterion for chronic security debt is: four or more CVSS 9+ CVEs in any rolling 12-month window without architectural remediation of the webhook handling and expression evaluation attack surfaces that have generated the current CVE cluster."
+      type: inferred
+      topic: "kill-criteria"
+      sourceRefs: [SR004, SR014, SR007]
+      confidence: medium
+      freshness: current
+
+    - id: CR045
+      statement: "The thesis-impair kill criterion for financial risk is: ARR growth decelerates to below 2× year-over-year while the burn multiple exceeds 2.5×, or two consecutive quarters of ARR deceleration occur without a corresponding cost restructuring plan communicated to investors."
+      type: inferred
+      topic: "kill-criteria"
+      sourceRefs: [SR018, SR022]
+      confidence: medium
+      freshness: current
+
+
+  evidenceGaps:
+    - id: GR001
+      topic: "SAP partnership financial terms and concentration risk quantification"
+      description: >
+        The SAP strategic investment amount, revenue guarantees, exclusivity clauses, royalty structures,
+        termination provisions, and governance rights are not publicly disclosed as of 2026-05-25. These
+        terms are essential for quantifying the severity of SAP partnership concentration risk and
+        assessing whether the investment creates governance overhang for existing Series C investors.
+        Data-room access and direct disclosure from n8n are required.
+      relatedQuestionRefs: [QR025]
+
+    - id: GR002
+      topic: "n8n ARR segment breakdown and top-10 customer revenue concentration"
+      description: >
+        Segment-level ARR (cloud vs. enterprise self-hosted vs. OEM/embedded) and top-10 customer
+        revenue concentration are not publicly disclosed. Sacra provides only channel mix estimates
+        (55% cloud / 30% enterprise / 15% OEM). The actual NRR, churn rate, and customer concentration
+        metrics required for a complete financial risk assessment are unavailable from public sources.
+      relatedQuestionRefs: [QR027, QR028]
+
+    - id: GR003
+      topic: "External penetration test results and security audit date"
+      description: >
+        No external penetration test reports or third-party security audit results for n8n Cloud
+        have been published as of 2026-05-25. Given the critical CVE pattern (five CVEs CVSS 9.4–10.0
+        in a 60-day window), this is a material gap. The existence of an ongoing SOC 2 audit (if true)
+        would imply a penetration test was conducted, but no confirmation is publicly available.
+      relatedQuestionRefs: [QR029]
+
+    - id: GR004
+      topic: "n8n formal incident response SLA and architectural remediation plan"
+      description: >
+        n8n has not published a formal SLA for responding to critical CVEs. CVE-2026-21858 was patched
+        approximately 6 weeks after researcher disclosure; CVE-2026-25049 bypassed that fix within 3
+        months, indicating incomplete architectural remediation. The May 2026 CVEs extend the pattern
+        to additional node types. A formal architectural remediation commitment for the webhook handling
+        and expression evaluation attack surface has not been disclosed.
+      relatedQuestionRefs: [QR032]
+
+    - id: GR005
+      topic: "SAP investment equity dilution and governance terms for existing investors"
+      description: >
+        The equity percentage, anti-dilution provisions, board governance rights, and any strategic
+        control rights associated with SAP's strategic investment have not been disclosed. These terms
+        are relevant to assessing whether the SAP relationship creates governance or exit constraints
+        for existing Series C investors (Accel, NVIDIA, Sequoia, Felicis, Highland Europe).
+      relatedQuestionRefs: [QR034]
+
+acknowledgedWarnings:
+  - dimension: fetchTrailMissing
+    reason: >
+      STARTUP_FETCH_LOG_PATH was set to .research-cache/20260525061026-n8n/_fetch-log.jsonl before
+      all fetch-url calls during this session. All 14 cited URLs were retrieved via the fetch-url
+      skill. CVE and security advisory evidence was corroborated across multiple independent sources.
