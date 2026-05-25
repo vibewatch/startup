@@ -1,0 +1,2460 @@
+{
+  "schemaVersion": "report-v2",
+  "artifact": "product-tech",
+  "slug": "workos",
+  "runDate": "2026-05-24",
+  "company": {
+    "name": "WorkOS"
+  },
+  "chapter": {
+    "number": 5,
+    "title": "Product & Technology",
+    "summary": "WorkOS packages enterprise identity primitives—SSO/SAML, SCIM-based directory sync, user management/AuthKit, admin onboarding, audit logs, and newer fine-grained authorization—behind one control plane while still expecting customers to own their app database and resource model. The strongest technical advantages are breadth of enterprise-readiness coverage and self-serve IT onboarding; the main diligence gaps are limited public trust-architecture detail, still-maturing FGA roadmap items, and extra integration work for on-prem or framework-edge cases."
+  },
+  "sections": [
+    {
+      "id": "enterprise-identity-surface",
+      "title": "Enterprise identity surface",
+      "body": "WorkOS is best understood as an enterprise-readiness bundle rather than a single login widget. The current public surface spans Enterprise SSO, Directory Sync, User Management, AuthKit, MFA, Audit Logs, Admin Portal, and newer fine-grained authorization. The important architectural choice is that WorkOS does not try to become the customer's full application data layer: the SSO docs frame the product as authentication middleware, the user management pages repeatedly tell teams to keep their own user table current through the Events API, and AuthKit can be consumed either as hosted UI or as headless APIs. That gives startups a faster route to enterprise login and provisioning without fully outsourcing their core product model. The suite is also explicitly organization-aware: users can belong to organizations through memberships, JIT provisioning can attach people to orgs based on verified domains, and Admin Portal flows give IT teams a customer-facing setup path instead of engineering-led onboarding.",
+      "claimRefs": [
+        "CE001",
+        "CE002",
+        "CE003",
+        "CE005",
+        "CE006",
+        "CE007",
+        "CE008",
+        "CE012",
+        "CE013",
+        "CE014",
+        "CE023"
+      ],
+      "tableRefs": [
+        "TE001",
+        "TE002"
+      ],
+      "figureRefs": [
+        "FE002"
+      ]
+    },
+    {
+      "id": "control-plane-and-authorization",
+      "title": "Control plane and authorization model",
+      "body": "Under the hood, WorkOS is not just protocol abstraction; it is a shared control plane that normalizes inputs from IdPs, directories, and app-auth events. SSO accepts SAML or OIDC but exposes an OAuth-like initiation and callback flow with organization-aware redirect handling. Directory Sync sits alongside that path, ingesting directory and HRIS changes, normalizing users and groups, and delivering them back through webhooks or the Events API. Organization memberships then become the bridge from identity to authorization. Basic RBAC is environment- and membership-centric, with default roles, optional multiple-role mode, and group-to-role mapping from SSO or SCIM sources. FGA extends that model from org-wide permissions to resource trees such as workspaces, projects, and apps. The public docs position this as incremental adoption rather than a full rewrite: org-wide roles can stay in tokens for fast checks while resource-scoped decisions move to the Authorization API.",
+      "claimRefs": [
+        "CE004",
+        "CE015",
+        "CE016",
+        "CE017",
+        "CE018",
+        "CE019",
+        "CE020",
+        "CE021",
+        "CE022",
+        "CE025",
+        "CE026"
+      ],
+      "tableRefs": [
+        "TE003"
+      ],
+      "figureRefs": [
+        "FE001",
+        "FE003"
+      ]
+    },
+    {
+      "id": "security-deployment-and-reliability",
+      "title": "Security, deployment, and reliability posture",
+      "body": "WorkOS exposes several places where integration quality matters more than the marketing copy. MFA is more than a checkbox: the public MFA product page describes TOTP and SMS factors behind one API, while AuthKit docs narrow the currently documented mandatory-flow behavior to non-SSO users using authenticator apps. Webhooks are also opinionated: endpoints must be HTTPS POST handlers, signed with a WorkOS-Signature header, and built to tolerate duplicate or out-of-order deliveries. Production retries can stretch across three days, which is useful for resilience but shifts idempotency and replay handling back to the integrator. For self-hosted customers, WorkOS can work in cloud-like connected deployments, but the on-prem guide still requires per-customer environments and API keys, firewall and callback planning, and a bespoke package for truly air-gapped installs. Security posture is credible at the checklist level—SOC 2 Type 2, GDPR/CCPA, annual pentests, external code audits, and HIPAA BAAs for enterprise plans—but the public security page stops short of deep architecture details such as key-management ownership, residency options, or published recovery objectives.",
+      "claimRefs": [
+        "CE010",
+        "CE011",
+        "CE027",
+        "CE028",
+        "CE029",
+        "CE030",
+        "CE031",
+        "CE032",
+        "CE033"
+      ],
+      "tableRefs": [
+        "TE004"
+      ]
+    },
+    {
+      "id": "developer-experience-and-roadmap",
+      "title": "Developer experience, ecosystem, and roadmap",
+      "body": "Developer experience is one of WorkOS's clearest strengths, but it is not zero-friction. The docs and repositories show a broad SDK footprint across Node, Next.js/AuthKit, Go, PHP, .NET, and official Postman assets, and the Node README now exposes public-client PKCE flows for mobile and CLI use cases. The Next.js helper goes beyond a thin SDK wrapper and bakes in session middleware or proxy behavior, encrypted cookies, and callback helpers, which should accelerate greenfield App Router apps. The trade-off is that teams still inherit framework-specific caveats, such as cookie configuration, callback routing, and middleware matcher edge cases. Public package surfaces also show active maintenance: Packagist reports millions of installs for the PHP SDK, while NuGet shows 2026 update cadence for WorkOS.net. External community evidence is thinner and more mixed: a founder-led Show HN launch indicates some organic attention, but the public Stack Overflow footprint is small and highlights the kind of edge-case debugging—redirect semantics and invalid role slugs—that still falls on implementers. FGA's own docs also leave several important capabilities in a coming-soon state.",
+      "claimRefs": [
+        "CE034",
+        "CE035",
+        "CE036",
+        "CE037",
+        "CE038",
+        "CE039",
+        "CE040",
+        "CE041",
+        "CE042",
+        "CE043",
+        "CE044",
+        "CE045",
+        "CE046"
+      ],
+      "tableRefs": [
+        "TE005"
+      ],
+      "figureRefs": [
+        "FE004"
+      ]
+    }
+  ],
+  "tables": [
+    {
+      "id": "TE001",
+      "title": "Product module matrix",
+      "columns": [
+        "Module",
+        "Primary user",
+        "Current scope",
+        "Differentiation",
+        "Key diligence gap"
+      ],
+      "rows": [
+        [
+          "Enterprise SSO",
+          "Product engineers; enterprise IT",
+          "SAML and OIDC abstraction through one API and 20+ IdP support",
+          "Lets teams keep their own auth stack and DB while adding enterprise login",
+          "No public per-IdP success, SLA, or certificate-renewal automation metrics"
+        ],
+        [
+          "Directory Sync",
+          "IT admins; provisioning pipelines",
+          "SCIM-style provisioning, deprovisioning, groups, and normalized directory data",
+          "Single integration covers many directories and HRIS sources",
+          "No public volume, throughput, or large-tenant benchmark data"
+        ],
+        [
+          "User Management / AuthKit",
+          "Application teams; end users",
+          "Hosted or headless auth with email/password, social, SSO, Magic Auth, sessions, and org policies",
+          "Bridges enterprise auth with app-native sign-in and keeps app DB as system of record",
+          "Public pricing and deep token/session limits are only partially public"
+        ],
+        [
+          "MFA",
+          "Security-conscious app teams",
+          "TOTP and SMS factors behind one API; AuthKit docs describe authenticator-app enforcement for non-SSO users",
+          "Adds stronger auth without a separate MFA vendor",
+          "Current public docs do not show SSO-specific MFA enforcement via WorkOS"
+        ],
+        [
+          "Admin Portal",
+          "Customer IT contacts",
+          "Self-serve setup for domain verification, SSO, Directory Sync, audit/log-stream intents",
+          "Reduces onboarding labor by moving IdP-specific setup into hosted flows",
+          "One-connection-per-organization constraint can limit complex tenant setups"
+        ],
+        [
+          "Audit Logs",
+          "Compliance and platform teams",
+          "Organization-scoped event capture, log streaming, retention add-ons",
+          "Reusable schema and metadata model across SDKs",
+          "Public docs do not expose storage architecture or long-term immutability guarantees"
+        ],
+        [
+          "Fine-Grained Authorization",
+          "B2B SaaS product teams",
+          "Resource-scoped roles and permissions layered on top of existing RBAC",
+          "Incremental path from org-wide RBAC to hierarchical authorization",
+          "Several high-value features are still marked coming soon"
+        ],
+        [
+          "Organizations + memberships",
+          "Multi-tenant app builders",
+          "Unlimited organizations, flexible workspace models, lifecycle states, JIT membership",
+          "Provides a consistent tenant object shared across auth and admin surfaces",
+          "Public docs do not quantify org/member scale ceilings"
+        ]
+      ],
+      "notes": "Rows synthesize WorkOS product pages and technical docs; gaps call out information not publicly specified rather than implementation defects.",
+      "claimRefs": [
+        "CE001",
+        "CE002",
+        "CE005",
+        "CE007",
+        "CE010",
+        "CE012",
+        "CE018",
+        "CE023"
+      ]
+    },
+    {
+      "id": "TE002",
+      "title": "Workflow and use-case table",
+      "columns": [
+        "User job",
+        "Current workflow",
+        "WorkOS solution",
+        "Measurable benefit",
+        "Limitation"
+      ],
+      "rows": [
+        [
+          "Sell into an enterprise that requires SSO",
+          "Add SAML or OIDC login to an existing auth stack",
+          "Standalone SSO API or AuthKit SSO",
+          "Single integration instead of custom per-IdP flows",
+          "Customer app must still validate org context and own its user records"
+        ],
+        [
+          "Automate workforce provisioning",
+          "Receive hires, changes, and offboarding events from directories or HRIS",
+          "Directory Sync via webhooks or Events API",
+          "Removes manual user lifecycle work and reduces state drift",
+          "Customer still owns downstream reconciliation and throughput resilience"
+        ],
+        [
+          "Launch app auth quickly",
+          "Provide branded sign-in, sessions, and organization-aware policies",
+          "AuthKit hosted UI or User Management APIs",
+          "Fastest path from basic auth to enterprise-ready auth",
+          "Framework-specific setup and cookie rules still matter"
+        ],
+        [
+          "Let IT contacts self-configure",
+          "Hand off SSO or directory onboarding to customer admins",
+          "Admin Portal links from dashboard or API",
+          "Reduces high-touch onboarding and keeps provider docs current",
+          "Portal scope is per organization and connection model is opinionated"
+        ],
+        [
+          "Model coarse and fine authorization",
+          "Start with org roles, then add resource-level checks",
+          "RBAC plus FGA Authorization API",
+          "Incremental path without full data migration",
+          "FGA roadmap still leaves some enterprise asks pending"
+        ],
+        [
+          "Meet compliance logging needs",
+          "Capture sign-in or admin actions and forward to SIEMs",
+          "Audit Logs + log streams",
+          "Standardized event model across SDKs",
+          "Retention and stream destinations are productized add-ons"
+        ]
+      ],
+      "notes": "Benefit and limitation cells summarize what the docs say is productized today versus where customers still own implementation detail.",
+      "claimRefs": [
+        "CE003",
+        "CE006",
+        "CE008",
+        "CE017",
+        "CE023",
+        "CE026",
+        "CE045",
+        "CE046"
+      ]
+    },
+    {
+      "id": "TE003",
+      "title": "Technology and operating architecture table",
+      "columns": [
+        "Layer",
+        "Role",
+        "Interface",
+        "Dependency",
+        "Risk"
+      ],
+      "rows": [
+        [
+          "Hosted auth surface",
+          "Presents login, password, MFA, social, and SSO flows",
+          "AuthKit hosted UI or app-owned UI over APIs",
+          "WorkOS dashboard config, redirect URIs, session cookies",
+          "Framework setup errors can break callbacks or cookies"
+        ],
+        [
+          "SSO control plane",
+          "Mediates SAML or OIDC IdP authentication",
+          "Authorization URL generation, callback exchange, org-aware redirects",
+          "Enterprise IdPs and redirect configuration",
+          "Tenant validation mistakes or IdP-specific edge cases can surface at runtime"
+        ],
+        [
+          "Directory Sync control plane",
+          "Normalizes directories, groups, and users",
+          "SDKs, webhooks, Events API",
+          "Directory providers and HRIS systems",
+          "Bursty or fragmented SCIM behavior must still be handled downstream"
+        ],
+        [
+          "Authorization layer",
+          "Maps memberships, roles, permissions, and FGA resources",
+          "Dashboard config, JWT claims, Authorization API",
+          "Organization membership graph and app resource model",
+          "Multiple roles enlarge JWTs and FGA still has roadmap gaps"
+        ],
+        [
+          "Operational event layer",
+          "Emits audit events and lifecycle updates",
+          "Audit Logs API, webhooks, log streams",
+          "Customer webhook endpoint and SIEM destinations",
+          "Out-of-order or duplicate delivery requires idempotent consumers"
+        ],
+        [
+          "Deployment variant for on-prem",
+          "Supports connected on-prem installs",
+          "Separate WorkOS environment and API key per customer",
+          "Firewall, HTTPS ingress and egress, optional tunnels",
+          "Air-gapped customers need custom packaging or alternate patterns"
+        ]
+      ],
+      "notes": "Architecture rows reflect the public control-plane model described in docs; they are not a deep infrastructure teardown of WorkOS internals.",
+      "claimRefs": [
+        "CE004",
+        "CE006",
+        "CE017",
+        "CE020",
+        "CE027",
+        "CE028",
+        "CE029",
+        "CE030",
+        "CE038"
+      ]
+    },
+    {
+      "id": "TE004",
+      "title": "Trust, quality, and compliance table",
+      "columns": [
+        "Control",
+        "Status",
+        "Scope",
+        "Evidence",
+        "Gap"
+      ],
+      "rows": [
+        [
+          "SOC 2 Type 2",
+          "Publicly stated",
+          "Company-wide security posture",
+          "Security page",
+          "No public control-matrix or in-scope service breakdown"
+        ],
+        [
+          "GDPR and CCPA",
+          "Publicly stated",
+          "Privacy/compliance",
+          "Security FAQ",
+          "Public page does not detail residency or deletion SLAs"
+        ],
+        [
+          "HIPAA BAA",
+          "Available on enterprise plans",
+          "Healthcare customers",
+          "Security FAQ",
+          "No public implementation guide for PHI boundary design"
+        ],
+        [
+          "Annual pentests and external code audits",
+          "Publicly stated",
+          "Application and codebase review",
+          "Security page",
+          "No public remediation summaries or cadence detail beyond annual testing"
+        ],
+        [
+          "Webhook signature verification",
+          "Documented",
+          "Inbound event authenticity",
+          "Webhook docs",
+          "Customer must still store secrets, validate timestamps, and build idempotency"
+        ],
+        [
+          "On-prem deployment guidance",
+          "Documented for connected on-prem",
+          "Enterprise deployment patterns",
+          "On-prem docs",
+          "Air-gapped architecture remains a public diligence gap"
+        ]
+      ],
+      "notes": "This table captures what WorkOS publicly discloses, not what may exist in its private Trust Center or customer-specific security package.",
+      "claimRefs": [
+        "CE027",
+        "CE028",
+        "CE029",
+        "CE031",
+        "CE032"
+      ]
+    },
+    {
+      "id": "TE005",
+      "title": "Roadmap, release, and development-stage table",
+      "columns": [
+        "Date or stage",
+        "Feature or milestone",
+        "Status",
+        "Implication",
+        "Source"
+      ],
+      "rows": [
+        [
+          "2023-12-29 recap",
+          "AuthKit and User Management introduced",
+          "Released",
+          "Expanded WorkOS from enterprise protocol tooling into full app-auth surface",
+          "2023 Product Updates Recap"
+        ],
+        [
+          "2023-12-29 recap",
+          "Events API and Directory Events view",
+          "Released",
+          "Gives apps an alternative or complement to webhooks for syncing state",
+          "2023 Product Updates Recap"
+        ],
+        [
+          "2023-12-29 recap",
+          "Admin Portal invite emails, streamlined setup links, and sandbox branding",
+          "Released",
+          "Improved self-serve enterprise onboarding",
+          "2023 Product Updates Recap"
+        ],
+        [
+          "2023-12-29 recap",
+          "99.99% availability for SSO, Directory Sync, and Audit Logs",
+          "Company-stated reliability milestone",
+          "Signals operational maturity but not a full public SLA package",
+          "2023 Product Updates Recap"
+        ],
+        [
+          "Current docs",
+          "FGA sub-50ms p95 access checks and strong consistency",
+          "Documented current capability",
+          "Positions FGA as production-oriented rather than purely conceptual",
+          "FGA docs"
+        ],
+        [
+          "Current docs (coming soon)",
+          "FGA user groups, sub-resource IdP mapping, permission overrides, edge caches",
+          "Roadmap / not yet fully released",
+          "Shows authorization surface is still expanding",
+          "FGA docs"
+        ],
+        [
+          "2026-05-11",
+          "WorkOS.net 4.0.1 package update",
+          "Recent SDK release",
+          "Evidence of ongoing SDK maintenance in 2026",
+          "NuGet WorkOS.net"
+        ]
+      ],
+      "notes": "Release history is anchored mainly on WorkOS's own 2023 recap plus current FGA docs and a 2026 NuGet package update; the public 2024–2026 changelog trail is incomplete.",
+      "claimRefs": [
+        "CE021",
+        "CE022",
+        "CE033",
+        "CE034",
+        "CE041"
+      ]
+    }
+  ],
+  "figures": [
+    {
+      "id": "FE001",
+      "title": "Product architecture map",
+      "type": "stack",
+      "layout": "wide",
+      "summary": "WorkOS layers customer-facing auth surfaces over a shared identity control plane, operational events, and enterprise-system integrations while leaving app data ownership with the customer.",
+      "data": {
+        "layers": [
+          {
+            "label": "Customer App Surface",
+            "detail": "Hosted AuthKit UI, customer-owned UI over APIs, and links back into Admin Portal. The application still owns its product DB, resource model, and session-aware business logic."
+          },
+          {
+            "label": "Identity Control Plane",
+            "detail": "User Management/AuthKit, Enterprise SSO, Directory Sync, organizations, roles, permissions, and FGA resource modeling exposed through one vendor surface."
+          },
+          {
+            "label": "Operational Event Layer",
+            "detail": "Events API, webhooks, Audit Logs, and log streaming. This layer keeps customer systems in sync but requires idempotent consumers and signature validation."
+          },
+          {
+            "label": "Developer Access Layer",
+            "detail": "Official SDKs and framework helpers across Node, Next.js/AuthKit, Go, PHP, and .NET plus Postman and API reference material."
+          },
+          {
+            "label": "External Enterprise Systems",
+            "detail": "Identity providers, directory providers, HRIS sources, SIEM destinations, and on-prem customer environments that connect to WorkOS via APIs, callbacks, and setup links."
+          }
+        ]
+      },
+      "claimRefs": [
+        "CE003",
+        "CE006",
+        "CE020",
+        "CE026",
+        "CE029",
+        "CE035"
+      ]
+    },
+    {
+      "id": "FE002",
+      "title": "Customer workflow and operating flow",
+      "type": "flow",
+      "layout": "wide",
+      "summary": "Enterprise onboarding typically starts with an IT contact configuring SSO or Directory Sync in Admin Portal, then flows into end-user auth, membership assignment, and app-side state sync.",
+      "data": {
+        "nodes": [
+          {
+            "id": "org-created",
+            "label": "Create organization",
+            "detail": "The customer app or dashboard creates an organization in WorkOS and stores the returned org ID."
+          },
+          {
+            "id": "portal-link",
+            "label": "IT contact opens Admin Portal",
+            "detail": "A temporary setup link lets an IT contact verify domains and configure SSO or Directory Sync for that organization."
+          },
+          {
+            "id": "idp-directory-config",
+            "label": "Customer configures IdP or directory",
+            "detail": "WorkOS hosts provider-specific setup docs, connection testing, and optional attribute or role mapping."
+          },
+          {
+            "id": "user-auth",
+            "label": "End user authenticates",
+            "detail": "Users sign in via SSO, password, social login, or other AuthKit method and receive org-aware session context."
+          },
+          {
+            "id": "membership-roles",
+            "label": "Membership and roles resolved",
+            "detail": "Organization membership, role assignment, and optional directory-group precedence determine access state."
+          },
+          {
+            "id": "app-sync",
+            "label": "Customer app syncs state",
+            "detail": "The app persists or updates users and audit state through the Events API, webhooks, and app-owned data models."
+          }
+        ],
+        "edges": [
+          {
+            "from": "org-created",
+            "to": "portal-link",
+            "label": "Invite IT contact"
+          },
+          {
+            "from": "portal-link",
+            "to": "idp-directory-config",
+            "label": "Configure connection"
+          },
+          {
+            "from": "idp-directory-config",
+            "to": "user-auth",
+            "label": "Connection becomes active"
+          },
+          {
+            "from": "user-auth",
+            "to": "membership-roles",
+            "label": "Resolve org + auth method"
+          },
+          {
+            "from": "membership-roles",
+            "to": "app-sync",
+            "label": "Persist user and access state"
+          },
+          {
+            "from": "idp-directory-config",
+            "to": "app-sync",
+            "label": "Provisioning updates"
+          }
+        ]
+      },
+      "claimRefs": [
+        "CE005",
+        "CE007",
+        "CE014",
+        "CE017",
+        "CE023",
+        "CE024"
+      ]
+    },
+    {
+      "id": "FE003",
+      "title": "Critical dependency map",
+      "type": "dag",
+      "layout": "wide",
+      "summary": "WorkOS depends on external identity and directory systems, customer-owned webhook consumers, and connected-network deployment assumptions; those dependencies shape implementation risk more than the API surface alone.",
+      "data": {
+        "nodes": [
+          {
+            "id": "customer-app",
+            "label": "Customer application",
+            "detail": "Owns the product DB, resource model, callback endpoints, and business logic."
+          },
+          {
+            "id": "workos-control",
+            "label": "WorkOS control plane",
+            "detail": "SSO, Directory Sync, organizations, role mapping, Audit Logs, and FGA APIs."
+          },
+          {
+            "id": "enterprise-idp",
+            "label": "Identity provider",
+            "detail": "Okta, Entra ID, Google Workspace, and other SAML/OIDC sources that drive enterprise sign-in."
+          },
+          {
+            "id": "directory-hris",
+            "label": "Directory or HRIS",
+            "detail": "SCIM-style provisioning and user lifecycle source systems that can send fragmented or bursty updates."
+          },
+          {
+            "id": "webhook-endpoint",
+            "label": "Customer webhook endpoint",
+            "detail": "Receives signed events, must validate timestamps, and tolerate duplicate or out-of-order delivery."
+          },
+          {
+            "id": "onprem-network",
+            "label": "Connected on-prem network",
+            "detail": "Customer-controlled firewalls and HTTPS ingress or egress rules for callbacks, APIs, and tunnels."
+          }
+        ],
+        "edges": [
+          {
+            "from": "enterprise-idp",
+            "to": "workos-control",
+            "label": "SAML/OIDC auth"
+          },
+          {
+            "from": "directory-hris",
+            "to": "workos-control",
+            "label": "SCIM and directory data"
+          },
+          {
+            "from": "workos-control",
+            "to": "customer-app",
+            "label": "Tokens, APIs, org context"
+          },
+          {
+            "from": "workos-control",
+            "to": "webhook-endpoint",
+            "label": "Signed event delivery"
+          },
+          {
+            "from": "webhook-endpoint",
+            "to": "customer-app",
+            "label": "State reconciliation"
+          },
+          {
+            "from": "onprem-network",
+            "to": "workos-control",
+            "label": "Egress HTTPS traffic"
+          },
+          {
+            "from": "workos-control",
+            "to": "onprem-network",
+            "label": "Callbacks, actions, webhooks"
+          }
+        ]
+      },
+      "claimRefs": [
+        "CE027",
+        "CE028",
+        "CE029",
+        "CE030",
+        "CE043",
+        "CE046"
+      ]
+    },
+    {
+      "id": "FE004",
+      "title": "Product maturity and capability map",
+      "type": "matrix",
+      "layout": "wide",
+      "summary": "WorkOS appears strongest in enterprise identity and onboarding primitives today; authorization is compelling but still the least fully-disclosed surface because several key capabilities remain marked coming soon.",
+      "data": {
+        "columns": [
+          "Coverage breadth",
+          "Self-serve maturity",
+          "Runtime path",
+          "Public caveat"
+        ],
+        "rows": [
+          {
+            "label": "SSO",
+            "values": [
+              "High — SAML, OIDC, many IdPs",
+              "Medium — Admin Portal + docs",
+              "Standalone API or AuthKit",
+              "No public per-IdP reliability metrics"
+            ]
+          },
+          {
+            "label": "Directory Sync",
+            "values": [
+              "High — provisioning, groups, HRIS",
+              "Medium — Admin Portal and integrations",
+              "Webhooks or Events API",
+              "No public throughput or scale benchmarks"
+            ]
+          },
+          {
+            "label": "User Management/AuthKit",
+            "values": [
+              "High — full auth surface",
+              "High — hosted UI plus APIs",
+              "Session + Events API model",
+              "Pricing and some deep limits only partially public"
+            ]
+          },
+          {
+            "label": "MFA",
+            "values": [
+              "Medium — TOTP and SMS",
+              "High inside AuthKit dashboard flow",
+              "API plus hosted flow",
+              "SSO-specific enforcement details are limited publicly"
+            ]
+          },
+          {
+            "label": "Admin Portal",
+            "values": [
+              "High for enterprise setup",
+              "High — core self-serve differentiator",
+              "Dashboard links or Portal API",
+              "One-connection-per-org model is opinionated"
+            ]
+          },
+          {
+            "label": "Audit Logs",
+            "values": [
+              "Medium — API + stream + retention",
+              "Medium — schema tools exist",
+              "API and downstream SIEMs",
+              "Storage architecture and immutability detail not public"
+            ]
+          },
+          {
+            "label": "FGA",
+            "values": [
+              "Medium — resource-scoped model documented",
+              "Medium — current docs and quick starts",
+              "JWT for org-wide + Authorization API for resources",
+              "User groups, sub-resource IdP mapping, and overrides still coming soon"
+            ]
+          }
+        ]
+      },
+      "approximationNotes": "Matrix ratings are analytical summaries of the public docs and ecosystem signals, not WorkOS's own product scoring.",
+      "claimRefs": [
+        "CE001",
+        "CE018",
+        "CE021",
+        "CE022",
+        "CE023",
+        "CE035"
+      ]
+    }
+  ],
+  "callouts": [
+    {
+      "calloutType": "strength",
+      "title": "WorkOS bundles enterprise-readiness primitives without forcing a full data-model rewrite",
+      "body": "The public docs consistently show WorkOS handling protocol and onboarding complexity while leaving the customer app in control of its database, resource model, and business logic. That is a strong fit for B2B SaaS teams that need enterprise features quickly but do not want to rebuild their whole auth stack around a monolithic identity product.",
+      "claimRefs": [
+        "CE003",
+        "CE007",
+        "CE008",
+        "CE020",
+        "CE035"
+      ]
+    },
+    {
+      "calloutType": "strength",
+      "title": "Admin Portal is the clearest product differentiator in the public surface",
+      "body": "The strongest recurring advantage is not just protocol abstraction but the hosted IT-admin onboarding layer around it. Both WorkOS's own product pages and its build-versus-buy narrative emphasize that self-serve setup links, provider-specific docs, and guided configuration can remove weeks of engineer-and-support mediation from enterprise onboarding.",
+      "claimRefs": [
+        "CE023",
+        "CE024",
+        "CE034",
+        "CE045"
+      ]
+    },
+    {
+      "calloutType": "risk",
+      "title": "Operational correctness still sits with the customer integration",
+      "body": "WorkOS simplifies identity plumbing, but it does not eliminate operational work. Customers still need idempotent webhook consumers, secure callback handling, cookie and middleware hygiene, per-org role governance, and deployment-specific firewall planning for connected on-prem installs.",
+      "claimRefs": [
+        "CE016",
+        "CE027",
+        "CE028",
+        "CE029",
+        "CE038",
+        "CE043",
+        "CE044"
+      ]
+    },
+    {
+      "calloutType": "risk",
+      "title": "Authorization and trust depth are ahead of public evidence",
+      "body": "FGA looks strategically important, but key capabilities remain marked coming soon and the public trust surface is still shallow compared with what sophisticated enterprise buyers usually request. Investors should expect follow-up diligence on roadmap commitment, residency or key-management architecture, and real-world production references for air-gapped or large-scale deployments.",
+      "claimRefs": [
+        "CE021",
+        "CE022",
+        "CE030",
+        "CE031",
+        "CE032"
+      ]
+    }
+  ],
+  "localEvidence": {
+    "searchQueries": [
+      {
+        "query": "site:workos.com WorkOS SSO Directory Sync Admin Portal 2026",
+        "engine": "bing",
+        "hits": null,
+        "retainedSourceRefs": [
+          "SE001",
+          "SE002",
+          "SE007",
+          "SE020"
+        ]
+      },
+      {
+        "query": "site:workos.com WorkOS FGA AuthKit webhooks",
+        "engine": "bing",
+        "hits": null,
+        "retainedSourceRefs": [
+          "SE004",
+          "SE017",
+          "SE018"
+        ]
+      },
+      {
+        "query": "site:github.com/workos WorkOS SDK",
+        "engine": "bing",
+        "hits": null,
+        "retainedSourceRefs": [
+          "SE023",
+          "SE024",
+          "SE025",
+          "SE026"
+        ]
+      },
+      {
+        "query": "site:stackoverflow.com WorkOS",
+        "engine": "bing",
+        "hits": null,
+        "retainedSourceRefs": [
+          "SE032",
+          "SE033"
+        ]
+      },
+      {
+        "query": "WorkOS roadmap 2026",
+        "engine": "bing",
+        "hits": 27900,
+        "retainedSourceRefs": [
+          "SE017",
+          "SE022",
+          "SE029"
+        ]
+      },
+      {
+        "query": "WorkOS pricing 2026 user management",
+        "engine": "bing",
+        "hits": 27900,
+        "retainedSourceRefs": [
+          "SE003",
+          "SE006"
+        ]
+      }
+    ],
+    "researchQuestions": [
+      {
+        "id": "QE001",
+        "question": "What modules make up WorkOS's current product suite for enterprise identity and access?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/0",
+          "contentRequirements/1"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE002",
+        "question": "Does WorkOS abstract SAML and OIDC behind one enterprise SSO integration surface?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/2"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE003",
+        "question": "Is WorkOS SSO a middleware layer or the authoritative user database for the app?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/2"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE004",
+        "question": "How do WorkOS SSO callbacks preserve tenant context safely across redirects?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/2"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE005",
+        "question": "How does Directory Sync move provisioning and deprovisioning data into the customer app?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/2"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE006",
+        "question": "Does Directory Sync normalize data across directory and HRIS providers?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/2"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE007",
+        "question": "Which end-user authentication methods ship with User Management and AuthKit?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/0",
+          "contentRequirements/1"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE008",
+        "question": "How does WorkOS let the customer app remain the system of record for users?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/2"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE009",
+        "question": "What MFA factors and policy boundaries are publicly documented today?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/5"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE010",
+        "question": "How are users, organizations, and organization memberships modeled in WorkOS?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/0",
+          "contentRequirements/2"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE011",
+        "question": "What lifecycle states and controls exist for organization memberships?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/2"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE012",
+        "question": "How do roles and permissions map onto organization memberships in the base RBAC model?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/2",
+          "contentRequirements/4"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE013",
+        "question": "Do multiple roles or JWT-based permissions create governance or token-size tradeoffs?",
+        "type": "adverse",
+        "targets": [
+          "contentRequirements/4",
+          "contentRequirements/5"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE014",
+        "question": "What does WorkOS FGA add beyond tenant-wide RBAC?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/2",
+          "contentRequirements/4"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE015",
+        "question": "How are fine-grained authorization checks executed at runtime?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/2"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE016",
+        "question": "Which FGA capabilities are still on the public roadmap in 2026 rather than fully shipped?",
+        "type": "freshness",
+        "targets": [
+          "contentRequirements/3",
+          "contentRequirements/4"
+        ],
+        "status": "partial"
+      },
+      {
+        "id": "QE017",
+        "question": "How does Admin Portal reduce enterprise onboarding and support work?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/0",
+          "contentRequirements/3"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE018",
+        "question": "What scope or connection limits remain in the Admin Portal model?",
+        "type": "adverse",
+        "targets": [
+          "contentRequirements/3"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE019",
+        "question": "How do Audit Logs, log streams, and schemas fit into the operating model?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/2",
+          "contentRequirements/5"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE020",
+        "question": "What delivery semantics make WorkOS webhooks operationally fragile for integrators?",
+        "type": "adverse",
+        "targets": [
+          "contentRequirements/3",
+          "contentRequirements/5"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE021",
+        "question": "What extra integration work appears when customers demand on-prem or air-gapped deployment?",
+        "type": "adverse",
+        "targets": [
+          "contentRequirements/3",
+          "contentRequirements/5"
+        ],
+        "status": "partial"
+      },
+      {
+        "id": "QE022",
+        "question": "What trust, privacy, and compliance controls does WorkOS publicly disclose?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/5"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE023",
+        "question": "What recent product or reliability signals has WorkOS published through 2026?",
+        "type": "freshness",
+        "targets": [
+          "contentRequirements/3"
+        ],
+        "status": "partial"
+      },
+      {
+        "id": "QE024",
+        "question": "How broad is the official SDK and framework ecosystem around WorkOS?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/2",
+          "contentRequirements/3"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE025",
+        "question": "What public developer-community friction points show up in WorkOS integrations?",
+        "type": "adverse",
+        "targets": [
+          "contentRequirements/3",
+          "contentRequirements/5"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE026",
+        "question": "How complex does WorkOS itself argue it is to build comparable SSO and SCIM features in-house?",
+        "type": "comparison",
+        "targets": [
+          "contentRequirements/4"
+        ],
+        "status": "answered"
+      }
+    ],
+    "sources": [
+      {
+        "id": "SE001",
+        "publisher": "WorkOS",
+        "title": "Single Sign-On — WorkOS",
+        "url": "https://workos.com/single-sign-on",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "sso",
+          "saml",
+          "oidc",
+          "enterprise-login"
+        ],
+        "keyQuote": "Save months of development time integrating and debugging SAML and OpenID Connect protocols."
+      },
+      {
+        "id": "SE002",
+        "publisher": "WorkOS",
+        "title": "Directory Sync — WorkOS",
+        "url": "https://workos.com/directory-sync",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "directory-sync",
+          "scim",
+          "provisioning"
+        ],
+        "keyQuote": "Quickly enable SCIM provisioning from all major corporate directory providers with a single integration."
+      },
+      {
+        "id": "SE003",
+        "publisher": "WorkOS",
+        "title": "User Management — WorkOS",
+        "url": "https://workos.com/user-management",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "user-management",
+          "authkit",
+          "pricing",
+          "events-api"
+        ]
+      },
+      {
+        "id": "SE004",
+        "publisher": "WorkOS",
+        "title": "AuthKit by WorkOS",
+        "url": "https://www.authkit.com/",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "authkit",
+          "hosted-ui",
+          "login-ui"
+        ],
+        "keyQuote": "A fully-featured UI component system for building authentication flows into your app."
+      },
+      {
+        "id": "SE005",
+        "publisher": "WorkOS",
+        "title": "Multi-Factor Authentication — WorkOS",
+        "url": "https://workos.com/mfa",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "mfa",
+          "totp",
+          "sms"
+        ]
+      },
+      {
+        "id": "SE006",
+        "publisher": "WorkOS",
+        "title": "Audit Logs — WorkOS",
+        "url": "https://workos.com/audit-logs",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "audit-logs",
+          "log-streams",
+          "schema"
+        ]
+      },
+      {
+        "id": "SE007",
+        "publisher": "WorkOS",
+        "title": "Admin Portal — WorkOS",
+        "url": "https://workos.com/admin-portal",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "admin-portal",
+          "sso-onboarding",
+          "directory-onboarding"
+        ]
+      },
+      {
+        "id": "SE008",
+        "publisher": "WorkOS",
+        "title": "Role-Based Access Control — WorkOS",
+        "url": "https://workos.com/fine-grained-authorization",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "rbac",
+          "authorization"
+        ]
+      },
+      {
+        "id": "SE009",
+        "publisher": "WorkOS",
+        "title": "Security — WorkOS",
+        "url": "https://workos.com/security",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "security",
+          "compliance",
+          "privacy",
+          "trust"
+        ],
+        "keyQuote": "SOC 2 Type 2 certified."
+      },
+      {
+        "id": "SE010",
+        "publisher": "WorkOS",
+        "title": "SDKs – WorkOS Docs",
+        "url": "https://workos.com/docs/sdks",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "sdks",
+          "developer-experience"
+        ]
+      },
+      {
+        "id": "SE011",
+        "publisher": "WorkOS",
+        "title": "Single Sign-On – WorkOS Docs",
+        "url": "https://workos.com/docs/sso",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "sso",
+          "callbacks",
+          "organization-validation"
+        ]
+      },
+      {
+        "id": "SE012",
+        "publisher": "WorkOS",
+        "title": "Directory Sync – WorkOS Docs",
+        "url": "https://workos.com/docs/directory-sync",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "directory-sync",
+          "events-api",
+          "webhooks",
+          "scim"
+        ]
+      },
+      {
+        "id": "SE013",
+        "publisher": "WorkOS",
+        "title": "AuthKit – WorkOS Docs",
+        "url": "https://workos.com/docs/authkit/overview",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "authkit",
+          "authentication",
+          "security"
+        ]
+      },
+      {
+        "id": "SE014",
+        "publisher": "WorkOS",
+        "title": "Multi-Factor Authentication – AuthKit – WorkOS Docs",
+        "url": "https://workos.com/docs/authkit/mfa",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "mfa",
+          "authkit",
+          "authenticator-app"
+        ]
+      },
+      {
+        "id": "SE015",
+        "publisher": "WorkOS",
+        "title": "Users and Organizations – AuthKit – WorkOS Docs",
+        "url": "https://workos.com/docs/authkit/users-organizations",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "organizations",
+          "memberships",
+          "identity-linking",
+          "jit-provisioning"
+        ]
+      },
+      {
+        "id": "SE016",
+        "publisher": "WorkOS",
+        "title": "Roles and Permissions – AuthKit – WorkOS Docs",
+        "url": "https://workos.com/docs/authkit/roles-and-permissions",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "roles",
+          "permissions",
+          "rbac",
+          "jwt",
+          "directory-role-assignment"
+        ]
+      },
+      {
+        "id": "SE017",
+        "publisher": "WorkOS",
+        "title": "Fine-Grained Authorization (FGA) – WorkOS Docs",
+        "url": "https://workos.com/docs/fga",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "fga",
+          "authorization",
+          "resource-hierarchy",
+          "roadmap"
+        ],
+        "keyQuote": "Sub-50ms p95 access checks."
+      },
+      {
+        "id": "SE018",
+        "publisher": "WorkOS",
+        "title": "Sync data with webhooks – WorkOS Docs",
+        "url": "https://workos.com/docs/events/data-syncing/webhooks",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "webhooks",
+          "signatures",
+          "retries",
+          "idempotency"
+        ],
+        "keyQuote": "WorkOS will consider the event delivery a failure and retry up to 6 times, with exponential backoff over 3 days."
+      },
+      {
+        "id": "SE019",
+        "publisher": "WorkOS",
+        "title": "Using WorkOS with On-prem Customers – WorkOS Docs",
+        "url": "https://workos.com/docs/on-prem-deployment",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "on-prem",
+          "air-gapped",
+          "deployment",
+          "firewalls"
+        ],
+        "keyQuote": "Events can also be ingested with the Events API, which is the preferred method for event delivery in an on-prem deployment scenario since those requests will originate from your on-prem application infrastructure."
+      },
+      {
+        "id": "SE020",
+        "publisher": "WorkOS",
+        "title": "Admin Portal – WorkOS Docs",
+        "url": "https://workos.com/docs/admin-portal",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "admin-portal",
+          "setup-links",
+          "organization-scoping"
+        ]
+      },
+      {
+        "id": "SE021",
+        "publisher": "WorkOS",
+        "title": "Build vs buy part I: complexities of building SSO and SCIM in-house — WorkOS",
+        "url": "https://workos.com/blog/build-vs-buy-part-i-complexities-of-building-sso-and-scim-in-house",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "implementation-complexity",
+          "sso",
+          "scim",
+          "build-vs-buy"
+        ],
+        "keyQuote": "Assuming the team will only support Okta ... the estimated time to launch SSO is about 3 months."
+      },
+      {
+        "id": "SE022",
+        "publisher": "WorkOS",
+        "title": "2023 Product Updates Recap — WorkOS",
+        "url": "https://workos.com/blog/2023-product-updates-recap",
+        "date": "2023-12-29",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "releases",
+          "availability",
+          "events-api",
+          "authkit",
+          "admin-portal"
+        ],
+        "keyQuote": "A recap of 40+ releases for WorkOS customers in 2023 including 99.99% availability, Events API, AuthKit, Domain Verification API, and more."
+      },
+      {
+        "id": "SE023",
+        "publisher": "GitHub / WorkOS",
+        "title": "GitHub - workos/workos-node",
+        "url": "https://github.com/workos/workos-node",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "developer-signal",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "node-sdk",
+          "github",
+          "developer-signal"
+        ]
+      },
+      {
+        "id": "SE024",
+        "publisher": "GitHub / WorkOS",
+        "title": "GitHub - workos/authkit-nextjs",
+        "url": "https://github.com/workos/authkit-nextjs",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "developer-signal",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "nextjs",
+          "authkit",
+          "github",
+          "developer-signal"
+        ]
+      },
+      {
+        "id": "SE025",
+        "publisher": "WorkOS",
+        "title": "workos-node README",
+        "url": "https://raw.githubusercontent.com/workos/workos-node/main/README.md",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "developer-signal",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "node-sdk",
+          "pkce",
+          "semver",
+          "developer-signal"
+        ]
+      },
+      {
+        "id": "SE026",
+        "publisher": "WorkOS",
+        "title": "authkit-nextjs README",
+        "url": "https://raw.githubusercontent.com/workos/authkit-nextjs/main/README.md",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "developer-signal",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "nextjs",
+          "cookies",
+          "middleware",
+          "developer-signal"
+        ]
+      },
+      {
+        "id": "SE027",
+        "publisher": "Packagist",
+        "title": "workos/workos-php - Packagist.org",
+        "url": "https://packagist.org/packages/workos/workos-php",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "developer-signal",
+        "reputationTier": "medium",
+        "independence": "independent",
+        "topics": [
+          "php-sdk",
+          "package-registry",
+          "developer-signal"
+        ]
+      },
+      {
+        "id": "SE028",
+        "publisher": "Go Package Discovery",
+        "title": "workos-go module - github.com/workos/workos-go/v4 - Go Packages",
+        "url": "https://pkg.go.dev/github.com/workos/workos-go/v4",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "developer-signal",
+        "reputationTier": "medium",
+        "independence": "independent",
+        "topics": [
+          "go-sdk",
+          "package-registry",
+          "developer-signal"
+        ]
+      },
+      {
+        "id": "SE029",
+        "publisher": "NuGet",
+        "title": "WorkOS.net 4.0.1",
+        "url": "https://www.nuget.org/packages/WorkOS.net",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "developer-signal",
+        "reputationTier": "medium",
+        "independence": "independent",
+        "topics": [
+          "dotnet-sdk",
+          "nuget",
+          "developer-signal"
+        ]
+      },
+      {
+        "id": "SE030",
+        "publisher": "Postman / WorkOS",
+        "title": "WorkOS Public Postman collection",
+        "url": "https://www.postman.com/workos/workspace/workos-public/collection/25188762-79ce1172-4741-4f1d-a486-64380f9a599f?ctx=documentation",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "developer-signal",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "postman",
+          "api-collection",
+          "developer-signal"
+        ]
+      },
+      {
+        "id": "SE031",
+        "publisher": "Hacker News",
+        "title": "AuthKit: Open-Source Auth UI by WorkOS",
+        "url": "https://news.ycombinator.com/item?id=38447228",
+        "date": "2023-11-28",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "other",
+        "reputationTier": "medium",
+        "independence": "independent",
+        "topics": [
+          "community-signal",
+          "launch",
+          "authkit"
+        ],
+        "keyQuote": "Hi HN - I'm the founder of WorkOS. Happy to answer questions about AuthKit and User Management."
+      },
+      {
+        "id": "SE032",
+        "publisher": "Stack Overflow",
+        "title": "Why do I get \"The endpoint only accepts POST requests. Received a GET request\" error when authenticating with SSO on iOS App but not on Safari",
+        "url": "https://stackoverflow.com/questions/79133392/why-do-i-get-the-endpoint-only-accepts-post-requests-received-a-get-request-e",
+        "date": "2024-10-28",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "adverse",
+        "sourceType": "other",
+        "reputationTier": "medium",
+        "independence": "independent",
+        "topics": [
+          "developer-friction",
+          "ios",
+          "sso",
+          "pwa"
+        ],
+        "keyQuote": "We are using WorkOS to get the URL to login.microsoft.online which is where the user finishes up their auth."
+      },
+      {
+        "id": "SE033",
+        "publisher": "Stack Overflow",
+        "title": "Error: The role is invalid. WorkOS not working",
+        "url": "https://stackoverflow.com/questions/78690335/error-the-role-is-invalid-workos-not-working",
+        "date": "2024-07-01",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "adverse",
+        "sourceType": "other",
+        "reputationTier": "medium",
+        "independence": "independent",
+        "topics": [
+          "developer-friction",
+          "roles",
+          "organization-memberships"
+        ],
+        "keyQuote": "I think the problem might be with this role is not defined or not included in workos system."
+      },
+      {
+        "id": "SE034",
+        "publisher": "RubyGems.org",
+        "title": "workos | RubyGems.org",
+        "url": "https://rubygems.org/gems/workos",
+        "accessDate": "2026-05-24",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "developer-signal",
+        "reputationTier": "medium",
+        "independence": "independent",
+        "topics": [
+          "ruby-sdk",
+          "package-registry",
+          "developer-signal"
+        ]
+      }
+    ],
+    "claims": [
+      {
+        "id": "CE001",
+        "statement": "WorkOS publicly sells an enterprise identity suite that includes SSO, Directory Sync, User Management/AuthKit, MFA, Audit Logs, Admin Portal, and fine-grained authorization.",
+        "type": "inferred",
+        "topic": "product-surface",
+        "sourceRefs": [
+          "SE001",
+          "SE002",
+          "SE003",
+          "SE005",
+          "SE006",
+          "SE007",
+          "SE017"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE001"
+        ]
+      },
+      {
+        "id": "CE002",
+        "statement": "WorkOS Enterprise SSO supports both SAML and OIDC through a single integration surface and advertises 20+ supported identity providers.",
+        "type": "company-claimed",
+        "topic": "sso",
+        "sourceRefs": [
+          "SE001",
+          "SE011"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE002"
+        ]
+      },
+      {
+        "id": "CE003",
+        "statement": "WorkOS positions its SSO product as authentication middleware that lets customers keep their own database and user records rather than outsourcing the app's user store to WorkOS.",
+        "type": "company-claimed",
+        "topic": "sso-architecture",
+        "sourceRefs": [
+          "SE001",
+          "SE011"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE003"
+        ]
+      },
+      {
+        "id": "CE004",
+        "statement": "WorkOS SSO docs recommend authenticating against an organization parameter and explicitly warn teams to validate the returned organization ID rather than relying on email-domain matching at callback time.",
+        "type": "company-claimed",
+        "topic": "sso-tenant-validation",
+        "sourceRefs": [
+          "SE011"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE004"
+        ]
+      },
+      {
+        "id": "CE005",
+        "statement": "Directory Sync provides SCIM-style provisioning and deprovisioning behind a single integration and advertises real-time updates through webhook events.",
+        "type": "company-claimed",
+        "topic": "directory-sync",
+        "sourceRefs": [
+          "SE002",
+          "SE012"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE005"
+        ]
+      },
+      {
+        "id": "CE006",
+        "statement": "WorkOS says Directory Sync normalizes data from directories and HRIS sources and can deliver changes through webhooks or the Events API.",
+        "type": "company-claimed",
+        "topic": "directory-sync",
+        "sourceRefs": [
+          "SE002",
+          "SE012"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE005",
+          "QE006"
+        ]
+      },
+      {
+        "id": "CE007",
+        "statement": "User Management and AuthKit support email/password, enterprise SSO, social login, and Magic Auth, and can be consumed through a hosted UI or public APIs.",
+        "type": "company-claimed",
+        "topic": "authkit",
+        "sourceRefs": [
+          "SE003",
+          "SE004",
+          "SE013"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE007"
+        ]
+      },
+      {
+        "id": "CE008",
+        "statement": "WorkOS tells customers to keep user data in their own database and use the Events API to receive realtime updates when WorkOS-side user state changes.",
+        "type": "company-claimed",
+        "topic": "events-api",
+        "sourceRefs": [
+          "SE003"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE008"
+        ]
+      },
+      {
+        "id": "CE009",
+        "statement": "AuthKit's public security positioning includes default email verification, automatic identity linking, bot detection, and MFA availability.",
+        "type": "company-claimed",
+        "topic": "authkit-security",
+        "sourceRefs": [
+          "SE004",
+          "SE013"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE007"
+        ]
+      },
+      {
+        "id": "CE010",
+        "statement": "The MFA product page says WorkOS supports both TOTP and SMS factors behind one API interface.",
+        "type": "company-claimed",
+        "topic": "mfa",
+        "sourceRefs": [
+          "SE005",
+          "SE014"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE009"
+        ]
+      },
+      {
+        "id": "CE011",
+        "statement": "AuthKit MFA docs say MFA can be enabled in the dashboard, requires authenticator-app setup for new and existing users before sign-in, and does not apply to SSO users.",
+        "type": "company-claimed",
+        "topic": "mfa-policy",
+        "sourceRefs": [
+          "SE014"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE009"
+        ]
+      },
+      {
+        "id": "CE012",
+        "statement": "Organizations are a first-class WorkOS object with no public limit on count and can model both many-to-many workspaces and single-workspace tenancy patterns.",
+        "type": "company-claimed",
+        "topic": "organizations",
+        "sourceRefs": [
+          "SE015"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE010"
+        ]
+      },
+      {
+        "id": "CE013",
+        "statement": "WorkOS treats email address as the unique user identifier and automatically handles identity linking across authentication methods on the same email.",
+        "type": "company-claimed",
+        "topic": "identity-linking",
+        "sourceRefs": [
+          "SE013",
+          "SE015"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE010"
+        ]
+      },
+      {
+        "id": "CE014",
+        "statement": "Organization memberships have pending, active, and inactive states; deactivation revokes active sessions and reactivation retains the prior role before it can be updated.",
+        "type": "company-claimed",
+        "topic": "memberships",
+        "sourceRefs": [
+          "SE015"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE011"
+        ]
+      },
+      {
+        "id": "CE015",
+        "statement": "In AuthKit RBAC, roles and permissions are assigned through organization memberships and each environment is seeded with a default member role.",
+        "type": "company-claimed",
+        "topic": "rbac",
+        "sourceRefs": [
+          "SE016"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE012"
+        ]
+      },
+      {
+        "id": "CE016",
+        "statement": "AuthKit's multiple-role mode gives a membership the union of permissions across assigned roles, but WorkOS warns permission slugs live in JWT claims and that larger role sets mean larger tokens and more governance overhead.",
+        "type": "company-claimed",
+        "topic": "rbac-jwt-tradeoff",
+        "sourceRefs": [
+          "SE016"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE012",
+          "QE013"
+        ]
+      },
+      {
+        "id": "CE017",
+        "statement": "When Directory Sync is present, WorkOS recommends directory-group role assignment over SSO role assignment and documents that explicit directory-group mappings override SSO or manual role assignment.",
+        "type": "company-claimed",
+        "topic": "role-precedence",
+        "sourceRefs": [
+          "SE016"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE012"
+        ]
+      },
+      {
+        "id": "CE018",
+        "statement": "WorkOS FGA extends tenant-wide RBAC into hierarchical, resource-scoped authorization for resources such as organizations, workspaces, projects, and apps.",
+        "type": "company-claimed",
+        "topic": "fga",
+        "sourceRefs": [
+          "SE017"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE014"
+        ]
+      },
+      {
+        "id": "CE019",
+        "statement": "The FGA docs say teams can adopt FGA incrementally alongside existing RBAC without data migration or a separate schema DSL.",
+        "type": "company-claimed",
+        "topic": "fga-adoption",
+        "sourceRefs": [
+          "SE017"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE014"
+        ]
+      },
+      {
+        "id": "CE020",
+        "statement": "WorkOS describes FGA runtime evaluation as a two-layer model in which AuthKit embeds organization-scoped roles into access tokens while the Authorization API evaluates resource-scoped permissions against the full hierarchy.",
+        "type": "company-claimed",
+        "topic": "fga-runtime",
+        "sourceRefs": [
+          "SE017"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE015"
+        ]
+      },
+      {
+        "id": "CE021",
+        "statement": "FGA docs advertise sub-50ms p95 access checks, strong consistency, and warmed caches, while also saying edge caches are still coming soon.",
+        "type": "company-claimed",
+        "topic": "fga-performance",
+        "sourceRefs": [
+          "SE017"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE015",
+          "QE023"
+        ]
+      },
+      {
+        "id": "CE022",
+        "statement": "WorkOS still marks FGA user groups and teams, identity-provider role assignment for sub-resources, permission assignment overrides, and further performance enhancements as coming soon.",
+        "type": "company-claimed",
+        "topic": "fga-roadmap",
+        "sourceRefs": [
+          "SE017"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE016"
+        ]
+      },
+      {
+        "id": "CE023",
+        "statement": "Admin Portal gives IT contacts a self-serve UI for domain verification, SSO, Directory Sync, and related enterprise setup flows, including test sign-in and connection-status views.",
+        "type": "company-claimed",
+        "topic": "admin-portal",
+        "sourceRefs": [
+          "SE007",
+          "SE020"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE017"
+        ]
+      },
+      {
+        "id": "CE024",
+        "statement": "API-generated Admin Portal links expire five minutes after creation, whereas dashboard-generated setup links remain active for 30 days or until configured.",
+        "type": "company-claimed",
+        "topic": "admin-portal-links",
+        "sourceRefs": [
+          "SE007",
+          "SE020"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE017"
+        ]
+      },
+      {
+        "id": "CE025",
+        "statement": "Admin Portal sessions are scoped to a specific organization and WorkOS says organizations may have only one connection, which makes the portal workflow opinionated around a single active setup context.",
+        "type": "company-claimed",
+        "topic": "admin-portal-limit",
+        "sourceRefs": [
+          "SE020"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE018"
+        ]
+      },
+      {
+        "id": "CE026",
+        "statement": "Audit Logs support organization-scoped events with actors, targets, metadata, and JSON schema validation, while log streaming and retention are separately priced product elements.",
+        "type": "company-claimed",
+        "topic": "audit-logs",
+        "sourceRefs": [
+          "SE006"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE019"
+        ]
+      },
+      {
+        "id": "CE027",
+        "statement": "Webhook consumers must accept HTTPS POSTs, read the WorkOS-Signature header, and verify an HMAC SHA256 signature plus timestamp tolerance using the shared webhook secret.",
+        "type": "company-claimed",
+        "topic": "webhooks-security",
+        "sourceRefs": [
+          "SE018"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE020"
+        ]
+      },
+      {
+        "id": "CE028",
+        "statement": "If a webhook endpoint fails, WorkOS retries production events up to six times with exponential backoff over three days, does not guarantee in-order delivery, and recommends idempotent processing that compares timestamps to avoid stale overwrites.",
+        "type": "company-claimed",
+        "topic": "webhooks-reliability",
+        "sourceRefs": [
+          "SE018"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE020"
+        ]
+      },
+      {
+        "id": "CE029",
+        "statement": "Connected on-prem deployments require a distinct WorkOS environment and API key per customer plus explicit firewall planning for callbacks, actions, webhooks, and outbound HTTPS traffic.",
+        "type": "company-claimed",
+        "topic": "on-prem-deployment",
+        "sourceRefs": [
+          "SE019"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE021"
+        ]
+      },
+      {
+        "id": "CE030",
+        "statement": "WorkOS recommends the Events API rather than inbound webhooks for many on-prem scenarios because requests can originate from customer infrastructure, but truly air-gapped environments require a specialized package or alternate approach.",
+        "type": "company-claimed",
+        "topic": "air-gapped-deployment",
+        "sourceRefs": [
+          "SE019"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE021"
+        ]
+      },
+      {
+        "id": "CE031",
+        "statement": "WorkOS's security page publicly states SOC 2 Type 2 certification, GDPR and CCPA compliance, annual third-party penetration tests, external code audits, and HIPAA BAAs for enterprise plans.",
+        "type": "company-claimed",
+        "topic": "security-posture",
+        "sourceRefs": [
+          "SE009"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE022"
+        ]
+      },
+      {
+        "id": "CE032",
+        "statement": "WorkOS says the data it stores is limited to what identity providers send and directs customers to a public subprocessor list and Trust Center for more compliance detail.",
+        "type": "company-claimed",
+        "topic": "privacy-data-scope",
+        "sourceRefs": [
+          "SE009"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE022"
+        ]
+      },
+      {
+        "id": "CE033",
+        "statement": "WorkOS's 2023 product recap claimed more than 40 releases that year and highlighted 99.99% availability for SSO, Directory Sync, and Audit Logs.",
+        "type": "company-claimed",
+        "topic": "release-history",
+        "sourceRefs": [
+          "SE022"
+        ],
+        "confidence": "medium",
+        "freshness": "historical",
+        "answersQuestionRefs": [
+          "QE023"
+        ]
+      },
+      {
+        "id": "CE034",
+        "statement": "That 2023 recap also highlighted Events API, User Management/AuthKit, GitHub OAuth support, Admin Portal invite and branding improvements, Domain Verification API, and a Postman public workspace.",
+        "type": "company-claimed",
+        "topic": "release-history",
+        "sourceRefs": [
+          "SE022"
+        ],
+        "confidence": "medium",
+        "freshness": "historical",
+        "answersQuestionRefs": [
+          "QE017",
+          "QE023"
+        ]
+      },
+      {
+        "id": "CE035",
+        "statement": "WorkOS publicly exposes both backend SDKs and AuthKit-focused SDKs, and the public ecosystem clearly includes Node, Next.js, Go, PHP, and .NET surfaces.",
+        "type": "inferred",
+        "topic": "sdk-coverage",
+        "sourceRefs": [
+          "SE010",
+          "SE023",
+          "SE024",
+          "SE027",
+          "SE028",
+          "SE029"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE024"
+        ]
+      },
+      {
+        "id": "CE036",
+        "statement": "The official Node SDK requires Node 22.11 or higher and supports public-client PKCE flows that exchange authorization codes using a stored code verifier.",
+        "type": "company-claimed",
+        "topic": "node-sdk",
+        "sourceRefs": [
+          "SE023",
+          "SE025"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE024"
+        ]
+      },
+      {
+        "id": "CE037",
+        "statement": "The AuthKit Next.js library is intended for Next.js App Router apps and requires encrypted session-cookie configuration, including a WORKOS_COOKIE_PASSWORD of at least 32 characters.",
+        "type": "company-claimed",
+        "topic": "nextjs-sdk",
+        "sourceRefs": [
+          "SE024",
+          "SE026"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE024"
+        ]
+      },
+      {
+        "id": "CE038",
+        "statement": "The Next.js helper relies on proxy or middleware for session management and warns that SameSite none reduces CSRF protection while overly broad matchers can break static assets.",
+        "type": "company-claimed",
+        "topic": "nextjs-sdk",
+        "sourceRefs": [
+          "SE026"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE024"
+        ]
+      },
+      {
+        "id": "CE039",
+        "statement": "Packagist reports the official WorkOS PHP SDK with 2,725,740 installs, 7 dependents, 41 GitHub stars, and 3 open issues.",
+        "type": "third-party-reported",
+        "topic": "php-sdk-signal",
+        "sourceRefs": [
+          "SE027"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE024"
+        ]
+      },
+      {
+        "id": "CE040",
+        "statement": "The Go package docs enumerate focused packages for SSO, Directory Sync, User Management, Audit Logs, Organizations, and Webhooks.",
+        "type": "third-party-reported",
+        "topic": "go-sdk-signal",
+        "sourceRefs": [
+          "SE028"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE024"
+        ]
+      },
+      {
+        "id": "CE041",
+        "statement": "NuGet lists WorkOS.net as the official .NET client, shows version 4.0.1 last updated on 2026-05-11, and computes target support across net8.0, net9.0, and net10.0 platforms.",
+        "type": "third-party-reported",
+        "topic": "dotnet-sdk-signal",
+        "sourceRefs": [
+          "SE029"
+        ],
+        "confidence": "medium",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QE023",
+          "QE024"
+        ]
+      },
+      {
+        "id": "CE042",
+        "statement": "A founder-led Show HN thread for AuthKit and User Management appeared on 2023-11-28, indicating at least some launch-time community attention around the WorkOS auth surface.",
+        "type": "third-party-reported",
+        "topic": "community-signal",
+        "sourceRefs": [
+          "SE031"
+        ],
+        "confidence": "low",
+        "freshness": "historical",
+        "answersQuestionRefs": [
+          "QE025"
+        ]
+      },
+      {
+        "id": "CE043",
+        "statement": "A 2024 Stack Overflow post describes an iOS or PWA SSO integration where Microsoft authentication produced a GET-versus-POST callback problem when WorkOS generated the login URL, showing public evidence of redirect-edge friction.",
+        "type": "third-party-reported",
+        "topic": "developer-friction",
+        "sourceRefs": [
+          "SE032"
+        ],
+        "confidence": "low",
+        "freshness": "historical",
+        "answersQuestionRefs": [
+          "QE025"
+        ]
+      },
+      {
+        "id": "CE044",
+        "statement": "Another 2024 Stack Overflow thread shows that creating an organization membership with roleSlug admin fails if the role has not already been created in WorkOS.",
+        "type": "third-party-reported",
+        "topic": "developer-friction",
+        "sourceRefs": [
+          "SE033"
+        ],
+        "confidence": "low",
+        "freshness": "historical",
+        "answersQuestionRefs": [
+          "QE025"
+        ]
+      },
+      {
+        "id": "CE045",
+        "statement": "In WorkOS's own build-versus-buy framing, a first SSO implementation for only one IdP can take about three months and each enterprise onboarding can consume roughly 10 to 20 hours of engineering and support time.",
+        "type": "company-claimed",
+        "topic": "implementation-complexity",
+        "sourceRefs": [
+          "SE021"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE017",
+          "QE026"
+        ]
+      },
+      {
+        "id": "CE046",
+        "statement": "The same WorkOS article argues that SCIM implementations are harder than SSO because providers fragment data and behavior, duplicate requests occur, and large initial syncs can flood systems because most IdPs do not allow rate limits.",
+        "type": "company-claimed",
+        "topic": "implementation-complexity",
+        "sourceRefs": [
+          "SE021"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE020",
+          "QE026"
+        ]
+      }
+    ],
+    "evidenceGaps": [
+      {
+        "type": "missing-source",
+        "severity": "material",
+        "topic": "fga-roadmap",
+        "missingEvidence": "Public GA dates, pricing detail, customer references, and changelog entries for FGA features still labeled coming soon.",
+        "whyItMatters": "Authorization can be strategically important to WorkOS expansion, but investors need to know whether roadmap items are near-term commitments or long-dated aspirations.",
+        "diligencePath": "Request dated product roadmap commitments, launch criteria, pricing, and at least two production customer references for FGA from management.",
+        "relatedQuestionRefs": [
+          "QE016"
+        ],
+        "relatedTableRefs": [
+          "TE005"
+        ]
+      },
+      {
+        "type": "private-evidence-only",
+        "severity": "material",
+        "topic": "air-gapped-deployment",
+        "missingEvidence": "A public reference architecture or case study for air-gapped or fully disconnected customer deployments.",
+        "whyItMatters": "On-prem guidance exists, but the hardest enterprise deployments often come from disconnected environments where identity and webhook assumptions break down.",
+        "diligencePath": "Ask WorkOS for deployment diagrams, security reviews, and live customer references covering connected on-prem versus air-gapped installations.",
+        "relatedQuestionRefs": [
+          "QE021"
+        ],
+        "relatedTableRefs": [
+          "TE003"
+        ]
+      },
+      {
+        "type": "stale",
+        "severity": "minor",
+        "topic": "release-freshness",
+        "missingEvidence": "A complete dated public product-change log for 2024-2026 covering AuthKit, Admin Portal, and FGA rather than isolated recap or package pages.",
+        "whyItMatters": "Without a fuller chronology, it is hard to judge release velocity, rollback risk, or whether important capabilities are already GA versus merely documented.",
+        "diligencePath": "Review WorkOS changelog exports, roadmap decks, and release metrics with product leadership, then reconcile them against customer adoption by module.",
+        "relatedQuestionRefs": [
+          "QE023"
+        ],
+        "relatedTableRefs": [
+          "TE005"
+        ]
+      },
+      {
+        "type": "missing-source",
+        "severity": "minor",
+        "topic": "security-depth",
+        "missingEvidence": "Public trust-center detail on encryption architecture, key-management ownership, data residency, incident-response timing, and recovery objectives.",
+        "whyItMatters": "Checklist compliance is helpful, but sophisticated enterprise buyers often ask deeper architecture questions before approving identity vendors.",
+        "diligencePath": "Request the full security packet, architecture diagrams, trust-center exports, and any residency or disaster-recovery documentation under NDA."
+      }
+    ]
+  }
+}

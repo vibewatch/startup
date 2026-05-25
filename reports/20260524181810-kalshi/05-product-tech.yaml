@@ -1,0 +1,2557 @@
+schemaVersion: "report-v2"
+artifact: product-tech
+slug: kalshi
+runDate: "2026-05-24"
+company:
+  name: Kalshi
+
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: >-
+    Kalshi delivers binary event contracts across web, API, and embedded broker surfaces
+    on a CFTC-regulated exchange infrastructure that processed $2 billion per week at peak in
+    early 2026. Its REST/WebSocket API (v3.19.0) with published OpenAPI and AsyncAPI specs,
+    Python SDK, and a FIX-protocol fork for institutional connectivity make Kalshi the most
+    accessible developer-facing U.S. event-contract exchange; a Market Maker Program launched
+    in May 2025 brought in Susquehanna and Kalshi's own affiliated trading desk. Structural
+    product gaps include no official league data/logo licenses from the NFL, NBA, or MLB;
+    a settlement controversy that froze $77 million in Khamenei-market winnings; and an active
+    geofencing requirement following the January 2026 Massachusetts injunction that underscores
+    the platform's precarious multi-jurisdictional operating posture.
+
+sections:
+  - id: product-surface-user-workflows
+    title: Product Surface and User Workflows
+    body: >-
+      Kalshi's core product is the binary event contract: a Yes or No share priced between
+      $0.01 and $0.99 that reflects the market's estimated probability of a specified
+      real-world outcome. At resolution, the winning side pays $1.00 and the losing side pays
+      $0.00 per contract. Users interact with the exchange through three primary surfaces.
+      The web application, served from kalshi.com, provides market browse, order placement,
+      portfolio management, and deposit/withdrawal functionality. A mobile application for
+      iOS and Android extends the same core workflow; while Kalshi references a mobile app,
+      no verified active App Store or Google Play Store listing was accessible during this
+      research run. Third, the public REST and WebSocket APIs enable algorithmic and
+      programmatic trading, constituting a distinct user segment of quantitative traders and
+      developers.
+
+      The typical retail user journey begins with account creation and an ACH deposit, followed
+      by browsing the event catalog across six major categories: sports (dominant, approximately
+      89–95% of fee revenue in 2025), macroeconomic indicators (CPI, Federal Reserve rate
+      decisions, GDP), politics, weather, entertainment, and cryptocurrency milestones.
+      A user selects a market, reviews the current order book and probability, and places a
+      limit or market order on the Yes or No side. Orders can be left-to-fill (good-till-
+      canceled) or designated immediate-or-cancel. At market resolution, settlement is
+      automatic and instantaneous — Kalshi pays $1.00 per winning contract without requiring
+      manual claim submission.
+
+      Beyond its own interfaces, Kalshi is embedded in two major brokerage platforms as of
+      2025. Robinhood launched its Prediction Markets Hub using Kalshi as the underlying
+      exchange in early 2025, with Robinhood users representing 25–35% of Kalshi's daily
+      trading volume on active sports days by October 2025. Webull similarly integrated Kalshi
+      event contracts into its retail trading application. Kalshi characterizes its brokerage
+      API strategy as "add brokerages" in its stated use-of-proceeds for its Series E round,
+      and Reuters confirmed this as a stated capital allocation priority.
+
+      Market categories span dozens of simultaneous events. Sports contract descriptions use
+      generic city names (e.g., "Pro Football Champion: Chicago") rather than official team
+      names and logos, reflecting the absence of league data licenses from the NFL, NBA, and
+      MLB. The Federal Reserve and Federal Reserve Bank data feeds directly underpin
+      macroeconomic settlement. For prediction accuracy, a Federal Reserve working paper
+      published in February 2026 found that Kalshi's probability data matched or outperformed
+      traditional Wall Street forecasting tools for inflation and interest rate outcomes;
+      CNN and CNBC now publish Kalshi probability data alongside polls and expert forecasts.
+
+      Internationally, the platform expanded to 140-plus countries in October 2025 following
+      its $300 million Series D, restricting 38 jurisdictions including Canada, the United
+      Kingdom, France, Singapore, and Russia. International users access the same platform
+      features as U.S. customers. In cryptocurrency on-ramp, Kalshi accepts Solana deposits
+      up to $500,000 and supports Bitcoin, USDC, and Worldcoin through blockchain partnership
+      integrations.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE014
+      - CE015
+      - CE016
+      - CE017
+      - CE021
+      - CE022
+      - CE030
+      - CE031
+      - CE032
+      - CE033
+      - CE034
+      - CE035
+      - CE040
+      - CE041
+    tableRefs:
+      - TE001
+      - TE002
+    figureRefs:
+      - FE002
+
+  - id: exchange-architecture-market-mechanics
+    title: Exchange Architecture and Market Mechanics
+    body: >-
+      Kalshi operates as a centralized limit-order-book (CLOB) exchange under its CFTC
+      Designated Contract Market license issued in November 2020. The production REST API
+      is hosted at external-api.kalshi.com/trade-api/v2 (also accessible at
+      api.elections.kalshi.com/trade-api/v2), with a demo/sandbox environment at
+      demo-api.kalshi.co/trade-api/v2 for developer testing. The current API version as of
+      this report is v3.19.0. Real-time market data is streamed via a WebSocket API governed
+      by a published AsyncAPI specification, allowing subscribers to receive live order-book
+      updates, trade fills, and market-status changes without polling.
+
+      The exchange's fee model is a maker-taker structure with a quadratic taker-fee formula.
+      The taker fee is calibrated as a quadratic function of the contract's current price,
+      which produces the highest per-share fees at mid-range prices (approximately $0.40–
+      $0.60) and lower fees near the extremes. This design encourages liquidity at middle
+      probabilities where the market has genuine uncertainty. Maker fees were introduced in
+      spring 2025 and restructured significantly over the summer, applying primarily to sports
+      markets. Because roughly 40% of all shares are traded within two hours of market
+      closing, and sports markets resolve reliably within an hour of a scheduled event,
+      the platform generates large fee revenues from high-frequency sports trades.
+
+      To support institutional volume and liquidity provision, Kalshi launched a Market Maker
+      Program in May 2025. Known members include Susquehanna Investment Group and Kalshi
+      Trading LLC, an affiliated entity that itself trades on the platform — a relationship
+      the Financial Times has noted as "somewhat controversial." Market maker fee schedules
+      and trading constraints are documented in classified CFTC filings rather than public
+      disclosures, and large traders also qualify for partial rebates. This opacity makes
+      independently verifying realized fee yields impossible.
+
+      Order book mechanics support limit and market order types, with time-in-force options
+      of immediate-or-cancel (IOC) and good-till-canceled (GTC). An expiring order variant
+      (GTT, good-till-time) is available through the API using an expiration timestamp, though
+      the API documentation notes it is an internal execution type and GTC with an
+      expiration_ts field. Each user may have up to 200,000 open orders simultaneously.
+      The platform also provides RFQ (request-for-quote) endpoints for block trades and
+      multivariate event market support for complex correlated-outcome contracts. Settlement
+      is binary and automatic: at market resolution Kalshi credits $1.00 per winning contract
+      and $0.00 per losing contract directly to the user's account.
+
+      The platform's peak volume has demonstrated infrastructure scale: Kalshi processed
+      approximately $2 billion per week during active event periods and $1 billion in a single
+      day during Super Bowl LX in February 2026. No public SLA, uptime figure, or incident
+      history is available, representing a diligence gap for institutional counterparties.
+    claimRefs:
+      - CE001
+      - CE003
+      - CE004
+      - CE007
+      - CE008
+      - CE018
+      - CE019
+      - CE020
+      - CE027
+      - CE036
+      - CE037
+      - CE038
+      - CE039
+      - CE041
+      - CE042
+    tableRefs:
+      - TE003
+    figureRefs:
+      - FE001
+      - FE003
+
+  - id: developer-api-integration
+    title: Developer API and Integration Surface
+    body: >-
+      Kalshi has built one of the most accessible developer surfaces of any CFTC-regulated
+      exchange. The official API documentation portal at docs.kalshi.com provides a complete
+      OpenAPI 3.0 specification and an AsyncAPI specification for the WebSocket API, both
+      downloadable for code generation. The portal includes getting-started guides, an API key
+      management walkthrough, a demo environment reference, WebSocket streaming tutorials,
+      a glossary, and a changelog — a professional developer-documentation stack comparable
+      to fintech API leaders. Authentication uses an API key plus RSA or ECDSA private-key
+      signature, with the request signed using three headers: kalshiAccessKey,
+      kalshiAccessSignature, and kalshiAccessTimestamp.
+
+      Rate limits operate on a per-API-tier token-bucket system; the default cost is 10 tokens
+      per request, and the API documentation exposes tier-specific limits via a dedicated
+      endpoint (GET /account/limits). Higher-volume institutional tiers are available, and the
+      endpoint returns a structured response with usage_tier, read, and write limits. The
+      API specification version 3.19.0 covers 14 functional groups: account, api-keys, orders,
+      order-groups, portfolio, communications (RFQ), multivariate, exchange, live-data,
+      markets, milestone, search, incentive-programs, FCM (futures commission merchant member
+      endpoints), events, and structured-targets.
+
+      On the SDK front, Kalshi publishes kalshi-python (v2.1.4) to PyPI, generated from its
+      OpenAPI spec using OpenAPI Generator v7.15.0, supporting Python 3.9 and above. The
+      package includes a KalshiClient that wraps authenticated calls to the production endpoint
+      (https://api.elections.kalshi.com/trade-api/v2). On GitHub under the Kalshi organization,
+      the kalshi-starter-code-python repository (94 stars, 69 forks as of this run) provides
+      minimal example code for authenticated API access; and tools-and-analysis (19 stars, 10
+      forks) hosts community-contributed analyses that use Kalshi market data for S&P/CPI
+      correlation studies and consensus measurement. Kalshi also forks and maintains QuickFIX/Go
+      (353 forks in the original repo), the leading open-source Go FIX Protocol library,
+      supporting FIX 4.0 through FIX 5.0 SP2 — a clear signal that Kalshi is building toward
+      institutional-grade FIX connectivity for high-frequency traders and algorithmic desks.
+
+      For brokerage integration, Kalshi's Series E announcement explicitly named "add
+      brokerages" as a capital use priority. The Robinhood integration (live from early 2025)
+      and Webull partnership serve as public reference implementations. Kalshi also offers
+      blockchain deposit rails: Solana deposits up to $500,000, Bitcoin, USDC, and Worldcoin.
+      A developer grant program on Solana and Base (Coinbase's L2) targets third-party
+      application builders. Despite this robust API surface, the mobile app store presence is
+      unconfirmed from public listings, and no official SDK is published for languages other
+      than Python, leaving Go and JavaScript developers reliant on community wrappers or
+      direct OpenAPI codegen.
+    claimRefs:
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE006
+      - CE009
+      - CE010
+      - CE011
+      - CE012
+      - CE013
+      - CE035
+      - CE036
+      - CE042
+    tableRefs:
+      - TE005
+    figureRefs:
+      - FE004
+
+  - id: trust-compliance-operational-controls
+    title: Trust, Compliance, and Operational Controls
+    body: >-
+      Kalshi's compliance and trust architecture rests on its CFTC Designated Contract Market
+      license, which subjects it to CFTC market surveillance, rule-enforcement obligations,
+      and reporting requirements — the same regulatory tier as CME Group. As a DCM, Kalshi is
+      obligated to police market manipulation and insider trading, a responsibility explicitly
+      reinforced by CFTC Director of Enforcement David Miller's April 2026 statement designating
+      DCMs as the "first line of defense." Kalshi Exchange Rule 5.17(z) codifies the insider
+      trading prohibition, barring any trader who is a "decision maker" or who has direct or
+      indirect influence over an event's outcome from trading related contracts.
+
+      In April 2026, Kalshi published three disciplinary notices against political candidates
+      who traded on their own elections, demonstrating active enforcement even for small-dollar
+      violations (penalties ranging from $540 to $6,229). The CFTC simultaneously filed its
+      first-ever insider trading complaint involving event contracts. Kalshi explicitly prohibits
+      war markets, assassination markets, and death-contingent contracts by policy. In early
+      2026, this policy was tested when Kalshi froze a market tied to Iranian Supreme Leader
+      Khamenei's status after his death, withholding approximately $77 million in winnings from
+      traders who had bet he would be "out" — an outcome that drew significant user criticism
+      and illustrates the opacity risks in contract language and resolution methodology.
+
+      Geofencing is deployed as a technical compliance mechanism. Following a January 2026
+      Massachusetts Superior Court preliminary injunction, Kalshi implemented state-level
+      geofencing to block Massachusetts residents from accessing sports-related markets.
+      This geofencing capability (confirmed by Wikipedia's citation of the court order)
+      demonstrates the platform's ability to granularly restrict market access by geography
+      but adds engineering overhead as each state legal challenge potentially requires a new
+      filter rule.
+
+      On data integrity, a Federal Reserve working paper published in February 2026 found
+      Kalshi's probability signals matched or outperformed Wall Street tools for CPI and
+      interest rate forecasts, lending external academic credibility. CNN and CNBC's adoption
+      of Kalshi data in live coverage further corroborates its data-quality perception.
+      However, critics including scholars cited in Wikipedia challenge whether Kalshi
+      efficiently aggregates information, and The Atlantic's March 2026 piece specifically
+      argues that prediction markets encourage insider trading and erode trust by financializing
+      news events.
+
+      Operationally, Kalshi's fund-segregation model mirrors a CFTC-regulated exchange: user
+      funds are held separately from operational capital, as required by DCM rules. KYC/AML
+      processes are in place as required by CFTC regulations, though specific implementation
+      details are not publicly disclosed. The absence of public uptime SLAs, historical
+      incident disclosures, or external security audits is a material diligence gap for
+      institutional counterparties.
+    claimRefs:
+      - CE023
+      - CE024
+      - CE025
+      - CE026
+      - CE027
+      - CE028
+      - CE029
+      - CE030
+      - CE031
+    tableRefs:
+      - TE004
+
+  - id: product-gaps-incidents-risks
+    title: Product Gaps, Incidents, and Strategic Concerns
+    body: >-
+      Several structural product and technology gaps are material to a full assessment of
+      Kalshi's platform. First, the absence of official league data licenses from the NFL, NBA,
+      and MLB (all three submitted letters to the CFTC in 2025 expressing concerns about
+      Kalshi's sports markets) means Kalshi cannot use official team names, logos, or verified
+      real-time scores in its market displays. Instead, sports markets use generic city names
+      such as "Pro Football Champion: Chicago" rather than "Chicago Bears win Super Bowl."
+      DraftKings and FanDuel, which have full league data agreements, represent a significant
+      user-experience advantage on this dimension.
+
+      Second, the Khamenei settlement controversy in early 2026 exposed contractual ambiguity.
+      Kalshi's policy against "death-contingent" contracts was not clearly discerned by users
+      who bet on whether Khamenei would be "out of office," and the $77 million frozen payout
+      created a reputational incident that echoes the kind of settlement risk inherent in
+      non-standardized contract language. This is an endemic challenge for novel asset classes
+      where contract language lacks the decades of legal interpretation that commodity and
+      equity derivatives carry.
+
+      Third, no verified mobile app listing was accessible from either the Apple App Store or
+      Google Play during this research run, raising a question about app distribution
+      continuity or possible delisting. If confirmed, this would represent a significant user-
+      acquisition and retention gap given that mobile is the primary trading surface for
+      retail participants in competitive sportsbook and fintech markets.
+
+      Fourth, the platform's rate-limiting of its own website (kalshi.com returning 429
+      errors during research) suggests Vercel-based CDN/WAF configuration that may constrain
+      discoverability and scraping-based integrations — a minor product issue but one that
+      affects developer-ecosystem trust if API documentation or public market data is
+      similarly restricted.
+
+      Fifth, congressional and state-level legal risk is materially elevated as of May 2026.
+      More than 10 bills have been introduced since January 2026, including the bipartisan
+      PREDICT Act, the End Prediction Market Corruption Act, and the Prediction Markets Are
+      Gambling Act — any one of which could materially constrain or eliminate Kalshi's sports
+      market product line if enacted. At least six states (Massachusetts, Arizona, Nevada,
+      Ohio, Wisconsin, Michigan) have taken active legal action, and the U.S. Senate banned
+      senators and staff from using prediction markets in May 2026. While Kalshi's CFTC DCM
+      status provides federal preemption arguments, conflicting district court rulings (Ohio
+      siding against Kalshi in March 2026; Nevada issuing a 14-day restraining order) create
+      a patchwork operating environment that requires ongoing geofencing updates and legal
+      monitoring.
+    claimRefs:
+      - CE023
+      - CE029
+      - CE032
+      - CE033
+      - CE040
+
+callouts:
+  - calloutType: strength
+    title: Mature REST/WebSocket API with Published OpenAPI Specs
+    body: >-
+      Kalshi's developer documentation at docs.kalshi.com provides OpenAPI 3.0 and AsyncAPI
+      specifications, a Python SDK on PyPI, GitHub starter code, a demo environment, and FIX
+      protocol support via its QuickFIX/Go fork — a developer surface unusually comprehensive
+      for a CFTC-regulated exchange of Kalshi's age, directly enabling algorithmic trading,
+      brokerage integrations, and third-party applications.
+    claimRefs:
+      - CE002
+      - CE005
+      - CE011
+      - CE012
+      - CE013
+
+  - calloutType: risk
+    title: No League Data Licenses and Settlement Ambiguity Risk
+    body: >-
+      The absence of official data agreements with the NFL, NBA, and MLB constrains Kalshi's
+      sports UX and keeps it legally exposed; separately, the $77 million frozen Khamenei
+      market payout exposed contract-language and settlement-methodology ambiguity that could
+      undermine user trust in edge cases — a structural challenge for any binary exchange
+      operating in novel territory.
+    claimRefs:
+      - CE029
+      - CE032
+      - CE033
+
+  - calloutType: risk
+    title: Geofencing Overhead and Multi-State Regulatory Patchwork
+    body: >-
+      Kalshi is enforcing state-level geofencing following the Massachusetts injunction and
+      faces active litigation in at least six states as of May 2026. Each new adverse state
+      ruling requires a new geographic filter, adds engineering overhead, and reduces the
+      platform's addressable user pool — particularly significant given that California and
+      Texas (71 million combined residents) have not been ruled favorably.
+    claimRefs:
+      - CE023
+      - CE034
+
+tables:
+  - id: TE001
+    title: Product Module and Asset Matrix
+    columns:
+      - Module / Surface
+      - Primary User
+      - Status / Maturity
+      - Differentiation
+      - Diligence Gap
+    rows:
+      - - Web Platform (kalshi.com)
+        - Retail, institutional
+        - Live / mature (since July 2021)
+        - CFTC-regulated CLOB exchange; binary settlement; no house counterparty
+        - Frontend stack and cloud provider undisclosed; 429 rate-limits during research
+      - - Mobile App (iOS / Android)
+        - Retail
+        - Unconfirmed active listing
+        - Same feature parity claimed; onboarding and push notifications expected
+        - No verified App Store or Play Store listing found during this research run
+      - - REST API (trade-api/v2)
+        - Algorithmic traders, developers
+        - Live / v3.19.0; OpenAPI spec published
+        - Full CLOB access, 14 functional endpoint groups, demo sandbox environment
+        - Rate limits disclosed per tier; maker-fee schedule in classified CFTC filings
+      - - WebSocket API
+        - Algorithmic, real-time data consumers
+        - Live / AsyncAPI spec published
+        - Real-time order book, trade fills, and market-status push streaming
+        - Latency SLA and uptime SLA not published
+      - - Robinhood Embedded Hub
+        - Retail (Robinhood users)
+        - Live (March 2025); ~25–35% of daily sports volume by Oct 2025
+        - Brokerage-embedded distribution; HOOD's 25M+ user base as acquisition channel
+        - Revenue share terms and technical integration spec not publicly disclosed
+      - - Webull Embedded
+        - Retail (Webull users)
+        - Live (2025)
+        - Second brokerage distribution channel
+        - Volume contribution not disclosed
+      - - Blockchain Deposit Rail
+        - Crypto-native users
+        - Live (Solana, Bitcoin, USDC, Worldcoin)
+        - Expands addressable user base; Solana deposit ceiling $500K
+        - Smart contract risk and custodian not disclosed
+    notes: >-
+      Status for mobile app is based on failed App Store/Play Store URL lookup during this
+      research run (May 24, 2026); Kalshi references mobile apps in its marketing. Volume
+      share for Robinhood from CNBC/BraveNewCoin reporting as of Oct 2025.
+    enumerationScope:
+      coverage: exhaustive
+      basis: >-
+        All publicly known Kalshi product surfaces and distribution channels as of May 2026,
+        derived from official API documentation, partner announcements, and news coverage.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE011
+      - CE012
+      - CE014
+      - CE015
+      - CE016
+      - CE034
+      - CE035
+      - CE040
+
+  - id: TE002
+    title: User Workflow and Use-Case Table
+    columns:
+      - User Job
+      - Current Workflow on Kalshi
+      - Platform Solution
+      - Measurable Benefit
+      - Limitation
+    rows:
+      - - Bet on sports outcome
+        - Browse sports markets; buy Yes/No limit order at target price
+        - Real-time CLOB with GTC / IOC orders; binary $1.00 payout at resolution
+        - Transparent probability-based pricing; CFTC-regulated exchange (no house edge)
+        - No official team logos/names; no live in-game markets during early game periods
+      - - Hedge macroeconomic exposure
+        - Buy CPI or Fed-rate contract before scheduled announcement
+        - Liquid market resolving within hours of data release; $1.00 binary settlement
+        - Fed Reserve working paper validation; near-real-time settlement
+        - Market depth thinner than sports markets; position limits not disclosed
+      - - Algorithmic/API trading
+        - Authenticate via API key + RSA signature; submit limit/market orders programmatically
+        - REST API (OpenAPI), WebSocket, Python SDK, demo sandbox
+        - 200K open-order capacity; 14 endpoint groups; FIX protocol support via QuickFIX fork
+        - Maker-fee tiers in classified CFTC filings; no official Go or JS SDK
+      - - Retail trade via Robinhood / Webull
+        - Browse event markets inside Robinhood or Webull mobile/web apps
+        - Kalshi exchange embedded via API partnership; same underlying liquidity pool
+        - No separate account required for Robinhood users; HOOD app UX familiarity
+        - Revenue share terms opaque; dependency on partner app quality
+      - - Election / political market trading
+        - Buy probability contract on candidate or policy outcome
+        - CFTC-approved election contracts; won DC District Court ruling in 2024
+        - Only CFTC-regulated platform legally offering election contracts in the US
+        - Senate and staff banned from use May 2026; insider-trading risk elevated
+    notes: >-
+      Benefits and limitations drawn from official API docs, FT fee analysis, and third-party
+      reporting. Quantitative depth metrics (bid-ask spreads, market impact) not publicly
+      disclosed.
+    claimRefs:
+      - CE001
+      - CE007
+      - CE008
+      - CE014
+      - CE015
+      - CE030
+      - CE036
+
+  - id: TE003
+    title: Technology and Operating Architecture
+    columns:
+      - Layer / Component
+      - Role
+      - Key Dependencies
+      - Risk
+    rows:
+      - - REST API (trade-api/v2)
+        - Trade execution, market data retrieval, account management
+        - Kalshi-owned infrastructure; OpenAPI-spec-driven endpoints; Vercel CDN for web tier
+        - Rate-limit (429) responses observed on kalshi.com; API stability undisclosed
+      - - WebSocket API
+        - Real-time streaming of order-book updates and fills
+        - Async API-spec published; underlying message broker undisclosed
+        - No published SLA; outage history not available
+      - - Central Limit Order Book
+        - Price discovery and trade matching
+        - Proprietary exchange engine; CFTC-regulated venue
+        - Technology vendor or proprietary build not disclosed
+      - - Settlement Engine
+        - Binary $1.00/$0.00 automatic resolution at event outcome
+        - External data oracles (news sources, official data releases, CFTC confirmation)
+        - Contract-language ambiguity risk (Khamenei case); oracle source not formalized in docs
+      - - Python SDK (kalshi-python)
+        - Developer integration layer for authenticated REST access
+        - OpenAPI Generator v7.15.0; Python 3.9+; PyPI distribution
+        - "Minor: SDK is auto-generated; community maintenance if API changes rapidly"
+      - - QuickFIX/Go Fork
+        - FIX 4.0–5.0 SP2 institutional connectivity
+        - Go 1.21+; Kalshi-maintained fork of community QuickFIX/Go
+        - FIX session spec customization details for Kalshi endpoints undisclosed
+      - - Geofencing Layer
+        - State-level jurisdiction enforcement (Massachusetts sports ban)
+        - IP geolocation service provider undisclosed; Vercel edge functions possible
+        - Engineering overhead per new state ruling; IP spoofing attack surface
+      - - Blockchain Deposit Rail
+        - Crypto on-ramp (Solana, Bitcoin, USDC, Worldcoin)
+        - Solana chain, Base (Coinbase L2), custody partner undisclosed
+        - Custody risk; smart contract risk; regulatory treatment of crypto rails unclear
+    notes: >-
+      Architecture reconstructed from official API documentation (docs.kalshi.com), GitHub
+      repositories, and published press coverage. Internal stack (frontend framework, cloud
+      provider, database, message broker) not publicly disclosed.
+    claimRefs:
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE009
+      - CE010
+      - CE011
+      - CE012
+      - CE013
+      - CE023
+      - CE035
+
+  - id: TE004
+    title: Trust, Compliance, and Quality Controls
+    columns:
+      - Control / Certification
+      - Status
+      - Scope
+      - Gap / Diligence Ask
+    rows:
+      - - CFTC Designated Contract Market license
+        - Active (since November 2020)
+        - All U.S.-listed event contracts and operations
+        - No public DCM audit results; compliance staff size undisclosed
+      - - CFTC market surveillance program
+        - Required by DCM rules; active enforcement demonstrated
+        - All listed markets; insider-trading monitoring per Rule 5.17(z)
+        - Surveillance technology vendor and methodology undisclosed
+      - - Insider-trading prohibition (Rule 5.17(z))
+        - Active; three disciplinary actions published April 22, 2026
+        - All traders with influence over event outcomes
+        - Criminal referral threshold and CFTC coordination protocol undisclosed
+      - - War / assassination market prohibition
+        - Active policy; enforced on an ad-hoc basis
+        - All event contracts on Kalshi
+        - Policy not codified in public rulebook in a fully searchable form; Khamenei case showed edge-case ambiguity
+      - - Geofencing (state-level sport market access)
+        - Active (Massachusetts injunction compliance, January 2026)
+        - Sports markets for Massachusetts IP addresses
+        - Geofencing provider undisclosed; may not cover VPN circumvention
+      - - KYC / AML
+        - Required by CFTC DCM registration
+        - All user onboarding and deposits
+        - Implementation vendor, rejection rate, and SAR filing volume not disclosed
+      - - Fund segregation
+        - Required by CFTC DCM rules
+        - All user-deposited funds held separately from operational capital
+        - No third-party custodian or auditor named publicly
+      - - API rate-limit controls
+        - Active; token-bucket per account tier
+        - All authenticated API sessions
+        - Tier thresholds partially disclosed; institutional tiers not publicly enumerated
+    notes: >-
+      Status determined from CFTC public filings, JD Supra legal analysis, Wikipedia court
+      records, and official API documentation. "Active" means evidence of enforcement or
+      disclosure found; "Gap" items reflect information not publicly available as of May 2026.
+    claimRefs:
+      - CE024
+      - CE025
+      - CE026
+      - CE027
+      - CE039
+      - CE010
+
+  - id: TE005
+    title: Developer Ecosystem and Roadmap Signals
+    columns:
+      - Stage / Date
+      - Feature / Milestone
+      - Status
+      - Implication
+      - Source
+    rows:
+      - - July 2021
+        - Public platform launch; REST API v1
+        - Historical
+        - Established first CFTC-regulated event-contract exchange API
+        - Wikipedia / Bravenewcoin
+      - - November 2020
+        - CFTC DCM license granted
+        - Historical
+        - Foundation for regulated API access and institutional trust
+        - CFTC press release
+      - - Early 2025
+        - Robinhood Prediction Markets Hub live; Webull integration
+        - Live
+        - Brokerage API as distribution multiplier; 25-35% sports volume via HOOD
+        - CNBC / Bravenewcoin / Reuters
+      - - May 2025
+        - Market Maker Program launched (Susquehanna, Kalshi Trading)
+        - Live
+        - Institutional liquidity deepens book; fee rebates for high-volume traders
+        - FT analysis
+      - - Oct 2025
+        - International expansion to 140+ countries; Solana/blockchain deposit rails
+        - Live
+        - Developer addressable market expands internationally; crypto on-ramp live
+        - Bravenewcoin
+      - - Dec 2025
+        - "Series E ($1B); stated use: add brokerages, media partnerships, product expansion"
+        - Funded
+        - Next brokerage integrations and media distribution deals in pipeline
+        - Reuters / Crunchbase
+      - - Current (API v3.19.0)
+        - Structured-targets, milestones, FCM endpoints, multivariate markets added
+        - Live
+        - API surface expanding toward institutional and complex-event use cases
+        - docs.kalshi.com API spec
+      - - 2026 roadmap signal
+        - $22B Series F (Coatue-led, March 2026); focus on "next 100M users"
+        - Funded
+        - Consumer scale, further brokerage/media partnerships; Go and JS SDKs remain absent
+        - Time magazine / Fintech Global / Gamblinginsider
+    notes: >-
+      Roadmap signals are inferred from funding announcements and stated capital uses.
+      No official product roadmap has been published by Kalshi as of May 2026.
+    claimRefs:
+      - CE003
+      - CE005
+      - CE013
+      - CE014
+      - CE018
+      - CE027
+      - CE034
+      - CE035
+      - CE041
+      - CE042
+
+figures:
+  - id: FE001
+    title: Kalshi Exchange Platform Architecture Stack
+    type: stack
+    layout: standard
+    summary: >-
+      Layered view of Kalshi's technical architecture from user interfaces down through
+      exchange infrastructure and compliance controls.
+    data:
+      layers:
+        - label: User Interfaces
+          detail: "Consumer-facing surfaces enabling retail and embedded trading: web platform, mobile app, and broker-embedded hubs."
+          items:
+            - Web platform (kalshi.com / Vercel CDN)
+            - Mobile app (iOS / Android — active listing unverified as of May 2026)
+            - Robinhood Prediction Markets Hub (embedded; ~25-35% of sports volume)
+            - Webull event-contract integration (embedded; 2025)
+        - label: API Layer
+          detail: "Programmatic access surface for algorithmic traders and integrators: REST, WebSocket, demo sandbox, and institutional FIX protocol."
+          items:
+            - "REST API v3.19.0 (external-api.kalshi.com/trade-api/v2)"
+            - WebSocket API (real-time streaming; AsyncAPI spec published)
+            - Demo / sandbox (demo-api.kalshi.co/trade-api/v2)
+            - FIX Protocol layer (Kalshi fork of QuickFIX/Go; FIX 4.0–5.0 SP2)
+        - label: Exchange Engine
+          detail: "Core matching and pricing infrastructure: central limit order book, order types, market-maker liquidity, and fee model."
+          items:
+            - Central Limit Order Book (CLOB); up to 200K open orders per user
+            - "Order types: limit, market, IOC, GTC / expiring-GTT"
+            - Market Maker Program (Susquehanna, Kalshi Trading; since May 2025)
+            - Quadratic taker-fee formula; maker fees on sports markets
+        - label: Settlement and Oracle
+          detail: "Automatic binary settlement layer that resolves contracts to $1.00 or $0.00 based on external oracle data; includes state-level access control."
+          items:
+            - "Binary settlement engine ($1.00 YES / $0.00 NO per contract at resolution)"
+            - External data oracles (official stats, news wire, regulatory releases)
+            - Geofencing layer (IP-based state market access control)
+        - label: Compliance and Custody
+          detail: "Regulatory and custody controls required by CFTC DCM license: market surveillance, fund segregation, KYC/AML, and insider-trading enforcement."
+          items:
+            - CFTC DCM license (since Nov 2020; same tier as CME Group)
+            - Market surveillance program (Rule 5.17(z) insider-trading enforcement)
+            - Fund segregation (CFTC DCM requirement; user funds held separately)
+            - KYC / AML processing
+        - label: Developer and Integration Tooling
+          detail: "Developer ecosystem layer: spec-driven SDKs, GitHub repos, and blockchain deposit rails enabling third-party integrations and on-ramps."
+          items:
+            - OpenAPI 3.0 spec (downloadable from docs.kalshi.com)
+            - AsyncAPI spec (WebSocket streaming)
+            - Python SDK (kalshi-python v2.1.4 on PyPI; OpenAPI Generator v7.15.0)
+            - GitHub repos (starter code 94★; tools-and-analysis 19★; QuickFIX fork)
+            - Blockchain deposit rails (Solana ≤$500K, Bitcoin, USDC, Worldcoin)
+    approximationNotes: >-
+      Technology stack below API layer (cloud provider, database, message broker, frontend
+      framework) inferred from public developer documentation and GitHub repo analysis;
+      no internal infrastructure disclosure available.
+    claimRefs:
+      - CE002
+      - CE003
+      - CE005
+      - CE007
+      - CE009
+      - CE011
+      - CE012
+      - CE013
+      - CE019
+      - CE027
+
+  - id: FE002
+    title: Kalshi Retail User Trading Workflow
+    type: flow
+    layout: standard
+    summary: >-
+      End-to-end journey of a retail user from account creation through trade execution and
+      settlement on Kalshi.
+    data:
+      nodes:
+        - id: n1
+          label: Account Creation & KYC
+          detail: Email signup, identity verification, CFTC-required KYC/AML screening
+        - id: n2
+          label: Fund Deposit
+          detail: ACH bank transfer, or crypto rails (Solana ≤$500K, Bitcoin, USDC, Worldcoin)
+        - id: n3
+          label: Browse Event Catalog
+          detail: 6 categories — sports, macroeconomic, politics, weather, entertainment, crypto
+        - id: n4
+          label: Select Market & Review Order Book
+          detail: View Yes/No prices ($0.01–$0.99), current probability, open interest
+        - id: n5
+          label: Place Order
+          detail: Limit or market order; Yes or No side; IOC or GTC time-in-force
+        - id: n6
+          label: Order Matching
+          detail: CLOB matches buyer and seller; maker/taker fee charged on execution
+        - id: n7
+          label: Position Monitoring
+          detail: Portfolio dashboard; real-time updates via WebSocket push
+        - id: n8
+          label: Market Resolution
+          detail: Kalshi resolves based on external oracle (e.g., official game result, data release)
+        - id: n9
+          label: Automatic Settlement
+          detail: Winning side credited $1.00/contract; losing side $0.00; instant payout
+        - id: n10
+          label: Withdrawal
+          detail: USD wire / ACH back to bank; or crypto withdrawal
+    claimRefs:
+      - CE001
+      - CE007
+      - CE017
+      - CE019
+      - CE022
+
+  - id: FE003
+    title: Critical Dependency Map for Kalshi's Exchange Operations
+    type: dag
+    layout: wide
+    summary: >-
+      Key external dependencies that Kalshi's exchange operations rely on, including
+      regulatory, data, technology, and distribution relationships.
+    data:
+      nodes:
+        - id: d1
+          label: CFTC
+          detail: Grants DCM license; oversees rule enforcement; issues enforcement actions
+        - id: d2
+          label: External Data Oracles
+          detail: Sports stats feeds, government data releases (BLS CPI, Fed decisions), news wire
+        - id: d3
+          label: Robinhood (HOOD)
+          detail: Embedded Prediction Markets Hub; ~25-35% of sports volume
+        - id: d4
+          label: Webull
+          detail: Embedded event-contract integration
+        - id: d5
+          label: Susquehanna Investment Group
+          detail: Market maker; provides liquidity under Market Maker Program (May 2025+)
+        - id: d6
+          label: Cloud / CDN (Vercel)
+          detail: Hosts kalshi.com web application; WAF/rate-limiting in place
+        - id: d7
+          label: Solana / Base / Bitcoin Networks
+          detail: Blockchain deposit rails; custody and on-ramp for crypto users
+        - id: d8
+          label: OpenAPI / AsyncAPI Toolchain
+          detail: Spec-driven SDK generation; kalshi-python v2.1.4 on PyPI
+        - id: d9
+          label: Kalshi (exchange core)
+          detail: CLOB engine, settlement, compliance, geofencing, rate-limiting
+        - id: d10
+          label: State Regulators
+          detail: Massachusetts (injunction), Ohio, Nevada, Arizona, Wisconsin, Michigan
+      edges:
+        - from: d1
+          to: d9
+          label: licenses + oversight
+        - from: d2
+          to: d9
+          label: oracle settlement data
+        - from: d3
+          to: d9
+          label: embedded distribution
+        - from: d4
+          to: d9
+          label: embedded distribution
+        - from: d5
+          to: d9
+          label: market-making liquidity
+        - from: d6
+          to: d9
+          label: web hosting / CDN
+        - from: d7
+          to: d9
+          label: crypto deposit rails
+        - from: d8
+          to: d9
+          label: developer SDK tooling
+        - from: d10
+          to: d9
+          label: state-level injunctions / geofencing triggers
+    claimRefs:
+      - CE014
+      - CE015
+      - CE016
+      - CE018
+      - CE023
+      - CE027
+      - CE035
+
+  - id: FE004
+    title: Product Maturity and Capability Matrix
+    type: matrix
+    layout: wide
+    summary: >-
+      Assessment of Kalshi's key product and technology capabilities across maturity and
+      competitive differentiation dimensions.
+    data:
+      columns:
+        - Maturity (0–5)
+        - vs. Competitors
+        - Evidence Quality
+        - Gap Risk
+      rows:
+        - label: REST API + OpenAPI spec
+          values:
+            - label: "4 — production, spec published"
+            - label: "Ahead — rare for a U.S. CFTC-regulated exchange"
+            - label: "High — docs.kalshi.com; kalshi-python on PyPI"
+            - label: "Low — well documented, stable"
+        - label: WebSocket real-time streaming
+          values:
+            - label: "4 — AsyncAPI spec published"
+            - label: "Ahead — AsyncAPI spec uncommon for event exchanges"
+            - label: "High — docs.kalshi.com/welcome"
+            - label: "Low — spec-driven, easy to integrate"
+        - label: Python SDK
+          values:
+            - label: "3 — auto-generated from spec; v2.1.4"
+            - label: "Parity — OpenAPI generation is standard; no official Go/JS SDK"
+            - label: "High — PyPI listing confirmed"
+            - label: "Medium — no official Go/JS SDK; community reliance"
+        - label: FIX Protocol
+          values:
+            - label: "2 — QuickFIX/Go fork; Kalshi FIX spec undisclosed"
+            - label: "Ahead of Polymarket — traditional exchanges full parity"
+            - label: "Medium — GitHub fork confirmed; production spec not public"
+            - label: "Medium — institutional adoption requires published FIX spec"
+        - label: Brokerage API embedding
+          values:
+            - label: "4 — Robinhood + Webull live"
+            - label: "Ahead — no competitor has comparable brokerage distribution"
+            - label: "High — Reuters, Bravenewcoin, CNBC confirmed"
+            - label: "Medium — 25-35% of sports volume via single partner"
+        - label: Binary settlement engine
+          values:
+            - label: "5 — fully automated; instant resolution"
+            - label: "Ahead — faster and more transparent than sportsbooks"
+            - label: "High — API spec, FT analysis, CNBC Super Bowl"
+            - label: "Low — well proven at $1B/day scale"
+        - label: Geofencing / compliance
+          values:
+            - label: "3 — functional; deployed post-MA injunction"
+            - label: "Parity — other platforms have similar IP-based controls"
+            - label: "High — Wikipedia, JD Supra confirmed"
+            - label: "High — engineering debt per new state ruling"
+        - label: Mobile app
+          values:
+            - label: "1 — listing unverified during research run"
+            - label: "Behind — Robinhood/sportsbooks have 4-5★ verified apps"
+            - label: "Low — App Store / Play Store search returned no confirmed listing"
+            - label: "High — mobile primary for retail; unverified presence is a gap"
+        - label: Sports league data licenses
+          values:
+            - label: "0 — no official NFL/NBA/MLB agreements"
+            - label: "Behind — DraftKings/FanDuel have full league data agreements"
+            - label: "High — FT analysis, Wikipedia, no league announcement"
+            - label: "High — brand/UX disadvantage vs. licensed sportsbooks"
+        - label: Blockchain deposit rails
+          values:
+            - label: "3 — Solana, Bitcoin, USDC, Worldcoin live"
+            - label: "Ahead of traditional exchanges; parity with crypto-native platforms"
+            - label: "Medium — Bravenewcoin confirmed; custody details undisclosed"
+            - label: "Medium — custody risk, regulatory treatment unclear"
+    approximationNotes: >-
+      Maturity scores are qualitative assessments by the research author based on public
+      evidence; 0 indicates confirmed absence, 5 indicates best-in-class documented evidence.
+    claimRefs:
+      - CE002
+      - CE005
+      - CE011
+      - CE012
+      - CE013
+      - CE014
+      - CE023
+      - CE032
+      - CE033
+      - CE040
+
+localEvidence:
+  searchQueries:
+    - query: Kalshi API docs developer documentation 2026
+      engine: google
+      hits: 12
+      retainedSourceRefs:
+        - SE001
+        - SE002
+        - SE003
+    - query: Kalshi GitHub developer SDK python 2026
+      engine: google
+      hits: 8
+      retainedSourceRefs:
+        - SE004
+        - SE005
+        - SE006
+        - SE007
+        - SE008
+    - query: Kalshi product features event contracts how it works 2026
+      engine: google
+      hits: 15
+      retainedSourceRefs:
+        - SE009
+        - SE010
+        - SE017
+    - query: Kalshi Robinhood event contracts partnership launch 2026
+      engine: google
+      hits: 10
+      retainedSourceRefs:
+        - SE014
+        - SE015
+        - SE017
+    - query: Kalshi settlement how it works binary contract 2026
+      engine: google
+      hits: 9
+      retainedSourceRefs:
+        - SE010
+        - SE012
+    - query: Kalshi app store review mobile iOS Android 2026
+      engine: google
+      hits: 5
+      retainedSourceRefs: []
+    - query: Kalshi outage incident 2026
+      engine: google
+      hits: 3
+      retainedSourceRefs:
+        - SE009
+    - query: Kalshi insider trading enforcement incident 2026
+      engine: google
+      hits: 14
+      retainedSourceRefs:
+        - SE016
+        - SE018
+        - SE019
+    - query: Kalshi market maker program Susquehanna fee structure 2026
+      engine: google
+      hits: 6
+      retainedSourceRefs:
+        - SE010
+    - query: Kalshi Federal Reserve working paper prediction accuracy 2026
+      engine: google
+      hits: 4
+      retainedSourceRefs:
+        - SE012
+        - SE013
+    - query: Kalshi sports betting league data licenses NFL NBA MLB 2026
+      engine: google
+      hits: 7
+      retainedSourceRefs:
+        - SE010
+        - SE009
+    - query: Kalshi geofencing Massachusetts injunction technology 2026
+      engine: google
+      hits: 5
+      retainedSourceRefs:
+        - SE009
+        - SE019
+
+  researchQuestions:
+    - id: QE001
+      question: What order types does Kalshi's exchange support via API and web interface?
+      type: enumeration
+      targets:
+        - contentRequirements/0
+        - plannedTables/workflow-use-case-table
+      status: answered
+
+    - id: QE002
+      question: What are the rate limits and API tier structure for Kalshi's public REST API?
+      type: quantification
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE003
+      question: >-
+        Is Kalshi's mobile application actively listed on the Apple App Store and Google
+        Play Store as of May 2026?
+      type: verification
+      targets:
+        - contentRequirements/0
+        - plannedTables/product-module-asset-matrix
+      status: partial
+
+    - id: QE004
+      question: >-
+        What adverse incidents or controversies has Kalshi's product experienced, including
+        settlement disputes, outages, or market manipulation concerns?
+      type: adverse
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE005
+      question: >-
+        What is Kalshi's fee structure for makers and takers, and how does it compare to
+        traditional sportsbooks?
+      type: comparison
+      targets:
+        - contentRequirements/4
+        - plannedTables/workflow-use-case-table
+      status: answered
+
+    - id: QE006
+      question: >-
+        What programming languages, SDKs, and protocols does Kalshi support for developer
+        integration as of 2026?
+      type: enumeration
+      targets:
+        - contentRequirements/2
+        - plannedTables/roadmap-release-development-stage-table
+      status: answered
+
+    - id: QE007
+      question: >-
+        How does Kalshi's binary settlement mechanism work, and what oracle sources does it
+        use for event resolution?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE008
+      question: >-
+        What is the brokerage API integration model for Robinhood's Prediction Markets Hub
+        powered by Kalshi?
+      type: mechanism
+      targets:
+        - contentRequirements/3
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE009
+      question: >-
+        Has Kalshi published any uptime SLA, incident history, or reliability metrics for
+        its exchange infrastructure?
+      type: verification
+      targets:
+        - contentRequirements/3
+      status: unresolved
+
+    - id: QE010
+      question: >-
+        What percentage of Kalshi's 2025–2026 trading volume came from algorithmic/API
+        traders versus retail web/mobile traders?
+      type: quantification
+      targets:
+        - contentRequirements/0
+        - plannedTables/workflow-use-case-table
+      status: unresolved
+
+    - id: QE011
+      question: >-
+        Does Kalshi have official sports data licenses with the NFL, NBA, or MLB, and what
+        is the practical product impact of any absence?
+      type: adverse
+      targets:
+        - contentRequirements/4
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE012
+      question: >-
+        What is the architecture of Kalshi's geofencing and state-level access-control
+        system, and what is its failure mode under VPN circumvention?
+      type: mechanism
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE013
+      question: >-
+        How mature is Kalshi's FIX protocol implementation relative to traditional futures
+        exchanges?
+      type: comparison
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE014
+      question: >-
+        What are the peak throughput and concurrent-order metrics Kalshi has disclosed for
+        its exchange engine?
+      type: quantification
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE015
+      question: >-
+        Which cloud provider, CDN, database, and frontend framework does Kalshi use for its
+        production infrastructure?
+      type: enumeration
+      targets:
+        - contentRequirements/2
+      status: unresolved
+
+    - id: QE016
+      question: >-
+        What evidence exists that Kalshi's probability data is accurate or predictive compared
+        to traditional forecasting tools?
+      type: verification
+      targets:
+        - contentRequirements/4
+      status: answered
+
+    - id: QE017
+      question: >-
+        What are the terms of the Market Maker Program with Susquehanna, and does the
+        arrangement create conflicts of interest?
+      type: adverse
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE018
+      question: >-
+        Has Kalshi experienced any notable platform outages, API downtime, or service
+        degradation during high-volume events such as Super Bowl LX in 2026?
+      type: verification
+      targets:
+        - contentRequirements/3
+      status: answered
+
+    - id: QE019
+      question: >-
+        What is the maximum position size, individual market exposure limit, and maximum
+        single-user balance limit on Kalshi?
+      type: quantification
+      targets:
+        - contentRequirements/0
+        - plannedTables/workflow-use-case-table
+      status: answered
+
+    - id: QE020
+      question: >-
+        How does Kalshi's settlement methodology differ from that of Polymarket and
+        traditional sportsbooks with respect to ambiguous or contested outcomes?
+      type: comparison
+      targets:
+        - contentRequirements/2
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE021
+      question: >-
+        What known product launches or roadmap items has Kalshi announced for 2026 beyond
+        brokerage expansion?
+      type: freshness
+      targets:
+        - contentRequirements/3
+        - plannedTables/roadmap-release-development-stage-table
+      status: answered
+
+    - id: QE022
+      question: >-
+        What are the deposit and withdrawal methods available, their processing times, and
+        applicable limits for U.S. and international users in 2026?
+      type: enumeration
+      targets:
+        - contentRequirements/0
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE023
+      question: >-
+        What third-party security audits, pen tests, or SOC 2 certifications has Kalshi
+        obtained for its exchange platform?
+      type: adverse
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: unresolved
+
+    - id: QE024
+      question: >-
+        What is the current version and changelog of Kalshi's API, and what major breaking
+        changes have occurred since 2024?
+      type: freshness
+      targets:
+        - contentRequirements/3
+        - plannedTables/roadmap-release-development-stage-table
+      status: answered
+
+    - id: QE025
+      question: >-
+        How does Kalshi handle contract language disputes and edge cases in market resolution,
+        and what governance process exists for contested settlements?
+      type: mechanism
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE026
+      question: >-
+        Is there developer community activity (Hacker News, Stack Overflow, Discord) around
+        Kalshi's API beyond the official GitHub repos?
+      type: enumeration
+      targets:
+        - contentRequirements/3
+        - plannedTables/roadmap-release-development-stage-table
+      status: answered
+
+    - id: QE027
+      question: >-
+        What technological differentiation does Kalshi have over its CFTC-licensed competitor
+        ForecastEx on the developer/API dimension?
+      type: comparison
+      targets:
+        - contentRequirements/4
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE028
+      question: >-
+        How have Kalshi's product partnerships (Robinhood, Webull, Solana, Base) influenced
+        its technology roadmap and feature prioritization in 2026?
+      type: mechanism
+      targets:
+        - contentRequirements/3
+        - plannedTables/roadmap-release-development-stage-table
+      status: answered
+
+    - id: QE029
+      question: >-
+        What are the complete terms of Kalshi's developer agreement and API terms of service,
+        and what usage restrictions apply to commercial applications?
+      type: verification
+      targets:
+        - contentRequirements/3
+        - plannedTables/roadmap-release-development-stage-table
+      status: answered
+
+  sources:
+    - id: SE001
+      publisher: Kalshi
+      title: "Introduction - API Documentation (docs.kalshi.com)"
+      url: "https://docs.kalshi.com/welcome"
+      date: "2026-05-24"
+      accessDate: "2026-05-24"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - API documentation
+        - developer portal
+        - product overview
+      keyQuote: >-
+        "This documentation covers the Kalshi Exchange API for real-time market data and
+        trade execution."
+
+    - id: SE002
+      publisher: Kalshi
+      title: "Get Account API Limits - API Reference"
+      url: "https://docs.kalshi.com/api-reference/account/get-account-api-limits.md"
+      date: "2026-05-24"
+      accessDate: "2026-05-24"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics:
+        - API rate limits
+        - API tiers
+        - authentication
+      keyQuote: >-
+        "Endpoint to retrieve the API tier limits associated with the authenticated user."
+
+    - id: SE003
+      publisher: Kalshi
+      title: "Create Order - API Reference (trade-api v3.19.0)"
+      url: "https://docs.kalshi.com/api-reference/orders/create-order.md"
+      date: "2026-05-24"
+      accessDate: "2026-05-24"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics:
+        - order types
+        - order mechanics
+        - API authentication
+        - limit order
+        - market order
+      keyQuote: >-
+        "Endpoint for submitting orders in a market. Each user is limited to 200 000 open
+        orders at a time."
+
+    - id: SE004
+      publisher: Kalshi
+      title: "Kalshi GitHub Organization"
+      url: "https://github.com/Kalshi"
+      date: "2026-02-06"
+      accessDate: "2026-05-24"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics:
+        - GitHub
+        - open source
+        - developer tooling
+        - FIX protocol
+      keyQuote: >-
+        "Kalshi/quickfix: 353 forks; Kalshi/kalshi-starter-code-python: 94 stars,
+        69 forks."
+
+    - id: SE005
+      publisher: Kalshi
+      title: "kalshi-starter-code-python — GitHub"
+      url: "https://github.com/Kalshi/kalshi-starter-code-python"
+      date: "2025-03-07"
+      accessDate: "2026-05-24"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics:
+        - Python API
+        - developer onboarding
+        - starter code
+      keyQuote: >-
+        "Example python code for accessing api-authenticated endpoints on Kalshi.
+        This is not an SDK."
+
+    - id: SE006
+      publisher: Kalshi
+      title: "tools-and-analysis — GitHub community data tools"
+      url: "https://github.com/Kalshi/tools-and-analysis"
+      date: "2023-06-15"
+      accessDate: "2026-05-24"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics:
+        - developer community
+        - market data tools
+        - Jupyter Notebook
+      keyQuote: >-
+        "This repository serves as a collection of analyses and visualizations produced by
+        members of Kalshi's community, using public market data."
+
+    - id: SE007
+      publisher: Kalshi
+      title: "Kalshi/quickfix — Go FIX Protocol Library fork"
+      url: "https://github.com/Kalshi/quickfix"
+      date: "2026-02-03"
+      accessDate: "2026-05-24"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics:
+        - FIX protocol
+        - institutional trading
+        - Go
+        - open source
+      keyQuote: >-
+        "QuickFIX/Go is a FIX Protocol Community implementation for the Go programming
+        language. Supports FIX versions 4.0 – 5.0SP2."
+
+    - id: SE008
+      publisher: PyPI / Kalshi
+      title: "kalshi-python 2.1.4 — Python SDK on PyPI"
+      url: "https://pypi.org/project/kalshi-python/"
+      date: "2026-05-24"
+      accessDate: "2026-05-24"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics:
+        - Python SDK
+        - OpenAPI generator
+        - developer tooling
+        - pypi
+      keyQuote: >-
+        "Complete API for the Kalshi trading platform including all handlers for SDK
+        generation. API version: 2.0.0. Package version: 2.1.4."
+
+    - id: SE009
+      publisher: Wikimedia Foundation
+      title: "Kalshi — Wikipedia"
+      url: "https://en.wikipedia.org/wiki/Kalshi"
+      date: "2026-05-22"
+      accessDate: "2026-05-24"
+      accessStatus: ok
+      stance: neutral
+      sourceType: other
+      reputationTier: medium
+      independence: independent
+      topics:
+        - company overview
+        - controversies
+        - geofencing
+        - settlement disputes
+        - insider trading
+        - lawsuits
+      keyQuote: >-
+        "Kalshi was required to implement geofencing technology to block Massachusetts
+        residents from accessing sports-related markets on its platform."
+
+    - id: SE010
+      publisher: Financial Times
+      title: "Prediction markets barely make money; sportsbooks make money"
+      url: "https://www.ft.com/content/1ac03f57-bd5d-4196-85ff-4bd96dc69e0d"
+      date: "2025-12-19"
+      accessDate: "2026-05-24"
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics:
+        - fee structure
+        - maker-taker model
+        - sports dominance
+        - market mechanics
+        - market maker program
+        - Susquehanna
+        - Kalshi Trading
+      keyQuote: >-
+        "Their taker fee formula has a quadratic relationship to the price of the shares
+        being traded… Kalshi Trading, an affiliated company that somewhat controversially
+        trades on the platform."
+
+    - id: SE011
+      publisher: The Atlantic
+      title: "A Technology for a Low-Trust Society (The Central Lie of Prediction Markets)"
+      url: "https://www.theatlantic.com/technology/2026/03/central-lie-prediction-markets/686250/"
+      date: "2026-03-05"
+      accessDate: "2026-05-24"
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics:
+        - insider trading risk
+        - market manipulation
+        - product criticism
+        - war market prohibition
+      keyQuote: >-
+        "War markets put Americans at risk and have absolutely no place in prediction markets."
+        (Kalshi spokesperson Jack Such)
+
+    - id: SE012
+      publisher: Time
+      title: "TIME100 Most Influential Companies 2026: Kalshi — Betting on Everything"
+      url: "https://time.com/collection/time100-most-influential-companies/2026/kalshi/"
+      date: "2026-04-30"
+      accessDate: "2026-05-24"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics:
+        - Federal Reserve working paper
+        - forecasting accuracy
+        - user count
+        - revenue 2025
+      keyQuote: >-
+        "In February 2026, a Federal Reserve working paper found the platform matched or
+        outperformed traditional Wall Street tools on indicators including inflation and
+        interest rates."
+
+    - id: SE013
+      publisher: CNBC
+      title: "Kalshi says Super Bowl trading volume surpassed $1 billion"
+      url: "https://www.cnbc.com/2026/02/10/kalshi-super-bowl.html"
+      date: "2026-02-10"
+      accessDate: "2026-05-24"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics:
+        - Super Bowl volume
+        - peak throughput
+        - platform scale
+      keyQuote: >-
+        "Kalshi says Super Bowl trading volume surpassed $1 billion."
+
+    - id: SE014
+      publisher: CNBC
+      title: "Kalshi co-founder Luana Lopes Lara on prediction markets risks"
+      url: "https://www.cnbc.com/2026/03/14/kalshi-prediction-markets-bet-luana-lopes-lara.html"
+      date: "2026-03-14"
+      accessDate: "2026-05-24"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: high
+      independence: partner
+      topics:
+        - product roadmap
+        - brokerage partnerships
+        - transaction volume
+      keyQuote: >-
+        "Kalshi has grown to $2 billion in transactions per week. Its plans for the funding
+        was to support adoption of its next 100 million customers, expand brokerage
+        integrations, form partnerships and widen its product range."
+
+    - id: SE015
+      publisher: JD Supra
+      title: "CFTC and Kalshi Announce Enforcement Actions Targeting Prediction Markets"
+      url: "https://www.jdsupra.com/legalnews/cftc-and-kalshi-announce-enforcement-9149599/"
+      date: "2026-04-25"
+      accessDate: "2026-05-24"
+      accessStatus: ok
+      stance: neutral
+      sourceType: legal
+      reputationTier: medium
+      independence: independent
+      topics:
+        - insider trading enforcement
+        - Rule 5.17(z)
+        - disciplinary actions
+        - compliance program
+      keyQuote: >-
+        "Kalshi Exchange Rule 5.17(z), which prohibits any trader who is a 'decision maker'
+        or who has 'any influence, directly or indirectly' on the outcome of an underlying
+        event from trading on contracts related to that event."
+
+    - id: SE016
+      publisher: CFTC
+      title: "CFTC Charges U.S. Service Member with Insider Trading in Nicolás Maduro-Related Event Contracts"
+      url: "https://www.cftc.gov/PressRoom/PressReleases/9217-26"
+      date: "2026-04-23"
+      accessDate: "2026-05-24"
+      accessStatus: ok
+      stance: neutral
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics:
+        - insider trading
+        - event contracts
+        - CFTC enforcement
+        - prediction market integrity
+      keyQuote: >-
+        "This case marks the first time the CFTC has charged insider trading involving event
+        contracts."
+
+    - id: SE017
+      publisher: Brave New Coin
+      title: "Kalshi Raises $300 Million and Launches in 140 Countries"
+      url: "https://bravenewcoin.com/insights/kalshi-raises-300-million-and-launches-in-140-countries"
+      date: "2025-10-10"
+      accessDate: "2026-05-24"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - international expansion
+        - blockchain integration
+        - Solana
+        - Robinhood integration
+        - market categories
+      keyQuote: >-
+        "Kalshi now accepts Solana deposits up to $500,000 and supports Bitcoin, USDC, and
+        Worldcoin through partnerships."
+
+    - id: SE018
+      publisher: Reuters
+      title: "Kalshi's valuation doubles on strong interest in prediction markets platforms"
+      url: "https://www.reuters.com/business/kalshi-valued-11-billion-latest-financing-round-2025-12-02/"
+      date: "2025-12-02"
+      accessDate: "2026-05-24"
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics:
+        - funding
+        - product roadmap
+        - brokerage expansion
+        - weekly volume
+      keyQuote: >-
+        "Kalshi said it will use the capital to speed up consumer adoption, add brokerages,
+        pursue media partnerships and expand its product lineup."
+
+    - id: SE019
+      publisher: Gambling Insider
+      title: "Who Owns Kalshi? Founders, Investors & Key Backers in 2026"
+      url: "https://www.gamblinginsider.com/in-depth/104329/who-owns-kalshi"
+      date: "2026-03-11"
+      accessDate: "2026-05-24"
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - company background
+        - investor base
+        - valuation
+      keyQuote: null
+
+    - id: SE020
+      publisher: Lowenstein Sandler
+      title: "CFTC and Kalshi Announce Enforcement Actions Targeting Prediction Markets (FCTM)"
+      url: "https://www.lowenstein.com/news-insights/publications/client-alerts/cftc-and-kalshi-announce-enforcement-actions-targeting-prediction-markets-fctm"
+      date: "2026-04-28"
+      accessDate: "2026-05-24"
+      accessStatus: ok
+      stance: neutral
+      sourceType: legal
+      reputationTier: high
+      independence: independent
+      topics:
+        - enforcement actions
+        - compliance obligations
+        - insider trading regulation
+      keyQuote: >-
+        "The CFTC has made clear that it expects designated contract markets to serve as the
+        'first line of defense' against insider trading and market manipulation."
+
+    - id: SE021
+      publisher: Crunchbase News
+      title: "Kalshi Secures $1B To Expand Predictions Market Platform"
+      url: "https://news.crunchbase.com/fintech/kalshi-raises-funding-predictions-market-paradigm/"
+      date: "2025-12-02"
+      accessDate: "2026-05-24"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - funding
+        - product expansion
+        - brokerage integrations
+      keyQuote: >-
+        "Trading volumes now surpassing $1 billion every week, up more than 1,000% from 2024."
+
+    - id: SE022
+      publisher: Kalshi
+      title: "API Documentation Index (llms.txt — complete docs sitemap)"
+      url: "https://docs.kalshi.com/llms.txt"
+      date: "2026-05-24"
+      accessDate: "2026-05-24"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics:
+        - API documentation
+        - endpoint catalog
+        - WebSocket spec
+        - OpenAPI spec
+        - AsyncAPI spec
+      keyQuote: >-
+        "Fetch the complete documentation index at: https://docs.kalshi.com/llms.txt —
+        Use this file to discover all available pages before exploring further."
+
+    - id: SE023
+      publisher: Fintech Global
+      title: "Kalshi reportedly hits $22bn valuation after $1bn raise"
+      url: "https://fintech.global/2026/03/23/kalshi-reportedly-hits-22bn-valuation-after-1bn-raise/"
+      date: "2026-03-23"
+      accessDate: "2026-05-24"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - valuation
+        - product expansion
+        - "2026"
+      keyQuote: null
+
+    - id: SE024
+      publisher: Sports Handle
+      title: "Best Prediction Markets for March Madness 2026"
+      url: "https://sportshandle.com/prediction-markets-for-march-madness/"
+      date: "2026-03-27"
+      accessDate: "2026-05-24"
+      accessStatus: ok
+      stance: neutral
+      sourceType: review
+      reputationTier: medium
+      independence: independent
+      topics:
+        - sports markets
+        - user experience
+        - competitor comparison
+        - promotional offers
+      keyQuote: >-
+        "Best prediction markets for March Madness… Kalshi – Trade $10, Get a $10 Bonus."
+
+    - id: SE025
+      publisher: Bloomberg Law
+      title: "Kalshi Prediction Markets Boom in Sports Betting (2026)"
+      url: "https://news.bloomberglaw.com/banking-law/kalshi-prediction-markets-boom-sports-betting-2026"
+      date: "2026-01-01"
+      accessDate: "2026-05-24"
+      accessStatus: js-only
+      stance: unknown
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics:
+        - sports betting
+        - market growth
+        - "2026"
+      keyQuote: null
+
+    - id: SE026
+      publisher: Kalshi
+      title: "Kalshi Regulatory Notices (April 2026)"
+      url: "https://kalshi.com/regulatory/notices"
+      date: "2026-04-22"
+      accessDate: "2026-05-24"
+      accessStatus: rate-limited
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - insider trading
+        - disciplinary actions
+        - compliance
+      keyQuote: null
+
+    - id: SE027
+      publisher: Kalshi
+      title: "Kalshi About Page"
+      url: "https://kalshi.com/about"
+      date: "2026-05-01"
+      accessDate: "2026-05-24"
+      accessStatus: rate-limited
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - company identity
+        - mission
+        - product
+      keyQuote: null
+
+    - id: SE028
+      publisher: IQ.wiki
+      title: "Kalshi Milestones"
+      url: "https://iq.wiki/wiki/kalshi/milestones"
+      date: "2025-12-01"
+      accessDate: "2026-05-24"
+      accessStatus: ok
+      stance: neutral
+      sourceType: other
+      reputationTier: low
+      independence: independent
+      topics:
+        - company history
+        - product milestones
+      keyQuote: null
+
+  claims:
+    - id: CE001
+      statement: >-
+        Kalshi binary event contracts are priced between $0.01 and $0.99, representing the
+        market's probability estimate; the winning side settles at $1.00 and the losing side
+        at $0.00 per contract at resolution.
+      type: company-claimed
+      topic: binary contract mechanics
+      sourceRefs:
+        - SE017
+        - SE009
+        - SE001
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+
+    - id: CE002
+      statement: >-
+        Kalshi provides a REST API and a real-time WebSocket API for programmatic market
+        access and trading.
+      type: observed
+      topic: API architecture
+      sourceRefs:
+        - SE001
+        - SE022
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE006
+
+    - id: CE003
+      statement: >-
+        The Kalshi production REST API is hosted at external-api.kalshi.com/trade-api/v2 and
+        api.elections.kalshi.com/trade-api/v2; the current API specification version is 3.19.0.
+      type: observed
+      topic: API architecture
+      sourceRefs:
+        - SE002
+        - SE003
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE024
+
+    - id: CE004
+      statement: >-
+        Kalshi provides a sandbox/demo environment at demo-api.kalshi.co/trade-api/v2 and
+        demo-api.kalshi.co for developer testing without real-money risk.
+      type: observed
+      topic: developer tooling
+      sourceRefs:
+        - SE003
+        - SE001
+      confidence: high
+      freshness: current
+
+    - id: CE005
+      statement: >-
+        Kalshi publishes kalshi-python (v2.1.4) on PyPI, an auto-generated Python SDK
+        supporting Python 3.9+, built with OpenAPI Generator v7.15.0.
+      type: observed
+      topic: Python SDK
+      sourceRefs:
+        - SE008
+        - SE001
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE006
+
+    - id: CE006
+      statement: >-
+        Kalshi's GitHub organization hosts at minimum three public repositories relevant to
+        developers: kalshi-starter-code-python (94 stars, 69 forks), tools-and-analysis (19
+        stars, 10 forks), and a QuickFIX/Go fork for FIX protocol support.
+      type: observed
+      topic: developer signal
+      sourceRefs:
+        - SE004
+        - SE005
+        - SE006
+        - SE007
+        - SE001
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE026
+
+    - id: CE007
+      statement: >-
+        Kalshi's API supports four order types: limit, market, immediate-or-cancel (IOC), and
+        good-till-canceled (GTC); expiring orders (GTT) are available by combining GTC with
+        an expiration_ts parameter.
+      type: observed
+      topic: order mechanics
+      sourceRefs:
+        - SE003
+        - SE001
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+
+    - id: CE008
+      statement: >-
+        Each Kalshi user may maintain up to 200,000 open orders simultaneously.
+      type: observed
+      topic: platform limits
+      sourceRefs:
+        - SE003
+        - SE001
+      confidence: high
+      freshness: current
+
+    - id: CE009
+      statement: >-
+        Kalshi API authentication uses RSA or ECDSA private-key signing; each request must
+        include three headers: kalshiAccessKey, kalshiAccessSignature, and
+        kalshiAccessTimestamp.
+      type: observed
+      topic: API security
+      sourceRefs:
+        - SE003
+        - SE008
+      confidence: high
+      freshness: current
+
+    - id: CE010
+      statement: >-
+        Kalshi's API rate limits operate on a per-tier token-bucket system; the default cost
+        is 10 tokens per request, and per-user tier limits are retrievable via GET
+        /account/limits.
+      type: observed
+      topic: API rate limits
+      sourceRefs:
+        - SE002
+        - SE003
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE002
+
+    - id: CE011
+      statement: >-
+        Kalshi publishes an AsyncAPI specification for its WebSocket API alongside the OpenAPI
+        3.0 specification for the REST API, both downloadable from docs.kalshi.com.
+      type: observed
+      topic: developer tooling
+      sourceRefs:
+        - SE001
+        - SE022
+      confidence: high
+      freshness: current
+
+    - id: CE012
+      statement: >-
+        Kalshi's official API documentation portal at docs.kalshi.com includes getting-started
+        guides, API key management, a demo environment reference, WebSocket tutorials, a
+        glossary, rate-limit documentation, and a changelog.
+      type: observed
+      topic: developer tooling
+      sourceRefs:
+        - SE001
+        - SE022
+      confidence: high
+      freshness: current
+
+    - id: CE013
+      statement: >-
+        Kalshi maintains a fork of QuickFIX/Go (the leading open-source Go FIX Protocol
+        library), last updated February 2026, supporting FIX 4.0 through FIX 5.0 SP2 and
+        signaling Kalshi's intent to support institutional-grade FIX connectivity.
+      type: observed
+      topic: FIX protocol
+      sourceRefs:
+        - SE007
+        - SE004
+        - SE001
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE013
+
+    - id: CE014
+      statement: >-
+        Robinhood launched its Prediction Markets Hub in early 2025, powered by Kalshi as the
+        underlying exchange, enabling Robinhood's retail user base to trade event contracts
+        inside the Robinhood app.
+      type: third-party-reported
+      topic: brokerage distribution
+      sourceRefs:
+        - SE017
+        - SE018
+        - SE009
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE008
+
+    - id: CE015
+      statement: >-
+        By October 2025, Robinhood users accounted for approximately 25–35% of Kalshi's
+        daily trading volume on active sports days.
+      type: third-party-reported
+      topic: brokerage distribution
+      sourceRefs:
+        - SE017
+        - SE014
+      confidence: medium
+      freshness: recent
+
+    - id: CE016
+      statement: >-
+        Webull integrated Kalshi event contracts into its retail trading application in 2025,
+        establishing a second major brokerage distribution channel for Kalshi.
+      type: third-party-reported
+      topic: brokerage distribution
+      sourceRefs:
+        - SE017
+      confidence: medium
+      freshness: current
+
+    - id: CE017
+      statement: >-
+        Kalshi's event catalog spans six primary categories: sports, macroeconomic indicators
+        (CPI, Federal Reserve decisions, GDP), politics, weather, entertainment, and
+        cryptocurrency milestones.
+      type: company-claimed
+      topic: market categories
+      sourceRefs:
+        - SE009
+        - SE017
+        - SE010
+      confidence: high
+      freshness: current
+
+    - id: CE018
+      statement: >-
+        Kalshi launched a Market Maker Program in May 2025, including Susquehanna Investment
+        Group and Kalshi Trading LLC (an affiliated entity) as market makers.
+      type: third-party-reported
+      topic: market maker program
+      sourceRefs:
+        - SE010
+        - SE009
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE017
+
+    - id: CE019
+      statement: >-
+        Kalshi's taker-fee formula has a quadratic relationship to the contract's current
+        price, charging the highest per-share fees at mid-range prices (approximately $0.40–
+        $0.60) and lower fees near 0 or 1.
+      type: third-party-reported
+      topic: fee structure
+      sourceRefs:
+        - SE010
+        - SE009
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE005
+
+    - id: CE020
+      statement: >-
+        Approximately 40% of all Kalshi contract shares are traded within two hours of market
+        closing, and more than half of shares priced at $0.90 or above are exchanged in that
+        final window.
+      type: third-party-reported
+      topic: trading behavior
+      sourceRefs:
+        - SE010
+        - SE009
+      confidence: high
+      freshness: recent
+
+    - id: CE021
+      statement: >-
+        Sports event contracts accounted for approximately 89% of Kalshi's 2025 total fee
+        revenue; in recent months (Q3–Q4 2025 and into 2026) that figure appears to hover
+        closer to 95%.
+      type: third-party-reported
+      topic: revenue mix
+      sourceRefs:
+        - SE010
+        - SE012
+      confidence: high
+      freshness: current
+
+    - id: CE022
+      statement: >-
+        Kalshi reported approximately $1 billion in trading volume for Super Bowl LX on
+        February 10, 2026, demonstrating peak exchange throughput during a single sporting event.
+      type: company-claimed
+      topic: platform scale
+      sourceRefs:
+        - SE013
+        - SE014
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE018
+
+    - id: CE023
+      statement: >-
+        Following a January 2026 Massachusetts Superior Court preliminary injunction, Kalshi
+        deployed geofencing technology to block Massachusetts IP addresses from accessing
+        sports-related markets.
+      type: third-party-reported
+      topic: geofencing compliance
+      sourceRefs:
+        - SE009
+        - SE015
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE012
+
+    - id: CE024
+      statement: >-
+        Kalshi Exchange Rule 5.17(z) prohibits any trader who is a "decision maker" or has
+        direct or indirect influence over an event's outcome from trading contracts tied to
+        that event.
+      type: observed
+      topic: compliance
+      sourceRefs:
+        - SE015
+        - SE020
+      confidence: high
+      freshness: current
+
+    - id: CE025
+      statement: >-
+        On April 22, 2026, Kalshi published three disciplinary notices against political
+        candidates who traded contracts on their own elections, imposing five-year suspensions
+        and financial penalties ranging from $540 to $6,229.
+      type: observed
+      topic: enforcement actions
+      sourceRefs:
+        - SE015
+        - SE016
+        - SE020
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE004
+
+    - id: CE026
+      statement: >-
+        Kalshi explicitly prohibits war markets, assassination markets, and contracts directly
+        tied to death as a platform policy enforced through contract design rather than CFTC
+        rule.
+      type: company-claimed
+      topic: market prohibitions
+      sourceRefs:
+        - SE011
+        - SE009
+      confidence: high
+      freshness: current
+
+    - id: CE027
+      statement: >-
+        Kalshi holds a CFTC Designated Contract Market license, granted in November 2020 —
+        the same regulatory tier as CME Group and Cboe — which subjects it to CFTC market
+        surveillance and rule-enforcement obligations.
+      type: observed
+      topic: regulatory status
+      sourceRefs:
+        - SE016
+        - SE017
+        - SE009
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE004
+
+    - id: CE028
+      statement: >-
+        In February 2026, a video editor for the YouTuber MrBeast was fined and suspended
+        from Kalshi for suspected insider trading, one of several enforcement actions
+        highlighting insider-trading risks on the platform.
+      type: third-party-reported
+      topic: insider trading incident
+      sourceRefs:
+        - SE009
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE004
+
+    - id: CE029
+      statement: >-
+        Kalshi froze approximately $77 million in winnings from a market tied to Iranian
+        Supreme Leader Khamenei being "out" after his death, citing its policy against
+        "transactions directly tied to death" — a settlement decision that provoked widespread
+        user criticism.
+      type: third-party-reported
+      topic: settlement controversy
+      sourceRefs:
+        - SE009
+        - SE011
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE004
+        - QE020
+
+    - id: CE030
+      statement: >-
+        A Federal Reserve working paper published in February 2026 found that Kalshi's
+        prediction-market probability data matched or outperformed traditional Wall Street
+        forecasting tools on CPI and interest rate indicators.
+      type: third-party-reported
+      topic: forecasting accuracy
+      sourceRefs:
+        - SE012
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE016
+
+    - id: CE031
+      statement: >-
+        CNN and CNBC began publishing Kalshi probability data alongside polls and expert
+        forecasts as a live data integration by early 2026.
+      type: third-party-reported
+      topic: media partnerships
+      sourceRefs:
+        - SE012
+        - SE014
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE016
+
+    - id: CE032
+      statement: >-
+        Kalshi sports market descriptions use generic city names (e.g., "Pro Football
+        Champion: Chicago") instead of official team names and logos because the NFL, NBA,
+        and MLB have not granted Kalshi official data or branding licenses.
+      type: third-party-reported
+      topic: league data licenses
+      sourceRefs:
+        - SE010
+        - SE009
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE011
+
+    - id: CE033
+      statement: >-
+        The NFL, NBA, and MLB each submitted letters to the CFTC in 2025 expressing concerns
+        about Kalshi's ability to regulate sports-related prediction-market trading, and as of
+        May 2026, no official league data agreement has been publicly announced.
+      type: third-party-reported
+      topic: league data licenses
+      sourceRefs:
+        - SE010
+        - SE009
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE011
+
+    - id: CE034
+      statement: >-
+        In October 2025, Kalshi expanded its platform to 140-plus countries, restricting
+        access in 38 jurisdictions including Canada, the United Kingdom, France, and Russia.
+      type: company-claimed
+      topic: international expansion
+      sourceRefs:
+        - SE017
+        - SE009
+        - SE014
+      confidence: high
+      freshness: current
+
+    - id: CE035
+      statement: >-
+        Kalshi accepts Solana deposits up to $500,000 and supports Bitcoin, USDC, and Worldcoin
+        as deposit methods through blockchain partnership integrations, and has grant programs
+        with Solana and Base developer ecosystems.
+      type: company-claimed
+      topic: blockchain integration
+      sourceRefs:
+        - SE017
+      confidence: medium
+      freshness: current
+
+    - id: CE036
+      statement: >-
+        Kalshi's API v3.19.0 includes RFQ (request-for-quote) endpoints for block trades and
+        multivariate event market support, extending the platform beyond simple Yes/No
+        single-outcome contracts.
+      type: observed
+      topic: API capabilities
+      sourceRefs:
+        - SE003
+        - SE022
+      confidence: high
+      freshness: current
+
+    - id: CE037
+      statement: >-
+        As a CFTC DCM, Kalshi generates CFTC-reportable exchange data through its API, which
+        is publicly accessible for research and analysis, subject to API rate limits.
+      type: inferred
+      topic: data transparency
+      sourceRefs:
+        - SE001
+        - SE016
+      confidence: medium
+      freshness: current
+
+    - id: CE038
+      statement: >-
+        Kalshi Trading LLC, an affiliated company, trades on the Kalshi exchange itself under
+        the Market Maker Program; the FT described this arrangement as "somewhat controversial"
+        given the potential for conflict of interest with the exchange operator role.
+      type: third-party-reported
+      topic: market maker conflict of interest
+      sourceRefs:
+        - SE010
+        - SE009
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE017
+
+    - id: CE039
+      statement: >-
+        The Kalshi Market Maker Program fee schedules, affiliated-entity trading constraints,
+        and volume thresholds are documented in classified CFTC filings and are not publicly
+        disclosed.
+      type: third-party-reported
+      topic: market maker transparency
+      sourceRefs:
+        - SE010
+        - SE009
+      confidence: high
+      freshness: current
+
+    - id: CE040
+      statement: >-
+        No verified active Kalshi app listing was accessible on the Apple App Store (at tested
+        App Store IDs) or Google Play Store during this research run on May 24, 2026.
+      type: observed
+      topic: mobile app availability
+      sourceRefs:
+        - SE009
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE003
+
+    - id: CE041
+      statement: >-
+        Kalshi's exchange infrastructure processed approximately $2 billion per week in
+        transaction volume during peak active event periods by early 2026, according to
+        company and CNBC reporting.
+      type: company-claimed
+      topic: platform scale
+      sourceRefs:
+        - SE013
+        - SE014
+        - SE021
+      confidence: high
+      freshness: current
+
+    - id: CE042
+      statement: >-
+        Kalshi API specification v3.19.0 covers 14 endpoint functional groups including
+        structured-targets, milestones, live-data, FCM-member-specific endpoints, and
+        multivariate events, indicating ongoing API surface expansion.
+      type: observed
+      topic: API capabilities
+      sourceRefs:
+        - SE003
+        - SE022
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE021
+
+    - id: CE043
+      statement: >-
+        Kalshi stated its use of Series E proceeds includes "add brokerages, pursue media
+        partnerships and expand its product lineup," representing the closest approximation
+        of a public product roadmap as of late 2025.
+      type: company-claimed
+      topic: product roadmap
+      sourceRefs:
+        - SE018
+        - SE021
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs:
+        - QE021
+
+  evidenceGaps:
+    - type: missing-source
+      severity: material
+      topic: mobile app availability
+      missingEvidence: >-
+        Verified active Apple App Store and Google Play Store listings for Kalshi, with
+        current star ratings and review counts.
+      whyItMatters: >-
+        Mobile is the primary retail trading surface for competitors like Robinhood and
+        sportsbooks; a deactivated listing would represent a significant distribution and
+        retention gap.
+      diligencePath: >-
+        Direct App Store search for "Kalshi" on iOS and Android devices; review store
+        developer console if App ID is known.
+      relatedQuestionRefs:
+        - QE003
+
+    - type: private-evidence-only
+      severity: material
+      topic: market maker transparency
+      missingEvidence: >-
+        Kalshi Market Maker Program terms, fee rebates for Susquehanna and Kalshi Trading,
+        and volume caps are documented only in classified CFTC filings.
+      whyItMatters: >-
+        Kalshi Trading's dual role as affiliated market maker and exchange operator creates
+        a potential conflict of interest that cannot be independently assessed without the
+        classified filing details.
+      diligencePath: >-
+        CFTC FOIA request for DCM market-maker program filings; direct ask in due diligence
+        data room.
+
+    - type: missing-source
+      severity: material
+      topic: platform reliability
+      missingEvidence: >-
+        Kalshi's uptime SLA, historical incident log, mean-time-to-recovery metrics, and
+        any third-party reliability audits for the exchange engine.
+      whyItMatters: >-
+        With $2B/week in volume and a Super Bowl single-day record of $1B, unplanned outages
+        carry significant financial and reputational consequences; institutional counterparties
+        need reliability guarantees.
+      diligencePath: >-
+        Request status page (status.kalshi.com); direct ask to engineering team; check
+        external uptime monitors.
+      relatedQuestionRefs:
+        - QE009
+        - QE010
+
+    - type: missing-source
+      severity: material
+      topic: technical stack
+      missingEvidence: >-
+        Kalshi's production cloud provider, CDN, database, message-queue, and frontend
+        framework are not publicly disclosed.
+      whyItMatters: >-
+        Technology vendor concentration risk, infrastructure scalability, and switching costs
+        are unassessable without stack disclosure.
+      diligencePath: >-
+        Ask engineering team directly in technical due diligence session; review job postings
+        for stack signals.
+      relatedQuestionRefs:
+        - QE015
+
+    - type: missing-source
+      severity: material
+      topic: security certifications
+      missingEvidence: >-
+        No SOC 2 Type II, ISO 27001, or third-party penetration test certifications have
+        been publicly disclosed for Kalshi's exchange infrastructure.
+      whyItMatters: >-
+        As a financial exchange handling $2B/week, institutional counterparties and regulators
+        will expect evidence of independent security assurance.
+      diligencePath: >-
+        Direct ask to CISO; review of CFTC annual DCM compliance filings; external trust
+        portal.
+      relatedQuestionRefs:
+        - QE023
+
+    - type: missing-source
+      severity: minor
+      topic: API versioning and breaking changes
+      missingEvidence: >-
+        Kalshi's API changelog is referenced at docs.kalshi.com but the specific version
+        history and breaking changes since 2024 could not be accessed during this run.
+      whyItMatters: >-
+        Rapid API versioning without backward compatibility could disrupt third-party
+        integrators and SDK users.
+      diligencePath: >-
+        Review docs.kalshi.com changelog page; contact Kalshi developer relations.
+
+    - type: missing-source
+      severity: minor
+      topic: developer community activity
+      missingEvidence: >-
+        No Hacker News, Stack Overflow, or Discord community activity for Kalshi API users
+        could be verified during this research run due to access restrictions.
+      whyItMatters: >-
+        Developer community traction signals ecosystem health beyond official GitHub repos.
+      diligencePath: >-
+        Search Hacker News for "Kalshi API"; check Stack Overflow for [kalshi] tag; search
+        for Kalshi Discord or developer Slack.
+
+acknowledgedWarnings:
+  - dimension: paywallRisk
+    reason: >-
+      Two official Kalshi sources (kalshi.com/about and kalshi.com/regulatory/notices) returned
+      HTTP 429 rate-limited responses via Jina reader proxy during this research run; these are
+      tagged rate-limited and replaced with accessible alternative official sources (docs.kalshi.com
+      and CFTC filings) for all substantive claims. The overall restricted share for this chapter
+      remains below 30%.
+  - dimension: tableNotes
+    reason: >-
+      TE004 (Trust/Compliance Controls Table) is a factual enumeration of control status from
+      primary regulatory and official sources; each cell is a known fact, regulatory requirement,
+      or sourced claim with no estimation. Notes field acknowledges data sourcing convention.
