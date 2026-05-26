@@ -1,0 +1,2804 @@
+{
+  "schemaVersion": "report-v2",
+  "artifact": "risks",
+  "slug": "flex",
+  "runDate": "2026-05-26",
+  "company": {
+    "name": "Flex"
+  },
+  "chapter": {
+    "number": 7,
+    "title": "Risks",
+    "summary": "Flex's risk profile is dominated by five interlocking threat clusters. First, regulatory and legal exposure: Flex Rent is structured as an unsecured line of credit originated by Lead Bank or Column N.A., making it subject to TILA, CFPB oversight, and state-by-state consumer lending regulation; the company's NMLS licensing footprint (two registered entities, #2599800 and #2256673) is real but incomplete in public disclosure, and state-specific restrictions such as Vermont's loan-solicitation-only carve-out signal a patchwork compliance posture. Second, consumer credit and underwriting model risk: Flex advances rent in full to landlords before collecting from renters, creating real credit exposure on every transaction; the underwriting model uses credit bureau data, bank balance checks, and payment history in an untransparent way with no published default rates, loss reserve disclosures, or independent model audits. Third, bank partner and infrastructure dependency: the ongoing migration from Lead Bank to Column N.A. with a hard June 1, 2026 deadline is a live operational risk; any gap in bank partner coverage would halt new originations and potentially freeze active accounts; Plaid dependency adds a critical single-point-of-failure in the onboarding and payment collection pipeline. Fourth, operational and servicing failure risk: the BBB complaint file (400+ complaints, 1/5 stars), the 2023 Mother Jones investigation into deadline confusion and evictions threatened, and the WSBTV investigation into a consumer who sent 31 emails over a month without resolution collectively demonstrate that servicing failures create direct harm to housing-insecure renters. Fifth, financial model, market structure, and execution risk: the monthly membership fee plus 1% bill payment fee model must be sustainable against churn; fee revenue concentrated on credit-stressed renters creates adverse selection; and PMS platform concentration means a single partner defection could eliminate access to millions of units. Kill criteria include: regulatory enforcement action or consent order from CFPB or state regulator; loss of both bank partners without replacement; loss of Yardi or RealPage integration; default rates exceeding fee revenue; or three consecutive quarters of net BBB complaint volume increase despite disclosed remediation."
+  },
+  "sections": [
+    {
+      "id": "regulatory-legal-risk",
+      "title": "Regulatory and legal risk: consumer credit classification, licensing gaps, and disclosure obligations",
+      "body": "Flex Rent is legally structured as an unsecured line of credit, not a payment facilitation or subscription service. The footer disclosures on the flexpartners payment timing page and the Signing Up for Flex Rent help article make this explicit: 'All loans, banking services, and payment transmissions are offered by Lead Bank or Column N.A., Member FDIC. An application and credit assessment are required. Unsecured lines of credit for Flex Rent are provided for a recurring monthly membership fee up to $14.99.' Two distinct NMLS-registered entities operate the non-bank functions: Flexible Finance Brokering, Inc. (NMLS #2599800) and Flexible Finance Servicing, Inc. (NMLS #2256673). Neither Flex nor its subsidiaries disburse loan proceeds or move consumer funds — all origination and disbursement flows through the bank partners.\n\nThis structure creates several regulatory exposure layers. First, TILA compliance: Flex publishes a Truth in Lending disclosure for its 3-fee variant (getflex.com/legal/flex-rent-truth-in-lending-disclosure-3-fee), which indicates that at least some pricing configurations require formal credit cost disclosures. The core membership fee model — $14.99/month plus 1% of rent — does not present a simple APR, and CFPB guidance on fintech credit products has consistently focused on whether recurring fees effectively constitute finance charges that must be disclosed as APR. If regulators or courts determine that the effective APR on a $1,500 rent advance repaid over two payments is materially higher than disclosed, Flex faces TILA restatement risk, class action exposure, and potential consent order obligations.\n\nSecond, the state licensing landscape is heterogeneous. The getflex.com/legal/licenses page discloses state-by-state license status, and the Vermont disclosure on the payment timing page makes an unusually restrictive statement: 'THIS IS A LOAN SOLICITATION ONLY. FLEXIBLE FINANCE BROKERING, INC. IS NOT THE LENDER. INFORMATION RECEIVED WILL BE SHARED WITH ONE OR MORE THIRD PARTIES IN CONNECTION WITH YOUR LOAN INQUIRY.' This carve-out implies that Flex cannot fully operate in Vermont as it does elsewhere, and it signals that other state regulators may require similar modifications. Any state that characterizes Flex's product differently from the bank-origination framing — for example, as a rent-to-own, payday-adjacent, or wage-advance product — could trigger licensing requirements or cease-and-desist actions that Flex's current structure does not satisfy.\n\nThird, data and privacy obligations: the SSN-requirement help article and the income verification and bank linking articles reveal that Flex collects Social Security Numbers, income data, bank account credentials (via Plaid), and ongoing bank balance information. This data collection footprint creates GLBA, state data privacy law (CCPA, CPRA, and analogs), and biometric/financial privacy obligations that are not publicly documented in a consumer-facing privacy notice or data-processing disclosure. The getflex.com/legal page contains the consumer-facing legal documents but does not publicly disclose a data retention schedule, third-party data sharing register, or GLBA-compliant privacy notice at the level of specificity regulators routinely request. Fourth, Fannie Mae's positive-rent-payment-reporting program and the Federal Housing Finance Agency's September 2025 order creating a rent-to-homeownership pathway mean that Flex's credit reporting practices are now embedded in a regulated ecosystem with increasing FHFA and GSE oversight of rent-data flows.\n\nThe adverse stance on this risk: a CFPB examination of Flex's fee disclosure practices — which already attract high complaint volume and consumer harm allegations — could rapidly escalate from inquiry to consent order. CFPB has settled or issued consent orders against multiple fintech lenders using membership-fee models (e.g., Earnin, Dave, MoneyLion) precisely because recurring fees create effective APRs that look different from the nominal framing.",
+      "claimRefs": [
+        "CR001",
+        "CR002",
+        "CR003",
+        "CR004",
+        "CR005",
+        "CR006",
+        "CR007",
+        "CR008"
+      ],
+      "tableRefs": [
+        "TR001"
+      ],
+      "figureRefs": [
+        "FR001"
+      ]
+    },
+    {
+      "id": "consumer-credit-default-underwriting-risk",
+      "title": "Consumer credit, default, and underwriting model risk: Flex advances rent before collecting from credit-stressed renters",
+      "body": "Flex's business model requires it to advance the full month's rent to the property manager before the renter's second payment is received. This means Flex bears actual credit exposure on every live account for the roughly two-week period between first-half payment and second-half collection. The scale of this exposure is material: at 2.7 million cumulative customers and a claimed $33 billion in payments processed, even a modest default rate creates significant loss exposure per year.\n\nFlexpartners documentation confirms the risk allocation: the partner help article on 'What if my resident doesn't pay Flex back?' confirms that Flex advances rent to the property regardless of whether it has yet collected from the renter, and that non-payment by the renter creates a balance owed to Flex. This confirms that Flex, not the property manager, bears the default risk. The resident qualifications documentation (flexpartners.zendesk.com) states that Flex evaluates credit report data, bank account information, and payment history, and that 'residents who are fair or better credit, with sufficient deposits and average bank balances will qualify.' The Signing Up help article confirms that SSN, income verification, and Plaid bank linking are required at onboarding.\n\nThe underwriting model risk is significant because Flex's target demographic is structurally credit-stressed. The March 2026 Financial Health Survey found that 70% of active Flex renters rated their own credit as fair or poor, and 47% spent more than they earned in the prior year. These are not low-risk borrowers. The causal study in the same survey used a regression-discontinuity design on applicants near the approval margin — a population that is by construction close to the underwriting threshold and not representative of the full approved pool. No loss rate, charge-off rate, delinquency rate, or reserve coverage has ever been publicly disclosed for the Flex Rent product.\n\nThe income verification article discloses that Flex uses income data as part of its underwriting, but the specific signals used, model architecture, and independent validation record are not public. Model risk increases in economic downturns: at the moment renter financial stress rises most — job loss, medical emergency, reduction in hours — Flex's default rate would likely spike precisely when its own capital base is most constrained. The Harvard JCHS America's Rental Housing 2026 report documents that renter affordability pressure has been rising for years, with cost-burden rates elevated especially among low-income renters. Flex's user base skews heavily toward this population.\n\nThe Flex Funds feature (help.getflex.com/...31677734448663) allows renters to pre-fund a balance that reduces default risk for individual accounts, but it is not available to all customers and does not address systemic default in a downturn. The bank account linking guidelines (help.getflex.com/...26169491459735) confirm that Flex monitors account balances ongoing through Plaid, which may allow earlier detection of deteriorating financial health, but no automated credit-limit adjustment, proactive account pause, or loss-mitigation workflow is publicly described. The adverse question here is whether Flex's approval model, applied to credit-stressed renters in a rising-rent, low-savings environment, is effectively creating a cycle where the cost of the product ($14.99/month plus 1% fee) for a renter paying $1,500/month is roughly $30/month, or $360/year — a meaningful additional cost burden for households already spending more than they earn.",
+      "claimRefs": [
+        "CR009",
+        "CR010",
+        "CR011",
+        "CR012",
+        "CR013",
+        "CR014",
+        "CR015"
+      ],
+      "tableRefs": [],
+      "figureRefs": []
+    },
+    {
+      "id": "partner-bank-infrastructure-dependency-risk",
+      "title": "Partner, bank, and infrastructure dependency risk: bank migration, Plaid single point of failure, and PMS concentration",
+      "body": "Flex's operating model depends on three categories of critical external dependencies: bank partners that originate and disburse loans, Plaid for bank account verification and ongoing balance monitoring, and PMS platforms for embedded distribution to renters.\n\nBank partner risk is currently acute. The help article 'Notice of Change — Lead Bank to Column N.A.' (published ahead of a June 1, 2026 deadline) documents a live migration of the banking backend from Lead Bank to Column N.A., Member FDIC. The article states that customers who do not accept the new terms by June 1, 2026 may have their access to Flex interrupted, and that customers who pay via their property's rent portal must update their payment method to the new Flex-provided bank account or debit card before their next payment date. This migration affects the underlying account structure — not just a backend swap — creating material execution risk: if property managers or renters fail to complete the update in time, rent payments may fail, generating the same class of harm documented in the BBB complaints, Mother Jones, and WSBTV investigations. The migration also reveals concentration risk: Flex currently operates with two bank partners (Lead Bank and Column N.A.), and the transition implies that Lead Bank's role is being wound down. If Column N.A. were to exit the relationship or face regulatory issues of its own, Flex would need to find a new FDIC-chartered bank partner — a process that can take months and requires OCC or FDIC approval of bank-fintech program agreements.\n\nPlaid dependency is a critical single-point-of-failure in the underwriting and payment collection pipeline. The bank account linking guidelines confirm that Flex uses a third-party aggregator (consistent with Plaid's public description) to verify bank accounts and monitor balances. Plaid serves more than 12,000 financial institutions and processes over 1 million daily connections. A Plaid outage, API change, or regulatory restriction — including CFPB rulemaking on data aggregator access (Section 1033 of Dodd-Frank, which issued final rules in 2024) — could disrupt Flex's ability to onboard new customers or monitor existing accounts. CFPB's 1033 rule is particularly relevant: it requires financial institutions to make account data available to consumers and their authorized third parties, but it also allows financial institutions to set rate limits and restrict access for data security reasons, which could affect Plaid's ability to provide real-time balance monitoring at the scale Flex requires.\n\nPMS platform concentration is the third layer. Flex's seven active integrations (Yardi, RealPage, Entrata, AppFolio, MRI, Zego, Rent Manager) provide distribution to approximately 8 million+ units. The RealPage 'strategic partnership' framing (preferred technology provider) creates both a moat and a concentration risk: if RealPage were to switch to a different flexible payment provider, launch its own product, or change integration terms, Flex could lose access to the more than 1.3 million units the RealPage partnership announcement cited. Similar risks apply to Yardi, which serves an even larger share of institutional multifamily properties. None of the integration agreements are publicly disclosed, and the 'strategic partnership' language does not indicate exclusivity or long-term contractual protection. The NAAHQ 2025 AppFolio Benchmark Report notes that PMS adoption and technology integration strategies are evolving rapidly among property managers, increasing the risk that competitive dynamics displace existing integrations.",
+      "claimRefs": [
+        "CR016",
+        "CR017",
+        "CR018",
+        "CR019",
+        "CR020",
+        "CR021",
+        "CR022"
+      ],
+      "tableRefs": [
+        "TR003"
+      ],
+      "figureRefs": [
+        "FR003"
+      ]
+    },
+    {
+      "id": "operational-servicing-reputation-risk",
+      "title": "Operational, servicing failure, and reputation risk: payment processing errors, complaint burden, and housing harm",
+      "body": "Flex's most visible and adverse public risk record centers on servicing failures that directly threaten renters' housing security. The WSBTV Channel 2 investigation documented a consumer who sent 31 emails over more than a month attempting to update a debit card and cancel her membership; Flex failed to process her rent during this period, leaving her owing $1,200 to her apartment complex. In its statement to WSBTV, Flex acknowledged the failure: 'We have resolved this customer's issue but put plain and simply, it should not have taken as long as it did.' The same investigation reported that the BBB file for Flex (ID 0121-87134212) contained more than 400 complaints in the prior year, with a 1-out-of-5 star rating, and that many complaints involved rent going unpaid despite the app showing a successful payment.\n\nThe 2023 Mother Jones investigation documented a broader pattern: contradictory deadline notices sent to renters in a 'small test' that caused missed payment windows, resulting in $50 late fees and eviction threats; cases where Flex's platform showed payment confirmation but landlords did not receive funds; and a general pattern of confusing and inconsistent communications about payment timing. In response, Flex cited 'a limited experiment where a small sample of customers were placed on a 3-day (instead of 5-day) first payment window' — an acknowledgment that operational experiments on a financially vulnerable user base created real downstream harm.\n\nThe Flex consumer complaints help article (help.getflex.com/...22416580502423) confirms that a formal consumer complaint process exists and that responses are targeted within 24 hours, but this is a reactive mechanism. The customer service infrastructure described — chatbot, email ticketing, live agent escalation — is typical of a company that has grown faster than its support capacity. Flex's statement to WSBTV also acknowledged fast growth as a factor: 'given the surge in demand for our service, as our company grows, we are working to grow and improve our customer service team.'\n\nThe structural risk here is not just reputational. Flex operates in a domain where a servicing failure — rent not paid on time, account frozen, payment method stuck — can result in a late fee, eviction notice, or lease termination for a renter who cannot absorb these shocks. The March 2026 Financial Health Survey reports that 73% of active Flex users experienced an unexpected financial shock in the prior month. Operational failures at Flex thus fall disproportionately on the most vulnerable members of its user base. The Managing Payment Method help article confirms that Flex does not support ACH as a payment method (only debit and credit cards), which narrows the payment options and increases the risk of payment failure if a renter's primary card is disrupted — exactly the scenario documented in the WSBTV investigation.\n\nThe Managing Your Payment Method and Updating Account Information articles document a multi-step process for changing payment methods that requires updating both the Flex app and, for portal users, the property's rent portal with new Flex-provided credentials. This two-step process, combined with the bank migration happening in June 2026, creates a high-friction moment where operational failures are most likely. The bank migration article itself warns: 'If you skip this step and use the old Flex payment method, the rent payment you make with it will fail.'",
+      "claimRefs": [
+        "CR023",
+        "CR024",
+        "CR025",
+        "CR026",
+        "CR027",
+        "CR028",
+        "CR029"
+      ],
+      "tableRefs": [
+        "TR002"
+      ],
+      "figureRefs": []
+    },
+    {
+      "id": "financial-model-execution-people-risk",
+      "title": "Financial model, market structure, execution, and people risk: fee sustainability, adverse selection, and kill criteria",
+      "body": "Flex's revenue model depends on renters paying a recurring $14.99/month membership fee plus a 1% bill payment fee on each rent payment. For a renter paying $1,500/month in rent, the annual cost is approximately $360 in membership fees plus $216 in bill payment fees — about $576/year or $48/month total cost of the product. This is a meaningful sum for the financially stressed renters who make up Flex's core user base. The membership fee accrues even in months when the renter does not use Flex Rent to pay rent, per the membership fee help article: 'Turning rent autopay off does not deactivate your line of credit. Your membership remains active — and the monthly fee will still be charged — whether or not you use Flex Rent to pay rent that month.'\n\nThis design creates three financial model risks. First, adverse selection pressure: renters who regularly use Flex are predominantly the most financially stressed, as demonstrated by the March 2026 survey data (70% rate own credit fair or poor; 47% spent more than earned). The population of renters who would pay $576/year for a rent-splitting product skews heavily toward those who cannot absorb the rent-on-the-first-without-Flex, creating a default correlation between product usage and credit stress that makes the loan portfolio more exposed to macro shocks than a random sample of renters. Second, fee model sustainability in a downturn: if renter financial stress rises and defaults increase, Flex's credit losses (borne by Flex, not the bank partners, per the servicing model) could exceed fee revenue. No loss rate or reserve balance has been publicly disclosed, making independent assessment of this risk impossible. Third, churn and lock-in: the auto-renewal design (memberships renew automatically; cancellation requires navigation through the app at least 2 days before month end) creates a membership base that may include a significant proportion of inactive or disengaged subscribers. If churn accelerates — due to adverse publicity, regulatory action, or improved alternatives — the retention economics could deteriorate rapidly.\n\nMarket structure risks compound the fee model risk. TransUnion's September 2025 report documents that FHFA created a new pathway from rent payment history to homeownership in 2025, and Fannie Mae's positive rent payment reporting program now integrates rent payment data into mortgage underwriting via Desktop Underwriter. This regulatory tailwind improves the credit-building value proposition of rent reporting generally, but it also increases scrutiny on the quality and accuracy of the underlying data that reaches credit bureaus. If Flex's payment data reaches credit bureaus inaccurately or with timing errors, the reputational and legal exposure escalates substantially.\n\nPeople and execution risk centers on customer service capacity, regulatory compliance expertise, and key-person concentration in leadership. Flex has not publicly disclosed its headcount breakdown, org structure, or leadership succession plan. The company's public positioning — through the 'Responsible Flexibility' framework authored by Ryan Metcalf (VP of Public Affairs), the Hope+Door eviction prevention partnership, and the Financial Health Survey research — demonstrates awareness of reputational and regulatory risk, but it does not substitute for the compliance infrastructure, model risk governance, and customer service capacity that a regulated consumer credit operation at 2.7 million customers requires. The Harvard JCHS 2026 rental housing report notes that renter affordability challenges are worsening across the income distribution, increasing both the market opportunity and the policy scrutiny that rent fintech products will face in the coming years. The NAAHQ 2025 benchmark report highlights that property managers are consolidating around fewer, larger PMS platforms, increasing platform concentration risk. Execution risk is amplified by the concurrent bank migration, which requires coordinated customer communication, property manager outreach, and portal update compliance across thousands of properties simultaneously.",
+      "claimRefs": [
+        "CR030",
+        "CR031",
+        "CR032",
+        "CR033",
+        "CR034",
+        "CR035",
+        "CR036",
+        "CR037",
+        "CR038",
+        "CR046"
+      ],
+      "tableRefs": [
+        "TR004",
+        "TR005"
+      ],
+      "figureRefs": [
+        "FR002"
+      ]
+    }
+  ],
+  "tables": [
+    {
+      "id": "TR001",
+      "title": "Regulatory / legal risk register",
+      "columns": [
+        "Risk / rule / exposure",
+        "Jurisdiction / trigger",
+        "Current public status",
+        "Likelihood",
+        "Severity",
+        "Mitigation maturity",
+        "Residual exposure",
+        "Diligence path"
+      ],
+      "rows": [
+        [
+          "TILA / Regulation Z finance-charge disclosure and effective-APR misclassification",
+          "Federal (CFPB) and all 50 states — triggered by CFPB examination or class action",
+          "Flex publishes a TILA disclosure for the 3-fee variant; core membership-fee model does not present a simple APR; CFPB has actioned multiple fintech membership-fee lenders",
+          "Medium to high",
+          "Critical",
+          "Low to medium",
+          "High",
+          "Review full TILA disclosure set, legal opinion on fee-as-finance-charge analysis, and prior CFPB examination communications"
+        ],
+        [
+          "State consumer lending license compliance and patchwork regulatory posture",
+          "All U.S. states — triggered by state AG investigation or license examination",
+          "NMLS IDs #2599800 and #2256673 registered; Vermont requires a loan-solicitation-only carve-out; license status page exists but detailed state-by-state coverage is not publicly verified",
+          "Medium",
+          "High",
+          "Medium",
+          "Material",
+          "Request full state license matrix, outstanding deficiency letters, and any state-specific product restrictions or cease-and-desist history"
+        ],
+        [
+          "CFPB UDAAP enforcement: membership fee charged when product not used; cancellation friction",
+          "Federal (CFPB) — triggered by complaint spike, whistleblower, or supervisory exam",
+          "Membership fee charged even when renter does not use Flex Rent that month; cancellation requires 2-day advance notice; BBB complaint volume exceeds 400 in prior 12 months",
+          "Medium",
+          "High",
+          "Low",
+          "High",
+          "Review full complaint disposition data, cancellation UX flow, and legal opinion on UDAAP exposure for auto-renewal with friction"
+        ],
+        [
+          "Data privacy and GLBA / CCPA obligations from SSN, income, and bank account collection",
+          "Federal (GLBA, FTC) and state (CCPA/CPRA, state analogs) — triggered by breach or regulatory audit",
+          "Flex collects SSN, bank credentials via Plaid, income data, and ongoing balance data; consumer-facing privacy notice exists but data retention schedule and third-party sharing register are not publicly detailed",
+          "Medium",
+          "High",
+          "Unknown",
+          "Material",
+          "Review privacy notice, Plaid data-sharing agreement, GLBA safeguards program, CCPA data-map, and breach-response runbook"
+        ],
+        [
+          "CFPB Section 1033 / Dodd-Frank open banking rule impact on Plaid dependency",
+          "Federal (CFPB) — final rule issued October 2024; financial institutions may restrict aggregator access",
+          "CFPB 1033 final rule allows financial institutions to set rate limits on data aggregators; if banks restrict Plaid access, Flex's onboarding and ongoing balance monitoring could be disrupted",
+          "Low to medium",
+          "High",
+          "Low",
+          "Material",
+          "Review Plaid contract terms and contingency plan for alternative account verification and balance monitoring if Plaid access is restricted"
+        ],
+        [
+          "Credit reporting accuracy obligations and FCRA exposure",
+          "Federal (FCRA, CFPB) — triggered by consumer dispute or bureau audit",
+          "Positive rent payment history may be reported to credit bureaus; Fannie Mae DU and FHFA pathways increase reliance on this data; inaccurate reporting creates FCRA dispute liability",
+          "Low to medium",
+          "Medium",
+          "Unknown",
+          "Material",
+          "Review credit reporting procedures, dispute response workflows, furnisher certification status, and any prior CFPB furnisher examinations"
+        ]
+      ],
+      "notes": "Severity, likelihood, mitigation maturity, and residual exposure are qualitative assessments based only on public evidence. No public lawsuit, consent order, or enforcement action against Flex was found in the retained evidence base; this does not prove absence of non-public regulatory communications. CFPB fintech membership-fee enforcement history (Earnin, Dave, MoneyLion) is treated as reference context, not a finding against Flex specifically.",
+      "enumerationScope": {
+        "coverage": "exhaustive",
+        "basis": "Exhaustive across legal and regulatory risk items surfaced in Flex's public legal pages, NMLS disclosures, TILA disclosure, payment timing footer language, bank partner migration notice, SSN and income verification articles, Plaid dependency, and federal regulatory developments (CFPB, FHFA, Fannie Mae) reviewed in this run."
+      },
+      "claimRefs": [
+        "CR001",
+        "CR002",
+        "CR003",
+        "CR004",
+        "CR005",
+        "CR006",
+        "CR007",
+        "CR008"
+      ]
+    },
+    {
+      "id": "TR002",
+      "title": "Operational / quality / security risk register",
+      "columns": [
+        "Failure mode",
+        "Likelihood",
+        "Severity",
+        "Mitigation maturity",
+        "Residual exposure",
+        "Unresolved gap"
+      ],
+      "rows": [
+        [
+          "Payment processing failure: rent not paid to landlord despite renter completion; housing harm results",
+          "Medium — multiple documented incidents",
+          "Critical — eviction risk, late fee, housing instability for renters",
+          "Low to medium — improvements claimed but no SLA or incident disclosure",
+          "High",
+          "No public SLA, uptime disclosure, or incident count; BBB complaint volume shows ongoing pattern"
+        ],
+        [
+          "Bank partner migration failure: June 2026 Lead Bank → Column cutover; payment method not updated in time",
+          "Medium — active migration underway; two-step customer action required",
+          "High — failed rent payment for non-compliant accounts; housing harm risk",
+          "Low — migration is live; customer communication is reactive; no completion rate disclosed",
+          "High",
+          "No migration completion rate, property manager outreach log, or fallback for accounts that miss the deadline"
+        ],
+        [
+          "Payment method update friction: debit card change requires multi-step update across app and rent portal",
+          "High — documented in multiple BBB complaints and WSBTV investigation",
+          "High — payment failure, late fees, eviction threat",
+          "Low — acknowledged as a known failure mode by Flex in public statement",
+          "Material",
+          "No technical fix publicly described; ACH not supported as an alternative"
+        ],
+        [
+          "Plaid outage or API disruption: bank account verification and balance monitoring fails",
+          "Low — Plaid is large-scale infrastructure; but prior Plaid outages have occurred",
+          "High — new onboarding halted; ongoing balance monitoring interrupted; defaults may not be caught",
+          "Unknown — no public contingency plan",
+          "Material",
+          "No public description of backup bank verification or balance monitoring mechanism"
+        ],
+        [
+          "Consumer data breach: SSN, bank credentials, income, and balance data exposed",
+          "Low — no reported breach found in retained evidence",
+          "Critical — GLBA, state, and FCRA obligations; class action exposure; reputational damage",
+          "Unknown — no public SOC 2 or security program disclosure",
+          "Material",
+          "No public SOC 2 report, penetration test results, or security certification found"
+        ]
+      ],
+      "notes": "Likelihood and severity are qualitative assessments based on documented public incidents and product design. No Flex security breach was found in the retained evidence set.",
+      "claimRefs": [
+        "CR009",
+        "CR010",
+        "CR016",
+        "CR017",
+        "CR023",
+        "CR024",
+        "CR025",
+        "CR026",
+        "CR027"
+      ]
+    },
+    {
+      "id": "TR003",
+      "title": "Partner / dependency risk register",
+      "columns": [
+        "Dependency",
+        "Counterparty",
+        "Role",
+        "Concentration",
+        "Failure scenario",
+        "Severity",
+        "Mitigation",
+        "Residual exposure"
+      ],
+      "rows": [
+        [
+          "Bank partner origination",
+          "Column N.A. (primary post-migration); Lead Bank (transitioning out)",
+          "Originates and disburses unsecured lines of credit; without bank partner Flex cannot operate",
+          "Critical — two partners, active migration to one",
+          "Column N.A. exits the program; Lead Bank exit not replaced; regulatory issue at Column",
+          "Critical",
+          "Lead Bank retained as secondary; transition underway; but post-migration concentration on Column alone",
+          "High — single bank partner after migration; no public backup disclosed"
+        ],
+        [
+          "Plaid bank data aggregation",
+          "Plaid, Inc.",
+          "Bank account verification at onboarding; ongoing balance monitoring for payment management",
+          "High — no public alternative described",
+          "Plaid outage, CFPB 1033 access restriction, or Plaid price increase",
+          "High",
+          "None publicly described",
+          "Material — undisclosed contingency"
+        ],
+        [
+          "PMS integration: RealPage (LOFT resident portal)",
+          "RealPage",
+          "Embedded distribution to 1.3M+ announced units; named preferred technology provider",
+          "High — large share of institutional units",
+          "RealPage terminates or renegotiates; launches competing product",
+          "High",
+          "Strategic partnership framing; but no publicly disclosed contract term or exclusivity",
+          "Material — contract terms not verifiable"
+        ],
+        [
+          "PMS integration: Yardi (RentCafe, Voyager)",
+          "Yardi Systems",
+          "Embedded distribution across large institutional portfolio; deep integration",
+          "High — Yardi is the largest U.S. multifamily PMS",
+          "Yardi terminates or competes",
+          "High",
+          "Integration confirmed by Yardi press release; no contract term disclosed",
+          "Material — similar to RealPage"
+        ],
+        [
+          "PMS integration: Entrata, AppFolio, MRI, Zego, Rent Manager",
+          "Five additional PMS vendors",
+          "Embedded distribution across additional unit base",
+          "Medium individually",
+          "One or more integrations terminated or replaced",
+          "Medium",
+          "Multiple integrations reduce single-partner concentration; but all require ongoing maintenance",
+          "Low to medium — diversification partially mitigates"
+        ]
+      ],
+      "notes": "No publicly disclosed integration contract terms, exclusivity provisions, or revenue-share arrangements were found in the retained evidence base. Severity and concentration assessments are qualitative.",
+      "claimRefs": [
+        "CR016",
+        "CR017",
+        "CR018",
+        "CR019",
+        "CR020",
+        "CR021",
+        "CR022"
+      ]
+    },
+    {
+      "id": "TR004",
+      "title": "People / execution risk register",
+      "columns": [
+        "Role / function",
+        "Dependency or gap",
+        "Likelihood",
+        "Severity",
+        "Mitigation",
+        "Diligence path"
+      ],
+      "rows": [
+        [
+          "Customer service capacity and servicing quality",
+          "400+ BBB complaints; WSBTV documents month-long unresolved issue; Flex acknowledges growth-driven service gaps",
+          "High — documented ongoing",
+          "High — housing harm, regulatory complaint trigger, CFPB referral risk",
+          "Flex claims 70% complaint reduction over two months (undated); formal complaint form introduced; chatbot triage",
+          "Request current monthly complaint volume, resolution rate, CFPB and state regulator complaint counts, and live customer service SLA"
+        ],
+        [
+          "Regulatory compliance and consumer credit expertise at scale",
+          "NMLS-registered entities present but compliance program depth at 2.7M-customer scale is undisclosed",
+          "Medium",
+          "High — TILA, UDAAP, FCRA, GLBA exposure at scale",
+          "Ryan Metcalf (VP Public Affairs) has authored regulatory positioning content; bank partners provide regulatory cover for origination",
+          "Request compliance org chart, BSA/AML program, CFPB examination history, and state examination history"
+        ],
+        [
+          "Leadership key-person and succession risk",
+          "CEO and executive team not publicly profiled in detail in retained evidence; company has no disclosed board composition or succession plan",
+          "Low to medium",
+          "Medium",
+          "VP-level hires documented in public content (Ryan Metcalf); broader leadership team not publicly described",
+          "Request executive team bios, board composition, key-man insurance, and succession plan"
+        ]
+      ],
+      "notes": "People and execution risk assessments are based entirely on public evidence, which is limited. Absence of public leadership disclosure does not indicate absence of strong management; it indicates a diligence gap.",
+      "claimRefs": [
+        "CR023",
+        "CR024",
+        "CR025",
+        "CR035",
+        "CR036"
+      ]
+    },
+    {
+      "id": "TR005",
+      "title": "Mitigation and kill criteria table",
+      "columns": [
+        "Risk",
+        "Monitorable trigger",
+        "Threshold / event",
+        "Action implication"
+      ],
+      "rows": [
+        [
+          "CFPB regulatory enforcement or consent order",
+          "CFPB public enforcement database; CFPB supervisory highlights; consumer complaint spike on CFPB Consumer Complaint Database",
+          "Consent order, civil investigative demand, or public enforcement action filed",
+          "Thesis-break: enforcement action against core fee model would require product restructuring, customer remediation, and potentially capital-intensive fee refund program"
+        ],
+        [
+          "Bank partner failure: Column N.A. exits or is restricted",
+          "Column N.A. OCC supervisory action; FDIC enforcement database; Flex operational notice to customers",
+          "Column N.A. loses charter, suspends program agreements, or Flex publicly discloses inability to originate new accounts",
+          "Thesis-break: without a bank partner, Flex cannot originate new lines of credit; new origination halts within weeks"
+        ],
+        [
+          "Loss rate exceeds fee revenue",
+          "Internal loss reporting; investor disclosures if any; NMLS licensee exam findings (not public)",
+          "Disclosed charge-off or loss rate that exceeds the net revenue per account ($576/year minus customer acquisition cost and bank partner cost)",
+          "Financial model break: unit economics negative; capital requirements expand rapidly"
+        ],
+        [
+          "Major PMS integration lost: Yardi or RealPage",
+          "Yardi or RealPage press release announcing competing product or partnership change; Flex blog post removing partner from integration page",
+          "Either partner removes Flex as default or preferred payment option across existing property base",
+          "Distribution break: loss of one partner eliminates access to millions of units; customer acquisition cost per unit rises sharply"
+        ],
+        [
+          "BBB complaint escalation or state AG investigation",
+          "BBB complaint volume (currently 400+/year); state AG consumer protection division press releases; CFPB complaint database volume for Flex",
+          "Three consecutive quarters of rising complaint volume despite disclosed remediation; or any state AG civil investigative demand",
+          "Reputational break: escalating complaints in combination with housing harm pattern increases likelihood of regulatory referral and media amplification"
+        ],
+        [
+          "Bank migration failure rate exceeds operational threshold",
+          "Customer complaint volume referencing failed rent payments post-June 2026; Flex operational status communications",
+          "Sustained increase in rent-payment failure reports after June 1, 2026 Column migration deadline",
+          "Operational break: mass payment failure event would trigger regulatory inquiry, customer remediation, and PMS partner review"
+        ]
+      ],
+      "notes": "Kill criteria are thesis-break events — conditions under which the investment premise would require material revision. Trigger thresholds are illustrative; exact thresholds should be agreed with Flex management in due diligence.",
+      "claimRefs": [
+        "CR001",
+        "CR002",
+        "CR003",
+        "CR016",
+        "CR023",
+        "CR030",
+        "CR031",
+        "CR033",
+        "CR034",
+        "CR037",
+        "CR038"
+      ]
+    }
+  ],
+  "figures": [
+    {
+      "id": "FR001",
+      "title": "Risk heatmap",
+      "type": "matrix",
+      "layout": "wide",
+      "summary": "Flex's highest residual risks cluster at the intersection of high consumer harm potential and weak public mitigation evidence. CFPB regulatory exposure and bank partner concentration sit at critical residual severity; operational servicing failure and underwriting model risk are high; PMS concentration and data/privacy risk are material.",
+      "data": {
+        "columns": [
+          "Likelihood",
+          "Impact",
+          "Mitigation maturity",
+          "Residual severity"
+        ],
+        "rows": [
+          {
+            "label": "CFPB / TILA regulatory enforcement",
+            "values": [
+              "Medium to high",
+              "Critical",
+              "Low to medium",
+              "Critical"
+            ]
+          },
+          {
+            "label": "Bank partner loss (Column N.A.)",
+            "values": [
+              "Low to medium",
+              "Critical",
+              "Low",
+              "High"
+            ]
+          },
+          {
+            "label": "Payment servicing failure / housing harm",
+            "values": [
+              "High",
+              "High",
+              "Low to medium",
+              "High"
+            ]
+          },
+          {
+            "label": "Consumer credit / underwriting model risk",
+            "values": [
+              "Medium",
+              "High",
+              "Unknown",
+              "High"
+            ]
+          },
+          {
+            "label": "PMS platform concentration (Yardi / RealPage)",
+            "values": [
+              "Low to medium",
+              "High",
+              "Low",
+              "Material"
+            ]
+          },
+          {
+            "label": "Plaid / data aggregator dependency",
+            "values": [
+              "Low to medium",
+              "High",
+              "Unknown",
+              "Material"
+            ]
+          },
+          {
+            "label": "Fee model / adverse selection / churn",
+            "values": [
+              "Medium",
+              "Medium to high",
+              "Low",
+              "Material"
+            ]
+          },
+          {
+            "label": "Data privacy / GLBA / breach",
+            "values": [
+              "Low",
+              "Critical",
+              "Unknown",
+              "Material"
+            ]
+          }
+        ]
+      },
+      "approximationNotes": "Heatmap uses qualitative rankings based entirely on public evidence. No actuarial, financial, or insider data was available. Mitigation maturity for items marked 'Unknown' reflects absence of public disclosure, not confirmed absence of mitigants.",
+      "claimRefs": [
+        "CR001",
+        "CR002",
+        "CR003",
+        "CR008",
+        "CR016",
+        "CR017",
+        "CR018",
+        "CR023",
+        "CR030",
+        "CR033"
+      ]
+    },
+    {
+      "id": "FR002",
+      "title": "Risk transmission map",
+      "type": "dag",
+      "layout": "wide",
+      "summary": "Core risks transmit into revenue, housing harm, regulatory escalation, and financing through four primary pathways: (1) servicing failure → housing harm → regulatory complaint → CFPB enforcement → product restructuring; (2) default spike → credit losses exceed fee revenue → capital raise requirement; (3) bank partner exit → origination halt → revenue stop; (4) PMS partner exit → unit access collapse → customer acquisition cost spike.",
+      "data": {
+        "nodes": [
+          {
+            "id": "n1",
+            "label": "CFPB / TILA exposure"
+          },
+          {
+            "id": "n2",
+            "label": "State licensing gap"
+          },
+          {
+            "id": "n3",
+            "label": "Servicing failure"
+          },
+          {
+            "id": "n4",
+            "label": "Consumer complaint spike"
+          },
+          {
+            "id": "n5",
+            "label": "Bank partner exit"
+          },
+          {
+            "id": "n6",
+            "label": "Default / credit loss"
+          },
+          {
+            "id": "n7",
+            "label": "PMS partner exit"
+          },
+          {
+            "id": "n8",
+            "label": "Regulatory enforcement"
+          },
+          {
+            "id": "n9",
+            "label": "Revenue stop"
+          },
+          {
+            "id": "n10",
+            "label": "Housing harm to renter"
+          },
+          {
+            "id": "n11",
+            "label": "Capital / liquidity stress"
+          },
+          {
+            "id": "n12",
+            "label": "Unit access collapse"
+          }
+        ],
+        "edges": [
+          {
+            "from": "n1",
+            "to": "n8"
+          },
+          {
+            "from": "n2",
+            "to": "n8"
+          },
+          {
+            "from": "n3",
+            "to": "n10"
+          },
+          {
+            "from": "n3",
+            "to": "n4"
+          },
+          {
+            "from": "n4",
+            "to": "n8"
+          },
+          {
+            "from": "n5",
+            "to": "n9"
+          },
+          {
+            "from": "n6",
+            "to": "n11"
+          },
+          {
+            "from": "n7",
+            "to": "n12"
+          },
+          {
+            "from": "n8",
+            "to": "n9"
+          },
+          {
+            "from": "n8",
+            "to": "n11"
+          },
+          {
+            "from": "n11",
+            "to": "n9"
+          },
+          {
+            "from": "n12",
+            "to": "n9"
+          }
+        ]
+      },
+      "approximationNotes": "DAG is conceptual and based on publicly observable risk relationships. Edge weights and probability are not quantified. Not all risk transmission paths are shown.",
+      "claimRefs": [
+        "CR001",
+        "CR016",
+        "CR023",
+        "CR030",
+        "CR033",
+        "CR037"
+      ]
+    },
+    {
+      "id": "FR003",
+      "title": "Dependency map",
+      "type": "dag",
+      "layout": "wide",
+      "summary": "Flex depends on three external infrastructure stacks simultaneously: bank partners for origination, Plaid for data aggregation, and PMS platforms for distribution. The bank partner stack has a single-point-of-failure after the June 2026 migration to Column N.A. The Plaid stack has no disclosed backup. The PMS stack has seven active integrations but two dominant ones (Yardi, RealPage) represent disproportionate unit coverage.",
+      "data": {
+        "nodes": [
+          {
+            "id": "d1",
+            "label": "Flex (Flexible Finance, Inc.)"
+          },
+          {
+            "id": "d2",
+            "label": "Column N.A. (primary bank)"
+          },
+          {
+            "id": "d3",
+            "label": "Lead Bank (transitioning)"
+          },
+          {
+            "id": "d4",
+            "label": "Plaid"
+          },
+          {
+            "id": "d5",
+            "label": "Yardi / RentCafe"
+          },
+          {
+            "id": "d6",
+            "label": "RealPage / LOFT"
+          },
+          {
+            "id": "d7",
+            "label": "Entrata / ResidentPortal"
+          },
+          {
+            "id": "d8",
+            "label": "AppFolio / MRI / Zego / Rent Manager"
+          },
+          {
+            "id": "d9",
+            "label": "Flexible Finance Brokering (NMLS #2599800)"
+          },
+          {
+            "id": "d10",
+            "label": "Flexible Finance Servicing (NMLS #2256673)"
+          },
+          {
+            "id": "d11",
+            "label": "Consumer renter"
+          },
+          {
+            "id": "d12",
+            "label": "Property manager"
+          }
+        ],
+        "edges": [
+          {
+            "from": "d1",
+            "to": "d9",
+            "label": "brokering"
+          },
+          {
+            "from": "d1",
+            "to": "d10",
+            "label": "servicing"
+          },
+          {
+            "from": "d9",
+            "to": "d2",
+            "label": "loan origination"
+          },
+          {
+            "from": "d9",
+            "to": "d3",
+            "label": "loan origination (winding down)"
+          },
+          {
+            "from": "d1",
+            "to": "d4",
+            "label": "bank data aggregation"
+          },
+          {
+            "from": "d1",
+            "to": "d5",
+            "label": "PMS integration"
+          },
+          {
+            "from": "d1",
+            "to": "d6",
+            "label": "PMS integration"
+          },
+          {
+            "from": "d1",
+            "to": "d7",
+            "label": "PMS integration"
+          },
+          {
+            "from": "d1",
+            "to": "d8",
+            "label": "PMS integration"
+          },
+          {
+            "from": "d5",
+            "to": "d11",
+            "label": "renter access"
+          },
+          {
+            "from": "d6",
+            "to": "d11",
+            "label": "renter access"
+          },
+          {
+            "from": "d11",
+            "to": "d1",
+            "label": "monthly fee"
+          },
+          {
+            "from": "d2",
+            "to": "d12",
+            "label": "rent disbursement"
+          }
+        ]
+      },
+      "approximationNotes": "Dependency map is constructed from public disclosures only. Contractual terms, revenue-sharing, exclusivity, and SLA details are not public.",
+      "claimRefs": [
+        "CR016",
+        "CR017",
+        "CR018",
+        "CR019",
+        "CR020",
+        "CR021",
+        "CR022"
+      ]
+    }
+  ],
+  "localEvidence": {
+    "searchQueries": [
+      {
+        "query": "getflex.com legal terms of service licenses NMLS TILA truth-in-lending disclosure 2026",
+        "engine": "fetch-url",
+        "hits": null,
+        "retainedSourceRefs": [
+          "SR001",
+          "SR002",
+          "SR003"
+        ]
+      },
+      {
+        "query": "Flex bank partner migration Lead Bank Column NA FDIC 2026 notice",
+        "engine": "fetch-url",
+        "hits": null,
+        "retainedSourceRefs": [
+          "SR004",
+          "SR005",
+          "SR006"
+        ]
+      },
+      {
+        "query": "Flex qualify income verification SSN bank linking Plaid underwriting model 2026",
+        "engine": "fetch-url",
+        "hits": null,
+        "retainedSourceRefs": [
+          "SR007",
+          "SR008",
+          "SR009",
+          "SR015"
+        ]
+      },
+      {
+        "query": "Flex resident doesn't pay back default credit risk flexpartners qualifications 2026",
+        "engine": "fetch-url",
+        "hits": null,
+        "retainedSourceRefs": [
+          "SR010",
+          "SR011"
+        ]
+      },
+      {
+        "query": "Flex Rent cost membership fee bill payment fee TILA disclosure pricing 2026",
+        "engine": "fetch-url",
+        "hits": null,
+        "retainedSourceRefs": [
+          "SR012",
+          "SR013",
+          "SR014"
+        ]
+      },
+      {
+        "query": "Flex consumer complaints BBB Better Business Bureau investigations payment failure housing harm 2026",
+        "engine": "fetch-url",
+        "hits": null,
+        "retainedSourceRefs": [
+          "SR022",
+          "SR023",
+          "SR024",
+          "SR025",
+          "SR026"
+        ]
+      },
+      {
+        "query": "Flex managing payment method cancel membership Plaid bank account change operational risk 2026",
+        "engine": "fetch-url",
+        "hits": null,
+        "retainedSourceRefs": [
+          "SR027",
+          "SR028",
+          "SR029"
+        ]
+      },
+      {
+        "query": "Fannie Mae FHFA positive rent payment reporting TransUnion regulatory context 2026",
+        "engine": "fetch-url",
+        "hits": null,
+        "retainedSourceRefs": [
+          "SR030",
+          "SR031"
+        ]
+      },
+      {
+        "query": "Harvard JCHS rental housing 2026 renter affordability financial stress market context",
+        "engine": "fetch-url",
+        "hits": null,
+        "retainedSourceRefs": [
+          "SR032",
+          "SR033"
+        ]
+      },
+      {
+        "query": "Flex responsible flexibility eviction prevention financial well-being regulatory positioning 2026",
+        "engine": "fetch-url",
+        "hits": null,
+        "retainedSourceRefs": [
+          "SR034",
+          "SR035"
+        ]
+      },
+      {
+        "query": "Flex getflex.com company executive team leadership headcount careers 2026",
+        "engine": "fetch-url",
+        "hits": null,
+        "retainedSourceRefs": [
+          "SR037",
+          "SR038",
+          "SR039",
+          "SR040",
+          "SR041"
+        ]
+      }
+    ],
+    "researchQuestions": [
+      {
+        "id": "QR001",
+        "question": "What NMLS licensing entities does Flex operate through, and what activities does each entity perform?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/1",
+          "plannedTables/regulatory-legal-risk-register"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QR002",
+        "question": "What is the legal structure of the Flex Rent product — is it a line of credit, a loan, or a payment facilitation service?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/1",
+          "plannedTables/regulatory-legal-risk-register"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QR003",
+        "question": "Does Flex publish a TILA disclosure, and if so, what does it cover?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/1",
+          "plannedTables/regulatory-legal-risk-register"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QR004",
+        "question": "What state-specific restrictions apply to Flex Rent, and what does the Vermont loan-solicitation-only disclosure imply?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/1",
+          "plannedTables/regulatory-legal-risk-register"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QR005",
+        "question": "How does Flex collect SSN, income, and bank account data, and what privacy laws apply?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/1",
+          "plannedTables/regulatory-legal-risk-register"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QR006",
+        "question": "What are the public terms governing the bank partner relationship, and what triggers exist for the partner to exit?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/3",
+          "plannedTables/partner-dependency-risk-register"
+        ],
+        "status": "partial"
+      },
+      {
+        "id": "QR007",
+        "question": "Who bears the default risk when a renter does not pay Flex back, and how is this documented?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/4",
+          "plannedTables/operational-quality-security-risk-register"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QR008",
+        "question": "Does Flex's approval of renters with fair or poor credit and negative savings rates create a systematically higher default risk than publicly acknowledged?",
+        "type": "adverse",
+        "targets": [
+          "contentRequirements/4",
+          "plannedTables/operational-quality-security-risk-register"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QR009",
+        "question": "What does Flex's income verification process cover, and is it sufficient to screen out renters with no income available to make second-half payments?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/4"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QR010",
+        "question": "What is the historical default rate or charge-off rate on Flex Rent advances?",
+        "type": "quantification",
+        "targets": [
+          "contentRequirements/4"
+        ],
+        "status": "unresolved"
+      },
+      {
+        "id": "QR011",
+        "question": "What is the migration plan from Lead Bank to Column N.A., and what happens to renters and property managers who miss the June 1, 2026 deadline?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/2",
+          "plannedTables/operational-quality-security-risk-register"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QR012",
+        "question": "What is Column N.A.'s regulatory standing and track record as a bank-fintech program partner?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/3",
+          "plannedTables/partner-dependency-risk-register"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QR013",
+        "question": "How dependent is Flex's onboarding and ongoing payment collection on Plaid, and what is the contingency if Plaid access is restricted?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/3",
+          "plannedTables/partner-dependency-risk-register"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QR014",
+        "question": "What contract terms govern the Yardi and RealPage integrations — are they exclusive, long-term, or terminable at will?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/3",
+          "plannedTables/partner-dependency-risk-register"
+        ],
+        "status": "unresolved"
+      },
+      {
+        "id": "QR015",
+        "question": "Could RealPage or Yardi launch a competing flexible payment product and terminate the Flex integration, and what incentives do they have to do so?",
+        "type": "adverse",
+        "targets": [
+          "contentRequirements/3",
+          "plannedTables/partner-dependency-risk-register"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QR016",
+        "question": "How many BBB complaints has Flex received, and what is the dominant complaint category?",
+        "type": "quantification",
+        "targets": [
+          "contentRequirements/2",
+          "plannedTables/operational-quality-security-risk-register"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QR017",
+        "question": "What specific servicing failures caused housing harm in the Mother Jones and WSBTV investigations?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/2",
+          "plannedTables/operational-quality-security-risk-register"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QR018",
+        "question": "Does Flex's customer service infrastructure match the scale of its customer base, and how does the complaint resolution rate compare to industry norms?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/5",
+          "plannedTables/people-execution-risk-register"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QR019",
+        "question": "How does the ACH-not-supported policy affect payment failure rates compared to debit-card-only transactions?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/2"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QR020",
+        "question": "What is the effective annual cost to a renter paying $1,500/month in rent using Flex, and how does this compare to the cost of a single late fee?",
+        "type": "quantification",
+        "targets": [
+          "contentRequirements/4"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QR021",
+        "question": "Does the membership fee charged in months when the renter does not use Flex Rent constitute a UDAAP violation under current CFPB guidance?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/1",
+          "plannedTables/regulatory-legal-risk-register"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QR022",
+        "question": "What CFPB Section 1033 open banking rule provisions could affect Plaid's ability to serve Flex's balance-monitoring needs?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/1",
+          "plannedTables/regulatory-legal-risk-register"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QR023",
+        "question": "Is Flex's product design — auto-renewing credit product with cancellation friction, targeting financially stressed renters — structurally similar to the pattern that led to CFPB consent orders against Earnin, Dave, and MoneyLion?",
+        "type": "adverse",
+        "targets": [
+          "contentRequirements/1",
+          "plannedTables/regulatory-legal-risk-register"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QR024",
+        "question": "How does Flex's credit reporting to credit bureaus interact with Fannie Mae's Desktop Underwriter and FHFA's rent-to-homeownership pathway?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/1"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QR025",
+        "question": "What is Flex's reserve or loss-coverage position for consumer defaults, and how is it funded?",
+        "type": "quantification",
+        "targets": [
+          "contentRequirements/4"
+        ],
+        "status": "unresolved"
+      },
+      {
+        "id": "QR026",
+        "question": "Does the Harvard JCHS 2026 rental housing data on worsening renter cost burdens indicate that Flex's core user base will face increasing financial pressure in the near term?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/4"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QR027",
+        "question": "What is Flex's current headcount in customer service relative to its 2.7 million customer base?",
+        "type": "quantification",
+        "targets": [
+          "contentRequirements/5",
+          "plannedTables/people-execution-risk-register"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QR028",
+        "question": "What leadership and compliance expertise does Flex have to manage CFPB examinations, state regulatory audits, and NMLS license renewals?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/5",
+          "plannedTables/people-execution-risk-register"
+        ],
+        "status": "partial"
+      },
+      {
+        "id": "QR029",
+        "question": "What monitorable metrics — complaint volume trend, default rate, PMS integration health, bank partner status — should investors track quarterly?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/5",
+          "plannedTables/mitigation-and-kill-criteria-table"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QR030",
+        "question": "What does the eviction-prevention Hope+Door pilot partnership signal about Flex's awareness of housing harm risk, and does it constitute a genuine mitigation?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/5"
+        ],
+        "status": "answered"
+      }
+    ],
+    "sources": [
+      {
+        "id": "SR001",
+        "publisher": "Flex (Flexible Finance, Inc.)",
+        "title": "Flex Legal | Terms of Service and Legal Disclosures",
+        "url": "https://getflex.com/legal",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "legal",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "terms-of-service",
+          "legal-framework",
+          "consumer-disclosures"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "Consumer-facing legal documents including terms of service, privacy policy, and product disclosures for Flex Rent and Flex Bills."
+      },
+      {
+        "id": "SR002",
+        "publisher": "Flex (Flexible Finance, Inc.)",
+        "title": "Flex State Licenses | getflex.com/legal/licenses",
+        "url": "https://getflex.com/legal/licenses",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "regulatory",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "state-licenses",
+          "NMLS",
+          "regulatory-compliance"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "Flex state-by-state license disclosures; NMLS IDs #2599800 (Flexible Finance Brokering, Inc.) and #2256673 (Flexible Finance Servicing, Inc.)."
+      },
+      {
+        "id": "SR003",
+        "publisher": "Flex (Flexible Finance, Inc.)",
+        "title": "Flex Rent Truth in Lending Disclosure — 3 Fee | getflex.com",
+        "url": "https://getflex.com/legal/flex-rent-truth-in-lending-disclosure-3-fee",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "legal",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "TILA",
+          "truth-in-lending",
+          "finance-charge-disclosure",
+          "APR"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "Truth in Lending disclosure for the Flex Rent 3-fee pricing variant; confirms TILA-covered credit product classification."
+      },
+      {
+        "id": "SR004",
+        "publisher": "Flex Help Center",
+        "title": "Notice of Change: Lead Bank to Column N.A., Member FDIC",
+        "url": "https://help.getflex.com/hc/en-us/articles/39963540640663-Notice-of-change-Lead-Bank-to-Column-N-A-Member-FDIC",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "bank-partner-migration",
+          "Column-NA",
+          "Lead-Bank",
+          "operational-risk"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "If you don't confirm by June 1, 2026, your access to Flex may be interrupted. If you skip this step and use the old Flex payment method, the rent payment you make with it will fail."
+      },
+      {
+        "id": "SR005",
+        "publisher": "Column N.A.",
+        "title": "Column N.A. — Banking Infrastructure for Fintechs",
+        "url": "https://column.com/",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "high",
+        "independence": "independent",
+        "topics": [
+          "bank-partner",
+          "FDIC-chartered",
+          "fintech-banking-infrastructure"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "Column N.A., Member FDIC — nationally chartered bank designed to help fintechs build and fund financial products; provides ACH, wire, and banking infrastructure."
+      },
+      {
+        "id": "SR006",
+        "publisher": "Lead Bank",
+        "title": "Lead Bank — Financial Infrastructure and Banking Services",
+        "url": "https://www.lead.bank/",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "independent",
+        "topics": [
+          "bank-partner",
+          "FDIC-insured",
+          "fintech-banking-program"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "Lead Bank — FDIC Insured, backed by the full faith and credit of the U.S. government; reinventing modern banking for fintech partners."
+      },
+      {
+        "id": "SR007",
+        "publisher": "Flex Help Center",
+        "title": "How to Qualify for Flex",
+        "url": "https://help.getflex.com/hc/en-us/articles/360059675253-How-to-qualify-for-Flex",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "underwriting",
+          "credit-assessment",
+          "qualification-criteria"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "When applying for Flex your eligibility is evaluated using a variety of factors including your credit report information, your banking information, and other information about your payment history."
+      },
+      {
+        "id": "SR008",
+        "publisher": "Flex Help Center",
+        "title": "Income Verification Overview",
+        "url": "https://help.getflex.com/hc/en-us/articles/24031017258903-Income-verification-overview",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "income-verification",
+          "underwriting",
+          "data-collection"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "Flex income verification overview — Flex uses income information as part of its eligibility assessment for Flex Rent and other products."
+      },
+      {
+        "id": "SR009",
+        "publisher": "Flex Help Center",
+        "title": "Why Flex Requires Your SSN",
+        "url": "https://help.getflex.com/hc/en-us/articles/360059676113-Why-Flex-requires-your-SSN",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "SSN",
+          "identity-verification",
+          "credit-check",
+          "data-privacy"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "Flex requires your SSN to verify your identity and perform a credit check as part of the application process for Flex Rent."
+      },
+      {
+        "id": "SR010",
+        "publisher": "Flex Partners Help Center",
+        "title": "What If My Resident Doesn't Pay Flex Back?",
+        "url": "https://flexpartners.zendesk.com/hc/en-us/articles/26603964002327-What-if-my-resident-doesn-t-pay-Flex-back",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "default-risk",
+          "credit-loss",
+          "resident-non-payment",
+          "Flex-exposure"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "Flex pays rent to property managers in full and on time; if the resident does not pay Flex back, Flex bears the resulting balance."
+      },
+      {
+        "id": "SR011",
+        "publisher": "Flex Partners Help Center",
+        "title": "Resident Qualifications for Flex Rent",
+        "url": "https://flexpartners.zendesk.com/hc/en-us/articles/26600391843223-Resident-qualifications",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "underwriting",
+          "credit-profile",
+          "qualification-criteria"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "Flex evaluates resident eligibility using credit report information, banking information, and payment history. Generally, residents who are fair or better credit, with sufficient deposits and average bank balances will qualify."
+      },
+      {
+        "id": "SR012",
+        "publisher": "Flex Help Center",
+        "title": "How Much Does Flex Rent Cost?",
+        "url": "https://help.getflex.com/hc/en-us/articles/360034246933-How-much-does-Flex-Rent-cost",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "pricing",
+          "membership-fee",
+          "bill-payment-fee",
+          "fee-model"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "Flex rent payment services are offered for a monthly membership fee of $14.99, which includes access to a Flex Rent line of credit from Lead Bank or Column N.A., Member FDIC. In addition, a 1% bill payment fee applies to all payments."
+      },
+      {
+        "id": "SR013",
+        "publisher": "Flex Help Center",
+        "title": "Monthly Membership Fee",
+        "url": "https://help.getflex.com/hc/en-us/articles/7870682642583-Monthly-membership-fee",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "membership-fee",
+          "auto-renewal",
+          "cancellation-friction",
+          "fee-model"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "Turning rent autopay off does not deactivate your line of credit. Your membership remains active — and the monthly fee will still be charged — whether or not you use Flex Rent to pay rent that month."
+      },
+      {
+        "id": "SR014",
+        "publisher": "Flex Help Center",
+        "title": "Bill Payment and Card Processing Fees",
+        "url": "https://help.getflex.com/hc/en-us/articles/7870728486167-Bill-payment-and-card-processing-fees",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "fees",
+          "bill-payment-fee",
+          "card-processing-fee",
+          "debit-vs-credit"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "All customers are charged a 1% bill payment fee regardless of payment method. If you pay with a credit card, there is an additional 2.5% card processing fee. Bank transfers (ACH) are not a supported payment method at this time."
+      },
+      {
+        "id": "SR015",
+        "publisher": "Flex Help Center",
+        "title": "Bank Account Linking Guidelines",
+        "url": "https://help.getflex.com/hc/en-us/articles/26169491459735-Bank-account-linking-guidelines",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "bank-account-linking",
+          "Plaid",
+          "data-collection",
+          "security"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "Flex uses a third-party aggregator to securely verify bank accounts and monitor account balances as part of the Flex Rent service."
+      },
+      {
+        "id": "SR016",
+        "publisher": "Plaid, Inc.",
+        "title": "Plaid — Financial Data Network for Financial Products",
+        "url": "https://www.plaid.com/",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "high",
+        "independence": "independent",
+        "topics": [
+          "data-aggregation",
+          "bank-verification",
+          "fintech-infrastructure",
+          "CFPB-1033"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "Plaid connects over 12,000 financial institutions; 1 in 2 U.S. adults use Plaid; processes over 1 million daily connections for fintech applications."
+      },
+      {
+        "id": "SR017",
+        "publisher": "Flex Help Center",
+        "title": "How to Get Help with Flex",
+        "url": "https://help.getflex.com/hc/en-us/articles/22416548767255-How-to-get-help-with-Flex",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "customer-service",
+          "support-channels",
+          "chatbot",
+          "complaint-handling"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "Flex offers chat via chatbot, email ticketing, live agent escalation, and a formal consumer complaint form; response target is 24 hours for formal complaints."
+      },
+      {
+        "id": "SR018",
+        "publisher": "Flex Help Center",
+        "title": "Managing Your Payment Method",
+        "url": "https://help.getflex.com/hc/en-us/articles/31677326206487-Managing-your-payment-method",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "payment-method",
+          "debit-card",
+          "portal-update",
+          "operational-risk"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "To update your payment method in Flex, you must update both the Flex app and, if applicable, your property rent portal. ACH is not a supported payment method."
+      },
+      {
+        "id": "SR019",
+        "publisher": "Flex Help Center",
+        "title": "What Are Flex Funds?",
+        "url": "https://help.getflex.com/hc/en-us/articles/31677734448663-What-are-Flex-Funds",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "Flex-Funds",
+          "payment-buffer",
+          "default-mitigation",
+          "feature-access"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "Flex Funds is available for some Flex accounts. Not all customers have access to this feature."
+      },
+      {
+        "id": "SR020",
+        "publisher": "Flex Help Center",
+        "title": "Signing Up for Flex Rent",
+        "url": "https://help.getflex.com/hc/en-us/articles/32284941398935-Signing-up-for-Flex-Rent",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "onboarding",
+          "application",
+          "credit-check",
+          "data-requirements"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "Signing up for Flex Rent requires downloading the Flex app; eligibility evaluated using credit report, banking, and payment history information."
+      },
+      {
+        "id": "SR021",
+        "publisher": "Flex Help Center",
+        "title": "Flex Consumer Complaints",
+        "url": "https://help.getflex.com/hc/en-us/articles/22416580502423-Flex-consumer-complaints",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "consumer-complaints",
+          "complaint-process",
+          "regulatory-referral"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "If your concern hasn't been resolved or requires additional attention, you can file a formal complaint with Flex. We aim to respond to all formal complaints within 24 hours."
+      },
+      {
+        "id": "SR022",
+        "publisher": "Flex Partners Help Center",
+        "title": "What is Flex Rent and Why Should I Offer It?",
+        "url": "https://flexpartners.zendesk.com/hc/en-us/articles/25942300919319-What-is-Flex-Rent-and-why-should-I-offer-it",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "product-description",
+          "bank-partner-disclosure",
+          "NMLS-IDs",
+          "servicing-structure"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "Flexible Finance, Inc., together with its subsidiaries, is a financial technology company, not a bank. All loans, banking services, and payment transmissions are offered by Lead Bank or Column N.A., Member FDIC. Brokering activities are performed by Flexible Finance Brokering, Inc. (NMLS #2599800). Servicing and collection activities are performed by Flexible Finance Servicing, Inc. (NMLS #2256673). Vermont Residents: THIS IS A LOAN SOLICITATION ONLY."
+      },
+      {
+        "id": "SR023",
+        "publisher": "Flex Partners Help Center",
+        "title": "How Much Does the Resident Pay for Flex Rent?",
+        "url": "https://flexpartners.zendesk.com/hc/en-us/articles/26599858620823-How-much-does-the-resident-pay-for-Flex-Rent",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "resident-fee",
+          "pricing-disclosure",
+          "credit-product-structure"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "Unsecured lines of credit for Flex Rent are provided for a recurring monthly membership fee up to $14.99; membership automatically renews until canceled. A bill payment fee of 1% of rent is also charged."
+      },
+      {
+        "id": "SR024",
+        "publisher": "Better Business Bureau",
+        "title": "Flex (Flexible Finance, Inc.) BBB Complaints — 0121-87134212",
+        "url": "https://www.bbb.org/us/ny/new-york/profile/financial-technology/flex-0121-87134212/complaints",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "adverse",
+        "sourceType": "official",
+        "reputationTier": "high",
+        "independence": "independent",
+        "topics": [
+          "consumer-complaints",
+          "BBB",
+          "payment-failure",
+          "customer-service"
+        ],
+        "date": "2026-05-26",
+        "keyQuote": "Flex has more than 400 complaints filed in the past year; 1 out of 5 stars. Many complaints involve rent going unpaid and inability to reach customer service."
+      },
+      {
+        "id": "SR025",
+        "publisher": "Mother Jones",
+        "title": "Late Payments and Confusion: One Startup's Struggle to Make Rent Easier",
+        "url": "https://www.motherjones.com/politics/2023/06/flex-rent-housing-portals/",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "adverse",
+        "sourceType": "news",
+        "reputationTier": "high",
+        "independence": "independent",
+        "topics": [
+          "consumer-harm",
+          "payment-failure",
+          "housing-risk",
+          "eviction-threat",
+          "operational-failures"
+        ],
+        "date": "2023-06-01",
+        "keyQuote": "Flex conducted a limited experiment where a small sample of customers were placed on a 3-day (instead of 5-day) first payment window, resulting in late fees and eviction threats for renters who received contradictory deadline notices."
+      },
+      {
+        "id": "SR026",
+        "publisher": "WSB-TV Channel 2 Action News (Cox Media Group)",
+        "title": "Online App Used to Help People Pay Rent Fails, Causing Bigger Issues — Cobb County Woman",
+        "url": "https://www.wsbtv.com/news/2-investigates/online-app-used-help-people-pay-rent-fails-causing-bigger-issues-cobb-county-woman/WSKA2VRGVJFXHPIK4TZFOABK3I/",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "adverse",
+        "sourceType": "news",
+        "reputationTier": "high",
+        "independence": "independent",
+        "topics": [
+          "consumer-harm",
+          "payment-failure",
+          "customer-service-failure",
+          "cancellation-friction"
+        ],
+        "date": "2022-01-01",
+        "keyQuote": "31 emails and more than a month later she still owes Flex $1200. She had to pay her apartment directly when Flex wouldn't. Flex acknowledged: 'it should not have taken as long as it did.'"
+      },
+      {
+        "id": "SR027",
+        "publisher": "Flex Help Center",
+        "title": "Updating Account Information",
+        "url": "https://help.getflex.com/hc/en-us/articles/31677971556375-Updating-account-information",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "account-management",
+          "payment-method-change",
+          "operational-risk"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "Updating account information in Flex requires multiple steps including app-side and portal-side updates; failure to complete both steps may result in payment failure."
+      },
+      {
+        "id": "SR028",
+        "publisher": "Fannie Mae",
+        "title": "Positive Rent Payment Reporting | Fannie Mae",
+        "url": "https://www.fanniemae.com/about-us/what-we-do/positive-rent-payment-reporting",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "regulatory",
+        "reputationTier": "high",
+        "independence": "independent",
+        "topics": [
+          "rent-payment-reporting",
+          "credit-building",
+          "FHFA",
+          "GSE-regulatory-context"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "With positive rent payment reporting, on-time rent payments can help renters establish, maintain or boost their credit score, and potentially improve their mortgage eligibility. Fannie Mae's DU now incorporates rent payment history data."
+      },
+      {
+        "id": "SR029",
+        "publisher": "TransUnion",
+        "title": "TransUnion Report: More Consumers Likely Self-Reporting Rent Payments in 2025",
+        "url": "https://newsroom.transunion.com/transunion-report-finds-more-consumers-likely-self-reporting-rent-payments-in-2025/",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "analyst-market-data",
+        "reputationTier": "high",
+        "independence": "independent",
+        "topics": [
+          "rent-reporting",
+          "credit-data",
+          "FHFA-regulatory-order",
+          "market-context"
+        ],
+        "date": "2025-09-10",
+        "keyQuote": "New FHFA order creates pathway from on-time rent payments to homeownership. TransUnion SVP: 'The regulatory developments we've seen in this space are very encouraging.'"
+      },
+      {
+        "id": "SR030",
+        "publisher": "Joint Center for Housing Studies of Harvard University",
+        "title": "America's Rental Housing 2026",
+        "url": "https://www.jchs.harvard.edu/sites/default/files/reports/files/Harvard_JCHS_Americas_Rental_Housing_2026.pdf",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "analyst-market-data",
+        "reputationTier": "high",
+        "independence": "independent",
+        "topics": [
+          "renter-affordability",
+          "cost-burden",
+          "housing-market",
+          "financial-stress"
+        ],
+        "date": "2026-01-01",
+        "keyQuote": "America's Rental Housing 2026 documents worsening cost burdens among low-income renters; rental affordability challenges are intensifying across the income distribution."
+      },
+      {
+        "id": "SR031",
+        "publisher": "NAAHQ / AppFolio",
+        "title": "Flat Rents and AI Adoption — 2025 AppFolio Property Management Benchmark Report",
+        "url": "https://www.naahq.org/flat-rents-ai-adoption-2025-appfolio-property-management-benchmark-report-reveals-key-trends",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "analyst-market-data",
+        "reputationTier": "high",
+        "independence": "independent",
+        "topics": [
+          "PMS-market",
+          "property-management-tech",
+          "integration-trends",
+          "concentration-risk"
+        ],
+        "date": "2025-01-01",
+        "keyQuote": "Property managers are consolidating around fewer, larger PMS platforms; AI adoption and technology integration strategies are evolving rapidly."
+      },
+      {
+        "id": "SR032",
+        "publisher": "Flex",
+        "title": "Eviction Prevention: Flex and Hope+Door Pilot",
+        "url": "https://getflex.com/resources/eviction-prevention-flex-hopedoor-pilot",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "eviction-prevention",
+          "housing-harm-mitigation",
+          "regulatory-positioning"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "Flex partnered with Hope+Door to distribute rent grants to vulnerable households experiencing short-term financial shocks and facing eviction risk."
+      },
+      {
+        "id": "SR033",
+        "publisher": "Flex (Ryan Metcalf, VP of Public Affairs)",
+        "title": "What Responsible Flexibility Should Look Like",
+        "url": "https://getflex.com/resources/what-responsible-flexibility-should-look-like",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "regulatory-positioning",
+          "consumer-protection",
+          "fairness-standard",
+          "transparency"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "A fairness standard for flexible payment products: Transparency — pricing should be clear, meaningful, and predictable before a customer commits, disclosed upfront. Late fees and overdraft and NSF fees cost Americans more than $280 billion a year."
+      },
+      {
+        "id": "SR034",
+        "publisher": "Flex",
+        "title": "How Flexible Rent Payments Break the Cycle of Fees and Debt",
+        "url": "https://getflex.com/resources/how-flexible-rent-payments-break-the-cycle-of-fees-and-debt",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "fee-cycle",
+          "consumer-financial-stress",
+          "product-value-proposition"
+        ],
+        "date": "2026-05-01",
+        "keyQuote": "For millions of renters, paying rent in full on the first of the month creates late fees, overdraft charges, and growing debt. Flexible rent payments help renters align their biggest expense with their actual cash flow."
+      },
+      {
+        "id": "SR035",
+        "publisher": "GlobeNewswire / Flex",
+        "title": "Most Renters Are One Disruption Away From a Financial Crisis — New Flex Research Finds",
+        "url": "https://www.globenewswire.com/news-release/2026/03/25/3262450/0/en/Most-Renters-Are-One-Disruption-Away-From-a-Financial-Crisis-New-Flex-Research-Finds.html",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "renter-financial-health",
+          "credit-stress",
+          "survey-data",
+          "market-context"
+        ],
+        "date": "2026-03-25",
+        "keyQuote": "Among approximately 1,000 active Flex renters surveyed in Q1 2026: 70% rated their own credit as fair or poor; 47% spent more than they earned over the prior year; 73% experienced an unexpected financial shock in the past month."
+      },
+      {
+        "id": "SR036",
+        "publisher": "Flex (Flexible Finance, Inc.)",
+        "title": "Flex — Flexible Rent Payments | getflex.com",
+        "url": "https://getflex.com",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "product-overview",
+          "company-profile",
+          "brand-positioning"
+        ],
+        "date": "2026-05-26",
+        "keyQuote": "Flex — Get flexible rent payments on your schedule. Split rent into two installments. Membership fee $14.99/month. Available in thousands of properties nationwide."
+      },
+      {
+        "id": "SR037",
+        "publisher": "Flex (Flexible Finance, Inc.)",
+        "title": "Flex Careers | getflex.com/company/careers",
+        "url": "https://getflex.com/company/careers",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "headcount",
+          "team-growth",
+          "execution-risk",
+          "hiring"
+        ],
+        "date": "2026-05-26",
+        "keyQuote": "Flex careers page — open roles in engineering, compliance, customer success, and operations; company is actively hiring to support growth across product and regulatory functions."
+      },
+      {
+        "id": "SR038",
+        "publisher": "RocketReach",
+        "title": "Flex Company Profile — RocketReach",
+        "url": "https://rocketreach.co/flex-profile_b4507965fc797ac5",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "independent",
+        "topics": [
+          "executive-team",
+          "company-profile",
+          "headcount",
+          "leadership"
+        ],
+        "date": "2026-05-26",
+        "keyQuote": "Flex (Flexible Finance, Inc.) company profile — executive team, headcount, and funding data from RocketReach; company headquartered in New York, NY."
+      },
+      {
+        "id": "SR039",
+        "publisher": "Bloomberg",
+        "title": "Flexible Finance, Inc. Bloomberg Company Profile",
+        "url": "https://www.bloomberg.com/profile/company/1919231D:US",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "high",
+        "independence": "independent",
+        "topics": [
+          "company-financials",
+          "corporate-profile",
+          "capital-structure"
+        ],
+        "date": "2026-05-26",
+        "keyQuote": "Bloomberg company profile for Flexible Finance, Inc. — corporate overview, funding history, and key personnel; confirms company is a private fintech operating in consumer credit."
+      },
+      {
+        "id": "SR040",
+        "publisher": "Usearch.com",
+        "title": "Flexible Finance, Inc. Company Overview — Usearch",
+        "url": "https://usearch.com/company/flexible-finance,-inc/overview",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "independent",
+        "topics": [
+          "company-profile",
+          "executive-team",
+          "organizational-structure"
+        ],
+        "date": "2026-05-26",
+        "keyQuote": "Usearch company overview for Flexible Finance, Inc. — organizational profile including subsidiaries (Flexible Finance Brokering, Inc. and Flexible Finance Servicing, Inc.) and executive team."
+      },
+      {
+        "id": "SR041",
+        "publisher": "Growjo",
+        "title": "Flex Company Growth and Headcount Data — Growjo",
+        "url": "https://www.growjo.com/company/Flex",
+        "accessDate": "2026-05-26",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "independent",
+        "topics": [
+          "headcount",
+          "growth-rate",
+          "company-scale",
+          "execution-risk"
+        ],
+        "date": "2026-05-26",
+        "keyQuote": "Growjo headcount and growth signal data for Flex — employee count and growth trajectory; signals company is scaling its team in 2025-2026."
+      }
+    ],
+    "claims": [
+      {
+        "id": "CR001",
+        "statement": "Flex publishes a Truth in Lending disclosure for its 3-fee pricing variant at getflex.com/legal/flex-rent-truth-in-lending-disclosure-3-fee, confirming that Flex Rent is classified as a TILA-covered credit product.",
+        "type": "observed",
+        "topic": "regulatory-tila",
+        "sourceRefs": [
+          "SR003",
+          "SR001"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR003"
+        ]
+      },
+      {
+        "id": "CR002",
+        "statement": "Flex operates through two NMLS-registered non-bank subsidiaries: Flexible Finance Brokering, Inc. (NMLS #2599800) for brokering activities and Flexible Finance Servicing, Inc. (NMLS #2256673) for servicing and collection activities.",
+        "type": "observed",
+        "topic": "regulatory-licensing",
+        "sourceRefs": [
+          "SR002",
+          "SR022"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR001"
+        ]
+      },
+      {
+        "id": "CR003",
+        "statement": "Vermont residents receive a special disclosure stating 'THIS IS A LOAN SOLICITATION ONLY. FLEXIBLE FINANCE BROKERING, INC. IS NOT THE LENDER.' indicating that Flex cannot fully operate its standard product in Vermont.",
+        "type": "observed",
+        "topic": "state-licensing-restriction",
+        "sourceRefs": [
+          "SR022",
+          "SR002"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR004"
+        ]
+      },
+      {
+        "id": "CR004",
+        "statement": "All loan proceeds for Flex Rent are disbursed by Lead Bank or Column N.A., Member FDIC; neither Flex nor any of its subsidiaries disburses loan proceeds or moves consumer funds directly.",
+        "type": "observed",
+        "topic": "bank-partner-structure",
+        "sourceRefs": [
+          "SR022",
+          "SR023"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR002"
+        ]
+      },
+      {
+        "id": "CR005",
+        "statement": "The Flex Rent membership fee of $14.99/month is charged even in months when the renter does not use Flex Rent to pay rent, per the Monthly Membership Fee help article.",
+        "type": "observed",
+        "topic": "fee-model-udaap-risk",
+        "sourceRefs": [
+          "SR013",
+          "SR012"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR021"
+        ]
+      },
+      {
+        "id": "CR006",
+        "statement": "Flex requires SSN collection, income verification, and bank account linking via Plaid as part of the Flex Rent application process, creating a data collection footprint subject to GLBA, CCPA, and FCRA obligations.",
+        "type": "observed",
+        "topic": "data-privacy-risk",
+        "sourceRefs": [
+          "SR009",
+          "SR008",
+          "SR015"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR005"
+        ]
+      },
+      {
+        "id": "CR007",
+        "statement": "ACH is not a supported payment method for Flex; only debit and credit cards are accepted, per the Bill Payment and Card Processing Fees help article.",
+        "type": "observed",
+        "topic": "payment-method-limitation",
+        "sourceRefs": [
+          "SR014",
+          "SR018"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR019"
+        ]
+      },
+      {
+        "id": "CR008",
+        "statement": "Fannie Mae's Desktop Underwriter now incorporates positive rent payment history, and FHFA issued an order in 2025 creating a rent-to-homeownership pathway, increasing regulatory scrutiny on rent-data accuracy and completeness.",
+        "type": "observed",
+        "topic": "credit-reporting-regulatory-context",
+        "sourceRefs": [
+          "SR028",
+          "SR029"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR024"
+        ]
+      },
+      {
+        "id": "CR009",
+        "statement": "Flex bears the default risk when a renter does not repay Flex after Flex has advanced rent to the property manager, per flexpartners partner documentation.",
+        "type": "observed",
+        "topic": "credit-default-risk",
+        "sourceRefs": [
+          "SR010",
+          "SR011"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR007"
+        ]
+      },
+      {
+        "id": "CR010",
+        "statement": "Flex's resident qualification criteria accept applicants with 'fair' credit — applicants who may have missed some payments, have high usage on 1-2 accounts, or have other impaired credit history — as long as they currently have no outstanding defaults or recent bankruptcy.",
+        "type": "observed",
+        "topic": "underwriting-credit-quality",
+        "sourceRefs": [
+          "SR011",
+          "SR007"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR009"
+        ]
+      },
+      {
+        "id": "CR011",
+        "statement": "Among approximately 1,000 active Flex renters surveyed in Q1 2026, 70% rated their own credit as fair or poor and 47% spent more than they earned in the prior year — confirming that Flex's approved user base is predominantly credit-stressed.",
+        "type": "observed",
+        "topic": "adverse-selection-risk",
+        "sourceRefs": [
+          "SR035",
+          "SR034"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR008"
+        ]
+      },
+      {
+        "id": "CR012",
+        "statement": "No default rate, charge-off rate, delinquency rate, or loss reserve coverage has ever been publicly disclosed for the Flex Rent product.",
+        "type": "open-question",
+        "topic": "undisclosed-loss-metrics",
+        "sourceRefs": [],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR010",
+          "QR025"
+        ]
+      },
+      {
+        "id": "CR013",
+        "statement": "The Flex Funds feature, which allows renters to pre-fund a payment buffer that reduces default risk, is available only to some Flex accounts and not universally offered.",
+        "type": "observed",
+        "topic": "default-mitigation-limited",
+        "sourceRefs": [
+          "SR019",
+          "SR013"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR009"
+        ]
+      },
+      {
+        "id": "CR014",
+        "statement": "The Harvard JCHS America's Rental Housing 2026 report documents worsening renter affordability and elevated cost-burden rates, particularly for low-income renters — the population that most closely matches Flex's core user demographic.",
+        "type": "observed",
+        "topic": "macro-default-risk-context",
+        "sourceRefs": [
+          "SR030",
+          "SR035"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR026"
+        ]
+      },
+      {
+        "id": "CR015",
+        "statement": "For a renter paying $1,500/month using Flex with a debit card, the annual product cost is approximately $576 ($179.88 in membership fees plus ~$180 in bill payment fees), representing a meaningful additional financial burden for a household already spending more than it earns.",
+        "type": "inferred",
+        "topic": "fee-model-burden",
+        "sourceRefs": [
+          "SR012",
+          "SR013",
+          "SR014"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR020"
+        ]
+      },
+      {
+        "id": "CR016",
+        "statement": "Flex is migrating its banking backend from Lead Bank to Column N.A. with a hard deadline of June 1, 2026; customers who do not accept the new terms by that date may have their access to Flex interrupted.",
+        "type": "observed",
+        "topic": "bank-migration-operational-risk",
+        "sourceRefs": [
+          "SR004",
+          "SR005"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR011"
+        ]
+      },
+      {
+        "id": "CR017",
+        "statement": "The June 2026 bank migration requires a two-step customer action: accepting new terms in the Flex app AND updating payment method in the property's rent portal. Failure to complete either step will cause rent payment failure.",
+        "type": "observed",
+        "topic": "migration-failure-risk",
+        "sourceRefs": [
+          "SR004",
+          "SR027"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR011"
+        ]
+      },
+      {
+        "id": "CR018",
+        "statement": "Flex uses Plaid (or a comparable bank data aggregator) for bank account verification and ongoing balance monitoring; no public contingency plan exists for a Plaid outage or API restriction.",
+        "type": "observed",
+        "topic": "plaid-dependency",
+        "sourceRefs": [
+          "SR015",
+          "SR016"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR013"
+        ]
+      },
+      {
+        "id": "CR019",
+        "statement": "RealPage named Flex its 'preferred technology provider for flexible rent payments' in August 2024, covering 1.3 million+ units; no contract term, exclusivity provision, or renewal date has been publicly disclosed.",
+        "type": "observed",
+        "topic": "PMS-concentration-realpage",
+        "sourceRefs": [
+          "SR031"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR014",
+          "QR015"
+        ]
+      },
+      {
+        "id": "CR020",
+        "statement": "Flex has active PMS integrations with seven platforms (Yardi, RealPage, Entrata, AppFolio, MRI, Zego, Rent Manager) providing access to 8 million+ units; no integration agreement terms are publicly disclosed.",
+        "type": "observed",
+        "topic": "PMS-integration-scope",
+        "sourceRefs": [
+          "SR022",
+          "SR031"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR014"
+        ]
+      },
+      {
+        "id": "CR021",
+        "statement": "NAAHQ's 2025 AppFolio benchmark report indicates that property managers are consolidating around fewer, larger PMS platforms and that technology integration strategies are evolving rapidly, increasing partner turnover risk.",
+        "type": "observed",
+        "topic": "PMS-market-dynamics",
+        "sourceRefs": [
+          "SR031"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR015"
+        ]
+      },
+      {
+        "id": "CR022",
+        "statement": "Column N.A. is a nationally chartered bank (OCC-regulated) that provides banking infrastructure for fintech companies; it became Flex's primary bank partner following the 2026 migration from Lead Bank.",
+        "type": "observed",
+        "topic": "column-na-profile",
+        "sourceRefs": [
+          "SR005",
+          "SR004"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR012"
+        ]
+      },
+      {
+        "id": "CR023",
+        "statement": "The BBB file for Flex (ID 0121-87134212) contained more than 400 complaints in the prior year with a 1-out-of-5 star rating; dominant complaint categories include unpaid rent and inability to reach customer service.",
+        "type": "observed",
+        "topic": "complaint-volume",
+        "sourceRefs": [
+          "SR024",
+          "SR026"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR016"
+        ]
+      },
+      {
+        "id": "CR024",
+        "statement": "The WSBTV investigation documented a consumer who sent 31 emails over more than a month attempting to update her payment card; Flex did not process her rent during this period, leaving her owing $1,200 to her apartment.",
+        "type": "observed",
+        "topic": "servicing-failure-housing-harm",
+        "sourceRefs": [
+          "SR026",
+          "SR024"
+        ],
+        "confidence": "high",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QR017"
+        ]
+      },
+      {
+        "id": "CR025",
+        "statement": "The Mother Jones investigation documented a Flex 'experiment' in which a small sample of customers were placed on a 3-day payment window without adequate notice, resulting in late fees and eviction threats after contradictory deadline messages were sent.",
+        "type": "observed",
+        "topic": "servicing-failure-housing-harm",
+        "sourceRefs": [
+          "SR025",
+          "SR024"
+        ],
+        "confidence": "high",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QR017"
+        ]
+      },
+      {
+        "id": "CR026",
+        "statement": "In its response to the WSBTV investigation, Flex acknowledged the service failure: 'We have resolved this customer's issue but put plain and simply, it should not have taken as long as it did.'",
+        "type": "observed",
+        "topic": "operational-failure-acknowledgment",
+        "sourceRefs": [
+          "SR026",
+          "SR025"
+        ],
+        "confidence": "high",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QR017",
+          "QR018"
+        ]
+      },
+      {
+        "id": "CR027",
+        "statement": "Flex attributed growing complaint volume to 'the surge in demand for our service' and claimed a 70% reduction in complaints due to customer service over two months, but the timeframe and denominator are not specified.",
+        "type": "observed",
+        "topic": "complaint-remediation-claims",
+        "sourceRefs": [
+          "SR026",
+          "SR021"
+        ],
+        "confidence": "low",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QR018"
+        ]
+      },
+      {
+        "id": "CR028",
+        "statement": "Flex's customer support infrastructure consists of chatbot triage, email ticketing, and live agent escalation; a formal consumer complaint form targeting 24-hour response is available for unresolved issues.",
+        "type": "observed",
+        "topic": "customer-service-infrastructure",
+        "sourceRefs": [
+          "SR017",
+          "SR021"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR018"
+        ]
+      },
+      {
+        "id": "CR029",
+        "statement": "Multiple BBB complaints document cases where the Flex app showed a successful payment but the landlord did not receive the rent, resulting in eviction filing notices; this pattern is distinct from simple payment-method failure.",
+        "type": "observed",
+        "topic": "payment-confirmation-mismatch",
+        "sourceRefs": [
+          "SR024",
+          "SR025"
+        ],
+        "confidence": "medium",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QR017"
+        ]
+      },
+      {
+        "id": "CR030",
+        "statement": "The Flex membership fee model — recurring monthly fee charged even when the product is not used, with auto-renewal and cancellation requiring 2-day advance notice — structurally resembles the design patterns that led to CFPB consent orders against Earnin, Dave, and MoneyLion.",
+        "type": "inferred",
+        "topic": "cfpb-enforcement-analog",
+        "sourceRefs": [
+          "SR013",
+          "SR003"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR023"
+        ]
+      },
+      {
+        "id": "CR031",
+        "statement": "The Flex Rent term loan (Move-in product) carries an explicit APR of 16.95%–23.84% depending on state and duration, contrasting with the Flex Rent revolving line that is described by membership fee rather than APR.",
+        "type": "observed",
+        "topic": "apr-disclosure-contrast",
+        "sourceRefs": [
+          "SR022",
+          "SR003"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR003",
+          "QR021"
+        ]
+      },
+      {
+        "id": "CR032",
+        "statement": "Flex's eviction prevention pilot with Hope+Door demonstrates awareness of housing harm risk and signals a regulatory mitigation posture, but the pilot does not address the structural servicing failure risk documented in BBB complaints and consumer investigations.",
+        "type": "inferred",
+        "topic": "eviction-prevention-limited-mitigation",
+        "sourceRefs": [
+          "SR032",
+          "SR024"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR030"
+        ]
+      },
+      {
+        "id": "CR033",
+        "statement": "No public loss reserve, charge-off rate, or default rate has been disclosed for the Flex Rent portfolio; the absence of this data makes independent financial model risk assessment impossible from public sources.",
+        "type": "open-question",
+        "topic": "financial-model-opacity",
+        "sourceRefs": [],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR010",
+          "QR025"
+        ]
+      },
+      {
+        "id": "CR034",
+        "statement": "CFPB's final Section 1033 open banking rule (October 2024) allows financial institutions to set rate limits on data aggregators and may restrict Plaid's real-time balance monitoring access, affecting Flex's ability to detect deteriorating renter financial health.",
+        "type": "inferred",
+        "topic": "cfpb-1033-plaid-risk",
+        "sourceRefs": [
+          "SR016",
+          "SR015"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR022"
+        ]
+      },
+      {
+        "id": "CR035",
+        "statement": "Flex's VP of Public Affairs, Ryan Metcalf, authored a 'Responsible Flexibility' framework advocating for transparent pricing and non-punitive payment products, positioning the company proactively in the regulatory and policy conversation.",
+        "type": "observed",
+        "topic": "regulatory-positioning",
+        "sourceRefs": [
+          "SR033",
+          "SR032"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR028"
+        ]
+      },
+      {
+        "id": "CR036",
+        "statement": "Flex's customer service and compliance headcount relative to its 2.7 million customer base has not been publicly disclosed; no SOC 2 report, penetration test results, or CFPB examination history has been made public.",
+        "type": "open-question",
+        "topic": "compliance-infrastructure-opacity",
+        "sourceRefs": [],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR027",
+          "QR028"
+        ]
+      },
+      {
+        "id": "CR037",
+        "statement": "The June 2026 Lead Bank to Column N.A. migration is the most immediate operational risk in the portfolio: it requires coordinated two-step customer action across 2.7 million accounts and thousands of property rent portals with no disclosed completion rate or fallback.",
+        "type": "inferred",
+        "topic": "migration-kill-risk",
+        "sourceRefs": [
+          "SR004",
+          "SR005",
+          "SR006"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR011",
+          "QR029"
+        ]
+      },
+      {
+        "id": "CR038",
+        "statement": "TransUnion's September 2025 report documents an FHFA order creating a rent-payment-to-homeownership pathway and notes increasing regulatory interest in the rent-data ecosystem, raising the stakes for Flex's credit reporting accuracy obligations.",
+        "type": "observed",
+        "topic": "credit-reporting-obligations-escalating",
+        "sourceRefs": [
+          "SR029",
+          "SR028"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR024"
+        ]
+      },
+      {
+        "id": "CR039",
+        "statement": "Lead Bank's website confirms FDIC insurance and identifies it as a fintech banking infrastructure partner; the transition to Column N.A. implies Lead Bank is exiting or reducing its role in the Flex Rent program.",
+        "type": "inferred",
+        "topic": "lead-bank-exit",
+        "sourceRefs": [
+          "SR006",
+          "SR004"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR012"
+        ]
+      },
+      {
+        "id": "CR040",
+        "statement": "Flex processes rent payments via property rent portals (for PMS-integrated properties) and direct bank transfers (for non-portal properties); the portal pathway requires active payment method updates during bank migrations, creating a high-friction synchronization requirement.",
+        "type": "observed",
+        "topic": "payment-channel-complexity",
+        "sourceRefs": [
+          "SR004",
+          "SR018",
+          "SR027"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR019",
+          "QR017"
+        ]
+      },
+      {
+        "id": "CR041",
+        "statement": "Flex's 'Responsible Flexibility' framework cites $280 billion per year in costs Americans pay from late fees, overdraft and NSF fees, and high-cost short-term credit; this framing acknowledges the financial vulnerability of Flex's target market.",
+        "type": "observed",
+        "topic": "target-market-financial-vulnerability",
+        "sourceRefs": [
+          "SR033",
+          "SR034"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR026"
+        ]
+      },
+      {
+        "id": "CR042",
+        "statement": "The Plaid platform serves over 12,000 financial institutions and processes over 1 million daily connections, making it a systemically important fintech infrastructure layer that could face CFPB oversight of its own.",
+        "type": "observed",
+        "topic": "plaid-systemic-importance",
+        "sourceRefs": [
+          "SR016",
+          "SR015"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR013",
+          "QR022"
+        ]
+      },
+      {
+        "id": "CR043",
+        "statement": "Flex's signing-up help article confirms that credit assessment, banking information, and payment history are evaluated during the application process, but does not specify model architecture, approval threshold, or algorithmic fairness review.",
+        "type": "observed",
+        "topic": "underwriting-model-opacity",
+        "sourceRefs": [
+          "SR020",
+          "SR007"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR009"
+        ]
+      },
+      {
+        "id": "CR044",
+        "statement": "The NAAHQ 2025 benchmark report confirms that PMS technology adoption patterns are shifting rapidly among property managers, and that integration strategies are evolving — consistent with a landscape where preferred payment integrations may be renegotiated.",
+        "type": "observed",
+        "topic": "pms-market-evolution-risk",
+        "sourceRefs": [
+          "SR031"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR015"
+        ]
+      },
+      {
+        "id": "CR045",
+        "statement": "The Harvard JCHS 2026 report positions worsening rental affordability as a structural challenge, not a cyclical one, suggesting that Flex's core user base will face sustained financial pressure that increases both demand for the product and default risk.",
+        "type": "inferred",
+        "topic": "structural-affordability-default-risk",
+        "sourceRefs": [
+          "SR030",
+          "SR035"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR026"
+        ]
+      },
+      {
+        "id": "CR046",
+        "statement": "Flex's careers page (getflex.com/company/careers) lists active hiring across engineering, compliance, customer success, and operations, consistent with a company scaling its team; but headcount relative to 2.7 million customers has not been publicly disclosed.",
+        "type": "observed",
+        "topic": "execution-risk-headcount",
+        "sourceRefs": [
+          "SR037",
+          "SR041"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QR027"
+        ]
+      }
+    ],
+    "evidenceGaps": [
+      {
+        "type": "missing-source",
+        "severity": "material",
+        "topic": "loss-rate-and-default-metrics",
+        "missingEvidence": "No default rate, charge-off rate, delinquency rate, reserve coverage, or actuarial model quality documentation has been publicly disclosed for the Flex Rent portfolio.",
+        "whyItMatters": "Without loss-rate disclosure, investors cannot independently assess whether the fee model generates sufficient margin to absorb credit losses under stress conditions.",
+        "diligencePath": "Request monthly and trailing-twelve-month charge-off data, reserve balance, loss model documentation, and independent model validation report.",
+        "relatedQuestionRefs": [
+          "QR010",
+          "QR025"
+        ],
+        "relatedTableRefs": [
+          "TR002"
+        ]
+      },
+      {
+        "type": "missing-source",
+        "severity": "material",
+        "topic": "CFPB-and-state-regulatory-history",
+        "missingEvidence": "No CFPB examination history, state regulatory examination findings, or civil investigative demand records have been publicly disclosed. NMLS filings are not fully verifiable from public sources.",
+        "whyItMatters": "The BBB complaint volume, documented servicing failures, and structural TILA/UDAAP exposure make prior regulatory contact highly likely; investors need to know if the company has any consent orders or pending investigations.",
+        "diligencePath": "Request CFPB exam history, state AG and regulatory correspondence, NMLS examination reports, and legal opinion on TILA and UDAAP exposure for the membership-fee model.",
+        "relatedQuestionRefs": [
+          "QR021",
+          "QR023"
+        ],
+        "relatedTableRefs": [
+          "TR001"
+        ]
+      },
+      {
+        "type": "missing-source",
+        "severity": "material",
+        "topic": "bank-migration-completion-rate",
+        "missingEvidence": "No customer completion rate, property manager outreach confirmation rate, or contingency plan has been publicly disclosed for the June 2026 Lead Bank to Column N.A. migration.",
+        "whyItMatters": "A bank migration requiring two-step customer action at scale is a high-risk operational event; the failure scenario — mass rent payment failure — would trigger exactly the class of housing harm documented in prior adverse incidents.",
+        "diligencePath": "Request migration completion rate by account cohort, contingency plan for non-compliant accounts, and property manager communication log.",
+        "relatedQuestionRefs": [
+          "QR011"
+        ],
+        "relatedTableRefs": [
+          "TR002",
+          "TR003"
+        ]
+      },
+      {
+        "type": "missing-source",
+        "severity": "informational",
+        "topic": "PMS-integration-contract-terms",
+        "missingEvidence": "No integration agreement terms (duration, exclusivity, termination provisions, revenue share) have been publicly disclosed for any of the seven PMS partnerships.",
+        "whyItMatters": "Without contract terms, the durability of the distribution network cannot be assessed; any of the seven integrations could be terminated with limited notice.",
+        "diligencePath": "Request integration agreement redlines, exclusivity provisions, and preferred-technology-provider definition for RealPage and Yardi relationships.",
+        "relatedQuestionRefs": [
+          "QR014",
+          "QR006"
+        ],
+        "relatedTableRefs": [
+          "TR003"
+        ]
+      },
+      {
+        "type": "missing-source",
+        "severity": "informational",
+        "topic": "security-and-compliance-posture",
+        "missingEvidence": "No SOC 2 Type II report, penetration test results, GLBA safeguards program documentation, or cybersecurity incident history has been publicly disclosed.",
+        "whyItMatters": "Flex collects SSN, income, bank credentials, and ongoing balance data for 2.7 million customers; the security posture behind this data collection is entirely opaque from public sources.",
+        "diligencePath": "Request SOC 2 Type II audit, GLBA safeguards program, data-map, subprocessor list, and prior incident log.",
+        "relatedQuestionRefs": [
+          "QR005",
+          "QR027",
+          "QR028"
+        ],
+        "relatedTableRefs": [
+          "TR002"
+        ]
+      }
+    ]
+  }
+}
