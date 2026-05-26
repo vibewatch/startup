@@ -1,0 +1,1866 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: redpanda
+runDate: '2026-05-26'
+company:
+  name: Redpanda
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: >-
+    Redpanda's product portfolio centers on a C++ rewrite of Apache Kafka that ships as a single binary with no ZooKeeper
+    or JVM dependency, achieving at least 10x lower P99 tail latency in company benchmarks. The portfolio has expanded into
+    three pillars: Redpanda Streaming (the core broker), Redpanda Connect (300+ connectors via the acquired Benthos engine),
+    and the Agentic Data Plane (AI governance launched October 2025). Cloud Topics in the R1 engine reached GA in Q1 2026,
+    enabling direct object-storage writes and completing the company's cloud-native storage architecture. Security posture is
+    described by Redpanda as SOC 2 Type 2-attested, with TLS 1.2 in transit and AES-256 GCM token encryption, though the
+    underlying audit report is not publicly downloadable. Observed cloud control-plane uptime (99.66%, Feb–May 2026) fell short
+    of the contractual 99.99% multi-zone SLA, warranting closer monitoring.
+sections:
+  - id: product-definition
+    title: "Product definition and customer workflow role"
+    body: >-
+      Redpanda is a from-scratch C++ rewrite of the Apache Kafka messaging protocol, built to give developers and platform
+      engineers a streaming data platform that is faster, simpler to operate, and Kafka-compatible out of the box. Where
+      Apache Kafka requires ZooKeeper (or KRaft in newer versions) for consensus and relies on a JVM that introduces garbage
+      collection pauses at high percentiles, Redpanda ships as a single self-contained binary — brokers, schema registry,
+      HTTP proxy, and Raft consensus all included. Operators go from download to a running 3-node cluster in under a minute
+      on a developer laptop, and to a production Kubernetes cluster in under 90 seconds. This operational simplicity targets
+      three customer workflow categories: real-time event streaming (financial tick data, IoT, gaming telemetry), data
+      integration pipelines (CDC from Postgres and MySQL into data lakes, ETL into Snowflake), and increasingly agentic AI
+      infrastructure (governed context delivery to LLMs, agent audit trails, token budget enforcement). As of May 2026 the
+      portfolio has three major product families: Redpanda Streaming (the C++ broker), Redpanda Connect (the data connectivity
+      suite, originally the open-source Benthos project acquired in May 2024), and the Agentic Data Plane (ADP, launched
+      October 2025 and expanded with AI Gateway in February 2026). The official documentation characterizes the platform as
+      "a high-performance streaming data platform and Agentic Data Plane" that is "Kafka API-compatible." Redpanda targets
+      enterprises that currently run Apache Kafka but find the operational overhead, cost, and latency ceiling to be blockers,
+      as well as developer teams looking for a faster on-ramp that does not sacrifice Kafka ecosystem compatibility.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE006
+      - CE007
+      - CE009
+      - CE010
+    tableRefs:
+      - TE002
+    figureRefs:
+      - FE002
+
+  - id: product-module-map
+    title: "Product module and SKU map"
+    body: >-
+      Redpanda Streaming is available in five SKUs spanning the open-source community, commercial on-premise, and three
+      cloud-managed tiers. The Community Edition is Apache 2.0 licensed and freely available for self-managed deployment on
+      Linux, macOS (via Docker), Kubernetes, and air-gapped environments. The Enterprise Edition adds tiered storage,
+      role-based access control, multi-zone topic replication tuning, and 24×7 support under a commercial license. The
+      three Redpanda Cloud tiers — Serverless (fully managed, auto-scaling, multi-tenant shared infrastructure), Dedicated
+      (single-tenant clusters in Redpanda's cloud), and BYOC (clusters deployed in the customer's own AWS, GCP, or Azure
+      account but fully managed by Redpanda) — cover a spectrum from zero-infrastructure developer trials to enterprise
+      data sovereignty requirements. Cloud Topics in the R1 engine became generally available with Streaming version 26.1
+      in Q1 2026; it can coexist with tiered-storage topics in the same cluster. Redpanda Connect offers 300+ pre-built
+      connectors including CDC connectors for Postgres, MySQL, MongoDB, Oracle, and MSSQL; it is implemented in Go as an
+      embeddable single binary and uses Bloblang for declarative transformations. The redpanda-data/connect GitHub
+      repository had 8,700 stars and 7,417 commits as of the research date, indicating a healthy open-source adoption base.
+      The Agentic Data Plane integrates Redpanda Streaming, Redpanda Connect, and the Oxla distributed SQL engine (acquired
+      October 2025) into a unified governance surface for AI agents, offering an AI Gateway, centralized identity
+      management via OAuth2/OIDC/MCP/A2A, OpenTelemetry-based observability, and token budget enforcement. The
+      redpanda-data/redpanda core repository had 12,100 stars and 50,847 commits as of the research date.
+    claimRefs:
+      - CE011
+      - CE012
+      - CE013
+      - CE014
+      - CE015
+      - CE016
+      - CE017
+      - CE018
+      - CE019
+      - CE020
+    tableRefs:
+      - TE001
+    figureRefs:
+      - FE001
+
+  - id: architecture-operating-model
+    title: "Core architecture and operating model"
+    body: >-
+      Redpanda's performance advantage derives from a thread-per-core architecture implemented in C++ using the Seastar
+      framework and io_uring for kernel I/O. Each logical CPU core owns a dedicated shard with its own memory and I/O
+      queue; no shared-state locks and no JVM garbage collector pauses produce the latency consistency that distinguishes
+      Redpanda from Java-based Kafka at high percentiles. The Raft consensus protocol replaces ZooKeeper for distributed
+      coordination: every partition leader election, topic metadata change, and configuration update flows through Raft
+      without any external dependency. Data durability relies primarily on local NVMe SSDs with replication across
+      availability zones (minimum replication factor of three in cloud deployments). Redpanda's R1 engine introduced a
+      unified storage model that allows Cloud Topics and Tiered Storage topics to coexist in a single cluster. Cloud Topics
+      (GA in v26.1, Q1 2026) writes data directly to object storage (AWS S3, GCP GCS) by batching incoming records in memory
+      for a short time window (e.g., 250 ms) or size (e.g., 4 MB) before flushing, keeping only lightweight Raft metadata on
+      local disk. This design bypasses the cross-AZ networking cost incurred when replicating full payloads via Raft, at the
+      cost of higher write latency for low-batch-count workloads. Tiered Storage, production-proven for several years, offloads
+      cold segments to object storage while keeping hot data on NVMe. For cloud deployments, Redpanda uses a cell-based
+      architecture: each cell co-locates all services (brokers, management API, ACL store) needed to serve a cluster, so a
+      failure in one cell does not cascade across other customers' clusters. This architecture allowed Redpanda Cloud GCP
+      clusters to remain stable during the June 2025 global GCP outage. Redpanda Connect operates as an independently
+      deployable Go binary alongside or embedded within Redpanda Streaming: pipelines are described in a single YAML file,
+      at-least-once delivery is guaranteed through in-process transactions, and the largest deployed instance was observed
+      pushing 50 Gbps of throughput.
+    claimRefs:
+      - CE021
+      - CE022
+      - CE023
+      - CE024
+      - CE025
+      - CE026
+      - CE027
+      - CE028
+      - CE029
+      - CE035
+    tableRefs:
+      - TE003
+    figureRefs:
+      - FE003
+
+  - id: deployment-reliability-support
+    title: "Deployment, integration, reliability, and support"
+    body: >-
+      Redpanda supports self-managed deployment on Linux (Debian/Ubuntu, Fedora/RHEL/Amazon Linux), macOS via Docker,
+      Kubernetes, and fully air-gapped environments. Redpanda Cloud is available on AWS, GCP, and Azure across multiple
+      regions, with BYOC supporting customer-managed VPCs. The Cloud SLA (last updated March 17, 2025) commits to 99.99%
+      monthly uptime for multi-zone Dedicated and BYOC clusters, 99.90% for Serverless instances, and 99.50% for single-zone
+      clusters. Service credits range from 10% for any breach of the multi-zone 99.99% target up to 100% of the monthly fee
+      for availability below 95%. The public status page (status.redpanda.com) recorded cloud control-plane uptime of 99.66%
+      and Redpanda Cloud Accounts uptime of 99.96% during the Feb–May 2026 window; Redpanda Serverless showed 100% uptime
+      in the same period. IsDown recorded 17 Redpanda outages over the trailing 12 months, most of which were minor support
+      system incidents (e.g., Slack-to-Zendesk sync) rather than data-path failures. Redpanda Connect integrates with
+      existing Kafka clients without code changes and supports a Kafka Migrator command for moving workloads from any Kafka
+      system to Redpanda. Support tiers provide access to Redpanda's technical team via telephone, email, and customer support
+      portal; BYOC and Enterprise tiers include dedicated account support with SLA-backed response times. The Agentic Data
+      Plane is also deployable in a fully managed cloud, BYOC, or on-premise model, expanding the supported deployment
+      surface. Roadmap items are tracked primarily through official press releases and the versioned documentation site;
+      a formal public roadmap portal is not published, making forward feature visibility dependent on vendor communications.
+    claimRefs:
+      - CE030
+      - CE031
+      - CE032
+      - CE033
+      - CE034
+      - CE036
+    tableRefs:
+      - TE005
+    figureRefs: []
+
+  - id: technical-differentiation
+    title: "Technical differentiation and IP"
+    body: >-
+      Redpanda's primary technical differentiator is its C++ thread-per-core architecture, which eliminates the JVM garbage
+      collector as a source of tail-latency jitter. In Redpanda's own published benchmarks, the platform delivers at least
+      10x lower P99 tail latencies than Apache Kafka and requires up to 3x fewer nodes for equivalent throughput. At higher
+      throughput levels, Redpanda remains 2–3x faster. ARM-hardware compatibility is a secondary differentiator: Redpanda
+      runs without degradation on AWS Graviton instances, whereas Kafka's JVM has documented performance problems on ARM.
+      Deploying Redpanda on Graviton is4gen.medium instances in place of comparable x86 instances yields approximately 57%
+      cost savings per byte, a concrete TCO lever for customers in AWS environments. The company's regression-testing
+      infrastructure checks performance to microsecond accuracy across every release cycle, preventing the gradual latency
+      regression common in large codebases. A third-party technical comparison (AutoMQ, April 2026) categorizes Redpanda as
+      a "shared-nothing, disk-based" platform that excels at latency but carries higher operational and cost burden relative
+      to shared-storage (S3-native) platforms; this framing is consistent with the trade-offs Redpanda acknowledges by
+      introducing Cloud Topics as a hybrid option. The Agentic Data Plane represents a product-layer differentiation:
+      by integrating AI Gateway, MCP/A2A protocol support, OpenTelemetry observability, and the Oxla SQL engine into a
+      unified governance surface, Redpanda is positioning itself as infrastructure for AI-agent context delivery and
+      auditability — a capability set no pure-streaming competitor currently offers in a single product.
+    claimRefs:
+      - CE037
+      - CE038
+      - CE039
+      - CE040
+      - CE041
+      - CE042
+      - CE043
+      - CE044
+    figureRefs:
+      - FE004
+
+  - id: trust-security-compliance
+    title: "Security, compliance, and quality controls"
+    body: >-
+      Redpanda's security posture is aligned with the AICPA SOC 2 Trust Services Criteria for security, availability, and
+      privacy. Redpanda publicly states that it has obtained SOC 2 Type 2 attestation, but the underlying audit report has
+      not been made publicly downloadable; the company instead publishes a trust-center security posture document. Customer
+      data isolation is enforced at the VPC level: Dedicated
+      customers receive a single-tenant cluster in a separate VPC within Redpanda's cloud account, while BYOC customers
+      run clusters in their own VPC and cloud account, ensuring sensitive data never leaves the customer environment. All
+      data in transit is protected by TLS 1.2; OAuth2 and OIDC access tokens are encrypted at rest using AES-256 GCM, and
+      tokens never leave the customer network. Federated SSO via OAuth2 and OIDC with PKCE is supported; passwords for
+      non-SSO users are hashed with bcrypt. Production access by Redpanda engineering follows Zero Trust principles, with
+      all interactive sessions recorded and retained for audit. The company conducts annual penetration testing and operates
+      a bug bounty program, though neither pentest scope/vendor nor bug bounty platform is publicly named. Static secrets are
+      stored in AWS/GCP Secret Manager with periodic rotation; IAM roles follow least-privilege. A blog post in September
+      2023 documented the introduction of customer-managed VPCs and described SOC 2 compliance readiness, indicating the
+      compliance program was active by that date. The PeerSpot review platform shows user feedback on Redpanda's reliability
+      and operational characteristics; a formal independent security audit trail for enterprise procurement due diligence
+      would require direct engagement with Redpanda's security team.
+    claimRefs:
+      - CE045
+      - CE046
+      - CE047
+      - CE048
+      - CE049
+      - CE050
+      - CE051
+      - CE052
+      - CE053
+    tableRefs:
+      - TE004
+
+tables:
+  - id: TE001
+    title: "Product module and SKU matrix"
+    columns:
+      - "Product / Module"
+      - "Primary User"
+      - "Deployment Model"
+      - "Maturity Status"
+      - "Key Differentiator"
+      - "Diligence Gap"
+    rows:
+      - ["Redpanda Streaming — Community Edition", "Developers / platform engineers", "Self-managed (Linux, Docker, K8s)", "GA — production-proven since 2022", "Open-source C++ Kafka replacement, no ZooKeeper", "Exact scope of community vs. enterprise feature boundaries"]
+      - ["Redpanda Streaming — Enterprise Edition", "Enterprise platform teams", "Self-managed (Linux, Kubernetes, air-gapped)", "GA — commercial license", "Tiered Storage, RBAC, 24×7 support, cross-AZ replication tuning", "Enterprise feature list vs. Confluent not fully public"]
+      - ["Redpanda Cloud Serverless", "Developers / startups", "Fully managed — Redpanda infra", "GA — observed 100% uptime Feb–May 2026", "Auto-scaling, zero infrastructure ops, free tier", "Pricing ceiling at scale; shared infra isolation assurances"]
+      - ["Redpanda Cloud Dedicated", "Enterprise — compliance-light", "Fully managed — Redpanda infra", "GA — production-proven", "Dedicated single-tenant cluster, integrated Console", "Customer-count and retention evidence limited publicly"]
+      - ["Redpanda Cloud BYOC", "Enterprise — data sovereignty", "Managed in customer AWS/GCP/Azure VPC", "GA — flagship enterprise tier", "Sensitive data stays in customer VPC; fully managed ops", "Pricing not public; requires direct sales engagement"]
+      - ["Redpanda Connect", "Data / ML engineers", "Self-managed or managed cloud pipelines", "GA — production-proven post-acquisition", "300+ connectors, CDC, Bloblang, Go single binary", "CDC maturity vs. Debezium ecosystem; Oracle CDC stability"]
+      - ["Agentic Data Plane (ADP)", "Enterprise AI / platform teams", "Cloud managed, BYOC, or on-premise", "Early GA — launched Oct 2025", "AI Gateway, MCP/A2A, OpenTelemetry, Oxla SQL, zero lock-in", "Limited public production deployments; customer proof needed"]
+      - ["Cloud Topics (R1 engine)", "Platform engineers — cost-sensitive workloads", "Cloud / BYOC only (v26.1+)", "GA — Q1 2026", "Direct S3/GCS writes; eliminates cross-AZ replication cost", "Read-path latency vs. disk-first; SLA data at GA scale TBD"]
+    notes: >-
+      Maturity status based on official product announcements and documentation as of 2026-05-26. Diligence gaps reflect absence
+      of public evidence rather than confirmed deficiencies. Serverless uptime observed from public status page (Feb–May 2026 window).
+    claimRefs:
+      - CE011
+      - CE012
+      - CE013
+      - CE014
+      - CE015
+      - CE019
+      - CE020
+
+  - id: TE002
+    title: "Workflow and use-case table"
+    columns:
+      - "User Job / Workflow"
+      - "Current State (without Redpanda)"
+      - "Redpanda Solution"
+      - "Measurable Benefit"
+      - "Key Limitation"
+    rows:
+      - ["Real-time event streaming at low latency", "Apache Kafka + ZooKeeper + JVM cluster", "Redpanda Streaming single binary", "≥10× lower P99 tail latency (company benchmark); up to 3× fewer nodes (company benchmark)", "Self-managed operational knowledge required; enterprise features licensed"]
+      - ["Database change-data-capture pipelines", "Kafka + Kafka Connect + Debezium plugins", "Redpanda Connect CDC connectors (Postgres, MySQL, MongoDB, Oracle, MSSQL)", "Declarative YAML config; single binary deployment; at-least-once guarantees", "Debezium ecosystem breadth still larger; Oracle CDC maturity unproven at scale"]
+      - ["AI agent context delivery and governance", "Custom REST APIs + vector DBs, no audit trail", "Redpanda ADP: AI Gateway + MCP/A2A + OpenTelemetry + Oxla SQL", "Governed agent access, token budgets, full action audit trail", "ADP is early GA (Oct 2025); limited public customer proof available"]
+      - ["Cost-optimized streaming (object-storage persistence)", "Kafka clusters with EBS-backed broker storage", "Cloud Topics R1 engine — direct S3/GCS writes", "Eliminates cross-AZ Raft replication cost for cold data", "Write-path batch window (250 ms / 4 MB) adds latency vs. disk-first topics"]
+      - ["Multi-cloud / air-gapped deployments", "Complex self-managed Kafka with manual ZooKeeper ops", "Redpanda self-managed single binary on Linux / K8s / air-gapped", "No ZooKeeper dependency; portable across cloud and on-prem", "C++ toolchain expertise required for custom builds; community smaller than Kafka"]
+      - ["Kafka workload migration", "Parallel-run source and target Kafka clusters", "Redpanda Kafka Migrator (rpk command)", "Single-command migration path; Kafka API compatibility", "Migration tooling maturity unproven for large-partition workloads; no independent case studies"]
+    notes: >-
+      Benefits labeled as company benchmark are self-reported by Redpanda and have not been independently audited for this
+      report. Comparisons against Apache Kafka reflect Redpanda's October 2022 published benchmark; Kafka performance has
+      evolved since then and an independent refresh is a diligence gap.
+    claimRefs:
+      - CE001
+      - CE015
+      - CE016
+      - CE023
+      - CE029
+      - CE037
+
+  - id: TE003
+    title: "Technology and operating architecture table"
+    columns:
+      - "Layer / Component"
+      - "Role"
+      - "External Dependency"
+      - "Technical Risk"
+    rows:
+      - ["C++ broker core (Seastar / thread-per-core / io_uring)", "Log replication, partition leadership, consumer group management", "Linux kernel with io_uring support (≥5.1)", "Kernel ABI compatibility; C++ expertise barrier for community contributions"]
+      - ["Raft consensus module", "Distributed coordination, leader election, metadata replication", "None — fully internal", "Split-brain scenarios; Raft tuning sensitivity for high partition-count deployments"]
+      - ["Kafka API compatibility layer", "Wire-protocol compatibility for all existing Kafka clients", "None — self-contained", "API parity gaps for advanced Kafka features (e.g., KIP-939); client-version drift edge cases"]
+      - ["Embedded Schema Registry", "Message schema storage and versioning", "None — embedded", "Less mature than Confluent Schema Registry for complex AVRO schema evolution workflows"]
+      - ["Tiered Storage", "Cold-data offload to object storage; reduces broker disk footprint", "AWS S3 / GCP GCS / Azure Blob", "Cloud provider availability dependency for cold reads; egress costs on read-back"]
+      - ["Cloud Topics (R1 engine)", "Direct-to-S3/GCS writes; Raft stores only metadata", "AWS S3 / GCP GCS", "Higher write latency from batch window; read path must pull from object storage"]
+      - ["Redpanda Connect (Go binary)", "CDC, data integration pipelines, AI connectors, Bloblang transforms", "None (embeddable); upstream CDC source DBs", "CDC connector maturity vs. Debezium; Go runtime dependency separate from C++ core"]
+      - ["Redpanda Console (Web UI)", "Cluster management, topic inspection, schema browsing", "Redpanda broker Admin API", "Operational tooling less feature-complete than Confluent Control Center"]
+      - ["ADP AI Gateway", "Centralized AI model routing, token budgets, MCP server registry", "Cloud LLM APIs (OpenAI, AWS Bedrock, GCP Vertex AI, Ollama)", "Early-stage product; cloud LLM API dependency introduces external failure modes for agent workflows"]
+    notes: >-
+      External dependencies and technical risks assessed from official documentation and engineering blog posts as of 2026-05-26.
+      Risk severity not independently validated; requires direct technical diligence with Redpanda engineering.
+    claimRefs:
+      - CE021
+      - CE022
+      - CE023
+      - CE025
+      - CE026
+      - CE027
+      - CE028
+      - CE042
+
+  - id: TE004
+    title: "Trust, quality, and compliance controls"
+    columns:
+      - "Control / Certification"
+      - "Status"
+      - "Scope"
+      - "Gap / Diligence Ask"
+    rows:
+      - ["SOC 2 Type 2 attestation", "Company-claimed as obtained; public report not downloadable", "Redpanda Cloud (Dedicated + BYOC + Serverless)", "Request SOC 2 Type II attestation report; confirm audit firm and period"]
+      - ["TLS 1.2 data-in-transit encryption", "Verified — official security documentation", "All Redpanda Cloud tiers; all cluster traffic", "TLS 1.3 upgrade path not documented; confirm cipher suites in use"]
+      - ["AES-256 GCM access-token encryption at rest", "Verified — official security documentation", "Redpanda Cloud OAuth2/OIDC access tokens", "Disk-level volume encryption delegates to cloud provider defaults; confirm key management"]
+      - ["Single-tenant VPC isolation", "Verified — official security documentation", "Dedicated (Redpanda VPC) and BYOC (customer VPC)", "Management-plane access from Redpanda shared infra remains; confirm blast-radius scope"]
+      - ["Federated SSO via OAuth2/OIDC with PKCE", "Verified — official security documentation", "Redpanda Cloud Console authentication", "SAML support not documented; RBAC role granularity not public; confirm before procurement"]
+      - ["Zero Trust production access with session recording", "Company-claimed — internal security posture doc", "Redpanda engineering access to production clusters", "No independent audit of access controls; request audit log evidence during diligence"]
+      - ["Annual penetration testing", "Company-claimed — internal security posture doc", "Applications and production network", "Pentest scope, vendor, and findings not disclosed; request executive summary for diligence"]
+      - ["Bug bounty program", "Company-claimed — internal security posture doc", "Publicly accessible application surfaces", "Platform (HackerOne/Bugcrowd) and scope not named; confirm program maturity"]
+      - ["Contractual 99.99% uptime SLA (multi-zone clusters)", "Contractual — Cloud SLA doc last updated 2025-03-17", "Dedicated and BYOC multi-zone clusters", "Control-plane observed at 99.66% (Feb–May 2026) — below SLA; clarify measurement scope with Redpanda"]
+    notes: >-
+      Status is based on publicly available documentation as of 2026-05-26. 'Company-claimed' indicates reliance on Redpanda's
+      own security posture document (trust center) rather than third-party attestation. Diligence asks require direct engagement
+      with Redpanda's security and compliance teams.
+    claimRefs:
+      - CE031
+      - CE045
+      - CE046
+      - CE047
+      - CE048
+      - CE049
+      - CE050
+      - CE051
+      - CE053
+
+  - id: TE005
+    title: "Roadmap, release, and development-stage milestones"
+    columns:
+      - "Date / Stage"
+      - "Feature / Milestone"
+      - "Status"
+      - "Strategic Implication"
+      - "Source"
+    rows:
+      - ["May 2024", "Acquisition of Benthos → rebranded as Redpanda Connect", "Completed", "Adds 300+ connectors and CDC to core platform; end-to-end streaming from source to sink", "SE015 (press release)"]
+      - ["October 2025", "Acquisition of Oxla (distributed SQL engine)", "Completed", "Enables SQL queries over data in motion and at rest; foundational for ADP analytics layer", "SE016 (press release)"]
+      - ["October 2025", "Agentic Data Plane (ADP) v1 — AI governance, MCP/A2A integration, Oxla SQL endpoint", "GA", "New market category — AI agent governance infrastructure; differentiates from pure-streaming competitors", "SE016, SE024"]
+      - ["February 2026", "ADP expanded: AI Gateway, OpenTelemetry observability, unified identity and authorization", "GA", "Enterprise AI readiness gate — token budgets, cost controls, and observability for production agentic workloads", "SE004, SE023"]
+      - ["Q1 2026 (v26.1)", "Cloud Topics General Availability — R1 engine complete", "GA", "Completes the storage-tier strategy; customers can mix disk-first, tiered, and cloud-native topics in one cluster", "SE009 (architecture blog)"]
+      - ["August 2025", "16 AI connectors open-sourced under Apache 2.0 (OpenAI, Cohere, Bedrock, Ollama, Vertex AI)", "Released", "Grows AI connector ecosystem; lowers barrier to Redpanda for AI/ML pipeline use cases", "SE013 (blog)"]
+      - ["Ongoing / 2026", "Redpanda Streaming 26.x versioning and continuous release cadence", "Active development — latest v26.1.9 per docs", "Rapid versioning signals active engineering investment; date-based versioning aids enterprise change management", "SE019 (docs)"]
+    notes: >-
+      Dates are based on official press releases and blog posts. A formal public product roadmap is not published; forward-looking
+      milestones beyond announced releases are unavailable without direct vendor engagement. Version 26.1.9 sourced from
+      docs.redpanda.com latest-redpanda-tag metadata.
+    claimRefs:
+      - CE006
+      - CE007
+      - CE008
+      - CE041
+      - CE042
+
+figures:
+  - id: FE001
+    title: "Redpanda product architecture stack"
+    type: stack
+    layout: standard
+    summary: >-
+      Five-layer architecture from infrastructure through the Agentic Data Plane, showing how Redpanda Streaming, Connect,
+      and ADP stack on top of a cloud-agnostic deployment foundation.
+    data:
+      layers:
+        - label: "Infrastructure & Deployment"
+          modules:
+            - "AWS, GCP, Azure (Dedicated / BYOC / Serverless)"
+            - "Kubernetes, Linux on-prem, air-gapped"
+            - "ARM (Graviton) and x86 hardware"
+        - label: "Redpanda Streaming Engine (C++)"
+          modules:
+            - "Seastar thread-per-core / io_uring"
+            - "Raft consensus (no ZooKeeper)"
+            - "NVMe-first topics (disk replication)"
+            - "Tiered Storage (cold offload to S3/GCS)"
+            - "Cloud Topics / R1 engine (direct S3/GCS writes, GA v26.1)"
+        - label: "Kafka Compatibility API"
+          modules:
+            - "Kafka wire protocol (producers, consumers, admin)"
+            - "Embedded Schema Registry"
+            - "Embedded HTTP Proxy"
+            - "Transactions and consumer groups"
+        - label: "Redpanda Connect (Go)"
+          modules:
+            - "300+ pre-built connectors (sources, sinks, processors)"
+            - "CDC: Postgres, MySQL, MongoDB, Oracle, MSSQL"
+            - "Bloblang declarative transformation language"
+            - "AI processors (OpenAI, Bedrock, Cohere, Ollama, Vertex AI)"
+        - label: "Agentic Data Plane (ADP)"
+          modules:
+            - "AI Gateway (routing, token budgets, policy enforcement)"
+            - "Unified identity: OAuth2 / OIDC / MCP / A2A protocols"
+            - "OpenTelemetry observability (AI actions, agent traces)"
+            - "Oxla SQL engine (query data in motion and at rest)"
+    approximationNotes: >-
+      Layer boundaries are logical product groupings derived from official documentation; actual binary/service composition
+      may differ in detail. ADP layer reflects capabilities announced through February 2026.
+    claimRefs:
+      - CE002
+      - CE003
+      - CE015
+      - CE018
+      - CE021
+      - CE022
+
+  - id: FE002
+    title: "Customer workflow: data flow through Redpanda"
+    type: flow
+    layout: standard
+    summary: >-
+      End-to-end data path from source databases and event producers through Redpanda Streaming into downstream consumers,
+      including the AI governance layer for agentic workloads.
+    data:
+      nodes:
+        - id: sources
+          label: "Data Sources"
+          detail: "Databases (Postgres, MySQL, MongoDB), event producers, APIs, IoT sensors"
+        - id: connect-ingest
+          label: "Redpanda Connect (Ingest)"
+          detail: "CDC connectors pull change events; HTTP/Kafka sources ingest event streams"
+        - id: streaming-engine
+          label: "Redpanda Streaming Engine"
+          detail: "Durable partitioned log; Raft-replicated; NVMe + Cloud Topics storage tiers"
+        - id: consumers
+          label: "Consumer Applications"
+          detail: "Real-time analytics, dashboards, ML model inference, microservices"
+        - id: adp-agents
+          label: "AI Agents (ADP governed)"
+          detail: "LLM-backed agents consuming context; AI Gateway enforces token budgets and identity"
+        - id: sinks
+          label: "Data Sinks"
+          detail: "Snowflake, S3/GCS data lakes, vector databases, downstream Kafka topics"
+        - id: connect-egress
+          label: "Redpanda Connect (Egress)"
+          detail: "Sink connectors and Bloblang transformations push processed data to targets"
+      edges:
+        - from: sources
+          to: connect-ingest
+          label: "CDC / pull"
+        - from: connect-ingest
+          to: streaming-engine
+          label: "Write to topics"
+        - from: streaming-engine
+          to: consumers
+          label: "Real-time consume (Kafka API)"
+        - from: streaming-engine
+          to: adp-agents
+          label: "Governed context (ADP / MCP)"
+        - from: streaming-engine
+          to: connect-egress
+          label: "Pipeline source"
+        - from: connect-egress
+          to: sinks
+          label: "Deliver to sinks"
+    claimRefs:
+      - CE004
+      - CE005
+      - CE015
+      - CE016
+      - CE018
+      - CE028
+
+  - id: FE003
+    title: "Critical dependency map"
+    type: dag
+    layout: wide
+    summary: >-
+      Key external dependencies for the Redpanda platform, spanning cloud infrastructure, open protocols, security
+      infrastructure, and AI model providers.
+    data:
+      nodes:
+        - id: redpanda-core
+          label: "Redpanda Platform"
+          detail: "Core streaming engine + Connect + ADP"
+        - id: cloud-providers
+          label: "Cloud Providers"
+          detail: "AWS, GCP, Azure — compute, storage, networking for cloud tiers"
+        - id: object-storage
+          label: "Object Storage"
+          detail: "AWS S3, GCP GCS, Azure Blob — for Tiered Storage and Cloud Topics"
+        - id: linux-kernel
+          label: "Linux Kernel"
+          detail: "io_uring (≥5.1) for high-performance I/O; amd64 and ARM64 supported"
+        - id: kafka-clients
+          label: "Kafka Ecosystem Clients"
+          detail: "All Kafka SDK clients (Java, Python, Go, etc.) via Kafka API compatibility"
+        - id: identity-providers
+          label: "Customer Identity Providers"
+          detail: "OAuth2/OIDC-compatible IdPs for SSO (Okta, Azure AD, Google, etc.)"
+        - id: lets-encrypt
+          label: "Let's Encrypt (TLS)"
+          detail: "TLS certificate issuance for Redpanda Cloud cluster endpoints"
+        - id: llm-apis
+          label: "LLM API Providers"
+          detail: "OpenAI, AWS Bedrock, GCP Vertex AI, Ollama (for ADP AI Gateway routing)"
+        - id: mcp-servers
+          label: "MCP Servers / A2A Agents"
+          detail: "Third-party Model Context Protocol servers registered in ADP gateway"
+      edges:
+        - from: redpanda-core
+          to: cloud-providers
+          label: "Compute + network"
+        - from: redpanda-core
+          to: object-storage
+          label: "Tiered Storage / Cloud Topics"
+        - from: redpanda-core
+          to: linux-kernel
+          label: "I/O (io_uring) — self-managed"
+        - from: redpanda-core
+          to: kafka-clients
+          label: "Kafka API protocol (backward compat)"
+        - from: redpanda-core
+          to: identity-providers
+          label: "OAuth2/OIDC federation (optional)"
+        - from: redpanda-core
+          to: lets-encrypt
+          label: "TLS certificate issuance"
+        - from: redpanda-core
+          to: llm-apis
+          label: "ADP AI Gateway routing"
+        - from: redpanda-core
+          to: mcp-servers
+          label: "ADP MCP server registry"
+    claimRefs:
+      - CE003
+      - CE023
+      - CE042
+      - CE047
+      - CE048
+
+  - id: FE004
+    title: "Product maturity and capability map"
+    type: matrix
+    layout: standard
+    summary: >-
+      Maturity levels, GA dates, deployment models, and open-source availability across Redpanda's six product modules
+      as of May 2026.
+    data:
+      columns:
+        - "Maturity Level"
+        - "Commercial GA"
+        - "Deployment Model"
+        - "Open Source"
+      rows:
+        - label: "Redpanda Streaming — Community Edition"
+          values:
+            - "Production-proven"
+            - "2022"
+            - "Self-managed (Linux, K8s, Docker)"
+            - "Yes — Apache 2.0 (Community)"
+        - label: "Redpanda Cloud Dedicated / BYOC"
+          values:
+            - "Production-proven"
+            - "2022–2023"
+            - "Fully managed / customer cloud"
+            - "No — commercial SaaS"
+        - label: "Redpanda Cloud Serverless"
+          values:
+            - "Established"
+            - "2023"
+            - "Fully managed, auto-scale"
+            - "No — commercial SaaS"
+        - label: "Redpanda Connect (fka Benthos)"
+          values:
+            - "Production-proven"
+            - "2024 (post-acquisition)"
+            - "Self-managed or managed cloud pipelines"
+            - "Yes — Apache 2.0"
+        - label: "Cloud Topics (R1 engine)"
+          values:
+            - "Early GA"
+            - "Q1 2026 (v26.1)"
+            - "Cloud and BYOC only"
+            - "No — cloud service"
+        - label: "Agentic Data Plane (ADP)"
+          values:
+            - "Early GA"
+            - "October 2025"
+            - "Cloud, BYOC, or on-premise"
+            - "Partial — AI connectors Apache 2.0"
+    approximationNotes: >-
+      Maturity assessments are editorial judgments based on availability date, public customer evidence, and SLA track record.
+      "Early GA" indicates general availability but limited public production case studies.
+    claimRefs:
+      - CE011
+      - CE012
+      - CE013
+      - CE014
+      - CE015
+      - CE016
+
+callouts:
+  - calloutType: strength
+    title: "Single-binary architecture eliminates operational complexity"
+    body: >-
+      Redpanda's C++ single-binary design removes ZooKeeper, the JVM, and multiple ancillary Java services from the
+      operator's stack. This reduces provisioning time to under 90 seconds for a production Kubernetes cluster and
+      eliminates the most common operational failure modes in large Kafka deployments. The thread-per-core architecture
+      and microsecond-accuracy regression testing provide a defensible performance moat.
+    claimRefs:
+      - CE002
+      - CE003
+      - CE021
+      - CE037
+
+  - calloutType: risk
+    title: "Cloud control-plane uptime gap versus contractual SLA"
+    body: >-
+      The public status page recorded 99.66% cloud control-plane uptime during the Feb–May 2026 window, which is below the
+      contractual 99.99% multi-zone SLA. While this gap may reflect measurement scope differences (probe methodology vs.
+      operational SLA), it warrants direct clarification with Redpanda. Seventeen outages tracked by IsDown over the
+      trailing 12 months, predominantly minor support-system incidents, suggest data-path reliability is stronger than
+      the control-plane metric implies, but confirmation requires diligence.
+    claimRefs:
+      - CE031
+      - CE032
+      - CE033
+
+  - calloutType: risk
+    title: "ADP is an early-GA product with limited public production evidence"
+    body: >-
+      The Agentic Data Plane launched in October 2025 and received significant feature additions in February 2026.
+      As of the report date, public production deployments remain limited and largely unverified. The AI Gateway,
+      Oxla SQL integration, and MCP/A2A protocol support represent genuine technical ambition, but enterprise
+      procurement should require direct customer references and a detailed reliability SLA for the ADP tier before
+      committing workloads.
+    claimRefs:
+      - CE007
+      - CE018
+      - CE042
+      - CE043
+
+  - calloutType: insight
+    title: "ARM-hardware cost savings provide a concrete, near-term TCO lever"
+    body: >-
+      Redpanda's compatibility with AWS Graviton (ARM64) instances — where Kafka suffers JVM-related performance
+      degradation — creates an immediate TCO advantage in AWS environments. Approximately 57% cost savings per byte
+      delivered has been cited for Graviton deployments. For AWS-heavy enterprises evaluating a Kafka migration,
+      this ARM advantage is a verifiable, hardware-level differentiator that does not depend on benchmarks run by
+      Redpanda.
+    claimRefs:
+      - CE038
+      - CE039
+
+localEvidence:
+  searchQueries:
+    - query: "Redpanda C++ architecture single binary Kafka rewrite thread-per-core Seastar performance"
+      engine: google
+      hits: 12
+      retainedSourceRefs:
+        - SE004
+        - SE010
+        - SE019
+        - SE020
+    - query: "Redpanda Connect benthos acquisition 2026 connectors CDC"
+      engine: google
+      hits: 8
+      retainedSourceRefs:
+        - SE015
+        - SE009
+        - SE021
+        - SE022
+    - query: "Redpanda Cloud Topics R1 engine object storage architecture announced 2026"
+      engine: google
+      hits: 7
+      retainedSourceRefs:
+        - SE009
+        - SE011
+    - query: "Redpanda Cloud BYOC Dedicated Serverless SLA reliability uptime 2026"
+      engine: google
+      hits: 10
+      retainedSourceRefs:
+        - SE007
+        - SE028
+        - SE029
+    - query: "Redpanda security SOC2 compliance certifications TLS encryption trust center"
+      engine: google
+      hits: 9
+      retainedSourceRefs:
+        - SE006
+        - SE014
+    - query: "Redpanda GitHub stars contributors developer signal community"
+      engine: google
+      hits: 6
+      retainedSourceRefs:
+        - SE020
+        - SE021
+        - SE022
+    - query: "Redpanda Agentic Data Plane AI gateway announced MCP A2A 2026"
+      engine: google
+      hits: 8
+      retainedSourceRefs:
+        - SE007
+        - SE016
+        - SE017
+        - SE023
+    - query: "Redpanda outages incidents status reliability 2025 2026"
+      engine: google
+      hits: 9
+      retainedSourceRefs:
+        - SE028
+        - SE029
+    - query: "Redpanda vs Kafka vs Confluent performance comparison architecture independent"
+      engine: google
+      hits: 11
+      retainedSourceRefs:
+        - SE025
+        - SE031
+    - query: "Redpanda roadmap cloud topics tiered storage release 2026"
+      engine: google
+      hits: 7
+      retainedSourceRefs:
+        - SE009
+        - SE019
+    - query: "Redpanda benchmarks latency throughput independent third party"
+      engine: google
+      hits: 5
+      retainedSourceRefs:
+        - SE010
+        - SE025
+        - SE032
+    - query: "Redpanda security CVE vulnerability pentest 2026"
+      engine: google
+      hits: 4
+      retainedSourceRefs:
+        - SE006
+
+  researchQuestions:
+    - id: QE001
+      question: "What products and deployment SKUs does Redpanda offer across its streaming, connectivity, and agent governance portfolio as of 2026?"
+      type: enumeration
+      targets:
+        - "plannedTables/product-module-asset-matrix"
+        - "contentRequirements/1"
+      status: answered
+    - id: QE002
+      question: "What connector types and integrations does Redpanda Connect provide across its 300+ pre-built connector library?"
+      type: enumeration
+      targets:
+        - "contentRequirements/1"
+        - "plannedTables/product-module-asset-matrix"
+      status: answered
+    - id: QE003
+      question: "What deployment environments and cloud regions does Redpanda Cloud support?"
+      type: enumeration
+      targets:
+        - "contentRequirements/3"
+      status: answered
+    - id: QE004
+      question: "What security certifications, compliance standards, and trust controls does Redpanda maintain across its cloud and self-managed products?"
+      type: enumeration
+      targets:
+        - "plannedTables/trust-quality-compliance-table"
+        - "contentRequirements/5"
+      status: answered
+    - id: QE005
+      question: "What are the published performance benchmarks for Redpanda versus Apache Kafka on P99 tail latency, node count, and throughput?"
+      type: quantification
+      targets:
+        - "contentRequirements/4"
+      status: answered
+    - id: QE006
+      question: "How many GitHub stars, commits, and forks do the redpanda-data/redpanda and redpanda-data/connect repositories have as of the research date?"
+      type: quantification
+      targets:
+        - "contentRequirements/4"
+        - "plannedTables/product-module-asset-matrix"
+      status: answered
+    - id: QE007
+      question: "What uptime SLA commitments does Redpanda Cloud offer across Dedicated, BYOC, and Serverless tiers, and what service credits apply for breaches?"
+      type: quantification
+      targets:
+        - "contentRequirements/3"
+        - "plannedTables/trust-quality-compliance-table"
+      status: answered
+    - id: QE008
+      question: "Has Redpanda actually achieved single-binary deployment eliminating ZooKeeper and JVM dependencies in production deployments?"
+      type: verification
+      targets:
+        - "contentRequirements/0"
+        - "contentRequirements/2"
+      status: answered
+    - id: QE009
+      question: "Is Redpanda's Cloud Topics direct-to-object-storage R1 engine architecture generally available as of Q1 2026?"
+      type: verification
+      targets:
+        - "contentRequirements/2"
+        - "plannedTables/roadmap-release-development-stage-table"
+      status: answered
+    - id: QE010
+      question: "Does Redpanda Connect provide fully production-ready CDC connectors for Postgres and MySQL?"
+      type: verification
+      targets:
+        - "contentRequirements/1"
+        - "plannedTables/workflow-use-case-table"
+      status: answered
+    - id: QE011
+      question: "Has Redpanda Cloud achieved and maintained its contractual SLA commitments based on publicly observable uptime data over the past 90 days?"
+      type: verification
+      targets:
+        - "contentRequirements/3"
+        - "plannedTables/trust-quality-compliance-table"
+      status: answered
+    - id: QE012
+      question: "Is the Redpanda core engine genuinely written in C++ as claimed, and does the GitHub repository confirm this?"
+      type: verification
+      targets:
+        - "contentRequirements/2"
+        - "contentRequirements/4"
+      status: answered
+    - id: QE013
+      question: "What documented incidents and outages has Redpanda Cloud experienced over the trailing 12 months, and what was the severity of data-path failures?"
+      type: adverse
+      targets:
+        - "contentRequirements/3"
+        - "plannedTables/trust-quality-compliance-table"
+      status: answered
+    - id: QE014
+      question: "What limitations, community size gaps, or enterprise feature immaturity risks does Redpanda face relative to Apache Kafka and Confluent as identified by independent sources?"
+      type: adverse
+      targets:
+        - "contentRequirements/4"
+      status: answered
+    - id: QE015
+      question: "Are there any known security vulnerabilities (CVEs) or publicly disclosed security incidents affecting Redpanda as of 2026?"
+      type: adverse
+      targets:
+        - "contentRequirements/5"
+        - "plannedTables/trust-quality-compliance-table"
+      status: partial
+    - id: QE016
+      question: "What new product capabilities or technical features has Redpanda launched or made generally available in 2026?"
+      type: freshness
+      targets:
+        - "contentRequirements/3"
+        - "plannedTables/roadmap-release-development-stage-table"
+      status: answered
+    - id: QE017
+      question: "What is the current production-stable version of Redpanda Streaming and Redpanda Connect as of the run date?"
+      type: freshness
+      targets:
+        - "contentRequirements/3"
+        - "plannedTables/roadmap-release-development-stage-table"
+      status: answered
+    - id: QE018
+      question: "What are the publicly known near-term roadmap items for Redpanda Streaming beyond the 26.1 release?"
+      type: freshness
+      targets:
+        - "contentRequirements/3"
+        - "plannedTables/roadmap-release-development-stage-table"
+      status: partial
+    - id: QE019
+      question: "How does Redpanda's shared-nothing disk-based architecture compare to WarpStream and Confluent Freight in latency, cost, and operational complexity per independent analysis?"
+      type: comparison
+      targets:
+        - "contentRequirements/4"
+      status: answered
+    - id: QE020
+      question: "How does Redpanda Connect compare to Kafka Connect in deployment model, connector breadth, and operational simplicity?"
+      type: comparison
+      targets:
+        - "contentRequirements/1"
+        - "plannedTables/workflow-use-case-table"
+      status: answered
+    - id: QE021
+      question: "How does Redpanda's BYOC cloud model compare to AWS MSK and Confluent Dedicated in terms of data sovereignty and cost structure?"
+      type: comparison
+      targets:
+        - "contentRequirements/1"
+        - "contentRequirements/3"
+      status: answered
+    - id: QE022
+      question: "How does Redpanda's thread-per-core C++ architecture mechanistically eliminate JVM garbage collection pauses to achieve lower P99 tail latency?"
+      type: mechanism
+      targets:
+        - "contentRequirements/2"
+        - "contentRequirements/4"
+      status: answered
+    - id: QE023
+      question: "How does the Raft consensus protocol replace ZooKeeper for cluster coordination, and what are the implications for partition count scalability?"
+      type: mechanism
+      targets:
+        - "contentRequirements/2"
+      status: answered
+    - id: QE024
+      question: "How does the Cloud Topics architecture separate metadata storage in Raft from data storage in object storage, and what is the write-path batching mechanism?"
+      type: mechanism
+      targets:
+        - "contentRequirements/2"
+        - "plannedTables/technology-operating-architecture-table"
+      status: answered
+    - id: QE025
+      question: "How does Redpanda's cell-based cloud architecture improve fault isolation and reduce blast radius during cloud provider outages?"
+      type: mechanism
+      targets:
+        - "contentRequirements/2"
+        - "contentRequirements/3"
+      status: answered
+    - id: QE026
+      question: "How does the Redpanda ADP governance layer mechanistically enforce identity, policy, token budgets, and observability for AI agent interactions with enterprise data?"
+      type: mechanism
+      targets:
+        - "contentRequirements/5"
+        - "contentRequirements/0"
+      status: answered
+
+  sources:
+    - id: SE001
+      publisher: "Redpanda Data"
+      title: "High-perf Agentic Data Plane & Streaming | Redpanda"
+      url: "https://redpanda.com/"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["product overview", "agentic data plane", "streaming"]
+      keyQuote: "Deploy and govern enterprise agents at scale, on trusted infrastructure, with no lock-in to clouds, models, or anything else."
+
+    - id: SE002
+      publisher: "Redpanda Data"
+      title: "Redpanda Cloud: No-Compromise Kafka Cloud | Redpanda"
+      url: "https://www.redpanda.com/redpanda-cloud"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["cloud deployment", "BYOC", "Dedicated", "Serverless"]
+
+    - id: SE003
+      publisher: "Redpanda Data"
+      title: "Data connectors and change data capture tools | Redpanda"
+      url: "https://www.redpanda.com/connect"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["Redpanda Connect", "connectors", "CDC", "data integration"]
+      keyQuote: "300+ pre-built connectors"
+
+    - id: SE004
+      publisher: "Redpanda Data"
+      title: "Redpanda vs Kafka: Key differences explained"
+      url: "https://www.redpanda.com/compare/redpanda-vs-kafka"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["Kafka comparison", "single binary", "ZooKeeper", "architecture"]
+      keyQuote: "Single-binary deployment: brokers, schema registry, HTTP proxy, Raft consensus all built in"
+
+    - id: SE005
+      publisher: "Redpanda Data"
+      title: "Redpanda vs Confluent: A detailed comparison"
+      url: "https://www.redpanda.com/compare/redpanda-vs-confluent"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["Confluent comparison", "R1 engine", "Cloud Topics", "single binary"]
+
+    - id: SE006
+      publisher: "Redpanda Data"
+      title: "Redpanda Data: Security and Privacy"
+      url: "https://www.redpanda.com/legal/security"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["security", "SOC 2", "TLS", "AES-256", "SSO", "OIDC", "penetration testing"]
+      keyQuote: "Redpanda Data maintains a set of internal information security policies and processes based on controls and best practices from AICPA SOC 2 Trust Services Criteria."
+
+    - id: SE007
+      publisher: "Redpanda Data"
+      title: "Redpanda Cloud Service Level Agreement"
+      url: "https://www.redpanda.com/legal/redpanda-cloud-service-level-agreement"
+      date: "2025-03-17"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["SLA", "uptime", "service credits", "reliability"]
+      keyQuote: "Monthly Uptime Percentage Commitment: <=99.99% Multi-Zone Cluster — 10% Service Credit"
+
+    - id: SE008
+      publisher: "Redpanda Data"
+      title: "Redpanda Support Services Terms and Conditions"
+      url: "https://www.redpanda.com/legal/redpanda-support-services-terms-and-conditions"
+      date: "2024-03-05"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["support", "SLA", "technical support"]
+
+    - id: SE009
+      publisher: "Redpanda Data"
+      title: "Introducing Redpanda Connect"
+      url: "https://www.redpanda.com/blog/redpanda-connect"
+      date: "2024-05-30"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["Redpanda Connect", "Benthos", "connectors", "throughput"]
+      keyQuote: "Today, you can connect anything to anywhere in 140 milliseconds with Redpanda Connect."
+
+    - id: SE010
+      publisher: "Redpanda Data"
+      title: "Redpanda vs. Kafka: A performance comparison"
+      url: "https://www.redpanda.com/blog/redpanda-vs-kafka-performance-benchmark"
+      date: "2022-10-13"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["performance benchmark", "latency", "throughput", "ARM", "Graviton"]
+      keyQuote: "Redpanda delivers at least 10x faster tail latencies than Apache Kafka and uses up to 3x fewer nodes to do so!"
+
+    - id: SE011
+      publisher: "Redpanda Data"
+      title: "Under the hood: Redpanda Cloud Topics architecture"
+      url: "https://www.redpanda.com/blog/cloud-topics-architecture"
+      date: "2026-03-30"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["Cloud Topics", "R1 engine", "object storage", "S3", "architecture"]
+      keyQuote: "The Cloud Topics architecture separates where metadata is stored (each partition's Raft log) and where data is stored (object storage)."
+
+    - id: SE012
+      publisher: "Redpanda Data"
+      title: "Behind the scenes: Redpanda Cloud's response to the GCP outage"
+      url: "https://www.redpanda.com/blog/gcp-outage-june-redpanda-cloud"
+      date: "2025-06-20"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["reliability", "cell-based architecture", "GCP outage", "resilience"]
+      keyQuote: "Redpanda Cloud clusters in GCP remained stable during the outage due to their design for the SLA offered and a cell-based architecture."
+
+    - id: SE013
+      publisher: "Redpanda Data"
+      title: "High-performance data streams: no longer a 'pipe dream' for Lacework"
+      url: "https://www.redpanda.com/blog/high-performance-data-streaming-cloud-security-services"
+      date: "2023-06-06"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["Lacework", "customer", "throughput", "security", "use case"]
+
+    - id: SE014
+      publisher: "Redpanda Data"
+      title: "Redpanda open-sources top 16 AI connectors"
+      url: "https://www.redpanda.com/blog/redpanda-top-16-ai-connectors-open-source"
+      date: "2025-08-18"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["AI connectors", "OpenAI", "Bedrock", "Ollama", "Vertex AI", "Apache 2.0", "open source"]
+      keyQuote: "We're excited to release Redpanda's top AI connectors to the most used destinations — including OpenAI, Cohere, Bedrock, Ollama, and Vertex AI — under the Apache 2.0 open-source license."
+
+    - id: SE015
+      publisher: "Redpanda Data"
+      title: "Redpanda Acquires Benthos to Deliver a Complete, End-to-End Streaming Data Platform"
+      url: "https://www.redpanda.com/press/redpanda-acquires-benthos"
+      date: "2024-05-30"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["Benthos acquisition", "Redpanda Connect", "connectors", "open source"]
+      keyQuote: "The acquisition completes Redpanda as a unified, end-to-end streaming data platform built close to the hardware."
+
+    - id: SE016
+      publisher: "Redpanda Data"
+      title: "Redpanda acquires Oxla, launches new Agentic Data Plane for governing AI Agents"
+      url: "https://www.redpanda.com/press/redpanda-acquires-oxla-launches-new-agentic-data-plane-for-enterprise-data"
+      date: "2025-10-28"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["Oxla acquisition", "ADP", "SQL engine", "AI agents", "MCP", "governance"]
+      keyQuote: "Redpanda ADP is built on modern, battle-tested data stacks, including the Redpanda Streaming platform, the Redpanda Connect data connectivity suite, and the recently acquired Oxla standard SQL query engine and database."
+
+    - id: SE017
+      publisher: "Redpanda Data"
+      title: "Redpanda Raises $100M Series D, Launches Enterprise Agentic AI Platform"
+      url: "https://www.redpanda.com/press/redpanda-raises-100m-launches-enterprise-agentic-ai-platform"
+      date: "2025-04-03"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["Series D", "agentic AI", "MCP", "300 connectors", "BYOC"]
+
+    - id: SE018
+      publisher: "Redpanda Data"
+      title: "New York Stock Exchange Relies on Redpanda to Power NYSE Cloud Streaming"
+      url: "https://www.redpanda.com/press/new-york-stock-exchange-relies-on-redpanda-to-power-nyse-cloud-streaming"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["NYSE", "customer", "production", "mission-critical", "streaming"]
+
+    - id: SE019
+      publisher: "Redpanda Data"
+      title: "What's new in Redpanda Cloud: customer-managed VPC, SOC2"
+      url: "https://www.redpanda.com/blog/redpanda-cloud-customer-managed-vpc-soc2"
+      date: "2023-09-26"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["SOC 2", "customer-managed VPC", "security", "compliance readiness"]
+
+    - id: SE020
+      publisher: "Redpanda Data"
+      title: "Welcome to Redpanda Documentation"
+      url: "https://docs.redpanda.com/"
+      date: "2026-04-08"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["documentation", "API", "versions", "Connect", "Cloud", "self-managed"]
+      keyQuote: "Redpanda is a high-performance streaming data platform and Agentic Data Plane. Kafka API-compatible."
+
+    - id: SE021
+      publisher: "Redpanda Data (GitHub)"
+      title: "GitHub — redpanda-data/redpanda: Redpanda is a streaming data platform for developers"
+      url: "https://github.com/redpanda-data/redpanda"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: high
+      independence: company
+      topics: ["GitHub", "open source", "C++", "stars", "commits", "community"]
+      keyQuote: "12.1k stars, 744 forks, 50,847 commits"
+
+    - id: SE022
+      publisher: "Redpanda Data (GitHub)"
+      title: "GitHub — redpanda-data/connect: Fancy stream processing made operationally mundane"
+      url: "https://github.com/redpanda-data/connect"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: high
+      independence: company
+      topics: ["GitHub", "Go", "connectors", "CDC", "Bloblang", "open source"]
+      keyQuote: "8.7k stars, 944 forks, 7,417 commits"
+
+    - id: SE023
+      publisher: "Redpanda Data (GitHub)"
+      title: "GitHub — redpanda-data/benthos"
+      url: "https://github.com/redpanda-data/benthos"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: high
+      independence: company
+      topics: ["GitHub", "Benthos", "open source", "legacy repo", "community"]
+
+    - id: SE024
+      publisher: "Help Net Security"
+      title: "Redpanda brings identity, policy control, and data governance to AI agents"
+      url: "https://www.helpnetsecurity.com/2026/02/19/redpanda-brings-identity-policy-control-and-data-governance-to-ai-agents/"
+      date: "2026-02-19"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["ADP", "AI governance", "AI Gateway", "MCP", "identity", "2026"]
+      keyQuote: "Together, these features form a unified governance layer that allows enterprises to securely connect AI agents and Model Context Protocol (MCP) servers to live enterprise data with visibility and control."
+
+    - id: SE025
+      publisher: "Business Wire"
+      title: "Redpanda Raises $100M Led by GV, Launches Agentic AI Service for the Enterprise"
+      url: "https://www.businesswire.com/news/home/20250403701102/en/Redpanda-Raises-%24100M-Led-by-GV-Launches-Agentic-AI-Service-for-the-Enterprise"
+      date: "2025-04-03"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: high
+      independence: company
+      topics: ["Series D", "valuation", "agentic AI", "MCP", "BYOC", "300 connectors"]
+
+    - id: SE026
+      publisher: "AutoMQ"
+      title: "Kafka Alternatives Compared (2026): AutoMQ vs Confluent Cloud vs WarpStream vs Redpanda vs MSK and More"
+      url: "https://www.automq.com/blog/kafka-alternatives-compared-2026"
+      date: "2026-04-29"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: low
+      independence: competitor
+      topics: ["Kafka comparison", "architecture", "latency", "cost", "shared-nothing", "disk-based"]
+      keyQuote: "Traditional disk-based platforms — Apache Kafka, Redpanda — excel at latency but carry higher operational and cost burdens."
+
+    - id: SE027
+      publisher: "PeerSpot"
+      title: "Redpanda Reviews"
+      url: "https://www.peerspot.com/products/redpanda-reviews"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: neutral
+      sourceType: review
+      reputationTier: medium
+      independence: independent
+      topics: ["reviews", "customer feedback", "reliability", "ease of use"]
+
+    - id: SE028
+      publisher: "Redpanda Data"
+      title: "Redpanda Status"
+      url: "https://status.redpanda.com/"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: neutral
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["uptime", "status", "reliability", "Feb 2026", "May 2026"]
+      keyQuote: "Cloud Control Plane 99.66% uptime; Redpanda Cloud Accounts 99.96% uptime; Redpanda Serverless 100% uptime"
+
+    - id: SE029
+      publisher: "IsDown"
+      title: "Redpanda Outage History | IsDown"
+      url: "https://isdown.app/status/redpanda/outage-history"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: neutral
+      sourceType: other
+      reputationTier: medium
+      independence: independent
+      topics: ["outages", "incidents", "reliability", "2025", "2026"]
+      keyQuote: "There were 20 Redpanda outages since March 2025. The 17 outages from the last 12 months are summarized below."
+
+    - id: SE030
+      publisher: "Middleware.io"
+      title: "What is Redpanda Monitoring?"
+      url: "https://middleware.io/blog/what-is-redpanda-monitoring/"
+      date: "2026-04-10"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: neutral
+      sourceType: other
+      reputationTier: medium
+      independence: independent
+      topics: ["monitoring", "observability", "Redpanda", "metrics"]
+
+    - id: SE031
+      publisher: "KLogic"
+      title: "Kafka Compatible Alternatives: Redpanda, WarpStream & More Compared"
+      url: "https://klogic.io/blog/kafka-compatible-alternatives/"
+      date: "2026-01-10"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics: ["Kafka alternatives", "Redpanda", "WarpStream", "comparison", "sub-millisecond latency"]
+      keyQuote: "Sub-millisecond latency; No ZooKeeper required; Lower resource usage; Full Kafka API compatibility; Simpler operations"
+
+    - id: SE032
+      publisher: "The New Stack"
+      title: "Case Study: How Lacework Scaled Data Streaming with Redpanda"
+      url: "https://thenewstack.io/case-study-how-lacework-scaled-data-streaming-with-redpanda/"
+      date: "2023-06-06"
+      accessDate: "2026-05-26"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["Lacework", "customer case study", "throughput", "cybersecurity", "production"]
+
+  claims:
+    - id: CE001
+      statement: "Redpanda is a streaming data platform written from scratch in C++ that is Apache Kafka API-compatible, designed to eliminate ZooKeeper and JVM dependencies."
+      type: observed
+      topic: "core architecture"
+      sourceRefs: [SE004, SE021]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE008, QE012]
+
+    - id: CE002
+      statement: "Redpanda ships as a single binary that embeds the broker, schema registry, HTTP proxy, and Raft consensus engine with no external runtime dependencies."
+      type: observed
+      topic: "single binary"
+      sourceRefs: [SE004, SE020]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE008]
+
+    - id: CE003
+      statement: "Redpanda requires no ZooKeeper or JVM; it uses the Raft consensus protocol for distributed coordination internally."
+      type: observed
+      topic: "core architecture"
+      sourceRefs: [SE004, SE021]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE008, QE023]
+
+    - id: CE004
+      statement: "Redpanda targets three customer workflow categories: real-time event streaming, data integration and CDC pipelines, and agentic AI infrastructure."
+      type: company-claimed
+      topic: "product definition"
+      sourceRefs: [SE001, SE020]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE001]
+
+    - id: CE005
+      statement: "Redpanda's portfolio as of May 2026 comprises three major products: Redpanda Streaming, Redpanda Connect, and the Agentic Data Plane."
+      type: observed
+      topic: "product portfolio"
+      sourceRefs: [SE001, SE016, SE020]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE001]
+
+    - id: CE006
+      statement: "Redpanda Connect was created from Benthos, an open-source stream processing project acquired by Redpanda in May 2024 and rebranded."
+      type: observed
+      topic: "Redpanda Connect history"
+      sourceRefs: [SE015, SE009]
+      confidence: high
+      freshness: historical
+      answersQuestionRefs: [QE002]
+
+    - id: CE007
+      statement: "The Agentic Data Plane was launched in October 2025 following Redpanda's acquisition of Oxla, a distributed SQL engine, in the same month."
+      type: observed
+      topic: "ADP launch"
+      sourceRefs: [SE016, SE025]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE016]
+
+    - id: CE008
+      statement: "Redpanda Cloud Topics became generally available with Streaming version 26.1 in Q1 2026, completing the R1 unified storage engine."
+      type: observed
+      topic: "Cloud Topics GA"
+      sourceRefs: [SE011, SE020]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE009, QE016, QE017]
+
+    - id: CE009
+      statement: "Redpanda supports full Apache Kafka API compatibility, enabling existing Kafka producers, consumers, and admin clients to operate without code changes."
+      type: observed
+      topic: "Kafka compatibility"
+      sourceRefs: [SE004, SE021]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE008]
+
+    - id: CE010
+      statement: "The official Redpanda documentation describes the platform as 'a high-performance streaming data platform and Agentic Data Plane' that is Kafka API-compatible."
+      type: observed
+      topic: "product definition"
+      sourceRefs: [SE020, SE001]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE001]
+
+    - id: CE011
+      statement: "Redpanda Streaming is available in multiple SKUs: Community Edition (open source), Enterprise Edition (commercial), and three cloud-managed tiers (Serverless, Dedicated, BYOC)."
+      type: observed
+      topic: "product SKUs"
+      sourceRefs: [SE001, SE002, SE020]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE001, QE003]
+
+    - id: CE012
+      statement: "Redpanda Cloud Dedicated deploys fully managed clusters in Redpanda's own cloud account with an integrated Redpanda Console and optional managed Kafka Connect."
+      type: observed
+      topic: "Dedicated deployment"
+      sourceRefs: [SE002, SE007]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE001, QE003]
+
+    - id: CE013
+      statement: "Redpanda Cloud BYOC deploys managed clusters in the customer's own AWS, GCP, or Azure VPC; sensitive data and credentials never leave the customer environment."
+      type: observed
+      topic: "BYOC deployment"
+      sourceRefs: [SE002, SE006]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE003, QE021]
+
+    - id: CE014
+      statement: "Redpanda Cloud Serverless dynamically manages cluster provisioning and machine resource allocation, with no infrastructure management required from customers."
+      type: observed
+      topic: "Serverless deployment"
+      sourceRefs: [SE002, SE007]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE001, QE003]
+
+    - id: CE015
+      statement: "Redpanda Connect offers 300+ pre-built connectors including sources, sinks, and processors, implemented in Go as an embeddable single binary."
+      type: observed
+      topic: "Redpanda Connect connectors"
+      sourceRefs: [SE003, SE009, SE015]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE002, QE020]
+
+    - id: CE016
+      statement: "Redpanda Connect provides CDC connectors for Postgres, MySQL, MongoDB, Oracle, and MSSQL, delivering change events as first-class stream events."
+      type: observed
+      topic: "CDC connectors"
+      sourceRefs: [SE003, SE022]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE002, QE010, QE020]
+
+    - id: CE017
+      statement: "Redpanda Connect uses Bloblang, a declarative mapping language, for data transformation, filtering, and enrichment within pipeline configurations."
+      type: observed
+      topic: "Bloblang"
+      sourceRefs: [SE022, SE003]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE002]
+
+    - id: CE018
+      statement: "The Agentic Data Plane includes AI Gateway (routing, token budgets, policy enforcement), unified identity via OAuth2/OIDC/MCP/A2A, and OpenTelemetry observability for AI agent actions."
+      type: observed
+      topic: "ADP capabilities"
+      sourceRefs: [SE016, SE024]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE026]
+
+    - id: CE019
+      statement: "The redpanda-data/redpanda GitHub repository had approximately 12,100 stars, 744 forks, and 50,847 commits as of the research date."
+      type: observed
+      topic: "developer signal"
+      sourceRefs: [SE021]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE006]
+
+    - id: CE020
+      statement: "The redpanda-data/connect GitHub repository had approximately 8,700 stars, 944 forks, and 7,417 commits as of the research date."
+      type: observed
+      topic: "developer signal"
+      sourceRefs: [SE022]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE006]
+
+    - id: CE021
+      statement: "Redpanda's core uses a thread-per-core architecture built on the Seastar C++ framework and io_uring, where each CPU core owns a dedicated shard with its own memory and I/O queue, eliminating lock contention and JVM garbage collection pauses."
+      type: observed
+      topic: "thread-per-core architecture"
+      sourceRefs: [SE021, SE010]
+      confidence: high
+      freshness: historical
+      answersQuestionRefs: [QE012, QE022]
+
+    - id: CE022
+      statement: "Redpanda uses the Raft consensus protocol for distributed coordination, replacing ZooKeeper; every partition leader election and metadata change flows through internal Raft with no external dependency."
+      type: observed
+      topic: "Raft consensus"
+      sourceRefs: [SE004, SE021]
+      confidence: high
+      freshness: historical
+      answersQuestionRefs: [QE023]
+
+    - id: CE023
+      statement: "Cloud Topics in the R1 engine writes data directly to object storage (AWS S3 or GCP GCS) while keeping only lightweight Raft metadata on local disk, separating the data and metadata storage planes."
+      type: observed
+      topic: "Cloud Topics architecture"
+      sourceRefs: [SE011, SE020]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE009, QE024]
+
+    - id: CE024
+      statement: "Cloud Topics batches incoming records in memory over a short window (e.g., 250 ms or 4 MB) before flushing to object storage, optimizing for cost and throughput at the cost of higher write latency."
+      type: observed
+      topic: "Cloud Topics write path"
+      sourceRefs: [SE011]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE024]
+
+    - id: CE025
+      statement: "Redpanda Cloud uses a cell-based architecture that co-locates all services (brokers, management API, ACL store) needed to serve a given cluster, reducing the blast radius of failures across customer environments."
+      type: observed
+      topic: "cell-based architecture"
+      sourceRefs: [SE012]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE025]
+
+    - id: CE026
+      statement: "Redpanda Tiered Storage, production-proven for several years, offloads cold segments to object storage while keeping hot data on local NVMe disks within the same cluster."
+      type: observed
+      topic: "Tiered Storage"
+      sourceRefs: [SE004, SE011]
+      confidence: high
+      freshness: current
+
+    - id: CE027
+      statement: "The R1 engine allows a single Redpanda cluster to host topics with different storage configurations — local NVMe, tiered storage, and Cloud Topics — simultaneously, optimizing each per workload."
+      type: observed
+      topic: "R1 unified engine"
+      sourceRefs: [SE011, SE005]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE009]
+
+    - id: CE028
+      statement: "Redpanda Connect uses declarative YAML pipeline configuration, guarantees at-least-once delivery via in-process transactions (no disk state required), and runs as an embeddable single Go binary."
+      type: observed
+      topic: "Redpanda Connect architecture"
+      sourceRefs: [SE022, SE009]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE020]
+
+    - id: CE029
+      statement: "Redpanda is supported for self-managed deployment on Linux (Debian/Ubuntu, Fedora/RHEL/Amazon Linux), macOS via Docker, Kubernetes, and air-gapped environments."
+      type: observed
+      topic: "deployment platforms"
+      sourceRefs: [SE021, SE020]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE003]
+
+    - id: CE030
+      statement: "Redpanda Cloud is available on AWS, GCP, and Azure across multiple regions for Dedicated, BYOC, and Serverless tiers."
+      type: observed
+      topic: "cloud availability"
+      sourceRefs: [SE002, SE006]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE003]
+
+    - id: CE031
+      statement: "Redpanda's Cloud SLA (last updated March 17, 2025) guarantees 99.99% monthly uptime for multi-zone Dedicated/BYOC clusters, 99.90% for Serverless, and 99.50% for single-zone clusters."
+      type: observed
+      topic: "SLA commitments"
+      sourceRefs: [SE007, SE002]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE007, QE011]
+
+    - id: CE032
+      statement: "The Redpanda status page recorded 99.66% cloud control-plane uptime and 99.96% Redpanda Cloud Accounts uptime during the Feb–May 2026 observation window."
+      type: observed
+      topic: "observed uptime"
+      sourceRefs: [SE028]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE011, QE013]
+
+    - id: CE033
+      statement: "IsDown tracked 17 Redpanda outages over the trailing 12 months, predominantly minor support-system incidents rather than data-path failures."
+      type: third-party-reported
+      topic: "outage history"
+      sourceRefs: [SE029]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE013]
+
+    - id: CE034
+      statement: "During the GCP global outage of June 12, 2025, Redpanda Cloud clusters in GCP remained stable due to the cell-based architecture and local NVMe replication design."
+      type: company-claimed
+      topic: "GCP outage resilience"
+      sourceRefs: [SE012]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE025, QE013]
+
+    - id: CE035
+      statement: "Redpanda Connect's largest reported deployment pushes 50 Gbps of throughput via dual 25 Gbps NICs, demonstrating production-scale capability."
+      type: company-claimed
+      topic: "throughput scale"
+      sourceRefs: [SE009]
+      confidence: medium
+      freshness: recent
+
+    - id: CE036
+      statement: "Redpanda Serverless recorded 100% uptime on the public status page over the Feb–May 2026 observation window."
+      type: observed
+      topic: "Serverless uptime"
+      sourceRefs: [SE028]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE011]
+
+    - id: CE037
+      statement: "Redpanda's published benchmarks claim at least 10x lower P99 tail latency than Apache Kafka and up to 3x fewer nodes for equivalent throughput; at higher loads Redpanda is 2–3x faster."
+      type: company-claimed
+      topic: "performance benchmark"
+      sourceRefs: [SE010]
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs: [QE005, QE019]
+
+    - id: CE038
+      statement: "Redpanda runs without performance degradation on ARM-based AWS Graviton instances, while Apache Kafka's JVM has documented performance issues on ARM hardware."
+      type: company-claimed
+      topic: "ARM compatibility"
+      sourceRefs: [SE010]
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs: [QE005, QE022]
+
+    - id: CE039
+      statement: "Deploying Redpanda on AWS Graviton is4gen.medium instances instead of comparable x86 instances can provide approximately 57% cost savings per byte."
+      type: company-claimed
+      topic: "ARM cost savings"
+      sourceRefs: [SE010]
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs: [QE005]
+
+    - id: CE040
+      statement: "Redpanda's engineering team conducts continuous performance regression testing to microsecond accuracy with each release to prevent latency degradation."
+      type: company-claimed
+      topic: "regression testing"
+      sourceRefs: [SE010]
+      confidence: medium
+      freshness: current
+
+    - id: CE041
+      statement: "Redpanda open-sourced 16 AI connector processors for OpenAI, Cohere, AWS Bedrock, Ollama, and Vertex AI under the Apache 2.0 license in August 2025."
+      type: observed
+      topic: "AI connectors"
+      sourceRefs: [SE014, SE022]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE016]
+
+    - id: CE042
+      statement: "The ADP AI Gateway provides centralized token budget controls, spending limits, deferred tool loading, and a YAML-configured registry of approved MCP servers for AI agent governance."
+      type: observed
+      topic: "AI Gateway"
+      sourceRefs: [SE024, SE016]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE026]
+
+    - id: CE043
+      statement: "Redpanda's Oxla SQL acquisition enables agents to query live streaming data and historical data at rest via a standard SQL endpoint, broadening the ADP data access model beyond streaming."
+      type: observed
+      topic: "Oxla SQL integration"
+      sourceRefs: [SE016, SE025]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE026]
+
+    - id: CE044
+      statement: "A third-party technical analysis (AutoMQ, April 2026) categorizes Redpanda as a 'shared-nothing, disk-based' platform that excels at latency but carries higher operational and cost burden relative to shared-storage (S3-native) architectures."
+      type: third-party-reported
+      topic: "competitive positioning"
+      sourceRefs: [SE026]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE014, QE019]
+
+    - id: CE045
+      statement: "Redpanda's security posture is aligned with the AICPA SOC 2 Trust Services Criteria for security, availability, and privacy, based on Redpanda's own security posture document."
+      type: company-claimed
+      topic: "SOC 2 alignment"
+      sourceRefs: [SE006]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE004]
+
+    - id: CE046
+      statement: "Redpanda Cloud customers receive single-tenant VPC isolation: Dedicated customers get a separate VPC in Redpanda's cloud account; BYOC customers run clusters in their own VPC."
+      type: observed
+      topic: "VPC isolation"
+      sourceRefs: [SE006, SE019]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE004]
+
+    - id: CE047
+      statement: "Redpanda Cloud encrypts all customer data and cluster operations traffic with TLS 1.2; OAuth2/OIDC access tokens are encrypted at rest using AES-256 GCM and never leave the customer network."
+      type: observed
+      topic: "encryption"
+      sourceRefs: [SE006, SE019]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE004]
+
+    - id: CE048
+      statement: "Redpanda Cloud supports federated SSO authentication via OAuth2 and OIDC with PKCE for code exchange; non-SSO passwords are hashed and salted with bcrypt."
+      type: observed
+      topic: "authentication"
+      sourceRefs: [SE006, SE019]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE004]
+
+    - id: CE049
+      statement: "Redpanda production access by engineering staff uses Zero Trust tooling, requires SSO with two-factor authentication, and records all interactive sessions for audit."
+      type: company-claimed
+      topic: "Zero Trust access"
+      sourceRefs: [SE006]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE004]
+
+    - id: CE050
+      statement: "Redpanda conducts annual penetration testing of its applications and production network as part of its vulnerability management program."
+      type: company-claimed
+      topic: "penetration testing"
+      sourceRefs: [SE006]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE004]
+
+    - id: CE051
+      statement: "Redpanda operates a bug bounty program for responsible disclosure of security vulnerabilities."
+      type: company-claimed
+      topic: "bug bounty"
+      sourceRefs: [SE006]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE004]
+
+    - id: CE052
+      statement: "Redpanda Cloud uses AWS/GCP Secret Manager for static secret storage with periodic rotation; IAM roles follow least-privilege principles and favor dynamic credentials where possible."
+      type: observed
+      topic: "secret management"
+      sourceRefs: [SE006, SE019]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE004]
+
+    - id: CE053
+      statement: "Redpanda publicly states that Redpanda Cloud has obtained SOC 2 Type 2 attestation, but the underlying audit report is not publicly downloadable and must be requested directly during enterprise diligence."
+      type: observed
+      topic: "SOC 2 gap"
+      sourceRefs: [SE006, SE019]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE004, QE015]
+
+  evidenceGaps:
+    - type: private-evidence-only
+      severity: material
+      topic: "SOC 2 Type II attestation"
+      missingEvidence: "Publicly available or customer-shareable SOC 2 Type II audit report covering Redpanda Cloud (Dedicated, BYOC, Serverless)"
+      whyItMatters: "Enterprise security teams require access to the SOC 2 Type II report for vendor approval; a non-public report can still slow procurement in regulated industries"
+      diligencePath: "Request SOC 2 Type II report under NDA directly from Redpanda's security team; confirm audit firm, period, and scope of covered services"
+      relatedQuestionRefs: [QE004, QE015]
+      relatedTableRefs: [TE004]
+
+    - type: stale
+      severity: material
+      topic: "performance benchmark"
+      missingEvidence: "Independent third-party benchmark of Redpanda vs. Apache Kafka (KRaft mode, 2024–2026) replicating Redpanda's 2022 latency claims"
+      whyItMatters: "Redpanda's primary 10x latency claim is from a 2022 self-published benchmark; Kafka has improved with KRaft, and an independent refresh is needed to verify the current gap"
+      diligencePath: "Commission or identify a credible third-party benchmark (e.g., from a cloud provider or analyst firm) comparing Redpanda 26.x vs. Apache Kafka 3.9 under equivalent workloads"
+      relatedQuestionRefs: [QE005, QE019]
+
+    - type: missing-source
+      severity: material
+      topic: "ADP production customer proof"
+      missingEvidence: "Named production customer references for the Agentic Data Plane (AI Gateway, agent governance) with quantified business outcomes"
+      whyItMatters: "ADP is the primary growth narrative and a key differentiation claim; without production proof the product maturity and market fit are unconfirmed"
+      diligencePath: "Request two to three named ADP customer references from Redpanda sales; validate specific use cases, deployment scale, and production SLA adherence"
+      relatedQuestionRefs: [QE015, QE026]
+      relatedTableRefs: [TE001]
+
+    - type: missing-source
+      severity: minor
+      topic: "Cloud Topics read-path latency"
+      missingEvidence: "Published or customer-reported read-path latency data for Cloud Topics topics versus disk-first topics under equivalent consumer workloads"
+      whyItMatters: "Cloud Topics write-path trade-offs (batch window) are documented, but read-path latency impact on consumer applications has not been publicly benchmarked"
+      diligencePath: "Request internal benchmark data or customer testimonials for Cloud Topics read performance; review Cloud Topics SLA commitments relative to disk-first topics"
+      relatedQuestionRefs: [QE009, QE024]
+      relatedTableRefs: [TE003]
+
+    - type: missing-source
+      severity: minor
+      topic: "Near-term public product roadmap"
+      missingEvidence: "Redpanda does not publish a forward public roadmap; confirmed features beyond v26.1 are not disclosed"
+      whyItMatters: "Without a roadmap, diligence cannot assess whether current gaps in ADP, Connect, or Cloud Topics will be addressed within 12 months"
+      diligencePath: "Request a vendor roadmap session (NDA preferred) covering the next two release cycles; confirm whether ADP SLA and Oxla SQL performance targets are on the near-term plan"
+      relatedQuestionRefs: [QE018]
+
+    - type: private-evidence-only
+      severity: minor
+      topic: "CVE and security incident history"
+      missingEvidence: "Published CVE record or public incident post-mortem for Redpanda Cloud security events"
+      whyItMatters: "No CVEs were found in the OpenCVE database for Redpanda during research, but absence may reflect disclosure policy rather than absence of vulnerabilities"
+      diligencePath: "Search NIST NVD for Redpanda Data CVEs; request internal security incident log from Redpanda security team during due diligence"
+      relatedQuestionRefs: [QE015]
+      relatedTableRefs: [TE004]
