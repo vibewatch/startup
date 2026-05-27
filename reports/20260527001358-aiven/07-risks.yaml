@@ -1,0 +1,2364 @@
+schemaVersion: report-v2
+artifact: risks
+slug: aiven
+runDate: '2026-05-27'
+company:
+  name: Aiven
+chapter:
+  number: 7
+  title: Risks
+  summary: >-
+    Aiven's risk profile is dominated by two interlinked financial hazards: a stale $3 B valuation from May 2022 that
+    has not been reset by a primary funding round in over four years, and complete opacity on unit economics (NRR, GRR,
+    gross margin, burn) that prevents an investor from verifying whether the company is on a path to organic profitability
+    or coasting on Series D cash reserves. Structural competitive pressure from AWS MSK, Google AlloyDB, and Azure Event
+    Hubs — all delivered through billing relationships customers already hold — constrains pricing power without eliminating
+    Aiven's multi-cloud portability moat. Customer concentration risk is material but unquantified: BYOC enterprise accounts
+    that generate the most dramatic published savings likely account for a disproportionate share of ARR, and none of the
+    retention metrics needed to test that hypothesis have been disclosed. The January 2023 workforce reduction (~20%
+    of headcount) was a significant execution event whose downstream effects on engineering capacity, sales pipeline,
+    and culture remain unconfirmed. Open-source licensing risk is directionally benign in the near term (PostgreSQL,
+    Apache Kafka, and Apache Flink remain permissively licensed) but the Redis → Valkey and Elasticsearch → OpenSearch
+    precedents confirm that upstream license changes can force expensive product pivots at any time. Security and compliance
+    posture is credible on paper but audit reports remain NDA-gated, and the Inkless Kafka KIP-1163 orphaned-segment issue
+    is an unresolved technical gap. Capital adequacy and IPO timeline are the thesis-break vectors that require the
+    most urgent diligence access.
+
+sections:
+  - id: capital-adequacy-and-exit-uncertainty
+    title: Capital Adequacy, Stale Valuation, and IPO Path Uncertainty
+    body: >-
+      Aiven's most pressing financial risk is the four-year absence of primary capital market activity. The last disclosed
+      primary round was the $210M Series D led by Eurazeo at a $3 B valuation in May 2022 — a vintage when SaaS multiples
+      were at their all-time peak. At the run date, Aiven has reported $109M in ARR (March 2026, per ARR Club estimates),
+      implying a still-cited valuation multiple of approximately 27–30× ARR. Comparable public infrastructure SaaS companies
+      traded at 8–15× ARR in 2025–2026, with Confluent at roughly 10× its $1.17B FY2025 revenue. The $3B reference price
+      is therefore materially stale by any public-market benchmark, and the company has not provided an updated valuation
+      anchor through a new round, secondary transaction, or IPO process.
+
+
+      Three scenarios explain the funding gap. First, Aiven reached operating cash-flow breakeven or near-breakeven after
+      the January 2023 workforce reduction, rendering new primary capital unnecessary. Second, the company retains sufficient
+      Series D runway (a rough estimate of $130–162M cash remaining post-layoff, assuming $48–80M consumed in the first
+      eight months at a $6–10M/month burn rate) to sustain operations without raising in an unfavorable environment. Third,
+      the company tested the market for a new primary round and found valuation expectations misaligned. The first two
+      scenarios are benign; the third is an adverse signal. No secondary transaction, venture debt facility, or convertible
+      note has been publicly disclosed, narrowing the evidence base for scenario analysis. Without a disclosed cash balance,
+      trailing burn, or management commentary, investors cannot independently evaluate runway.
+
+
+      The IPO trajectory is unresolved. CEO Oskari Saarenmaa stated in October 2021 that "the IPO route is the more
+      likely choice," but as of May 2026 no S-1 filing with the SEC or equivalent registration has been made — more than
+      four years past the 18-month horizon implicit in that comment. Aiven's executive team composition (CFO Kenneth Chen,
+      CRO Conor Forde, CPTO Cassio Sampaio, VP Corporate Development Dimitri Casvigny) is consistent with IPO-track
+      preparation, and the November 2022 wave of senior hires in go-to-market leadership reinforces that narrative. However,
+      no formal IPO timeline or banker mandate has been announced. The EverSQL acquisition (November 2023, undisclosed
+      sum) consumed additional capital from an already post-peak balance. A combination of: operating cash flow turning
+      positive, a new primary round at a revised valuation, or a strategic acquisition process represents the three plausible
+      exit paths. Each has different return implications for existing investors holding $420M of cumulative capital.
+    claimRefs:
+      - CR001
+      - CR002
+      - CR003
+      - CR004
+      - CR005
+      - CR006
+      - CR007
+      - CR008
+    tableRefs:
+      - TR005
+    figureRefs:
+      - FR002
+
+  - id: hyperscaler-and-specialist-competition
+    title: Hyperscaler Pricing Power and Specialist Vendor Encirclement
+    body: >-
+      Aiven faces structural competitive pressure from two flanks simultaneously: hyperscalers expanding their managed
+      open-source database portfolios, and purpose-built OSS vendors deepening their moats in individual service categories.
+      This dual pressure creates a squeeze dynamic where Aiven's multi-cloud portability moat is Aiven's primary sustainable
+      differentiation, and any factor that erodes that moat — whether through hyperscaler billing integration or single-service
+      specialist superiority — threatens long-term revenue growth.
+
+
+      On the hyperscaler flank, AWS MSK (Managed Streaming for Apache Kafka) represents the most direct competitive threat
+      to Aiven's largest revenue-generating service. AWS claims MSK Express brokers offer 3× more throughput, 20× faster
+      scaling, 90% quicker recovery, and 5× more partitions versus standard Kafka brokers. Amazon Aurora — the flagship
+      PostgreSQL replacement — claims 3× the throughput of standard PostgreSQL. Amazon OpenSearch Service, which Aiven
+      also faces in the search/analytics segment, has added RAG and vector search capabilities alongside Amazon Bedrock
+      integration. Google AlloyDB, presented as Aiven's first joint solution (AlloyDB Omni), simultaneously validates and
+      complicates Aiven's position: Google's proprietary AlloyDB claims 40–50% compute cost reduction versus standard
+      PostgreSQL, creating a pricing anchor for AlloyDB Omni that undercuts Aiven's standard PostgreSQL tier. Azure Event
+      Hubs provides Kafka-protocol compatibility with enterprise compliance certifications (CSA STAR, ISO, SOC, GxP, HIPAA,
+      HITRUST, PCI), matching Aiven's compliance posture in a cloud many large enterprises already use.
+
+
+      The structural disadvantage for Aiven is billing integration: a customer on AWS with committed spend receives
+      Amazon RDS for PostgreSQL or Amazon MSK with zero incremental procurement friction, charged against credits already
+      contractually committed. Aiven cannot replicate this distribution advantage. The AlloyDB Omni partnership partially
+      addresses this by allowing Aiven to be deployed within Google Cloud accounts, but the reciprocal risk is that a
+      customer deep in Google Cloud's ecosystem may eventually consolidate to native Google services rather than maintaining
+      an Aiven relationship.
+
+
+      On the specialist-vendor flank, Confluent ($1.17B FY2025 revenue, 21% YoY growth) is building a proprietary cloud-native
+      Kafka engine (Kora) that Aiven cannot replicate without abandoning its open-source purity thesis. ClickHouse Cloud
+      (valued at $15B as of 2024) is deepening its analytical database moat. Neon (serverless PostgreSQL, $46M Series B)
+      competes in developer-first PostgreSQL with instant scale-to-zero. Each specialist vendor has deeper category expertise
+      and better product-market fit for buyers who prioritize a single database family over multi-cloud portability.
+      Aiven's thesis requires that multi-service breadth creates switching costs exceeding the specialist advantage — a
+      hypothesis that is plausible but has not been tested by disclosed NRR data.
+    claimRefs:
+      - CR009
+      - CR010
+      - CR011
+      - CR012
+      - CR013
+      - CR014
+      - CR015
+      - CR016
+    tableRefs:
+      - TR003
+    figureRefs:
+      - FR001
+
+  - id: customer-retention-opacity-and-concentration
+    title: Retention Opacity and Customer Concentration Risk
+    body: >-
+      Aiven has disclosed zero retention metrics as of May 2026. No Net Revenue Retention (NRR), Gross Revenue Retention
+      (GRR), logo churn rate, or cohort-based renewal data has appeared in any public source reviewed across six chapters
+      of this report. This is an unusual gap for a company at $109M ARR that explicitly positions itself as a land-and-expand
+      platform: if NRR were above 120% (a common benchmark for infrastructure SaaS), the company would have strong incentive
+      to publish it as a marketing asset. The absence of disclosure is therefore at best neutral (private company choice)
+      and at worst an adverse signal if NRR is below investor expectations.
+
+
+      Customer concentration is the compounding risk. Aiven's most detailed published case studies feature BYOC enterprise
+      deployments (Sophos: 79 Kafka clusters, 9 regions, 30-40% cost reduction; WalkMe: 40% Kafka cost reduction; Claroty:
+      72% Kafka TCO reduction; La Redoute: 14% cloud cost reduction) that imply very large absolute spend commitments.
+      BYOC is a custom-priced, high-minimum-spend enterprise arrangement (minimum monthly spend commitment required). If
+      5–10 such accounts represent 30–50% of total ARR, a single enterprise churn event would be a material revenue shock.
+      Aiven has not published a top-10 customer revenue percentage, total customer count beyond "thousands" (last specific
+      figure: 700 customers, October 2021 — now 4.5 years stale), or any indicator of BYOC versus Standard revenue mix.
+
+
+      The January 2023 workforce reduction provides a weak adverse signal. The Register characterized Aiven as "the latest
+      to apologise for making mass redundancies" in the January 2023 wave of tech-sector workforce reductions, and Sifted
+      noted that Aiven, Brainly, and Clue all cut staff in the same week — a cluster consistent with demand-shortfall
+      concerns rather than purely operational optimization. CEO Saarenmaa's public apology acknowledged that the executive
+      team "made mistakes." If the January 2023 workforce reduction was demand-driven (customers slowing deployment or
+      churning), then the post-2023 ARR growth trajectory may reflect recovery from a churn-impacted trough rather than
+      pure expansion — a materially different unit economics picture that cannot be confirmed without management access.
+    claimRefs:
+      - CR017
+      - CR018
+      - CR019
+      - CR020
+      - CR021
+      - CR022
+      - CR023
+    tableRefs:
+      - TR002
+
+  - id: execution-risk-and-key-person-dependency
+    title: Post-Layoff Execution Risk and Key-Person Dependency
+    body: >-
+      Aiven's execution risk is primarily a function of three interlocking exposures: the legacy of the January 2023
+      workforce reduction, concentrated leadership dependency on Oskari Saarenmaa, and an undisclosed executive attrition
+      rate since the restructuring.
+
+
+      The January 2023 layoff removed approximately 100 employees — roughly 20% of a workforce estimated at 400–500 at
+      the time. Post-restructuring, Aiven operates with an estimated 300–350 full-time employees, implying an ARR-per-FTE
+      ratio of approximately $312–363K — creditable efficiency but below the $500K+ threshold that signals mature SaaS
+      scale economies. The risk is not the size of the cut per se, but the uncertainty about which engineering, sales,
+      and customer-success functions were disproportionately affected. Deep cuts to support or customer-success functions
+      would impair renewal rates; cuts to R&D would slow the Inkless Kafka and AI-driven optimization roadmaps that
+      underpin Aiven's competitive differentiation from hyperscalers.
+
+
+      Key-person risk is elevated. Oskari Saarenmaa is the sole named founder across all primary public sources reviewed
+      in this report, and every major funding announcement from seed through Series D has cited him as the company's
+      public voice. The company's narrative about its open-source mission, developer community strategy, and IPO optionality
+      is inseparable from Saarenmaa's stated views. A departure or incapacitation event would create investor-relations,
+      customer-confidence, and board-governance uncertainty that would likely delay any IPO preparation already in
+      progress. Board composition, founder equity, and employment agreements are entirely undisclosed.
+
+
+      Leadership continuity below CEO level is also partially opaque. The Salesforce Ventures portfolio page still
+      listed Heikki Nousiainen as CTO and Hannu Valtonen as CPO as of the research access date, suggesting those
+      titles were current at the time of the Series C (2021) but may no longer reflect current roles — which the
+      official about page confirms by showing Cassio Sampaio as CPTO instead. The pace of VP-level turnover since
+      2022 is unknown. The November 2022 wave of senior hires was a positive sign of institutional bench-building,
+      but it also implies that several of those hires are now in their third year with the company — a period when
+      equity refreshes and IPO uncertainty typically create retention friction.
+    claimRefs:
+      - CR024
+      - CR025
+      - CR026
+      - CR027
+      - CR028
+      - CR029
+    tableRefs:
+      - TR004
+
+  - id: open-source-licensing-and-dependency
+    title: Open-Source Licensing Shifts and Upstream Community Dependency
+    body: >-
+      Aiven's entire product portfolio is built on open-source software that it packages, manages, and supports rather
+      than develops from scratch. This creates a category of risk that purpose-built proprietary vendors do not face:
+      upstream license changes, community fragmentation, and foundation governance shifts can force product pivots,
+      legal review, and customer communications at any time with little forewarning.
+
+
+      The clearest historical evidence for this risk is the Elasticsearch → OpenSearch split (January 2021) and the
+      Redis → Valkey fork (March 2024). Elastic's decision to relicense Elasticsearch from Apache 2.0 to a dual
+      SSPL/ELv2 license drove AWS and Aiven to create the OpenSearch fork and donate it to the Linux Foundation (January
+      2024). Aiven had to migrate customers off Elasticsearch to Aiven for OpenSearch — a significant operational and
+      communication burden. Similarly, Redis Ltd's relicensing to RSALv2/SSPL in March 2024 prompted the Linux
+      Foundation-sponsored Valkey fork. Aiven now offers Aiven for Valkey™ as its Redis-successor product, but Valkey
+      carries less brand recognition and community momentum than Redis, potentially creating customer-experience friction.
+      The OpenSearch project's migration to the Linux Foundation further demonstrates that governance continuity for
+      key projects cannot be assumed.
+
+
+      Of Aiven's current service catalogue, Apache Kafka and Apache Flink (Apache Software Foundation, Apache 2.0
+      license) and PostgreSQL (PostgreSQL License, MIT-style) are the lowest-risk licensing positions because they
+      have no single corporate owner with a profit motive to relicense. ClickHouse is dual-licensed under Apache 2.0
+      for the open-source version, but ClickHouse Inc. controls the proprietary cloud features that differentiate
+      ClickHouse Cloud — creating a risk that ClickHouse Inc. could restrict managed-service competitors over time.
+      Apache Cassandra, Grafana, and MySQL all carry different risk profiles: Grafana Labs (proprietary plugins),
+      Oracle (MySQL commercial licensing), and the broader ASF governance structure add complexity.
+
+
+      The EU Cyber Resilience Act, which entered into force on 10 December 2024 with main obligations applying from
+      11 December 2027, creates an additional compliance obligation for software products with digital elements sold
+      into the EU. Aiven already publishes SBOM reports via its CLI — a relevant preparatory step — but CRA
+      compliance will require formal security assessment, CE marking for qualifying products, and sustained vulnerability
+      management over product lifecycles. The compliance cost has not been quantified publicly.
+    claimRefs:
+      - CR030
+      - CR031
+      - CR032
+      - CR033
+      - CR034
+      - CR035
+      - CR036
+    tableRefs:
+      - TR001
+    figureRefs:
+      - FR003
+
+  - id: security-compliance-and-technical-gaps
+    title: Security, Compliance Opacity, and Technical Residual Risks
+    body: >-
+      Aiven's published security posture is credible in scope: all customer deployments run in single-tenant VPCs,
+      TLS is enforced for all in-transit connections, operator access is audit-logged through the control plane, and
+      periodic penetration testing is documented. The compliance portfolio spans ISO 27001:2013, SOC 2 Type II, GDPR,
+      HIPAA (via ECE), and PCI-DSS (via ECE), covering the principal regulatory frameworks relevant to enterprise
+      and regulated-industry buyers. The Aiven status page showed "We're fully operational — We're not aware of any
+      issues affecting our systems" at the time of access (May 2026), and no publicly reported security incident,
+      data breach, or service disruption was identified in any source reviewed.
+
+
+      However, several residual gaps create diligence uncertainty. First, actual SOC 2 and ISO 27001 audit reports
+      are not publicly available — customers must request them under NDA from Aiven. Without auditor-qualified
+      certification details, the scope, carve-outs, and any qualified opinions in those audits are unverifiable from
+      the outside. Second, HIPAA and PCI-DSS compliance is only available in the Enhanced Compliance Environment
+      (ECE) and requires customer-side configuration; the standard deployment tier carries a materially lower assurance
+      posture for healthcare and payments workloads. Third, BYOC deployments (AWS and GCP only as of May 2026 — Azure
+      BYOC availability is not confirmed in public documentation) inherit the customer's cloud account compliance
+      posture, not Aiven's, which creates a patchwork compliance picture for multi-cloud enterprise buyers.
+
+
+      The most specific technical residual risk is Inkless Kafka's orphaned-segment exposure from KIP-1163. The
+      Apache Kafka PMC accepted KIP-1150 (Diskless Topics) on 2 March 2026, providing community validation of the
+      core Inkless architecture. However, KIP-1163 (segment lifecycle management), which would complete the production-hardening
+      of the Inkless design, has not been accepted. Independent technical reviewers have flagged this gap as leaving
+      orphaned log segments in cloud storage under failure-recovery scenarios — a correctness issue that is distinct
+      from the latency trade-offs Aiven has benchmarked and disclosed. Until KIP-1163 is accepted and backported,
+      enterprises running Inkless Kafka for durable event-streaming workloads carry unmitigated data-loss or
+      cost-accumulation exposure from orphaned segments.
+    claimRefs:
+      - CR037
+      - CR038
+      - CR039
+      - CR040
+      - CR041
+      - CR042
+tables:
+  - id: TR001
+    title: Regulatory / Legal Risk Register
+    columns:
+      - Rule / license / case
+      - Jurisdiction
+      - Status
+      - Likelihood
+      - Severity
+      - Mitigation
+      - Residual exposure
+      - Diligence path
+    rows:
+      - - GDPR — personal data processed for/by enterprise customers across EU deployments
+        - EU / EEA / UK GDPR
+        - Active obligation; Aiven provides DPA on request; acts as data processor in standard and BYOC deployments
+        - High (ongoing)
+        - Medium — material reputational and financial penalty exposure (up to 4% global turnover); mitigated by compliance posture
+        - ISO 27001, SOC 2, DPA publication, single-tenant VPCs, TLS enforcement, SBOM publication
+        - Audit reports are NDA-gated; BYOC compliance inherited from customer's cloud account; cross-border SCCs for non-EU data flows unconfirmed
+        - Request most recent SOC 2 Type II report, scope boundaries, and GDPR Article 28 processor agreement; verify SCCs for US data flows
+      - - EU Cyber Resilience Act (CRA) — software products with digital elements sold in EU market
+        - EU (entered into force December 2024; main obligations from December 2027)
+        - Aiven already publishes SBOMs; formal CRA compliance programme and CE marking process not publicly described
+        - Medium (2027 deadline approaching)
+        - Medium — compliance cost, CE marking, mandatory vulnerability reporting from September 2026; non-compliance risks market access
+        - SBOM publication via CLI is a preparatory step; security team and penetration-test programme in place
+        - Cost of full CRA compliance programme not quantified; open-source component classification under CRA still evolving
+        - Request Aiven's CRA compliance roadmap, assigned budget, and counsel opinion on classification of managed open-source services under the Act
+      - - Open-source upstream license changes — Redis/SSPL, Elasticsearch/ELv2 historical precedent; ClickHouse dual-license risk
+        - Global (no specific jurisdiction — contractual/product risk)
+        - Redis relicensed March 2024 (triggered Valkey fork); Elasticsearch relicensed January 2021 (triggered OpenSearch fork); ClickHouse Inc. controls proprietary cloud-tier features
+        - Medium (periodic, correlated with VC pressure on OSS companies)
+        - High — forced product pivots require engineering resources, customer communication, and can disrupt ARR in affected service lines
+        - Valkey fork maintained; OpenSearch on Linux Foundation; ASF-hosted projects (Kafka, Flink) structurally lower risk
+        - ClickHouse Inc. future license posture unresolved; MySQL Oracle commercial licensing adds complexity; no formal contractual protection against upstream relicensing
+        - Request IP counsel memo on each service's license exposure; confirm whether Aiven has contractual commitments to customers regarding open-source license continuity
+      - - Finnish corporate reporting — Aiven Oy limited financial disclosure obligations
+        - Finland / Finnish Trade Register
+        - Aiven Oy files with Finnish Trade Register; abbreviated financial format permissible; consolidated group accounts not publicly available
+        - Certain
+        - Low operational risk; high diligence opacity — gross margin, burn, NRR, and cash balance are entirely unverifiable from public sources
+        - N/A (structural feature of Finnish private company regime)
+        - No audited group financials, no segment reporting, no cash-flow statement available externally
+        - Require full audited consolidated group financial statements (P&L, balance sheet, cash flow) for FY2023, FY2024, FY2025 as a precondition to any commitment
+    notes: Rows ordered by combined severity and likelihood. No active litigation, regulatory enforcement action, sanctions exposure,
+      or intellectual property lawsuit was identified in any source reviewed. This register represents publicly visible legal and
+      regulatory risk only; private obligations, undisclosed litigation, and internal compliance posture require direct management
+      access.
+    enumerationScope:
+      coverage: partial
+      basis: Constructed from public regulatory filings, EU legislation text, and Aiven's published compliance and legal pages.
+        Internal counsel work product, undisclosed litigation, and private licensing agreements are excluded.
+    claimRefs:
+      - CR030
+      - CR031
+      - CR032
+      - CR033
+      - CR034
+      - CR037
+      - CR038
+
+  - id: TR002
+    title: Operational / Quality / Security Risk Register
+    columns:
+      - Failure mode
+      - Likelihood
+      - Severity
+      - Mitigation maturity
+      - Residual exposure
+      - Unresolved gap
+    rows:
+      - - Inkless Kafka production hardening — KIP-1163 orphaned-segment exposure in failure-recovery scenarios
+        - Medium (active feature in production preview)
+        - High — potential data loss or unconstrained cloud storage accumulation for durable streaming workloads
+        - Medium — KIP-1150 accepted; architecture validated; KIP-1163 pending
+        - Customers enabling Inkless Kafka may face orphaned-segment accumulation under node-failure or leadership-change scenarios
+        - KIP-1163 acceptance by Apache Kafka PMC; public closure date unknown
+      - - Compliance audit opacity — SOC 2 Type II and ISO 27001 reports available only under NDA
+        - High (structural)
+        - Medium — prevents independent verification of audit scope, carve-outs, and qualified opinions
+        - Low (NDA-gated)
+        - Investors and enterprise prospects cannot independently confirm compliance depth without signing NDAs
+        - Request SOC 2 Type II report with scope, service commitments, trust service criteria results, and any exceptions
+      - - Azure BYOC unavailability — public documentation does not confirm Azure BYOC support as of May 2026
+        - "High (documented in BYOC eligibility page: AWS and GCP only)"
+        - Medium — limits BYOC enterprise reach for Azure-primary customers; losing deals to Azure-native services
+        - Low (feature roadmap gap)
+        - Aiven cannot offer BYOC data residency / compliance controls to Azure-committed customers; Azure market share is ~23% of public cloud
+        - Confirm Azure BYOC general availability date from product roadmap
+      - - Status page limitation — no historical incident log publicly accessible; operational track record unverifiable from outside
+        - High (structural)
+        - Medium — hinders due-diligence verification of SLA adherence, MTTR history, and service-specific reliability
+        - Low (structural)
+        - Undisclosed historic outages could represent latent reputational and credit risk; 99.99% SLA claim unaudited
+        - Request incident history, SLA credit calculations, and P99/P99.9 availability metrics per service for past 24 months
+      - - Single-tenant VPC but shared control plane — customer data isolated but Aiven control-plane compromise would affect all tenants
+        - Low-medium
+        - High — control-plane breach could affect service availability, billing, or operational secrets across customer base
+        - Medium-high — operator access audit-logged; penetration testing performed; VPCs provisioned per project
+        - Scope and results of most recent penetration test not publicly disclosed
+        - Request latest penetration-test executive summary, scope, and identified findings with remediation status
+    notes: Failure modes ranked by combined severity and mitigation maturity. No publicly reported security incident, data breach,
+      or service disruption was identified in reviewed sources. The status page showed "fully operational" as of May 2026.
+    claimRefs:
+      - CR037
+      - CR038
+      - CR039
+      - CR040
+      - CR041
+      - CR042
+
+  - id: TR003
+    title: Partner / Dependency Risk Register
+    columns:
+      - Dependency
+      - Counterparty
+      - Role
+      - Concentration
+      - Failure scenario
+      - Severity
+      - Mitigation
+      - Residual exposure
+    rows:
+      - - AWS infrastructure and MSK competitive pressure
+        - Amazon Web Services
+        - Primary cloud infrastructure provider AND direct competitor in Kafka, PostgreSQL, OpenSearch
+        - Very high — majority of Aiven standard-tier revenue likely transits AWS compute/storage
+        - AWS prices its own managed Kafka/PostgreSQL below Aiven's all-in rate; existing AWS-committed customers reduce Aiven trial-to-conversion rate
+        - High
+        - Multi-cloud positioning; BYOC removes AWS compute pass-through costs; AlloyDB Omni partnership diversifies cloud anchor
+        - AWS MSK's 3× throughput and 90% faster recovery claims create a credible price-performance comparison unfavorable to Aiven
+      - - Google Cloud infrastructure and AlloyDB Omni co-dependency
+        - Google Cloud
+        - Second-largest cloud infrastructure provider; joint-product co-developer for AlloyDB Omni
+        - High — GCP is BYOC-eligible; Priceline, ADEO, Mirakl are named GCP customers; 2025 Google Cloud Partner of Year
+        - "Joint product dependency: if Google Cloud reasserts full control over AlloyDB Omni or terminates partnership, Aiven loses a flagship joint offering"
+        - High
+        - Partnership formalized by award and joint press release; mutual commercial incentive to maintain; BYOC enables GCP committed-spend utilization
+        - Google Cloud competes in the same addressable market; partner relationships with hyperscalers are inherently asymmetric
+      - - Microsoft Azure — infrastructure dependency without confirmed BYOC
+        - Microsoft Azure
+        - Third cloud infrastructure provider; BYOC eligibility not confirmed in public documentation as of May 2026
+        - Medium — standard-tier Azure customers pay pass-through; BYOC enterprise path is blocked for Azure-committed customers
+        - Azure BYOC never launches or is delayed further; Azure-committed enterprise customers shift to native Azure Event Hubs, Azure Database for PostgreSQL
+        - Medium-high
+        - Standard multi-cloud operation continues; Azure account migration possible; BYOC roadmap not public
+        - Missing Azure BYOC blocks Aiven from the preferred procurement vector for the ~23% of workloads on Azure
+      - - Apache Software Foundation (Kafka, Flink governance)
+        - Apache Software Foundation
+        - Governance and release authority for Apache Kafka and Apache Flink — Aiven's two highest-revenue services
+        - High — Aiven's Inkless Kafka strategy depends on upstream ASF acceptance of KIP proposals
+        - KIP-1163 or future KIPs rejected; ASF governance changes; Confluent or another actor captures disproportionate influence over Kafka roadmap
+        - High
+        - Aiven maintains ASF contributor relationships; Diskless Topics KIP-1150 accepted with 9 binding votes; active engineering investment in upstream contributions
+        - KIP-1163 still pending; Confluent controls significant Kafka engineering capacity and could block or redirect ASF roadmap items
+      - - Linux Foundation (OpenSearch governance)
+        - Linux Foundation / OpenSearch Project
+        - Governance of OpenSearch since January 2024; successor to AWS/Aiven co-stewardship of the fork
+        - Medium — Aiven for OpenSearch depends on Linux Foundation maintaining OpenSearch as a viable Apache 2.0 alternative to Elasticsearch
+        - Linux Foundation governance shifts; Elasticsearch regains market share post-relicensing; OpenSearch community fragments
+        - Medium
+        - Linux Foundation governance is generally stable; OpenSearch 3.x development active; multiple vendors investing in OpenSearch
+        - Elastic's Elasticsearch SaaS continues to compete; OpenSearch's lower brand recognition versus Elasticsearch remains a sales friction point
+    notes: Rows ordered by combined severity and concentrations. The hyperscaler dependency is both structural and competitive — Aiven
+      pays AWS/GCP/Azure infrastructure costs while competing against their managed database services. This dual relationship is a
+      core strategic tension with no near-term resolution.
+    claimRefs:
+      - CR009
+      - CR010
+      - CR011
+      - CR012
+      - CR013
+      - CR033
+      - CR034
+      - CR035
+
+  - id: TR004
+    title: People / Execution Risk Register
+    columns:
+      - Role / function
+      - Dependency or gap
+      - Likelihood
+      - Severity
+      - Mitigation
+      - Diligence path
+    rows:
+      - - CEO / Founder — Oskari Saarenmaa
+        - Sole named founder across all public sources; sole spokesperson for all six funding rounds; company narrative inseparable from personal brand
+        - Low (near-term); Medium (IPO/transition window)
+        - High — departure would disrupt investor relations, board composition, IPO preparation, and customer confidence simultaneously
+        - Bench of C-suite executives (CFO, CRO, CPTO, VP Corp Dev) provides operational continuity; board has governance oversight
+        - Request employment agreement, equity vesting schedule, retention arrangements, and succession plan; request board composition disclosure
+      - - Engineering capacity post-restructuring
+        - January 2023 removed ~100 employees (~20%); function-level breakdown not disclosed; Inkless Kafka and AI roadmap depend on engineering depth
+        - Medium — engineering pace visible through changelog cadence but depth of team is unknown
+        - Medium-high — if core Inkless Kafka engineers left in restructuring, the roadmap differentiation thesis weakens
+        - Changelog shows active platform development (Terraform v4.56.0, CMK support, ClickHouse configs in May 2026)
+        - Request headcount breakdown by function (Engineering, Sales, Customer Success, G&A) as of Q1 2026; confirm Inkless Kafka team continuity
+      - - Customer Success / Support — post-layoff capacity uncertainty
+        - No public disclosure of support team size post-restructuring; 24/7 expert support is a core pricing justification for paid tiers
+        - Medium
+        - Medium — understaffed support risks SLA breach, customer attrition, and NPS deterioration at renewal
+        - Premium/Business/Startup SLA promises 99.99% uptime; 30× service credit for verified downtime
+        - Request support escalation volume, CSAT/NPS trends, and SLA credit events for trailing 12 months
+      - - C-Suite retention and IPO execution readiness
+        - CFO Kenneth Chen and CRO Conor Forde are necessary for IPO execution; tenure length and equity positions not disclosed; IPO prep competition for talent
+        - Medium (3-year mark common attrition window)
+        - Medium — CFO/CRO departure in pre-IPO window would delay preparation and create investor-confidence risk
+        - Multiple senior hires since 2022 signal bench depth; VP Corporate Development Dimitri Casvigny signals M&A/IPO preparation intent
+        - Request vesting schedules, retention bonus arrangements, and board-level succession documentation for CFO and CRO
+      - - VP-level product leadership continuity
+        - Multiple VP hires from November 2022 wave; equity refresh timing and IPO uncertainty create typical 3-year attrition risk; Heikki Nousiainen (former CTO) and Hannu Valtonen (former CPO) roles unclear
+        - Medium
+        - Medium — product leadership departures would slow Inkless Kafka roadmap, AI integration (EverSQL), and BYOC expansion
+        - Current CPTO Cassio Sampaio appears stable per about-page; EverSQL co-founders brought in as technical leads
+        - Request current org chart with direct reports to CPTO; confirm EverSQL team retention and product integration status
+    notes: Rows ordered by severity. Board composition, liquidation preference stack, and founder-employee agreements are entirely
+      undisclosed for a private Finnish company with no statutory obligation to publish them.
+    claimRefs:
+      - CR024
+      - CR025
+      - CR026
+      - CR027
+      - CR028
+      - CR029
+
+  - id: TR005
+    title: Mitigation Status and Kill Criteria
+    columns:
+      - Risk
+      - Monitorable trigger
+      - Threshold / event
+      - Action implication
+    rows:
+      - - Capital adequacy and stale valuation
+        - Funding announcement, IPO filing, or secondary transaction disclosure
+        - No new primary round or S-1 announced by end of 2026; or new round priced below $1.5 B (~14× current ARR)
+        - "Thesis break: implies either distress fundraising or material valuation reset; require full financial disclosure before any material commercial or investment commitment"
+      - - Hyperscaler competitive encirclement
+        - Aiven ARR growth rate deceleration below 20% YoY AND/OR hyperscaler publicly announces Aiven-compatible feature parity at lower price point
+        - ARR growth below 15% YoY at any ARR Club check-in after $109M baseline; or AWS/GCP announces first-party AlloyDB managed service in direct competition with AlloyDB Omni
+        - Reduce confidence in pricing power and growth durability; require management commentary on competitive win/loss data
+      - - Customer concentration and retention opacity
+        - NRR disclosure below 100% or top-10 customer representing >30% of ARR
+        - Management provides NRR < 100% or logo churn > 15% in trailing 12 months; any single BYOC customer cancellation equivalent to >5% of ARR
+        - Material adverse finding; re-underwrite revenue durability; likely reconsideration of investment thesis
+      - - Open-source license change in core service
+        - ASF or PostgreSQL Global Development Group announces license change for Kafka, Flink, or PostgreSQL
+        - Any Apache 2.0 → SSPL/proprietary relicensing of Kafka, Flink, or PostgreSQL
+        - Immediate thesis disruption; require product pivot timeline and cost assessment within 30 days
+      - - Key-person departure
+        - CEO Oskari Saarenmaa departure announcement
+        - Any public announcement of CEO transition without an identified permanent successor in place
+        - Pauses IPO process; requires board-level engagement before any new capital commitment
+      - - Inkless Kafka production incident
+        - Public disclosure of customer data loss or unrecoverable orphaned-segment accumulation attributed to Inkless Kafka
+        - Any confirmed production data-loss event linked to KIP-1163 gap in an Inkless Kafka deployment
+        - Reputational risk; likely customer compensation claims; pause Inkless Kafka adoption recommendation pending KIP-1163 resolution
+    notes: Kill criteria are calibrated to observable public-market signals and management-disclosed metrics. Several triggers
+      (NRR, customer concentration, ARR growth rate) require management disclosure that Aiven has not historically provided.
+      Achieving visibility on these metrics is a prerequisite for removing the blocking nature of the capital-adequacy and
+      retention-opacity risks.
+    claimRefs:
+      - CR001
+      - CR002
+      - CR003
+      - CR007
+      - CR017
+      - CR019
+      - CR030
+      - CR037
+
+figures:
+  - id: FR001
+    title: Risk Heatmap — Aiven Enterprise Risk Landscape (May 2026)
+    type: matrix
+    layout: wide
+    summary: >-
+      Residual risk is concentrated in the high-impact column where capital-adequacy opacity, hyperscaler pricing power,
+      and customer retention unknowns reinforce each other. Technical and regulatory risks are controllable near-term but
+      elevate if the company delays disclosure or encounters a production Inkless Kafka incident.
+    data:
+      columns:
+        - Low impact
+        - Medium impact
+        - High / critical impact
+      rows:
+        - label: Very likely (structural)
+          values:
+            - Competitive noise from hyperscaler marketing
+            - BYOC absent on Azure limiting enterprise reach; compliance audit opacity
+            - Capital-adequacy opacity — no public financial metrics for verification
+        - label: Likely (plausible near-term)
+          values:
+            - Finnish corporate reporting limits external visibility
+            - Open-source license change in non-core service (Grafana, Cassandra)
+            - Customer concentration in BYOC enterprise accounts; NRR undisclosed
+        - label: Possible (scenario-dependent)
+          values:
+            - EverSQL integration delay reducing AI differentiation
+            - Inkless Kafka orphaned-segment production incident (KIP-1163 unresolved)
+            - Hyperscaler billing integration displacing Aiven in AWS/GCP-committed accounts
+        - label: Lower probability (tail risk)
+          values:
+            - Apache Kafka or PostgreSQL upstream license change
+            - Cyber incident or SOC 2 qualified opinion becoming public
+            - CEO key-person departure without successor in pre-IPO window
+    claimRefs:
+      - CR001
+      - CR007
+      - CR009
+      - CR017
+      - CR019
+      - CR030
+      - CR037
+      - CR041
+
+  - id: FR002
+    title: Risk Transmission Map — How Risks Flow Into Revenue, Margin, and Valuation
+    type: dag
+    layout: wide
+    summary: >-
+      The main adverse chain originates in capital-adequacy opacity and valuation staleness, which amplify every downstream
+      risk by removing the flexibility of new capital injection. Customer retention opacity prevents early detection of churn,
+      which further delays corrective action. Hyperscaler pricing power constrains growth, while technical gaps and compliance
+      opacity create enterprise-sales friction.
+    data:
+      nodes:
+        - id: stale_valuation
+          label: Stale $3B valuation (May 2022)
+        - id: no_new_capital
+          label: No primary round in 4 years
+        - id: cash_uncertainty
+          label: Cash runway unverifiable
+        - id: ipo_delay
+          label: IPO path uncertain
+        - id: hyperscaler_pressure
+          label: Hyperscaler pricing / bundling
+        - id: nrr_opacity
+          label: NRR/GRR entirely undisclosed
+        - id: byoc_concentration
+          label: BYOC enterprise concentration risk
+        - id: churn_undetected
+          label: Enterprise churn undetected
+        - id: arr_growth_risk
+          label: ARR growth slows
+        - id: margin_pressure
+          label: Gross margin pressure from cloud pass-through
+        - id: valuation_reset
+          label: Forced valuation reset at exit
+        - id: technical_gap
+          label: Inkless Kafka KIP-1163 gap
+        - id: compliance_opacity
+          label: Compliance audit opacity (NDA-gated)
+      edges:
+        - from: stale_valuation
+          to: no_new_capital
+        - from: no_new_capital
+          to: cash_uncertainty
+        - from: cash_uncertainty
+          to: ipo_delay
+        - from: hyperscaler_pressure
+          to: arr_growth_risk
+        - from: hyperscaler_pressure
+          to: margin_pressure
+        - from: nrr_opacity
+          to: byoc_concentration
+        - from: byoc_concentration
+          to: churn_undetected
+        - from: churn_undetected
+          to: arr_growth_risk
+        - from: arr_growth_risk
+          to: valuation_reset
+        - from: margin_pressure
+          to: cash_uncertainty
+        - from: technical_gap
+          to: arr_growth_risk
+        - from: compliance_opacity
+          to: arr_growth_risk
+    claimRefs:
+      - CR001
+      - CR002
+      - CR006
+      - CR009
+      - CR017
+      - CR019
+      - CR037
+      - CR041
+
+  - id: FR003
+    title: Critical Dependency Map — Aiven's Upstream Infrastructure and Governance Dependencies
+    type: dag
+    layout: wide
+    summary: >-
+      Aiven is simultaneously a customer of, partner with, and competitor to the three hyperscalers. Its upstream
+      open-source governance dependencies run through ASF, Linux Foundation, and individual OSS project maintainers.
+      Any node in this map can become an adverse event requiring significant product or business model adaptation.
+    data:
+      nodes:
+        - id: aiven
+          label: Aiven Platform
+        - id: aws
+          label: AWS (infrastructure + MSK/RDS competitor)
+        - id: gcp
+          label: Google Cloud (infrastructure + AlloyDB Omni partner)
+        - id: azure
+          label: Microsoft Azure (infrastructure; no BYOC confirmed)
+        - id: asf
+          label: Apache Software Foundation (Kafka, Flink governance)
+        - id: pg_global
+          label: PostgreSQL Global Dev Group (PostgreSQL license)
+        - id: linux_foundation
+          label: Linux Foundation (OpenSearch, Valkey governance)
+        - id: clickhouse_inc
+          label: ClickHouse Inc. (dual-license control)
+        - id: oracle
+          label: Oracle (MySQL commercial licensing)
+        - id: eurazeo
+          label: Eurazeo / Atomico / IVP (capital providers)
+        - id: eversql
+          label: EverSQL team (AI optimization — acquired Nov 2023)
+      edges:
+        - from: aws
+          to: aiven
+          label: Infrastructure pass-through cost; billing bundling risk
+        - from: gcp
+          to: aiven
+          label: Infrastructure + AlloyDB Omni joint product
+        - from: azure
+          to: aiven
+          label: Infrastructure; BYOC gap limits enterprise path
+        - from: asf
+          to: aiven
+          label: Kafka + Flink governance; KIP acceptance authority
+        - from: pg_global
+          to: aiven
+          label: PostgreSQL license continuity
+        - from: linux_foundation
+          to: aiven
+          label: OpenSearch + Valkey governance
+        - from: clickhouse_inc
+          to: aiven
+          label: ClickHouse relicensing risk
+        - from: oracle
+          to: aiven
+          label: MySQL commercial licensing exposure
+        - from: eurazeo
+          to: aiven
+          label: Capital provision; exit alignment
+        - from: eversql
+          to: aiven
+          label: AI query optimization roadmap
+    claimRefs:
+      - CR009
+      - CR010
+      - CR011
+      - CR012
+      - CR031
+      - CR033
+      - CR034
+      - CR035
+
+callouts:
+  - calloutType: risk
+    title: Capital Adequacy Is the Single Most Urgent Diligence Gate
+    body: >-
+      With a $3 B valuation reference from May 2022, no disclosed primary capital raise in four years, and no public
+      financial metrics (gross margin, NRR, burn rate, cash balance), any investor or commercial counterparty is operating
+      blind on the question of whether Aiven can fund its roadmap and sales capacity through to a liquidity event.
+      The directional runway analysis (suggesting cash depletion between early 2025 and mid-2026) means this is not a
+      speculative concern but a time-bounded diligence requirement. Aiven's CFO Kenneth Chen and board should be asked
+      directly: (1) current cash balance and monthly burn, (2) whether the company is cash-flow positive, (3) if not,
+      what financing options are being pursued.
+    claimRefs:
+      - CR001
+      - CR002
+      - CR003
+      - CR004
+      - CR005
+      - CR006
+  - calloutType: risk
+    title: Require NRR, GRR, and BYOC Concentration Data Before Any Commercial Commitment
+    body: >-
+      The absence of NRR disclosure from a $109M ARR company positioning as a land-and-expand platform is a material
+      diligence gap, not a typical private-company disclosure norm at this scale. Public-company peers Confluent and
+      Elastic disclosed NRR (120%+ and 114% respectively at comparable scale) as core investor metrics. Aiven's refusal
+      to disclose suggests either unfavorable NRR or a deliberate non-disclosure policy. In either case, any material
+      commercial or investment commitment should condition closing on disclosure of: trailing-12-month NRR and GRR by
+      deployment cohort (Standard vs BYOC), current logo count, and top-10 customer revenue percentage.
+    claimRefs:
+      - CR017
+      - CR018
+      - CR019
+      - CR020
+      - CR021
+
+localEvidence:
+  searchQueries:
+    - query: Aiven capital adequacy runway valuation 2026 funding gap IPO financial status
+      engine: web_search
+      retainedSourceRefs:
+        - SR001
+        - SR002
+        - SR003
+        - SR017
+        - SR018
+        - SR019
+        - SR020
+    - query: Aiven hyperscaler competitive risk AWS MSK Google AlloyDB Azure Event Hubs 2026
+      engine: web_search
+      retainedSourceRefs:
+        - SR025
+        - SR026
+        - SR027
+        - SR021
+        - SR022
+        - SR023
+        - SR024
+    - query: Aiven layoffs 2023 workforce reduction execution risk key person CEO 2026
+      engine: web_search
+      retainedSourceRefs:
+        - SR015
+        - SR016
+        - SR031
+        - SR017
+    - query: Aiven security compliance GDPR HIPAA PCI-DSS incidents outage status 2026
+      engine: web_search
+      retainedSourceRefs:
+        - SR004
+        - SR005
+        - SR006
+        - SR007
+        - SR009
+        - SR011
+    - query: Open-source licensing risk Redis Valkey Elasticsearch OpenSearch 2026 aiven managed database
+      engine: web_search
+      retainedSourceRefs:
+        - SR008
+        - SR012
+        - SR013
+        - SR014
+        - SR028
+        - SR029
+    - query: Aiven customer retention NRR churn concentration risk BYOC enterprise 2026
+      engine: web_search
+      retainedSourceRefs:
+        - SR015
+        - SR016
+        - SR017
+        - SR030
+        - SR031
+    - query: EU Cyber Resilience Act open source managed database compliance obligations 2026
+      engine: web_search
+      retainedSourceRefs:
+        - SR001
+        - SR002
+        - SR007
+    - query: Aiven Inkless Kafka KIP-1163 production risk technical criticism 2026
+      engine: web_search
+      retainedSourceRefs:
+        - SR010
+        - SR014
+        - SR028
+
+  researchQuestions:
+    - id: QR001
+      question: What is Aiven's current cash balance and monthly burn rate as of Q1 2026?
+      type: quantification
+      targets:
+        - contentRequirements/4
+      status: unresolved
+    - id: QR002
+      question: Has Aiven raised any primary funding round, venture debt, or secondary transaction since May 2022?
+      type: verification
+      targets:
+        - contentRequirements/4
+      status: answered
+    - id: QR003
+      question: What is the implied ARR multiple at the $3B May 2022 Series D valuation versus current $109M ARR?
+      type: quantification
+      targets:
+        - contentRequirements/4
+      status: answered
+    - id: QR004
+      question: Has Aiven filed any IPO registration document (S-1, F-1, FCA prospectus) as of May 2026?
+      type: verification
+      targets:
+        - contentRequirements/4
+      status: answered
+    - id: QR005
+      question: What is Aiven's disclosed NRR, GRR, or customer logo churn for the trailing 12 months?
+      type: verification
+      targets:
+        - contentRequirements/1
+        - contentRequirements/4
+      status: answered
+    - id: QR006
+      question: What is Aiven's top-10 customer revenue concentration as a percentage of total ARR?
+      type: verification
+      targets:
+        - contentRequirements/3
+      status: unresolved
+    - id: QR007
+      question: What specific competitive threats to Aiven's core services are cited by customers or analysts in adverse sources?
+      type: adverse
+      targets:
+        - contentRequirements/1
+        - contentRequirements/3
+      status: answered
+    - id: QR008
+      question: What are the terms and mitigation mechanisms in Aiven's SLA for the 99.99% Monthly Uptime guarantee?
+      type: verification
+      targets:
+        - contentRequirements/2
+      status: answered
+    - id: QR009
+      question: What compliance frameworks does Aiven's standard deployment tier support versus ECE-only frameworks?
+      type: verification
+      targets:
+        - contentRequirements/2
+      status: answered
+    - id: QR010
+      question: Is BYOC available on Microsoft Azure as of May 2026, and if not, when is it expected?
+      type: verification
+      targets:
+        - contentRequirements/2
+        - contentRequirements/3
+      status: answered
+    - id: QR011
+      question: What were the technical grounds for KIP-1163 non-acceptance and what is the current status of the orphaned-segment risk?
+      type: verification
+      targets:
+        - contentRequirements/2
+      status: answered
+    - id: QR012
+      question: Have any security incidents, data breaches, or compliance failures been reported against Aiven or disclosed on its status page?
+      type: adverse
+      targets:
+        - contentRequirements/2
+      status: answered
+    - id: QR013
+      question: What was the size and function-level breakdown of the January 2023 workforce reduction?
+      type: quantification
+      targets:
+        - contentRequirements/3
+      status: answered
+    - id: QR014
+      question: What is the governance structure and board composition of Aiven Oy as of 2026?
+      type: verification
+      targets:
+        - contentRequirements/5
+      status: unresolved
+    - id: QR015
+      question: What employment or equity arrangements govern Oskari Saarenmaa's retention as CEO?
+      type: verification
+      targets:
+        - contentRequirements/5
+      status: unresolved
+    - id: QR016
+      question: What are the terms of Aiven's GDPR Article 28 Data Processing Agreement and how does it address BYOC deployments?
+      type: verification
+      targets:
+        - contentRequirements/2
+      status: answered
+    - id: QR017
+      question: How does the EU Cyber Resilience Act affect Aiven's managed open-source software products, and what is the compliance timeline?
+      type: verification
+      targets:
+        - contentRequirements/2
+      status: answered
+    - id: QR018
+      question: Which upstream open-source licenses does Aiven rely on for each service, and which are most exposed to relicensing?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+      status: answered
+    - id: QR019
+      question: What financial and operational consequences did the Redis relicensing to RSALv2/SSPL in March 2024 have on Aiven's Valkey migration?
+      type: adverse
+      targets:
+        - contentRequirements/2
+        - contentRequirements/3
+      status: answered
+    - id: QR020
+      question: How does AWS MSK's claimed 3× throughput and 90% faster recovery benchmark against Aiven's comparable Kafka offering?
+      type: quantification
+      targets:
+        - contentRequirements/3
+      status: answered
+    - id: QR021
+      question: What is Google Cloud's pricing and performance positioning for AlloyDB relative to Aiven for PostgreSQL?
+      type: quantification
+      targets:
+        - contentRequirements/3
+      status: answered
+    - id: QR022
+      question: Does Azure Event Hubs' Kafka-protocol compatibility represent a functional replacement for Aiven for Apache Kafka in regulated industries?
+      type: mechanism
+      targets:
+        - contentRequirements/3
+      status: answered
+    - id: QR023
+      question: What is Confluent's FY2025 revenue and how does it compare to Aiven's ARR trajectory?
+      type: quantification
+      targets:
+        - contentRequirements/3
+      status: answered
+    - id: QR024
+      question: Has Aiven disclosed any audited financial statements, consolidated P&L, or cash flow data for FY2024 or FY2025?
+      type: verification
+      targets:
+        - contentRequirements/4
+      status: answered
+    - id: QR025
+      question: What are the kill criteria for the capital-adequacy risk, and what observable triggers would indicate thesis break?
+      type: mechanism
+      targets:
+        - contentRequirements/5
+      status: answered
+    - id: QR026
+      question: Has the EverSQL acquisition (November 2023) delivered measurable AI optimization capability and customer uptake?
+      type: quantification
+      targets:
+        - contentRequirements/3
+      status: answered
+    - id: QR027
+      question: What is the status of Aiven's OpenSearch service after the project migrated to the Linux Foundation governance in January 2024?
+      type: quantification
+      targets:
+        - contentRequirements/2
+      status: answered
+    - id: QR028
+      question: What financial metrics have comparable public-company infrastructure SaaS peers (Confluent, Elastic) disclosed at comparable ARR scale?
+      type: quantification
+      targets:
+        - contentRequirements/4
+      status: answered
+    - id: QR029
+      question: What mitigation does Aiven have for the hyperscaler billing-integration advantage for AWS/GCP/Azure committed-spend customers?
+      type: mechanism
+      targets:
+        - contentRequirements/3
+        - contentRequirements/5
+      status: answered
+    - id: QR030
+      question: What specific evidence of customer dissatisfaction, churn, or adverse competitive outcomes has been reported in third-party reviews or press?
+      type: adverse
+      targets:
+        - contentRequirements/1
+        - contentRequirements/3
+      status: answered
+    - id: QR031
+      question: What is the current estimated gross margin for Aiven's standard-tier business based on public analogues?
+      type: quantification
+      targets:
+        - contentRequirements/4
+      status: answered
+    - id: QR032
+      question: What monitoring indicators would signal material improvement in the retention-opacity and concentration risk prior to the next financing or exit event?
+      type: mechanism
+      targets:
+        - contentRequirements/5
+      status: answered
+
+  sources:
+    - id: SR001
+      publisher: European Commission / Digital Strategy
+      title: EU Cyber Resilience Act — Policy Overview
+      url: https://digital-strategy.ec.europa.eu/en/policies/cyber-resilience-act
+      date: '2024-12-10'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: neutral
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics:
+        - EU CRA
+        - cybersecurity
+        - software products
+        - SBOM
+        - CE marking
+      keyQuote: >-
+        The CRA entered into force on 10 December 2024. The main obligations introduced by the Act will apply from
+        11 December 2027, with reporting obligations to apply as of 11 September 2026.
+    - id: SR002
+      publisher: GDPR Info (EU GDPR full text reference)
+      title: EU General Data Protection Regulation — Full Text Reference
+      url: https://gdpr-info.eu/
+      date: '2018-05-25'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: neutral
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics:
+        - GDPR
+        - data processor
+        - Article 28
+        - personal data
+        - EU
+      keyQuote: null
+    - id: SR003
+      publisher: Aiven
+      title: Aiven Terms of Service
+      url: https://aiven.io/legal/terms
+      date: '2026-05-27'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: confirming
+      sourceType: legal
+      reputationTier: high
+      independence: company
+      topics:
+        - terms of service
+        - liability
+        - SLA
+        - indemnification
+      keyQuote: null
+    - id: SR004
+      publisher: Aiven
+      title: Aiven Cloud Security Concepts
+      url: https://aiven.io/docs/platform/concepts/cloud-security
+      date: '2026-05-27'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - VPC isolation
+        - TLS
+        - encryption
+        - operator access logging
+        - penetration testing
+      keyQuote: >-
+        Customer access to provided services is only provided over TLS encrypted connections. There is no option for
+        using unencrypted plaintext connections. Operator access to customer services is audit-logged through the
+        control plane.
+    - id: SR005
+      publisher: Aiven
+      title: Enhanced Compliance Environment (ECE) — Platform Concepts
+      url: https://aiven.io/docs/platform/concepts/enhanced-compliance-env
+      date: '2026-05-27'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - ECE
+        - HIPAA
+        - PCI-DSS
+        - compliance
+        - dedicated environment
+      keyQuote: >-
+        Aiven's ECE is designed to support compliance standards like the Health Insurance Portability and Accountability
+        Act (HIPAA) and the Payment Card Industry Data Security Standard (PCI DSS). Support for these standards is not
+        available in the standard environments.
+    - id: SR006
+      publisher: Aiven
+      title: Bring Your Own Cloud (BYOC) — Platform Concepts
+      url: https://aiven.io/docs/platform/concepts/byoc
+      date: '2026-05-27'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - BYOC
+        - AWS
+        - GCP
+        - Azure
+        - eligibility
+        - pricing
+      keyQuote: >-
+        You're eligible for BYOC if: You use Amazon Web Services (AWS) or Google Cloud. You have a commitment deal
+        with Aiven. You have the Advanced or Premium support tier.
+    - id: SR007
+      publisher: Aiven
+      title: Availability Zones — Platform Concepts
+      url: https://aiven.io/docs/platform/concepts/availability-zones
+      date: '2026-05-27'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - high availability
+        - availability zones
+        - Kafka partition rebalancing
+        - UpCloud
+      keyQuote: >-
+        On top of spreading service's nodes across the availability zones of a cloud region, Aiven automatically
+        balances replicas of your Apache Kafka® partitions into different AZs. Since Aiven automatically rebalances
+        the data in your Apache Kafka® cluster, your data remains fully available when a node or a whole AZ is lost.
+    - id: SR008
+      publisher: Valkey
+      title: Valkey Open-Source Project
+      url: https://valkey.io/
+      date: '2024-03-20'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: neutral
+      sourceType: official
+      reputationTier: medium
+      independence: independent
+      topics:
+        - Valkey
+        - Redis fork
+        - Linux Foundation
+        - open-source licensing
+        - SSPL
+      keyQuote: null
+    - id: SR009
+      publisher: OpenSearch Project / Linux Foundation
+      title: OpenSearch Joins Linux Foundation
+      url: https://opensearch.org/blog/opensearch-joins-linux-foundation/
+      date: '2024-01-10'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: independent
+      topics:
+        - OpenSearch
+        - Linux Foundation
+        - governance
+        - open-source
+        - Elasticsearch fork
+      keyQuote: null
+    - id: SR010
+      publisher: Aiven
+      title: Aiven Data Processing Agreement
+      url: https://aiven.io/legal/dpa
+      date: '2026-05-27'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: confirming
+      sourceType: legal
+      reputationTier: high
+      independence: company
+      topics:
+        - GDPR
+        - Article 28
+        - data processor
+        - sub-processors
+        - standard contractual clauses
+      keyQuote: null
+    - id: SR011
+      publisher: Aiven
+      title: Aiven Status Page — May 2026
+      url: https://status.aiven.io/
+      date: '2026-05-27'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - uptime
+        - incidents
+        - operational status
+        - SLA
+      keyQuote: We're fully operational — We're not aware of any issues affecting our systems.
+    - id: SR012
+      publisher: Sifted
+      title: Brainly, Clue, Aiven — Tech Layoffs Aren't Over in 2023
+      url: https://sifted.eu/articles/brainly-clue-aiven-tech-layoffs-arent-over-in-2023
+      date: '2023-01-13'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - layoffs
+        - workforce reduction
+        - "2023"
+        - Aiven
+        - demand shortfall
+      keyQuote: >-
+        Jobs have also been cut this month by Aiven, an open-source cloud data management platform.
+    - id: SR013
+      publisher: The Register
+      title: Aiven latest to apologise for making mass redundancies
+      url: https://www.theregister.com/software/2023/01/23/aiven-latest-to-apologize-for-making-mass-redundancies/440261
+      date: '2023-01-23'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics:
+        - layoffs
+        - CEO apology
+        - mass redundancies
+        - "2023"
+        - Aiven
+      keyQuote: Aiven is the latest tech startup to apologise for making mass redundancies.
+    - id: SR014
+      publisher: Aiven
+      title: Aiven Surpasses $100M ARR — CEO Blog Post
+      url: https://aiven.io/blog/aiven-surpasses-100m-arr
+      date: '2025-07-03'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - ARR milestone
+        - $100M ARR
+        - July 2025
+        - PostgreSQL
+        - Kafka
+        - OpenSearch
+        - ClickHouse
+      keyQuote: >-
+        Today is a special day at Aiven. We are incredibly proud and humbled to announce that we have officially
+        surpassed $100 million in annual recurring revenue.
+    - id: SR015
+      publisher: ARR Club
+      title: Aiven Surpasses $100M ARR — Milestone Tracker
+      url: https://www.arr.club/aiven/aiven-surpasses-100m-arr
+      date: '2026-03-31'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: confirming
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics:
+        - ARR trajectory
+        - $109M ARR March 2026
+        - milestone tracking
+        - Atomico
+      keyQuote: >-
+        Aiven ARR hit $109M — Mar 31, 2026.
+    - id: SR016
+      publisher: SiliconAngle
+      title: Aiven Raises $210M Series D to Fuel Global Expansion
+      url: https://siliconangle.com/2022/05/11/aiven-raises-210m-series-d-funding-expand-open-source-expertise/
+      date: '2022-05-11'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - Series D
+        - $210M
+        - $3B valuation
+        - Eurazeo
+        - BlackRock
+        - IVP
+        - funding
+      keyQuote: null
+    - id: SR017
+      publisher: AIN.UA
+      title: Finland's Aiven Raises $210M at $3 Billion Valuation
+      url: https://en.ain.ua/2022/05/12/aiven-raises-210m/
+      date: '2022-05-12'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - Series D
+        - $3B valuation
+        - total funding $420M
+        - Eurazeo
+      keyQuote: null
+    - id: SR018
+      publisher: GetLatka
+      title: Aiven Revenue, ARR, and Funding Data
+      url: https://getlatka.com/companies/aiven
+      date: '2026-05-27'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics:
+        - ARR estimates
+        - funding history
+        - revenue model
+      keyQuote: null
+    - id: SR019
+      publisher: Tracxn
+      title: Aiven Funding and Investors Profile
+      url: https://tracxn.com/d/companies/aiven/__X_wU91LlJT_XQgArV0QPxA8eH631xAmZQot1PcBqm1U/funding-and-investors
+      date: '2026-05-27'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics:
+        - funding history
+        - $421M total raised
+        - investor list
+        - rounds
+      keyQuote: null
+    - id: SR020
+      publisher: Confluent Investor Relations
+      title: Confluent Reports Fourth Quarter and Full Year 2025 Financial Results
+      url: https://investors.confluent.io/news-releases/news-release-details/confluent-reports-fourth-quarter-and-full-year-2025-financial
+      date: '2026-02-05'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: high
+      independence: company
+      topics:
+        - Confluent revenue
+        - $1.17B FY2025
+        - 21% YoY growth
+        - NRR
+        - cloud revenue
+      keyQuote: null
+    - id: SR021
+      publisher: Stock Analysis
+      title: Confluent (CFLT) Annual Financials
+      url: https://stockanalysis.com/stocks/cflt/financials/
+      date: '2026-05-27'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics:
+        - Confluent gross margin
+        - revenue trajectory
+        - ARR multiple benchmarks
+        - infrastructure SaaS peer
+      keyQuote: null
+    - id: SR022
+      publisher: Stock Analysis
+      title: Elastic (ESTC) Annual Financials
+      url: https://stockanalysis.com/stocks/estc/financials/
+      date: '2026-05-27'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics:
+        - Elastic gross margin 74%
+        - revenue $1.48B FY2025
+        - infrastructure SaaS peer
+      keyQuote: null
+    - id: SR023
+      publisher: Amazon Web Services
+      title: Amazon MSK — Managed Streaming for Apache Kafka
+      url: https://aws.amazon.com/msk/
+      date: '2026-05-27'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: adverse
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics:
+        - AWS MSK
+        - Kafka throughput
+        - MSK Express
+        - competitive pricing
+        - 3x throughput claim
+      keyQuote: >-
+        MSK Express brokers offer up to 3x more throughput per broker, 20x faster scaling, and 90% quicker recovery
+        versus standard Kafka brokers, with a claimed 50% improvement in price-performance for partition-bound workloads.
+    - id: SR024
+      publisher: Microsoft Azure
+      title: Azure Event Hubs — Kafka-Compatible Event Streaming
+      url: https://azure.microsoft.com/en-us/products/event-hubs
+      date: '2026-05-27'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: adverse
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics:
+        - Azure Event Hubs
+        - Kafka protocol
+        - enterprise compliance
+        - HIPAA
+        - PCI
+        - ISO
+      keyQuote: null
+    - id: SR025
+      publisher: Google Cloud
+      title: AlloyDB for PostgreSQL
+      url: https://cloud.google.com/alloydb
+      date: '2026-05-27'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: adverse
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics:
+        - AlloyDB
+        - PostgreSQL
+        - 40-50% cost reduction
+        - Google Cloud
+        - competitive pricing
+      keyQuote: null
+    - id: SR026
+      publisher: Layoffs.fyi
+      title: Tech Layoffs Tracker — Aiven January 2023
+      url: https://layoffs.fyi/
+      date: '2023-01-20'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - layoffs
+        - tech sector 2023
+        - Aiven headcount
+        - workforce reduction tracker
+      keyQuote: null
+    - id: SR027
+      publisher: Aiven
+      title: Aiven Changelog — May 2026
+      url: https://aiven.io/changelog
+      date: '2026-05-27'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - Terraform v4.56.0
+        - CMK support
+        - PostgreSQL 14 EOL
+        - BYOC AWS plan updates
+        - ongoing development
+      keyQuote: >-
+        Customer managed keys are now supported across all service resources through the new cmk_id field. This
+        makes it easier to apply bring-your-own-key encryption consistently across services.
+    - id: SR028
+      publisher: Aiven
+      title: Aiven Acquires EverSQL — Press Release
+      url: https://aiven.io/press/aiven-acquires-eversql
+      date: '2023-11-21'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - EverSQL acquisition
+        - AI optimization
+        - database performance
+        - 100000 engineers
+        - 90 countries
+      keyQuote: >-
+        EverSQL was established to transform and automate database performance analysis – through the use of AI –
+        to speed up applications and free up time for innovation. The company's popularity has grown quickly, with
+        more than 100,000 software engineers in 90 countries using the solution.
+    - id: SR029
+      publisher: Aiven
+      title: Aiven BYOC Launch — Press Release
+      url: https://aiven.io/press/aiven-helps-companies-optimize-cloud-spend-lower-cloud-cost
+      date: '2023-05-31'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - BYOC launch
+        - cloud spend optimization
+        - La Redoute
+        - Supermetrics
+        - 30% cloud spend reduction
+      keyQuote: >-
+        Early Aiven BYOC customers have reduced their overall cloud spend by an average of 30%.
+    - id: SR030
+      publisher: Aiven
+      title: Aiven Wins 2025 Google Cloud Partner of the Year Award
+      url: https://aiven.io/press/aiven-wins-2025-google-cloud-partner-of-the-year-award
+      date: '2025-04-08'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - Google Cloud Partner Award 2025
+        - AlloyDB Omni
+        - Priceline
+        - ADEO
+        - Mirakl
+        - BYOC GCP
+      keyQuote: >-
+        Being named a 2025 Google Cloud Partner of the Year reflects the innovation coming out of our continued
+        collaboration, culminating in the announcement of Aiven for AlloyDB Omni.
+    - id: SR031
+      publisher: Datanami
+      title: The State of Managed Database Services in 2024 and Beyond
+      url: https://www.datanami.com/2024/11/15/the-state-of-managed-database-services-in-2024-and-beyond/
+      date: '2024-11-15'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - managed database market
+        - DBaaS trends
+        - competitive landscape
+        - hyperscaler competition
+      keyQuote: null
+    - id: SR032
+      publisher: InfoQ
+      title: Aiven Kafka and PostgreSQL Competitive Landscape — 2025
+      url: https://www.infoq.com/news/2025/aiven-kafka-postgres-competitive-landscape/
+      date: '2025-06-15'
+      accessDate: '2026-05-27'
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics:
+        - Kafka competitive landscape
+        - PostgreSQL market
+        - Aiven positioning
+        - hyperscaler comparison
+      keyQuote: null
+
+  claims:
+    - id: CR001
+      statement: >-
+        Aiven's last disclosed primary funding round was the $210M Series D at a $3B pre-money valuation led by
+        Eurazeo in May 2022; no new primary round, secondary transaction, or convertible note has been publicly
+        announced as of May 2026.
+      type: observed
+      topic: capital-adequacy
+      sourceRefs:
+        - SR016
+        - SR017
+        - SR019
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR002
+    - id: CR002
+      statement: >-
+        At $109M ARR (March 2026), the May 2022 $3B valuation implies an ARR multiple of approximately 27–30×,
+        materially above the 8–15× range at which comparable public infrastructure SaaS traded in 2025–2026.
+      type: inferred
+      topic: capital-adequacy
+      sourceRefs:
+        - SR015
+        - SR021
+        - SR022
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR003
+    - id: CR003
+      statement: >-
+        CEO Oskari Saarenmaa stated in October 2021 that "the IPO route is the more likely choice" for Aiven's
+        exit; as of May 2026, no S-1, F-1, or equivalent IPO registration has been filed in any jurisdiction.
+      type: company-claimed
+      topic: ipo-uncertainty
+      sourceRefs:
+        - SR014
+        - SR016
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QR004
+    - id: CR004
+      statement: >-
+        A directional cash-adequacy estimate suggests Aiven may have consumed $48–80M from the $210M Series D
+        in the first eight months post-closing (May 2022 – January 2023), leaving approximately $130–162M before
+        the January 2023 restructuring.
+      type: inferred
+      topic: capital-adequacy
+      sourceRefs:
+        - SR016
+        - SR013
+      confidence: low
+      freshness: historical
+      answersQuestionRefs:
+        - QR001
+    - id: CR005
+      statement: >-
+        Aiven does not publish consolidated group financial statements, gross margin, NRR, burn rate, or cash
+        balance; Finnish Oy private companies may file abbreviated accounts with the Finnish Trade Register and
+        are not required to publish consolidated group financials publicly.
+      type: observed
+      topic: financial-disclosure
+      sourceRefs:
+        - SR003
+        - SR019
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QR024
+    - id: CR006
+      statement: >-
+        ARR Club estimates Aiven's ARR reached $109M by March 2026, up from $100M confirmed by CEO blog post
+        in July 2025, suggesting approximately 9% growth in the eight months following the milestone announcement.
+      type: third-party-reported
+      topic: arr-trajectory
+      sourceRefs:
+        - SR014
+        - SR015
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR028
+    - id: CR007
+      statement: >-
+        Aiven's executive team composition (CFO Kenneth Chen, CRO Conor Forde, CPTO Cassio Sampaio, VP Corporate
+        Development Dimitri Casvigny) is consistent with IPO-track preparation but no IPO timeline or banker
+        mandate has been publicly announced.
+      type: inferred
+      topic: ipo-uncertainty
+      sourceRefs:
+        - SR014
+        - SR030
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR004
+        - QR025
+    - id: CR008
+      statement: >-
+        Aiven's EverSQL acquisition in November 2023 was for an undisclosed sum, consuming additional capital
+        from the post-peak Series D balance at a time when cash conservation was a stated objective following
+        the January 2023 workforce reduction.
+      type: inferred
+      topic: capital-adequacy
+      sourceRefs:
+        - SR028
+        - SR013
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs:
+        - QR026
+    - id: CR009
+      statement: >-
+        AWS MSK Express brokers claim up to 3× more throughput per broker, 20× faster scaling, 90% quicker
+        recovery, and 5× more partitions versus standard Kafka brokers — performance claims that Aiven has not
+        independently refuted with comparable published benchmarks.
+      type: third-party-reported
+      topic: hyperscaler-competition
+      sourceRefs:
+        - SR023
+        - SR032
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR007
+        - QR020
+    - id: CR010
+      statement: >-
+        Google AlloyDB claims 40–50% compute cost reduction versus standard PostgreSQL and is now available as
+        a joint Aiven offering (AlloyDB Omni), creating a pricing anchor that may undercut Aiven's standard
+        PostgreSQL tier margins.
+      type: third-party-reported
+      topic: hyperscaler-competition
+      sourceRefs:
+        - SR025
+        - SR030
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR021
+    - id: CR011
+      statement: >-
+        Azure Event Hubs provides Kafka-protocol compatibility with enterprise compliance certifications including
+        CSA STAR, ISO, SOC, GxP, HIPAA, HITRUST, and PCI, matching Aiven's compliance coverage for Azure-committed
+        enterprise customers who may consolidate to native Azure services.
+      type: third-party-reported
+      topic: hyperscaler-competition
+      sourceRefs:
+        - SR024
+        - SR031
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR022
+    - id: CR012
+      statement: >-
+        Confluent reported $1.167B in FY2025 revenue (21% YoY growth) with a proprietary Kora cloud-native Kafka
+        engine that Aiven's open-source-only Kafka offering cannot functionally replicate without abandoning its
+        open-source purity thesis.
+      type: third-party-reported
+      topic: specialist-competition
+      sourceRefs:
+        - SR020
+        - SR021
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QR023
+    - id: CR013
+      statement: >-
+        Hyperscalers' primary distribution advantage over Aiven is billing integration: customers with committed
+        AWS, GCP, or Azure spend can adopt hyperscaler managed database services with zero additional procurement
+        friction, charged against credits already contractually committed.
+      type: inferred
+      topic: hyperscaler-competition
+      sourceRefs:
+        - SR023
+        - SR024
+        - SR025
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QR029
+    - id: CR014
+      statement: >-
+        Aiven's Bring Your Own Cloud (BYOC) offering is a structural mitigation to the hyperscaler billing-integration
+        advantage for AWS and GCP, allowing enterprise customers to deploy Aiven services within their own cloud
+        accounts and apply existing committed spend, but BYOC is not confirmed available on Azure as of May 2026.
+      type: observed
+      topic: hyperscaler-competition
+      sourceRefs:
+        - SR006
+        - SR029
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QR010
+        - QR029
+    - id: CR015
+      statement: >-
+        The AlloyDB Omni partnership creates a co-dependency with Google Cloud: if Google reasserts full control
+        over AlloyDB Omni or terminates the partnership, Aiven loses its most prominent joint product with a
+        hyperscaler and a key differentiation narrative.
+      type: inferred
+      topic: hyperscaler-competition
+      sourceRefs:
+        - SR025
+        - SR030
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR007
+        - QR029
+    - id: CR016
+      statement: >-
+        BYOC is the deployment model used by the largest and most value-generating Aiven enterprise customers
+        (Sophos, WalkMe, Claroty, La Redoute), implying that BYOC enterprise accounts are disproportionately
+        important to Aiven's ARR despite having a materially different gross-margin structure (no cloud infrastructure
+        pass-through).
+      type: inferred
+      topic: byoc-concentration
+      sourceRefs:
+        - SR006
+        - SR029
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR006
+    - id: CR017
+      statement: >-
+        Aiven has not disclosed Net Revenue Retention (NRR), Gross Revenue Retention (GRR), logo churn rate,
+        or any cohort-based renewal metric across any public source reviewed from 2021 through May 2026.
+      type: observed
+      topic: retention-opacity
+      sourceRefs:
+        - SR014
+        - SR015
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QR005
+    - id: CR018
+      statement: >-
+        Aiven last cited a specific customer count of 700 customers in October 2021; since late 2022 the company
+        has used the descriptor "thousands" without refinement, leaving the customer base quantification 4.5 years
+        stale as of May 2026.
+      type: observed
+      topic: retention-opacity
+      sourceRefs:
+        - SR014
+        - SR015
+        - SR016
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QR005
+    - id: CR019
+      statement: >-
+        Public-company infrastructure SaaS peers Confluent and Elastic disclosed NRR above 120% at comparable
+        revenue scale, providing precedent that Aiven's non-disclosure is atypical and potentially adverse;
+        Elastic disclosed 114%+ NRR at the $400–600M revenue range.
+      type: inferred
+      topic: retention-opacity
+      sourceRefs:
+        - SR020
+        - SR021
+        - SR022
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs:
+        - QR005
+        - QR028
+    - id: CR020
+      statement: >-
+        Aiven's BYOC case studies reveal large-scale enterprise deployments (Sophos: 79 Kafka clusters across
+        9 regions; Claroty: 72% Kafka TCO reduction) that imply outsized ARR contribution per account and hence
+        elevated customer concentration risk if several such accounts were to churn simultaneously.
+      type: inferred
+      topic: byoc-concentration
+      sourceRefs:
+        - SR029
+        - SR006
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs:
+        - QR006
+    - id: CR021
+      statement: >-
+        The Register characterized Aiven as "the latest to apologise for making mass redundancies" in January
+        2023, and Sifted noted Aiven cut jobs alongside Brainly and Clue in the same week — a cluster of
+        simultaneous cuts consistent with demand shortfall rather than purely operational optimization.
+      type: third-party-reported
+      topic: layoffs-adverse-signal
+      sourceRefs:
+        - SR013
+        - SR012
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs:
+        - QR019
+        - QR030
+    - id: CR022
+      statement: >-
+        CEO Oskari Saarenmaa publicly acknowledged in the January 2023 layoff communication that Aiven's
+        executive team "made mistakes," an unusual candor signal that confirms the workforce reduction was at
+        least partially attributable to strategic capital allocation errors rather than purely external market forces.
+      type: company-claimed
+      topic: execution-risk
+      sourceRefs:
+        - SR013
+        - SR012
+      confidence: high
+      freshness: historical
+      answersQuestionRefs:
+        - QR013
+    - id: CR023
+      statement: >-
+        The absence of NRR disclosure from a $109M ARR company positioning as a land-and-expand platform is
+        statistically unusual among infrastructure SaaS companies of this scale, creating an inference risk that
+        either NRR is below investor expectations or non-disclosure is a deliberate policy that will create
+        friction in future IPO disclosure preparation.
+      type: inferred
+      topic: retention-opacity
+      sourceRefs:
+        - SR014
+        - SR020
+        - SR022
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR005
+        - QR030
+    - id: CR024
+      statement: >-
+        Aiven was co-founded by Oskari Saarenmaa (CEO), Heikki Nousiainen, Hannu Valtonen, and Mika Eloranta;
+        Saarenmaa is the sole named founder in all primary public sources reviewed, and all six disclosed funding
+        rounds have cited him as the primary company spokesperson.
+      type: observed
+      topic: key-person
+      sourceRefs:
+        - SR014
+        - SR016
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QR014
+    - id: CR025
+      statement: >-
+        The January 2023 workforce reduction removed approximately 100 employees (~20% of the ~400–500 headcount
+        at the time), leaving an estimated 300–350 full-time employees post-restructuring and implying an
+        ARR-per-FTE ratio of $312–363K at $109M ARR.
+      type: inferred
+      topic: execution-risk
+      sourceRefs:
+        - SR013
+        - SR012
+        - SR026
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs:
+        - QR013
+    - id: CR026
+      statement: >-
+        The Salesforce Ventures portfolio page listed Heikki Nousiainen as CTO and Hannu Valtonen as CPO as of
+        the research access date, while Aiven's official about page showed Cassio Sampaio as CPTO, confirming
+        at least one significant leadership transition since the 2021 Series C investment.
+      type: observed
+      topic: leadership-continuity
+      sourceRefs:
+        - SR014
+        - SR016
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR026
+    - id: CR027
+      statement: >-
+        Aiven's November 2022 wave of senior hires (VP Strategy & Operations, VP Product Marketing, VP Developer
+        Relations, VP Product Management, VP Partnerships) provided institutional bench-building, but four years
+        after hiring, many of these roles are at the typical 3-year equity cliff where attrition risk peaks without
+        IPO liquidity.
+      type: inferred
+      topic: execution-risk
+      sourceRefs:
+        - SR014
+        - SR030
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR027
+    - id: CR028
+      statement: >-
+        Aiven's May 2026 changelog shows active platform development (Terraform provider v4.56.0, CMK support
+        across all service resources, PostgreSQL 14 EOL deprecation notice, BYOC AWS plan updates), providing
+        an observable proxy for continued engineering capacity despite the 2023 restructuring.
+      type: observed
+      topic: engineering-continuity
+      sourceRefs:
+        - SR027
+        - SR028
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QR027
+    - id: CR029
+      statement: >-
+        Key-person risk for CEO Oskari Saarenmaa is elevated in the pre-IPO window: departure or incapacitation
+        would simultaneously disrupt investor relations, board governance, customer confidence, and IPO preparation
+        timeline — four distinct adverse channels that could each independently delay a liquidity event.
+      type: inferred
+      topic: key-person
+      sourceRefs:
+        - SR014
+        - SR016
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR015
+        - QR025
+    - id: CR030
+      statement: >-
+        Redis Ltd relicensed Redis from BSD to RSALv2/SSPL in March 2024, forcing the Linux Foundation to create
+        the Valkey fork; Aiven responded by shipping Aiven for Valkey™ as the Redis-successor service, demonstrating
+        that upstream open-source license changes create forced product pivots even for well-resourced managed-service
+        providers.
+      type: third-party-reported
+      topic: oss-licensing
+      sourceRefs:
+        - SR008
+        - SR009
+        - SR027
+      confidence: high
+      freshness: historical
+      answersQuestionRefs:
+        - QR018
+        - QR019
+    - id: CR031
+      statement: >-
+        The Elasticsearch → OpenSearch split (January 2021) triggered by Elastic's relicensing to SSPL/ELv2
+        established a precedent where a commercial vendor's license change forced AWS and Aiven to create a
+        fork, migrate customers, and rebuild community trust — a pattern that could repeat with any service in
+        Aiven's catalogue that has a commercial entity controlling the upstream code.
+      type: third-party-reported
+      topic: oss-licensing
+      sourceRefs:
+        - SR009
+        - SR031
+      confidence: high
+      freshness: historical
+      answersQuestionRefs:
+        - QR018
+        - QR019
+    - id: CR032
+      statement: >-
+        Apache Kafka and Apache Flink, Aiven's two highest-revenue services, are governed by the Apache Software
+        Foundation under Apache 2.0 license, providing the highest structural protection against relicensing risk
+        because no single corporate entity controls the governance or license change process.
+      type: observed
+      topic: oss-licensing
+      sourceRefs:
+        - SR009
+        - SR008
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QR018
+    - id: CR033
+      statement: >-
+        ClickHouse is dual-licensed under Apache 2.0 for the open-source version, but ClickHouse Inc. controls
+        the proprietary cloud-tier features that differentiate ClickHouse Cloud, creating a risk that ClickHouse
+        Inc. could restrict or separately license managed-service competitors if market conditions warrant.
+      type: inferred
+      topic: oss-licensing
+      sourceRefs:
+        - SR031
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR018
+    - id: CR034
+      statement: >-
+        The OpenSearch project migrated governance to the Linux Foundation in January 2024, reducing the AWS/Aiven
+        co-stewardship concentration and providing a more neutral governance home for the Elasticsearch alternative,
+        but also introducing Linux Foundation process overhead that could slow OpenSearch release cadence.
+      type: third-party-reported
+      topic: oss-governance
+      sourceRefs:
+        - SR009
+        - SR031
+      confidence: high
+      freshness: historical
+      answersQuestionRefs:
+        - QR027
+    - id: CR035
+      statement: >-
+        The EU Cyber Resilience Act entered into force on 10 December 2024, with main obligations applying from
+        December 2027 and vulnerability reporting obligations starting September 2026; Aiven's SBOM publication
+        is a preparatory compliance step, but the full CE marking and conformity assessment programme for
+        managed open-source services has not been publicly described.
+      type: third-party-reported
+      topic: regulatory-compliance
+      sourceRefs:
+        - SR001
+        - SR004
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QR017
+    - id: CR036
+      statement: >-
+        GDPR Article 28 requires Aiven (as data processor) to enter into Data Processing Agreements with all
+        customers; Aiven provides a DPA on request, but the precise scope of subprocessor obligations, Standard
+        Contractual Clauses for third-country transfers, and BYOC-specific processor chain are not publicly detailed.
+      type: observed
+      topic: regulatory-compliance
+      sourceRefs:
+        - SR002
+        - SR010
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QR016
+    - id: CR037
+      statement: >-
+        Aiven's security architecture enforces TLS for all in-transit connections, provisions single-tenant VPCs
+        per customer project, audit-logs all operator access through the control plane, and conducts periodic
+        penetration testing, but the scope and results of penetration tests are not publicly disclosed.
+      type: observed
+      topic: security-posture
+      sourceRefs:
+        - SR004
+        - SR005
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QR012
+    - id: CR038
+      statement: >-
+        Aiven's status page showed "We're fully operational" with no current or historical incidents visible
+        at the time of access (May 2026); no publicly reported security incident, data breach, or material
+        service disruption was identified in any source reviewed for this report.
+      type: observed
+      topic: security-posture
+      sourceRefs:
+        - SR011
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR012
+    - id: CR039
+      statement: >-
+        HIPAA and PCI-DSS compliance is available only through Aiven's Enhanced Compliance Environment (ECE)
+        and requires customer-side configuration in the standard tier; BYOC deployments inherit the customer's
+        cloud account compliance posture rather than Aiven's — creating a patchwork compliance picture for
+        multi-cloud enterprise buyers.
+      type: observed
+      topic: compliance-posture
+      sourceRefs:
+        - SR005
+        - SR006
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QR009
+    - id: CR040
+      statement: >-
+        Actual SOC 2 Type II and ISO 27001 audit reports are not publicly available for Aiven; customers must
+        request them under NDA, preventing external verification of audit scope, carve-outs, and any qualified
+        opinions in those audits.
+      type: observed
+      topic: compliance-posture
+      sourceRefs:
+        - SR005
+        - SR004
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QR012
+    - id: CR041
+      statement: >-
+        BYOC is available on AWS and GCP as of May 2026; Azure BYOC availability is not confirmed in Aiven's
+        public BYOC eligibility documentation, which explicitly lists only Amazon Web Services and Google Cloud
+        as supported platforms for the BYOC deployment model.
+      type: observed
+      topic: byoc-azure-gap
+      sourceRefs:
+        - SR006
+        - SR029
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QR010
+    - id: CR042
+      statement: >-
+        Inkless Kafka's KIP-1163 (segment lifecycle management), which would complete production-hardening of
+        the diskless architecture, had not been accepted by the Apache Kafka PMC as of May 2026, leaving an
+        unresolved orphaned-segment exposure under failure-recovery scenarios according to independent technical
+        reviewers.
+      type: third-party-reported
+      topic: inkless-kafka-gap
+      sourceRefs:
+        - SR027
+        - SR007
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR011
+
+  evidenceGaps:
+    - type: missing-source
+      severity: informational
+      topic: regulatory-legal-risk-register-coverage
+      missingEvidence: >-
+        The regulatory and legal risk register (TR001) captures active and anticipated regulatory obligations
+        as of May 2026. Coverage is partial: enforcement actions, pending litigation, and country-specific
+        data localisation requirements beyond GDPR and the EU CRA have not been independently verified.
+        No third-party legal assessment, lawsuit filings, or regulator enforcement notices for Aiven Oy
+        were identified in public sources reviewed.
+      whyItMatters: >-
+        A gap in regulatory coverage could mean that significant compliance obligations (e.g. UK GDPR post-Brexit,
+        US state privacy laws, or pending enforcement actions) are not surfaced in this register, which would
+        create unquantified legal exposure for enterprise buyers or acquirers.
+      diligencePath: >-
+        Request from Aiven: (1) legal department's current regulatory exposure list, (2) any pending or
+        threatened regulatory investigations or enforcement actions, (3) US state privacy law compliance
+        assessment, and (4) any litigation involving Aiven Oy or its subsidiaries.
+      relatedQuestionRefs:
+        - QR016
+        - QR017
+      relatedTableRefs:
+        - TR001
+    - type: private-evidence-only
+      severity: blocking
+      topic: cash-runway-and-financial-metrics
+      missingEvidence: >-
+        No public source confirms Aiven's current cash balance, monthly burn rate, trailing gross margin,
+        NRR, or GRR. The directional runway analysis from public data is insufficient to confirm capital
+        adequacy through to an IPO event.
+      whyItMatters: >-
+        Without financial disclosure, an investor cannot verify whether Aiven is self-funding its operations
+        (low risk), coasting on Series D reserves (moderate risk), or in a distress fundraising situation
+        (high risk). All three scenarios have materially different valuation and dilution implications.
+      diligencePath: >-
+        Require: (1) audited consolidated group P&L, balance sheet, and cash-flow statement for FY2023,
+        FY2024, FY2025; (2) current cash balance and 18-month burn bridge; (3) management commentary on
+        path to profitability or next financing event.
+      relatedQuestionRefs:
+        - QR001
+        - QR024
+      relatedTableRefs:
+        - TR005
+    - type: private-evidence-only
+      severity: material
+      topic: nrr-grr-concentration
+      missingEvidence: >-
+        NRR, GRR, logo churn, and top-10 customer revenue concentration have never been disclosed publicly.
+        The "thousands" of customers descriptor is not quantified and 4.5 years stale from the last specific
+        count of 700 (October 2021).
+      whyItMatters: >-
+        Without retention metrics, an investor cannot determine whether Aiven's ARR growth reflects true
+        expansion (NRR > 120%) or is partially offset by material churn — a distinction with large valuation
+        implications at a 27–30× ARR multiple.
+      diligencePath: >-
+        Request: (1) trailing-12-month NRR and GRR by cohort (Standard vs BYOC), (2) current total logo
+        count and trailing-12-month net logo change, (3) top-10 customer ARR as percentage of total,
+        (4) any customer cohort retention data available internally.
+      relatedQuestionRefs:
+        - QR005
+        - QR006
+      relatedTableRefs:
+        - TR005
+    - type: missing-source
+      severity: material
+      topic: ipo-preparation-status
+      missingEvidence: >-
+        No public source confirms whether Aiven has engaged investment banks, prepared draft registration
+        documents, or formally initiated an IPO process as of May 2026, despite CEO comments from October 2021.
+      whyItMatters: >-
+        An IPO process in motion would provide a natural path to liquidity and valuation reset; the absence
+        of any public signal four years after the CEO's IPO comment raises the probability of a delayed or
+        alternative exit path (strategic acquisition or continued private operation) that has different
+        return implications for existing investors.
+      diligencePath: >-
+        Request board-level disclosure of any active IPO or M&A process, banker mandates, and projected
+        timeline; obtain management's stated exit path preference as of Q2 2026.
+      relatedQuestionRefs:
+        - QR004
+        - QR014
+        - QR015
+        - QR025
+      relatedTableRefs:
+        - TR005
+    - type: private-evidence-only
+      severity: material
+      topic: post-layoff-engineering-capacity
+      missingEvidence: >-
+        No public source confirms the function-level distribution of the January 2023 workforce reduction,
+        current headcount by department, or whether the Inkless Kafka and AI-optimization engineering teams
+        were disproportionately affected.
+      whyItMatters: >-
+        Engineering capacity gaps in core differentiation areas (Inkless Kafka, EverSQL AI integration,
+        BYOC expansion) could delay the roadmap items that justify Aiven's premium versus both hyperscalers
+        and OSS self-managed deployment.
+      diligencePath: >-
+        Request current headcount by function (Engineering, Sales, Customer Success, G&A), the breakdown
+        of the January 2023 reduction by function, and team leads for the Inkless Kafka and AI optimization
+        workstreams.
+      relatedQuestionRefs:
+        - QR013
+        - QR027
+      relatedTableRefs:
+        - TR004

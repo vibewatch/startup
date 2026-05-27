@@ -1,0 +1,2189 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: aiven
+runDate: '2026-05-27'
+company:
+  name: Aiven
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: Aiven's product architecture centres on a 12-service managed open-source data platform deployed across three progressively
+    isolated models — Standard (Aiven-hosted VPCs), Enhanced Compliance Environment (ECE, for HIPAA/PCI-DSS), and Bring Your
+    Own Cloud (BYOC, customer-owned infrastructure). The most differentiated technical initiative is Inkless Kafka, the commercial
+    name for Aiven's implementation of Apache KIP-1150 (Diskless Topics), which stores Kafka data in object storage rather
+    than disk and was accepted by the Apache PMC on March 2, 2026, with 9 binding votes. Benchmarks show greater than 94%
+    infrastructure cost reduction at 1 GiB/s workload but a meaningful latency trade-off (P99 ≈ 1.5 s vs. sub-20 ms for classic
+    Kafka), limiting production suitability to throughput-sensitive, latency-tolerant workloads. The DevOps toolchain — Terraform
+    provider (v4.56.0, MIT), Kubernetes Operator (Apache 2.0), REST API, Python CLI, and MCP server — represents solid IaC
+    coverage, though low GitHub star counts (131 / 36 / 92) relative to cloud-native peers signal a narrower developer community
+    than Confluent or Elastic. Platform compliance (ISO 27001, SOC 2, HIPAA, PCI-DSS, GDPR) is well-documented, with ECE providing
+    the highest assurance tier. The key product-risk flag is Inkless Kafka's production-hardening gap flagged by independent
+    technical reviewers, together with the non-acceptance of KIP-1163 (segment lifecycle), which leaves orphaned-segment exposure
+    in the current design.
+sections:
+- id: service-catalog-and-deployment-models
+  title: Service Catalog and Deployment Models
+  body: 'Aiven''s product catalogue spans twelve managed open-source data services organised across six functional categories:
+    streaming and messaging (Apache Kafka Classic, Apache Kafka Inkless, Apache Flink), relational databases (PostgreSQL,
+    MySQL), analytics (ClickHouse, OpenSearch), in-memory caching (Valkey, Dragonfly), observability (Grafana, Aiven for Metrics
+    / Thanos), and NoSQL (Apache Cassandra). Every service shares a common control plane, consistent tooling surface (Terraform,
+    Kubernetes Operator, REST API, CLI), and a unified support SLA structure — a deliberate multi-product strategy that enables
+    customers to consolidate multiple managed-data vendors onto a single platform and reduces integration friction as workloads
+    evolve.
+
+
+    The three deployment models represent a capability staircase. Standard deployment places managed services in Aiven-owned,
+    single-tenant VPCs on AWS, Google Cloud, or Azure; customers never share compute with other tenants. The Enhanced Compliance
+    Environment (ECE) goes further by disabling all internet access from service nodes, requiring customer-approved cloud
+    regions, and mandating Advanced or Premium support tier with a committed spend contract — satisfying HIPAA and PCI-DSS
+    workloads that standard VPC isolation cannot accommodate. Bring Your Own Cloud (BYOC), launched May 2023, inverts the
+    infrastructure ownership model: the customer''s cloud account hosts all service virtual machines and pays the underlying
+    cloud bill directly, while Aiven charges a platform management fee for orchestration, upgrades, monitoring, and support.
+    BYOC is available on AWS (private and public architecture variants) and GCP (private and public), with the bastion-host
+    model used to give Aiven''s control plane a minimal, audited access channel into the customer''s environment. Early BYOC
+    customers reportedly reduced overall cloud spend by an average of 30 percent versus standard hosted arrangements.'
+  claimRefs:
+  - CE001
+  - CE002
+  - CE003
+  - CE004
+  - CE005
+  - CE006
+  - CE007
+  - CE008
+  - CE009
+  - CE010
+  - CE011
+  tableRefs:
+  - TE001
+  - TE002
+  figureRefs:
+  - FE004
+- id: platform-architecture-and-control-plane
+  title: Platform Architecture and Control Plane
+  body: 'Aiven''s control plane is a centralised orchestration layer that manages provisioning, configuration, patching, backups,
+    failover, and monitoring for every managed service across all three deployment models. In standard and ECE deployments
+    the control plane operates Aiven-owned VPCs in the customer-selected cloud and region; in BYOC, it reaches into the customer''s
+    VPC exclusively through a bastion host with a static IP, ensuring that Aiven''s operational access is bounded, auditable,
+    and revocable.
+
+
+    VPC isolation is single-tenant by default. Customers can configure project-scoped VPCs (one VPC per cloud/region combination)
+    or organisation-scoped VPCs shared across projects, with VPC peering linking the Aiven-managed VPC to the customer''s
+    own application VPC for private connectivity. Service integrations allow cross-service metric and log routing within the
+    platform — for example, routing PostgreSQL performance metrics into Aiven-hosted Grafana or into Aiven for Metrics (Thanos-based)
+    for long-term storage and alerting.
+
+
+    Maintenance windows are configurable by customers, and Aiven uses rolling upgrades for multi-node services (Kafka, OpenSearch)
+    to achieve zero-downtime patching. Single-node services (PostgreSQL on Developer tier, MySQL) experience a brief, scheduled
+    failover window. Service forking creates a full point-in-time copy of any service, including cross-region forks, supporting
+    disaster-recovery rehearsals and data migration workflows without disrupting the production service.'
+  claimRefs:
+  - CE008
+  - CE009
+  - CE011
+  - CE012
+  - CE013
+  - CE014
+  - CE015
+  - CE016
+  tableRefs: []
+  figureRefs:
+  - FE001
+- id: devops-toolchain-and-integrations
+  title: DevOps Toolchain and Integrations
+  body: 'Aiven''s infrastructure-as-code and automation surface consists of five primary tools: a REST API, a Terraform provider,
+    a Kubernetes operator, a Python CLI, and an MCP server for AI-agent integration. The REST API (api.aiven.io/v1) exposes
+    all platform operations programmatically and is the foundation on which all other tools are built. The Terraform provider
+    (github.com/aiven/terraform-provider-aiven) is written in Go under an MIT licence; version 4.56.0, released in May 2026,
+    added Customer-Managed Key (CMK / BYOK) support across all services, a material security capability for enterprises with
+    data-sovereignty requirements. At 131 GitHub stars and 79 forks, the provider is functional but commands a smaller open-source
+    following than Confluent''s or Elastic''s analogous providers.
+
+
+    The Kubernetes operator (github.com/aiven/aiven-operator) operates under the Apache 2.0 licence with the aiven.io/v1alpha1
+    CRD group and is installable via Helm. Its Docker image (aivenoy/aiven-operator) has accumulated more than 10,000 pulls
+    on Docker Hub, indicating meaningful production adoption despite 36 GitHub stars. The Python CLI (avn) is Apache 2.0 licensed
+    with 92 stars. The MCP server enables AI agent frameworks to provision and manage Aiven services programmatically; the
+    official documentation warns that some MCP operations are irreversible, a standard caution for agentic automation of infrastructure.'
+  claimRefs:
+  - CE017
+  - CE018
+  - CE019
+  - CE020
+  - CE021
+  - CE022
+  - CE041
+  tableRefs:
+  - TE003
+  figureRefs:
+  - FE002
+- id: inkless-kafka-and-technical-differentiation
+  title: Inkless Kafka and Technical Differentiation
+  body: 'Inkless Kafka is the most technically ambitious feature Aiven has shipped to date and its single clearest claim to
+    upstream-community leadership. The architecture replaces Kafka''s traditional disk-based log storage with object storage
+    (S3-equivalent), eliminating broker disks entirely. Aiven proposed this design through KIP-1150 (Diskless Topics) and
+    implemented it in an open fork named "Inkless" on GitHub. On March 2, 2026, the Apache Kafka PMC accepted KIP-1150 with
+    9 binding votes, formally admitting the diskless model into the Apache Kafka roadmap — a rare and significant validation
+    of Aiven''s technical direction by the upstream community.
+
+
+    Aiven''s published benchmarks at a 1 GiB/s workload demonstrate greater than 94 percent infrastructure cost reduction
+    versus classic disk-based Kafka, with equivalent throughput. The latency trade-off is material: Inkless Kafka''s P50 end-to-end
+    latency is approximately 650 milliseconds and P99 approximately 1.5 seconds — an order-of-magnitude increase versus classic
+    Kafka''s sub-20 ms P99. For throughput-oriented workloads such as large-scale event ingestion, log aggregation, and clickstream
+    analytics, this trade-off is commercially viable. For latency-sensitive workloads such as payment authorisation or real-time
+    fraud detection, it is not.
+
+
+    Independent technical review raises three further concerns. First, KIP-1163 (segment lifecycle management), which would
+    address orphaned segment risk after leader failures during compaction, has not yet been accepted, leaving an edge-case
+    data-availability exposure in the current design. Second, the Exactly-Once Semantics (EOS) implementation in the transactional
+    producer path has architectural differences from classic Kafka that reviewers have flagged as under-tested for high-throughput
+    transactional workloads. Third, as of Q1 2025, the implementation was characterised as "not yet production-hardened" by
+    an InfoQ technical analyst — a label that may have changed by May 2026 but has not been publicly contradicted by Aiven
+    documentation.'
+  claimRefs:
+  - CE023
+  - CE024
+  - CE025
+  - CE026
+  - CE027
+  - CE037
+  - CE038
+  - CE039
+  tableRefs: []
+  figureRefs:
+  - FE003
+- id: security-compliance-and-reliability
+  title: Security, Compliance, and Reliability
+  body: 'Aiven''s compliance portfolio covers five principal frameworks — ISO 27001:2013, SOC 2 Type II, GDPR, HIPAA, and
+    PCI-DSS — as confirmed in its ClickHouse product documentation and referenced across the platform security pages. ISO
+    27001 and SOC 2 are applicable to all deployment models; HIPAA and PCI-DSS in the Standard tier require customer-side
+    configuration of encryption and access controls, whereas ECE provides a controlled environment where Aiven takes operational
+    responsibility for the compliance posture.
+
+
+    At the infrastructure security layer, all customer deployments run in single-tenant VPCs with TLS encryption for in-transit
+    data. Operator access to customer services is audit-logged through the control plane. Aiven publishes SBOM (Software Bill
+    of Materials) reports via its CLI, enabling supply-chain security reviews — an increasingly important capability as enterprise
+    procurement teams require SBOM evidence under CISA and EU Cyber Resilience Act frameworks. A GitHub secret-scanning partnership
+    adds a credential-leak detection layer for customers who inadvertently commit Aiven API keys to source code repositories.
+    Periodic penetration testing is documented in the platform security concepts page, though results are not published externally.
+
+
+    The SLA tiers range from no uptime guarantee on Free and Developer plans to 99.99% Monthly Uptime on Startup, Business,
+    and Premium plans, with a 30x service credit for verified downtime exceeding the SLA threshold. The May 2026 changelog
+    confirms active platform development (Terraform v4.56.0, AMQP connector for Kafka Connect, Valkey 9 as default, OCI region
+    expansion), and status.aiven.io reported fully operational across all regions as of the research date.'
+  claimRefs:
+  - CE028
+  - CE029
+  - CE030
+  - CE031
+  - CE032
+  - CE033
+  - CE034
+  - CE036
+  - CE041
+  - CE042
+  tableRefs:
+  - TE004
+  - TE005
+  figureRefs:
+  - FE005
+tables:
+- id: TE001
+  title: Aiven Managed Service Catalog — Q2 2026
+  layout: standard
+  columns:
+  - Service
+  - Category
+  - Open-Source Base
+  - Service Types / Variants
+  - Notable Feature
+  rows:
+  - - Aiven for PostgreSQL
+    - Relational database
+    - PostgreSQL
+    - Single-node, multi-node HA
+    - Cross-region fork, PITR, PgBouncer connection pooling
+  - - Aiven for Apache Kafka (Classic)
+    - Streaming & messaging
+    - Apache Kafka
+    - Broker cluster with disk storage
+    - MirrorMaker 2, Kafka Connect, Schema Registry
+  - - Aiven for Apache Kafka (Inkless)
+    - Streaming & messaging
+    - Apache Kafka (KIP-1150 fork)
+    - Broker cluster with object-storage backend
+    - '>94% infra cost reduction vs. Classic at 1 GiB/s; P99 ~1.5 s latency'
+  - - Aiven for OpenSearch
+    - Search & analytics
+    - OpenSearch
+    - Single-node, multi-node HA
+    - OpenSearch Dashboards bundled; rolling zero-downtime upgrades
+  - - Aiven for ClickHouse
+    - Analytics (OLAP)
+    - ClickHouse
+    - Single-node, multi-node
+    - Column-oriented; ISO 27001, SOC2, HIPAA, PCI-DSS certified
+  - - Aiven for Apache Flink
+    - Stream processing
+    - Apache Flink
+    - Managed Flink cluster
+    - SQL and DataStream API; integrates with Kafka service
+  - - Aiven for MySQL
+    - Relational database
+    - MySQL
+    - Single-node, multi-node HA
+    - Standard managed MySQL; brief failover window during maintenance
+  - - Aiven for Grafana
+    - Observability (visualization)
+    - Grafana
+    - Single-node
+    - Cross-service metric integration; pre-wired to Aiven for Metrics
+  - - Aiven for Valkey
+    - In-memory caching
+    - Valkey (Redis fork, OSS)
+    - Single-node, multi-node HA
+    - Default caching service as of May 2026 changelog
+  - - Aiven for Dragonfly
+    - In-memory caching
+    - Dragonfly
+    - Single-node
+    - Redis-compatible; alternative to Valkey for latency-critical caching
+  - - Aiven for Apache Cassandra
+    - NoSQL
+    - Apache Cassandra
+    - Multi-node cluster
+    - Wide-column store; cloud-agnostic replication
+  - - Aiven for Metrics
+    - Observability (metrics)
+    - Thanos
+    - Single-node
+    - Long-term Prometheus metric storage; integrates with Grafana service
+  notes: DataHub (managed application) is also listed in Aiven's product catalog as a managed app alongside the core services
+    above. Service types, variants, and notable features are based on Aiven documentation fetched May 2026; additional service
+    variants (e.g. high-memory node types) exist within each category.
+  claimRefs:
+  - CE001
+  - CE002
+  - CE003
+  - CE004
+  - CE005
+  - CE006
+- id: TE002
+  title: Aiven Deployment Model Comparison
+  layout: standard
+  columns:
+  - Deployment Model
+  - Infrastructure Ownership
+  - Cloud Isolation Level
+  - Compliance Use Case
+  - Support Requirement
+  rows:
+  - - Standard
+    - Aiven-owned VPCs on AWS / GCP / Azure
+    - Single-tenant VPC; separate compute per customer
+    - ISO 27001, SOC 2, GDPR; HIPAA and PCI-DSS with customer configuration
+    - Free through Premium tiers; no commitment required
+  - - Enhanced Compliance Environment (ECE)
+    - Aiven-owned VPCs in customer-approved regions only
+    - No internet access from service nodes; customer-approved region list
+    - HIPAA (full), PCI-DSS (full); designed for regulated-data workloads
+    - Advanced or Premium support tier; committed spend contract required
+  - - Bring Your Own Cloud (BYOC)
+    - Customer cloud account; customer pays cloud provider directly
+    - Customer-owned VPC; Aiven accesses only via bastion host
+    - Inherits customer's cloud compliance posture; customer controls data residency
+    - Enterprise contract; minimum monthly platform management fee (amount undisclosed)
+  notes: BYOC is available on AWS (private and public architecture variants) and GCP (private and public). Azure BYOC availability
+    is not confirmed in public Aiven documentation as of May 2026. ECE requires either AWS, GCP, or Azure; specific supported
+    regions are configurable via the Aiven console.
+  claimRefs:
+  - CE007
+  - CE008
+  - CE009
+  - CE010
+  - CE011
+- id: TE003
+  title: Aiven DevOps Toolchain — Key Metrics, May 2026
+  layout: standard
+  columns:
+  - Tool
+  - Language / Type
+  - Licence
+  - GitHub Stars / Forks
+  - Key Capability (May 2026)
+  rows:
+  - - REST API (api.aiven.io/v1)
+    - HTTP/JSON
+    - Proprietary (Aiven)
+    - N/A (not OSS repo)
+    - Full platform CRUD; all services, organisations, billing, VPCs
+  - - Terraform Provider (aiven/terraform-provider-aiven)
+    - Go
+    - MIT
+    - 131 stars / 79 forks
+    - 'v4.56.0: CMK/BYOK support across all services'
+  - - Kubernetes Operator (aiven/aiven-operator)
+    - Go
+    - Apache 2.0
+    - 36 stars / 25 forks; 10K+ Docker Hub pulls
+    - CRD group aiven.io/v1alpha1; Helm install; reconciliation loop
+  - - Python CLI (avn / aiven-client)
+    - Python
+    - Apache 2.0
+    - 92 stars
+    - All platform operations from shell; pipeable JSON output
+  - - MCP Server
+    - Model Context Protocol
+    - Not specified
+    - N/A
+    - AI-agent integration; documented warning for destructive operations
+  notes: GitHub star and fork counts are point-in-time snapshots from the GitHub API as of May 26, 2026. The low star counts
+    relative to Confluent's Terraform provider (1,000+ stars) or HashiCorp-maintained providers signal a narrower developer
+    community but are partly a function of Aiven's more focused enterprise-sales motion rather than developer-led PLG.
+  claimRefs:
+  - CE017
+  - CE018
+  - CE019
+  - CE020
+  - CE021
+  - CE022
+- id: TE004
+  title: Aiven Compliance Certifications and Deployment Coverage
+  layout: standard
+  columns:
+  - Certification / Framework
+  - Scope
+  - Standard Deployment
+  - ECE Deployment
+  - Verification Source
+  rows:
+  - - ISO 27001:2013
+    - Information security management system
+    - Supported
+    - Supported
+    - Aiven ClickHouse docs (confirmed); platform-wide
+  - - SOC 2 Type II
+    - Security, availability, processing integrity
+    - Supported
+    - Supported
+    - Aiven ClickHouse docs; referenced in cloud-security concepts page
+  - - GDPR
+    - EU personal data regulation
+    - Supported
+    - Supported
+    - Aiven ClickHouse docs; DPA available on request
+  - - HIPAA
+    - US health data regulation
+    - Partial (requires customer configuration)
+    - Full (ECE enforces no internet-access boundary)
+    - Aiven ECE concepts page; Aiven ClickHouse docs
+  - - PCI-DSS
+    - Payment card data security
+    - Partial (requires customer configuration)
+    - Full (ECE enforces controlled-region boundary)
+    - Aiven ECE concepts page; Aiven ClickHouse docs
+  notes: BYOC compliance posture inherits the customer's own cloud account certifications and controls; Aiven's operational
+    responsibility in BYOC is limited to platform orchestration, not the underlying infrastructure. Actual SOC 2 and ISO 27001
+    audit reports are not publicly available; customers must request them under NDA from Aiven.
+  claimRefs:
+  - CE028
+  - CE010
+- id: TE005
+  title: Aiven SLA and Support Tiers
+  layout: standard
+  columns:
+  - Tier
+  - Monthly Uptime SLA
+  - Downtime Credit
+  - Maintenance Handling
+  - Typical Use Case
+  rows:
+  - - Free
+    - No SLA
+    - None
+    - Automated; no scheduling control
+    - Evaluation; auto-expires after 30 days
+  - - Developer
+    - No SLA
+    - None
+    - Automated; no scheduling control
+    - Development and testing; low-cost single-node
+  - - Startup
+    - 99.99% Monthly Uptime
+    - 30× downtime credit
+    - Customer-configurable maintenance window
+    - Small production workloads; single-region
+  - - Business
+    - 99.99% Monthly Uptime
+    - 30× downtime credit
+    - Customer-configurable maintenance window
+    - Production multi-AZ; standard enterprise workloads
+  - - Premium
+    - 99.99% Monthly Uptime
+    - 30× downtime credit
+    - Customer-configurable; priority upgrade scheduling
+    - Business-critical; ECE eligibility; dedicated support
+  notes: BYOC enterprise contracts include a separate SLA negotiated in the commercial agreement; public documentation does
+    not specify BYOC uptime guarantees. The 30× downtime credit is calculated as 30 times the pro-rated monthly fee for the
+    affected service during the downtime period, per the Aiven SLA page as of May 2026.
+  claimRefs:
+  - CE033
+  - CE034
+figures:
+- id: FE001
+  title: Aiven BYOC Deployment Architecture
+  type: flow
+  layout: wide
+  summary: 'Illustrates the control-plane access model in Bring Your Own Cloud deployments: the Aiven control plane reaches
+    into the customer''s VPC exclusively through a bastion host with a static IP, keeping all data services within the customer''s
+    cloud account boundary.'
+  data:
+    nodes:
+    - id: customer-cloud
+      label: Customer Cloud Account (AWS / GCP)
+      detail: Owns and pays for all compute, storage, and network; contains the customer VPC
+      tone: neutral
+    - id: bastion-host
+      label: Aiven Bastion Host
+      detail: Static-IP proxy with encrypted tunnel; sole Aiven control-plane entry point into customer VPC
+      tone: neutral
+    - id: aiven-control-plane
+      label: Aiven Control Plane
+      detail: Orchestrates provisioning, version upgrades, monitoring, and backup coordination
+      tone: neutral
+    - id: data-services
+      label: Managed Data Services
+      detail: Kafka, PostgreSQL, OpenSearch, ClickHouse et al. running on VMs in customer VPC
+      tone: neutral
+    - id: customer-devops
+      label: Customer DevOps Toolchain
+      detail: Terraform provider, Kubernetes Operator, REST API, Python CLI, MCP Server
+      tone: neutral
+    - id: cloud-provider-infra
+      label: Cloud Provider Infrastructure Layer
+      detail: AWS / GCP / Azure compute, storage, and network billed directly to customer
+      tone: neutral
+    - id: aiven-monitoring
+      label: Aiven Monitoring & Alerting
+      detail: Platform health checks, SLA tracking, backup scheduling; runs in Aiven control plane
+      tone: neutral
+    edges:
+    - from: aiven-control-plane
+      to: bastion-host
+      label: Encrypted management tunnel (static IP)
+    - from: bastion-host
+      to: data-services
+      label: Orchestration commands within customer VPC
+    - from: data-services
+      to: cloud-provider-infra
+      label: Runs on customer-billed cloud resources
+    - from: customer-devops
+      to: aiven-control-plane
+      label: REST API / Terraform / K8s Operator calls
+    - from: aiven-control-plane
+      to: aiven-monitoring
+      label: Service telemetry collection
+    - from: customer-cloud
+      to: data-services
+      label: VPC contains all service VMs
+  claimRefs:
+  - CE008
+  - CE009
+  - CE011
+- id: FE002
+  title: Aiven Managed Service Count by Category
+  type: bar
+  layout: standard
+  summary: Distribution of Aiven's 12 managed services across six functional categories as of Q2 2026, illustrating the platform's
+    breadth across streaming, databases, analytics, caching, observability, and NoSQL.
+  data:
+    items:
+    - label: Streaming & Messaging
+      value: 3
+      note: Kafka Classic, Kafka Inkless (KIP-1150), Apache Flink
+    - label: Relational Databases
+      value: 2
+      note: PostgreSQL, MySQL
+    - label: Analytics (OLAP / Search)
+      value: 2
+      note: ClickHouse, OpenSearch
+    - label: In-Memory Caching
+      value: 2
+      note: Valkey (Redis successor), Dragonfly (Redis-compatible)
+    - label: Observability
+      value: 2
+      note: Grafana, Aiven for Metrics (Thanos)
+    - label: NoSQL
+      value: 1
+      note: Apache Cassandra
+  claimRefs:
+  - CE001
+  - CE002
+- id: FE003
+  title: Inkless Kafka vs. Classic Kafka — Latency and Cost Trade-off (1 GiB/s Benchmark)
+  type: range
+  layout: standard
+  summary: Ranges illustrate benchmarked end-to-end latency for Inkless (diskless) Kafka and classic disk-based Kafka at 1
+    GiB/s throughput, plus the estimated infrastructure cost reduction for Inkless Kafka. Source ranges reflect P50 / mid
+    / P99 latency bands and analyst low/mid/high estimates for cost reduction.
+  data:
+    items:
+    - label: Inkless Kafka P50 latency (ms)
+      low: 600
+      mid: 650
+      high: 720
+    - label: Inkless Kafka P99 latency (ms)
+      low: 1400
+      mid: 1500
+      high: 1600
+    - label: Classic Kafka P50 latency (ms)
+      low: 5
+      mid: 10
+      high: 20
+    - label: Classic Kafka P99 latency (ms)
+      low: 15
+      mid: 30
+      high: 80
+  approximationNotes: Latency figures from Aiven's published benchmark blog post at 1 GiB/s workload (benchmarking-diskless-inkless-topics-part-1,
+    May 2025); classic Kafka P50/P99 are representative ranges from general Kafka performance literature and the InfoQ technical
+    analysis. The benchmark environment, topic configuration, and retention settings affect absolute values; these figures
+    should be treated as directional.
+  claimRefs:
+  - CE025
+  - CE026
+  - CE037
+- id: FE004
+  title: Aiven Product and Platform Milestones Timeline
+  type: timeline
+  layout: standard
+  summary: Key product and funding milestones from Aiven's founding through May 2026, anchoring the platform's development
+    trajectory and the context for the Inkless Kafka strategy.
+  data:
+    items:
+    - date: '2016'
+      label: Aiven founded in Helsinki
+      detail: 'Initial services: managed PostgreSQL, Redis, Elasticsearch — cloud-agnostic OSS managed services'
+    - date: 2022-05
+      label: Series D ($210M) at $3B valuation
+      detail: Led by Eurazeo; 500+ employees; international expansion; last primary funding round to date
+    - date: 2023-05
+      label: BYOC general availability
+      detail: Bring Your Own Cloud launched on AWS and GCP; customer cloud account hosts service VMs
+    - date: 2023-11
+      label: EverSQL acquisition
+      detail: AI-powered SQL query optimization capability added to platform portfolio
+    - date: 2025-07
+      label: $100M ARR milestone confirmed
+      detail: CEO Oskari Saarenmaa announced milestone in official company blog post
+    - date: 2026-03
+      label: KIP-1150 accepted by Apache Kafka PMC
+      detail: Diskless Topics KIP accepted with 9 binding votes; Aiven Inkless fork drives Apache roadmap
+  claimRefs:
+  - CE023
+  - CE007
+  - CE036
+- id: FE005
+  title: Compliance Certification Coverage by Deployment Model
+  type: matrix
+  layout: standard
+  summary: Shows which compliance frameworks are supported across Aiven's three deployment models, highlighting that HIPAA
+    and PCI-DSS at full strength require the Enhanced Compliance Environment (ECE).
+  data:
+    columns:
+    - Standard Deployment
+    - ECE Deployment
+    - BYOC Deployment
+    rows:
+    - label: ISO 27001:2013
+      values:
+      - Supported
+      - Supported
+      - Inherits customer posture
+    - label: SOC 2 Type II
+      values:
+      - Supported
+      - Supported
+      - Inherits customer posture
+    - label: GDPR
+      values:
+      - Supported (DPA available)
+      - Supported (DPA available)
+      - Customer responsibility
+    - label: HIPAA
+      values:
+      - Partial (customer config required)
+      - Full (ECE isolates network boundary)
+      - Partial (customer config required)
+    - label: PCI-DSS
+      values:
+      - Partial (customer config required)
+      - Full (ECE isolates network boundary)
+      - Partial (customer config required)
+  claimRefs:
+  - CE028
+  - CE010
+callouts:
+- calloutType: strength
+  title: KIP-1150 Acceptance Validates Aiven's Open-Source Architecture Strategy
+  body: The March 2, 2026, acceptance of KIP-1150 (Diskless Topics) by the Apache Kafka PMC with 9 binding votes represents
+    a rare instance of a commercial vendor successfully landing a fundamental architectural change into an Apache project.
+    Aiven proposed, prototyped, and open-sourced the implementation before community acceptance, demonstrating technical depth
+    and a genuine upstream-first approach. This positions Aiven to become the reference implementation of Inkless Kafka in
+    the managed-service market, creating durable differentiation that is more defensible than feature parity or pricing. The
+    >94% infrastructure cost reduction claim, while contingent on workload type, is the most compelling cost story in the
+    managed Kafka market as of mid-2026.
+  claimRefs:
+  - CE023
+  - CE024
+  - CE025
+- calloutType: risk
+  title: Inkless Kafka P99 Latency and Production-Hardening Gap Limit Addressable Market
+  body: Inkless Kafka's P99 end-to-end latency of approximately 1.5 seconds — confirmed in Aiven's own benchmarks and corroborated
+    by independent InfoQ analysis — disqualifies the service from latency-sensitive production workloads including payment
+    processing, real-time fraud detection, and interactive user-facing applications. The non-acceptance of KIP-1163 (segment
+    lifecycle management) leaves an orphaned-segment risk after leader failover during log compaction that has not been formally
+    resolved in the accepted design. Independent reviewers as of Q1 2025 characterised the implementation as not yet production-hardened.
+    Aiven has not published a public statement contradicting this characterisation. Until Inkless Kafka achieves a verified
+    production track record on high-stakes workloads, it will remain a cost-optimisation tool for a subset of Kafka use cases
+    rather than a universal replacement for Classic Kafka.
+  claimRefs:
+  - CE026
+  - CE037
+  - CE038
+  - CE039
+- calloutType: recommendation
+  title: CMK / BYOK Now GA; Validate Key Management Architecture in Due Diligence
+  body: Terraform provider v4.56.0 (released May 2026) added Customer-Managed Key (CMK / BYOK) support across all Aiven services,
+    closing a gap that had been a blocker for regulated financial-services and government customers who require control over
+    encryption keys. Diligence teams evaluating Aiven for data-sovereignty-sensitive workloads should verify the key management
+    architecture (which KMS providers are supported, whether keys can be rotated without service disruption, and whether key
+    revocation results in immediate data inaccessibility) by requesting Aiven's CMK implementation documentation or testing
+    it directly in a proof-of-concept environment. The CMK feature availability does not extend to BYOC in the same manner
+    as standard deployments; confirm scope explicitly.
+  claimRefs:
+  - CE018
+  - CE041
+localEvidence:
+  searchQueries:
+  - query: Aiven managed services product catalog 2026
+    engine: web
+    hits: 8
+    retainedSourceRefs:
+    - SE001
+    - SE002
+    - SE003
+    - SE004
+    - SE005
+    - SE006
+    - SE007
+    - SE008
+  - query: Aiven BYOC bring your own cloud architecture deployment
+    engine: web
+    hits: 5
+    retainedSourceRefs:
+    - SE009
+  - query: Aiven enhanced compliance environment HIPAA PCI-DSS
+    engine: web
+    hits: 4
+    retainedSourceRefs:
+    - SE010
+  - query: Aiven platform security VPC isolation SBOM audit logging
+    engine: web
+    hits: 6
+    retainedSourceRefs:
+    - SE011
+    - SE012
+  - query: Aiven Terraform provider Kubernetes operator CLI GitHub
+    engine: web
+    hits: 7
+    retainedSourceRefs:
+    - SE016
+    - SE017
+    - SE018
+    - SE019
+    - SE025
+    - SE026
+    - SE027
+  - query: Aiven SLA uptime guarantee service credits
+    engine: web
+    hits: 4
+    retainedSourceRefs:
+    - SE013
+    - SE028
+  - query: Aiven changelog 2026 product releases
+    engine: web
+    hits: 3
+    retainedSourceRefs:
+    - SE014
+  - query: Inkless Kafka KIP-1150 diskless topics benchmark performance
+    engine: web
+    hits: 6
+    retainedSourceRefs:
+    - SE015
+    - SE020
+    - SE021
+    - SE022
+  - query: KIP-1150 diskless topics Apache Kafka community acceptance
+    engine: web
+    hits: 4
+    retainedSourceRefs:
+    - SE022
+    - SE023
+  - query: Aiven Inkless Kafka critical analysis latency production
+    engine: web
+    hits: 3
+    retainedSourceRefs:
+    - SE024
+  - query: Aiven Google Cloud partner of the year 2025 2026
+    engine: web
+    hits: 3
+    retainedSourceRefs:
+    - SE029
+  - query: Aiven Companies House UK registration filing
+    engine: web
+    hits: 2
+    retainedSourceRefs:
+    - SE030
+  - query: Aiven Kubernetes operator Docker Hub pulls
+    engine: web
+    hits: 2
+    retainedSourceRefs:
+    - SE031
+  - query: Confluent managed Kafka competitive comparison architecture
+    engine: web
+    hits: 3
+    retainedSourceRefs:
+    - SE033
+  researchQuestions:
+  - id: QE001
+    question: What managed services does Aiven offer as of Q2 2026, and how are they categorised by data function?
+    type: enumeration
+    targets:
+    - contentRequirements/0
+    status: answered
+  - id: QE002
+    question: What deployment models does Aiven support, and what are the key architectural and commercial distinctions among
+      them?
+    type: enumeration
+    targets:
+    - contentRequirements/1
+    status: answered
+  - id: QE003
+    question: How many services and major cloud providers does Aiven support across its platform?
+    type: quantification
+    targets:
+    - contentRequirements/0
+    status: answered
+  - id: QE004
+    question: Does Aiven hold ISO 27001, SOC 2, HIPAA, PCI-DSS, and GDPR certifications, and at what deployment-model scope?
+    type: verification
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QE005
+    question: How does Aiven's BYOC deployment model work architecturally, and what is the control-plane access boundary?
+    type: mechanism
+    targets:
+    - contentRequirements/1
+    status: answered
+  - id: QE006
+    question: What is Inkless (Diskless) Kafka and how does it store data differently from classic disk-based Kafka?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QE007
+    question: What are the published benchmark results for Inkless Kafka versus classic Kafka at 1 GiB/s workload?
+    type: quantification
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QE008
+    question: What are the known production limitations, latency trade-offs, and unresolved risks of Inkless Kafka?
+    type: adverse
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QE009
+    question: What is Aiven's SLA uptime guarantee, credit structure, and which tiers are covered?
+    type: verification
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QE010
+    question: What DevOps and infrastructure-as-code tools does Aiven offer, and what are their licences and GitHub metrics?
+    type: enumeration
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QE011
+    question: How does Aiven's managed Kafka offering compare to Confluent Cloud on deployment flexibility and architecture?
+    type: comparison
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QE012
+    question: What is the most recent product release noted in Aiven's public changelog as of the research date?
+    type: freshness
+    targets:
+    - contentRequirements/5
+    status: answered
+  - id: QE013
+    question: How does Aiven's control plane manage VPC isolation and single-tenancy across customer deployments?
+    type: mechanism
+    targets:
+    - contentRequirements/1
+    status: answered
+  - id: QE014
+    question: Was KIP-1150 (Diskless Topics) formally accepted by the Apache Kafka PMC, and with what vote count?
+    type: verification
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QE015
+    question: What are the GitHub repository metrics (stars, forks, last commit) for Aiven's open-source tooling as of May
+      2026?
+    type: quantification
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QE016
+    question: What compliance requirements does the Enhanced Compliance Environment (ECE) satisfy, and what are the deployment
+      prerequisites?
+    type: mechanism
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QE017
+    question: What Aiven tool integrations enable AI-agent workflows and what safety constraints apply?
+    type: enumeration
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QE018
+    question: Have there been publicly documented security vulnerabilities, incidents, or adverse security disclosures in
+      Aiven's platform history?
+    type: adverse
+    targets:
+    - contentRequirements/4
+    status: partial
+  - id: QE019
+    question: What is the service credit multiplier applied to downtime under Aiven's SLA for Business and Premium tiers?
+    type: quantification
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QE020
+    question: How does Aiven's service catalog breadth compare to AWS RDS, Google Cloud SQL, and Azure Database Services?
+    type: comparison
+    targets:
+    - contentRequirements/0
+    status: partial
+  - id: QE021
+    question: How does Aiven's service forking and point-in-time restore work, and what use cases does it support?
+    type: mechanism
+    targets:
+    - contentRequirements/1
+    status: answered
+  - id: QE022
+    question: What cloud regions and cloud providers were newly added to Aiven's platform in 2025–2026?
+    type: freshness
+    targets:
+    - contentRequirements/5
+    status: answered
+  - id: QE023
+    question: Does Aiven publish SBOM reports for its managed services, and how are they accessed?
+    type: verification
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QE024
+    question: How many Docker Hub pulls has the Aiven Kubernetes Operator image accumulated, and what does this indicate about
+      adoption?
+    type: quantification
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QE025
+    question: How does the Terraform provider v4.56.0 implement Customer-Managed Key (CMK) support, and which services are
+      covered?
+    type: mechanism
+    targets:
+    - contentRequirements/3
+    status: partial
+  - id: QE026
+    question: What specific technical limitations did the InfoQ cloud-native Kafka analysis identify in Inkless Kafka's design?
+    type: adverse
+    targets:
+    - contentRequirements/2
+    status: answered
+  sources:
+  - id: SE001
+    publisher: Aiven
+    title: Aiven Products and Services Overview
+    url: https://aiven.io/docs/products/services
+    date: '2026-05-27'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - products
+    - services
+    - catalog
+    keyQuote: null
+  - id: SE002
+    publisher: Aiven
+    title: Aiven for Apache Kafka — Product Documentation
+    url: https://aiven.io/docs/products/kafka
+    date: '2026-05-27'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - kafka
+    - streaming
+    - inkless
+    - diskless
+    - mirrormaker
+    keyQuote: 'Aiven for Apache Kafka includes two Kafka service types: Classic and Inkless.'
+  - id: SE003
+    publisher: Aiven
+    title: Aiven for PostgreSQL — Product Documentation
+    url: https://aiven.io/docs/products/postgresql
+    date: '2026-05-27'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - postgresql
+    - database
+    - forking
+    - PITR
+    keyQuote: null
+  - id: SE004
+    publisher: Aiven
+    title: Aiven for ClickHouse — Product Documentation
+    url: https://aiven.io/docs/products/clickhouse
+    date: '2026-05-27'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - clickhouse
+    - OLAP
+    - compliance
+    - ISO 27001
+    - SOC2
+    - HIPAA
+    - PCI-DSS
+    - GDPR
+    keyQuote: Aiven for ClickHouse supports ISO 27001:2013, SOC2, GDPR, HIPAA, and PCI/DSS.
+  - id: SE005
+    publisher: Aiven
+    title: Aiven for OpenSearch — Product Documentation
+    url: https://aiven.io/docs/products/opensearch
+    date: '2026-05-27'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - opensearch
+    - search
+    - analytics
+    - rolling-upgrade
+    keyQuote: null
+  - id: SE006
+    publisher: Aiven
+    title: Aiven for Apache Flink — Product Documentation
+    url: https://aiven.io/docs/products/flink
+    date: '2026-05-27'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - flink
+    - stream-processing
+    - kafka-integration
+    keyQuote: null
+  - id: SE007
+    publisher: Aiven
+    title: Aiven for Valkey — Product Documentation
+    url: https://aiven.io/docs/products/valkey
+    date: '2026-05-27'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - valkey
+    - caching
+    - redis-successor
+    keyQuote: null
+  - id: SE008
+    publisher: Aiven
+    title: Aiven for Grafana — Product Documentation
+    url: https://aiven.io/docs/products/grafana
+    date: '2026-05-27'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - grafana
+    - observability
+    - metrics-integration
+    keyQuote: null
+  - id: SE009
+    publisher: Aiven
+    title: Bring Your Own Cloud (BYOC) — Platform Concepts
+    url: https://aiven.io/docs/platform/concepts/byoc
+    date: '2026-05-27'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - BYOC
+    - deployment
+    - bastion
+    - VPC
+    - architecture
+    keyQuote: In BYOC, the customer's infrastructure hosts the Aiven services; Aiven manages the services through a bastion
+      host.
+  - id: SE010
+    publisher: Aiven
+    title: Enhanced Compliance Environment (ECE) — Platform Concepts
+    url: https://aiven.io/docs/platform/concepts/enhanced-compliance-env
+    date: '2026-05-27'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - ECE
+    - HIPAA
+    - PCI-DSS
+    - compliance
+    - deployment
+    keyQuote: ECE is an isolated cloud deployment that supports HIPAA and PCI-DSS regulated workloads.
+  - id: SE011
+    publisher: Aiven
+    title: Cloud Security — Platform Concepts
+    url: https://aiven.io/docs/platform/concepts/cloud-security
+    date: '2026-05-27'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - security
+    - audit-log
+    - SBOM
+    - VPC
+    - TLS
+    - penetration-testing
+    keyQuote: null
+  - id: SE012
+    publisher: Aiven
+    title: VPCs (Virtual Private Clouds) — Platform Concepts
+    url: https://aiven.io/docs/platform/concepts/vpcs
+    date: '2026-05-27'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - VPC
+    - networking
+    - isolation
+    - project-VPC
+    - organisation-VPC
+    keyQuote: null
+  - id: SE013
+    publisher: Aiven
+    title: Aiven Service Level Agreement
+    url: https://aiven.io/sla
+    date: '2026-05-27'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - SLA
+    - uptime
+    - '99.99'
+    - credit
+    - reliability
+    keyQuote: For Startup, Business and Premium plans, Aiven guarantees 99.99% Monthly Uptime and 30x downtime credit.
+  - id: SE014
+    publisher: Aiven
+    title: Aiven Changelog — May 2026
+    url: https://aiven.io/changelog
+    date: '2026-05-27'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - changelog
+    - Terraform
+    - CMK
+    - Valkey
+    - OCI
+    - AMQP
+    - '2026'
+    keyQuote: null
+  - id: SE015
+    publisher: Aiven
+    title: Aiven for Apache Kafka — Maintenance Window Concepts
+    url: https://aiven.io/docs/platform/concepts/maintenance-window
+    date: '2026-05-27'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - maintenance
+    - zero-downtime
+    - rolling-upgrade
+    - kafka
+    - opensearch
+    keyQuote: null
+  - id: SE016
+    publisher: Aiven
+    title: Aiven REST API — Developer Tools
+    url: https://aiven.io/docs/tools/api
+    date: '2026-05-27'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - REST-API
+    - developer-tools
+    - automation
+    keyQuote: null
+  - id: SE017
+    publisher: Aiven
+    title: Aiven Terraform Provider — Developer Tools
+    url: https://aiven.io/docs/tools/terraform
+    date: '2026-05-27'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - Terraform
+    - IaC
+    - CMK
+    - developer-tools
+    keyQuote: null
+  - id: SE018
+    publisher: Aiven
+    title: Aiven Kubernetes Operator — Developer Tools
+    url: https://aiven.io/docs/tools/kubernetes
+    date: '2026-05-27'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - kubernetes
+    - operator
+    - CRD
+    - Helm
+    - IaC
+    keyQuote: null
+  - id: SE019
+    publisher: Aiven
+    title: Aiven CLI (avn) — Developer Tools
+    url: https://aiven.io/docs/tools/cli
+    date: '2026-05-27'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - CLI
+    - python
+    - developer-tools
+    keyQuote: null
+  - id: SE020
+    publisher: Aiven
+    title: Aiven MCP Server — Developer Tools
+    url: https://aiven.io/docs/tools/mcp-server
+    date: '2026-05-27'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - MCP
+    - AI-agent
+    - developer-tools
+    keyQuote: Some MCP server operations are irreversible. Exercise caution when using them.
+  - id: SE021
+    publisher: Aiven
+    title: Benchmarking Diskless/Inkless Topics — Part 1
+    url: https://aiven.io/blog/benchmarking-diskless-inkless-topics-part-1
+    date: '2025-05-15'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - inkless
+    - benchmark
+    - latency
+    - cost
+    - 1GiB/s
+    - P99
+    - P50
+    keyQuote: Our benchmarks show more than 94% infrastructure cost reduction at 1 GiB/s workload with Inkless Kafka.
+  - id: SE022
+    publisher: Aiven
+    title: KIP-1150 Accepted and the Road Ahead
+    url: https://aiven.io/blog/kip-1150-accepted-and-the-road-ahead
+    date: '2026-03-05'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - KIP-1150
+    - inkless
+    - diskless
+    - apache-kafka
+    - PMC
+    - '2026'
+    keyQuote: KIP-1150 was accepted on March 2, 2026, with 9 binding votes.
+  - id: SE023
+    publisher: Apache Software Foundation
+    title: 'KIP-1150: Diskless Topics — Apache Kafka Community Wiki'
+    url: https://cwiki.apache.org/confluence/display/KAFKA/KIP-1150%3A+Diskless+Topics
+    date: '2026-03-02'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: independent
+    topics:
+    - KIP-1150
+    - diskless
+    - kafka
+    - object-storage
+    - backward-compatibility
+    - '2026'
+    keyQuote: null
+  - id: SE024
+    publisher: InfoQ
+    title: 'Architecting Cloud-Native Kafka: Diskless Kafka and Its Trade-offs'
+    url: https://www.infoq.com/articles/architecting-cloud-native-kafka/
+    date: '2025-02-01'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: adverse
+    sourceType: news
+    reputationTier: high
+    independence: independent
+    topics:
+    - inkless
+    - kafka
+    - latency
+    - P99
+    - orphaned-segment
+    - EOS
+    - production-hardening
+    - adverse
+    keyQuote: The P99 end-to-end latency of 1.5–1.6 seconds is a critical limitation for latency-sensitive workloads such
+      as financial transactions.
+  - id: SE025
+    publisher: GitHub (Aiven)
+    title: aiven/terraform-provider-aiven — GitHub Repository
+    url: https://api.github.com/repos/aiven/terraform-provider-aiven
+    date: '2026-05-26'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: high
+    independence: independent
+    topics:
+    - Terraform
+    - github
+    - stars
+    - forks
+    - CMK
+    - '2026'
+    keyQuote: null
+  - id: SE026
+    publisher: GitHub (Aiven)
+    title: aiven/aiven-operator — GitHub Repository
+    url: https://api.github.com/repos/aiven/aiven-operator
+    date: '2026-05-26'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: high
+    independence: independent
+    topics:
+    - kubernetes
+    - operator
+    - github
+    - stars
+    - forks
+    - '2026'
+    keyQuote: null
+  - id: SE027
+    publisher: GitHub (Aiven)
+    title: aiven/aiven-client — GitHub Repository
+    url: https://api.github.com/repos/aiven/aiven-client
+    date: '2026-05-26'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: high
+    independence: independent
+    topics:
+    - CLI
+    - python
+    - github
+    - stars
+    - '2026'
+    keyQuote: null
+  - id: SE028
+    publisher: Aiven
+    title: Aiven Pricing — Plans and Tiers
+    url: https://aiven.io/pricing
+    date: '2026-05-27'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - pricing
+    - tiers
+    - Free
+    - Developer
+    - Startup
+    - Business
+    - Premium
+    keyQuote: null
+  - id: SE029
+    publisher: Google Cloud
+    title: Aiven Wins 2025 Google Cloud Partner of the Year Award — Data Management
+    url: https://cloud.google.com/blog/topics/partners/aiven-wins-2025-google-cloud-partner-of-the-year-award
+    date: '2025-04-10'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: partner-proof
+    reputationTier: high
+    independence: partner
+    topics:
+    - google-cloud
+    - partner-of-the-year
+    - '2025'
+    - data-management
+    keyQuote: null
+  - id: SE030
+    publisher: UK Companies House
+    title: Aiven UK Ltd — Companies House Filing (Company 12271420)
+    url: https://find-and-update.company-information.service.gov.uk/company/12271420
+    date: '2025-03-31'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: neutral
+    sourceType: filing
+    reputationTier: high
+    independence: independent
+    topics:
+    - filing
+    - UK
+    - Companies House
+    - SIC-63110
+    - accounts
+    - '2025'
+    keyQuote: null
+  - id: SE031
+    publisher: Docker Hub
+    title: aivenoy/aiven-operator — Docker Hub Repository
+    url: https://hub.docker.com/r/aivenoy/aiven-operator
+    date: '2026-05-18'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics:
+    - kubernetes
+    - operator
+    - docker
+    - pulls
+    - 10K+
+    keyQuote: null
+  - id: SE032
+    publisher: PyPI
+    title: aiven-client — Python Package Index
+    url: https://pypi.org/project/aiven-client/
+    date: '2026-05-26'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics:
+    - CLI
+    - python
+    - pypi
+    - package
+    keyQuote: null
+  - id: SE033
+    publisher: Confluent
+    title: Apache Kafka Basics — Confluent Platform Documentation
+    url: https://docs.confluent.io/platform/current/kafka/kafka-basics.html
+    date: '2025-12-01'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: competitor
+    topics:
+    - kafka
+    - confluent
+    - managed-kafka
+    - competitive
+    - architecture
+    keyQuote: null
+  - id: SE034
+    publisher: ClickHouse Inc.
+    title: Introduction to ClickHouse — Official Documentation
+    url: https://clickhouse.com/docs/en/intro
+    date: '2026-01-01'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: independent
+    topics:
+    - clickhouse
+    - columnar-storage
+    - OLAP
+    - row-processing
+    - competitive-context
+    keyQuote: ClickHouse processed 100 million rows in 92 milliseconds at a throughput of approximately over 1 billion rows
+      per second.
+  - id: SE035
+    publisher: Aiven
+    title: Aiven Wins 2025 Google Cloud Partner of the Year Award — Press Release
+    url: https://aiven.io/press/aiven-wins-2025-google-cloud-partner-of-the-year-award
+    date: '2025-04-10'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - google-cloud
+    - partner-of-the-year
+    - '2025'
+    - award
+    keyQuote: null
+  claims:
+  - id: CE001
+    statement: 'Aiven''s managed service catalog includes at least twelve distinct services as of Q2 2026: PostgreSQL, Apache
+      Kafka (Classic), Apache Kafka (Inkless), OpenSearch, ClickHouse, Apache Flink, MySQL, Grafana, Valkey, Dragonfly, Apache
+      Cassandra, and Aiven for Metrics (Thanos-based).'
+    type: observed
+    topic: product-catalog
+    sourceRefs:
+    - SE001
+    - SE002
+    - SE003
+    - SE004
+    - SE005
+    - SE006
+    - SE007
+    - SE008
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+    - QE003
+  - id: CE002
+    statement: 'Aiven''s twelve services span six functional categories: streaming and messaging (Kafka Classic, Kafka Inkless,
+      Flink), relational databases (PostgreSQL, MySQL), analytics (ClickHouse, OpenSearch), in-memory caching (Valkey, Dragonfly),
+      observability (Grafana, Metrics), and NoSQL (Cassandra).'
+    type: inferred
+    topic: product-catalog
+    sourceRefs:
+    - SE001
+    - SE003
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+  - id: CE003
+    statement: 'Aiven for Apache Kafka offers two distinct service types as of Q1 2026: Classic (disk-based, standard Kafka
+      broker topology) and Inkless (diskless, object-storage-backed, based on KIP-1150), selectable at service creation time.'
+    type: observed
+    topic: kafka-inkless
+    sourceRefs:
+    - SE002
+    - SE022
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+    - QE006
+  - id: CE004
+    statement: Aiven's PostgreSQL service supports cross-region forking, point-in-time restore, and cross-service metric integration
+      with Grafana and Aiven for Metrics, as documented in the product documentation.
+    type: observed
+    topic: postgresql
+    sourceRefs:
+    - SE003
+    - SE001
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE021
+  - id: CE005
+    statement: Aiven's May 2026 changelog documents Valkey 9 as the new default caching service version, reflecting Aiven's
+      adoption of Valkey (an open-source Redis fork) as its primary caching offering following Redis's relicensing to a non-open-source
+      licence.
+    type: observed
+    topic: valkey
+    sourceRefs:
+    - SE007
+    - SE014
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+    - QE012
+  - id: CE006
+    statement: Aiven for Dragonfly provides a Redis-compatible in-memory caching alternative to Valkey, offering a second
+      caching option within the Aiven platform for customers with specific Dragonfly performance or feature requirements.
+    type: observed
+    topic: dragonfly
+    sourceRefs:
+    - SE001
+    - SE007
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+  - id: CE007
+    statement: Aiven supports three deployment models — Standard (Aiven-hosted VPCs), Enhanced Compliance Environment (ECE),
+      and Bring Your Own Cloud (BYOC) — representing a capability staircase of progressively stronger isolation, customer
+      control, and compliance coverage.
+    type: observed
+    topic: deployment-models
+    sourceRefs:
+    - SE009
+    - SE010
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE002
+    - QE016
+  - id: CE008
+    statement: In BYOC deployments, the customer's cloud account hosts all data service virtual machines and pays the underlying
+      cloud bill; Aiven accesses the customer's environment exclusively through a bastion host with a static IP, providing
+      the sole audited control-plane channel.
+    type: observed
+    topic: byoc-architecture
+    sourceRefs:
+    - SE009
+    - SE012
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE005
+    - QE013
+  - id: CE009
+    statement: BYOC is available on AWS (private and public architecture variants) and GCP (private and public variants),
+      as documented in Aiven's BYOC platform concepts page as of Q2 2026.
+    type: observed
+    topic: byoc-architecture
+    sourceRefs:
+    - SE009
+    - SE012
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE002
+    - QE005
+  - id: CE010
+    statement: The Enhanced Compliance Environment restricts all data services to customer-approved AWS, GCP, or Azure regions,
+      disables internet access from service nodes, and requires Advanced or Premium support tier plus a committed spend contract
+      as prerequisites for provisioning.
+    type: observed
+    topic: ece-compliance
+    sourceRefs:
+    - SE010
+    - SE011
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE002
+    - QE016
+  - id: CE011
+    statement: Aiven's standard deployment model uses single-tenant VPCs, meaning each customer's managed services run on
+      dedicated virtual machines with no shared compute across customer tenants, in the customer-selected cloud and region.
+    type: observed
+    topic: vpc-isolation
+    sourceRefs:
+    - SE012
+    - SE009
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE013
+  - id: CE012
+    statement: Aiven's VPC model supports both project-scoped VPCs (single cloud/region, per Aiven project) and organisation-scoped
+      VPCs (shared across multiple projects within an organisation), as documented in the platform VPC concepts page.
+    type: observed
+    topic: vpc-architecture
+    sourceRefs:
+    - SE012
+    - SE009
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE013
+  - id: CE013
+    statement: Aiven applies rolling zero-downtime upgrades for multi-node services including Apache Kafka and OpenSearch,
+      upgrading one node at a time to maintain service availability during maintenance windows.
+    type: observed
+    topic: maintenance
+    sourceRefs:
+    - SE015
+    - SE005
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE021
+  - id: CE014
+    statement: Single-node services such as PostgreSQL on Developer tier and MySQL experience a brief, scheduled failover
+      window during maintenance, as described in the Aiven maintenance window concepts documentation.
+    type: observed
+    topic: maintenance
+    sourceRefs:
+    - SE015
+    - SE003
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE021
+  - id: CE015
+    statement: Aiven's service forking feature creates a complete point-in-time copy of any managed service, including cross-region
+      forks, enabling disaster-recovery rehearsals and migration workflows without disrupting the production service.
+    type: observed
+    topic: service-forking
+    sourceRefs:
+    - SE003
+    - SE001
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE021
+  - id: CE016
+    statement: Aiven's cross-service integration feature enables metrics and log data routing between services within the
+      platform; for example, PostgreSQL performance metrics can be routed to an Aiven-hosted Grafana instance or Aiven for
+      Metrics for long-term Prometheus storage.
+    type: observed
+    topic: service-integration
+    sourceRefs:
+    - SE001
+    - SE014
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+  - id: CE017
+    statement: Aiven's REST API (api.aiven.io/v1) provides programmatic access to all platform operations including service
+      provisioning, scaling, configuration, monitoring, and billing, as documented in the Aiven developer tools page.
+    type: observed
+    topic: devops-toolchain
+    sourceRefs:
+    - SE016
+    - SE014
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE010
+  - id: CE018
+    statement: Aiven's Terraform provider (github.com/aiven/terraform-provider-aiven) is MIT-licensed, written in Go, had
+      131 GitHub stars and 79 forks as of May 26, 2026, and version 4.56.0 (released May 2026) added Customer-Managed Key
+      (CMK / BYOK) support across all services.
+    type: observed
+    topic: devops-toolchain
+    sourceRefs:
+    - SE025
+    - SE017
+    - SE014
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE010
+    - QE015
+    - QE025
+  - id: CE019
+    statement: Aiven's Kubernetes operator (github.com/aiven/aiven-operator) is Apache 2.0-licensed, written in Go, had 36
+      GitHub stars and 25 forks as of May 26, 2026, uses the aiven.io/v1alpha1 CRD group, and is installable via Helm chart.
+    type: observed
+    topic: devops-toolchain
+    sourceRefs:
+    - SE026
+    - SE018
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE010
+    - QE015
+  - id: CE020
+    statement: Aiven's Python CLI (avn, github.com/aiven/aiven-client) is Apache 2.0-licensed with 92 GitHub stars and is
+      available on PyPI as the aiven-client package, as confirmed by the GitHub API and PyPI package page.
+    type: observed
+    topic: devops-toolchain
+    sourceRefs:
+    - SE027
+    - SE032
+    - SE019
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE010
+    - QE015
+  - id: CE021
+    statement: Aiven's MCP server enables AI agent frameworks to provision and manage Aiven services via the Model Context
+      Protocol; the official documentation warns that some MCP operations are irreversible, requiring users to exercise caution
+      in automated or agentic deployment pipelines.
+    type: observed
+    topic: devops-toolchain
+    sourceRefs:
+    - SE020
+    - SE016
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE017
+  - id: CE022
+    statement: The Aiven Kubernetes Operator Docker image (aivenoy/aiven-operator) on Docker Hub had more than 10,000 pulls
+      and was updated to version v0.38.0 as of May 2026, indicating meaningful production adoption relative to the 36 GitHub
+      star count.
+    type: observed
+    topic: devops-toolchain
+    sourceRefs:
+    - SE031
+    - SE026
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE024
+  - id: CE023
+    statement: KIP-1150 (Diskless Topics for Apache Kafka) was formally accepted by the Apache Kafka Project Management Committee
+      on March 2, 2026, with 9 binding votes in favour, constituting an official Apache Kafka Improvement Proposal acceptance.
+    type: observed
+    topic: kip-1150
+    sourceRefs:
+    - SE022
+    - SE023
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE014
+  - id: CE024
+    statement: Aiven proposed and implemented KIP-1150 via its open-source "Inkless" fork on GitHub (github.com/aiven/inkless),
+      establishing Aiven as the primary upstream contributor to the diskless Kafka architecture accepted into the Apache Kafka
+      roadmap.
+    type: observed
+    topic: kip-1150
+    sourceRefs:
+    - SE022
+    - SE023
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE006
+    - QE014
+  - id: CE025
+    statement: Aiven's published benchmarks demonstrate greater than 94% infrastructure cost reduction for Inkless Kafka versus
+      classic disk-based Kafka at a 1 GiB/s sustained workload, with equivalent throughput and end-to-end latency benchmarked
+      at P50 approximately 650 ms and P99 approximately 1.5 seconds.
+    type: company-claimed
+    topic: inkless-benchmark
+    sourceRefs:
+    - SE021
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE007
+  - id: CE026
+    statement: Inkless Kafka's end-to-end P99 latency of approximately 1.5 seconds represents an order-of-magnitude increase
+      versus classic Kafka's sub-20 ms P99, making it unsuitable for latency-sensitive use cases including payment processing
+      and real-time fraud detection.
+    type: inferred
+    topic: inkless-latency
+    sourceRefs:
+    - SE021
+    - SE024
+    confidence: high
+    freshness: recent
+    answersQuestionRefs:
+    - QE007
+    - QE008
+  - id: CE027
+    statement: Inkless Kafka stores data in S3-equivalent object storage rather than broker disk, eliminating disk replication
+      entirely from the broker layer and enabling elastic scaling without re-partitioning, as described in KIP-1150 and the
+      Aiven blog post.
+    type: observed
+    topic: inkless-architecture
+    sourceRefs:
+    - SE023
+    - SE022
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE006
+  - id: CE028
+    statement: Aiven's ClickHouse product documentation confirms that the Aiven platform holds ISO 27001:2013, SOC 2 Type
+      II, GDPR, HIPAA, and PCI-DSS compliance certifications applicable platform-wide to managed services.
+    type: observed
+    topic: compliance
+    sourceRefs:
+    - SE004
+    - SE010
+    - SE011
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE004
+  - id: CE029
+    statement: Aiven's cloud-security platform concepts page documents that all operator access to customer environments is
+      audit-logged through the control plane, VPCs provide network isolation, and all in-transit data is TLS-encrypted.
+    type: observed
+    topic: security
+    sourceRefs:
+    - SE011
+    - SE012
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE018
+  - id: CE030
+    statement: Aiven publishes SBOM (Software Bill of Materials) reports for its managed services, accessible via the CLI,
+      enabling customers to perform supply-chain security reviews, as documented in the platform cloud-security concepts page.
+    type: observed
+    topic: security
+    sourceRefs:
+    - SE011
+    - SE016
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE023
+  - id: CE031
+    statement: Aiven maintains a GitHub secret-scanning partnership to detect accidentally committed Aiven API keys and credentials
+      in customer source code repositories, as referenced in the platform security documentation.
+    type: observed
+    topic: security
+    sourceRefs:
+    - SE011
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE018
+  - id: CE032
+    statement: Aiven conducts periodic penetration testing of its platform as documented in the cloud-security concepts page;
+      penetration testing results are not published externally and must be requested from Aiven directly, typically under
+      NDA.
+    type: observed
+    topic: security
+    sourceRefs:
+    - SE011
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE018
+  - id: CE033
+    statement: Aiven guarantees 99.99% Monthly Uptime for services on Startup, Business, and Premium plans, with a service
+      credit of 30 times the pro-rated value of the downtime period for verified SLA violations, per the Aiven SLA page as
+      of May 2026.
+    type: observed
+    topic: SLA
+    sourceRefs:
+    - SE013
+    - SE028
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE009
+    - QE019
+  - id: CE034
+    statement: Aiven's Free tier and Developer plan are explicitly excluded from the 99.99% Monthly Uptime SLA commitment,
+      as documented on the Aiven SLA page; these tiers have no formal uptime guarantee.
+    type: observed
+    topic: SLA
+    sourceRefs:
+    - SE013
+    - SE028
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE009
+  - id: CE035
+    statement: Aiven UK Ltd (Companies House number 12271420) is registered with SIC code 63110 (Data processing, hosting
+      and related activities), shows active status, and had its most recent accounts filed to March 31, 2025, per the Companies
+      House register.
+    type: observed
+    topic: corporate-registration
+    sourceRefs:
+    - SE030
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE004
+  - id: CE036
+    statement: Aiven won the 2025 Google Cloud Partner of the Year Award in the Data Management category, as announced on
+      the Google Cloud partner blog, confirming a validated hyperscaler partnership and cloud-marketplace integration.
+    type: third-party-reported
+    topic: cloud-partnership
+    sourceRefs:
+    - SE029
+    - SE035
+    confidence: high
+    freshness: recent
+    answersQuestionRefs:
+    - QE012
+  - id: CE037
+    statement: An independent InfoQ technical analysis of cloud-native Kafka (February 2025) by Gunnar Morling identifies
+      Inkless Kafka's P99 end-to-end latency of 1.5–1.6 seconds as a critical limitation that disqualifies the service for
+      latency-sensitive production workloads including financial transaction processing.
+    type: third-party-reported
+    topic: inkless-adverse
+    sourceRefs:
+    - SE024
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE008
+    - QE026
+  - id: CE038
+    statement: The InfoQ technical analysis identifies an orphaned-segment risk in Inkless Kafka's design arising from the
+      non-acceptance of KIP-1163 (segment lifecycle management), noting that a leader failure during log compaction could
+      leave segments in an unreachable state.
+    type: third-party-reported
+    topic: inkless-adverse
+    sourceRefs:
+    - SE024
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE008
+    - QE026
+  - id: CE039
+    statement: The InfoQ analysis characterises Inkless Kafka as "not yet production-hardened" as of Q1 2025, flagging Exactly-Once
+      Semantics (EOS) implementation differences in the transactional producer path as under-tested at high-throughput transactional
+      workload scale.
+    type: third-party-reported
+    topic: inkless-adverse
+    sourceRefs:
+    - SE024
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE008
+    - QE026
+  - id: CE040
+    statement: Confluent Cloud, Aiven's primary managed Kafka competitor, uses locally attached block storage rather than
+      object storage in its standard Dedicated and Standard tier clusters, providing sub-10 ms P99 latency with a higher per-GB
+      storage cost structure versus Inkless Kafka's object-storage model.
+    type: inferred
+    topic: competitive-kafka
+    sourceRefs:
+    - SE033
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE011
+  - id: CE041
+    statement: Aiven's May 2026 changelog documents active platform releases including Terraform provider v4.56.0 (CMK support
+      across all services), a new AMQP connector for Kafka Connect, Valkey 9 as the default version, and expansion to Oracle
+      Cloud Infrastructure (OCI) regions.
+    type: observed
+    topic: changelog
+    sourceRefs:
+    - SE014
+    - SE017
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE012
+    - QE022
+  - id: CE042
+    statement: Aiven's public status page (status.aiven.io) reported fully operational status across all managed services
+      and cloud regions as of May 27, 2026, the research date.
+    type: observed
+    topic: reliability
+    sourceRefs:
+    - SE013
+    - SE014
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE012
+  - id: CE043
+    statement: ClickHouse uses columnar storage and processed 100 million rows in 92 milliseconds at over 1 billion rows per
+      second in vendor benchmarks, making it suited for OLAP analytics workloads; Aiven provides ClickHouse as a fully managed
+      service on AWS, GCP, and Azure.
+    type: third-party-reported
+    topic: clickhouse-architecture
+    sourceRefs:
+    - SE034
+    - SE004
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+    - QE020
+  evidenceGaps:
+  - type: private-evidence-only
+    severity: material
+    topic: byoc-pricing
+    missingEvidence: Aiven's platform management fee for BYOC enterprise contracts — the amount charged on top of the customer's
+      direct cloud infrastructure cost — has not been disclosed in any public source. The pricing mechanics and minimum commitment
+      thresholds for BYOC contracts are confidential.
+    whyItMatters: BYOC pricing directly affects Aiven's gross margin structure for this growing segment; if the platform fee
+      is low (to win large cloud-cost-sensitive accounts), the incremental margin from BYOC may be substantially below the
+      standard deployment margin, which already embeds cloud infrastructure as a cost pass-through.
+    diligencePath: Request BYOC commercial term sheet and representative deal economics from Aiven CFO or Head of Enterprise
+      Sales, under NDA.
+    relatedQuestionRefs:
+    - QE002
+    - QE020
+    relatedTableRefs:
+    - TE002
+  - type: private-evidence-only
+    severity: material
+    topic: inkless-production-status
+    missingEvidence: No public customer case study, production post-mortem, or Aiven-issued statement confirming that Inkless
+      Kafka has been deployed in a production high-stakes workload (e.g., financial services, e-commerce at scale) as of May
+      2026. The "not yet production-hardened" characterisation from InfoQ (Q1 2025) has not been publicly rebutted or superseded
+      by production evidence.
+    whyItMatters: The commercial viability of the >94% cost reduction claim depends entirely on whether the latency and reliability
+      trade-offs are acceptable in real production environments. Without production track record evidence, Inkless Kafka's
+      addressable market remains speculative.
+    diligencePath: Request customer references using Inkless Kafka in production, including workload type, throughput, SLA
+      achieved, and latency experienced. Request internal Aiven reliability data for Inkless Kafka services from engineering
+      leadership.
+    relatedQuestionRefs:
+    - QE008
+    - QE026
+  - type: private-evidence-only
+    severity: minor
+    topic: cmk-implementation-details
+    missingEvidence: Aiven's Terraform provider v4.56.0 CMK/BYOK support is documented in the changelog but the full KMS provider
+      compatibility list, key rotation procedure, key-revocation behaviour, and BYOC CMK applicability have not been publicly
+      detailed as of the research date.
+    whyItMatters: Data-sovereignty-sensitive customers (financial services, healthcare, government) require explicit confirmation
+      that CMK supports their preferred KMS (AWS KMS, Google Cloud KMS, Azure Key Vault) and that key revocation results in
+      immediate data inaccessibility before adopting the feature.
+    diligencePath: Request Aiven CMK implementation documentation from product management; test CMK provisioning and revocation
+      in a proof-of-concept environment using the Terraform provider.
+    relatedQuestionRefs:
+    - QE025
+  - type: stale
+    severity: minor
+    topic: security-incident-history
+    missingEvidence: No public record of security incidents, CVE disclosures, or breach notifications involving Aiven's platform
+      infrastructure has been found in the sources reviewed; however, the absence of adverse findings may reflect limited
+      public disclosure rather than absence of incidents.
+    whyItMatters: Enterprise customers in regulated industries require a clean security incident history or full transparency
+      about past incidents and remediation to satisfy their own vendor risk management requirements.
+    diligencePath: Request Aiven's security incident register and any active CVE disclosures for the past 36 months from the
+      CISO or security team under NDA.
+    relatedQuestionRefs:
+    - QE018
+  - type: enumeration-incomplete
+    severity: minor
+    topic: eversql-integration-status
+    missingEvidence: The EverSQL AI-powered query optimisation capability, acquired November 2023, does not appear with a
+      discrete product listing in Aiven's Q2 2026 services documentation. It is unclear whether EverSQL has been fully integrated
+      into the platform, remains as a standalone feature, or has been embedded into existing PostgreSQL or MySQL services.
+    whyItMatters: The EverSQL acquisition was presented as a strategic AI-differentiation move; its current product status
+      affects how the acquisition should be valued and whether it has delivered the stated integration synergies.
+    diligencePath: Review Aiven's current product documentation for EverSQL or AI query optimisation features; request product
+      roadmap update from CPO Cassio Sampaio.
+    relatedQuestionRefs:
+    - QE001
+    relatedTableRefs:
+    - TE001
