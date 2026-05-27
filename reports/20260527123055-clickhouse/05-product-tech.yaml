@@ -1,0 +1,1804 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: clickhouse
+runDate: '2026-05-27'
+company:
+  name: ClickHouse
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: |-
+    ClickHouse sells both an open-source columnar OLAP database and a materially differentiated managed cloud layer rather than a simple hosted cluster. The strongest technical evidence points to vectorized execution, MergeTree sorted-part storage with sparse primary indexes and compression, and a cloud architecture built around shared storage, parallel replicas, and read/write compute separation. Product strength is reinforced by broad integration support and healthy developer signals, but buyers should still diligence identity granularity, benchmark methodology, and how much semantic/self-service abstraction they must build above the core engine.
+sections:
+- id: product-scope-delivery
+  title: Product Scope & Delivery Model
+  body: |-
+    ClickHouse is not a single SKU so much as a product family anchored on one analytics engine. The public record supports three concrete delivery surfaces. First, there is the open-source column-oriented OLAP database itself. Second, there is ClickHouse Cloud, which is explicitly positioned as a fully managed service and available across the major cloud marketplaces/providers. Third, there are managed workflow surfaces around the engine—most visibly ClickPipes for ingestion plus cloud operations surfaces such as the SQL console and clickhousectl. That means the customer decision is less about whether ClickHouse is “database or platform” and more about which layer of the stack they want ClickHouse to operate for them.
+
+    In customer workflow terms, the product is strongest where a team wants fast analytical storage plus operational convenience, not where it wants a complete semantic BI stack out of the box. ClickHouse Cloud’s pitch is operational relief: serverless operations, autoscaling, backups, replication, and provider choice. ClickPipes reduces the amount of custom ingestion plumbing a team has to maintain. Microsoft’s connector and Azure integration evidence show the workflow extending into BI and event pipelines, while the module map shows that the cloud control plane materially changes setup, scaling, and integration work compared with a raw self-managed deployment. The main diligence nuance is that many surrounding workflows still depend on third-party or partner tools rather than a single vertically integrated ClickHouse-native application layer.
+  claimRefs:
+  - CE001
+  - CE002
+  - CE003
+  - CE004
+  - CE005
+  - CE006
+  - CE007
+  - CE008
+  - CE019
+  - CE024
+  - CE025
+  - CE026
+  - CE051
+  - CE052
+  tableRefs:
+  - TE001
+  figureRefs:
+  - FE002
+- id: engine-storage-architecture
+  title: Engine, Storage & Cloud Architecture
+  body: |-
+    The core technical differentiation remains the engine design. ClickHouse’s architecture material explicitly describes a vectorized execution model with optional code compilation, while the lower-level architecture page explains that data is processed as column chunks and most operations are dispatched over arrays rather than scalar values. That is consistent with what the product is built to do: large analytical scans, aggregates, filters, and joins over wide datasets rather than row-by-row transactional workloads. The storage layer is built around the MergeTree family, where inserts create immutable parts that are merged in the background. Those parts are sorted by primary key, and the index is sparse: it records marks for granules instead of every row, which keeps indexes small enough to stay memory-resident for very large datasets.
+
+    That architecture matters because it explains both the performance upside and the operational tradeoffs. The sparse primary index and ordered storage improve pruning and compression, but the same docs note that sparse reads can still pull extra rows per block, so performance depends on schema design and key choice. In cloud deployments, ClickHouse adds another layer of differentiation: compute and storage separation, object-backed parallel replicas, Shared Catalog coordination, and compute-compute separation for read/write workload isolation. The Shared database engine documentation makes clear that SharedMergeTree-style stateless compute is not just a hosted VM wrapper; it is a different operating model designed for dynamic compute environments where local disks should not own durable state.
+  claimRefs:
+  - CE009
+  - CE010
+  - CE011
+  - CE012
+  - CE013
+  - CE014
+  - CE015
+  - CE016
+  - CE017
+  - CE018
+  - CE020
+  - CE021
+  - CE032
+  - CE052
+  tableRefs:
+  - TE003
+  figureRefs:
+  - FE001
+- id: integrations-ecosystem-usage
+  title: Integrations, Ecosystem & Workflow Fit
+  body: |-
+    ClickHouse’s workflow story is broad and pragmatic rather than purely native. The integrations index explicitly separates core, partner, and community integrations, which is a useful signal: ClickHouse supports a wide ecosystem, but not every connector is maintained to the same standard or with the same support model. For ingestion, the strongest public evidence is the combination of the Kafka engine and ClickPipes. The Kafka engine provides the low-level table-engine path with consumer-group, security, and materialized-view controls, while ClickPipes is the managed cloud path for Kafka, S3, Postgres, MongoDB, GCS, MySQL, and other sources. The Cloudflare Logpush guide is particularly valuable because it shows a concrete production pattern—S3 as durable buffer plus exactly-once and replay semantics—rather than generic integration marketing.
+
+    The developer surface is also unusually strong for an infrastructure company. GitHub activity, package distribution, and container adoption all point to a mature open-source ecosystem: the main repo has large star/fork counts and frequent releases, the Python and JavaScript clients are actively maintained, and the Docker image has very high pull volume. Independent sources reinforce that the product is not limited to classic dashboarding; adopters and company stories span observability, cloud platforms, SEO, blockchain, and customer-facing analytics. The caveat is architectural rather than ecosystemal. HypeQuery’s analysis argues that once deployments scale, teams often build semantic, translation, or self-service layers above ClickHouse so analysts and business users do not need to reason directly about highly optimized schemas. In other words, ClickHouse fits the performance core of the workflow extremely well, but the last mile of governed self-service is frequently assembled from adjacent tooling.
+  claimRefs:
+  - CE019
+  - CE020
+  - CE021
+  - CE022
+  - CE023
+  - CE024
+  - CE025
+  - CE026
+  - CE027
+  - CE034
+  - CE035
+  - CE036
+  - CE037
+  - CE038
+  - CE039
+  - CE040
+  - CE041
+  - CE043
+  - CE044
+  - CE045
+  - CE046
+  - CE047
+  - CE048
+  - CE049
+  - CE050
+  tableRefs:
+  - TE002
+  figureRefs:
+  - FE003
+- id: trust-roadmap-risks
+  title: Trust, Roadmap & Product Risks
+  body: |-
+    On trust and operational maturity, the public surface is better than average for an infrastructure product but still incomplete for hard enterprise diligence. ClickHouse publicly documents a meaningful control set—SSO, MFA, RBAC, private connectivity options, IP filtering, CMEK, and a compliance list that includes GDPR, HIPAA, ISO 27001, PCI DSS, and SOC 2. The Azure GA announcement adds concrete platform-level claims around network isolation, traffic encryption, and multi-availability-zone replication. Those are useful signals that the managed service is designed for production-sensitive workloads, not only experimentation.
+
+    The remaining risk is not absence of controls but uneven public depth. TrustRadius feedback still points to role-granularity and identity-provider limitations, while the broader workflow evidence suggests self-service deployments may need an extra semantic or translation layer that ClickHouse does not fully own. The 2026 changelog shows an active platform roadmap—autoscaling changes, spend controls, index sharding preview, AWS/GCP/Azure region work, and BYOC expansion—but preview features are not yet the same as mature, widely deployed defaults. For buyers, the implication is straightforward: ClickHouse appears technically strong for high-performance analytics workloads, especially when cloud-managed, but enterprise diligence should still press on benchmark methodology, identity governance depth, and the amount of surrounding platform code a team must build to democratize access safely.
+  claimRefs:
+  - CE028
+  - CE029
+  - CE030
+  - CE031
+  - CE032
+  - CE033
+  - CE041
+  - CE042
+  - CE046
+  - CE047
+  tableRefs:
+  - TE004
+  - TE005
+  figureRefs:
+  - FE004
+tables:
+- id: TE001
+  title: Product Module / Asset Matrix
+  columns:
+  - Module / asset
+  - Primary user
+  - Status / maturity
+  - Differentiation
+  - Diligence gap
+  rows:
+  - - Open-source ClickHouse server
+    - Data platform and infrastructure teams
+    - Production-mature core product with broad OSS adoption
+    - Vectorized columnar OLAP engine with MergeTree storage model
+    - Need customer-specific proof on migration effort from incumbent warehouses or search stacks
+  - - ClickHouse Cloud managed service
+    - Teams that want managed analytics infra
+    - GA across major cloud marketplaces/providers with active 2026 region work
+    - Managed operations, autoscaling, shared storage design, parallel replicas, compute separation
+    - Need clearer public SLOs and workload-specific benchmark methodology
+  - - ClickPipes managed ingestion
+    - Platform teams moving event or CDC data into ClickHouse
+    - In market and expanding by region/connectors in 2026
+    - Cloud-native ingestion without custom ETL or consumer fleet management
+    - Connector depth and backlog handling vary by source and should be tested on real schemas
+  - - SQL console and clickhousectl
+    - Operators, analysts, and developers
+    - In market
+    - Native operating surface for querying and managing cloud services
+    - Public feedback still asks for deeper query-plan and role-governance UX
+  - - Official client and connector ecosystem
+    - Application developers and analytics engineers
+    - High-signal maintenance footprint in 2026
+    - Python, JavaScript, Docker, Power BI/Fabric, dbt and ODBC paths already documented
+    - Connector coverage is broad, but support ownership is split across core, partner, and community tiers
+  notes: |-
+    This matrix distinguishes the core engine, managed cloud, ingestion plane, admin surfaces, and ecosystem packages; it is not a revenue decomposition.
+  claimRefs:
+  - CE001
+  - CE002
+  - CE003
+  - CE005
+  - CE019
+  - CE024
+  - CE025
+  - CE026
+  - CE034
+  - CE036
+  - CE037
+  - CE038
+  - CE051
+  - CE052
+- id: TE002
+  title: Workflow / Use-Case Table
+  columns:
+  - User job
+  - Current workflow
+  - ClickHouse solution
+  - Measurable benefit
+  - Limitation
+  rows:
+  - - Ingest streaming events and logs
+    - Build or operate custom consumers, landing zones, and retries
+    - Kafka engine or ClickPipes-managed ingestion into ClickHouse Cloud
+    - Managed ingestion reduces custom ETL and can add replay/exactly-once style semantics via buffered object storage paths
+    - Operational behavior still depends on source system, schema drift, and connector maturity
+  - - Model warehouse transforms
+    - Run SQL models and CI/CD outside the database
+    - dbt-clickhouse adapter with incremental, MV, distributed and testing support
+    - Lets analytics engineers standardize transforms and deployment workflows around ClickHouse
+    - Adapter limitations still exist for some distributed and very large model patterns
+  - - Connect BI and semantic tools
+    - Export or copy data into a separate BI store
+    - Direct BI connectivity via ODBC/Power Query plus broader core/partner/community integrations
+    - Supports DirectQuery/import and keeps analytics closer to operational data
+    - Some cloud-service scenarios still require an ODBC driver and gateway bridge
+  - - Operate customer-facing or observability analytics
+    - Scale dashboards and queries on large event streams
+    - ClickHouse core plus cloud management, caching, and scale features
+    - Independent and official evidence both point to sub-second or real-time analytical workflows at scale
+    - Teams may still need custom abstraction layers for broad self-service
+  - - Democratize self-service analytics
+    - Analysts ask platform teams for query help on optimized schemas
+    - Use ClickHouse as the performance core under semantic or translation layers
+    - Preserves engine performance while widening internal access to governed metrics
+    - This abstraction layer is often ecosystem-built rather than natively owned by ClickHouse
+  notes: |-
+    Benefits in this table are source-backed workflow outcomes, not audited ROI claims. The last-mile self-service layer often sits outside the native ClickHouse product.
+  claimRefs:
+  - CE019
+  - CE020
+  - CE021
+  - CE022
+  - CE023
+  - CE024
+  - CE025
+  - CE026
+  - CE027
+  - CE041
+  - CE046
+  - CE047
+  - CE049
+  - CE050
+- id: TE003
+  title: Technology / Operating Architecture Table
+  columns:
+  - Layer / component
+  - Role
+  - Dependency
+  - Risk
+  rows:
+  - - Query processing layer
+    - Parses, plans, and runs analytical SQL with vectorized execution and optional code compilation
+    - Core engine internals and column-chunk processing model
+    - Performance advantage depends on workload fit and schema design, not on query speed claims alone
+  - - MergeTree storage parts
+    - Stores immutable sorted parts and merges them in the background for high-ingest analytical tables
+    - Primary key design, merge settings, background resources
+    - Bad key design or too many tiny parts can erode ingest/query efficiency
+  - - Sparse primary index and granules
+    - Keeps indexes memory-efficient while enabling data skipping
+    - Sorting key choice and index_granularity
+    - Sparse reads may still pull extra rows, so pruning is workload-sensitive
+  - - Shared catalog / Shared database engine
+    - Coordinates stateless cloud compute and SharedMergeTree-style tables without local-disk ownership
+    - Central catalog state and Keeper-backed coordination
+    - Control-plane or metadata coordination is now a more important dependency than local-disk durability
+  - - Cloud compute pools and object-backed parallel replicas
+    - Scale reads and writes with separated compute and replicated object-backed storage access
+    - Cloud orchestration plus underlying object storage and provider primitives
+    - Provider-region maturity and preview features can affect feature availability
+  - - Integration layer and table engines
+    - Connects ClickHouse to brokers, databases, lake formats, and object stores
+    - Connector quality plus external system APIs and schemas
+    - Real customer experience depends on connector ownership and integration support tier
+  notes: |-
+    This architecture table combines stable engine design with cloud operating-model details. It is an evidence-backed product architecture map, not a full source-code or control-plane diagram.
+  claimRefs:
+  - CE009
+  - CE010
+  - CE011
+  - CE012
+  - CE013
+  - CE014
+  - CE015
+  - CE016
+  - CE017
+  - CE018
+  - CE052
+- id: TE004
+  title: Trust / Quality / Compliance Table
+  columns:
+  - Control / quality signal
+  - Status
+  - Scope
+  - Implication
+  - Gap
+  rows:
+  - - Compliance baseline
+    - Publicly listed
+    - GDPR, HIPAA, ISO 27001, PCI DSS, SOC 2 and related items
+    - Signals an enterprise-oriented cloud posture rather than a hobbyist managed service
+    - Public list is not the same as scoped audit evidence for a buyer’s required control set
+  - - Identity and access controls
+    - Publicly listed
+    - SSO, MFA, RBAC, IP filtering, CMEK, private connectivity
+    - Shows ClickHouse understands buyer expectations for enterprise cloud controls
+    - Public detail on SCIM, role granularity, and IdP compatibility is still thin
+  - - Network and availability controls
+    - Publicly described for Azure GA
+    - Network isolation, traffic encryption, multi-AZ replication
+    - Supports production analytics workloads that need resilience and protected traffic paths
+    - Need provider-by-provider and tier-by-tier detail on recovery objectives
+  - - Operational UX feedback
+    - Independent mixed feedback
+    - SQL console, roles, and SSO experience
+    - Independent review evidence helps separate product-control claims from operator experience
+    - Review evidence is anecdotal and should be validated with reference customers
+  - - Connector dependencies
+    - Known requirement
+    - ODBC driver and gateway for some Microsoft cloud flows
+    - BI connectivity exists today and is not purely aspirational
+    - Extra gateway/driver steps add implementation friction relative to truly browser-native SaaS connectors
+  notes: |-
+    This table captures only controls and quality signals visible in fetched sources. It should not be read as a substitute for customer-facing security, privacy, or architecture review packs.
+  claimRefs:
+  - CE028
+  - CE029
+  - CE030
+  - CE042
+  - CE050
+- id: TE005
+  title: Roadmap / Release / Development-Stage Table
+  columns:
+  - Date / stage
+  - Feature / milestone
+  - Status
+  - Implication
+  - Source
+  rows:
+  - - 2026-04
+    - Dual-window vertical autoscaling
+    - Rolling / launched
+    - Cloud service is tuning cost responsiveness for variable workloads rather than freezing around a single lookback window
+    - 2026 cloud changelog
+  - - 2026-04
+    - Marketplace subscription sharing across AWS, Azure, and GCP
+    - Launched
+    - Confirms real multi-cloud commercial plumbing, not just marketing availability
+    - 2026 cloud changelog
+  - - 2026-04
+    - Index sharding
+    - Private preview
+    - Shows active work on reducing memory pressure and improving performance for heavy index workloads such as vector and full-text search
+    - 2026 cloud changelog
+  - - 2026-04 to 2026-05
+    - BYOC on GCP plus AWS/Azure/GCP region expansion
+    - GA / launched
+    - Strengthens platform reach for data residency and provider-choice requirements
+    - 2026 cloud changelog
+  - - 2026-05
+    - Organization spend alerts and primary-service idling
+    - GA
+    - Signals maturing cloud-finops and workload-isolation capabilities
+    - 2026 cloud changelog
+  - - '2026-05-26'
+    - clickhouse-connect 1.1.0 package release
+    - Released
+    - Client ecosystem is still shipping meaningful updates during the run window
+    - PyPI clickhouse-connect
+  notes: |-
+    This is a public roadmap-and-release visibility table. It reflects what is publicly visible by the run date, not an internal product-management backlog.
+  claimRefs:
+  - CE005
+  - CE031
+  - CE032
+  - CE033
+  - CE036
+figures:
+- id: FE001
+  title: ClickHouse Product Architecture Map
+  type: stack
+  layout: wide
+  summary: Engine layers and cloud operating layers that together explain ClickHouse’s product differentiation for analytics workloads.
+  data:
+    layers:
+    - label: Interface & tooling layer
+      detail: User-facing surfaces that let operators, developers, and analysts interact with ClickHouse deployments.
+      items:
+      - SQL console
+      - clickhousectl CLI
+      - HTTP/native wire protocols
+      - Power BI / Fabric / ODBC paths
+    - label: Query processing layer
+      detail: Parsers, planners, processors, and vectorized execution over column chunks.
+      items:
+      - Vectorized execution
+      - Optional code compilation
+      - Chunk/block processing
+      - SQL-centric analytics
+    - label: Storage & pruning layer
+      detail: MergeTree parts, ordered primary keys, sparse marks, and compression-oriented layout choices.
+      items:
+      - Immutable parts
+      - Background merges
+      - Sparse primary index
+      - Compression-aware ordering
+    - label: Cloud control & elasticity layer
+      detail: Managed orchestration for shared storage, parallel replicas, and separated compute pools.
+      items:
+      - Shared Catalog / Shared DB engine
+      - Object-backed parallel replicas
+      - Compute-storage separation
+      - Compute-compute separation
+  approximationNotes: |-
+    This figure is a product architecture map synthesized from documentation and product pages, not a complete source-code or infra topology diagram.
+  claimRefs:
+  - CE009
+  - CE010
+  - CE011
+  - CE012
+  - CE013
+  - CE014
+  - CE018
+  - CE052
+- id: FE002
+  title: Customer Workflow / Operating Flow
+  type: flow
+  layout: wide
+  summary: How teams move from source systems into managed analytics workflows on ClickHouse.
+  data:
+    nodes:
+    - id: n1
+      label: Event / source systems
+      detail: Kafka topics, S3/object storage, operational databases, Cloudflare Logpush, and partner ecosystems
+    - id: n2
+      label: Ingestion path selected
+      detail: Teams choose Kafka engine for low-level control or ClickPipes for managed ingestion
+    - id: n3
+      label: ClickHouse storage tables
+      detail: MergeTree or cloud-managed stateless tables land the data for fast analytical reads
+    - id: n4
+      label: Transform / model layer
+      detail: dbt-clickhouse, SQL, materialized views, and operational pipelines shape data models
+    - id: n5
+      label: Consume in BI / apps
+      detail: Power BI, Fabric, app code, dashboards, and customer-facing analytics read from ClickHouse
+    - id: n6
+      label: Governed self-service
+      detail: At scale, some teams add semantic or translation layers above raw ClickHouse schemas
+    edges:
+    - from: n1
+      to: n2
+    - from: n2
+      to: n3
+    - from: n3
+      to: n4
+    - from: n4
+      to: n5
+    - from: n5
+      to: n6
+  approximationNotes: |-
+    This workflow abstracts over several deployment choices. Not every customer uses every node, but each node is explicitly evidenced in the fetched materials.
+  claimRefs:
+  - CE019
+  - CE020
+  - CE021
+  - CE022
+  - CE025
+  - CE026
+  - CE027
+  - CE050
+- id: FE003
+  title: Critical Dependency Map
+  type: dag
+  layout: wide
+  summary: External systems and supporting layers that shape the full ClickHouse workflow beyond the core database engine.
+  data:
+    nodes:
+    - id: d1
+      label: ClickHouse core engine
+      role: Columnar analytics execution and storage
+    - id: d2
+      label: Object storage / cloud providers
+      role: Cloud regions, managed infra primitives, marketplace distribution
+    - id: d3
+      label: Shared catalog / coordination state
+      role: Metadata coordination for stateless cloud compute
+    - id: d4
+      label: Ingestion connectors
+      role: ClickPipes, Kafka engine, and source adapters
+    - id: d5
+      label: BI and connector layer
+      role: Power BI / Fabric connector, ODBC driver, app clients
+    - id: d6
+      label: Semantic / translation layer
+      role: Optional abstraction for governed self-service at scale
+    - id: d7
+      label: End analytics users
+      role: Analysts, app developers, platform teams, dashboard consumers
+    edges:
+    - from: d2
+      to: d1
+      label: Runs cloud service and marketplace distribution
+    - from: d3
+      to: d1
+      label: Coordinates stateless cloud state
+    - from: d4
+      to: d1
+      label: Loads operational and event data
+    - from: d1
+      to: d5
+      label: Serves queries to client and BI surfaces
+    - from: d5
+      to: d7
+      label: Delivers dashboards and app queries
+    - from: d6
+      to: d1
+      label: Rewrites governed queries onto optimized schemas
+    - from: d6
+      to: d7
+      label: Enables broader self-service access
+  approximationNotes: |-
+    The dependency map mixes native and ecosystem dependencies because buyers evaluating full workflow adoption care about both.
+  claimRefs:
+  - CE003
+  - CE010
+  - CE024
+  - CE027
+  - CE046
+  - CE047
+  - CE050
+- id: FE004
+  title: Product Maturity / Capability Map
+  type: matrix
+  layout: wide
+  summary: Public maturity view across core engine, managed cloud, ingestion, ecosystem, and buyer-facing trust signals.
+  data:
+    columns:
+    - Public evidence quality
+    - Current maturity
+    - Buyer benefit
+    - Open diligence concern
+    rows:
+    - label: Core OLAP engine
+      values:
+      - High
+      - High
+      - Fast analytical queries on large datasets
+      - Performance still depends on schema discipline
+    - label: Managed cloud platform
+      values:
+      - High
+      - High
+      - Managed operations and multi-cloud availability
+      - Public benchmark methodology and SLO depth
+    - label: Managed ingestion
+      values:
+      - Medium-High
+      - Medium-High
+      - Faster onboarding for event and CDC pipelines
+      - Connector coverage and replay semantics vary by source
+    - label: BI / client ecosystem
+      values:
+      - High
+      - High
+      - Strong Python, JS, Docker, and Microsoft analytics paths
+      - Some flows still rely on gateway or driver dependencies
+    - label: Governed self-service abstraction
+      values:
+      - Medium
+      - Ecosystem-led
+      - Lets large teams use ClickHouse without raw-schema fluency
+      - Often built outside the native product boundary
+  approximationNotes: |-
+    These maturity labels are analytical judgments based on public evidence quality and feature rollout status as of the run date.
+  claimRefs:
+  - CE005
+  - CE031
+  - CE032
+  - CE033
+  - CE042
+  - CE046
+callouts:
+- calloutType: strength
+  title: Cloud Architecture Is More Than Hosted Open Source
+  body: |-
+    Shared state coordination, object-backed parallel replicas, and compute-compute separation indicate that ClickHouse Cloud is meaningfully different from a simple self-managed cluster wrapped in support.
+  claimRefs:
+  - CE008
+  - CE009
+  - CE010
+  - CE052
+- calloutType: risk
+  title: Self-Service Usually Needs Another Layer
+  body: |-
+    The strongest recurring implementation risk is not query speed but usability at scale: optimized ClickHouse schemas often push large organizations toward semantic, translation, or governed self-service layers that ClickHouse does not fully own natively.
+  claimRefs:
+  - CE046
+  - CE047
+- calloutType: risk
+  title: Identity and Governance Depth Need Live Diligence
+  body: |-
+    Public control disclosures are solid, but independent review evidence still points to gaps in role granularity and some identity-provider compatibility; those gaps should be reference-checked before a broad enterprise rollout.
+  claimRefs:
+  - CE029
+  - CE042
+- calloutType: insight
+  title: Developer Signal Is a Real Asset
+  body: |-
+    ClickHouse’s open-source repo activity, package releases, and container pull volume suggest a genuine platform ecosystem rather than a thin wrapper around a closed managed service.
+  claimRefs:
+  - CE034
+  - CE036
+  - CE037
+  - CE038
+localEvidence:
+  searchQueries:
+  - query: 'Find current 2026 authoritative technical and official sources for ClickHouse product and technology: official docs on ClickHouse Cloud (AWS GCP Azure), architecture (vectorized execution, sparse primary indexes, compression, MergeTree/SharedMergeTree, parallel replicas), integrations (Kafka Spark dbt Airflow BI), security/compliance or trust pages, plus independent developer-signal sources such as GitHub repo, PyPI or package registry, and credible technical analysis. Return direct URLs.'
+    engine: web_search
+    retainedSourceRefs:
+    - SE001
+    - SE002
+    - SE003
+    - SE004
+    - SE005
+    - SE006
+    - SE007
+    - SE008
+    - SE009
+    - SE010
+    - SE014
+    - SE016
+    - SE017
+    - SE018
+    - SE019
+    - SE021
+    - SE023
+  - query: Find direct official ClickHouse documentation URLs in 2026 for SharedMergeTree and parallel replicas. Return exact clickhouse.com docs links only.
+    engine: web_search
+    retainedSourceRefs:
+    - SE001
+    - SE006
+    - SE010
+  - query: Find direct official ClickHouse documentation URLs in 2026 for sparse primary indexes and compression. Return exact clickhouse.com docs links only.
+    engine: web_search
+    retainedSourceRefs:
+    - SE003
+    - SE004
+    - SE005
+  - query: Find direct official ClickHouse documentation URLs in 2026 for Kafka engine, Spark integration, dbt integration, Airflow integration, and BI integrations. Return exact links only.
+    engine: web_search
+    retainedSourceRefs:
+    - SE007
+    - SE008
+    - SE009
+    - SE011
+    - SE020
+  - query: Find direct official or partner URLs in 2026 confirming ClickHouse Cloud availability on AWS, Google Cloud, and Microsoft Azure. Return exact URLs only.
+    engine: web_search
+    retainedSourceRefs:
+    - SE001
+    - SE010
+    - SE020
+    - SE021
+  - query: 'Find independent 2026 developer-signal URLs for ClickHouse: GitHub repo stats, Stack Overflow tag page, DB-Engines ranking page, PyPI clickhouse-connect, npm @clickhouse/client, and Docker Hub clickhouse-server. Return direct URLs only.'
+    engine: web_search
+    retainedSourceRefs:
+    - SE014
+    - SE015
+    - SE016
+    - SE017
+    - SE018
+    - SE019
+    - SE022
+  - query: Find direct public 2026 URLs on cloud.google.com, learn.microsoft.com, or Azure Marketplace that mention ClickHouse Cloud or ClickHouse integration availability. Return exact URLs only.
+    engine: web_search
+    retainedSourceRefs:
+    - SE020
+    - SE021
+  researchQuestions:
+  - id: QE001
+    question: 'What exactly is sold to buyers: open-source software, managed cloud, or both?'
+    type: verification
+    targets:
+    - contentRequirements/0
+    - plannedTables/product-module-asset-matrix
+    status: answered
+  - id: QE002
+    question: Which product modules materially change the customer workflow beyond raw open-source deployment?
+    type: verification
+    targets:
+    - contentRequirements/1
+    - plannedTables/product-module-asset-matrix
+    status: answered
+  - id: QE003
+    question: How does ClickHouse Cloud reduce operational burden versus self-managed clusters?
+    type: mechanism
+    targets:
+    - contentRequirements/3
+    - plannedFigures/customer-workflow-operating-flow
+    status: answered
+  - id: QE004
+    question: How is query execution accelerated inside the core database engine?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    - plannedFigures/product-architecture-map
+    status: answered
+  - id: QE005
+    question: How do MergeTree parts and background merges shape ingest behaviour?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+  - id: QE006
+    question: How do sparse primary indexes work and what tradeoffs do they introduce?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+  - id: QE007
+    question: How does sort order interact with compression and pruning efficiency?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+  - id: QE008
+    question: Which cloud primitives underpin SharedMergeTree, shared catalog state, and parallel replicas?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    - plannedFigures/product-architecture-map
+    status: answered
+  - id: QE009
+    question: How broad is ClickHouse integration at the engine and connector layer?
+    type: verification
+    targets:
+    - contentRequirements/3
+    - plannedTables/workflow-use-case-table
+    status: answered
+  - id: QE010
+    question: What managed ingestion options exist for streaming and event pipelines?
+    type: verification
+    targets:
+    - contentRequirements/3
+    - plannedTables/workflow-use-case-table
+    status: answered
+  - id: QE011
+    question: How mature is Kafka ingestion for enterprise analytics workflows?
+    type: verification
+    targets:
+    - plannedTables/workflow-use-case-table
+    - plannedTables/roadmap-release-development-stage-table
+    status: answered
+  - id: QE012
+    question: How strong is dbt support for analytics engineering and CI/CD workflows?
+    type: verification
+    targets:
+    - contentRequirements/3
+    - plannedTables/workflow-use-case-table
+    status: answered
+  - id: QE013
+    question: How strong is BI connectivity, especially into Microsoft analytics tools?
+    type: verification
+    targets:
+    - contentRequirements/3
+    - plannedTables/workflow-use-case-table
+    status: answered
+  - id: QE014
+    question: Where is ClickHouse Cloud currently available across AWS, GCP, and Azure in 2026?
+    type: freshness
+    targets:
+    - contentRequirements/3
+    - plannedTables/roadmap-release-development-stage-table
+    status: answered
+  - id: QE015
+    question: Which 2026 cloud releases indicate ongoing product and platform maturity?
+    type: freshness
+    targets:
+    - contentRequirements/3
+    - plannedTables/roadmap-release-development-stage-table
+    status: answered
+  - id: QE016
+    question: What trust, security, privacy, and compliance controls are publicly documented?
+    type: verification
+    targets:
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+    status: answered
+  - id: QE017
+    question: What security or identity gaps still surface in practitioner feedback?
+    type: adverse
+    targets:
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+    status: answered
+  - id: QE018
+    question: How credible is the current open-source and developer ecosystem around ClickHouse?
+    type: quantification
+    targets:
+    - contentRequirements/4
+    - plannedFigures/product-maturity-capability-map
+    status: answered
+  - id: QE019
+    question: Which official clients and connectors show strong maintenance signals in 2026?
+    type: freshness
+    targets:
+    - contentRequirements/3
+    - plannedTables/product-module-asset-matrix
+    status: answered
+  - id: QE020
+    question: What independent evidence supports ClickHouse performance for analytics workloads at scale?
+    type: comparison
+    targets:
+    - contentRequirements/4
+    - plannedFigures/product-maturity-capability-map
+    status: answered
+  - id: QE021
+    question: Which production workloads demonstrate differentiated fit beyond generic BI?
+    type: comparison
+    targets:
+    - contentRequirements/4
+    - plannedTables/workflow-use-case-table
+    status: answered
+  - id: QE022
+    question: How much of the self-service semantic layer is native versus ecosystem-built?
+    type: comparison
+    targets:
+    - contentRequirements/4
+    - plannedFigures/product-maturity-capability-map
+    status: answered
+  - id: QE023
+    question: What external dependencies are critical for full workflow delivery?
+    type: mechanism
+    targets:
+    - contentRequirements/3
+    - plannedFigures/critical-dependency-map
+    status: answered
+  - id: QE024
+    question: Which parts of the ClickHouse stack are GA versus preview in 2026?
+    type: freshness
+    targets:
+    - plannedFigures/product-maturity-capability-map
+    - plannedTables/roadmap-release-development-stage-table
+    status: answered
+  - id: QE025
+    question: What product risks matter most for buyers standardising on ClickHouse for analytics platforms?
+    type: adverse
+    targets:
+    - contentRequirements/4
+    - contentRequirements/5
+    - plannedFigures/critical-dependency-map
+    status: answered
+  sources:
+  - id: SE001
+    publisher: ClickHouse
+    title: ClickHouse Cloud | Cloud Based DBMS | ClickHouse
+    url: https://clickhouse.com/cloud
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - clickhouse-cloud
+    - parallel-replicas
+    - clickpipes
+    - cloud-marketplaces
+  - id: SE002
+    publisher: ClickHouse
+    title: Introduction | ClickHouse Docs
+    url: https://clickhouse.com/docs/cloud/overview
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - clickhouse-cloud
+    - cloud-operations
+    - security-controls
+    - compliance
+  - id: SE003
+    publisher: ClickHouse
+    title: Architecture overview | ClickHouse Docs
+    url: https://clickhouse.com/docs/academic_overview
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - vectorized-execution
+    - merge-tree
+    - integration-layer
+    - analytics-architecture
+  - id: SE004
+    publisher: ClickHouse
+    title: Architecture Overview | ClickHouse Docs
+    url: https://clickhouse.com/docs/development/architecture
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - vectorized-execution
+    - column-chunks
+    - processors
+    - query-pipeline
+  - id: SE005
+    publisher: ClickHouse
+    title: MergeTree table engine | ClickHouse Docs
+    url: https://clickhouse.com/docs/engines/table-engines/mergetree-family/mergetree
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - merge-tree
+    - sparse-primary-index
+    - compression
+    - granules
+  - id: SE006
+    publisher: ClickHouse
+    title: Shared | ClickHouse Docs
+    url: https://clickhouse.com/docs/engines/database-engines/shared
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - sharedmergetree
+    - shared-catalog
+    - cloud-architecture
+  - id: SE007
+    publisher: ClickHouse
+    title: Kafka table engine | ClickHouse Docs
+    url: https://clickhouse.com/docs/engines/table-engines/integrations/kafka
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - kafka
+    - streaming-ingestion
+    - clickpipes
+    - materialized-views
+  - id: SE008
+    publisher: ClickHouse
+    title: Integrating dbt and ClickHouse | ClickHouse Docs
+    url: https://clickhouse.com/docs/integrations/dbt
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - dbt
+    - analytics-engineering
+    - materializations
+    - ci-cd
+  - id: SE009
+    publisher: ClickHouse
+    title: Integrations | ClickHouse Docs
+    url: https://clickhouse.com/docs/integrations
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - integrations
+    - partner-ecosystem
+    - community-ecosystem
+  - id: SE010
+    publisher: ClickHouse
+    title: Cloud changelog - 2026 | ClickHouse Docs
+    url: https://clickhouse.com/docs/whats-new/changelog/cloud
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - cloud-roadmap
+    - regions
+    - index-sharding
+    - byoc
+  - id: SE011
+    publisher: ClickHouse
+    title: Monitoring Cloudflare logs with ClickStack | ClickHouse Docs
+    url: https://clickhouse.com/docs/use-cases/observability/clickstack/integrations/cloudflare-logs
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - clickpipes
+    - cloudflare
+    - s3-ingestion
+    - observability
+  - id: SE012
+    publisher: ClickHouse
+    title: ClickHouse adopters | ClickHouse Docs
+    url: https://clickhouse.com/docs/about-us/adopters
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - adopters
+    - workload-fit
+    - production-users
+  - id: SE013
+    publisher: ClickHouse
+    title: 'Trouble will find you: How Cloudflare uses ClickHouse to scale analytics at quadrillion-row scale'
+    url: https://clickhouse.com/blog/cloudflare
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - cloudflare
+    - scale
+    - dictionaries
+    - replicas
+  - id: SE014
+    publisher: GitHub
+    title: 'GitHub - ClickHouse/ClickHouse: ClickHouse® is a real-time analytics database management system'
+    url: https://github.com/ClickHouse/ClickHouse
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: company
+    topics:
+    - github
+    - repo-stats
+    - releases
+    - open-source
+  - id: SE015
+    publisher: GitHub
+    title: 'GitHub - ClickHouse/clickhouse-docs: Official documentation for ClickHouse'
+    url: https://github.com/ClickHouse/clickhouse-docs
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: company
+    topics:
+    - github
+    - docs-repo
+    - open-source
+  - id: SE016
+    publisher: DB-Engines
+    title: ClickHouse System Properties
+    url: https://db-engines.com/en/system/ClickHouse
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: developer-signal
+    reputationTier: high
+    independence: independent
+    topics:
+    - db-engines
+    - popularity
+    - access-methods
+    - ecosystem
+  - id: SE017
+    publisher: PyPI
+    title: clickhouse-connect · PyPI
+    url: https://pypi.org/project/clickhouse-connect/
+    date: '2026-05-26'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: company
+    topics:
+    - python-client
+    - superset
+    - sqlalchemy
+    - package-release
+  - id: SE018
+    publisher: npm
+    title: '@clickhouse/client - npm'
+    url: https://www.npmjs.com/package/@clickhouse/client
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: company
+    topics:
+    - javascript-client
+    - streaming
+    - npm-downloads
+    - typescript
+  - id: SE019
+    publisher: Docker
+    title: clickhouse/clickhouse-server - Docker Image
+    url: https://hub.docker.com/r/clickhouse/clickhouse-server
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: company
+    topics:
+    - docker
+    - deployment
+    - http-interface
+    - native-client
+  - id: SE020
+    publisher: Microsoft Learn
+    title: Power Query ClickHouse connector - Power Query
+    url: https://learn.microsoft.com/en-us/power-query/connectors/clickhouse
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: partner-proof
+    reputationTier: high
+    independence: partner
+    topics:
+    - power-bi
+    - fabric
+    - power-query
+    - odbc
+  - id: SE021
+    publisher: Business Wire
+    title: ClickHouse Cloud Is Now Generally Available on Microsoft Azure
+    url: https://www.businesswire.com/news/home/20240625765046/en/ClickHouse-Cloud-Is-Now-Generally-Available-on-Microsoft-Azure
+    date: '2024-06-25'
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: news
+    reputationTier: medium
+    independence: company
+    topics:
+    - azure
+    - cloud-availability
+    - event-hubs
+    - power-bi
+  - id: SE022
+    publisher: TrustRadius
+    title: ClickHouse Reviews & Ratings 2026 | TrustRadius
+    url: https://www.trustradius.com/products/clickhouse/reviews
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: adverse
+    sourceType: review
+    reputationTier: medium
+    independence: independent
+    topics:
+    - reviews
+    - merge-tree
+    - performance
+    - identity-gaps
+  - id: SE023
+    publisher: HypeQuery
+    title: 'Seven Companies, One Pattern: Why Every Scaled ClickHouse Deployment Looks the Same'
+    url: https://hypequery.com/blog/seven-companies-one-pattern-why-every-scaled-clickhouse-deployment-looks-the-same
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: other
+    reputationTier: medium
+    independence: independent
+    topics:
+    - semantic-layer
+    - query-translation
+    - self-service-analytics
+    - scaled-deployments
+  - id: SE024
+    publisher: ClickHouse
+    title: User stories - ClickHouse
+    url: https://clickhouse.com/user-stories
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - user-stories
+    - real-time-analytics
+    - observability
+    - customers
+  - id: SE025
+    publisher: ClickHouse
+    title: How ClickHouse powers Netflix, Uber and Spotify’s Analytics | Aaron Katz, CEO of ClickHouse
+    url: https://clickhouse.com/videos/how-clickhouse-powers-netflix-uber-spotify-analytics-aaron-katz
+    accessDate: '2026-05-27'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - analytics-video
+    - customer-facing-analytics
+    - workload-fit
+  claims:
+  - id: CE001
+    statement: ClickHouse is positioned publicly as both an open-source column-oriented OLAP DBMS and a managed cloud offering.
+    type: company-claimed
+    topic: product-scope
+    sourceRefs:
+    - SE002
+    - SE016
+    - SE019
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+  - id: CE002
+    statement: ClickHouse Cloud is a fully managed service where infrastructure, maintenance, scaling, and operations are handled by ClickHouse.
+    type: company-claimed
+    topic: cloud-operations
+    sourceRefs:
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+    - QE003
+  - id: CE003
+    statement: ClickHouse Cloud is presented as available on all three major cloud marketplaces/providers.
+    type: company-claimed
+    topic: cloud-availability
+    sourceRefs:
+    - SE001
+    - SE021
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+    - QE014
+  - id: CE004
+    statement: ClickHouse Cloud supports centralized marketplace billing across AWS, Azure, and GCP subscriptions.
+    type: company-claimed
+    topic: cloud-availability
+    sourceRefs:
+    - SE010
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE014
+  - id: CE005
+    statement: The 2026 cloud changelog names AWS Mexico, Azure Australia East, and GCP London as supported ClickHouse Cloud regions or region additions.
+    type: company-claimed
+    topic: cloud-availability
+    sourceRefs:
+    - SE010
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE014
+    - QE024
+  - id: CE006
+    statement: The cloud overview describes ClickHouse Cloud as providing serverless operations, autoscaling, backups, replication, and high availability.
+    type: company-claimed
+    topic: cloud-operations
+    sourceRefs:
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE003
+  - id: CE007
+    statement: ClickHouse says its cloud architecture separates storage and compute with pay-for-use compute scaling.
+    type: company-claimed
+    topic: cloud-architecture
+    sourceRefs:
+    - SE001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE003
+  - id: CE008
+    statement: ClickHouse Cloud uses object-backed parallel replicas in a shared-nothing architecture to reduce storage duplication and network overhead.
+    type: company-claimed
+    topic: cloud-architecture
+    sourceRefs:
+    - SE001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE003
+    - QE008
+  - id: CE009
+    statement: The Shared database engine works with Shared Catalog to manage databases whose tables use stateless engines such as SharedMergeTree.
+    type: observed
+    topic: shared-catalog
+    sourceRefs:
+    - SE006
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE008
+  - id: CE010
+    statement: The Shared database engine removes local-disk dependency by storing metadata in a central versioned state that compute nodes fetch on startup.
+    type: observed
+    topic: shared-catalog
+    sourceRefs:
+    - SE006
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE008
+    - QE023
+  - id: CE011
+    statement: The VLDB architecture overview says ClickHouse uses a vectorized query execution engine with optional code compilation.
+    type: observed
+    topic: query-engine
+    sourceRefs:
+    - SE003
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QE004
+  - id: CE012
+    statement: The development architecture page says ClickHouse processes data as arrays or chunks and dispatches operations on arrays whenever possible.
+    type: observed
+    topic: query-engine
+    sourceRefs:
+    - SE004
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QE004
+  - id: CE013
+    statement: ClickHouse documents its engine as layered into query processing, storage, integration, and access/control components.
+    type: observed
+    topic: engine-layering
+    sourceRefs:
+    - SE003
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QE004
+    - QE009
+  - id: CE014
+    statement: MergeTree-family engines are designed for high ingest rates and large data volumes by creating parts that are merged in the background.
+    type: observed
+    topic: merge-tree
+    sourceRefs:
+    - SE005
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QE005
+  - id: CE015
+    statement: MergeTree primary keys index blocks of rows called granules rather than individual rows, and the default index granularity is 8192.
+    type: observed
+    topic: sparse-primary-index
+    sourceRefs:
+    - SE005
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QE006
+  - id: CE016
+    statement: ClickHouse documents sparse primary indexes as memory-efficient for very large tables but notes that a range read can still pull up to index_granularity*2 extra rows per data block.
+    type: observed
+    topic: sparse-primary-index
+    sourceRefs:
+    - SE005
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QE006
+    - QE025
+  - id: CE017
+    statement: ClickHouse explicitly links better compression to sorting data by a consistent primary key.
+    type: observed
+    topic: compression
+    sourceRefs:
+    - SE005
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QE007
+  - id: CE018
+    statement: The architecture overview says ClickHouse integrates external databases, Kafka and RabbitMQ, lakehouse table formats, and object storage through its integration layer.
+    type: observed
+    topic: integration-layer
+    sourceRefs:
+    - SE003
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QE009
+  - id: CE019
+    statement: ClickPipes is described as a Cloud-only managed ingestion engine for Kafka, S3, PostgreSQL, MongoDB, GCS, MySQL, and other sources.
+    type: company-claimed
+    topic: clickpipes
+    sourceRefs:
+    - SE001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE002
+    - QE010
+  - id: CE020
+    statement: The Kafka engine documentation recommends ClickPipes on ClickHouse Cloud for private networking, independent scaling, and monitoring of Kafka ingestion.
+    type: observed
+    topic: kafka-ingestion
+    sourceRefs:
+    - SE007
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE010
+    - QE011
+  - id: CE021
+    statement: The Kafka table engine supports configurable consumers, security protocols, schema-aware parsing, and materialized-view based streaming pipelines.
+    type: observed
+    topic: kafka-ingestion
+    sourceRefs:
+    - SE007
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE010
+    - QE011
+  - id: CE022
+    statement: The dbt-clickhouse adapter supports table, view, incremental, materialized-view, tests, snapshots, and seeds workflows.
+    type: observed
+    topic: dbt
+    sourceRefs:
+    - SE008
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE012
+  - id: CE023
+    statement: The dbt adapter also exposes ClickHouse-specific codecs, TTLs, indexes, and projections and documents CI/CD patterns for staging and production.
+    type: observed
+    topic: dbt
+    sourceRefs:
+    - SE008
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE012
+  - id: CE024
+    statement: ClickHouse organizes integrations into core, partner, and community tiers rather than presenting every connector as first-party.
+    type: observed
+    topic: integrations
+    sourceRefs:
+    - SE009
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE002
+    - QE009
+    - QE022
+  - id: CE025
+    statement: The Microsoft Power Query connector is GA and supports Power BI semantic models, Dataflows, and Fabric Dataflow Gen2.
+    type: observed
+    topic: bi-connectors
+    sourceRefs:
+    - SE020
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE013
+    - QE024
+  - id: CE026
+    statement: ClickHouse’s Azure GA announcement highlights turnkey integrations with Power BI, Azure Event Hubs, and Azure Blob Storage.
+    type: company-claimed
+    topic: bi-connectors
+    sourceRefs:
+    - SE021
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE013
+  - id: CE027
+    statement: The Cloudflare Logpush integration guide says ClickPipes can ingest from S3 with exactly-once semantics and replay capability.
+    type: observed
+    topic: clickpipes
+    sourceRefs:
+    - SE011
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE010
+    - QE021
+  - id: CE028
+    statement: The cloud overview lists GDPR, HIPAA, ISO 27001, ISO 27001 SoA, PCI DSS, and SOC 2 among ClickHouse Cloud compliance programs.
+    type: company-claimed
+    topic: compliance
+    sourceRefs:
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE016
+  - id: CE029
+    statement: The cloud overview lists SSO, multi-factor authentication, RBAC, Private Link, Private Service Connect, IP filtering, and CMEK as cloud security controls.
+    type: company-claimed
+    topic: security-controls
+    sourceRefs:
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE016
+  - id: CE030
+    statement: The Azure GA announcement says ClickHouse Cloud is built with network isolation, traffic encryption, and multi-availability-zone replication.
+    type: company-claimed
+    topic: security-controls
+    sourceRefs:
+    - SE021
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE016
+  - id: CE031
+    statement: The 2026 changelog shows organization spend alerts, dual-window autoscaling, and primary-service idling reaching GA or active rollout during 2026.
+    type: company-claimed
+    topic: cloud-roadmap
+    sourceRefs:
+    - SE010
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE015
+    - QE024
+  - id: CE032
+    statement: Index sharding entered private preview in 2026 to distribute index analysis across replicas, cut per-replica memory, and improve query performance.
+    type: company-claimed
+    topic: cloud-roadmap
+    sourceRefs:
+    - SE010
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE015
+    - QE024
+  - id: CE033
+    statement: The cloud changelog says BYOC on GCP became GA and ClickPipes reached AWS region parity in 2026.
+    type: company-claimed
+    topic: cloud-roadmap
+    sourceRefs:
+    - SE010
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE014
+    - QE015
+    - QE024
+  - id: CE034
+    statement: The public GitHub repo showed roughly 47.6k stars, 8.4k forks, and 796 releases on the access date.
+    type: observed
+    topic: repo-activity
+    sourceRefs:
+    - SE014
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE018
+    - QE019
+  - id: CE035
+    statement: The documentation repo page exposes active maintenance metadata, watchers, and multi-language docs contributions.
+    type: observed
+    topic: repo-activity
+    sourceRefs:
+    - SE015
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE018
+    - QE019
+  - id: CE036
+    statement: PyPI listed clickhouse-connect 1.1.0, released on 2026-05-26, with Python 3.10-3.14 support plus async, SQLAlchemy, Pandas, and Superset capabilities.
+    type: observed
+    topic: client-ecosystem
+    sourceRefs:
+    - SE017
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE018
+    - QE019
+  - id: CE037
+    statement: The npm package page showed @clickhouse/client 1.11.1 with 503,589 weekly downloads and documented streaming support for Node.js and browser clients.
+    type: observed
+    topic: client-ecosystem
+    sourceRefs:
+    - SE018
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE018
+    - QE019
+  - id: CE038
+    statement: Docker Hub showed more than 100 million pulls for clickhouse/clickhouse-server and documented the HTTP 8123 and native 9000 interfaces.
+    type: observed
+    topic: client-ecosystem
+    sourceRefs:
+    - SE019
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE018
+    - QE019
+  - id: CE039
+    statement: DB-Engines describes ClickHouse as a high-performance column-oriented SQL OLAP DBMS available as open source and as a cloud offering.
+    type: observed
+    topic: market-position
+    sourceRefs:
+    - SE016
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE018
+    - QE020
+  - id: CE040
+    statement: DB-Engines lists access methods including HTTP REST, JDBC, ODBC, and PostgreSQL/MySQL-compatible wire protocols.
+    type: observed
+    topic: access-methods
+    sourceRefs:
+    - SE016
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE009
+    - QE013
+  - id: CE041
+    statement: A TrustRadius reviewer credits MergeTree, primary-key data skipping, and compression for strong query performance and cites one workflow improving from more than two minutes to under one second.
+    type: third-party-reported
+    topic: performance-proof
+    sourceRefs:
+    - SE022
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE020
+  - id: CE042
+    statement: The same TrustRadius review flags gaps in SQL console query-plan UX, cloud role granularity, and some SSO IdP compatibility.
+    type: third-party-reported
+    topic: operator-feedback
+    sourceRefs:
+    - SE022
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE017
+    - QE025
+  - id: CE043
+    statement: ClickHouse’s Cloudflare meetup recap says Cloudflare ran ClickHouse in production by the end of 2016 and later exceeded 1,000 active replicas.
+    type: third-party-reported
+    topic: scale-proof
+    sourceRefs:
+    - SE013
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QE020
+    - QE021
+  - id: CE044
+    statement: The Cloudflare recap says the deployment processed hundreds of millions of inserted rows per second and maintained 184 dictionaries.
+    type: third-party-reported
+    topic: scale-proof
+    sourceRefs:
+    - SE013
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QE020
+    - QE021
+  - id: CE045
+    statement: Cloudflare said moving dictionaries from hashed to hashed-array layouts reduced memory footprints by more than 4x.
+    type: third-party-reported
+    topic: scale-proof
+    sourceRefs:
+    - SE013
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QE020
+  - id: CE046
+    statement: HypeQuery argues that scaled ClickHouse deployments commonly add query translation and semantic layers because optimized schemas are too cognitively expensive for broad self-service use.
+    type: third-party-reported
+    topic: abstraction-layer
+    sourceRefs:
+    - SE023
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE022
+    - QE023
+    - QE025
+  - id: CE047
+    statement: HypeQuery cites Uber, Cloudflare, Instacart, Microsoft, GitLab, Lyft, and Contentsquare as converging on similar abstraction stacks above ClickHouse.
+    type: third-party-reported
+    topic: abstraction-layer
+    sourceRefs:
+    - SE023
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE022
+    - QE023
+  - id: CE048
+    statement: ClickHouse’s adopters page shows production use across observability, SEO, blockchain, cloud data platforms, and security-related workloads.
+    type: company-claimed
+    topic: workload-fit
+    sourceRefs:
+    - SE012
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE021
+  - id: CE049
+    statement: ClickHouse’s user stories and analytics video position the product in observability, customer-facing analytics, and other large-scale analytics workflows.
+    type: company-claimed
+    topic: workload-fit
+    sourceRefs:
+    - SE024
+    - SE025
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE021
+  - id: CE050
+    statement: Microsoft’s connector documentation requires an ODBC driver and, for cloud service scenarios, an on-premises data gateway to bridge ClickHouse into Power BI services.
+    type: observed
+    topic: ecosystem-dependencies
+    sourceRefs:
+    - SE020
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE013
+    - QE023
+  - id: CE051
+    statement: The cloud overview positions the SQL console and clickhousectl CLI as part of the managed cloud operating surface.
+    type: company-claimed
+    topic: admin-surfaces
+    sourceRefs:
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE002
+  - id: CE052
+    statement: ClickHouse Cloud documents compute-compute separation, with independent compute layers for read and write workloads.
+    type: company-claimed
+    topic: cloud-architecture
+    sourceRefs:
+    - SE001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE003
+    - QE008
+  evidenceGaps:
+  - type: missing-source
+    severity: material
+    topic: benchmark-methodology
+    missingEvidence: A workload-normalized benchmark pack that shows schema, cluster shape, dataset characteristics, concurrency, and query mix behind ClickHouse’s headline speed and price/performance claims.
+    whyItMatters: Without reproducible workload context, investors can over-read marketing-level performance statements and under-estimate the implementation effort needed to match them.
+    diligencePath: Request benchmark methodology, representative customer workloads, and pre/post-migration results with schema and infrastructure assumptions disclosed.
+    relatedQuestionRefs:
+    - QE020
+  - type: private-evidence-only
+    severity: material
+    topic: identity-governance
+    missingEvidence: A current matrix covering SCIM, SAML/IdP support, audit logging, role granularity, break-glass access, and tenant-isolation controls by deployment type.
+    whyItMatters: Identity and governance controls are central to enterprise standardisation decisions, and the public surface is not detailed enough to clear large regulated buyers.
+    diligencePath: Request current security architecture and IAM documentation plus reference calls with buyers using SSO, private connectivity, and delegated admin at scale.
+    relatedQuestionRefs:
+    - QE016
+    - QE017
+  - type: private-evidence-only
+    severity: material
+    topic: semantic-layer-boundary
+    missingEvidence: Clear product guidance on which semantic, metrics, governance, or query-translation capabilities ClickHouse intends to own natively versus leave to partners and customer-built layers.
+    whyItMatters: This boundary determines how much application or platform code a buyer must build on top of ClickHouse to democratize access safely.
+    diligencePath: Request product roadmap and reference architectures for governed self-service analytics, especially in large multi-team deployments.
+    relatedQuestionRefs:
+    - QE022
+    - QE023
+  - type: stale
+    severity: minor
+    topic: preview-feature-rollout
+    missingEvidence: Customer-facing GA timelines, regional coverage, and workload caveats for preview items such as index sharding and any region-limited cloud features.
+    whyItMatters: Preview features can materially improve economics or performance, but buyers should not underwrite them as fully mature without rollout clarity.
+    diligencePath: Ask product and solutions engineering for GA timing, support commitments, and design-partner constraints for preview capabilities used in the target architecture.
+    relatedQuestionRefs:
+    - QE015
+    - QE024

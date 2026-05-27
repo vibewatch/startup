@@ -1,0 +1,1621 @@
+schemaVersion: "report-v2"
+artifact: "product-tech"
+slug: "sambanova-systems"
+runDate: "2026-05-27"
+company:
+  name: "SambaNova Systems"
+chapter:
+  number: 5
+  title: "Product & Technology"
+  summary: >
+    SambaNova delivers a vertically integrated AI inference stack built on its proprietary
+    Reconfigurable Dataflow Unit (RDU) architecture. The fourth-generation SN40L chip (three-tier
+    SRAM/HBM/DDR memory) achieves 132 tokens/sec on Llama 3.1 405B at full 16-bit precision,
+    outperforming GPU-based inference providers on large-model workloads. The fifth-generation SN50,
+    announced February 2026, claims 5× compute improvement and 895 tokens/sec on Llama 3.3 70B;
+    it targets H2 2026 shipping with SoftBank as the first customer. A narrow cloud model catalog
+    (~10 models), no public fine-tuning API, and vendor-controlled benchmark methodology are
+    material product gaps that buyers must verify independently.
+
+sections:
+  - id: rdu-hardware-platform
+    title: "RDU Hardware Platform and Chip Architecture"
+    body: >
+      SambaNova's hardware foundation is the Reconfigurable Dataflow Unit (RDU), a purpose-built
+      AI inference accelerator that replaces the instruction-set architecture (ISA) used by GPUs
+      with a dataflow execution model. Instead of launching sequential GPU kernels that repeatedly
+      load weights from external memory, the RDU configures a continuous processing pipeline
+      aligned with the model's computational graph, reducing data movement and enabling operator
+      fusion across entire transformer decoder layers in a single pass.
+
+      The fourth-generation SN40L chip—announced 2023 and published at IEEE MICRO 2024—implements
+      a three-tier memory hierarchy: 520 MB on-chip SRAM for immediate computation, HBM (64 GB per
+      chip in the SN40L-16 configuration) for active model weights, and DDR DRAM (768 GB per chip)
+      for capacity-tier storage that holds hundreds of models simultaneously. This architecture
+      allows a 16-chip SambaRack to address roughly 12 TB of total DRAM plus 1 TB HBM, enabling
+      trillion-parameter models—including Llama 3.1 405B and DeepSeek R1 671B at full 16-bit
+      precision—without quantization. The IEEE Micro paper measuring Composition of Experts (CoE)
+      workloads found that an eight-socket SN40L node achieves a 3.7× end-to-end speedup over a
+      DGX H100 and a 6.6× speedup over a DGX A100, with model switching 15–31× faster than GPU
+      baselines.
+
+      The fifth-generation SN50, introduced February 2026, delivers five times the compute per
+      accelerator and four times more network bandwidth than the SN40L. It supports up to 256
+      interconnected accelerators over a multi-terabyte-per-second fabric, enabling models up to
+      10 trillion parameters with up to 10 million token context lengths. The SambaRack SN50
+      packs 16 chips per rack at 20 kW, is fully air-cooled, and does not require liquid-cooling
+      infrastructure—a significant operational advantage for existing data centers. SoftBank Corp.
+      is the first confirmed SN50 customer, targeting deployment in Japanese AI data centers in
+      H2 2026. Intel, which has taken a strategic investment as part of the Series E, is
+      co-developing a heterogeneous inference blueprint in which Intel GPUs handle the prefill
+      (prompt processing) phase and SambaNova RDUs handle the decode (token generation) phase.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE006
+      - CE007
+      - CE008
+      - CE009
+      - CE010
+      - CE011
+    tableRefs:
+      - TE001
+      - TE003
+    figureRefs:
+      - FE001
+
+  - id: software-stack-and-cloud
+    title: "Software Stack, SambaCloud, and Deployment Modes"
+    body: >
+      SambaNova's software layer—SambaFlow—is a compiler-driven stack that maps neural network
+      computation graphs directly onto RDU hardware through spatial programming and operator
+      fusion. Rather than scheduling individual GPU kernels, SambaFlow generates dataflow patterns
+      tailored to each layer's memory access requirements, achieving high hardware utilization by
+      keeping data in flight through fused operations. SambaFlow supports Red Hat Enterprise Linux
+      and Ubuntu, and exposes a Python SDK and REST API compatible with the OpenAI client
+      interface.
+
+      Three product tiers address distinct buyer segments. SambaStack is the on-premises full-stack
+      platform: SambaRack hardware plus SambaFlow software plus pre-loaded model bundles, delivered
+      with 90-day deployment commitments and integrated model hot-swapping at inference time.
+      SambaManaged is a turnkey managed service where SambaNova operates the hardware—either in
+      the customer's data center or a partner facility—and is available via AWS Marketplace.
+      SambaCloud is the public API at cloud.sambanova.ai, fully OpenAI-API-compatible, with no
+      credit card required for signup and $5 in free credits for new accounts. The API supports
+      streaming (SSE), function calling, JSON mode, and audio transcription (Whisper-Large-v3).
+      SambaCloud's model catalog as of May 2026 is selective: approximately 10 models including
+      DeepSeek V3.1 (131K context), DeepSeek V3.2, Llama 4 Maverick, Llama 3.3 70B, MiniMax M2.7,
+      and gpt-oss-120b in high and low tiers. Fine-tuning is not offered as a public cloud
+      product.
+
+      The Accenture partnership (signed 2023) targets regulated enterprise buyers requiring model
+      ownership, data governance, and the ability to export model weights—use cases where GPU-cloud
+      providers typically do not guarantee data sovereignty. Sovereign AI deployments in Japan
+      (SoftBank/SambaCloud APAC), Australia (SouthernCrossAI), Germany (Infercom), and the UK
+      (Argyll) demonstrate the on-premises product in production. The Argonne National Laboratory
+      ALCF AI Testbed—which includes both a legacy SN30 training cluster and a newer SN40L
+      inference cluster of 16 RDUs—makes the system available to the scientific research community
+      under the NAIRR Pilot. TEPCO Systems (Japan) has selected SambaNova for inclusion in Japan's
+      NEDO Post-5G R&D project (April 2026).
+    claimRefs:
+      - CE012
+      - CE013
+      - CE014
+      - CE015
+      - CE016
+      - CE017
+      - CE018
+      - CE019
+      - CE020
+      - CE021
+    tableRefs:
+      - TE002
+      - TE004
+    figureRefs:
+      - FE002
+
+  - id: performance-benchmarks
+    title: "Performance, Benchmarks, and Technical Tradeoffs"
+    body: >
+      SambaNova's strongest differentiation is sustained single-user inference throughput on
+      large models (70B–671B parameters) at full 16-bit precision. Artificial Analysis, an
+      independent benchmark aggregator, confirmed 132 output tokens/sec on Llama 3.1 405B at
+      the September 2024 SambaCloud launch—the fastest speed for any provider on that model at
+      that time. On the Llama 3.1 70B model, SambaNova measured 461 tokens/sec versus Cerebras
+      at 445 tokens/sec and Groq at 250 tokens/sec at that benchmark window. For DeepSeek R1
+      671B, SambaNova reports 231–255 tokens/sec at full 16-bit precision; GPU-based providers
+      on the same model average approximately 19 tokens/sec due to memory bandwidth constraints
+      forcing quantization. The SN50 benchmarks (vendor-supplied, sourced to SemiAnalysis
+      InferenceX) claim 895 tokens/sec/user on Llama 3.3 70B versus 184 tokens/sec on Nvidia B200.
+
+      Three technical tradeoffs limit competitive comparability. First, all SambaNova performance
+      figures represent single-user (batch=1) latency rather than aggregate throughput, which is
+      the metric GPU-based systems optimize for (e.g., DGX H100 delivers 24,544 tokens/sec on
+      Llama 2-70B in MLPerf batch throughput mode while delivering only ~20 tokens/sec per user).
+      This is a structural consequence of SambaNova's dataflow architecture, which excels at
+      low-latency sequential execution but does not publish equivalent batch throughput data.
+      Second, benchmark methodology is predominantly vendor-controlled or sponsored; independent
+      third-party validation beyond Artificial Analysis's API endpoint measurements is limited.
+      SN50 claims cite SemiAnalysis InferenceX, a commercial benchmarking firm, rather than
+      open-methodology results. Third, model catalog depth is narrow: SambaCloud offers
+      approximately 10 models compared to 50–200 at GPU-cloud competitors, and does not support
+      image or video generation. Developers requiring frequent model switching or fine-tuning
+      as part of the workflow have no alternative within the SambaNova ecosystem.
+
+      The GPU memory-bandwidth bottleneck—described by Cerebras CEO Andrew Feldman and confirmed
+      in Databricks engineering benchmarks showing H100 tensor-parallel efficiency declining
+      from ~60% at 2 GPUs to ~25% at 8 GPUs—is the structural condition SambaNova's three-tier
+      memory is designed to exploit. At batch sizes encountered in production enterprise workloads
+      (small to medium), this advantage is real. Whether it persists as Nvidia and AMD improve
+      HBM capacity and software batching efficiency in Hopper/Blackwell successors is an open
+      technical question.
+    claimRefs:
+      - CE022
+      - CE023
+      - CE024
+      - CE025
+      - CE026
+      - CE027
+      - CE028
+      - CE029
+      - CE030
+    tableRefs:
+      - TE005
+    figureRefs:
+      - FE004
+
+  - id: developer-ecosystem
+    title: "Developer Ecosystem and Integration"
+    body: >
+      SambaNova maintains an active open-source developer footprint for a hardware-focused
+      company. The ai-starter-kit repository on GitHub provides open-source Python examples
+      organized into four categories: Data Ingestion and Preparation, Model Development and
+      Optimization, Intelligent Information Retrieval, and Advanced AI Capabilities. Example
+      kits cover enterprise knowledge retrieval (RAG), benchmarking, financial assistants,
+      function calling, custom chat templates, and multimodal knowledge retrieval. The kit
+      supports both SambaCloud API access (via SAMBANOVA_API_KEY) and on-premises SambaStack
+      endpoint integration.
+
+      The official sambanova Python SDK on PyPI (pip install sambanova) requires Python 3.9+
+      and exposes both synchronous and asynchronous clients via httpx, with aiohttp as an
+      optional high-concurrency backend. The SDK covers chat completions, a Responses API,
+      streaming (SSE), file uploads (audio transcription), typed request/response models via
+      Pydantic, automatic retries with exponential backoff, and a full error hierarchy. The
+      package version at time of authoring is not explicitly stated in public PyPI docs but
+      the project is actively maintained. SambaNova's HuggingFace organization
+      (sambanovasystems) hosts 32 model checkpoints including SambaLingo multilingual variants
+      (Arabic, Turkish, Hungarian, Thai at 7B and 70B scales) and a draft model for the
+      QwQ-0.5B-SFT architecture.
+
+      Integration ecosystem breadth is substantial relative to SambaNova's size: LangChain
+      (langchain-sambanova), LlamaIndex, CrewAI, AutoGen, OpenRouter, n8n, AWS, and
+      approximately 50 third-party integrations are listed in the AI Starter Kit documentation.
+      OpenAI-compatible endpoints mean existing codebases can switch inference providers by
+      changing a base URL and API key without rewriting client code. Rate limits and context
+      windows vary by tier (Free, Developer, Enterprise), with Enterprise offering dedicated
+      support and higher rate limits for production workloads.
+    claimRefs:
+      - CE031
+      - CE032
+      - CE033
+      - CE034
+      - CE035
+    figureRefs:
+      - FE003
+
+  - id: roadmap-gaps-risks
+    title: "Technology Roadmap, Product Gaps, and Strategic Risks"
+    body: >
+      SambaNova's product roadmap centers on three near-term deliverables: full SN50 hardware
+      production and customer shipments (H2 2026), Intel-SambaNova heterogeneous inference
+      clusters targeting enterprise and sovereign deployments (H2 2026), and expanded SambaCloud
+      capacity on SN50 silicon. The Intel collaboration announced April 2026 specifies that
+      Xeon 6 processors will serve as both the host CPU and the "action CPU" for agentic tool
+      execution and code compilation, while Intel GPUs handle prefill and SambaNova RDUs handle
+      decode—a three-way heterogeneous architecture that has no production deployments yet as of
+      the run date.
+
+      Material product gaps identified from independent review include: (1) No public fine-tuning
+      API—customers requiring custom model adaptation must use a GPU cloud for fine-tuning and
+      then switch to SambaNova for inference, introducing pipeline friction and multi-vendor
+      dependency. (2) Narrow model catalog breadth (~10 models versus 50–200 at GPU competitors),
+      with no image, video, or text-to-speech generation. (3) Context window ceilings: the
+      standard DeepSeek V3.1 offering is limited to 131K input context with 7K completion tokens;
+      the extended-context variant (DeepSeek V3.1-cb) has 32K completion tokens but only 32K
+      input context, constraining long-document and agentic use cases. (4) SN50 production
+      hardware is not yet fully commercially available at the run date. (5) No public compliance
+      certifications (SOC 2, FedRAMP, ISO 27001) are listed on the SambaNova website; security
+      posture relies on customer-facing controls (data-not-logged policy, on-premises deployment
+      options) rather than third-party attestations.
+
+      Strategic risks include: (a) SambaNova's enterprise-focus sales model involves long
+      procurement and security review cycles, which limits scalability relative to GPU clouds
+      and developer-friendly API competitors; (b) benchmark claims for both SN40L and SN50 are
+      predominantly vendor-controlled, and independent third-party validation remains limited;
+      (c) Nvidia's continued improvement in memory bandwidth (Blackwell B200: 192 GB HBM3e,
+      8 TB/s bandwidth) may narrow the inference latency gap as GPU software batching improves;
+      (d) the Intel collaboration creates a dependency on Intel supply chain and sales execution
+      for a significant portion of the enterprise go-to-market.
+    claimRefs:
+      - CE036
+      - CE037
+      - CE038
+      - CE039
+      - CE040
+      - CE041
+
+tables:
+  - id: TE001
+    title: "SambaNova Product Module and Asset Matrix"
+    columns:
+      - "Module / Product"
+      - "Primary User"
+      - "Status / Maturity"
+      - "Key Differentiation"
+      - "Diligence Gap"
+    rows:
+      - ["SN40L RDU chip (4th gen)", "Enterprise / government on-prem buyers", "GA — shipped since 2023, production deployments at Argonne, Softbank, Lawrence Livermore", "Three-tier SRAM/HBM/DDR memory; 520 MB on-chip SRAM per chip; enables full-precision 405B inference", "Independent wafer-level yield / procurement terms not disclosed"]
+      - ["SN50 RDU chip (5th gen)", "Agentic AI inference deployments", "Announced Feb 2026; H2 2026 production target; SoftBank as first customer", "5× compute vs SN40L; 4× network bandwidth; 256-chip interconnect; 10T param capacity", "No independent benchmark validation yet; production timeline unconfirmed"]
+      - ["SambaRack", "Data center operators, sovereign AI programs", "GA — 16 SN40/SN50 chips per rack; 10–20 kW, air-cooled", "Air-cooling with no liquid infrastructure; integrates with existing data center thermal envelopes", "Rack-level pricing and lead times not publicly disclosed"]
+      - ["SambaStack (on-prem full stack)", "Enterprises with data residency / compliance requirements", "GA — includes hardware, SambaFlow software, model bundles; 90-day deployment SLA", "Full-stack from chip to pre-trained model; hot-swap model bundles at inference time; 4× energy savings vs GPUs claimed", "No third-party security certifications (SOC 2, FedRAMP, ISO 27001) publicly listed"]
+      - ["SambaCloud (public API)", "Developers, AI-native companies, enterprises exploring inference", "GA — launched Sept 2024; OpenAI-compatible; free tier + Developer + Enterprise tiers", "132 t/s on Llama 3.1 405B (full 16-bit); only provider offering DeepSeek R1 671B at full precision at production speed", "Model catalog depth (~10 models) and fine-tuning absence limit developer surface versus GPU-cloud alternatives"]
+      - ["SambaManaged (managed cloud)", "Organizations wanting inference-as-a-service in controlled environments", "GA — available via AWS Marketplace; SambaNova-operated hardware at customer or partner facility", "Combines on-prem data sovereignty with managed operations; 90-day deployment", "Uptime SLA terms, geographic availability, and pricing not fully public"]
+    notes: "Status reflects information available as of May 2026. SN50 production availability is vendor-stated H2 2026 and unconfirmed by independent sources. Pricing for SambaStack, SambaRack, and SambaManaged requires direct sales engagement and is not publicly listed."
+    claimRefs:
+      - CE001
+      - CE003
+      - CE007
+      - CE014
+      - CE016
+
+  - id: TE002
+    title: "Customer Workflow and Use-Case Coverage Table"
+    columns:
+      - "User Job / Use Case"
+      - "Current Workflow Pain"
+      - "SambaNova Solution"
+      - "Measurable Benefit"
+      - "Limitation"
+    rows:
+      - ["Enterprise large-model inference (405B–671B)", "GPU providers require quantization (FP4/INT8), reducing accuracy; single-user latency >100 sec for 405B on H100", "SambaCloud or SambaStack with SN40L/SN50 keeping full-precision weights in DDR tier", "Llama 3.1 405B at 132 t/s (full 16-bit); DeepSeek R1 671B at 231–255 t/s; no accuracy degradation", "Context window limits (131K for DeepSeek V3.1 standard); no fine-tuning API; model catalog limited to ~10 models"]
+      - ["Agentic / multi-step reasoning workflows", "GPU inference latency stacks up across agent turns; 1000-token response at 50 t/s takes 20 sec vs 1 sec at 1000 t/s", "SambaCloud API with fast token generation; SN50 agentic caching; multi-model resident memory", "70B model at 461 t/s enables agentic loop latency below human perception threshold; SN50 targets 895 t/s", "SN50 hardware not at full production availability as of run date; agentic orchestration requires external frameworks (LangChain, CrewAI)"]
+      - ["Sovereign / regulated AI deployment", "Data cannot leave on-premises or national jurisdiction; GPU cloud APIs insufficient for GDPR, ITAR, or national AI requirements", "SambaStack on-premises or SambaManaged in controlled facility; SambaCloud APAC hosted by SoftBank in Japan", "Full model ownership; exportable model weights; air-cooled hardware deployable in existing data centers", "No public SOC 2 / FedRAMP / ISO 27001 certifications; compliance attestations must be obtained through direct audit"]
+      - ["Scientific research / large-scale simulation", "HPC centers need fast inference on large foundation models for science workflows (climate, drug discovery, fusion)", "SambaNova DataScale SN40L inference cluster at ALCF AI Testbed; 16 RDUs for AuroraGPT fine-tuning and evaluation", "Researchers can rapidly evaluate and adjust AI models; instant model switching vs multi-minute GPU reload", "Access requires proposal submission; ALCF AI Testbed usage queuing and prioritization apply"]
+    notes: "Benefits are from vendor claims or vendor-sponsored benchmarks except where cited as Artificial Analysis independent data. Independent validation of agentic workflow latency improvements and SN50 claims is limited as of the run date."
+    claimRefs:
+      - CE022
+      - CE023
+      - CE018
+      - CE019
+
+  - id: TE003
+    title: "Technology and Operating Architecture Table"
+    columns:
+      - "Layer / Component"
+      - "Role"
+      - "Key Dependency"
+      - "Risk"
+    rows:
+      - ["SN40L / SN50 RDU chip", "Core compute and inference execution; dataflow-based operator fusion", "TSMC fabrication (5 nm for SN40L; process node for SN50 not publicly confirmed)", "Foundry concentration at TSMC; geopolitical risk to advanced node allocation"]
+      - ["On-chip SRAM (520 MB per SN40L chip)", "Holds active weights for immediate computation; eliminates repeated DDR/HBM fetches for fused operations", "Custom SRAM cell design; tightly coupled to RDU microarchitecture", "SRAM density limits scalability of on-chip tier; future models may require larger SRAM budgets"]
+      - ["HBM tier (64 GB per chip, SN40L-16 config)", "Active model weight buffer between SRAM and DDR; high-bandwidth access for layers in flight", "HBM supply from SK Hynix / Samsung / Micron; constrained by industry-wide HBM demand", "HBM supply constraints can affect system availability; SambaNova uses less HBM per chip than H100 by design"]
+      - ["DDR DRAM tier (768 GB per chip, SN40L-16)", "Capacity-tier storage for hundreds of models simultaneously; enables microsecond hot-swap to HBM", "Standard DDR DRAM supply; commodity market, lower supply risk than HBM", "Cache miss performance impact if model is not prefetched from DDR to HBM; eviction policy proprietary"]
+      - ["SambaFlow compiler", "Compiles PyTorch / standard ML graphs to RDU dataflow programs; operator fusion; spatial layout optimization", "MLIR compiler infrastructure; SambaNova proprietary compiler passes", "Custom compiler creates vendor lock-in; model portability from SambaNova hardware to GPU requires recompilation or fallback"]
+      - ["SambaCloud API infrastructure", "OpenAI-compatible API gateway; rate limiting, auth, model routing, streaming", "Third-party hosting (SoftBank in APAC; colocation partners in US/EU)", "API outages tied to partner data center reliability; no public SLA for free/developer tiers"]
+    notes: "TSMC process node for SN50 is not confirmed in public documentation. HBM per-chip figures are for the SN40L-16 configuration per the Weicloud datasheet; SN50 HBM configuration is not publicly specified. SambaFlow compiler details are proprietary."
+    claimRefs:
+      - CE001
+      - CE004
+      - CE005
+      - CE009
+
+  - id: TE004
+    title: "Trust, Quality, and Compliance Controls Table"
+    columns:
+      - "Control / Certification"
+      - "Status"
+      - "Scope"
+      - "Gap / Diligence Ask"
+    rows:
+      - ["Data privacy (cloud API)", "Company-stated: API does not collect or log user prompts", "SambaCloud public API only; enterprise tier may have separate agreements", "No third-party attestation; requires trust in vendor's infrastructure controls; independent audit not publicly confirmed"]
+      - ["On-premises data sovereignty", "Supported — SambaStack and SambaManaged deploy in customer-controlled facilities; model weights exportable", "All on-prem products; air-gap deployment possible per vendor statements", "Air-gap deployment procedures and tooling not publicly documented; requires vendor engagement"]
+      - ["SOC 2 / ISO 27001 / FedRAMP", "Not publicly listed on sambanova.ai as of May 2026", "Unknown — not stated for cloud or on-prem products", "Significant gap for regulated enterprise and government buyers; must be obtained via direct diligence with SambaNova security team"]
+      - ["EU GDPR compliance (sovereign deployments)", "Claimed — Infercom (Germany/Luxembourg) deployment described as GDPR and EU AI Act compliant per Infercom announcements", "EU sovereign cloud deployments operated by Infercom", "GDPR compliance relies on Infercom as the data processor; SambaNova's own DPA terms not publicly available"]
+    notes: "Compliance information is based on public statements and partner announcements as of May 2026. Regulatory buyers should obtain formal compliance documentation and data processing agreements directly from SambaNova."
+    claimRefs:
+      - CE020
+      - CE038
+
+  - id: TE005
+    title: "Product Generation and Roadmap Table"
+    columns:
+      - "Date / Stage"
+      - "Product / Milestone"
+      - "Status"
+      - "Implication"
+      - "Source"
+    rows:
+      - ["2017", "SambaNova Systems founded; SN10/SN20 first-gen RDU development begins", "Historical", "Early RDU generations established dataflow architecture fundamentals", "Company overview / press releases"]
+      - ["~2020–2021", "SN30 RDU — training-focused cluster; deployed at Argonne ALCF AI Testbed as training cluster", "Historical — in production; training use case", "SN30 established national lab credibility; inference capability limited on this generation", "Argonne ALCF press release"]
+      - ["2023", "SN40L RDU (4th gen) — inference-optimized chip with three-tier memory; DataScale SN40L systems ship to enterprise and government customers", "GA — in production", "Enabled full-precision large-model inference; benchmark differentiation vs H100 established", "IEEE Micro paper; SambaNova datasheet; BusinessWire cloud launch announcement"]
+      - ["Sept 2024", "SambaNova Cloud (SambaCloud) public API launch — Llama 3.1 405B at 132 t/s; 70B at 461 t/s; free tier, Developer, Enterprise tiers", "GA — in production", "Opened developer market; independently benchmarked by Artificial Analysis", "BusinessWire press release Sept 2024"]
+      - ["Feb 2026", "SN50 RDU (5th gen) announced — 5× compute vs SN40L; 4× network bandwidth; 256-chip interconnect; 10T+ params; $350M Series E closed", "Announced — H2 2026 shipment target; SoftBank as first customer", "Next-generation agentic inference capability; production availability unconfirmed at run date", "BusinessWire SN50 press release Feb 2026; SambaNova press page"]
+      - ["Apr 2026", "Intel-SambaNova heterogeneous inference blueprint — GPUs for prefill, RDUs for decode, Xeon 6 CPUs for agentic tools", "Announced — H2 2026 deployment target", "First production-ready multi-vendor heterogeneous inference architecture; expands addressable market via Intel channels", "BusinessWire Intel Blueprint Apr 2026"]
+      - ["H2 2026 (target)", "SN50 commercial shipments; Intel-powered SambaCloud expansion; SambaRack SN50 general availability", "Planned — not yet confirmed", "Critical milestone for revenue growth and SN50 benchmark validation in production", "Vendor stated; not independently confirmed"]
+    notes: "SN10/SN20 generation dates are approximate; SambaNova has not published a public chip-generation chronology. SN50 production dates and Intel blueprint deployment timeline are vendor-stated targets as of May 2026."
+    claimRefs:
+      - CE003
+      - CE007
+      - CE023
+      - CE036
+
+figures:
+  - id: FE001
+    title: "SambaNova Full-Stack Product Architecture"
+    type: "stack"
+    layout: "standard"
+    summary: "Five-layer architecture from RDU silicon to deployed AI applications, showing how SambaNova's vertically integrated stack differentiates at each tier."
+    data:
+      layers:
+        - label: "Chip Layer"
+          detail: "Proprietary RDU silicon with three-tier memory (SRAM + HBM + DDR). SN40L (4th gen, GA) and SN50 (5th gen, announced Feb 2026, H2 2026 shipment target) implement Reconfigurable Dataflow Architecture (RDA) for continuous pipeline execution."
+          items:
+            - "SN40L RDU (4th gen, 520 MB SRAM/chip, 64 GB HBM/chip, 768 GB DDR/chip, 3-tier memory, TSMC 5nm)"
+            - "SN50 RDU (5th gen, 5× compute vs SN40L, 4× network bandwidth, 256-chip interconnect, 10T+ params)"
+        - label: "System Layer"
+          detail: "SambaRack integrates 16 RDU chips per rack at 10–20 kW with air-cooling only. Multi-rack clusters scale to 256 SN50 accelerators over a multi-terabyte-per-second fabric. No liquid cooling infrastructure required."
+          items:
+            - "SambaRack SN40L: 16 chips/rack, 10 kW, 400/200 GbE networking, air-cooled"
+            - "SambaRack SN50: 16 chips/rack, 20 kW, air-cooled, H2 2026 GA target"
+        - label: "Compiler / Runtime Layer"
+          detail: "SambaFlow compiles PyTorch graphs to RDU dataflow programs using spatial programming and operator fusion, eliminating GPU kernel-scheduling overhead. DDR-tier model scheduler enables microsecond model hot-swapping."
+          items:
+            - "SambaFlow compiler: MLIR-based, operator fusion, spatial layout, PyTorch frontend"
+            - "Model hot-swap scheduler: microsecond switching between resident models via DDR tier"
+        - label: "Platform Layer"
+          detail: "Three commercial tiers share the same hardware and SambaFlow software. SambaStack targets on-premises data-residency requirements; SambaManaged adds turnkey operations; SambaCloud is a developer-accessible public API."
+          items:
+            - "SambaStack: on-prem full stack (SambaRack + SambaFlow + model bundles), 90-day deployment SLA"
+            - "SambaManaged: SambaNova-operated service, available via AWS Marketplace"
+            - "SambaCloud: public OpenAI-compatible API at cloud.sambanova.ai, free tier + Developer + Enterprise"
+        - label: "Application / Model Layer"
+          detail: "SambaCloud hosts ~10 models as of May 2026, all at full 16-bit precision. Developer surface includes LangChain, LlamaIndex, and ~50 integrations. SambaLingo multilingual checkpoints are on HuggingFace."
+          items:
+            - "Models: Llama 3.1/3.3/4, DeepSeek V3.1/V3.2/R1, MiniMax M2.5/M2.7, gpt-oss-120b, Gemma 3"
+            - "Integrations: LangChain (langchain-sambanova), LlamaIndex, CrewAI, AutoGen, OpenRouter, n8n, ~50 total"
+            - "Developer tooling: ai-starter-kit (GitHub), sambanova SDK (PyPI), 32 model checkpoints (HuggingFace)"
+    approximationNotes: "SN50 specifications at chip layer are vendor-announced; independent confirmation pending production shipment. SambaCloud model catalog is as of May 2026 and changes frequently."
+    claimRefs:
+      - CE001
+      - CE003
+      - CE007
+      - CE012
+      - CE034
+
+  - id: FE002
+    title: "Enterprise Customer Deployment Workflow"
+    type: "flow"
+    layout: "standard"
+    summary: "How an enterprise customer evaluates, acquires, and deploys SambaNova inference infrastructure, from API trial to production on-premises."
+    data:
+      nodes:
+        - id: "n1"
+          label: "Developer/Evaluator: SambaCloud Free Tier"
+          detail: "Sign up at cloud.sambanova.ai, no credit card; $5 free credits; OpenAI-compatible API; test large-model inference speed"
+        - id: "n2"
+          label: "Enterprise API: SambaCloud Enterprise Tier"
+          detail: "Higher rate limits; production workloads; token-based billing; $0.22–$3.00/1M input tokens depending on model"
+        - id: "n3"
+          label: "Procurement Evaluation: SambaStack/SambaManaged"
+          detail: "Direct sales engagement; infosec review (typically months per SambaNova SVP); sizing and deployment planning"
+        - id: "n4"
+          label: "On-Prem Deployment: SambaStack"
+          detail: "90-day deployment SLA; SambaRack installed in customer data center; SambaFlow pre-configured; model bundles loaded"
+        - id: "n5"
+          label: "Managed Option: SambaManaged"
+          detail: "SambaNova operates hardware in customer facility or partner colo; available via AWS Marketplace"
+        - id: "n6"
+          label: "Production Inference"
+          detail: "Low-latency inference; microsecond model hot-swap; supports hundreds of concurrent model variants"
+      edges:
+        - from: "n1"
+          to: "n2"
+          label: "Upgrade for production rate limits"
+        - from: "n2"
+          to: "n3"
+          label: "Enterprise converts to on-prem for data sovereignty"
+        - from: "n3"
+          to: "n4"
+          label: "Direct hardware purchase path"
+        - from: "n3"
+          to: "n5"
+          label: "Managed service path"
+        - from: "n4"
+          to: "n6"
+          label: "Production deployment"
+        - from: "n5"
+          to: "n6"
+          label: "Managed production deployment"
+    approximationNotes: "Procurement timeline (months for infosec review) is stated by SambaNova SVP of Product in EE Times interview; not independently measured."
+    claimRefs:
+      - CE014
+      - CE016
+      - CE017
+
+  - id: FE003
+    title: "Critical Dependency Map"
+    type: "dag"
+    layout: "standard"
+    summary: "Key external dependencies for SambaNova's chip supply, manufacturing, cloud infrastructure, and software ecosystem."
+    data:
+      nodes:
+        - id: "d1"
+          label: "TSMC (5 nm foundry)"
+          detail: "Fabricates SN40L chips; advanced node foundry with geopolitical concentration risk in Taiwan"
+        - id: "d2"
+          label: "HBM suppliers (SK Hynix / Samsung / Micron)"
+          detail: "High-bandwidth memory supply for SN40L on-package memory; industry-wide supply constraint"
+        - id: "d3"
+          label: "DDR DRAM suppliers"
+          detail: "Commodity DRAM for capacity tier; lower supply risk than HBM"
+        - id: "d4"
+          label: "SN40L / SN50 RDU Chip"
+          detail: "Core compute; combines TSMC silicon + HBM packaging + DDR interface"
+        - id: "d5"
+          label: "SambaFlow Compiler"
+          detail: "Proprietary; depends on MLIR / PyTorch frontend; creates vendor lock-in for model portability"
+        - id: "d6"
+          label: "Intel (Xeon 6 + GPUs)"
+          detail: "Strategic partner; supplies host CPUs and GPUs for heterogeneous inference blueprint; also an investor"
+        - id: "d7"
+          label: "SambaRack / SambaStack System"
+          detail: "Integrates chip, memory, networking, SambaFlow; delivered to enterprise customers"
+        - id: "d8"
+          label: "SambaCloud API"
+          detail: "Depends on colocation partners (SoftBank APAC, US/EU partners) for hosting and reliability"
+      edges:
+        - from: "d1"
+          to: "d4"
+          label: "Fabricates RDU silicon"
+        - from: "d2"
+          to: "d4"
+          label: "On-package HBM integration"
+        - from: "d3"
+          to: "d4"
+          label: "DDR DRAM capacity tier"
+        - from: "d4"
+          to: "d7"
+          label: "Core compute module"
+        - from: "d5"
+          to: "d7"
+          label: "Software runtime layer"
+        - from: "d6"
+          to: "d7"
+          label: "Host CPU and network (heterogeneous blueprint)"
+        - from: "d7"
+          to: "d8"
+          label: "Powers cloud API infrastructure"
+    approximationNotes: "TSMC as SN40L foundry is referenced in IEEE Micro paper and industry reporting; SN50 foundry and process node not confirmed in public documentation."
+    claimRefs:
+      - CE004
+      - CE005
+      - CE039
+
+  - id: FE004
+    title: "Product Capability and Maturity Matrix"
+    type: "matrix"
+    layout: "wide"
+    summary: "Maturity assessment across five capability dimensions for SambaNova's three core product tiers."
+    data:
+      columns:
+        - "SambaCloud API"
+        - "SambaStack (on-prem)"
+        - "SambaManaged"
+      rows:
+        - label: "Large-model inference (405B+)"
+          values:
+            - label: "High"
+              tone: positive
+              detail: "GA; 132+ t/s on Llama 3.1 405B at full 16-bit precision; only cloud provider at this scale without quantization"
+            - label: "High"
+              tone: positive
+              detail: "Same SN40L/SN50 hardware capability; customer installs on-prem"
+            - label: "High"
+              tone: positive
+              detail: "Same hardware, SambaNova-operated; same inference capability"
+        - label: "Model catalog breadth"
+          values:
+            - label: "Low"
+              tone: negative
+              detail: "~10 models; no image/video/TTS generation; limited vs GPU-cloud competitors at 50–200 models"
+            - label: "Medium"
+              tone: neutral
+              detail: "Customer brings own checkpoints compilable via SambaFlow; broader catalog possible"
+            - label: "Low–Medium"
+              tone: neutral
+              detail: "Depends on SambaStack configuration; not self-service for new models"
+        - label: "Fine-tuning availability"
+          values:
+            - label: "None"
+              tone: negative
+              detail: "No public fine-tuning API; significant gap vs Together AI and Fireworks AI for developer market"
+            - label: "Present"
+              tone: neutral
+              detail: "Customers can fine-tune on SambaStack hardware via SambaFlow; requires on-prem hardware investment"
+            - label: "None"
+              tone: negative
+              detail: "Managed service does not include fine-tuning as a cloud product"
+        - label: "Data sovereignty / air-gap"
+          values:
+            - label: "Low"
+              tone: negative
+              detail: "Data transits SambaNova cloud; no third-party security certifications (SOC 2, ISO 27001) published"
+            - label: "High"
+              tone: positive
+              detail: "Customer-controlled facility; model weights exportable; air-gap deployable per vendor statements"
+            - label: "Medium"
+              tone: neutral
+              detail: "Controlled facility operated by SambaNova; DPA terms and certifications not fully public"
+        - label: "Developer ecosystem maturity"
+          values:
+            - label: "Medium"
+              tone: neutral
+              detail: "OpenAI-compatible; 50+ integrations; GitHub starter kits; PyPI SDK; lower than CUDA/PyTorch ecosystem"
+            - label: "Medium"
+              tone: neutral
+              detail: "SambaFlow requires learning; fewer tutorials than GPU-native alternatives"
+            - label: "Medium"
+              tone: neutral
+              detail: "Follows SambaStack API surface; same developer tooling"
+        - label: "Agentic AI readiness"
+          values:
+            - label: "Medium"
+              tone: neutral
+              detail: "Fast token generation (461–895 t/s); SN40L GA; SN50 with agentic caching pending H2 2026"
+            - label: "Medium"
+              tone: neutral
+              detail: "Multi-model resident memory enables agent orchestration; SN50 production pending"
+            - label: "Medium"
+              tone: neutral
+              detail: "Same hardware capability as SambaStack; same SN50 timeline dependency"
+    approximationNotes: "Maturity ratings are qualitative assessments based on public documentation, benchmarks, and analyst reviews as of May 2026. 'High' = production-ready with independent evidence; 'Medium' = functional but gaps; 'Low' = missing or unverified."
+    claimRefs:
+      - CE028
+      - CE037
+      - CE038
+
+callouts:
+  - calloutType: "strength"
+    title: "Best-in-Class Inference Speed on Large Models"
+    body: >
+      SambaNova's three-tier memory architecture is structurally well-suited to inference at 70B–671B
+      parameter scale where GPU memory bandwidth becomes the bottleneck. Independent Artificial Analysis
+      benchmarks confirm 132 t/s on Llama 3.1 405B at full 16-bit precision—the fastest on record at
+      SambaCloud's September 2024 launch—and SambaNova is currently the only cloud provider offering
+      DeepSeek R1 671B at full precision at production speed. This is a defensible technical advantage
+      rooted in architecture, not just optimization.
+    claimRefs:
+      - CE022
+      - CE024
+      - CE027
+
+  - calloutType: "risk"
+    title: "Vendor-Controlled Benchmarks and Narrow Product Surface"
+    body: >
+      All published SN50 performance figures cite SemiAnalysis InferenceX (a vendor-engaged firm)
+      rather than open-methodology benchmarks. SambaCloud's ~10-model catalog, absence of fine-tuning,
+      and context window ceilings on large models are structural product gaps that reduce its
+      addressable developer market relative to GPU-cloud competitors. Buyers should require
+      independent hardware benchmarks and detailed SLA/compliance documentation before
+      committing to large-scale inference contracts.
+    claimRefs:
+      - CE029
+      - CE037
+      - CE040
+
+  - calloutType: "insight"
+    title: "Air-Cooled Rack as Sovereign AI Enabler"
+    body: >
+      The SambaRack's 10–20 kW air-cooled form factor—operating in standard data center
+      thermal and power envelopes—differentiates SambaNova from liquid-cooled GPU alternatives
+      (DGX H100/H200 systems require 10–30 kW of liquid cooling infrastructure per system)
+      in the sovereign AI market. Sovereign deployments in Japan, Germany, Australia, and the UK
+      (and the upcoming SN50 deployment at SoftBank) validate this as a real procurement driver,
+      not marketing.
+    claimRefs:
+      - CE010
+      - CE021
+      - CE036
+
+localEvidence:
+  searchQueries:
+    - query: "SambaNova Systems SN40L RDU architecture DataScale product specifications 2026"
+      engine: "bing"
+      hits: 10
+      retainedSourceRefs:
+        - SE003
+        - SE011
+        - SE015
+        - SE010
+    - query: "SambaNova Systems Cloud API inference speed Llama 3.1 405B tokens per second 2026"
+      engine: "bing"
+      hits: 10
+      retainedSourceRefs:
+        - SE012
+        - SE020
+    - query: "SambaNova SambaFlow software stack SambaNova Cloud API developer documentation 2026"
+      engine: "bing"
+      hits: 8
+      retainedSourceRefs:
+        - SE007
+        - SE008
+        - SE017
+        - SE018
+    - query: "SambaNova Systems benchmark comparison GPU limitations criticism vendor-controlled benchmarks 2025 2026"
+      engine: "bing"
+      hits: 8
+      retainedSourceRefs:
+        - SE022
+        - SE021
+        - SE016
+        - SE013
+    - query: "SambaNova SN50 chip announced 2026 specifications performance"
+      engine: "bing"
+      hits: 10
+      retainedSourceRefs:
+        - SE013
+        - SE014
+        - SE016
+    - query: "SambaNova SambaStack SambaManaged deployment models supported security compliance enterprise 2025 2026"
+      engine: "bing"
+      hits: 6
+      retainedSourceRefs:
+        - SE024
+        - SE001
+        - SE002
+    - query: "SambaNova GitHub developer signal starter kit HuggingFace models PyPI SDK"
+      engine: "bing"
+      hits: 5
+      retainedSourceRefs:
+        - SE017
+        - SE018
+        - SE019
+    - query: "SambaNova customer deployment government lab research 2025 2026"
+      engine: "bing"
+      hits: 5
+      retainedSourceRefs:
+        - SE025
+    - query: "SambaNova Intel heterogeneous inference blueprint partnership announced 2026"
+      engine: "bing"
+      hits: 6
+      retainedSourceRefs:
+        - SE006
+        - SE014
+    - query: "SambaNova SN30 SN40L generation comparison dataflow architecture training inference"
+      engine: "bing"
+      hits: 5
+      retainedSourceRefs:
+        - SE025
+        - SE009
+
+  researchQuestions:
+    - id: QE001
+      question: "What are the hardware specifications of the SambaNova SN40L chip, including memory configuration?"
+      type: quantification
+      targets:
+        - "contentRequirements/2"
+        - "plannedTables/technology-operating-architecture-table"
+      status: answered
+
+    - id: QE002
+      question: "How does the RDU reconfigurable dataflow architecture differ mechanically from GPU SIMD execution?"
+      type: mechanism
+      targets:
+        - "contentRequirements/2"
+      status: answered
+
+    - id: QE003
+      question: "What inference throughput does SambaNova Cloud achieve for Llama 3.1 405B and 70B at full precision?"
+      type: quantification
+      targets:
+        - "contentRequirements/4"
+      status: answered
+
+    - id: QE004
+      question: "What is the complete model catalog currently supported on SambaCloud as of May 2026?"
+      type: enumeration
+      targets:
+        - "contentRequirements/0"
+        - "plannedTables/workflow-use-case-table"
+      status: answered
+
+    - id: QE005
+      question: "What deployment modes does SambaNova offer for enterprise on-premises inference?"
+      type: mechanism
+      targets:
+        - "contentRequirements/3"
+        - "plannedTables/product-module-asset-matrix"
+      status: answered
+
+    - id: QE006
+      question: "How does SambaNova's three-tier memory architecture compare to GPU HBM-only designs for large-model inference?"
+      type: comparison
+      targets:
+        - "contentRequirements/4"
+      status: answered
+
+    - id: QE007
+      question: "What are the announced specifications and performance claims for the SN50 fifth-generation RDU chip?"
+      type: quantification
+      targets:
+        - "contentRequirements/1"
+        - "plannedTables/roadmap-release-development-stage-table"
+      status: answered
+
+    - id: QE008
+      question: "Are SambaNova's inference benchmark claims independently verified, or are they primarily vendor-controlled?"
+      type: adverse
+      targets:
+        - "contentRequirements/4"
+      status: answered
+
+    - id: QE009
+      question: "What developer tools, SDKs, and open-source resources does SambaNova provide for API integration?"
+      type: enumeration
+      targets:
+        - "contentRequirements/3"
+      status: answered
+
+    - id: QE010
+      question: "What is the current SambaCloud pricing structure and how does it compare to GPU-cloud alternatives?"
+      type: freshness
+      targets:
+        - "contentRequirements/0"
+      status: answered
+
+    - id: QE011
+      question: "What key partnerships has SambaNova announced or launched in 2026 for product distribution?"
+      type: freshness
+      targets:
+        - "contentRequirements/3"
+      status: answered
+
+    - id: QE012
+      question: "Does SambaStack support air-gapped and fully offline on-premises deployment?"
+      type: verification
+      targets:
+        - "contentRequirements/3"
+      status: answered
+
+    - id: QE013
+      question: "How does the SN30 generation differ from SN40L, and what is the use case boundary between training and inference?"
+      type: comparison
+      targets:
+        - "contentRequirements/1"
+        - "plannedTables/roadmap-release-development-stage-table"
+      status: answered
+
+    - id: QE014
+      question: "What is the maximum number of model parameters a single SambaRack node can serve?"
+      type: quantification
+      targets:
+        - "contentRequirements/2"
+      status: answered
+
+    - id: QE015
+      question: "How does the SambaFlow compiler achieve operator fusion and what performance gain does it provide versus GPU kernel scheduling?"
+      type: mechanism
+      targets:
+        - "contentRequirements/2"
+        - "plannedTables/technology-operating-architecture-table"
+      status: answered
+
+    - id: QE016
+      question: "What are the known technical limitations and product gaps of the SambaNova platform relative to GPU-cloud competitors?"
+      type: adverse
+      targets:
+        - "contentRequirements/4"
+      status: answered
+
+    - id: QE017
+      question: "Is SambaNova's model catalog breadth competitive with GPU-cloud inference providers?"
+      type: comparison
+      targets:
+        - "contentRequirements/0"
+      status: answered
+
+    - id: QE018
+      question: "What security and compliance certifications does SambaNova hold for its cloud and on-premises products?"
+      type: verification
+      targets:
+        - "contentRequirements/5"
+        - "plannedTables/trust-quality-compliance-table"
+      status: unresolved
+
+    - id: QE019
+      question: "When will the SN50 chip become commercially available and what customers are confirmed for 2026 deployment?"
+      type: freshness
+      targets:
+        - "contentRequirements/1"
+        - "plannedTables/roadmap-release-development-stage-table"
+      status: partial
+
+    - id: QE020
+      question: "How does SambaNova's DDR-tier memory enable microsecond model hot-swapping in multi-tenant inference deployments?"
+      type: mechanism
+      targets:
+        - "contentRequirements/2"
+      status: answered
+
+    - id: QE021
+      question: "What is the Composition of Experts (CoE) architecture and how does the SN40L enable it at scale?"
+      type: mechanism
+      targets:
+        - "contentRequirements/2"
+      status: answered
+
+    - id: QE022
+      question: "What are all the deployment options for SambaNova products beyond SambaStack, including managed and cloud variants?"
+      type: enumeration
+      targets:
+        - "contentRequirements/3"
+        - "plannedTables/product-module-asset-matrix"
+      status: answered
+
+    - id: QE023
+      question: "What is the Intel-SambaNova heterogeneous inference blueprint and how does it divide compute roles between GPUs, RDUs, and CPUs?"
+      type: mechanism
+      targets:
+        - "contentRequirements/2"
+      status: answered
+
+    - id: QE024
+      question: "Does SambaNova's public SambaCloud API support model fine-tuning?"
+      type: verification
+      targets:
+        - "contentRequirements/0"
+      status: answered
+
+    - id: QE025
+      question: "What is the SambaNova chip generation timeline from SN30 through SN40L to SN50?"
+      type: enumeration
+      targets:
+        - "contentRequirements/1"
+        - "plannedTables/roadmap-release-development-stage-table"
+      status: answered
+
+  sources:
+    - id: SE001
+      publisher: "SambaNova Systems"
+      title: "SambaRack | Purpose-Built AI Rack for Model Deployment"
+      url: "https://sambanova.ai/products/sambarack"
+      date: "2026-05-27"
+      accessDate: "2026-05-27"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["SambaRack", "hardware", "on-premises", "air-cooling", "SN50"]
+      keyQuote: "SambaRack is a high-performance AI rack system designed to deploy and run large AI models efficiently in data centers. It integrates hardware, networking, and software into a single self-contained system built around SambaNova RDU chips."
+
+    - id: SE002
+      publisher: "SambaNova Systems"
+      title: "SambaStack | Full-Stack Enterprise AI Platform"
+      url: "https://sambanova.ai/products/sambastack"
+      date: "2026-05-27"
+      accessDate: "2026-05-27"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["SambaStack", "full-stack", "on-premises", "energy efficiency", "model bundles"]
+      keyQuote: "SambaStack allows your team to fully configure the workloads you want to run on SambaRack systems. Each rack can run pre-configured model bundles and hot-swap between model bundles at inference time."
+
+    - id: SE003
+      publisher: "SambaNova Systems"
+      title: "RDU | Next-Gen AI Chip for Inference at Scale"
+      url: "https://sambanova.ai/products/rdu-ai-chips"
+      date: "2026-05-27"
+      accessDate: "2026-05-27"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["SN50", "SN40L", "RDU", "dataflow", "three-tier memory", "agentic AI"]
+      keyQuote: "The SN50 RDU (Reconfigurable Dataflow Unit) is SambaNova's fifth-generation AI inference processor, designed specifically for large-scale, agentic workloads."
+
+    - id: SE004
+      publisher: "SambaNova Systems"
+      title: "Sambanova vs Nvidia: AI Chipsets Compared"
+      url: "https://sambanova.ai/blog/the-purpose-built-architecture"
+      date: "2024-01-01"
+      accessDate: "2026-05-27"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["RDA", "dataflow architecture", "memory architecture", "GPU comparison", "ISA"]
+      keyQuote: "The SambaNova Reconfigurable Dataflow Architecture (RDA) creates custom processing pipelines that allow data to flow through the complete computation graph. This minimizes data movement and results in extremely high hardware utilization."
+
+    - id: SE005
+      publisher: "SambaNova Systems"
+      title: "AI Solutions for Government & Public Sector"
+      url: "https://sambanova.ai/solutions/government-public-sector"
+      date: "2026-05-27"
+      accessDate: "2026-05-27"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["sovereign AI", "government", "SoftBank", "Japan", "APAC"]
+
+    - id: SE006
+      publisher: "SambaNova Systems"
+      title: "SambaNova Unveils Fastest Chip for Agentic AI, Collaborates with Intel, and Raises $350M+"
+      url: "https://sambanova.ai/press/sambanova-unveils-fastest-chip-for-agentic-ai-collaborates-with-intel-and-raises-350m"
+      date: "2026-02-24"
+      accessDate: "2026-05-27"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["SN50", "Intel partnership", "SoftBank", "Series E", "agentic AI", "2026"]
+      keyQuote: "The SN50 delivers five times more compute per accelerator and four times more network bandwidth than the previous generation."
+
+    - id: SE007
+      publisher: "SambaNova Systems"
+      title: "SambaNova Developer Guide - SambaNova Documentation"
+      url: "https://docs.sambanova.ai/docs/en/get-started/overview"
+      date: "2026-05-27"
+      accessDate: "2026-05-27"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["SambaFlow", "SambaCloud", "SambaStack", "developer documentation", "API"]
+
+    - id: SE008
+      publisher: "SambaNova Systems"
+      title: "SambaNova API Reference - SambaNova Documentation"
+      url: "https://docs.sambanova.ai/docs/en/api-reference/overview"
+      date: "2026-05-27"
+      accessDate: "2026-05-27"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["API reference", "SambaCloud", "SambaStack", "REST API", "function calling"]
+      keyQuote: "The SambaNova Developer guide and API reference provide the tools you need to build applications using SambaNova as an inference service."
+
+    - id: SE009
+      publisher: "IEEE"
+      title: "Composition of Experts on the SN40L Reconfigurable Dataflow Unit"
+      url: "https://ieeexplore.ieee.org/abstract/document/10609347"
+      date: "2024-07-25"
+      accessDate: "2026-05-27"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics: ["SN40L", "CoE", "Composition of Experts", "three-tier memory", "benchmark", "DGX H100 comparison"]
+      keyQuote: "A single eight-socket SN40L node achieves speedups between 2 and 13× due to aggressive operator fusion over an optimized baseline. The SN40L node deploys Samba-CoE, a 1 trillion-parameter CoE with a 19× smaller machine footprint, speeds up model switching time by 15–31× and achieves an overall speedup of 3.7× over a DGX H100 and 6.6× over a DGX A100."
+
+    - id: SE010
+      publisher: "Mark Gottscho (MICRO 2024 author)"
+      title: "SambaNova SN40L: Scaling the AI Memory Wall with Dataflow and Composition of Experts (MICRO 2024)"
+      url: "https://markgottscho.com/cv/papers/2024_RPrabhakar_Micro.pdf"
+      date: "2024-11-01"
+      accessDate: "2026-05-27"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics: ["SN40L", "dataflow", "three-tier memory", "HBM", "DRAM", "MICRO 2024", "operator fusion"]
+
+    - id: SE011
+      publisher: "Weicloud (SambaNova reseller/partner)"
+      title: "SambaNova DataScale SN40L Product Data Sheet"
+      url: "https://www.weicloud.com.tw/wp-content/uploads/2024/10/SambaNova_DataScale_Data-Sheet_10.08.2_TW.pdf"
+      date: "2024-10-01"
+      accessDate: "2026-05-27"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: partner
+      topics: ["SN40L", "DataScale", "hardware specifications", "memory", "networking", "datasheet"]
+      keyQuote: "DataScale SN40L-8 nodes, each with 8 x Cerulean SN40L Reconfigurable Dataflow Unit (RDU) chips, 512 GB -1 TB of high-bandwidth total memory, and 6 TB -12 TB DRAM total memory"
+
+    - id: SE012
+      publisher: "Business Wire"
+      title: "SambaNova Launches the World's Fastest AI Platform"
+      url: "https://www.businesswire.com/news/home/20240910319006/en/SambaNova-Launches-the-Worlds-Fastest-AI-Platform"
+      date: "2024-09-10"
+      accessDate: "2026-05-27"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: company
+      topics: ["SambaCloud", "Llama 3.1 405B", "132 tokens/sec", "launch", "API", "Artificial Analysis"]
+      keyQuote: "SambaNova Cloud runs Llama 3.1 70B at 461 tokens per second (t/s) and 405B at 132 t/s at full precision."
+
+    - id: SE013
+      publisher: "Business Wire"
+      title: "SambaNova Unveils Fastest Chip for Agentic AI, Collaborates with Intel, and Raises $350M+"
+      url: "https://www.businesswire.com/news/home/20260224971025/en/SambaNova-Unveils-Fastest-Chip-for-Agentic-AI-Collaborates-with-Intel-and-Raises-%24350M"
+      date: "2026-02-24"
+      accessDate: "2026-05-27"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: company
+      topics: ["SN50", "Intel", "SoftBank", "Series E", "$350M", "2026", "agentic AI", "heterogeneous inference"]
+      keyQuote: "The SN50 delivers five times more compute per accelerator and four times more network bandwidth than the previous generation. It links up to 256 accelerators over a multi‑terabyte‑per‑second interconnect."
+
+    - id: SE014
+      publisher: "Business Wire"
+      title: "SambaNova and Intel Announce Blueprint for Heterogeneous Inference: GPUs for Prefill, SambaNova RDUs for Decode, and Intel Xeon 6 CPUs for Agentic Tools"
+      url: "https://www.businesswire.com/news/home/20260408117878/en/SambaNova-and-Intel-Announce-Blueprint-for-Heterogeneous-Inference-GPUs-for-Prefill-SambaNova-RDUs-for-Decode-and-Intel-Xeon-6-CPUs-for-Agentic-Tools"
+      date: "2026-04-08"
+      accessDate: "2026-05-27"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: partner
+      topics: ["Intel", "heterogeneous inference", "Xeon 6", "prefill", "decode", "agentic", "2026", "partnership"]
+      keyQuote: "GPUs handle the highly parallel prefill phase, turning long prompts into key-value caches efficiently. SambaNova RDUs sit alongside Xeon 6 as the dedicated inference fabric for high-throughput, low-latency decode."
+
+    - id: SE015
+      publisher: "EE Times"
+      title: "'Token Wars' Heats Up As Cerebras and SambaNova Enter The Fray"
+      url: "https://www.eetimes.com/token-wars-heats-up-as-cerebras-and-sambanova-enter-the-fray/"
+      date: "2024-09-10"
+      accessDate: "2026-05-27"
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics: ["token speed", "batch size", "SN40L", "GPU bottleneck", "benchmark", "single-user latency", "Artificial Analysis"]
+      keyQuote: "Most of what we do is for a batch size of 1. Batch=1 is important because when individual users are asking questions, you want to get the response as quickly as possible."
+
+    - id: SE016
+      publisher: "BigGo News"
+      title: "SambaNova's SN50 AI Chip Claims 5x Speed, 8x Efficiency Over Nvidia B200, Partners with Intel and SoftBank"
+      url: "https://biggo.com/news/202602251224_SambaNova_SN50_AI_Chip_Launch_with_Intel_and_SoftBank"
+      date: "2026-02-25"
+      accessDate: "2026-05-27"
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: low
+      independence: independent
+      topics: ["SN50", "Nvidia B200", "performance", "SoftBank", "Intel", "2026", "agentic AI"]
+      keyQuote: "According to the company, the SN50 delivers five times the compute performance per accelerator compared to its predecessor. A single SN50 chip reportedly generated 895 tokens per second per user when running a Llama 3.3 70B model, compared to 184 tokens per second on an Nvidia B200."
+
+    - id: SE017
+      publisher: "GitHub / SambaNova Systems"
+      title: "GitHub - sambanova/ai-starter-kit"
+      url: "https://github.com/sambanova/ai-starter-kit"
+      date: "2026-05-27"
+      accessDate: "2026-05-27"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics: ["GitHub", "open-source", "starter kit", "developer tools", "LangChain", "RAG", "function calling", "Python"]
+      keyQuote: "SambaNova AI Starter Kits are a collection of open-source examples and guides designed to facilitate the deployment of AI-driven use cases for both developers and enterprises."
+
+    - id: SE018
+      publisher: "PyPI"
+      title: "sambanova — Python Package Index"
+      url: "https://pypi.org/project/sambanova/"
+      date: "2026-05-27"
+      accessDate: "2026-05-27"
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: independent
+      topics: ["PyPI", "Python SDK", "sambanova package", "async", "streaming", "httpx", "aiohttp"]
+      keyQuote: "The Samba Nova Python library provides convenient access to the Samba Nova REST API from any Python 3.9+ application."
+
+    - id: SE019
+      publisher: "Hugging Face (via Wayback Machine archive)"
+      title: "sambanovasystems (SambaNova) — Hugging Face Organization"
+      url: "https://web.archive.org/web/20260310160325/https://huggingface.co/sambanovasystems"
+      date: "2026-03-10"
+      accessDate: "2026-05-27"
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics: ["HuggingFace", "model checkpoints", "SambaLingo", "multilingual", "open-source models"]
+      keyQuote: "SambaNova provides an integrated generative AI platform, including SambaNova's leading RDU accelerator, software and model management, and pre-trained generative AI checkpoints. models 32"
+
+    - id: SE020
+      publisher: "Artificial Analysis"
+      title: "SambaNova — Intelligence, Performance & Price Analysis"
+      url: "https://artificialanalysis.ai/providers/sambanova"
+      date: "2026-05-27"
+      accessDate: "2026-05-27"
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: high
+      independence: independent
+      topics: ["benchmark", "tokens per second", "latency", "model performance", "pricing", "output speed"]
+      keyQuote: "Analysis of SambaNova's models across key metrics including quality, price, output speed, latency, context window & more."
+
+    - id: SE021
+      publisher: "ChatForest"
+      title: "SambaNova Review: Custom RDU Silicon for Full-Precision Large-Model Inference"
+      url: "https://chatforest.com/reviews/sambanova-rdu-inference-cloud/"
+      date: "2026-05-01"
+      accessDate: "2026-05-27"
+      accessStatus: ok
+      stance: adverse
+      sourceType: review
+      reputationTier: low
+      independence: independent
+      topics: ["RDU review", "limitations", "fine-tuning gap", "model catalog", "pricing", "DeepSeek pricing", "context window limits"]
+      keyQuote: "Limitations: No fine-tuning API. SambaNova has no public fine-tuning service. Narrow model catalog. Approximately 10 models vs 50–200 at competitors. Context window limitations. DeepSeek-V3.1's standard tier is capped at 131K context with only 7K completion tokens."
+
+    - id: SE022
+      publisher: "jamesm.blog"
+      title: "Cerebras, Groq, SambaNova: The Inference Hardware Insurgents"
+      url: "https://jamesm.blog/ai/inference-hardware-insurgents/"
+      date: "2026-01-01"
+      accessDate: "2026-05-27"
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: low
+      independence: independent
+      topics: ["inference hardware", "SN40L", "SN50", "enterprise strategy", "Composition of Experts", "market analysis", "2026"]
+      keyQuote: "The SambaNova bet is on the enterprise stack. Multi-model serving, regulated industries, on-premises deployments where data residency matters — this is the segment that values the architectural choices SambaNova made and is willing to pay for them. The risk is that the enterprise segment is harder to scale than the developer segment and the sales cycles are longer."
+
+    - id: SE023
+      publisher: "Intuition Labs"
+      title: "Cerebras vs SambaNova vs Groq: AI Chip Comparison (2025)"
+      url: "https://intuitionlabs.ai/articles/cerebras-vs-sambanova-vs-groq-ai-chips"
+      date: "2025-09-01"
+      accessDate: "2026-05-27"
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: low
+      independence: independent
+      topics: ["chip comparison", "Cerebras", "Groq", "SambaNova", "inference hardware", "benchmark"]
+
+    - id: SE024
+      publisher: "Accenture"
+      title: "Our generative AI collab with SambaNova"
+      url: "https://www.accenture.com/us-en/blogs/cloud-computing/generative-ai-partner-spotlight-sambanova"
+      date: "2023-03-29"
+      accessDate: "2026-05-27"
+      accessStatus: ok
+      stance: confirming
+      sourceType: partner-proof
+      reputationTier: high
+      independence: partner
+      topics: ["Accenture partnership", "enterprise generative AI", "data governance", "model ownership", "regulatory compliance"]
+      keyQuote: "SambaNova's generative AI offerings enable customers to fine-tune models on their own data, to own and control their own AI models and to have visibility into the model weights and datasets that the model is trained on."
+
+    - id: SE025
+      publisher: "Argonne National Laboratory / DOE"
+      title: "Argonne National Laboratory deploys a new SambaNova inference-optimized cluster to support AI-driven science"
+      url: "https://www.alcf.anl.gov/news/argonne-national-laboratory-deploys-new-sambanova-inference-optimized-cluster-support-ai"
+      date: "2024-01-01"
+      accessDate: "2026-05-27"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: customer
+      topics: ["Argonne", "ALCF", "SN40L", "SN30", "government deployment", "AI Testbed", "AuroraGPT", "NAIRR"]
+      keyQuote: "The Argonne deployment contains sixteen of SambaNova's Reconfigurable DataFlow Units (RDU). The ALCF AI Testbed, which already includes a SambaNova DataScale SN30 training cluster, is a growing collection of advanced AI accelerators available to researchers for open science."
+
+  claims:
+    - id: CE001
+      statement: "The SambaNova SN40L RDU chip integrates a three-tier memory architecture comprising 520 MB on-chip SRAM, 64 GB HBM per chip, and 768 GB DDR DRAM per chip in the SN40L-16 system configuration."
+      type: company-claimed
+      topic: "SN40L hardware specifications"
+      sourceRefs: [SE011, SE009, SE015]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE001]
+
+    - id: CE002
+      statement: "Argonne National Laboratory's ALCF AI Testbed includes sixteen SambaNova SN40L Reconfigurable Dataflow Units deployed as a new inference-optimized cluster alongside a pre-existing SN30 training cluster."
+      type: observed
+      topic: "government deployment"
+      sourceRefs: [SE025]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE013]
+
+    - id: CE003
+      statement: "The SambaNova SN40L (4th generation) RDU chip uses TSMC 5 nm fabrication and was published at IEEE MICRO 2024; predecessor generations (SN30) were training-optimized while SN40L targets inference."
+      type: third-party-reported
+      topic: "chip generation timeline"
+      sourceRefs: [SE009, SE010]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE025]
+
+    - id: CE004
+      statement: "The SambaNova Reconfigurable Dataflow Architecture (RDA) creates continuous processing pipelines that map neural network computation graphs directly onto hardware, minimizing data movement versus the GPU ISA kernel-by-kernel model that requires repeated weight loading from memory."
+      type: company-claimed
+      topic: "RDU dataflow architecture"
+      sourceRefs: [SE004, SE009, SE010]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE002]
+
+    - id: CE005
+      statement: "The IEEE Micro paper on SN40L Composition of Experts reports that an eight-socket SN40L node achieves a 3.7× end-to-end speedup over DGX H100 and 6.6× over DGX A100 on CoE workloads, with model switching 15–31× faster than GPU baselines."
+      type: third-party-reported
+      topic: "SN40L vs GPU benchmark"
+      sourceRefs: [SE009, SE010]
+      confidence: high
+      freshness: historical
+      answersQuestionRefs: [QE006]
+
+    - id: CE006
+      statement: "The SambaNova SN40L node can host and serve a 1 trillion-parameter Composition of Experts model on a single node with a 19× smaller machine footprint compared to GPU baselines."
+      type: third-party-reported
+      topic: "SN40L model capacity"
+      sourceRefs: [SE009, SE010]
+      confidence: high
+      freshness: historical
+      answersQuestionRefs: [QE014]
+
+    - id: CE007
+      statement: "The SambaNova SN50 (5th generation) chip, announced February 2026, delivers five times more compute per accelerator and four times more network bandwidth than the SN40L, and supports linking up to 256 accelerators over a multi-terabyte-per-second interconnect."
+      type: company-claimed
+      topic: "SN50 specifications"
+      sourceRefs: [SE006, SE013, SE003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE007]
+
+    - id: CE008
+      statement: "The SN50 supports models up to 10 trillion parameters with context lengths up to 10 million tokens, targeting agentic AI workloads requiring multi-model concurrency."
+      type: company-claimed
+      topic: "SN50 model capacity"
+      sourceRefs: [SE013, SE003, SE016]
+      confidence: medium
+      freshness: current
+
+    - id: CE009
+      statement: "The SambaRack SN50 packs 16 SN50 accelerators per rack at approximately 20 kW power consumption and uses exclusively air cooling, requiring no liquid cooling infrastructure."
+      type: company-claimed
+      topic: "SambaRack specifications"
+      sourceRefs: [SE016, SE001, SE013]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE012]
+
+    - id: CE010
+      statement: "SambaNova's SambaStack claims four times the energy savings compared to GPU-based systems, with SambaRack operating at approximately 10 kW per rack compared to standard GPU rack configurations."
+      type: company-claimed
+      topic: "energy efficiency"
+      sourceRefs: [SE002, SE016]
+      confidence: medium
+      freshness: current
+
+    - id: CE011
+      statement: "SambaFlow, the SambaNova software compiler, translates ML computation graphs to RDU dataflow programs using spatial programming and aggressive operator fusion, eliminating per-kernel overhead present in GPU CUDA execution."
+      type: company-claimed
+      topic: "SambaFlow compiler"
+      sourceRefs: [SE004, SE007, SE009]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE015]
+
+    - id: CE012
+      statement: "SambaCloud, SambaNova's public inference API, launched September 2024 and is fully OpenAI-API-compatible, requiring only a base URL change from existing OpenAI client code."
+      type: observed
+      topic: "SambaCloud API"
+      sourceRefs: [SE012, SE008, SE021]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE005]
+
+    - id: CE013
+      statement: "SambaCloud's free tier requires no credit card, provides $5 in free credits valid for 30 days, and grants access without a waitlist."
+      type: observed
+      topic: "SambaCloud pricing"
+      sourceRefs: [SE021, SE008]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE010]
+
+    - id: CE014
+      statement: "SambaNova offers three commercial deployment modes: SambaCloud (public API), SambaStack (on-premises full-stack), and SambaManaged (turnkey managed service available via AWS Marketplace), all sharing the same underlying SambaFlow software layer."
+      type: observed
+      topic: "deployment modes"
+      sourceRefs: [SE007, SE002, SE021]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE022]
+
+    - id: CE015
+      statement: "SambaStack delivers a 90-day deployment commitment for on-premises installations, including hardware installation, SambaFlow software configuration, and pre-loaded model bundles."
+      type: company-claimed
+      topic: "SambaStack deployment SLA"
+      sourceRefs: [SE021, SE002]
+      confidence: medium
+      freshness: current
+
+    - id: CE016
+      statement: "The Accenture partnership (2023) positions SambaNova for regulated enterprise buyers requiring model ownership, exportable model weights, and data governance—use cases where GPU-cloud providers do not guarantee full data sovereignty."
+      type: third-party-reported
+      topic: "Accenture partnership"
+      sourceRefs: [SE024]
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs: [QE011]
+
+    - id: CE017
+      statement: "SambaNova supports air-gapped and fully offline on-premises deployment through SambaStack, enabling deployments in environments that prohibit external network connectivity."
+      type: company-claimed
+      topic: "air-gap deployment"
+      sourceRefs: [SE021, SE002, SE024]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE012]
+
+    - id: CE018
+      statement: "SambaCloud sovereign deployments are active in Japan (SoftBank), Australia (SouthernCrossAI), Germany/Luxembourg (Infercom), and the UK (Argyll), with Infercom claiming GDPR and EU AI Act compliance for the European deployment."
+      type: third-party-reported
+      topic: "sovereign AI deployments"
+      sourceRefs: [SE021, SE005, SE013]
+      confidence: medium
+      freshness: current
+
+    - id: CE019
+      statement: "SambaCloud's model catalog as of May 2026 contains approximately 10 models: DeepSeek V3.1, DeepSeek V3.2, DeepSeek R1 Distill Llama 70B, Llama 4 Maverick, Llama 3.3 70B, gpt-oss-120b (high and low tiers), MiniMax M2.5, MiniMax M2.7, and Gemma 3 12B."
+      type: observed
+      topic: "model catalog"
+      sourceRefs: [SE021, SE020]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE004, QE017]
+
+    - id: CE020
+      statement: "SambaCloud states explicitly that it 'never sees or collects any of your data or user prompts'; this claim has no third-party attestation or independent audit confirmation as of May 2026."
+      type: company-claimed
+      topic: "data privacy"
+      sourceRefs: [SE021]
+      confidence: low
+      freshness: current
+
+    - id: CE021
+      statement: "SoftBank Corp. will be the first customer to deploy SN50 chips within its next-generation AI data centers in Japan, as confirmed by both companies in the February 2026 press release."
+      type: third-party-reported
+      topic: "SN50 first customer"
+      sourceRefs: [SE013, SE006]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE019]
+
+    - id: CE022
+      statement: "At SambaCloud's September 2024 public launch, Artificial Analysis independently benchmarked SambaNova at 132 output tokens/sec on Llama 3.1 405B—the fastest speed available for that model across all cloud endpoints tracked by Artificial Analysis at that time."
+      type: third-party-reported
+      topic: "Llama 405B inference speed"
+      sourceRefs: [SE012, SE020, SE015]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE003]
+
+    - id: CE023
+      statement: "SambaNova Cloud delivered Llama 3.1 70B at 461 tokens/sec at full 16-bit precision at the September 2024 launch, versus Cerebras at 445 t/s and Groq at approximately 250 t/s on the same model at that benchmark window."
+      type: third-party-reported
+      topic: "Llama 70B inference speed"
+      sourceRefs: [SE012, SE015, SE020]
+      confidence: medium
+      freshness: recent
+
+    - id: CE024
+      statement: "SambaNova reports DeepSeek R1 671B inference at 231–255 tokens/sec at full 16-bit precision; GPU-based providers on the same model average approximately 19 tokens/sec per user, constrained by HBM memory bandwidth and forced quantization."
+      type: company-claimed
+      topic: "DeepSeek 671B inference"
+      sourceRefs: [SE021, SE020]
+      confidence: medium
+      freshness: current
+
+    - id: CE025
+      statement: "The SN50 benchmark figures claim 895 tokens/sec/user on Llama 3.3 70B versus 184 tokens/sec on Nvidia B200; these figures cite SemiAnalysis InferenceX, a vendor-engaged commercial benchmarking firm, not an open-methodology independent benchmark."
+      type: company-claimed
+      topic: "SN50 benchmark claims"
+      sourceRefs: [SE013, SE016]
+      confidence: low
+      freshness: current
+      answersQuestionRefs: [QE008]
+
+    - id: CE026
+      statement: "GPU LLM inference is memory-bandwidth-bound, with Databricks engineering data showing H100 tensor-parallel efficiency declining from approximately 60% with 2 GPUs to 25% with 8 GPUs, limiting batch-parallel scale-out for single-user latency."
+      type: third-party-reported
+      topic: "GPU memory bandwidth bottleneck"
+      sourceRefs: [SE015, SE022]
+      confidence: medium
+      freshness: historical
+
+    - id: CE027
+      statement: "SambaNova is the only production cloud provider offering inference on both Llama 3.1 405B and DeepSeek R1 671B at full 16-bit precision at production speed as of the run date; Groq and Cerebras do not offer these models."
+      type: observed
+      topic: "large-model availability"
+      sourceRefs: [SE021, SE020, SE022]
+      confidence: medium
+      freshness: current
+
+    - id: CE028
+      statement: "SambaNova has no public fine-tuning API on SambaCloud; customers requiring model adaptation must use external providers for fine-tuning and then switch to SambaNova for inference, introducing pipeline friction."
+      type: observed
+      topic: "fine-tuning gap"
+      sourceRefs: [SE021]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE024]
+
+    - id: CE029
+      statement: "All published SN50 performance claims as of May 2026 cite either SembaNova internal measurements or SemiAnalysis InferenceX commercial benchmarks; no open-methodology third-party independent validation of SN50 claims exists."
+      type: observed
+      topic: "benchmark methodology gaps"
+      sourceRefs: [SE021, SE016, SE013]
+      confidence: medium
+      freshness: current
+
+    - id: CE030
+      statement: "SambaCloud's standard DeepSeek V3.1 offering is capped at 131K input context with only 7K completion tokens; the extended-context variant (V3.1-cb) provides 32K completion tokens but reduces input context to 32K."
+      type: observed
+      topic: "context window limitations"
+      sourceRefs: [SE021]
+      confidence: medium
+      freshness: current
+
+    - id: CE031
+      statement: "The SambaNova ai-starter-kit GitHub repository provides open-source examples in four categories (Data Ingestion, Model Development, Information Retrieval, Advanced AI Capabilities) and supports integration with both SambaCloud API and on-premises SambaStack endpoints."
+      type: observed
+      topic: "developer tooling"
+      sourceRefs: [SE017]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE009]
+
+    - id: CE032
+      statement: "The sambanova Python SDK on PyPI requires Python 3.9+ and exposes synchronous and asynchronous clients (httpx backend) with optional aiohttp support, streaming (SSE), typed Pydantic models, and automatic retry with exponential backoff."
+      type: observed
+      topic: "Python SDK"
+      sourceRefs: [SE018]
+      confidence: medium
+      freshness: current
+
+    - id: CE033
+      statement: "The SambaNova HuggingFace organization (sambanovasystems) hosts 32 public model checkpoints including SambaLingo multilingual variants (Arabic, Turkish, Hungarian, Thai at 7B–70B scales) as of March 2026."
+      type: observed
+      topic: "HuggingFace developer signal"
+      sourceRefs: [SE019]
+      confidence: medium
+      freshness: current
+
+    - id: CE034
+      statement: "SambaCloud's developer integration ecosystem includes LangChain (langchain-sambanova), LlamaIndex, CrewAI, AutoGen, OpenRouter, n8n, AWS, and approximately 50 total third-party integrations."
+      type: company-claimed
+      topic: "developer integrations"
+      sourceRefs: [SE021, SE017]
+      confidence: medium
+      freshness: current
+
+    - id: CE035
+      statement: "SambaNova provides a Responses API (announced May 2026) targeted at coding agents, in addition to its standard Chat Completions API, expanding the product surface for agentic application development."
+      type: company-claimed
+      topic: "Responses API"
+      sourceRefs: [SE007, SE008]
+      confidence: low
+      freshness: current
+
+    - id: CE036
+      statement: "The Intel-SambaNova heterogeneous inference blueprint—announced April 2026 for H2 2026 availability—specifies GPUs for prefill, SambaNova RDUs for decode, and Intel Xeon 6 CPUs as host and 'action CPU' for agentic tool execution."
+      type: third-party-reported
+      topic: "Intel heterogeneous inference"
+      sourceRefs: [SE014, SE013]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE023]
+
+    - id: CE037
+      statement: "SambaNova's SambaCloud model catalog contains approximately 10 models as of May 2026, compared to 50–200 models at GPU-cloud competitors such as Together AI and Fireworks AI; no image, video, or text-to-speech generation is offered."
+      type: observed
+      topic: "model catalog limitations"
+      sourceRefs: [SE021, SE020]
+      confidence: high
+      freshness: current
+
+    - id: CE038
+      statement: "SambaNova does not publicly list SOC 2, FedRAMP, or ISO 27001 certifications on its website as of May 2026; security attestations for regulated enterprise and government buyers must be obtained via direct audit engagement."
+      type: observed
+      topic: "compliance certifications gap"
+      sourceRefs: [SE021, SE024]
+      confidence: medium
+      freshness: current
+
+    - id: CE039
+      statement: "SambaNova's competitive position against Nvidia Blackwell B200 (192 GB HBM3e, 8 TB/s bandwidth) and AMD MI300X is not independently verified; as GPU HBM density and bandwidth improve, the memory-bandwidth advantage of RDU three-tier memory may narrow."
+      type: inferred
+      topic: "competitive risk from GPU roadmap"
+      sourceRefs: [SE022, SE023, SE015]
+      confidence: low
+      freshness: current
+      answersQuestionRefs: [QE016]
+
+    - id: CE040
+      statement: "The Composition of Experts (CoE) architecture implemented on SN40L enables a 1 trillion-parameter model to be deployed on a single node by composing multiple smaller expert models, with the DDR tier holding expert weights that are dynamically loaded to HBM based on routing decisions."
+      type: third-party-reported
+      topic: "Composition of Experts"
+      sourceRefs: [SE009, SE010]
+      confidence: high
+      freshness: historical
+      answersQuestionRefs: [QE021]
+
+    - id: CE041
+      statement: "SambaNova's enterprise-focused sales model requires customers to undertake infosec reviews typically spanning multiple months before on-premises deployment can begin, limiting sales velocity versus cloud-native API competitors."
+      type: third-party-reported
+      topic: "sales cycle risk"
+      sourceRefs: [SE015, SE022]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE016]
+
+  evidenceGaps:
+    - type: private-evidence-only
+      severity: material
+      topic: "SN50 independent benchmark validation"
+      missingEvidence: "Independent third-party benchmark results for SN50 using open methodology (MLPerf Inference or equivalent); SemiAnalysis InferenceX results referenced by SambaNova are from a commercial firm engaged by vendors."
+      whyItMatters: "All SN50 performance claims rest on vendor-sponsored benchmarks; buyers cannot independently verify 5× compute and 895 t/s figures without production hardware access."
+      diligencePath: "Await MLPerf Inference submission from SambaNova for SN50; request benchmark reproduction methodology and batch size assumptions from SambaNova technical team."
+      relatedQuestionRefs: [QE008, QE019]
+
+    - type: missing-source
+      severity: material
+      topic: "SambaNova compliance certifications"
+      missingEvidence: "Third-party audit reports confirming SOC 2 Type II, ISO 27001, FedRAMP Ready, or equivalent certifications for SambaCloud or SambaStack."
+      whyItMatters: "Absence of published certifications is a blocking procurement requirement for regulated verticals (financial services, healthcare, government), which represent SambaNova's stated enterprise target market."
+      diligencePath: "Request current compliance certification status and timeline directly from SambaNova security team; review any available penetration test summaries or SOC 2 readiness assessments."
+      relatedQuestionRefs: [QE018]
+
+    - type: missing-source
+      severity: minor
+      topic: "SN50 foundry and process node"
+      missingEvidence: "Confirmed TSMC process node (e.g., 3 nm or 4 nm) and foundry allocation for SN50; the IEEE MICRO paper confirms TSMC 5 nm for SN40L but SN50 fabrication details are not public."
+      whyItMatters: "Foundry process node affects performance projections, supply chain risk concentration, and competitive analysis of thermal density and transistor budget relative to Nvidia Blackwell."
+      diligencePath: "Check for SambaNova or TSMC announcements at HotChips 2026 or similar technical forums; semiconductor analyst reports on SambaNova wafer allocation."
+      relatedQuestionRefs: [QE019]
+
+    - type: stale
+      severity: minor
+      topic: "SambaCloud model catalog and pricing"
+      missingEvidence: "Model catalog and per-token pricing verified as of the run date directly from cloud.sambanova.ai; catalog and pricing change frequently and published data may be outdated."
+      whyItMatters: "Developers and enterprises making cost comparisons need current pricing; the ChatForest review pricing table may be stale relative to the run date."
+      diligencePath: "Verify directly at cloud.sambanova.ai pricing page and API documentation at time of diligence."
+      relatedQuestionRefs: [QE010]
