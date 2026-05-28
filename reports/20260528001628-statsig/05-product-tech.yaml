@@ -1,0 +1,1855 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: statsig
+runDate: '2026-05-28'
+company:
+  name: Statsig
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: Statsig publicly presents a broad but coherent product stack that combines release control, experimentation, analytics, replay, and warehouse-native analysis. The technical surface is credible for enterprise buyers, but the public pack still leaves diligence questions around fine-grained governance, replay browser coverage, and exact warehouse-boundary implementation details.
+sections:
+- id: platform-surface
+  title: Platform surface and customer workflow
+  body: 'Statsig''s public surface is organized around one product-development loop rather than a single standalone tool. The company markets feature flags, experimentation, analytics, and warehouse-native analysis as connected layers, and the docs reinforce that model by routing developers from gates to dynamic configs to experiments depending on whether they need a boolean release control, a structured JSON payload, or a randomized test. That matters for diligence because the product definition is not just “flagging”; it is a control-and-measurement stack intended to help engineering, product, and data teams ship code, observe impact, and decide whether to widen or reverse a release. The module map is therefore broad but still coherent: release controls and remote config sit in front of runtime behavior, experimentation and holdouts sit on top of exposure data, analytics and replay sit beside experimentation for diagnosis, and warehouse-native extends the same workflow to buyers that want
+    analysis on their own datasets.'
+  claimRefs:
+  - CE001
+  - CE002
+  - CE003
+  - CE005
+  - CE011
+  - CE014
+  - CE042
+  tableRefs:
+  - TE001
+  - TE002
+  figureRefs:
+  - FE001
+- id: runtime-architecture
+  title: Runtime architecture, APIs, and deployment model
+  body: 'The technical architecture visible in public materials centers on SDK-mediated runtime evaluation plus a console and API control plane. Feature gates, dynamic configs, and experiments are all presented as runtime checks that happen through Statsig SDKs or APIs, with event and exposure logging feeding downstream analysis. Warehouse Native changes where analysis runs, not whether Statsig participates in the workflow: public docs still depend on the Statsig console for setup, official SDKs for assignment, and a documented pipeline that writes staging and summary tables in the customer warehouse. The result is a hybrid architecture rather than a pure no-control-plane appliance. That hybrid model can be a strength for buyers who want hosted release management plus warehouse analysis, but it is also a diligence point because “warehouse native” does not eliminate implementation choices around assignment, ingestion, logging callbacks, and central API governance. Developer tooling such as
+    GitHub code references further suggests Statsig is trying to embed itself in the day-to-day engineering loop, not only in a metrics console.'
+  claimRefs:
+  - CE014
+  - CE015
+  - CE016
+  - CE017
+  - CE018
+  - CE019
+  - CE027
+  - CE043
+  tableRefs:
+  - TE003
+  figureRefs:
+  - FE002
+  - FE003
+- id: stats-and-observability
+  title: Experimentation statistics, analytics, and replay
+  body: 'Statsig''s statistical surface is meaningfully broader than a basic fixed-horizon A/B tool. Public docs cover CUPED variance reduction, sequential testing, holdouts, and Thompson-sampling bandits, and the warehouse-native docs explicitly connect those methods back to the same experimentation engine. That breadth supports the company''s pitch to data-science-heavy buyers, but the details also reveal trade-offs: sequential testing exists because peeking is a real risk, and the bandit docs explicitly say the default approach cannot personalize and may converge to the wrong global answer for specific user cohorts. On the observability side, the analytics surface includes funnels, retention, distribution, journeys, lifecycle, and dashboards, while Session Replay extends diagnosis into rrweb-based playback. Replay is not just a recording button; the public docs position it as part of the same feedback loop that informs launches and experiments. The caveat is that replay has its own browser
+    and privacy edge cases, so it should be underwritten as a higher-risk add-on than core flag evaluation.'
+  claimRefs:
+  - CE006
+  - CE007
+  - CE008
+  - CE009
+  - CE010
+  - CE011
+  - CE012
+  - CE013
+  - CE038
+  - CE039
+  tableRefs: []
+  figureRefs:
+  - FE004
+- id: enterprise-controls
+  title: Enterprise controls, privacy, and security posture
+  body: 'Statsig has a credible public enterprise-control surface, but it is strongest at the organization and project level rather than at the most granular object level. The access-management docs clearly separate SSO from SCIM, document enterprise OIDC SSO, and show Okta-based SCIM lifecycle automation. The warehouse-native roles page adds an explicit RBAC story for who can view, edit, and approve experiments, metrics, and raw data. Security and privacy materials also go beyond generic marketing: the compliance docs discuss customer-data isolation, AI-data boundaries, AES-256 at rest, TLS 1.2+, and SOC 2 Type II, while the privacy policy distinguishes between website/account processing and customer-controlled product data. The net takeaway is that Statsig is publicly legible on core enterprise controls, but fine-grained authorization, data-residency specifics, and some product-by-product control scope still require diligence rather than being fully settled by the public pack.'
+  claimRefs:
+  - CE020
+  - CE021
+  - CE022
+  - CE023
+  - CE025
+  - CE026
+  - CE036
+  tableRefs:
+  - TE004
+  figureRefs: []
+- id: limitations-and-roadmap
+  title: Technical limitations and roadmap-visible risk
+  body: 'The main public risks are not that Statsig lacks core breadth; they are that some important operational boundaries are still only partially documented. Public package registries and repositories make it clear that the company maintains a wide SDK footprint and ships actively, but those same artifacts do not prove feature parity across languages. The session replay issue queue shows that browser-specific failures can surface even when the broader platform story is strong. And on governance, public materials establish that Statsig has RBAC, approvals, and enterprise identity features, yet a public request for per-gate or per-rule access control highlights a possible gap for buyers with strict segregation-of-duties requirements. The warehouse-native story is also strong enough to take seriously but still leaves an implementation boundary question: the public pack shows in-warehouse analysis and hybrid deployment choices, not a universal no-ETL promise. For underwriting, that means
+    the product is clearly capable, but the last mile of governance, browser support, and deployment architecture still needs direct diligence.'
+  claimRefs:
+  - CE024
+  - CE028
+  - CE029
+  - CE030
+  - CE031
+  - CE032
+  - CE033
+  - CE034
+  - CE035
+  - CE038
+  - CE040
+  - CE041
+  - CE042
+  - CE043
+  tableRefs:
+  - TE005
+  figureRefs: []
+tables:
+- id: TE001
+  title: Product module / asset matrix
+  columns:
+  - Module
+  - Primary user
+  - Status / maturity
+  - Differentiation
+  - Diligence gap
+  rows:
+  - - Feature gates and rollout controls
+    - Engineering / product
+    - Mature core surface
+    - Boolean runtime controls tied to advanced targeting, release diagnostics, and rollback workflows
+    - Public evidence does not confirm per-gate or per-rule authorization granularity
+  - - Dynamic configs
+    - Application engineers
+    - Mature but bounded
+    - Server-defined JSON lets teams vary values by user context without redeploying code
+    - 100 KB payload limit may push larger parameter sets into adjacent config systems
+  - - Experiments, holdouts, and bandits
+    - Product / data science
+    - Advanced documented surface
+    - A/B/n, CUPED, sequential testing, holdouts, and Thompson-sampling autotune are all publicly documented
+    - Contextual fit, personalization limits, and rollout policy still need buyer-specific statistical review
+  - - Product analytics and dashboards
+    - Growth / analytics
+    - Mature supporting surface
+    - Funnels, retention, journeys, lifecycle, and dashboards are connected to release and experiment artifacts
+    - Public docs do not expose the underlying cloud analytics data model in the same detail as warehouse-native
+  - - Session replay
+    - Product / support / UX
+    - Documented but higher-risk add-on
+    - rrweb-based replay gives visual debugging with masking and eligibility controls
+    - Browser-support coverage and retention details are thinner than the flagging surface
+  - - Warehouse Native
+    - Data platform / experimentation teams
+    - Enterprise-grade but nuanced
+    - Runs experiment analysis in the customer warehouse while preserving Statsig’s stats engine and optional SDK assignment path
+    - Public materials show a hybrid deployment model rather than a universally local-only architecture
+  notes: This table maps the public product surface as visible on the run date. “Maturity” reflects documentation depth and shipping evidence, not internal revenue mix.
+  claimRefs:
+  - CE001
+  - CE002
+  - CE003
+  - CE004
+  - CE005
+  - CE011
+  - CE012
+  - CE014
+  - CE016
+  - CE042
+  - CE043
+- id: TE002
+  title: Workflow / use-case table
+  columns:
+  - User job
+  - Current workflow
+  - Statsig surface
+  - Measurable benefit
+  - Limitation
+  rows:
+  - - Ship a risky release safely
+    - Create control, target users, widen rollout only if metrics hold
+    - Feature gates plus release diagnostics
+    - Gradual release with rollback hooks and direct impact measurement
+    - Depends on SDK adoption and on-call discipline
+  - - Change application behavior without redeploying
+    - Serve server-defined parameters by user attributes
+    - Dynamic configs
+    - Fast operational changes to thresholds, copy, or ranking weights
+    - Large or deeply nested payloads hit the documented 100 KB cap
+  - - Run causal product tests
+    - Assign randomized variants and measure lift
+    - Experiments, CUPED, sequential testing, holdouts
+    - Statistically grounded launch decisions instead of historical correlation
+    - Method choice and stopping rules still require practitioner judgment
+  - - Understand behavior after launch
+    - Explore journeys, funnels, retention, and dashboards
+    - Product analytics
+    - Shared views of performance without starting from raw SQL
+    - Public docs do not fully expose warehouse-level lineage for hosted analytics
+  - - Diagnose hard-to-reproduce UX problems
+    - Review an interaction trace tied to product behavior
+    - Session Replay
+    - Visual debugging for conversion and failure analysis
+    - Replay privacy choices and browser compatibility are their own diligence track
+  notes: Benefits are stated only where the public docs or product pages make them explicit. Limitations are surfaced when the same sources admit them or when public evidence remains thin.
+  claimRefs:
+  - CE002
+  - CE003
+  - CE004
+  - CE005
+  - CE007
+  - CE010
+  - CE011
+  - CE012
+  - CE013
+- id: TE003
+  title: Technology / operating architecture table
+  columns:
+  - Layer / process / component
+  - Role
+  - Dependency
+  - Risk
+  rows:
+  - - Client and server SDK evaluation
+    - Executes gates, configs, and experiments inside app or service runtime
+    - Official SDKs, client keys, or server keys
+    - Older SDKs become unsupported after 12 months and language parity is not fully public
+  - - Exposure and custom event logging
+    - Attributes downstream metrics to features and experiments
+    - SDK event APIs or HTTP API calls
+    - Misconfigured logging weakens experiment readouts and analytics attribution
+  - - Console and Console API control plane
+    - Creates, edits, reviews, and automates product objects
+    - statsigapi.net, API keys, and versioned headers
+    - Central API rate limits and governance settings remain part of the operating model
+  - - Warehouse-native compute pipeline
+    - Runs analysis inside the customer warehouse and stores staging and result tables
+    - Customer datasets, warehouse credentials, and Statsig pipeline definitions
+    - Internal table names can change as the product evolves
+  - - Developer workflow overlays
+    - Link console objects back to repositories and runtime deployment helpers
+    - GitHub tokens and repository access for code references
+    - Integration convenience adds token-management and access-scope overhead
+  notes: This architecture table focuses on the public operating model rather than an internal source-code decomposition. It is specific enough for diligence but not a substitute for a vendor-supplied architecture review.
+  claimRefs:
+  - CE015
+  - CE016
+  - CE017
+  - CE018
+  - CE019
+  - CE027
+  - CE028
+  - CE035
+- id: TE004
+  title: Trust / quality / compliance table
+  columns:
+  - Control / posture
+  - Status
+  - Scope
+  - What it does
+  - Gap
+  rows:
+  - - OIDC SSO
+    - Publicly documented and enterprise-tier
+    - Organization authentication
+    - Lets companies keep their own identity provider and inherit MFA policy
+    - The public pack does not describe object-level authorization granularity
+  - - SCIM provisioning
+    - Publicly documented for Okta
+    - User and group lifecycle
+    - Automates provision, import, push, and deprovision flows into Statsig
+    - No public SCIM docs for non-Okta identity providers
+  - - Configurable RBAC and approvals
+    - Publicly documented at console or warehouse-native level
+    - Experiments, metrics, approvals, raw-data visibility
+    - Restricts who can view, edit, and approve sensitive objects
+    - Per-gate or per-rule policy is not clearly documented
+  - - Session replay privacy controls
+    - Publicly documented
+    - Replay capture and masking
+    - Provides baseline masking levels, CSS selector rules, and user eligibility gating
+    - Public retention and browser-support matrices are not surfaced here
+  - - Security and privacy program
+    - Publicly documented
+    - Platform-wide
+    - Claims customer isolation, AI-data consent boundaries, AES-256, TLS 1.2+, and SOC 2 Type II
+    - Regional deployment specifics and deeper audit artifacts still require diligence
+  notes: This table captures only the controls explicitly visible in the public pack. It does not assume certifications, regional deployments, or approval mechanics that are not directly documented.
+  claimRefs:
+  - CE020
+  - CE021
+  - CE022
+  - CE023
+  - CE024
+  - CE025
+  - CE026
+  - CE036
+- id: TE005
+  title: Roadmap / release / development-stage table
+  columns:
+  - Date / stage
+  - Feature or signal
+  - Status
+  - Implication
+  - Source
+  rows:
+  - - 2023-06 launch
+    - Warehouse Native
+    - Shipped
+    - Extends Statsig beyond hosted analysis into BigQuery, Snowflake, Databricks, and Redshift environments
+    - Warehouse Native launch post
+  - - Current docs
+    - Sequential testing and CUPED
+    - Shipped
+    - Shows a stats engine that goes beyond simple fixed-horizon A/B testing
+    - Experiment methodology docs
+  - - Current docs
+    - SDK support less than 12 months old
+    - Active policy
+    - Outdated SDKs can keep working but fall out of official support
+    - SDK support policy
+  - - Current public issue
+    - Safari 15 session replay crash
+    - Open risk on fetched page
+    - Replay can fail independently of the core flagging or analytics stack
+    - 'GitHub issue #36'
+  - - Current public issue
+    - Per-gate or per-rule RBAC granularity
+    - Requested / not clearly public
+    - Enterprise governance may lag buyer expectations for delegated ownership
+    - 'GitHub feedback issue #40'
+  - - Current package and registry surfaces
+    - Cross-language SDK packaging
+    - Active but unevenly visible
+    - Statsig clearly maintains broad packaging surfaces, but parity detail still needs diligence
+    - npm, Go, Dart, .NET, Java registries
+  notes: This table uses public release, issue, and package signals rather than an internal roadmap. It is intentionally conservative about anything that is not explicitly shipped or documented.
+  claimRefs:
+  - CE024
+  - CE028
+  - CE029
+  - CE030
+  - CE031
+  - CE032
+  - CE033
+  - CE034
+  - CE038
+  - CE040
+  - CE041
+figures:
+- id: FE001
+  title: Statsig product architecture stack
+  type: stack
+  layout: wide
+  summary: A layered view of how Statsig combines runtime control, measurement, and enterprise governance into one operating model.
+  approximationNotes: This is a synthesized architecture map derived from public docs and product pages, not an internal deployment diagram.
+  data:
+    layers:
+    - label: Application and SDK layer
+      detail: Client and server SDKs evaluate gates, configs, and experiments inside app or service runtime.
+      items:
+      - Web and mobile clients
+      - Server runtimes
+      - HTTP API callers
+    - label: Control-plane layer
+      detail: Console objects define gates, dynamic configs, experiments, holdouts, and approvals.
+      items:
+      - Feature gates
+      - Dynamic configs
+      - Experiments and holdouts
+      - Console API
+    - label: Measurement and decision layer
+      detail: Exposure logs, analytics, replay, and statistical methods turn launches into measurable decisions.
+      items:
+      - Product analytics
+      - Session replay
+      - CUPED and sequential testing
+      - Bandits and holdouts
+    - label: Enterprise and data layer
+      detail: Warehouse-native compute, access controls, privacy controls, and identity integrations support enterprise deployment.
+      items:
+      - Warehouse Native
+      - SSO and SCIM
+      - RBAC and approvals
+      - Security and privacy controls
+  claimRefs:
+  - CE001
+  - CE014
+  - CE016
+  - CE017
+  - CE023
+  - CE025
+- id: FE002
+  title: Customer workflow / operating flow
+  type: flow
+  layout: wide
+  summary: How a Statsig customer moves from launch definition to runtime evaluation, measurement, and wider rollout.
+  approximationNotes: This flow abstracts over whether analysis is hosted or warehouse-native, because both modes still use the same public product objects.
+  data:
+    nodes:
+    - id: n1
+      label: Define release object
+      detail: A team creates a feature gate, dynamic config, experiment, or holdout in the console or via the Console API.
+    - id: n2
+      label: Evaluate in runtime
+      detail: SDKs or HTTP APIs evaluate the object for a user or request based on targeting and assignment rules.
+    - id: n3
+      label: Log exposures and events
+      detail: Exposure and custom-event data are captured for later analytics and experiment readouts.
+    - id: n4
+      label: Analyze impact
+      detail: Teams inspect experiment results, analytics charts, and sometimes replay sessions to understand behavior.
+    - id: n5
+      label: Decide rollout
+      detail: Operators widen, stop, or optimize traffic using diagnostics, sequential reads, and bandit or holdout evidence.
+    - id: n6
+      label: Persist learning
+      detail: Dashboards, warehouse-native tables, and code-reference workflows feed the next iteration.
+    edges:
+    - from: n1
+      to: n2
+    - from: n2
+      to: n3
+    - from: n3
+      to: n4
+    - from: n4
+      to: n5
+    - from: n5
+      to: n6
+  claimRefs:
+  - CE002
+  - CE005
+  - CE011
+  - CE017
+  - CE019
+- id: FE003
+  title: Critical dependency map
+  type: dag
+  layout: wide
+  summary: Key external systems and operating dependencies that shape Statsig’s production behavior for enterprise customers.
+  approximationNotes: Dependency edges are based on publicly documented integrations and deployment patterns, not on a confidential supplier list.
+  data:
+    nodes:
+    - id: d1
+      label: Statsig control plane
+      role: Defines objects, APIs, and governance settings
+    - id: d2
+      label: Application SDKs
+      role: Evaluate releases and log exposures at runtime
+    - id: d3
+      label: Customer data warehouse
+      role: Runs warehouse-native experiment analysis and stores result tables
+      risk: Hybrid data-path choices still require architecture diligence
+    - id: d4
+      label: Identity provider / Okta
+      role: Handles SSO and SCIM lifecycle automation
+      risk: Public SCIM scope is only documented for Okta
+    - id: d5
+      label: Partner data pipes
+      role: Route data through Segment or warehouse ingestion paths
+      risk: Integration quality and data movement depend on buyer setup
+    - id: d6
+      label: Developer tooling
+      role: Connects console objects back to code via GitHub integrations and repos
+    - id: d7
+      label: Browser runtime
+      role: Hosts analytics and replay capture code in end-user environments
+      risk: Replay has visible browser-compatibility risk in public issue tracking
+    edges:
+    - from: d1
+      to: d2
+      label: serves specs and APIs
+    - from: d2
+      to: d3
+      label: writes logs or exposures for warehouse-native analysis
+    - from: d4
+      to: d1
+      label: authenticates and provisions console users
+    - from: d5
+      to: d1
+      label: feeds or routes event data
+    - from: d6
+      to: d1
+      label: maps objects back to repositories and release workflows
+    - from: d7
+      to: d2
+      label: runs client SDK and replay code
+  claimRefs:
+  - CE016
+  - CE022
+  - CE027
+  - CE036
+  - CE037
+  - CE038
+- id: FE004
+  title: Product maturity / capability map
+  type: matrix
+  layout: wide
+  summary: Relative maturity and diligence posture across the main Statsig product surfaces visible in public materials.
+  approximationNotes: Ratings are qualitative and evidence-led rather than revenue-weighted. They reflect public documentation depth, not internal adoption data.
+  data:
+    columns:
+    - Release control maturity
+    - Statistical depth
+    - Observability depth
+    - Governance clarity
+    rows:
+    - label: Feature gates
+      values:
+      - High
+      - Medium
+      - Medium
+      - Medium
+    - label: Dynamic configs
+      values:
+      - High
+      - Low
+      - Low
+      - Medium
+    - label: Experiments / holdouts / bandits
+      values:
+      - Medium
+      - High
+      - Medium
+      - Medium
+    - label: Analytics and replay
+      values:
+      - Medium
+      - Medium
+      - High
+      - Medium-Low
+    - label: Warehouse Native
+      values:
+      - Medium
+      - High
+      - Medium
+      - Medium
+  claimRefs:
+  - CE005
+  - CE009
+  - CE011
+  - CE013
+  - CE014
+  - CE023
+  - CE040
+callouts:
+- calloutType: strength
+  title: Integrated release-to-measurement workflow
+  body: Public materials consistently tie rollout control, experimentation, analytics, and warehouse-backed measurement into one operating loop instead of presenting Statsig as a single-purpose flagging product.
+  claimRefs:
+  - CE001
+  - CE011
+  - CE014
+- calloutType: risk
+  title: Governance granularity still needs diligence
+  body: Statsig clearly documents SSO, SCIM, configurable RBAC, and approvals, but public proof of per-gate or per-rule authorization remains thin enough that strict segregation-of-duties buyers should validate it directly.
+  claimRefs:
+  - CE021
+  - CE022
+  - CE023
+  - CE024
+- calloutType: risk
+  title: Session replay adds incremental surface-area risk
+  body: Replay is well integrated into Statsig’s analytics story and includes masking controls, but the public Safari crash issue shows that replay can fail independently of the core evaluation path.
+  claimRefs:
+  - CE012
+  - CE013
+  - CE038
+  - CE039
+localEvidence:
+  searchQueries:
+  - query: 'In 2026, what direct URLs best document Statsig''s product and technical surface: feature flags, dynamic config, experimentation statistics (CUPED, sequential testing, bandits, holdouts), analytics, session replay, warehouse native, SDKs, API, SSO, SCIM, and security/privacy? Return official and partner URLs.'
+    engine: web_search
+    hits: null
+    retainedSourceRefs:
+    - SE001
+    - SE002
+    - SE003
+    - SE004
+    - SE007
+    - SE008
+    - SE009
+    - SE010
+    - SE011
+    - SE012
+    - SE013
+    - SE014
+    - SE015
+    - SE016
+    - SE017
+    - SE018
+    - SE019
+    - SE020
+    - SE021
+    - SE022
+    - SE023
+    - SE024
+    - SE025
+    - SE026
+    - SE028
+    - SE040
+  - query: In 2026, what direct URLs best document independent or third-party technical signals about Statsig, such as GitHub repos, package registries, partner integration docs, reviews, or skeptical technical analysis? Return direct URLs.
+    engine: web_search
+    hits: null
+    retainedSourceRefs:
+    - SE029
+    - SE030
+    - SE031
+    - SE032
+    - SE035
+    - SE036
+    - SE037
+    - SE038
+    - SE039
+    - SE040
+    - SE041
+  - query: In 2026, what exact external URLs document Statsig package registries or integrations on npm, RubyGems, Maven, PyPI, Packagist, or similar domains? Return direct URLs only.
+    engine: web_search
+    hits: null
+    retainedSourceRefs:
+    - SE033
+    - SE034
+    - SE038
+    - SE039
+    - SE041
+  - query: org:statsig-io is:issue session replay
+    engine: github-api
+    hits: 3
+    retainedSourceRefs:
+    - SE029
+  - query: repo:statsig-io/statsig-feedback is:issue feature request
+    engine: github-api
+    hits: 7
+    retainedSourceRefs:
+    - SE030
+  researchQuestions:
+  - id: QE001
+    question: What customer workflow does Statsig aim to cover from release control through measurement?
+    type: verification
+    targets:
+    - contentRequirements/0
+    status: answered
+  - id: QE002
+    question: Which major product modules are publicly surfaced across Statsig's site and documentation?
+    type: enumeration
+    targets:
+    - contentRequirements/1
+    status: answered
+  - id: QE003
+    question: How do feature gates work at runtime and what release controls are documented?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QE004
+    question: How do dynamic configs differ from feature gates on the public surface?
+    type: comparison
+    targets:
+    - contentRequirements/0
+    - contentRequirements/2
+    status: answered
+  - id: QE005
+    question: What hard limits are publicly documented for dynamic configs?
+    type: verification
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QE006
+    question: Does Statsig publicly document A/B/n and mutually exclusive experimentation?
+    type: verification
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QE007
+    question: How does Statsig implement CUPED across cloud and warehouse-native modes?
+    type: mechanism
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QE008
+    question: How does Statsig handle early reads and sequential testing?
+    type: mechanism
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QE009
+    question: How does the documented multi-armed bandit allocate traffic, and what trade-off does it admit?
+    type: mechanism
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QE010
+    question: How do holdouts measure aggregate feature impact and what holdout sizes are recommended?
+    type: verification
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QE011
+    question: What analytics workflows are documented beyond experiment readouts?
+    type: enumeration
+    targets:
+    - contentRequirements/0
+    - contentRequirements/3
+    status: answered
+  - id: QE012
+    question: How is Session Replay technically captured on the public surface?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QE013
+    question: What privacy and eligibility controls are documented for session replay?
+    type: verification
+    targets:
+    - contentRequirements/5
+    status: answered
+  - id: QE014
+    question: What does Statsig publicly mean by warehouse-native experimentation?
+    type: verification
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QE015
+    question: What concrete steps run in the warehouse-native pipeline?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QE016
+    question: Does warehouse-native mode fully remove dependence on Statsig control-plane services?
+    type: comparison
+    targets:
+    - contentRequirements/2
+    - contentRequirements/3
+    status: answered
+  - id: QE017
+    question: What APIs are publicly documented for console automation and runtime evaluation?
+    type: verification
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QE018
+    question: What developer workflow aids are documented besides the basic SDKs?
+    type: mechanism
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QE019
+    question: What enterprise identity and provisioning controls are publicly documented?
+    type: verification
+    targets:
+    - contentRequirements/5
+    status: answered
+  - id: QE020
+    question: What public evidence exists for RBAC and approval workflows?
+    type: verification
+    targets:
+    - contentRequirements/5
+    status: answered
+  - id: QE021
+    question: What platform-wide security and privacy controls are publicly documented?
+    type: verification
+    targets:
+    - contentRequirements/5
+    status: answered
+  - id: QE022
+    question: What is the current public SDK lifecycle and support policy?
+    type: freshness
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QE023
+    question: How broad is the documented SDK and package surface across languages?
+    type: enumeration
+    targets:
+    - contentRequirements/1
+    - contentRequirements/4
+    status: partial
+  - id: QE024
+    question: Does the public surface reveal meaningful technical limitations or browser-compatibility risk?
+    type: adverse
+    targets:
+    - contentRequirements/3
+    - contentRequirements/5
+    status: partial
+  - id: QE025
+    question: What important product-governance or roadmap gaps remain unresolved from public evidence alone?
+    type: adverse
+    targets:
+    - contentRequirements/3
+    - contentRequirements/5
+    status: partial
+  sources:
+  - id: SE001
+    publisher: Statsig
+    title: Statsig | Smarter feature flags for fast-moving teams
+    url: https://www.statsig.com/featureflags
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - feature-flags
+    - release-management
+    - sdk
+  - id: SE002
+    publisher: Statsig
+    title: Statsig | The world's leading experimentation platform
+    url: https://www.statsig.com/experimentation
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - experimentation
+    - statistics
+    - testing
+  - id: SE003
+    publisher: Statsig
+    title: Statsig | Analytics for teams that ship
+    url: https://www.statsig.com/analytics
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - product-analytics
+    - funnels
+    - dashboards
+  - id: SE004
+    publisher: Statsig
+    title: Statsig | Warehouse Native
+    url: https://www.statsig.com/warehouse
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - warehouse-native
+    - analytics
+    - deployment-model
+  - id: SE005
+    publisher: Statsig
+    title: Privacy | Statsig
+    url: https://www.statsig.com/privacy
+    date: '2025-07-23'
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - privacy
+    - data-processing
+    - legal
+  - id: SE006
+    publisher: Statsig
+    title: Announcing Statsig Warehouse Native
+    url: https://www.statsig.com/blog/announcing-statsig-warehouse-native
+    date: '2023-06-14'
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: news
+    reputationTier: medium
+    independence: company
+    topics:
+    - warehouse-native
+    - launch
+    - rbac
+  - id: SE007
+    publisher: Statsig Documentation
+    title: Feature Flags - Statsig Documentation
+    url: https://docs.statsig.com/feature-flags/overview
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - feature-flags
+    - targeting
+    - rollouts
+  - id: SE008
+    publisher: Statsig Documentation
+    title: Dynamic Config - Statsig Documentation
+    url: https://docs.statsig.com/dynamic-config/overview
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - dynamic-config
+    - remote-config
+    - limits
+  - id: SE009
+    publisher: Statsig Documentation
+    title: Experiments Overview - Statsig Documentation
+    url: https://docs.statsig.com/experiments/overview
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - experiments
+    - ab-testing
+    - mutual-exclusion
+  - id: SE010
+    publisher: Statsig Documentation
+    title: CUPED - Statsig Documentation
+    url: https://docs.statsig.com/experiments/statistical-methods/methodologies/cuped
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - cuped
+    - variance-reduction
+    - statistics
+  - id: SE011
+    publisher: Statsig Documentation
+    title: Frequentist Sequential Testing - Statsig Documentation
+    url: https://docs.statsig.com/experiments/advanced-setup/sequential-testing
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - sequential-testing
+    - peeking
+    - experiments
+  - id: SE012
+    publisher: Statsig Documentation
+    title: Methodology - Statsig Documentation
+    url: https://docs.statsig.com/autotune/multi-armed-bandit
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - bandits
+    - autotune
+    - traffic-allocation
+  - id: SE013
+    publisher: Statsig Documentation
+    title: Holdouts - Statsig Documentation
+    url: https://docs.statsig.com/experiments/holdouts-introduction
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - holdouts
+    - incrementality
+    - measurement
+  - id: SE014
+    publisher: Statsig Documentation
+    title: Product Analytics Overview - Statsig Documentation
+    url: https://docs.statsig.com/product-analytics/overview
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - product-analytics
+    - dashboards
+    - journeys
+  - id: SE015
+    publisher: Statsig Documentation
+    title: Session Replay Overview - Statsig Documentation
+    url: https://docs.statsig.com/session-replay/overview
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - session-replay
+    - rrweb
+    - debugging
+  - id: SE016
+    publisher: Statsig Documentation
+    title: Privacy Options for Session Replay - Statsig Documentation
+    url: https://docs.statsig.com/session-replay/privacy
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - session-replay
+    - privacy
+    - masking
+    keyQuote: Use a feature gate to define which users are eligible for replays, ensuring that recordings are limited to specific users or cohorts.
+  - id: SE017
+    publisher: Statsig Documentation
+    title: About Warehouse Native - Statsig Documentation
+    url: https://docs.statsig.com/statsig-warehouse-native/introduction
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - warehouse-native
+    - compute
+    - assignment
+    keyQuote: Statsig Warehouse Native runs experimentation compute jobs directly in your data warehouse, using your existing datasets to calculate metrics and enrich experiment analysis based on your data.
+  - id: SE018
+    publisher: Statsig Documentation
+    title: Pipeline Overview - Statsig Documentation
+    url: https://docs.statsig.com/statsig-warehouse-native/analysis-tools/pipeline-overview
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - warehouse-native
+    - pipeline
+    - staging-tables
+  - id: SE019
+    publisher: Statsig Documentation
+    title: Console API Overview - Statsig Documentation
+    url: https://docs.statsig.com/console-api/introduction
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - console-api
+    - crud
+    - rate-limits
+  - id: SE020
+    publisher: Statsig Documentation
+    title: HTTP API - Statsig Documentation
+    url: https://docs.statsig.com/http-api/overview
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - http-api
+    - sdk-guidance
+    - exposures
+  - id: SE021
+    publisher: Statsig Documentation
+    title: Workspace Management Overview - Statsig Documentation
+    url: https://docs.statsig.com/access-management/introduction
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - access-management
+    - sso
+    - scim
+  - id: SE022
+    publisher: Statsig Documentation
+    title: SCIM User Provisioning - Statsig Documentation
+    url: https://docs.statsig.com/access-management/scim/overview
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - scim
+    - okta
+    - provisioning
+  - id: SE023
+    publisher: Statsig Documentation
+    title: Single Sign-On With OIDC - Statsig Documentation
+    url: https://docs.statsig.com/access-management/sso/overview
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - sso
+    - oidc
+    - mfa
+  - id: SE024
+    publisher: Statsig Documentation
+    title: SDK Support Policy - Statsig Documentation
+    url: https://docs.statsig.com/sdks/support
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - sdk-support
+    - release-policy
+    - open-source
+  - id: SE025
+    publisher: Statsig Documentation
+    title: JavaScript Client SDK (Web) - Statsig Documentation
+    url: https://docs.statsig.com/client/javascript-sdk
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - javascript-sdk
+    - client-evaluation
+    - events
+  - id: SE026
+    publisher: Statsig Documentation
+    title: AI Governance, Security & Privacy - Statsig Documentation
+    url: https://docs.statsig.com/compliance/ai_governance_security_privacy
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - security
+    - privacy
+    - soc2
+  - id: SE027
+    publisher: Statsig Documentation
+    title: Github Code References - Statsig Documentation
+    url: https://docs.statsig.com/integrations/github_code_references
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - github
+    - developer-workflow
+    - stale-gates
+  - id: SE028
+    publisher: Statsig Documentation
+    title: Roles - Statsig Documentation
+    url: https://docs.statsig.com/statsig-warehouse-native/features/roles-and-access
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - rbac
+    - warehouse-native
+    - approvals
+  - id: SE029
+    publisher: GitHub community
+    title: '@statsig/session-replay v3.25.5 crashes on Safari 15 with "Invalid regular expression: invalid group specifier name" · Issue #36 · statsig-io/js-client-monorepo'
+    url: https://github.com/statsig-io/js-client-monorepo/issues/36
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: adverse
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics:
+    - session-replay
+    - safari
+    - bug
+    keyQuote: The @statsig/session-replay package (v3.25.5) causes the website to completely fail to load on Safari version 15.6.
+  - id: SE030
+    publisher: GitHub community
+    title: 'Role Based Access Control on Individual Created Feature Gates Or Rules in Statsig · Issue #40 · statsig-io/statsig-feedback'
+    url: https://github.com/statsig-io/statsig-feedback/issues/40
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: adverse
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics:
+    - rbac
+    - feature-flags
+    - permissions
+    keyQuote: Is it Possible to have Role based Edit/Delete access on individual Feature Gates Or Rules in Statsig?
+  - id: SE031
+    publisher: GitHub / statsig-io
+    title: 'GitHub - statsig-io/node-js-server-sdk: Statsig''s SDK for server-side Node.js applications.'
+    url: https://github.com/statsig-io/node-js-server-sdk
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: company
+    topics:
+    - node-sdk
+    - testing
+    - server-sdk
+  - id: SE032
+    publisher: GitHub / statsig-io
+    title: 'GitHub - statsig-io/go-sdk: A golang SDK for interfacing with Statsig Feature Gates, Dynamic Configs, and A/B Experiments'
+    url: https://github.com/statsig-io/go-sdk
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: confirming
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: company
+    topics:
+    - go-sdk
+    - testing
+    - server-sdk
+  - id: SE033
+    publisher: npm
+    title: '@statsig/js-client - npm'
+    url: https://www.npmjs.com/package/@statsig/js-client
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics:
+    - npm
+    - javascript-sdk
+    - client-package
+  - id: SE034
+    publisher: npm
+    title: statsig-node - npm
+    url: https://www.npmjs.com/package/statsig-node
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics:
+    - npm
+    - node-sdk
+    - server-package
+  - id: SE035
+    publisher: Go Packages
+    title: statsig package - github.com/statsig-io/go-sdk - Go Packages
+    url: https://pkg.go.dev/github.com/statsig-io/go-sdk
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics:
+    - go-sdk
+    - package-index
+    - api-surface
+  - id: SE036
+    publisher: pub.dev
+    title: statsig | Dart package
+    url: https://pub.dev/packages/statsig
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics:
+    - dart-sdk
+    - flutter
+    - package-index
+  - id: SE037
+    publisher: NuGet
+    title: Statsig 2.4.1
+    url: https://www.nuget.org/packages/Statsig
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics:
+    - dotnet-sdk
+    - nuget
+    - package-index
+  - id: SE038
+    publisher: Maven Central
+    title: 'Maven Central: com.statsig:serversdk'
+    url: https://search.maven.org/artifact/com.statsig/serversdk
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics:
+    - java-sdk
+    - maven
+    - package-index
+  - id: SE039
+    publisher: Sonatype
+    title: 'Maven Central: com.statsig:serversdk'
+    url: https://central.sonatype.com/artifact/com.statsig/serversdk
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics:
+    - java-sdk
+    - sonatype
+    - package-index
+  - id: SE040
+    publisher: Okta
+    title: Integrate Statsig with Okta
+    url: https://www.okta.com/integrations/statsig/
+    date: '2022-05-26'
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: neutral
+    sourceType: partner-proof
+    reputationTier: high
+    independence: partner
+    topics:
+    - okta
+    - sso
+    - scim
+  - id: SE041
+    publisher: Twilio Segment
+    title: Statsig Integration
+    url: https://www.twilio.com/en-us/catalog/integrations/destination/statsig
+    accessDate: '2026-05-28'
+    accessStatus: ok
+    stance: neutral
+    sourceType: partner-proof
+    reputationTier: high
+    independence: partner
+    topics:
+    - segment
+    - data-routing
+    - integration
+  claims:
+  - id: CE001
+    statement: Statsig positions its platform as a unified product-development stack spanning feature flags, experimentation, analytics, session replay, and warehouse-native workflows.
+    type: company-claimed
+    topic: platform-surface
+    sourceRefs:
+    - SE001
+    - SE002
+    - SE003
+    - SE004
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+    - QE002
+  - id: CE002
+    statement: Feature Gates are runtime boolean controls evaluated by Statsig SDKs and support gradual rollouts, kill switches, targeting by user attributes, and environment-based rules.
+    type: observed
+    topic: feature-flags
+    sourceRefs:
+    - SE007
+    - SE001
+    - SE025
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE002
+    - QE003
+    - QE004
+  - id: CE003
+    statement: Dynamic Configs return server-defined JSON and can target different parameter values by user attributes in near real time.
+    type: observed
+    topic: dynamic-config
+    sourceRefs:
+    - SE008
+    - SE025
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE002
+    - QE004
+  - id: CE004
+    statement: Public docs state that a Dynamic Config payload is limited to 100 KB, constraining how much configuration data can be shipped through one object.
+    type: observed
+    topic: dynamic-config-limit
+    sourceRefs:
+    - SE008
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE005
+  - id: CE005
+    statement: Statsig publicly documents randomized A/B and A/B/n tests, multivariate experimentation, and mutually exclusive experiments that measure changes against product and business metrics.
+    type: observed
+    topic: experiments
+    sourceRefs:
+    - SE009
+    - SE002
+    - SE025
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE002
+    - QE006
+  - id: CE006
+    statement: Statsig’s cloud experimentation product applies CUPED using the seven days before each user’s exposure, while Warehouse Native recommends the same window but allows customization.
+    type: observed
+    topic: cuped
+    sourceRefs:
+    - SE010
+    - SE017
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE007
+  - id: CE007
+    statement: Statsig documents frequentist sequential testing as a response to the peeking problem in fixed-horizon experiments.
+    type: observed
+    topic: sequential-testing
+    sourceRefs:
+    - SE011
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE008
+  - id: CE008
+    statement: Statsig Autotune uses Thompson Sampling to allocate traffic in proportion to each variant’s probability of being the best.
+    type: observed
+    topic: bandits
+    sourceRefs:
+    - SE012
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE009
+  - id: CE009
+    statement: The same bandit methodology page says vanilla multi-armed bandits cannot personalize and can converge to a global winner that is suboptimal for specific user segments.
+    type: observed
+    topic: bandit-limit
+    sourceRefs:
+    - SE012
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE009
+    - QE024
+  - id: CE010
+    statement: Statsig holdouts measure the aggregate impact of multiple features, can be global or selected, and are recommended at small percentages such as 1% to 10% of users.
+    type: observed
+    topic: holdouts
+    sourceRefs:
+    - SE013
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE010
+  - id: CE011
+    statement: Statsig product analytics exposes metric drilldown, funnels, retention, distribution, user journeys, lifecycle views, and dashboards that can also hold feature gate and experiment snapshots.
+    type: observed
+    topic: product-analytics
+    sourceRefs:
+    - SE014
+    - SE003
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE011
+  - id: CE012
+    statement: Statsig Session Replay stores a serialized rrweb representation of the page and interaction stream rather than a literal video file.
+    type: observed
+    topic: session-replay
+    sourceRefs:
+    - SE015
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE012
+  - id: CE013
+    statement: Session Replay privacy controls include three baseline masking levels, CSS-selector overrides for mask, unmask, and block behavior, and a global targeting gate that decides which users are eligible for capture.
+    type: observed
+    topic: session-replay-privacy
+    sourceRefs:
+    - SE016
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE013
+  - id: CE014
+    statement: Warehouse Native is described as an experimentation platform that runs analysis compute jobs directly inside the customer’s data warehouse while using existing datasets and experiment assignment data.
+    type: observed
+    topic: warehouse-native
+    sourceRefs:
+    - SE017
+    - SE004
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE002
+    - QE014
+  - id: CE015
+    statement: The Warehouse Native pipeline identifies first exposures, annotates metric sources with exposure data, builds user-day staging tables, runs intermediate rollups, and writes per-experiment result tables in the warehouse.
+    type: observed
+    topic: warehouse-pipeline
+    sourceRefs:
+    - SE018
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE015
+  - id: CE016
+    statement: Even in warehouse-native mode, public docs still rely on Statsig’s console, SDK-driven assignment, optional logging callbacks, and Statsig-managed analysis semantics, so the public architecture is not a pure local-only control plane.
+    type: inferred
+    topic: warehouse-control-plane
+    sourceRefs:
+    - SE017
+    - SE019
+    - SE020
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE016
+  - id: CE017
+    statement: Statsig exposes both a console CRUD API at statsigapi.net and an HTTP API for runtime evaluation, while the HTTP API explicitly recommends official SDKs for most production integrations.
+    type: observed
+    topic: api-surface
+    sourceRefs:
+    - SE019
+    - SE020
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE017
+  - id: CE018
+    statement: Console API mutation requests are rate limited to about 100 requests per 10 seconds and 900 requests per 15 minutes per project, and the documented API version is 20240601.
+    type: observed
+    topic: console-api-limits
+    sourceRefs:
+    - SE019
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE017
+  - id: CE019
+    statement: Public SDK docs show client and server interfaces for gates, dynamic configs, experiments or layers, custom event logging, and explicit exposure logging support.
+    type: observed
+    topic: sdk-capabilities
+    sourceRefs:
+    - SE025
+    - SE020
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE018
+  - id: CE020
+    statement: Statsig’s access-management docs position SSO and SCIM as complementary, with SSO handling authentication and SCIM handling account lifecycle automation.
+    type: observed
+    topic: access-management
+    sourceRefs:
+    - SE021
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE019
+  - id: CE021
+    statement: Statsig documents enterprise-tier OIDC SSO with providers including Okta, Microsoft Entra ID, Google, Ping Identity, and OneLogin, plus automatic provisioning for new authenticated users and inherited MFA requirements from the IdP.
+    type: observed
+    topic: sso
+    sourceRefs:
+    - SE023
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE019
+  - id: CE022
+    statement: Statsig’s published SCIM documentation currently only offers an Okta SCIM integration and supports push users, unassign-based deactivation, import users, import groups, and push groups.
+    type: observed
+    topic: scim
+    sourceRefs:
+    - SE022
+    - SE040
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE019
+  - id: CE023
+    statement: Statsig says it has configurable RBAC across the console, and its Warehouse Native roles page emphasizes control over who can view, edit, and approve experiments, metrics, and raw-data visibility.
+    type: observed
+    topic: rbac
+    sourceRefs:
+    - SE028
+    - SE021
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE020
+  - id: CE024
+    statement: A public feature-request issue asks whether Statsig can restrict edit or delete access on individual feature gates or rules, indicating that fine-grained per-gate governance is not clearly documented on the public surface.
+    type: third-party-reported
+    topic: governance-gap
+    sourceRefs:
+    - SE030
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE024
+    - QE025
+  - id: CE025
+    statement: Statsig’s compliance docs say customer data remains isolated from other customers, AI features do not use customer data to build models without explicit written consent, encryption uses AES-256 at rest and TLS 1.2+ in transit, and the company maintains SOC 2 Type II certification.
+    type: observed
+    topic: security-posture
+    sourceRefs:
+    - SE026
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE021
+  - id: CE026
+    statement: Statsig’s privacy policy says the company acts as a processor or service provider for product data handled on behalf of customers and directs end users to the customer’s own privacy notice in those cases.
+    type: company-claimed
+    topic: privacy-role
+    sourceRefs:
+    - SE005
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE021
+  - id: CE027
+    statement: The GitHub Code References integration lets teams locate feature-gate and dynamic-config references from the Statsig console without storing the underlying code.
+    type: observed
+    topic: developer-workflow
+    sourceRefs:
+    - SE027
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE018
+  - id: CE028
+    statement: Statsig officially supports SDK versions released within the last 12 months, treats older versions as unsupported, and publishes release notes through each SDK repository’s GitHub Releases page.
+    type: observed
+    topic: sdk-support-policy
+    sourceRefs:
+    - SE024
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE022
+  - id: CE029
+    statement: The public npm page for statsig-node describes a Node.js SDK for multi-user server-side environments and shows an actively published package surface near the run date.
+    type: third-party-reported
+    topic: node-sdk-package
+    sourceRefs:
+    - SE034
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE023
+  - id: CE030
+    statement: The npm page for @statsig/js-client describes a public client package for feature gates, dynamic configs, and A/B/n experimentation.
+    type: third-party-reported
+    topic: js-sdk-package
+    sourceRefs:
+    - SE033
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE023
+  - id: CE031
+    statement: The Go package index lists APIs for gate checks, experiment or config retrieval, client initialize responses, event logging, and manual exposure logging.
+    type: third-party-reported
+    topic: go-sdk-package
+    sourceRefs:
+    - SE035
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE023
+  - id: CE032
+    statement: pub.dev lists a Statsig SDK for Dart, indicating that package support extends beyond JavaScript and server-side runtimes.
+    type: third-party-reported
+    topic: dart-sdk-package
+    sourceRefs:
+    - SE036
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE023
+  - id: CE033
+    statement: NuGet lists a Statsig package for both .NET server and client-side applications across modern .NET versions.
+    type: third-party-reported
+    topic: dotnet-sdk-package
+    sourceRefs:
+    - SE037
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE023
+  - id: CE034
+    statement: Maven Central and Sonatype both list a com.statsig server SDK artifact for Java, supporting the claim that Statsig maintains JVM server packaging.
+    type: third-party-reported
+    topic: java-sdk-package
+    sourceRefs:
+    - SE038
+    - SE039
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE023
+  - id: CE035
+    statement: Statsig’s public Node and Go server SDK repositories say each server SDK is tested across unit, integration, and end-to-end levels, with rule-evaluation consistency checks against backend results.
+    type: observed
+    topic: repo-quality
+    sourceRefs:
+    - SE031
+    - SE032
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE018
+    - QE023
+  - id: CE036
+    statement: Okta’s integration listing says the Statsig application supports OIDC SSO plus provisioning actions such as create, update, deactivate, sync password, and group push.
+    type: third-party-reported
+    topic: okta-partner-proof
+    sourceRefs:
+    - SE040
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE019
+  - id: CE037
+    statement: Twilio Segment hosts a Statsig destination listing, indicating partner-surface support for routing data into Statsig through Segment’s catalog.
+    type: third-party-reported
+    topic: segment-destination
+    sourceRefs:
+    - SE041
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE023
+  - id: CE038
+    statement: A public GitHub issue reports that @statsig/session-replay crashed Safari 15 pages with an invalid regular expression error and describes the problem as reproducible on the page’s referenced version set.
+    type: third-party-reported
+    topic: replay-risk
+    sourceRefs:
+    - SE029
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE024
+  - id: CE039
+    statement: The replay issue and the lack of a public browser-compatibility matrix imply that session replay adds browser-specific stability risk beyond the core flagging and analytics surfaces.
+    type: inferred
+    topic: replay-compatibility-gap
+    sourceRefs:
+    - SE015
+    - SE029
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE024
+  - id: CE040
+    statement: Public docs make the shipped surface legible, but public evidence on item-level roadmap timing and granular authorization scope remains thinner than the live feature surface, leaving diligence gaps around per-feature governance and warehouse-native boundary details.
+    type: inferred
+    topic: roadmap-gap
+    sourceRefs:
+    - SE030
+    - SE017
+    - SE024
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE025
+  - id: CE041
+    statement: Statsig’s Warehouse Native launch post says the initial launch covered BigQuery, Snowflake, Databricks, and Redshift and included experiment analysis, holdouts or layers, dashboards, RBAC, approval workflows, and auditing capabilities.
+    type: company-claimed
+    topic: warehouse-launch
+    sourceRefs:
+    - SE006
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE014
+    - QE020
+  - id: CE042
+    statement: Statsig’s feature-flag product page says the platform offers automated rollback workflows, real-time release diagnostics, more than 30 open-source SDKs, and infrastructure that serves billions of end users.
+    type: company-claimed
+    topic: flag-scale
+    sourceRefs:
+    - SE001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE003
+    - QE023
+  - id: CE043
+    statement: The warehouse product page says customers can keep their own assignment or flagging solution and use existing metric data and exposures, or use Statsig’s SDK and flagging stack, indicating a hybrid rather than all-or-nothing deployment model.
+    type: company-claimed
+    topic: hybrid-deployment
+    sourceRefs:
+    - SE004
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE016
+  evidenceGaps:
+  - type: private-evidence-only
+    severity: material
+    topic: sdk-parity
+    missingEvidence: A current public parity matrix that maps every supported language package to feature completeness, release cadence, and deprecation status.
+    whyItMatters: Package listings prove breadth, but they do not show whether advanced features like replay, warehouse-native logging, bandits, or governance controls are equally available across languages.
+    diligencePath: Request a language-by-language SDK capability matrix and the current server-core migration roadmap from the product or solutions team.
+    relatedQuestionRefs:
+    - QE023
+  - type: missing-source
+    severity: material
+    topic: session-replay-browser-matrix
+    missingEvidence: An official browser-support matrix or replay-specific changelog that confirms whether Safari 15 and similar legacy browser issues are fixed or intentionally unsupported.
+    whyItMatters: Replay can become a deployment blocker even when the core flagging stack works, especially for consumer web properties with long browser-tail support requirements.
+    diligencePath: Ask for replay browser support policy, current regression-test coverage, and incident history for browser-specific capture failures.
+    relatedQuestionRefs:
+    - QE024
+  - type: missing-source
+    severity: material
+    topic: governance-roadmap
+    missingEvidence: A current official roadmap or permissions matrix showing whether per-gate or per-rule RBAC, approval policies, and warehouse-native governance boundaries are already shipped, planned, or unsupported.
+    whyItMatters: Enterprise buyers often need delegated ownership and segregation of duties at a finer grain than project-level roles, and public evidence is still thinner than the feature surface itself.
+    diligencePath: Request the current enterprise authorization model, approval workflow granularity, and the next 12-month governance roadmap from product leadership.
+    relatedQuestionRefs:
+    - QE025
+  - type: stale
+    severity: minor
+    topic: warehouse-boundary-docs
+    missingEvidence: A single up-to-date architecture brief that reconciles warehouse-native compute, older direct-ingestion docs, and the company's no-extra-overhead positioning.
+    whyItMatters: The exact no-ETL or no-ingestion boundary affects security review, data-movement cost, and implementation complexity for warehouse-first buyers.
+    diligencePath: Ask the solutions architecture team for a current deployment decision tree covering hosted, hybrid, and warehouse-native data paths.
+    relatedQuestionRefs:
+    - QE016
+    - QE025
