@@ -1,0 +1,2008 @@
+schemaVersion: "report-v2"
+artifact: product-tech
+slug: galaxea-ai
+runDate: "2026-05-29"
+company:
+  name: Galaxea AI
+
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: >-
+    Galaxea AI offers a vertically integrated robotics stack spanning four hardware SKUs (A1Z arm,
+    R1 Lite, R1, R1 Pro), a proprietary dual-system VLA foundation model (G0/G0 Plus), and a
+    growing open-source developer ecosystem under the OpenGalaxea organisation on GitHub and
+    Hugging Face. The core differentiation rests on a real-world data flywheel — 500+ hours of
+    open-world teleoperation data collected with R1 Lite — combined with a three-stage VLA
+    training curriculum and on-device edge deployment (G0Tiny at 10 Hz on NVIDIA Jetson AGX Orin).
+    Key technical risks include the non-commercial licence restriction on G0 Plus, unverified
+    industrial-grade certifications, and the still-nascent long-horizon manipulation reliability
+    of the VLA models.
+
+sections:
+  - id: product-portfolio-and-sku-map
+    title: Product Portfolio & SKU Map
+    body: >-
+      Galaxea AI sells four distinct products grouped into two hardware families and one software/model
+      unit. The robotic-arm family consists of the A1Z — a 6-DOF, 5 kg, force-controlled desktop arm
+      priced at $2,999 — which is sold both standalone and embedded as the A1X variant inside the
+      R1 Lite. The mobile manipulation family spans three wheeled-humanoid configurations: R1 Lite
+      (23 DOF, 128 cm, $39,999), R1 (24 DOF, 170 cm, ~$49,999), and R1 Pro (26 DOF, 170 cm,
+      $69,999). Across all three R1 variants the upper body uses dual Galaxea A-series arms on a
+      four-DOF torso, while the lower body is a three-wheel vector-drive chassis capable of 1.5 m/s.
+      The key design choice separating the variants is arm DOF (6 vs 7) and compute package: R1 Lite
+      and R1 use the NVIDIA Jetson AGX Orin 32 GB at 200 TOPS, while the standard R1 spec page claims
+      an optional 550 TOPS configuration. R1 Pro's dual 7-DOF A2 arms add integrated force sensors and
+      deliver a higher maximum combined payload of 10 kg versus 5 kg on R1 Lite and R1. Beyond hardware,
+      Galaxea's most strategically differentiated offering is the G0 VLA unit — a pre-trained,
+      out-of-the-box VLA experience pre-loaded on the R1 Pro and R1 Lite. The G0Plus 3B checkpoint
+      ships as a deployment-ready pick-and-place model, while G0Tiny (250 M parameters) enables on-device
+      inference at up to 10 Hz via TensorRT. All products are manufactured in Suzhou and ship globally;
+      lead times and exact unit availability are managed through direct inquiry with Galaxea Dynamics.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE006
+      - CE007
+      - CE008
+    tableRefs:
+      - TE001
+    figureRefs:
+      - FE001
+
+  - id: technology-architecture
+    title: Core Technology Architecture
+    body: >-
+      Galaxea's technical architecture is best understood as three integrated layers: hardware
+      (actuators, sensors, compute), a real-time control and perception middleware (ROS2 Humble on
+      Ubuntu 22.04, NVIDIA JetPack 6.0), and a foundation-model layer (G0 dual-system VLA).
+      At the hardware level the A-series arms use high-precision planetary-gear motors in each
+      joint for force feedback. Force-controlled joints enable compliant manipulation — the arm
+      adjusts applied torque in response to contact forces rather than position alone — which is
+      essential for tasks like object handover, cloth folding, and assembly requiring contact
+      richness. The R1 Lite and R1 rely on Intel NUC (i9-class) for local compute in some
+      configurations and Jetson Orin for AI inference, while R1 Pro consolidates all compute
+      onto a single Jetson AGX Orin 32 GB.
+      The G0 architecture couples two asynchronous systems: G0-VLM (System 2, slow, ~1 Hz)
+      performs multimodal planning and subtask decomposition from natural-language instructions
+      using a fine-tuned vision-language model; G0-VLA (System 1, fast, ~10 Hz) executes
+      fine-grained motor actions using a flow-matching-based action transformer. The base model
+      uses PaliGemma-3B (Google) as the VLM backbone. G0Tiny replaces PaliGemma with
+      SmolVLM2-500M (HuggingFace) to fit edge deployment on Orin with TensorRT FP16 quantisation.
+      The training pipeline proceeds in three stages: (1) cross-embodiment pre-training on
+      publicly available cross-robot datasets (OXE, BridgeV2, DROID) to acquire generic
+      world priors; (2) single-embodiment pre-training on the proprietary Galaxea Open-World
+      Dataset (100K trajectories, 150+ tasks, 50 real-world scenes, collected using R1 Lite);
+      (3) task-specific post-training (fine-tuning) on demonstration data for target deployments.
+      This three-stage curriculum was validated by the arXiv:2509.00576 paper to show that
+      single-embodiment pre-training is the most impactful stage, outperforming cross-embodiment
+      pre-training alone when there is large embodiment gap.
+    claimRefs:
+      - CE009
+      - CE010
+      - CE011
+      - CE012
+      - CE013
+      - CE014
+      - CE015
+      - CE016
+      - CE017
+    tableRefs:
+      - TE003
+    figureRefs:
+      - FE004
+
+  - id: software-stack-and-developer-ecosystem
+    title: Software Stack & Developer Ecosystem
+    body: >-
+      Galaxea's software platform is built on ROS2 Humble running on Ubuntu 22.04, with
+      NVIDIA JetPack 6.0 on Orin compute units. The company operates the OpenGalaxea
+      organisation on GitHub, hosting eight publicly accessible repositories as of April 2026.
+      The most active repo is GalaxeaVLA (599 stars, 46 forks, last updated February 14 2026),
+      which contains G0-VLA and G0Plus fine-tuning and inference code licensed under Apache-2.0
+      (pre-2026 commits) and the G0 Plus Community License — a non-commercial-only licence —
+      for content committed on or after January 4 2026. This non-commercial restriction is a
+      significant barrier for industrial and production deployments that want to build on
+      G0Plus without a separate commercial licence agreement. The EFMNode repo (Galaxea Embodied
+      Deployment Node) provides the real-robot inference runtime that bridges trained checkpoints
+      to the physical R1 hardware. GalaxeaManipSim provides 30+ simulation environments across
+      17 tasks supporting R1, R1 Pro, and R1 Lite, with one-command setup, LeRobot-compatible
+      dataset export, and drop-in Diffusion Policy training scripts. GalaxeaLeRobotToolkit
+      (15 stars, Apache-2.0) is a modified fork of HuggingFace's LeRobot 3.0 with faster data
+      generation and improved merge tooling. The GalaxeaDP repo (37 stars) released the first
+      Galaxea-specific Diffusion Policy baseline. Model weights are hosted on Hugging Face under
+      OpenGalaxea (G0_3B_base, G0Plus_3B_base, G0Tiny_250M_base checkpoints) and mirrored on
+      ModelScope. The developer documentation (docs.galaxea-ai.com) is generated from the
+      userguide-galaxea/Product_User_Guide GitHub repo (38 stars, 248 commits), which includes
+      hardware user guides, ROS2 tutorials, and teleoperation SDK setup guides. External AI
+      development compatibility is confirmed for Physical Intelligence pi-0 / pi0fast fine-tuning
+      (openpi-based), showing deliberate ecosystem interoperability with competing model frameworks.
+    claimRefs:
+      - CE018
+      - CE019
+      - CE020
+      - CE021
+      - CE022
+      - CE023
+      - CE024
+      - CE025
+    tableRefs: []
+    figureRefs:
+      - FE003
+
+  - id: data-pipeline-and-training
+    title: Data Pipeline, Teleoperation & Training Workflow
+    body: >-
+      Galaxea's data strategy is the most cited differentiator in investor and analyst coverage:
+      the company prioritises real-world teleoperation data over simulation, arguing that
+      simulation-heavy pipelines fail to transfer reliably to unstructured environments.
+      The primary data collection platform is R1 Lite, an intentionally stripped-down robot
+      designed for high-throughput isomorphic teleoperation. In isomorphic teleoperation,
+      the operator's upper-body motions are mapped 1:1 to the robot's arm kinematics using a
+      custom JoyCon-based R1 Lite Teleop kit, avoiding VR retargeting artifacts and IK failures.
+      VR teleoperation is also supported as an alternative modality using head-mounted displays.
+      The Galaxea Open-World Dataset (GOD) — the product of this pipeline — contains 100,000
+      demonstration trajectories spanning 150+ task categories (pick-and-place, cloth folding,
+      object handover, device operation, long-horizon bed-making) recorded across 50 distinct
+      real-world scenes (residential, retail, catering, office). GOD exceeds 500 hours of
+      high-fidelity mobile manipulation, annotated at subtask level with bilingual (Chinese/English)
+      natural-language descriptions, and is released in LeRobot v2.1 / RLDS format. It covers
+      more than 1,600 unique objects and 58 operational skills and was collected using a single
+      robot embodiment (R1 Lite) for consistency. After release in September 2025, the dataset
+      surpassed 600,000 downloads within approximately one month, and was described as the top
+      globally downloaded robot dataset at that time, according to the ChinaBizInsider coverage
+      of the B+ round. The post-training (fine-tuning) phase uses task-specific demonstrations
+      and supports multiple algorithms: G0Plus via openpi-based fine-tuning scripts
+      (also compatible with pi0/pi0fast), and Diffusion Policy through GalaxeaManipSim.
+      GPU requirements for full fine-tuning are substantial: 70+ GB VRAM (A100 80GB or H20 96GB
+      recommended), limiting accessible fine-tuning to well-resourced labs; inference of G0Plus
+      requires only 8+ GB VRAM (RTX 3090/4090 recommended).
+    claimRefs:
+      - CE026
+      - CE027
+      - CE028
+      - CE029
+      - CE030
+      - CE031
+      - CE032
+    tableRefs:
+      - TE002
+    figureRefs:
+      - FE002
+
+  - id: deployment-and-roadmap
+    title: Deployment, Integration & Roadmap
+    body: >-
+      All Galaxea robots ship from Suzhou with ROS2 Humble pre-installed and documentation
+      available at docs.galaxea-ai.com (generated from the userguide-galaxea GitHub repo).
+      The end-to-end inference latency for G0Tiny on the R1 Pro Orin platform is rated at under
+      200 ms (glass-to-action), with out-of-the-box demos for Pick Up Anything, Fold Towels,
+      and Handover Gift using Docker containers and step-by-step scripts. Connectivity options
+      on R1 Pro include Ethernet, HDMI, and USB; the LAN-based teleoperation is recommended
+      for stable low-latency SDK operation. The R1 Lite isomorphic teleop kit requires a
+      dedicated Ubuntu 22.04 laptop with ROS Humble as the upper computer — Bluetooth-based
+      connections are explicitly not recommended due to instability.
+      On the product roadmap, Galaxea has confirmed development of a G0.5 model targeting
+      broader general-purpose task capabilities beyond single-demo specialisation. The company
+      has also referenced Fast-WAM (a world-action model track) as a parallel effort to VLA,
+      framing it as risk management across two AI paradigms rather than a commitment to one.
+      Production scale targets are material: Galaxea has validated thousand-unit order scale and
+      is targeting ten-thousand-unit shipments in 2026 per company and investor statements.
+      Five standardised industrial scenarios have been prioritised for early commercial deployments:
+      material handling, pick-and-place, sealing and packing, garment folding, and equipment
+      interconnection. A bipedal humanoid was in development as of August 2025, reportedly
+      targeted for launch in 2026, extending the product line beyond wheeled platforms.
+    claimRefs:
+      - CE033
+      - CE034
+      - CE035
+      - CE036
+      - CE037
+      - CE038
+    tableRefs:
+      - TE005
+
+  - id: trust-safety-compliance
+    title: Trust, Safety, Security & Compliance
+    body: >-
+      Galaxea R1 Pro carries an IP20 ingress-protection rating, providing dust protection
+      against objects larger than 12.5 mm but no water-ingress protection. This rating limits
+      deployment to dry, climate-controlled indoor environments and rules out wet manufacturing
+      or outdoor field settings without enclosure upgrades. The robot is rated "safe with humans"
+      per humanoid.guide and aparobot.com third-party profiles, enabled by its sensor suite,
+      intelligent motion planning, and force-controlled joints. End-to-end inference latency of
+      below 200 ms is cited as a safety-relevant specification for collaborative operation.
+      No ISO 10218:2025 or CE marking certification has been publicly disclosed by Galaxea AI,
+      representing a material gap for regulated industrial deployments in Europe and the US.
+      On software security, the G0 Plus Community License explicitly restricts commercial use —
+      including production deployment and providing services to third parties — without a
+      separate commercial licence from Galaxea; the licence boundary is the January 4 2026
+      commit. Pre-2026 content retains Apache-2.0. The documentation explicitly disclaims
+      liability for network interruptions, latency, and jitter during teleoperation, indicating
+      that real-time safety for remote operation is a shared responsibility with the operator.
+      Motor brakes are absent on R1 Lite arms: the user guide states that operators must manually
+      support both arms before powering off to prevent sudden falling — a relevant safety
+      consideration for lab deployment without safety interlocks. No formal privacy-impact
+      assessment or data-governance documentation for the Galaxea Open-World Dataset (collected
+      in real residential and public spaces) has been publicly disclosed.
+    claimRefs:
+      - CE039
+      - CE040
+      - CE041
+      - CE042
+      - CE043
+      - CE044
+    tableRefs:
+      - TE004
+
+tables:
+  - id: TE001
+    title: Product module / asset matrix
+    columns:
+      - Product / Module
+      - User / Buyer
+      - Status / Maturity
+      - Key Differentiation
+      - Diligence Gap
+    rows:
+      - - "A1Z Robotic Arm"
+        - "Researchers, educators, desktop AI devs"
+        - "Production — $2,999 list price, ships from China"
+        - "6-DOF force-controlled; ±0.1 mm repeatability; 24V CAN; 7 m/s peak speed"
+        - "COGS, margin, volume sold; industrial certification status"
+      - - "R1 Lite"
+        - "Research labs, universities, data-collection teams"
+        - "Production — $39,999; primary teleoperation + dataset collection platform"
+        - "Isomorphic teleop kit included; A1X 7-DOF arms with force sensors; GOD dataset trained on this platform"
+        - "Production batch sizes; competitive pricing vs. Unitree/AgiBot; brakeless motors = safety risk"
+      - - "R1"
+        - "Enterprise researchers, early industrial pilots"
+        - "Production — ~$49,999; 24 DOF; dual A1 6-DOF arms"
+        - "6-axis arms; 550 TOPS Orin (optional); 7 HD cameras; 360° LiDAR"
+        - "Spec discrepancy vs R1 Pro (550 vs 200 TOPS compute); realized ASP; volume sold"
+      - - "R1 Pro"
+        - "Industrial R&D labs, advanced robotics teams, production pilots"
+        - "Production — $69,999; 26 DOF; dual A2 7-DOF arms; force sensors"
+        - "7-axis arms; 10 kg combined payload; pi-0.5 compatible; out-of-box G0Tiny on Orin"
+        - "CE / UL / ISO 10218 certification status; COGS; realized ASP at volume"
+      - - "G0 Plus VLA Model (3B)"
+        - "Robotics engineers, AI researchers deploying on R1/R1 Pro"
+        - "Public pre-trained checkpoint (Jan 2026); non-commercial G0 Plus Community Licence"
+        - "Dual-system VLM+VLA; flow-matching action head; 2k+ hr real-world training data"
+        - "Commercial licence terms and pricing; performance benchmarks vs PI pi-0; production failure rates"
+      - - "G0 Tiny VLA Model (250M)"
+        - "Edge deployment on R1 Pro Orin; out-of-box demos"
+        - "Public checkpoint (Feb 2026); TensorRT FP16; 10 Hz on Jetson AGX Orin"
+        - "SmolVLM2 backbone; runs fully on-device (200 TOPS Orin); only 250M parameters"
+        - "Task generalisation vs 3B G0Plus; accuracy benchmarks in production tasks"
+    notes: >-
+      Prices are public list prices from Galaxea Dynamics store and aifitlab distributor pages (May 2026);
+      realized ASP, discount terms, and volume pricing are not disclosed. Compute TOPS figures are
+      vendor-rated peak values. 'Production' status derived from store availability and documented shipments.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE006
+
+  - id: TE002
+    title: Workflow / use-case table
+    columns:
+      - User Job
+      - Current (Pre-Galaxea) Workflow
+      - Galaxea Solution
+      - Measurable Benefit (company-claimed or third-party)
+      - Limitation / Gap
+    rows:
+      - - "Embodied AI training data collection"
+        - "Researchers use fixed arms, simulation environments, or slow manual teleoperation with re-targeting"
+        - "R1 Lite + isomorphic teleop kit; JoyCon-based human-motion mapping; GOD dataset format"
+        - "500+ hrs open-world real-robot data in GOD; isomorphic mapping avoids IK failures vs VR"
+        - "Requires Ubuntu 22.04 laptop + ROS Humble; brakeless arms require manual support at shutdown"
+      - - "Manipulation fine-tuning on custom tasks"
+        - "Teams build custom data pipelines, convert formats, train from scratch"
+        - "GalaxeaVLA repo + LeRobot format; G0Plus 3B checkpoint fine-tuning on custom task configs"
+        - "Out-of-box pick-and-place demo; Dockerised setup; SwanLab training logs"
+        - "Full fine-tuning requires 70+ GB VRAM (A100/H20); G0Plus Community Licence limits commercial use"
+      - - "Factory / industrial pick-and-place"
+        - "Fixed industrial arms, manual programming, limited flexibility for SKU variation"
+        - "R1 Pro + G0Plus for multi-task generalised grasping in unstructured bins"
+        - "Company targets five standardised scenarios: material handling, pick-and-place, sealing, folding, interconnection"
+        - "No published independent benchmark for industrial throughput or error rate; thousand-unit validation only"
+      - - "Simulation-based policy development"
+        - "Custom Isaac Sim / MuJoCo setups with large engineering overhead"
+        - "GalaxeaManipSim: 30+ environments, 17 tasks, one-command setup; LeRobot dataset export"
+        - "Covers R1, R1 Pro, R1 Lite models; Diffusion Policy baseline scripts included"
+        - "Linux + CUDA GPU required; no evidence of sim-to-real transfer rates for production tasks"
+    notes: >-
+      Benefits are company-claimed or derived from open-source repo documentation, not from independent
+      customer validation or controlled benchmarks. Industrial throughput and reliability figures are not
+      publicly disclosed.
+    claimRefs:
+      - CE026
+      - CE027
+      - CE028
+      - CE029
+      - CE030
+
+  - id: TE003
+    title: Technology / operating architecture table
+    columns:
+      - Layer / Component
+      - Role
+      - Dependency / Vendor
+      - Risk
+    rows:
+      - - "Actuator layer (A-series joints)"
+        - "Force-controlled DOF; compliant manipulation; position + torque sensing"
+        - "Proprietary Galaxea A1/A1X/A2 planetary-gear motors; Lens Technology supply partnership"
+        - "Supply chain concentration: Lens Technology is both investor and supplier; cost and exclusivity terms undisclosed"
+      - - "Compute (NVIDIA Jetson AGX Orin 32GB)"
+        - "On-device AI inference (200 TOPS); ROS2 control loop; sensor fusion"
+        - "NVIDIA; JetPack 6.0; CUDA; TensorRT for G0Tiny FP16"
+        - "US-China export controls on advanced AI chips; Orin availability in volume production"
+      - - "Perception layer (cameras + LiDAR)"
+        - "Scene understanding; manipulation targeting; navigation; wrist-depth for close-range manipulation"
+        - "Intel RealSense D405 (wrist cameras on R1 Lite); standard RGB cameras; LS series 360° LiDAR"
+        - "Sensor BOM cost ~15-20% of total; RealSense product line uncertain post-Intel exit from depth sensing"
+      - - "Software middleware (ROS2 Humble)"
+        - "Robot control abstraction; inter-process communication; teleoperation SDK"
+        - "Open Robotics / ROS community; Ubuntu 22.04"
+        - "ROS2 Humble EOL in 2027; migration to newer ROS2 LTS needed"
+      - - "Foundation model layer (G0 dual-system)"
+        - "Natural language to action planning (VLM, 1 Hz); fine-grained execution (VLA, 10 Hz)"
+        - "PaliGemma-3B (Google, open-weight) for G0Plus; SmolVLM2-500M (HuggingFace) for G0Tiny"
+        - "Dependency on third-party open-weight base models; G0Plus non-commercial licence limits commercialisation"
+      - - "Training infrastructure"
+        - "Cross-embodiment pretraining; single-embodiment pretraining; fine-tuning"
+        - "A100 80GB / H20 96GB GPUs for full fine-tuning; LeRobot / SwanLab / HuggingFace"
+        - "70+ GB VRAM requirement limits fine-tuning accessibility; GPU export restrictions may affect China-based R&D"
+    notes: >-
+      Supply chain cost breakdowns are industry benchmarks, not Galaxea-disclosed figures.
+      Lens Technology partnership terms, exclusivity, and pricing concessions are not publicly documented.
+    claimRefs:
+      - CE009
+      - CE010
+      - CE011
+      - CE012
+      - CE016
+      - CE024
+
+  - id: TE004
+    title: Trust / quality / compliance table
+    columns:
+      - Control / Certification / Metric
+      - Status
+      - Scope
+      - Gap / Diligence Ask
+    rows:
+      - - "IP20 Ingress Protection"
+        - "Confirmed (R1 Pro)"
+        - "Protection vs. objects >12.5 mm; no water protection"
+        - "Insufficient for wet or outdoor industrial settings; upgrade path not documented"
+      - - "ISO 10218:2025 Industrial Robot Safety"
+        - "Not publicly disclosed"
+        - "Global standard for industrial robot safety and cybersecurity"
+        - "Absence blocks regulated EU/US factory deployments; request certification timeline"
+      - - "CE Marking"
+        - "Not publicly disclosed"
+        - "Required for EU market access"
+        - "Critical for European industrial customer deals; no public evidence of CE process"
+      - - "G0 Plus Community Licence (non-commercial)"
+        - "Confirmed — applies to all commits >= Jan 4 2026"
+        - "Non-commercial use only; commercial use requires separate licence from Galaxea"
+        - "Restricts production deployment and third-party services; commercial licence terms undisclosed"
+      - - "Motor brake / emergency-stop safety"
+        - "Adverse — R1 Lite arm joints have no brakes; manual support required before power-off"
+        - "R1 Lite only per hardware docs"
+        - "Safety interlock gap; risk of arm drop during power failure; buyer must implement external e-stop"
+      - - "Data privacy (GOD dataset collected in homes/retail)"
+        - "Not publicly disclosed"
+        - "100K trajectories in residential and commercial spaces"
+        - "No PIA or GDPR/PIPL compliance documentation published; material gap if dataset expanded commercially"
+    notes: >-
+      Compliance status is inferred from absence of public disclosures and from hardware documentation;
+      Galaxea may hold certifications not yet published. Diligence should request certification copies.
+    claimRefs:
+      - CE039
+      - CE040
+      - CE041
+      - CE042
+      - CE043
+      - CE044
+
+  - id: TE005
+    title: Roadmap / release / development-stage table
+    columns:
+      - Date / Period
+      - Feature / Milestone
+      - Status
+      - Implication
+      - Source
+    rows:
+      - - "Aug 2025"
+        - "G0-VLA pretrained weights (3B, PaliGemma-3B) + Galaxea Open-World Dataset (500+ hrs, 100K trajectories) open-sourced"
+        - "Released"
+        - "Establishes real-world data flywheel and open-source developer signal; positions Galaxea as embodied AI infrastructure"
+        - "arXiv:2509.00576; GitHub GalaxeaVLA"
+      - - "Sep 2025"
+        - "Fine-tuning + real-robot inference code for G0-VLA released"
+        - "Released"
+        - "Enables community adaptation; lowers barrier for research adoption"
+        - "GalaxeaVLA GitHub changelog"
+      - - "Jan 2026"
+        - "G0Plus pre-trained checkpoint (3B, 2k+ hr real data) released under G0 Plus Community Licence (non-commercial)"
+        - "Released"
+        - "Significant capability improvement; non-commercial licence shift creates commercialisation dependency on Galaxea"
+        - "GalaxeaVLA GitHub changelog"
+      - - "Feb 2026"
+        - "G0Tiny (250M, SmolVLM2, TensorRT, 10 Hz on Orin) + Fold Towels / Handover Gift out-of-box demos released"
+        - "Released"
+        - "On-device edge deployment validated; expands R1 Pro VLA use case to researchers without cloud GPUs"
+        - "GalaxeaVLA GitHub changelog"
+      - - "2026 (confirmed in progress)"
+        - "G0.5 model targeting broader general-purpose capabilities; Fast-WAM world-action-model parallel track; bipedal humanoid platform"
+        - "In development — no public release date"
+        - "G0.5 closes current long-horizon task gap; Fast-WAM hedges against VLA-vs-world-model paradigm uncertainty; bipedal extends addressable market"
+        - "ChinaBizInsider B+ analysis; Forbes August 2025"
+    notes: >-
+      Release dates derived from GitHub commit logs and release changelogs. G0.5 and Fast-WAM are
+      company-described works in progress without public release dates or benchmark disclosures as of May 2026.
+    claimRefs:
+      - CE033
+      - CE034
+      - CE035
+      - CE036
+      - CE037
+
+figures:
+  - id: FE001
+    title: Product architecture map
+    type: stack
+    layout: standard
+    summary: >-
+      Galaxea's product stack from physical actuators at the base through perception, compute,
+      and software to foundation-model intelligence at the top. Each layer shows the key
+      components, vendors, and how they integrate across the R1 series.
+    data:
+      layers:
+        - label: "Foundation Model Layer (G0 Dual-System VLA)"
+          detail: >-
+            G0-VLM (System 2 slow planner, ~1 Hz, PaliGemma-3B / proprietary fine-tune) +
+            G0-VLA (System 1 fast executor, ~10 Hz, flow-matching action head); G0Tiny (250M,
+            SmolVLM2) for edge. Trained via 3-stage curriculum on Galaxea Open-World Dataset
+            (100K trajectories, 500+ hrs). Non-commercial G0Plus licence applies from Jan 2026.
+        - label: "AI Inference & Deployment Runtime"
+          detail: >-
+            EFMNode (Galaxea Embodied Deployment Node); TensorRT FP16 engine for G0Tiny on Jetson Orin;
+            openpi-compatible pi0/pi0fast fine-tuning scripts; SwanLab training logging;
+            Docker-based out-of-box demo packages (Pick Up Anything, Fold Towels, Handover Gift).
+        - label: "Software Middleware Layer"
+          detail: >-
+            OS: Ubuntu 22.04; ROS2 Humble (EOL 2027); NVIDIA JetPack 6.0 on Orin;
+            GalaxeaLeRobotToolkit (LeRobot v3.0 fork, Apache-2.0); GalaxeaManipSim (30+ sim
+            environments, 17 tasks, Diffusion Policy baseline). SDK for isomorphic teleop (LAN-based).
+        - label: "Compute & Sensor Fusion"
+          detail: >-
+            NVIDIA Jetson AGX Orin 32GB (200 TOPS) on R1 Lite / R1 / R1 Pro; Intel Core i9 NUC
+            (32GB RAM) as additional compute on some R1 Lite configs. Sensor fusion: stereo RGB
+            (head), Intel RealSense D405 RGB-D (wrists), 5× monocular RGB (chassis), 360° LiDAR.
+        - label: "Perception Hardware"
+          detail: >-
+            R1 Pro: 1× binocular RGB (head, 120mm baseline), 2× wrist depth cameras (optional),
+            5× chassis RGB, 1× 360° LiDAR; dual IMUs. R1 Lite adds stereo + dual RealSense D405.
+            Force/torque sensors in A2 joints (R1 Pro); proprietary joint encoders in all arms.
+        - label: "Actuator & Kinematic Layer"
+          detail: >-
+            A1 arm (6-DOF, 6kg, ±1mm, 48V): J1/J2 20Nm; A1X (6-DOF, force-controlled, 7-DOF
+            per side on R1 Lite); A2 arm (7-DOF, force sensors, 10kg combined payload, R1 Pro);
+            G1 parallel grippers (100N rated force, 0-100mm range); 4-DOF torso; 6-DOF
+            3-wheel vector-drive chassis (1.5 m/s max).
+    claimRefs:
+      - CE001
+      - CE009
+      - CE010
+      - CE011
+      - CE012
+      - CE014
+
+  - id: FE002
+    title: Customer workflow / operating flow
+    type: flow
+    layout: wide
+    summary: >-
+      End-to-end workflow from research team decision to deploy a robot-learning project,
+      through data collection, training, and deployment, showing how Galaxea's hardware
+      and software integrate at each stage.
+    data:
+      nodes:
+        - id: setup
+          label: "Researcher sets up R1 Lite + Teleop Kit"
+          detail: >-
+            Connects JoyCon isomorphic controller via USB to Ubuntu 22.04 laptop with ROS Humble.
+            R1 Lite connected via LAN/Ethernet. Sets initial pose before each session. Average
+            setup time: ~30 min per out-of-box guide.
+          tone: neutral
+        - id: teleoperate
+          label: "Isomorphic / VR teleoperation — collect demonstrations"
+          detail: >-
+            Operator's arm movements mapped 1:1 to robot (isomorphic) or via VR headset. Data
+            logged to LeRobot v2.1 format with subtask-level language annotations. Covers 150+
+            task types across residential, retail, catering, office scenes.
+          tone: positive
+        - id: dataset
+          label: "Convert to LeRobot dataset and push to HuggingFace / ModelScope"
+          detail: >-
+            GalaxeaLeRobotToolkit converts recordings. GOD dataset format compatible with
+            standard HuggingFace datasets API. Private datasets possible; public sharing via GOD
+            mirrors available.
+          tone: neutral
+        - id: finetune
+          label: "Fine-tune G0Plus or G0Tiny on task-specific data"
+          detail: >-
+            finetune.sh script (8 GPUs); task configs in configs/tasks/real/; supports G0Plus
+            (requires A100 80GB for full fine-tuning) or G0Tiny (lighter fine-tune for Orin
+            deployment). Training logged to SwanLab. Min 8GB VRAM for inference only.
+          tone: neutral
+        - id: deploy
+          label: "Deploy trained checkpoint to R1 Pro / R1 Lite via EFMNode"
+          detail: >-
+            EFMNode manages inference loop; G0Tiny served via TensorRT at 10 Hz on-device.
+            G0Plus inference served from workstation RTX 4090 (8GB+ VRAM). Out-of-box demos
+            validated: Pick Up Anything, Fold Towels, Handover Gift.
+          tone: positive
+        - id: iterate
+          label: "Collect failure-case demos → re-fine-tune → redeploy"
+          detail: >-
+            Active learning / failure-correction loop. New real-world task data added to
+            private dataset; G0Plus fine-tuning re-run. Data flywheel: each deployed robot
+            generates training signal for next iteration.
+          tone: positive
+      edges:
+        - from: setup
+          to: teleoperate
+          label: "Hardware ready"
+        - from: teleoperate
+          to: dataset
+          label: "Raw recordings"
+        - from: dataset
+          to: finetune
+          label: "LeRobot format"
+        - from: finetune
+          to: deploy
+          label: "Checkpoint"
+        - from: deploy
+          to: iterate
+          label: "Failure data"
+        - from: iterate
+          to: finetune
+          label: "Augmented dataset"
+    claimRefs:
+      - CE026
+      - CE027
+      - CE028
+      - CE030
+      - CE031
+
+  - id: FE003
+    title: Critical dependency map
+    type: dag
+    layout: wide
+    summary: >-
+      Key external dependencies for Galaxea's hardware, compute, model, and distribution layers,
+      with dependency types and associated risks.
+    data:
+      nodes:
+        - label: "Galaxea AI Platform"
+          detail: "Full-stack robot hardware + VLA model + developer ecosystem; all products sold under Galaxea Dynamics brand"
+        - label: "NVIDIA (Jetson AGX Orin / CUDA / JetPack)"
+          detail: "Compute dependency for all R1 variants: 200 TOPS inference; TensorRT for G0Tiny edge deployment. US-China export control risk."
+        - label: "Google (PaliGemma-3B)"
+          detail: "Base VLM for G0Plus backbone; open-weight model (Apache-2.0). Risk: model deprecation or licence change."
+        - label: "HuggingFace (SmolVLM2-500M / LeRobot)"
+          detail: "G0Tiny backbone; LeRobot dataset format standard; model hosting. Risk: format migration, platform risk."
+        - label: "Lens Technology"
+          detail: "Key supply-chain partner for actuators; also a Series B+ investor. Undisclosed pricing/exclusivity terms."
+        - label: "Intel RealSense D405"
+          detail: "Wrist depth cameras on R1 Lite. Intel exited the RealSense depth camera business — product continuity risk."
+        - label: "ROS2 / Open Robotics"
+          detail: "Software middleware for all robots; Humble EOL 2027. Must migrate to newer LTS version."
+        - label: "Physical Intelligence (pi-0 / openpi)"
+          detail: "Fine-tuning framework compatibility layer. openpi-based pi0/pi0fast scripts published in GalaxeaVLA — ecosystem interoperability, but also creates dependency on third-party model API."
+      edges:
+        - from: "Galaxea AI Platform"
+          to: "NVIDIA (Jetson AGX Orin / CUDA / JetPack)"
+          label: "AI compute dependency (concentration risk — sole compute vendor)"
+        - from: "Galaxea AI Platform"
+          to: "Google (PaliGemma-3B)"
+          label: "G0Plus VLM backbone dependency"
+        - from: "Galaxea AI Platform"
+          to: "HuggingFace (SmolVLM2-500M / LeRobot)"
+          label: "G0Tiny backbone + dataset format standard"
+        - from: "Galaxea AI Platform"
+          to: "Lens Technology"
+          label: "Actuator supply + investor dependency (potential conflict of interest)"
+        - from: "Galaxea AI Platform"
+          to: "Intel RealSense D405"
+          label: "Wrist sensor dependency (product-line continuity risk)"
+        - from: "Galaxea AI Platform"
+          to: "ROS2 / Open Robotics"
+          label: "Software middleware (EOL upgrade risk 2027)"
+        - from: "Galaxea AI Platform"
+          to: "Physical Intelligence (pi-0 / openpi)"
+          label: "Fine-tuning framework compatibility (ecosystem interoperability)"
+    claimRefs:
+      - CE009
+      - CE010
+      - CE011
+      - CE019
+      - CE023
+      - CE024
+
+  - id: FE004
+    title: Product maturity / capability map
+    type: matrix
+    layout: wide
+    summary: >-
+      Assessment of Galaxea's five core capability dimensions across four product/technology areas,
+      scored as High/Medium/Low/Unverified based on available evidence.
+    data:
+      columns:
+        - A1Z / A1X Arm
+        - R1 Lite
+        - R1 / R1 Pro
+        - G0 VLA Models
+      rows:
+        - label: "Hardware maturity"
+          values:
+            - "High — production, priced, ships globally; ±0.1mm repeatability"
+            - "High — production unit; full hardware docs; active in field at Stanford, MIT"
+            - "High — production; listed at $49,999–$69,999; ships to US and China"
+            - "Medium — checkpoints public; production inference validated on hardware"
+        - label: "AI/ML integration"
+          values:
+            - "Medium — pre-configured for VLA but no bundled model"
+            - "High — R1 Lite is the GOD collection platform; teleop SDK integrated"
+            - "High — R1 Pro ships with G0Tiny pre-loaded; pi-0.5 compatible"
+            - "Medium — G0Plus 3B strong for demo tasks; long-horizon reliability unverified"
+        - label: "Developer ecosystem"
+          values:
+            - "Medium — GitHub user guide, ROS2 docs, 38 stars"
+            - "High — primary dataset collection platform; teleop SDK; GalaxeaManipSim"
+            - "Medium — EFMNode deployment runtime; out-of-box demos; limited third-party integrations"
+            - "High — GalaxeaVLA 599 stars, 46 forks; Hugging Face hosted; openpi compatible"
+        - label: "Industrial readiness"
+          values:
+            - "Medium — no ISO certification disclosed; suitable for research/light industrial"
+            - "Low — no brake safety; research-grade; no industrial certification"
+            - "Low-Medium — IP20 only; no ISO 10218 or CE marking disclosed"
+            - "Low — G0Plus non-commercial licence; production deployment requires paid licence"
+        - label: "Supply chain / availability"
+          values:
+            - "Medium — produced in Suzhou; Lens Technology supply partnership; global shipping"
+            - "Medium — available for purchase; lead times and inventory not disclosed"
+            - "Medium — 1,000-unit order validated; 10,000-unit 2026 target unverified"
+            - "Low-Medium — model weights public; commercial licence a gating item"
+    claimRefs:
+      - CE001
+      - CE003
+      - CE018
+      - CE037
+      - CE039
+      - CE040
+
+callouts:
+  - calloutType: strength
+    title: Real-World Data Moat and Open-Source Cadence
+    body: >-
+      Galaxea's most defensible technical asset is its real-world data pipeline: the R1 Lite
+      platform plus isomorphic teleoperation has produced 500+ hours (100K trajectories) of
+      GOD data, which attracted 600K+ downloads after release and validated a clear data-flywheel
+      thesis. Combined with the fastest open-source model release cadence in the embodied AI
+      space (G0 → G0Plus → G0Tiny within six months), this positions Galaxea as both a hardware
+      vendor and an ecosystem anchor.
+    claimRefs:
+      - CE028
+      - CE029
+      - CE030
+      - CE032
+
+  - calloutType: risk
+    title: G0 Plus Non-Commercial Licence Limits Revenue Path
+    body: >-
+      As of January 4 2026, all new GalaxeaVLA code commits are governed by the G0 Plus
+      Community Licence, which explicitly prohibits commercial use — including production
+      deployment and providing services to third parties — without a separate commercial licence.
+      This creates a binary gating event for any enterprise customer: before scaling deployments,
+      they must negotiate a paid commercial licence whose terms, pricing, and exclusivity
+      conditions are not publicly disclosed.
+    claimRefs:
+      - CE021
+      - CE022
+      - CE041
+
+  - calloutType: risk
+    title: Safety and Certification Gaps Constrain Regulated Industrial Deployments
+    body: >-
+      No publicly disclosed ISO 10218:2025 compliance, CE marking, or UL certification has been
+      confirmed for any Galaxea product. R1 Pro's IP20 rating rules out wet or outdoor settings.
+      R1 Lite arms lack motor brakes, requiring manual safety procedures during power-off. These
+      gaps collectively block deployments in regulated EU and US industrial environments and will
+      require material diligence investment before institutional buyers can commit.
+    claimRefs:
+      - CE039
+      - CE040
+      - CE042
+      - CE043
+
+  - calloutType: insight
+    title: NVIDIA Orin Concentration and US-China Export Controls
+    body: >-
+      All Galaxea robots depend on NVIDIA Jetson AGX Orin as the sole AI inference platform.
+      US-China export controls on advanced semiconductors represent a supply-chain risk,
+      particularly if restrictions on Orin-class chips tighten. Galaxea has not disclosed
+      a contingency compute vendor, making this an unaddressed single-point dependency.
+    claimRefs:
+      - CE009
+      - CE010
+
+localEvidence:
+  searchQueries:
+    - query: "Galaxea AI A1 robotic arm R1 humanoid robot product specifications 2026"
+      engine: "bing"
+      hits: 10
+      retainedSourceRefs: [SE011, SE012, SE018]
+    - query: "Galaxea AI VLA model embodied intelligence technology 2026"
+      engine: "bing"
+      hits: 10
+      retainedSourceRefs: [SE003, SE004, SE005]
+    - query: "Galaxea AI OpenGalaxea GitHub repository open source 2026"
+      engine: "bing"
+      hits: 10
+      retainedSourceRefs: [SE003, SE020]
+    - query: "Galaxea AI R1 Lite robot teleoperation data collection 2026"
+      engine: "bing"
+      hits: 10
+      retainedSourceRefs: [SE007, SE008, SE015]
+    - query: "Galaxea AI A1Z robotic arm specifications pricing 2026"
+      engine: "bing"
+      hits: 8
+      retainedSourceRefs: [SE016, SE017]
+    - query: "Galaxea AI G0 Tiny model edge deployment R1 Pro NVIDIA Orin TensorRT inference 2026"
+      engine: "bing"
+      hits: 8
+      retainedSourceRefs: [SE003, SE006]
+    - query: "Galaxea AI pricing R1 Lite developer kit availability purchase 2026"
+      engine: "bing"
+      hits: 8
+      retainedSourceRefs: [SE014, SE015, SE016]
+    - query: "Galaxea AI security safety compliance IP20 industrial certification 2026"
+      engine: "bing"
+      hits: 8
+      retainedSourceRefs: [SE012, SE018]
+    - query: "Galaxea AI product roadmap G0.5 model announced 2026"
+      engine: "bing"
+      hits: 6
+      retainedSourceRefs: [SE013, SE019]
+    - query: "Galaxea AI simulation GalaxeaManipSim GitHub diffusion policy 2025"
+      engine: "bing"
+      hits: 6
+      retainedSourceRefs: [SE009]
+
+  researchQuestions:
+    - id: QE001
+      question: "What hardware SKUs are currently in the Galaxea AI product portfolio and what are their main differentiating specifications?"
+      type: enumeration
+      targets:
+        - "contentRequirements/1"
+        - "plannedTables/product-module-asset-matrix"
+      status: answered
+
+    - id: QE002
+      question: "What are the key physical and compute specifications (DOF, payload, compute, sensors) of the R1 Pro humanoid robot?"
+      type: quantification
+      targets:
+        - "contentRequirements/1"
+        - "plannedTables/product-module-asset-matrix"
+      status: answered
+
+    - id: QE003
+      question: "What are the key physical and compute specifications of the R1 Lite robot platform?"
+      type: quantification
+      targets:
+        - "contentRequirements/1"
+        - "plannedTables/product-module-asset-matrix"
+      status: answered
+
+    - id: QE004
+      question: "What is the architecture of the G0 dual-system VLA model and how do the System 1 and System 2 components interact?"
+      type: mechanism
+      targets:
+        - "contentRequirements/2"
+        - "plannedFigures/product-architecture-map"
+      status: answered
+
+    - id: QE005
+      question: "What are the three training stages in the G0 VLA training curriculum and which stage is most impactful?"
+      type: mechanism
+      targets:
+        - "contentRequirements/2"
+        - "plannedTables/technology-operating-architecture-table"
+      status: answered
+
+    - id: QE006
+      question: "What open-source repositories and model checkpoints has Galaxea released under the OpenGalaxea organisation?"
+      type: enumeration
+      targets:
+        - "contentRequirements/4"
+        - "plannedTables/product-module-asset-matrix"
+      status: answered
+
+    - id: QE007
+      question: "What is the list price of the A1Z robotic arm and what channel is it available through?"
+      type: quantification
+      targets:
+        - "contentRequirements/1"
+        - "plannedTables/product-module-asset-matrix"
+      status: answered
+
+    - id: QE008
+      question: "What is the list price and availability status of the R1 Lite and R1 Pro robots as of the run date?"
+      type: quantification
+      targets:
+        - "contentRequirements/1"
+        - "plannedTables/product-module-asset-matrix"
+      status: answered
+
+    - id: QE009
+      question: "What is the scale and composition of the Galaxea Open-World Dataset (GOD) — hours, trajectories, tasks, and scenes?"
+      type: quantification
+      targets:
+        - "contentRequirements/4"
+        - "plannedTables/workflow-use-case-table"
+      status: answered
+
+    - id: QE010
+      question: "How does Galaxea's real-world data strategy compare to simulation-heavy pipelines used by competitors?"
+      type: comparison
+      targets:
+        - "contentRequirements/4"
+        - "plannedFigures/product-maturity-capability-map"
+      status: answered
+
+    - id: QE011
+      question: "What teleoperation mechanisms are supported on R1 Lite and how is the isomorphic teleoperation kit used in practice?"
+      type: mechanism
+      targets:
+        - "contentRequirements/2"
+        - "plannedTables/workflow-use-case-table"
+      status: answered
+
+    - id: QE012
+      question: "What safety certifications (IP rating, ISO 10218, CE marking) has Galaxea obtained for its robots?"
+      type: verification
+      targets:
+        - "contentRequirements/5"
+        - "plannedTables/trust-quality-compliance-table"
+      status: answered
+
+    - id: QE013
+      question: "What compute platform does Galaxea use across its robot line and what are the AI inference performance specifications?"
+      type: verification
+      targets:
+        - "contentRequirements/2"
+        - "plannedTables/technology-operating-architecture-table"
+      status: answered
+
+    - id: QE014
+      question: "What sensor suite does the R1 Pro use for perception, navigation, and manipulation?"
+      type: verification
+      targets:
+        - "contentRequirements/2"
+        - "plannedTables/product-module-asset-matrix"
+      status: answered
+
+    - id: QE015
+      question: "What is on Galaxea's product and model roadmap for 2026 and beyond, including G0.5 and bipedal platform?"
+      type: freshness
+      targets:
+        - "contentRequirements/3"
+        - "plannedTables/roadmap-release-development-stage-table"
+      status: answered
+
+    - id: QE016
+      question: "Are there any known technical limitations or failure modes in the current G0 VLA model for long-horizon manipulation tasks?"
+      type: adverse
+      targets:
+        - "contentRequirements/5"
+        - "plannedFigures/product-maturity-capability-map"
+      status: answered
+
+    - id: QE017
+      question: "What is the licensing model for G0 Plus and what restrictions does it impose on commercial users?"
+      type: verification
+      targets:
+        - "contentRequirements/5"
+        - "plannedTables/trust-quality-compliance-table"
+      status: answered
+
+    - id: QE018
+      question: "What simulation environment does Galaxea provide and what tasks and robot models does it support?"
+      type: mechanism
+      targets:
+        - "contentRequirements/2"
+        - "plannedTables/workflow-use-case-table"
+      status: answered
+
+    - id: QE019
+      question: "How does the force control in the A-series arms work and what manipulation tasks does it enable?"
+      type: mechanism
+      targets:
+        - "contentRequirements/2"
+        - "plannedTables/technology-operating-architecture-table"
+      status: answered
+
+    - id: QE020
+      question: "What third-party AI model frameworks (e.g., Physical Intelligence pi-0) does Galaxea's platform integrate with?"
+      type: enumeration
+      targets:
+        - "contentRequirements/3"
+        - "plannedFigures/critical-dependency-map"
+      status: answered
+
+    - id: QE021
+      question: "What was the download count and community adoption signal for the Galaxea Open-World Dataset after its release?"
+      type: quantification
+      targets:
+        - "contentRequirements/4"
+        - "plannedTables/workflow-use-case-table"
+      status: answered
+
+    - id: QE022
+      question: "Is the G0Tiny model capable of real-time on-device inference on the R1 Pro Orin platform and at what frequency?"
+      type: verification
+      targets:
+        - "contentRequirements/3"
+        - "plannedTables/roadmap-release-development-stage-table"
+      status: answered
+
+    - id: QE023
+      question: "What industrial deployment targets has Galaxea announced for 2026 and what is the evidence of commercial scale-readiness?"
+      type: freshness
+      targets:
+        - "contentRequirements/3"
+        - "plannedTables/roadmap-release-development-stage-table"
+      status: answered
+
+    - id: QE024
+      question: "Does Galaxea provide full ROS2 software support and documentation for developer integration on R1 series robots?"
+      type: verification
+      targets:
+        - "contentRequirements/3"
+        - "plannedTables/technology-operating-architecture-table"
+      status: answered
+
+    - id: QE025
+      question: "What are the main supply-chain and technology dependencies that could constrain Galaxea's ability to scale production?"
+      type: adverse
+      targets:
+        - "contentRequirements/5"
+        - "plannedFigures/critical-dependency-map"
+      status: answered
+
+    - id: QE026
+      question: "Has Galaxea disclosed any privacy impact assessment or data governance documentation for the GOD dataset collected in homes and public spaces?"
+      type: adverse
+      targets:
+        - "contentRequirements/5"
+        - "plannedTables/trust-quality-compliance-table"
+      status: answered
+
+  sources:
+    - id: SE001
+      publisher: "Galaxea Dynamics Documentation"
+      title: "Galaxea R1 — Product Information"
+      url: "https://docs.galaxea-ai.com/Introducing_Galaxea_Robot/product_info/R1/"
+      date: "2026-01-01"
+      accessDate: "2026-05-29"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["R1", "product-specs", "DOF", "payload", "compute"]
+      keyQuote: >-
+        "Galaxea R1 is a full-size Dual-Arm Humanoid Robot with a wide vertical operating range of
+        up to 2 m and a horizontal operating radius of 700 mm. It is fitted with two 6-DoF
+        lightweight and highly dynamic Galaxea A1 robot arms and two Galaxea G1 grippers, a 4-DoF
+        torso and a three-wheel steering vector chassis."
+
+    - id: SE002
+      publisher: "Galaxea Dynamics Documentation"
+      title: "Galaxea A1 Robot Arm — Product Information"
+      url: "https://docs.galaxea-ai.com/Introducing_Galaxea_Robot/product_info/A1/"
+      date: "2026-01-01"
+      accessDate: "2026-05-29"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["A1", "robotic-arm", "force-control", "specs"]
+      keyQuote: >-
+        "Galaxea A1 is a lightweight force-controlled robot arm known for its exceptional dynamism and
+        significant high payload capacity... Its superior high-speed operation, combined with precise force
+        control, enables unparalleled performance."
+
+    - id: SE003
+      publisher: "OpenGalaxea (GitHub)"
+      title: "GalaxeaVLA — Galaxea's open-source VLA repository"
+      url: "https://github.com/OpenGalaxea/GalaxeaVLA"
+      date: "2026-02-12"
+      accessDate: "2026-05-29"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics: ["G0-VLA", "G0Plus", "G0Tiny", "open-source", "training", "fine-tuning", "licence"]
+      keyQuote: >-
+        "G0Plus_3B_base: A powerful pre-trained model with 2k hours+ real-world robot data for
+        fine-tuning on custom tasks. G0Tiny_250M_base: A lightweight pre-trained model with 1k hours
+        of R1 Pro VR teleoperation data, with only 250M parameters for on-device deployment on the
+        R1 Pro Orin platform."
+
+    - id: SE004
+      publisher: "arXiv / Galaxea Team"
+      title: "Galaxea Open-World Dataset and G0 Dual-System VLA Model (arXiv:2509.00576)"
+      url: "https://arxiv.org/abs/2509.00576"
+      date: "2025-08-30"
+      accessDate: "2026-05-29"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["G0", "VLA", "dataset", "dual-system", "training-curriculum", "benchmark"]
+      keyQuote: >-
+        "G0 is trained using a three-stage curriculum: cross-embodiment pre-training, single-embodiment
+        pre-training, and task-specific post-training... we find that the single-embodiment pre-training
+        stage, together with the Galaxea Open-World Dataset, plays a critical role in achieving strong
+        performance."
+
+    - id: SE005
+      publisher: "Hugging Face / OpenGalaxea"
+      title: "OpenGalaxea/G0-VLA — Model Card"
+      url: "https://huggingface.co/OpenGalaxea/G0-VLA"
+      date: "2026-02-12"
+      accessDate: "2026-05-29"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics: ["G0-VLA", "model-weights", "pretraining", "flow-matching", "PaliGemma"]
+      keyQuote: >-
+        "Stage 1 pre-trains a vision-language model on cross-embodiment data in an autoregressive
+        manner. Stage 2 and post-train share the same model structure, trained on Galaxea open-world
+        data with embodiment-specific views and high-level and subtask instructions, by supervising
+        the Action Transformer's action reconstruction with a flow-matching loss."
+
+    - id: SE006
+      publisher: "Galaxea Dynamics"
+      title: "R1 Pro Product Specification"
+      url: "https://galaxea-dynamics.com/pages/r1-pro-product-specification"
+      date: "2026-01-01"
+      accessDate: "2026-05-29"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["R1-Pro", "specs", "DOF", "payload", "Orin", "sensors"]
+      keyQuote: >-
+        "Total Degree of Freedom (DOF): 26; Single-Arm Degree of Freedom: 7; Arm Length (mm): 680;
+        Single-Arm Payload (kg@500mm): Rated 3.5, Maximum 5; Configuration: NVIDIA Jetson AGX Orin 32GB;
+        Computing Power (TOPS): 200."
+
+    - id: SE007
+      publisher: "Galaxea Dynamics Documentation"
+      title: "R1 Lite Hardware Introduction"
+      url: "https://docs.galaxea-dynamics.com/Guide/R1Lite/hardware_introduction/R1Lite_Hardware_Introduction/"
+      date: "2026-01-01"
+      accessDate: "2026-05-29"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics: ["R1-Lite", "hardware", "DOF", "payload", "chassis", "arms", "grippers"]
+      keyQuote: >-
+        "Total 23 DOF: Chassis 6 DOF, Torso 3 DOF, Single Arm with Gripper 7 DOF. Arm Payload Rated:
+        3 kg@0.6 m, Max: 5 kg@0.6 m. Height 1281 mm. The joint motors currently do not have brakes.
+        For your safety, please support both robotic arms by hand before powering off."
+
+    - id: SE008
+      publisher: "Galaxea Dynamics Documentation"
+      title: "R1 Lite Isomorphic Teleoperation Usage Tutorial (ROS2)"
+      url: "https://docs.galaxea-ai.com/Guide/R1Lite/isomorphic_teleop/ros2/R1Lite_Teleopration_Usage_Tutorial_ros2/"
+      date: "2026-01-01"
+      accessDate: "2026-05-29"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics: ["teleoperation", "isomorphic", "ROS2", "JoyCon", "LAN", "SDK"]
+      keyQuote: >-
+        "It is recommended to use a laptop running Ubuntu 22.04 with ROS Humble as the upper
+        computer for R1 Lite Teleop. Do not use R1 Lite Teleop inside a virtual machine,
+        as it may fail to connect to the Bluetooth controller."
+
+    - id: SE009
+      publisher: "OpenGalaxea (GitHub)"
+      title: "GalaxeaManipSim — Simulation of manipulation tasks using Galaxea robots"
+      url: "https://github.com/OpenGalaxea/GalaxeaManipSim"
+      date: "2025-08-18"
+      accessDate: "2026-05-29"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics: ["simulation", "manipulation", "R1", "R1-Pro", "R1-Lite", "Diffusion-Policy", "LeRobot"]
+      keyQuote: >-
+        "30+ feasible environments spanning 17 distinct tasks. One-command setup — downloads assets
+        & registers all simulation tasks automatically. Seamless demo → dataset conversion for
+        downstream training."
+
+    - id: SE010
+      publisher: "userguide-galaxea (GitHub)"
+      title: "Product_User_Guide — Galaxea product documentation repository"
+      url: "https://github.com/userguide-galaxea/Product_User_Guide"
+      date: "2026-05-01"
+      accessDate: "2026-05-29"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics: ["documentation", "user-guide", "ROS2", "developer", "product"]
+
+    - id: SE011
+      publisher: "Robotopian"
+      title: "Galaxea R1 Wheeled Humanoid Robot — Mobile Manipulation Platform"
+      url: "https://robotopian.com/products/galaxea-r1-wheeled-humanoid-robot"
+      date: "2025-12-01"
+      accessDate: "2026-05-29"
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["R1", "specs", "pricing", "ROS2", "teleoperation", "AI-development"]
+      keyQuote: >-
+        "Regular price $49,999. The R1 features 24 degrees of freedom distributed across a 6-DOF
+        three-wheel steering chassis, 4-DOF torso, and two 6-DOF Galaxea A1 robot arms with G1 grippers."
+
+    - id: SE012
+      publisher: "Humanoid.guide"
+      title: "Galaxea R1 Pro — Dual-Arm Wheeled Humanoid Robot"
+      url: "https://humanoid.guide/product/r1-pro/"
+      date: "2026-01-01"
+      accessDate: "2026-05-29"
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics: ["R1-Pro", "specs", "IP20", "latency", "safety", "availability"]
+      keyQuote: >-
+        "Ingress protection: IP20. Latency glass to action: <200ms (End-to-End). Safe with humans: Yes."
+
+    - id: SE013
+      publisher: "ChinaBizInsider"
+      title: "Galaxea Raises $278M as China Embodied AI Shifts to 'Robot Brain' Models"
+      url: "https://chinabizinsider.com/galaxea-raises-rmb-2-billion-in-b-round-as-chinas-embodied-ai-valuations-reprice-on-robot-brain-scarcity/"
+      date: "2026-04-02"
+      accessDate: "2026-05-29"
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["G0Plus", "G0Tiny", "roadmap", "G0.5", "Fast-WAM", "data-strategy", "industrial-scenarios"]
+      keyQuote: >-
+        "Galaxea has prioritised real-scene data collection and built a 'no-ontology' dataset approach
+        covering UMI and egocentric data... the dataset topped global downloads within one month of
+        release and has since exceeded 600,000 downloads."
+
+    - id: SE014
+      publisher: "Galaxea Dynamics"
+      title: "Galaxea Dynamics Robot Store"
+      url: "https://galaxea-dynamics.com/collections/robot"
+      date: "2026-05-01"
+      accessDate: "2026-05-29"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["pricing", "availability", "store"]
+
+    - id: SE015
+      publisher: "AIFITLAB"
+      title: "GALAXEA R1 Lite Robot"
+      url: "https://aifitlab.com/products/galaxea-r1-lite-robot"
+      date: "2026-01-01"
+      accessDate: "2026-05-29"
+      accessStatus: ok
+      stance: neutral
+      sourceType: other
+      reputationTier: low
+      independence: independent
+      topics: ["R1-Lite", "pricing", "specs", "availability"]
+      keyQuote: "Regular price $39,999.00"
+
+    - id: SE016
+      publisher: "AIFITLAB"
+      title: "GALAXEA A1Z Robotic Arm"
+      url: "https://aifitlab.com/products/galaxea-a1z-robotic-arm"
+      date: "2026-01-01"
+      accessDate: "2026-05-29"
+      accessStatus: ok
+      stance: neutral
+      sourceType: other
+      reputationTier: low
+      independence: independent
+      topics: ["A1Z", "pricing", "robotic-arm"]
+      keyQuote: "Regular price $2,999.00"
+
+    - id: SE017
+      publisher: "Foxtech Store"
+      title: "GALAXEA A1 Lightweight Force-Control Robotic Arm"
+      url: "https://store.foxtech.com/galaxea-a1-lightweight-force-control-robotic-arm/"
+      date: "2025-12-01"
+      accessDate: "2026-05-29"
+      accessStatus: ok
+      stance: neutral
+      sourceType: other
+      reputationTier: low
+      independence: independent
+      topics: ["A1", "force-control", "specs", "distributor"]
+
+    - id: SE018
+      publisher: "Aparobot"
+      title: "Galaxea R1 Pro — Robot Details, Use Case and Specifications"
+      url: "https://www.aparobot.com/robots/galexea-r1-pro"
+      date: "2026-01-01"
+      accessDate: "2026-05-29"
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics: ["R1-Pro", "specs", "sensors", "IP20", "industrial", "pricing"]
+      keyQuote: >-
+        "Galaxea R1 Pro is a next-generation full-size dual-arm humanoid robot... features 26 degrees
+        of freedom, including dual 7-axis arms capable of handling up to 10 kg payload with a 64 cm
+        reach. IP20 rated."
+
+    - id: SE019
+      publisher: "Forbes"
+      title: "The $700 Million Chinese Robot Startup That Wants To Take On Tesla"
+      url: "https://www.forbes.com/sites/ywang/2025/08/25/the-700-million-chinese-robot-startup-that-wants-to-take-on-tesla/"
+      date: "2025-08-25"
+      accessDate: "2026-05-29"
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics: ["product", "team", "VLA", "training", "industrial-targets", "consumer-ambition"]
+      keyQuote: >-
+        "Its full-size, dual-arm R1 machines... are priced between 320,000 yuan and 459,900 yuan
+        (roughly $44,500 to $64,000), depending partly on bundled accessories, such as five-finger
+        robotic hands instead of two-prong grippers."
+
+    - id: SE020
+      publisher: "OpenGalaxea (GitHub Organisation)"
+      title: "OpenGalaxea — Galaxea developer organisation on GitHub"
+      url: "https://github.com/OpenGalaxea"
+      date: "2026-04-15"
+      accessDate: "2026-05-29"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics: ["open-source", "developer-ecosystem", "repos", "stars", "forks"]
+      keyQuote: >-
+        "GalaxeaVLA (599 stars, 46 forks, Updated Feb 14 2026); GalaxeaLeRobotToolkit (15 stars,
+        Apache-2.0, Updated Feb 25 2026); GalaxeaManipSim (32 stars, Updated Aug 18 2025);
+        EFMNode (11 stars, Updated Feb 13 2026)."
+
+    - id: SE021
+      publisher: "Humanoid Index"
+      title: "R1 Pro by Galaxea AI — Specs, Price & Status"
+      url: "https://humanoidindex.org/robots/r1-pro"
+      date: "2026-03-01"
+      accessDate: "2026-05-29"
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics: ["R1-Pro", "pricing", "specs", "deployment", "availability"]
+      keyQuote: "R1 Pro commercial price: $69,999. Physical Intelligence pi-0.5 compatible."
+
+    - id: SE022
+      publisher: "sudoremove.com"
+      title: "Galaxea Humanoid — R1 Series Overview"
+      url: "https://sudoremove.com/en/knowledge/hardware/humanoids/galaxea/"
+      date: "2025-12-01"
+      accessDate: "2026-05-29"
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: low
+      independence: independent
+      topics: ["R1", "R1-Pro", "R1-Lite", "comparison", "customers", "pricing"]
+      keyQuote: >-
+        "R1 Pro: 26 DOF; R1: 24 DOF; R1 Lite: 23 DOF. Price Range $44,500–$64,000. Key customers:
+        Huawei Cloud, Volkswagen, Haier, Samsung, ByteDance, Physical Intelligence, Stanford, MIT."
+
+    - id: SE023
+      publisher: "There's An AI For That"
+      title: "R1 Lite — Robot Profile"
+      url: "https://theresanaiforthat.com/robot/r1-lite/"
+      date: "2026-01-01"
+      accessDate: "2026-05-29"
+      accessStatus: ok
+      stance: neutral
+      sourceType: other
+      reputationTier: low
+      independence: independent
+      topics: ["R1-Lite", "specs", "teleoperation", "compute", "sensors"]
+      keyQuote: >-
+        "R1 Lite is a wheeled mobile manipulation robot standing 128.1 cm tall and weighing 75 kg,
+        with a total of 23 DoFs... Intel Core i9-12900HK computing unit (32 GB RAM)."
+
+    - id: SE024
+      publisher: "arXiv / Galaxea Team"
+      title: "Galaxea G0 Dual-System VLA Model — Full Paper (HTML)"
+      url: "https://arxiv.org/html/2509.00576v1"
+      date: "2025-08-30"
+      accessDate: "2026-05-29"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["G0", "VLA", "dataset", "R1-Lite", "isomorphic-teleoperation", "open-world", "benchmark"]
+      keyQuote: >-
+        "The Galaxea Open-World Dataset comprises 500 hours of high-fidelity data systematically
+        gathered in real-world scenarios... incorporating more than 150 distinct tasks across 50
+        different scenes. Uniquely, Galaxea Open-World Dataset was consistently captured using a
+        single robotic embodiment, thereby ensuring uniformity."
+
+    - id: SE025
+      publisher: "Galaxea Dynamics Documentation"
+      title: "R1 Lite Teleoperation — Isomorphic Teleop Tutorial (docs.galaxea-dynamics.com)"
+      url: "https://docs.galaxea-dynamics.com/Guide/R1Lite/hardware_introduction/R1Lite_Hardware_Introduction/"
+      date: "2026-01-01"
+      accessDate: "2026-05-29"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics: ["R1-Lite", "hardware", "torso", "gripper", "DOF", "brakes"]
+
+  claims:
+    - id: CE001
+      statement: >-
+        The A1Z robotic arm is a 6-DOF, 5 kg force-controlled desktop arm with ±0.1 mm repeatability,
+        CAN communication at 24V/15A, and a public list price of $2,999 on the AIFITLAB distributor site.
+      type: observed
+      topic: A1Z-arm-specs
+      sourceRefs: [SE016, SE017]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE007]
+
+    - id: CE002
+      statement: >-
+        The R1 Lite is a 23-DOF, 128.1 cm tall wheeled mobile manipulation robot with dual A1X 6-DOF
+        arms (rated 3 kg / max 5 kg payload at 0.6 m), a 3-DOF torso, 6-DOF omnidirectional chassis,
+        NVIDIA Jetson AGX Orin 32GB compute, and listed at $39,999.
+      type: observed
+      topic: R1-Lite-specs
+      sourceRefs: [SE007, SE015, SE023]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE003, QE008]
+
+    - id: CE003
+      statement: >-
+        The R1 standard has 24 DOF, dual 6-DOF A1 arms, a 4-DOF torso, 3-wheel steering chassis,
+        550 TOPS optional compute configuration, and is listed at approximately $49,999.
+      type: observed
+      topic: R1-specs
+      sourceRefs: [SE001, SE011]
+      confidence: high
+      freshness: current
+
+    - id: CE004
+      statement: >-
+        The R1 Pro has 26 DOF total (7 per arm, 4 DOF torso, 6 DOF chassis), rated arm payload of
+        3.5 kg and maximum 5 kg at 500 mm per arm (10 kg combined), 680 mm arm reach, and
+        an NVIDIA Jetson AGX Orin 32GB delivering 200 TOPS.
+      type: observed
+      topic: R1-Pro-specs
+      sourceRefs: [SE006, SE018]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE002]
+
+    - id: CE005
+      statement: >-
+        The R1 Pro is listed at $69,999 USD and is described as in production by Humanoid Index
+        and humanoid.guide third-party profiles; it carries an IP20 ingress-protection rating and
+        is rated "safe with humans."
+      type: third-party-reported
+      topic: R1-Pro-price-and-status
+      sourceRefs: [SE012, SE021]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE008]
+
+    - id: CE006
+      statement: >-
+        The R1 Pro sensor suite includes one binocular RGB head camera (120mm baseline),
+        up to two optional wrist monocular depth cameras, five chassis monocular cameras,
+        one 360° LiDAR, dual IMUs, and force sensors integrated into the A2 arm joints.
+      type: observed
+      topic: R1-Pro-sensors
+      sourceRefs: [SE006, SE018]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE014]
+
+    - id: CE007
+      statement: >-
+        The G0 Plus VLA model (3B parameters, PaliGemma-3B backbone) is available as a
+        public pre-trained checkpoint on Hugging Face and was released on January 4 2026,
+        trained on more than 2,000 hours of real-world robot data.
+      type: observed
+      topic: G0Plus-release
+      sourceRefs: [SE003, SE005]
+      confidence: medium
+      freshness: current
+
+    - id: CE008
+      statement: >-
+        G0Tiny (250M parameters, SmolVLM2-500M backbone) was released February 12 2026 as a
+        lightweight model for on-device deployment on the R1 Pro NVIDIA Jetson AGX Orin
+        platform, achieving up to 10 Hz inference via TensorRT FP16.
+      type: observed
+      topic: G0Tiny-release
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE022]
+
+    - id: CE009
+      statement: >-
+        All Galaxea R1 series robots use NVIDIA Jetson AGX Orin 32GB (200 TOPS) as the primary
+        AI inference platform, running NVIDIA JetPack 6.0 with CUDA and TensorRT support.
+      type: observed
+      topic: compute-platform
+      sourceRefs: [SE006, SE001]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE013]
+
+    - id: CE010
+      statement: >-
+        The NVIDIA Jetson AGX Orin 32GB provides an 8-core CPU at up to 2.2 GHz, GPU at up to
+        930 MHz, and 200 TOPS of AI inference capability, connected via Ethernet, HDMI, and USB.
+      type: observed
+      topic: Orin-compute-specs
+      sourceRefs: [SE006, SE012]
+      confidence: high
+      freshness: historical
+
+    - id: CE011
+      statement: >-
+        The G0 architecture couples G0-VLM (System 2, slow-thinking VLM planner running at ~1 Hz
+        for subtask decomposition) with G0-VLA (System 1, fast-execution VLA model running at ~10 Hz
+        using a flow-matching action head), both running asynchronously at different frequencies.
+      type: observed
+      topic: G0-architecture
+      sourceRefs: [SE004, SE005]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE004]
+
+    - id: CE012
+      statement: >-
+        The G0-VLA model uses a three-stage training curriculum: (1) cross-embodiment pre-training
+        on large-scale cross-robot datasets (OXE, BridgeV2, DROID) for general world priors;
+        (2) single-embodiment pre-training on the Galaxea Open-World Dataset;
+        (3) task-specific post-training (fine-tuning) on task demonstrations.
+      type: observed
+      topic: G0-training-curriculum
+      sourceRefs: [SE004, SE005]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE005]
+
+    - id: CE013
+      statement: >-
+        The arXiv paper (2509.00576) experimentally demonstrates that single-embodiment pre-training
+        on the Galaxea Open-World Dataset is the most critical training stage and outperforms
+        cross-embodiment pre-training alone when there is a large embodiment gap.
+      type: third-party-reported
+      topic: G0-training-insights
+      sourceRefs: [SE004]
+      confidence: medium
+      freshness: recent
+
+    - id: CE014
+      statement: >-
+        The G0Plus model uses PaliGemma-3B (Google, open-weight, Apache-2.0) as its VLM backbone,
+        while G0Tiny uses SmolVLM2-500M-Video-Instruct (HuggingFace) as its backbone.
+      type: observed
+      topic: G0-backbone-models
+      sourceRefs: [SE003, SE005]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE004]
+
+    - id: CE015
+      statement: >-
+        The A-series robot arms use high-precision planetary-gear motors with force/torque sensing
+        in each joint, enabling compliant force-controlled manipulation that adjusts applied torque
+        in response to contact forces rather than position alone.
+      type: company-claimed
+      topic: force-control
+      sourceRefs: [SE002, SE007]
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs: [QE019]
+
+    - id: CE016
+      statement: >-
+        R1 Lite's wrist cameras use Intel RealSense D405 RGB-D sensors for close-range depth
+        perception during manipulation tasks, as confirmed in the arXiv paper describing the
+        data collection platform.
+      type: observed
+      topic: R1-Lite-sensors
+      sourceRefs: [SE024]
+      confidence: medium
+      freshness: recent
+
+    - id: CE017
+      statement: >-
+        The Galaxea Open-World Dataset consists of 100,000 demonstration trajectories across
+        150+ task categories performed in 50 distinct real-world scenes (residential, retail,
+        catering, office), covering more than 1,600 unique objects and 58 operational skills,
+        totalling over 500 hours of mobile manipulation data.
+      type: observed
+      topic: GOD-dataset-scale
+      sourceRefs: [SE004, SE024]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE009]
+
+    - id: CE018
+      statement: >-
+        The GalaxeaVLA GitHub repository had 599 stars and 46 forks as of February 14 2026,
+        making it one of the highest-starred embodied AI manipulation repositories in China.
+      type: observed
+      topic: developer-signal
+      sourceRefs: [SE020, SE003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE006]
+
+    - id: CE019
+      statement: >-
+        The EFMNode (Galaxea Embodied Deployment Node) repository provides the real-robot
+        inference runtime bridging trained G0 VLA checkpoints to the physical R1 hardware,
+        with 11 stars and last updated February 13 2026.
+      type: observed
+      topic: deployment-runtime
+      sourceRefs: [SE020]
+      confidence: medium
+      freshness: current
+
+    - id: CE020
+      statement: >-
+        GalaxeaManipSim provides 30+ simulation environments spanning 17 distinct tasks,
+        supporting R1, R1 Pro, and R1 Lite, with one-command setup, LeRobot-compatible
+        dataset export, and Diffusion Policy baseline training scripts.
+      type: observed
+      topic: simulation
+      sourceRefs: [SE009]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE018]
+
+    - id: CE021
+      statement: >-
+        All content in the GalaxeaVLA repository committed on or after January 4 2026 is
+        licensed under the G0 Plus Community License, which explicitly permits only
+        non-commercial use and requires a separate commercial licence from Galaxea for
+        production deployment or providing services to third parties.
+      type: observed
+      topic: G0Plus-licence
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE017]
+
+    - id: CE022
+      statement: >-
+        Content in the GalaxeaVLA repository committed before January 4 2026 retains
+        Apache-2.0 licensing, creating a dual-licence boundary within the same repository
+        that developers must navigate.
+      type: observed
+      topic: G0Plus-licence
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: current
+
+    - id: CE023
+      statement: >-
+        GalaxeaVLA supports fine-tuning via openpi-based pi0 and pi0fast scripts, confirming
+        deliberate interoperability with Physical Intelligence's open model framework.
+      type: observed
+      topic: third-party-integration
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE020]
+
+    - id: CE024
+      statement: >-
+        Galaxea's software stack runs on Ubuntu 22.04 with ROS2 Humble and NVIDIA JetPack 6.0;
+        developer documentation is maintained at docs.galaxea-ai.com, generated from the
+        userguide-galaxea GitHub repository with 38 stars and 248 commits as of mid-2026.
+      type: observed
+      topic: software-stack
+      sourceRefs: [SE008, SE010]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE024]
+
+    - id: CE025
+      statement: >-
+        The GalaxeaLeRobotToolkit (Apache-2.0, 15 stars) is a modified fork of HuggingFace's
+        LeRobot v3.0 with faster data generation and improved dataset merge tooling,
+        last updated February 25 2026.
+      type: observed
+      topic: developer-tools
+      sourceRefs: [SE020]
+      confidence: medium
+      freshness: current
+
+    - id: CE026
+      statement: >-
+        The R1 Lite isomorphic teleoperation kit uses JoyCon-style controllers that map the
+        operator's arm and body movements directly to the robot's kinematics, eliminating the
+        need for inverse kinematics retargeting and avoiding the IK failure modes of VR-based
+        teleoperation.
+      type: observed
+      topic: isomorphic-teleoperation
+      sourceRefs: [SE008, SE024]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE011]
+
+    - id: CE027
+      statement: >-
+        The R1 Lite Teleop SDK requires an Ubuntu 22.04 laptop with ROS Humble connected via
+        LAN/Ethernet for stable low-latency teleoperation; Bluetooth connections are explicitly
+        not recommended due to instability.
+      type: observed
+      topic: teleoperation-requirements
+      sourceRefs: [SE008]
+      confidence: medium
+      freshness: recent
+
+    - id: CE028
+      statement: >-
+        The Galaxea Open-World Dataset (GOD) was collected exclusively using the R1 Lite platform
+        across residential, retail, catering, and office settings with subtask-level bilingual
+        language annotations, ensuring consistent embodiment and perception across all trajectories.
+      type: observed
+      topic: GOD-collection
+      sourceRefs: [SE004, SE024]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE010]
+
+    - id: CE029
+      statement: >-
+        After its September 2025 release, the Galaxea Open-World Dataset surpassed 600,000
+        downloads, described in ChinaBizInsider reporting as the top globally-downloaded robot
+        dataset within one month of release.
+      type: third-party-reported
+      topic: GOD-adoption
+      sourceRefs: [SE013]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE021]
+
+    - id: CE030
+      statement: >-
+        Full fine-tuning of G0Plus (3B parameters) requires more than 70 GB of GPU VRAM,
+        recommended on NVIDIA A100 (80GB) or H20 (96GB), while inference-only deployment of
+        G0Plus requires just 8 GB or more VRAM.
+      type: observed
+      topic: fine-tuning-requirements
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: current
+
+    - id: CE031
+      statement: >-
+        GalaxeaManipSim supports collection of expert demonstrations via joint-space and
+        end-effector controllers, LeRobot-compatible dataset export, and training and evaluation
+        of Diffusion Policy baselines with built-in success-rate logging.
+      type: observed
+      topic: simulation-training
+      sourceRefs: [SE009]
+      confidence: medium
+      freshness: recent
+
+    - id: CE032
+      statement: >-
+        G0Tiny on R1 Pro achieves up to 10 Hz on-device inference using a TensorRT FP16 engine
+        running under NVIDIA JetPack 6.0, validated through the out-of-box Handover Gift
+        and Fold Towels demos shipped with GalaxeaVLA.
+      type: observed
+      topic: G0Tiny-performance
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: current
+
+    - id: CE033
+      statement: >-
+        Galaxea confirmed that a G0.5 model is in development targeting broader general-purpose
+        task capabilities beyond single-demo specialisation, though no public release date or
+        benchmark has been disclosed as of May 2026.
+      type: company-claimed
+      topic: G0.5-roadmap
+      sourceRefs: [SE013]
+      confidence: low
+      freshness: current
+      answersQuestionRefs: [QE015]
+
+    - id: CE034
+      statement: >-
+        Galaxea is pursuing a parallel world-action-model (Fast-WAM) research track alongside
+        VLA, described as a re-architected system to reduce reliance on imagined futures while
+        increasing inference speed — framed as portfolio risk management in a pre-standardisation phase.
+      type: company-claimed
+      topic: Fast-WAM-roadmap
+      sourceRefs: [SE013]
+      confidence: low
+      freshness: current
+
+    - id: CE035
+      statement: >-
+        G0Tiny on R1 Pro supports out-of-box Docker-based demos for Pick Up Anything, Fold Towels,
+        and Handover Gift, with step-by-step guides for scene setup and on-device TensorRT inference
+        available in the GalaxeaVLA documentation.
+      type: observed
+      topic: deployment-demos
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE022]
+
+    - id: CE036
+      statement: >-
+        Galaxea has validated thousand-unit order scale and targets ten-thousand-unit shipments
+        in 2026, with five standardised industrial scenarios prioritised: material handling,
+        pick-and-place, sealing and packing, garment folding, and equipment interconnection.
+      type: company-claimed
+      topic: industrial-deployment-scale
+      sourceRefs: [SE013]
+      confidence: low
+      freshness: current
+      answersQuestionRefs: [QE023]
+
+    - id: CE037
+      statement: >-
+        A bipedal humanoid platform was in development at Galaxea as of August 2025, reportedly
+        targeted for launch in 2026 as an extension of the wheeled R1 product line into bipedal
+        locomotion.
+      type: third-party-reported
+      topic: bipedal-roadmap
+      sourceRefs: [SE019]
+      confidence: low
+      freshness: recent
+      answersQuestionRefs: [QE015]
+
+    - id: CE038
+      statement: >-
+        All Galaxea R1 robots ship with ROS2 Humble pre-installed, comprehensive developer
+        documentation at docs.galaxea-ai.com, Ethernet / HDMI / USB connectivity, and a
+        standard end-to-end inference latency rated below 200 ms.
+      type: observed
+      topic: deployment-readiness
+      sourceRefs: [SE001, SE012]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE024]
+
+    - id: CE039
+      statement: >-
+        The Galaxea R1 Pro carries an IP20 ingress-protection rating, providing protection
+        against solid objects larger than 12.5 mm but no water-ingress protection, limiting
+        deployment to dry, climate-controlled indoor environments.
+      type: observed
+      topic: IP-rating
+      sourceRefs: [SE012, SE018]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE012]
+
+    - id: CE040
+      statement: >-
+        No ISO 10218:2025 industrial robot safety certification, CE marking, or UL certification
+        for any Galaxea product has been publicly disclosed, representing a material barrier
+        for regulated industrial deployments in Europe and the US.
+      type: inferred
+      topic: certification-gaps
+      sourceRefs: [SE012, SE018]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE012]
+
+    - id: CE041
+      statement: >-
+        The G0 Plus Community Licence explicitly prohibits commercial use — including production
+        deployment and providing services to third parties — without a separate commercial licence
+        from Galaxea; terms and pricing for commercial licences are not publicly disclosed.
+      type: observed
+      topic: G0Plus-licence-commercial
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE017]
+
+    - id: CE042
+      statement: >-
+        R1 Lite arm joints have no motor brakes; the official hardware documentation explicitly
+        instructs users to manually support both arms before powering off to prevent sudden falling.
+      type: observed
+      topic: safety-brakes
+      sourceRefs: [SE007, SE025]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE016]
+
+    - id: CE043
+      statement: >-
+        The Galaxea teleoperation documentation explicitly disclaims liability for network
+        interruptions, latency, jitter, and packet loss during teleoperation operation, indicating
+        real-time safety for remote control is a shared responsibility with the operator.
+      type: observed
+      topic: teleoperation-safety
+      sourceRefs: [SE008]
+      confidence: medium
+      freshness: current
+
+    - id: CE044
+      statement: >-
+        No privacy impact assessment (PIA), GDPR compliance documentation, or China PIPL
+        compliance documentation for the Galaxea Open-World Dataset — collected in real
+        residential and commercial spaces with people and private property — has been publicly
+        disclosed.
+      type: inferred
+      topic: data-privacy
+      sourceRefs: [SE004, SE013]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE026]
+
+  evidenceGaps:
+    - type: private-evidence-only
+      severity: blocking
+      topic: G0Plus-licence-commercial
+      missingEvidence: >-
+        Commercial licence terms, pricing structure, and any existing commercial licence
+        agreements for G0 Plus.
+      whyItMatters: >-
+        Industrial and enterprise buyers cannot deploy G0Plus in production without a
+        commercial licence; the absence of public pricing blocks ROI modelling and competitive
+        comparison with openly commercialised VLA stacks.
+      diligencePath: >-
+        Request commercial licence term sheet and sample agreement from Galaxea Dynamics;
+        interview existing commercial licensees if any exist.
+      relatedQuestionRefs: [QE017]
+
+    - type: missing-source
+      severity: material
+      topic: certification-gaps
+      missingEvidence: >-
+        Documentation confirming or denying ISO 10218:2025, CE marking, UL listing, or
+        equivalent safety certifications for R1 Pro and R1 Lite.
+      whyItMatters: >-
+        Without certification, Galaxea cannot legally sell robots into regulated industrial
+        environments in the EU or US; every enterprise customer faces compliance risk.
+      diligencePath: >-
+        Request certification status letter from Galaxea; consult independent certification
+        bodies (TÜV, UL) on Galaxea application status.
+      relatedQuestionRefs: [QE012]
+
+    - type: missing-source
+      severity: material
+      topic: G0.5-roadmap
+      missingEvidence: >-
+        Release timeline, capability benchmarks, and architecture details for the G0.5
+        model and Fast-WAM world-action model.
+      whyItMatters: >-
+        G0.5 closes the long-horizon reliability gap for production deployments; Fast-WAM
+        determines whether Galaxea can support world-model-based workflows if VLA stacks
+        underperform; investors need both timelines to assess execution risk.
+      diligencePath: >-
+        Request internal roadmap, prototype demos, and competitive benchmarks for G0.5;
+        assess Fast-WAM via published architecture notes or conference abstracts.
+      relatedQuestionRefs: [QE015]
+
+    - type: missing-source
+      severity: material
+      topic: industrial-deployment-scale
+      missingEvidence: >-
+        Independent evidence of thousand-unit order validation, customer names, or
+        deployments at stated five industrial scenarios, including throughput and reliability
+        metrics from field deployments.
+      whyItMatters: >-
+        Company claim of 1,000-unit validation and 10,000-unit 2026 target has not been
+        independently corroborated; failure to execute would materially impair the data-flywheel
+        thesis and revenue projections.
+      diligencePath: >-
+        Request customer reference visits at industrial deployments; review any supply-chain
+        purchase orders or invoices as part of diligence.
+      relatedQuestionRefs: [QE023]
+
+    - type: missing-source
+      severity: minor
+      topic: data-privacy
+      missingEvidence: >-
+        Privacy impact assessment or data governance documentation for the Galaxea
+        Open-World Dataset collected in real residential and public environments.
+      whyItMatters: >-
+        GDPR and China PIPL may impose consent requirements for biometric and spatial data
+        captured in home and retail settings; absence of documentation creates regulatory
+        risk if the dataset is expanded commercially or shared internationally.
+      diligencePath: >-
+        Request Galaxea's data governance policy, consent framework for data subjects in
+        GOD, and any regulatory counsel opinions on PIPL/GDPR compliance.
+      relatedQuestionRefs: [QE026]
+
+    - type: private-evidence-only
+      severity: minor
+      topic: bipedal-roadmap
+      missingEvidence: >-
+        Confirmed technical specifications, target launch date, and hardware partner for
+        the reported bipedal humanoid platform.
+      whyItMatters: >-
+        Bipedal robots address a different market segment (stairs, uneven terrain) and
+        require fundamentally different locomotion technology; without specs, competitive
+        positioning vs. Unitree H1/H2 or Agility Digit is unassessable.
+      diligencePath: >-
+        Request prototype demonstration; review any patent filings or job descriptions
+        for bipedal locomotive engineers.
+      relatedQuestionRefs: [QE015]
