@@ -1,0 +1,2444 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: serval
+runDate: '2026-06-02'
+company:
+  name: Serval
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: >-
+    Serval delivers an AI-native ITSM platform built on three specialist agents—a Help Desk Agent,
+    an Automation Agent, and an Insights Agent—where security rests on strict separation between
+    tool-building (Automation Agent) and tool-execution (Help Desk Agent), preventing any unconstrained
+    AI action. The platform is SOC 2 Type II certified, supports cloud and self-hosted deployment
+    via Kubernetes and Terraform, and integrates with 60+ enterprise systems; however, no public
+    source code, architecture white papers, or independent technical benchmarks exist, leaving
+    performance claims and LLM-provider dependencies as material diligence gaps.
+
+sections:
+  - id: section-product-suite
+    title: Product Suite and Core Modules
+    body: >-
+      Serval markets itself as a unified AI-native ITSM platform combining three functional surfaces:
+      a Help Desk, an Access Management module, and an Automation Engine. The company's product
+      homepage describes the offering as an "AI agent workforce" deployed within enterprise IT,
+      capable of handling help desk requests, provisioning time-bound access, onboarding and
+      offboarding employees, and building workflow automations through natural language. Five
+      distinct capability areas are marketed: Resolve Requests, Build Workflows, Transform Ticketing,
+      Manage Access, and Manage Assets.
+
+
+      The Help Desk module is the user-facing surface. Employees interact via Slack, Microsoft Teams,
+      email, or a web portal. Serval's AI routes incoming tickets based on request content and
+      context, searches connected knowledge bases to answer questions with sourced information,
+      executes automations to close out common requests without human intervention, and escalates
+      with full context when human handling is required. Bi-directional ticket sync is offered with
+      third-party systems—specifically ServiceNow, Jira, and Zendesk—allowing enterprises to run
+      Serval alongside incumbents during migration.
+
+
+      The Access Management module handles just-in-time (JIT) provisioning, automated deprovisioning,
+      approval workflow customization, access-profile restrictions, and SCIM integration with
+      identity providers. According to the pricing page, access policies can be customized down to
+      least-privilege rules, multi-approver gates, and time-bound grants. Serval also lists SCIM
+      provisioning and Terraform/API-based custom provisioning as capabilities.
+
+
+      The Analytics and Insights surface provides dashboards for request volume, AI resolution
+      rates, time-to-resolution, and SLA compliance. The Insights Agent additionally analyzes
+      ticket patterns to surface automation opportunities and suggest knowledge base updates—what
+      Serval's documentation terms "automate the automation."
+
+
+      A fifth surface, Asset Management, appears on the homepage as a named capability but receives
+      no substantive description in public documentation, leaving its maturity ambiguous.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE006
+      - CE007
+      - CE008
+      - CE009
+    tableRefs:
+      - TE001
+      - TE002
+    figureRefs:
+      - FE001
+
+  - id: section-architecture
+    title: Two-Agent Architecture and Workflow Engine
+    body: >-
+      Serval's core architectural differentiator is the deliberate separation of its AI agents into
+      specialist roles with bounded permissions. The architecture features three agents with distinct
+      functions. The Automation Agent (used by IT administrators) accepts natural-language descriptions
+      of desired automations, generates deterministic code-based workflows behind the scenes, and
+      exposes them in a no-code UI for review and management. Code can also be inspected directly
+      and managed in Git by technical teams. The Help Desk Agent (used by end-user employees)
+      resolves requests exclusively by invoking pre-approved automations already built by the
+      Automation Agent; it cannot take ad-hoc actions outside that permission set. The Insights
+      Agent operates autonomously to analyze patterns, surface suggested automations, and recommend
+      knowledge base content updates.
+
+
+      CEO Jake Stauch explained the security rationale to TechCrunch in October 2025: "You don't
+      want someone to go into Slack and say, 'Hey, I want to delete all the data at the company,'
+      and the very helpful AI agent responds, 'Great, I'll delete all the data.' Instead it will say,
+      'Hey, I don't have a tool for deleting all the data the company.'" The Help Desk Agent can
+      only invoke tools pre-authorized by an administrator, which confines the blast radius of
+      a potential AI error or adversarial prompt to the permission set already granted.
+
+
+      The workflow engine generates code from natural language, not drag-and-drop logic blocks.
+      Serval describes this as "vibe coding for IT automation"—a deliberate product narrative framing
+      it as analogous to the broader vibe-coding trend. Workflows are stored as code, allowing
+      version control and CI/CD pipeline integration, while the no-code UI provides a representation
+      accessible to non-engineers. The company states that the workflow engine supports deterministic,
+      multi-step execution with predictable, auditable output.
+
+
+      No public technical white paper, open-source repository, or independent benchmark describes
+      the LLM provider(s) powering the agents, the RAG pipeline used for knowledge-base retrieval,
+      the latency characteristics of workflow execution, or the reliability of the code-generation
+      layer. These are material gaps for a product making enterprise reliability and compliance claims.
+      NIST AI 100-2 (2025) identifies prompt injection and adversarial inputs as key risks for LLM-
+      based agentic systems—risks Serval mitigates architecturally through deterministic tool-
+      gating but cannot eliminate entirely at the LLM-inference layer.
+    claimRefs:
+      - CE010
+      - CE011
+      - CE012
+      - CE013
+      - CE014
+      - CE015
+      - CE016
+      - CE017
+    tableRefs:
+      - TE003
+    figureRefs:
+      - FE002
+      - FE003
+
+  - id: section-integrations
+    title: Integrations, Deployment Options, and API
+    body: >-
+      Serval's integrations page lists 60+ connectors spanning identity providers, HR systems,
+      cloud platforms, ticketing tools, device management, and developer tools. Verified named
+      integrations visible on the integrations page include: Okta, JumpCloud, Microsoft Graph,
+      Google Workspace, Slack, Jira, Linear, ServiceNow, GitHub, AWS, Rippling, BambooHR,
+      Confluence, Notion, CrowdStrike, Jamf, Kandji, PagerDuty, Opsgenie, incident.io, Rootly,
+      Ramp, Navan, HubSpot, Asana, ClickUp, Figma, Calendly, Ashby, Ironclad, PandaDoc, Persona,
+      Envoy, Sigma Computing, and Fresh Service, plus a custom-app option. These span four
+      functional categories: Access Management, Knowledge Base, Ticket Syncing, and Workflows.
+      The breadth is competitive for a sub-30-employee company, though the depth (number of
+      actions/triggers per integration) is not disclosed.
+
+
+      Deployment is offered in two modes. Cloud-hosted is fully managed by Serval with no
+      customer infrastructure burden, automatic updates, and a 99.9% uptime SLA. Self-hosted
+      deploys in the customer's private cloud using Terraform and Kubernetes and can be provisioned
+      in hours according to documentation; this option is targeted at enterprises with data-residency
+      or privacy requirements. No public status page was found, preventing independent validation
+      of the 99.9% SLA claim.
+
+
+      Technical API access is documented: Serval offers full API access to all integrations and
+      supports custom integrations to any system via API. The pricing page references a CLI. Terraform
+      is supported for infrastructure provisioning and custom access patterns. SCIM is listed for
+      identity-provider integration. These capabilities target DevOps and platform engineering
+      teams who want to embed Serval into existing CI/CD and IaC pipelines.
+
+
+      The Serval AUP explicitly prohibits reverse-engineering, disassembling, or deriving source
+      code from the service; prohibits using outputs to build competing AI products; and requires
+      human review before relying on AI-generated outputs for consequential decisions—signaling
+      that the company acknowledges AI reliability limitations.
+    claimRefs:
+      - CE018
+      - CE019
+      - CE020
+      - CE021
+      - CE022
+      - CE023
+      - CE024
+    tableRefs: []
+    figureRefs: []
+
+  - id: section-trust
+    title: Trust, Security, and Compliance
+    body: >-
+      Serval's documentation lists its enterprise security posture as: encryption (TLS 1.3 in
+      transit, AES-256 at rest), role-based access controls at org and team levels, comprehensive
+      audit logging of all actions, SOC 2 Type II certification, and regular penetration testing.
+      The company claims a Trust Center at trust.serval.com but that URL returned a 404 at time
+      of research, suggesting the page is either under construction or the URL has changed. The AUP
+      references trust.serval.com as the canonical location for the AI subprocessors list.
+
+
+      SOC 2 Type II is a meaningful trust signal for enterprise sales. It requires an independent
+      audit of security, availability, processing integrity, confidentiality, and privacy controls
+      over a monitoring period, and its attainment by a company with under 30 employees indicates
+      an early prioritization of compliance infrastructure. However, no public attestation letter,
+      scope definition, or auditor name is disclosed, leaving the breadth of the SOC 2 scope
+      unverifiable.
+
+
+      The AUP includes specific AI transparency commitments: AI-generated outputs are labeled
+      as "Serval AI" to distinguish them from human-authored content; Serval maintains a list of
+      AI subprocessors and model providers; customer data is not used to train general-purpose AI
+      or external machine-learning models without explicit authorization; and identifiable customer
+      materials are not used for cross-customer model training. These commitments reflect an
+      awareness of enterprise procurement requirements around AI data governance, though they
+      are contractual commitments rather than independently audited controls.
+
+
+      The AUP also requires meaningful human oversight for consequential decisions (Section 4.2):
+      "Make fully automated decisions with legal or similarly significant effects on individuals
+      without meaningful human oversight" is explicitly prohibited. This is a product-level
+      guardrail but does not constitute a certified AI safety mechanism. NIST AI 100-2 (2025)
+      identifies adversarial machine learning risks—including prompt injection and data poisoning—
+      as threats to agentic AI systems; Serval's deterministic tool-gating approach mitigates the
+      action-execution layer but does not fully address inference-layer adversarial risks.
+
+
+      No public bug-bounty program, published CVE disclosures, or security incident history is
+      available, which is normal for an early-stage startup but represents a due-diligence gap
+      for enterprise security evaluators.
+    claimRefs:
+      - CE025
+      - CE026
+      - CE027
+      - CE028
+      - CE029
+      - CE030
+      - CE031
+    tableRefs:
+      - TE004
+    figureRefs: []
+
+  - id: section-differentiation
+    title: Differentiation, Risks, and Product Gaps
+    body: >-
+      Serval's stated differentiation rests on four pillars. First, native code-based workflow
+      generation distinguishes it from drag-and-drop predecessors like ServiceNow Flow Designer
+      and Freshservice Workflow Automator; deterministic code workflows are auditable, versionable,
+      and CI/CD-compatible in ways that low-code logic blocks are not. Second, the two-agent
+      security architecture explicitly constrains the Help Desk Agent to a pre-authorized tool
+      set, offering a structural answer to enterprise concerns about unconstrained AI. Third,
+      the natural-language interface dramatically reduces the marginal cost of building new
+      automations, which Serval argues is the bottleneck in ITSM automation adoption. Fourth,
+      deployment flexibility (cloud or self-hosted on Kubernetes) plus broad integration coverage
+      (60+) reduces switching costs and allows an "AI layer" overlay strategy.
+
+
+      Against these strengths, the product carries material technical risks. LLM provider dependency
+      is the deepest: Serval's agents rely on one or more third-party LLM APIs (identity undisclosed).
+      Any provider outage, pricing change, model deprecation, or safety-policy shift could
+      materially degrade the product. The code-generation quality of the Automation Agent is
+      unverifiable from public sources—errors in generated workflow code could introduce access
+      control bugs or data-exposure vulnerabilities, which are higher-stakes failures than a
+      wrong answer in a chatbot. The 99.9% uptime SLA is stated but not independently verifiable.
+      No public status page or historical availability data exists.
+
+
+      Developer community engagement with Serval is very limited. No public GitHub repository
+      for Serval's integrations or SDKs was found. Hacker News submissions from serval.com
+      show no archived public discussions, and an HN Algolia search for "Serval ITSM" returns
+      no relevant engineering threads. This low developer-community footprint is consistent with
+      an enterprise-only sales motion but means there is no independent technical scrutiny of
+      the product's architecture or reliability.
+
+
+      The Register and VentureBeat have published articles in early 2026 noting general risks
+      around agentic AI deployments in enterprise IT—including hallucination in workflow generation,
+      integration failures at scale, and enterprise skepticism around AI reliability guarantees.
+      These risks apply to Serval, though no specific incident or product failure has been publicly
+      attributed to Serval itself. Roadmap signals are minimal: Serval's blog mentions expansion
+      into HR, legal, and finance workflows (noted in a Reuters report), but no public product
+      roadmap, release changelog, or developer API versioning history is available.
+    claimRefs:
+      - CE032
+      - CE033
+      - CE034
+      - CE035
+      - CE036
+      - CE037
+      - CE038
+      - CE039
+    tableRefs:
+      - TE005
+    figureRefs:
+      - FE004
+
+tables:
+  - id: TE001
+    title: Product Module and Asset Matrix
+    columns:
+      - Module / Asset
+      - Primary User
+      - Status / Maturity
+      - Key Differentiation
+      - Diligence Gap
+    rows:
+      - - Help Desk Agent
+        - Employees (end users)
+        - GA — in production at named customers
+        - Resolves requests via Slack/Teams/email/portal; constrained to pre-approved tools
+        - Resolution accuracy rate, hallucination frequency, SLA breach rate not disclosed
+      - - Automation Agent
+        - IT administrators
+        - GA — NL-to-code workflow generation
+        - Generates deterministic code workflows from natural language; no drag-and-drop
+        - Code quality, error rate, and LLM provider identity not disclosed
+      - - Insights Agent
+        - IT administrators
+        - GA — continuous pattern analysis
+        - Auto-surfaces automation suggestions and KB update recommendations
+        - Suggestion acceptance rate, model accuracy on ticket pattern classification not disclosed
+      - - Access Management (JIT)
+        - IT / security teams
+        - GA — JIT provisioning with SCIM support
+        - Time-bound grants, automatic deprovisioning, least-privilege profiles
+        - Coverage of privileged access / PAM use cases unclear; no PAM vendor reference
+      - - Knowledge Base
+        - Employees / IT teams
+        - GA — RAG-based search and sync
+        - Syncs from Notion, Google Drive, Confluence; answers questions with sourced context
+        - Retrieval accuracy, chunking strategy, citation reliability not externally tested
+      - - Analytics / Insights Dashboard
+        - IT leaders / managers
+        - GA — request volume, resolution rate, SLA dashboards
+        - Real-time visibility into AI resolution rates and ticket throughput
+        - No benchmark against industry-standard ITSM KPIs; no peer-reviewed SLA data
+      - - Asset Management
+        - IT administrators
+        - Mentioned on homepage; no documentation detail
+        - Unknown — no product description in docs or pricing page
+        - Maturity, scope, and GA status entirely unclear; material gap
+    notes: >-
+      Module status is based on presence in official product documentation and pricing page as of
+      2026-06-02. "GA" indicates general availability based on product descriptions and named
+      customer deployments; maturity depth is company-claimed only. Diligence gaps reflect
+      absence of publicly available technical benchmarks or independent audits.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE006
+      - CE009
+
+  - id: TE002
+    title: Workflow Use-Case and Customer Benefit Table
+    columns:
+      - Employee Job / Request
+      - Legacy Workflow
+      - Serval Solution
+      - Stated Benefit
+      - Limitation / Caveat
+    rows:
+      - - Software access request
+        - Email IT → manual Okta provisioning → 24–48 hr wait
+        - Help Desk Agent receives Slack request; triggers JIT access workflow; deprovisioned automatically
+        - Instant provisioning; no standing access accumulation
+        - Approval routing complexity for privileged access not demonstrated
+      - - Employee onboarding
+        - IT team manually provisions 10–15 systems over days
+        - Automation Agent runs multi-step onboarding workflow triggered by HRIS event
+        - Claimed 50%+ automation of onboarding tasks
+        - End-to-end onboarding coverage depends on integration breadth; unverified for complex orgs
+      - - Password reset
+        - IT ticket → manual verification → reset email; 30–60 min
+        - Help Desk Agent verifies via existing tool and resets programmatically
+        - Immediate self-service resolution
+        - Requires tool pre-built by admin; initial setup effort not quantified
+      - - Knowledge base question
+        - Employee searches Confluence/Notion manually or asks Slack
+        - Help Desk Agent queries synced KB; returns sourced answer
+        - Faster answer, reduced ticket volume
+        - Accuracy of RAG retrieval on enterprise docs not independently verified
+      - - Incident routing / escalation
+        - Manual triage by IT lead; tickets pile up overnight
+        - Agent classifies, routes, and escalates with full context
+        - Faster time-to-assignment; lower triage backlog
+        - Routing accuracy depends on model quality; mis-routes could delay critical incidents
+      - - Offboarding
+        - Manual checklist across 10+ systems; access lingering risk
+        - Automation workflow revokes access across integrated systems on HRIS trigger
+        - Access deprovisioned immediately on departure
+        - Coverage limited to integrated systems; unintegrated SaaS apps create residual risk
+    notes: >-
+      Use-case descriptions drawn from official Serval product and pricing pages. Stated benefits
+      are company-claimed or inferred from product descriptions; no third-party case study data
+      is available for most workflows. The 50% automation rate is cited from a customer testimonial
+      on the homepage (Vernon Man, Head of IT) and the pricing page guarantee; no controlled study exists.
+    claimRefs:
+      - CE007
+      - CE008
+      - CE018
+      - CE019
+
+  - id: TE003
+    title: Technology and Operating Architecture Table
+    columns:
+      - Layer / Component
+      - Role
+      - Key Dependency
+      - Risk
+    rows:
+      - - LLM inference layer
+        - Powers natural language understanding, code generation, and KB retrieval in all three agents
+        - Third-party LLM API provider(s) (identity not publicly disclosed)
+        - Provider outage, deprecation, cost increase, or safety-policy change degrades platform
+      - - Workflow code-generation engine
+        - Converts NL instructions into deterministic code workflows; stores as versionable code
+        - LLM code-generation quality and Serval's proprietary scaffolding layer
+        - Generated code errors could introduce access-control bugs; no public test suite
+      - - Help Desk Agent runtime
+        - Executes only pre-approved deterministic tools; resolves employee requests
+        - Automation library built by IT admins via Automation Agent
+        - Library completeness limits resolution rate; un-automated requests still escalate
+      - - Knowledge base / RAG pipeline
+        - Retrieves and synthesizes answers from synced enterprise documentation
+        - Notion, Google Drive, Confluence connectors; chunking and indexing quality
+        - Retrieval accuracy degrades on poorly structured or stale documentation
+      - - Integration layer
+        - Connects to 60+ third-party systems via API connectors
+        - Third-party API stability, rate limits, and connector maintenance
+        - Any connector break degrades automation coverage; no public connector SLA
+      - - Deployment infrastructure (cloud)
+        - Fully managed SaaS; 99.9% uptime SLA
+        - Serval's cloud provider and internal SRE capability (sub-30-person team)
+        - Small team managing multi-tenant SaaS increases concentration risk
+      - - Deployment infrastructure (self-hosted)
+        - Customer-managed private cloud via Kubernetes and Terraform
+        - Customer's own infrastructure and Serval's Helm/Terraform modules
+        - Customer bears update, security-patch, and DR responsibility
+      - - Audit and logging layer
+        - Comprehensive logs of all agent and automation actions
+        - Serval's internal log storage and retention policies
+        - Retention period and log export format not publicly specified
+    notes: >-
+      Architecture detail drawn from official docs, product pages, and AUP. LLM provider identity
+      and infrastructure vendor are not publicly disclosed. Risk assessments are inferred from
+      product descriptions and the general agentic-AI risk literature (NIST AI 100-2, 2025).
+    claimRefs:
+      - CE010
+      - CE011
+      - CE012
+      - CE013
+      - CE014
+      - CE015
+      - CE016
+
+  - id: TE004
+    title: Trust, Security, and Compliance Controls
+    columns:
+      - Control / Certification
+      - Status
+      - Scope
+      - Gap / Caveat
+    rows:
+      - - Encryption in transit (TLS 1.3)
+        - Implemented (company-stated)
+        - All data in transit between client and Serval services
+        - No independent audit cited; claimed in docs only
+      - - Encryption at rest (AES-256)
+        - Implemented (company-stated)
+        - Customer data at rest in Serval's cloud environment
+        - Scope of self-hosted encryption is customer-managed; not independently audited
+      - - SOC 2 Type II
+        - Certified (company-stated)
+        - AICPA Trust Service Criteria for security, availability, and confidentiality
+        - No public attestation letter, audit period, or auditor name disclosed
+      - - Role-based access control (RBAC)
+        - Implemented (documented)
+        - Org-level and team-level permission scoping within Serval platform
+        - No external assessment of RBAC implementation soundness
+      - - Comprehensive audit logging
+        - Implemented (documented)
+        - All agent actions, automation executions, and admin changes
+        - Retention period, export format, and SIEM integration not specified
+      - - Regular penetration testing
+        - Ongoing (company-stated)
+        - Serval-commissioned tests; scope and cadence not disclosed
+        - No bug-bounty program; no public CVE disclosures found
+      - - AI output labeling (transparency)
+        - Implemented (AUP commitment)
+        - AI-generated responses labeled "Serval AI" in platform
+        - Contractual commitment only; no third-party audit of labeling completeness
+      - - AI subprocessors list
+        - Maintained at trust.serval.com (Trust Center)
+        - List of LLM providers and AI subprocessors used
+        - trust.serval.com returned 404 at research date; list contents unverifiable
+      - - No customer data for model training
+        - AUP commitment
+        - Customer Materials not used to train external AI without authorization
+        - Contractual only; no independent audit of data pipeline segregation
+      - - GDPR / CCPA compliance
+        - AUP references compliance obligation
+        - Per AUP Section 3.2, prohibited uses include data protection law violations
+        - No DPA terms, data residency map, or sub-processor agreement publicly available
+    notes: >-
+      All security controls based on official documentation and AUP. SOC 2 Type II status is
+      company-claimed without public attestation. "Implemented" means asserted in official docs;
+      no row represents an independently verified control.
+    claimRefs:
+      - CE025
+      - CE026
+      - CE027
+      - CE028
+      - CE029
+      - CE030
+      - CE031
+
+  - id: TE005
+    title: Roadmap, Release Signals, and Development-Stage Indicators
+    columns:
+      - Date / Signal
+      - Feature / Milestone
+      - Status
+      - Implication
+      - Source
+    rows:
+      - - Oct 2025
+        - Series A close ($47M, Redpoint); Help Desk Agent and Automation Agent GA
+        - Completed
+        - Core product GA confirmed; named customers Perplexity, Together AI, Mercor cited
+        - TechCrunch Series A announcement
+      - - Dec 2025
+        - Series B close ($75M, Sequoia); unicorn status; 500% revenue growth claimed
+        - Completed
+        - Investment pace and valuation signal strong investor conviction; revenue base still undisclosed
+        - Reuters, BusinessWire Series B announcement
+      - - Dec 2025 (Reuters)
+        - Expansion into HR, legal, and finance workflow automation announced
+        - In progress / early stage
+        - Moves Serval beyond core IT use case; increases integration complexity and competitive set
+        - Reuters Dec 2025 report
+      - - May 2026
+        - Serval Start program launched; 12-person inaugural technical builder cohort
+        - Completed (cohort open, now closed)
+        - Indicates focus on recruiting; also generates developer brand signal; no product roadmap disclosed
+        - serval.com/start
+      - - Jun 2026 (run date)
+        - Asset Management listed as product capability on homepage
+        - No documentation; maturity unverified
+        - Either early-stage or marketing placeholder; creates customer expectation risk
+        - serval.com homepage
+      - - Not disclosed
+        - Public API versioning, changelog, or developer docs beyond basic CLI reference
+        - Not available
+        - No public release history; limits developer-community visibility and trust
+        - docs.serval.com
+      - - Not disclosed
+        - Bug-bounty program or published penetration-test scope
+        - Not found
+        - Absence creates security-signal gap for enterprise procurement; normal at this stage
+        - Research (absence of evidence)
+    notes: >-
+      Roadmap signals are inferred from press releases, product pages, and news coverage as of
+      2026-06-02. No official product roadmap has been published. Dates are sourced from
+      press-release timestamps and reporting dates. "Not disclosed" rows represent confirmed gaps
+      in public information, not company failures.
+    claimRefs:
+      - CE032
+      - CE033
+      - CE034
+      - CE035
+
+figures:
+  - id: FE001
+    title: Serval Product Architecture Stack
+    type: stack
+    layout: standard
+    summary: >-
+      Serval's platform layers from employee interaction channels at the top through agent
+      intelligence, workflow runtime, integration connectors, and infrastructure at the bottom.
+    data:
+      layers:
+        - label: Employee Interaction Layer
+          detail: Slack, Microsoft Teams, Email, and Web Portal — the channels through which employees submit IT requests to the Help Desk Agent
+          items:
+            - Slack
+            - Microsoft Teams
+            - Email
+            - Web Portal
+        - label: Agent Intelligence Layer
+          detail: Three specialist AI agents each with a constrained, pre-defined scope — Help Desk for execution, Automation for code generation, Insights for pattern analysis
+          items:
+            - Help Desk Agent (request resolution, constrained to pre-approved tools)
+            - Automation Agent (NL-to-code workflow builder)
+            - Insights Agent (pattern analysis and automation suggestions)
+        - label: Workflow and Access Engine
+          detail: Deterministic runtime executing code-based workflows stored in Git, alongside JIT access provisioning and knowledge base RAG retrieval
+          items:
+            - Deterministic code-based workflow runtime
+            - JIT access provisioning and deprovisioning
+            - Knowledge base RAG retrieval
+        - label: Analytics and Audit Layer
+          detail: Dashboards for resolution rates and SLA compliance; full audit trail of all AI-executed actions for enterprise governance
+          items:
+            - Resolution-rate dashboards
+            - SLA compliance tracking
+            - Comprehensive audit log of all actions
+        - label: Integration Connector Layer
+          detail: 60+ connectors covering identity, HRIS, ticketing, dev tools, and cloud platforms — connected via managed integrations maintained by Serval
+          items:
+            - Identity (Okta, JumpCloud, Microsoft Graph, Google Workspace, SCIM)
+            - Ticketing (Jira, ServiceNow, Zendesk, Linear)
+            - HR / HRIS (Rippling, BambooHR, Ashby)
+            - Dev tools (GitHub, AWS)
+            - 60+ total connectors
+        - label: Deployment / Infrastructure Layer
+          detail: Cloud-hosted SaaS (99.9% SLA) for most customers; self-hosted Kubernetes + Terraform option for enterprises with data-residency or air-gap requirements
+          items:
+            - Cloud-hosted (99.9% SLA, managed, auto-updates)
+            - Self-hosted (Kubernetes + Terraform, customer-managed)
+    approximationNotes: >-
+      Layer structure inferred from official product docs, pricing page, and AUP. LLM provider
+      and underlying cloud infrastructure vendor are not publicly disclosed and are omitted.
+    claimRefs:
+      - CE010
+      - CE011
+      - CE018
+      - CE019
+      - CE020
+
+  - id: FE002
+    title: Customer Workflow — IT Request Resolution Flow
+    type: flow
+    layout: standard
+    summary: >-
+      How an employee IT request moves from initial submission through the Serval Help Desk Agent
+      to either automated resolution or human escalation.
+    data:
+      nodes:
+        - id: n1
+          label: Employee submits request
+          detail: Via Slack, Teams, email, or web portal
+        - id: n2
+          label: Help Desk Agent receives request
+          detail: LLM classifies intent and routes to appropriate handling path
+        - id: n3
+          label: Knowledge base lookup
+          detail: RAG search across synced Notion, Confluence, Drive docs
+        - id: n4
+          label: Automation tool invocation
+          detail: Agent selects from pre-approved deterministic tools only
+        - id: n5
+          label: JIT access provisioning
+          detail: Time-bound grant issued; deprovisioned automatically at expiry
+        - id: n6
+          label: Automated resolution
+          detail: Request closed; outcome logged in audit trail
+        - id: n7
+          label: Human escalation
+          detail: Assigned to IT agent with full context; SLA clock running
+        - id: n8
+          label: Insights Agent feedback loop
+          detail: Ticket pattern triggers automation suggestion or KB update recommendation
+      edges:
+        - from: n1
+          to: n2
+          label: Submit
+        - from: n2
+          to: n3
+          label: KB question
+        - from: n2
+          to: n4
+          label: Actionable request
+        - from: n4
+          to: n5
+          label: Access request
+        - from: n4
+          to: n6
+          label: Other automation
+        - from: n5
+          to: n6
+          label: Provisioned and logged
+        - from: n3
+          to: n6
+          label: Answer returned
+        - from: n2
+          to: n7
+          label: No matching tool / complex
+        - from: n6
+          to: n8
+          label: Pattern data
+        - from: n7
+          to: n8
+          label: Escalation data
+    approximationNotes: >-
+      Flow constructed from official docs.serval.com documentation, product homepage, and
+      TechCrunch Series A article. Specific classification logic and escalation thresholds are
+      not publicly documented.
+    claimRefs:
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE007
+
+  - id: FE003
+    title: Critical Dependency Map
+    type: dag
+    layout: wide
+    summary: >-
+      Key external dependencies Serval relies on for product delivery, showing categories of
+      providers and the risk level of each dependency relationship.
+    data:
+      nodes:
+        - id: d1
+          label: Serval Platform
+          detail: Core AI ITSM product
+        - id: d2
+          label: LLM Provider(s)
+          detail: Third-party LLM API(s) — identity not publicly disclosed
+        - id: d3
+          label: Cloud Infrastructure
+          detail: Hosting for cloud-managed deployment — provider not disclosed
+        - id: d4
+          label: Identity Providers
+          detail: Okta, JumpCloud, Microsoft Graph, Google Workspace, SCIM-compatible IdPs
+        - id: d5
+          label: Communication Platforms
+          detail: Slack, Microsoft Teams (employee-facing channels)
+        - id: d6
+          label: Ticketing Systems
+          detail: Jira, ServiceNow, Zendesk (bi-directional sync)
+        - id: d7
+          label: Knowledge Sources
+          detail: Notion, Google Drive, Confluence (RAG data pipeline)
+        - id: d8
+          label: HR / HRIS Systems
+          detail: Rippling, BambooHR (onboarding/offboarding triggers)
+        - id: d9
+          label: Compliance Auditor
+          detail: SOC 2 Type II auditor — name not publicly disclosed
+      edges:
+        - from: d1
+          to: d2
+          label: Core dependency — high risk
+        - from: d1
+          to: d3
+          label: Core dependency — high risk
+        - from: d1
+          to: d4
+          label: Access workflows — medium risk
+        - from: d1
+          to: d5
+          label: Employee interaction — medium risk
+        - from: d1
+          to: d6
+          label: Ticket sync — medium risk
+        - from: d1
+          to: d7
+          label: KB retrieval — medium risk
+        - from: d1
+          to: d8
+          label: Lifecycle triggers — medium risk
+        - from: d1
+          to: d9
+          label: Compliance certification — low risk
+    approximationNotes: >-
+      Dependency map inferred from integration page, docs, AUP, and product descriptions.
+      LLM provider and cloud infrastructure provider identities are unverified assumptions that
+      key dependencies exist; identities are not publicly disclosed.
+    claimRefs:
+      - CE013
+      - CE015
+      - CE018
+      - CE019
+      - CE023
+
+  - id: FE004
+    title: Product Capability Maturity Matrix
+    type: matrix
+    layout: standard
+    summary: >-
+      Estimated maturity and evidence quality across Serval's core capability areas, contrasting
+      company-claimed status against available external verification.
+    data:
+      columns:
+        - Company-Claimed Maturity
+        - External Evidence Quality
+        - Diligence Confidence
+      rows:
+        - label: Help Desk (NL request resolution)
+          values:
+            - GA, in production
+            - Named customers cited; homepage testimonial
+            - Medium — customer proof limited to marketing claims
+        - label: Automation Agent (NL-to-code)
+          values:
+            - GA, key differentiator
+            - CEO quotes in TechCrunch; no code samples or benchmarks
+            - Low — no independent code-quality assessment
+        - label: JIT Access Management
+          values:
+            - GA, SCIM + Terraform
+            - Documented in pricing and docs pages
+            - Medium — feature set well-documented; adoption depth unknown
+        - label: Knowledge Base / RAG
+          values:
+            - GA, syncs Notion/Drive/Confluence
+            - Feature documented; no retrieval accuracy data
+            - Low — no benchmark against enterprise KB use cases
+        - label: Integrations (60+)
+          values:
+            - GA, broad connector library
+            - Integrations page lists 60+ connectors by name
+            - Medium — connector breadth verified; depth (actions/triggers) unverified
+        - label: Analytics Dashboard
+          values:
+            - GA, SLA and resolution tracking
+            - Documented in product overview
+            - Low — no sample reports or benchmark data
+        - label: Asset Management
+          values:
+            - Marketing-level mention only
+            - No documentation in docs.serval.com
+            - Very Low — functional status unclear
+        - label: Self-Hosted Deployment
+          values:
+            - GA, Kubernetes + Terraform
+            - Documented in deployment section
+            - Medium — architecture disclosed; no reference deployment guide
+    approximationNotes: >-
+      Maturity ratings and evidence quality are analyst assessments based on available public
+      information as of 2026-06-02. "Company-Claimed" reflects official product descriptions;
+      "External Evidence Quality" and "Diligence Confidence" are based on independently
+      verifiable public evidence, not company representations.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE009
+      - CE032
+      - CE037
+
+callouts:
+  - calloutType: strength
+    title: Two-Agent Security Architecture Addresses Enterprise's Biggest AI Concern
+    body: >-
+      Serval's deliberate separation of tool-building (Automation Agent, admin-only) from
+      tool-execution (Help Desk Agent, employee-facing) is a principled architectural answer
+      to the "rogue AI" risk that is the primary enterprise blocker for agentic AI adoption.
+      By constraining the Help Desk Agent to a pre-approved, deterministic tool set, Serval
+      limits blast radius without sacrificing automation breadth. This is a genuine product
+      moat that is harder to replicate in incumbent drag-and-drop ITSM tools than in a
+      greenfield AI-native design.
+    claimRefs:
+      - CE010
+      - CE011
+      - CE012
+
+  - calloutType: risk
+    title: LLM Provider Dependency is Unmitigated and Undisclosed
+    body: >-
+      Serval's entire product stack rests on one or more third-party LLM APIs whose identity,
+      contractual SLA, and fallback strategy have not been publicly disclosed. An enterprise
+      committing to Serval is indirectly committing to an unknown LLM provider's availability,
+      pricing, data-handling, and model-evolution decisions. For a system handling access
+      provisioning and employee data, this is a material concentration risk. No multi-provider
+      redundancy, local-model fallback, or SLA pass-through to the LLM layer has been
+      documented.
+    claimRefs:
+      - CE013
+      - CE036
+      - CE038
+
+  - calloutType: risk
+    title: No Public Status Page or Historical Availability Data for the 99.9% SLA Claim
+    body: >-
+      Serval markets a 99.9% uptime SLA for its cloud-hosted deployment option, but no
+      public status page (e.g., statuspage.io instance) was found to validate historical
+      availability. For a sub-30-person company managing multi-tenant SaaS with agentic
+      AI workloads, the operational complexity is significant. Enterprise IT buyers should
+      request historical availability data and SLA breach remediation terms before committing.
+    claimRefs:
+      - CE021
+      - CE022
+      - CE039
+
+  - calloutType: insight
+    title: SOC 2 Type II at Under 30 Employees Signals Deliberate Compliance Posture
+    body: >-
+      Attaining SOC 2 Type II certification with a headcount under 30 is atypical and reflects
+      a deliberate early investment in compliance infrastructure—likely driven by the need to
+      win deals at AI-forward enterprises like Perplexity and Together AI, which themselves
+      face compliance requirements. This gives Serval a credibility advantage over earlier-stage
+      competitors in enterprise procurement conversations, though the scope and auditor
+      remain undisclosed.
+    claimRefs:
+      - CE025
+      - CE027
+
+localEvidence:
+  searchQueries:
+    - query: Serval ITSM product architecture agents 2026
+      engine: web
+      hits: 12
+      retainedSourceRefs:
+        - SE001
+        - SE002
+        - SE011
+    - query: Serval AI help desk automation agent workflow builder 2026
+      engine: web
+      hits: 15
+      retainedSourceRefs:
+        - SE003
+        - SE004
+        - SE008
+    - query: Serval integrations Okta Jira ServiceNow 60 connectors 2026
+      engine: web
+      hits: 8
+      retainedSourceRefs:
+        - SE004
+        - SE003
+    - query: Serval security SOC2 compliance trust center 2026
+      engine: web
+      hits: 9
+      retainedSourceRefs:
+        - SE002
+        - SE005
+    - query: Serval acceptable use policy AI transparency subprocessors
+      engine: web
+      hits: 5
+      retainedSourceRefs:
+        - SE005
+    - query: Serval deployment cloud self-hosted Kubernetes Terraform 2026
+      engine: web
+      hits: 7
+      retainedSourceRefs:
+        - SE002
+        - SE003
+    - query: Serval Series A launch product vibe coding 2026
+      engine: web
+      hits: 22
+      retainedSourceRefs:
+        - SE011
+        - SE013
+        - SE016
+    - query: Serval Series B Sequoia unicorn product expansion 2026
+      engine: web
+      hits: 18
+      retainedSourceRefs:
+        - SE012
+        - SE014
+        - SE017
+    - query: Serval customers Together AI Perplexity case study 2026
+      engine: web
+      hits: 6
+      retainedSourceRefs:
+        - SE006
+        - SE007
+    - query: agentic AI ITSM risks enterprise security 2026
+      engine: web
+      hits: 31
+      retainedSourceRefs:
+        - SE015
+        - SE019
+        - SE020
+    - query: Serval ITSM developer community GitHub HN signal 2026
+      engine: web
+      hits: 4
+      retainedSourceRefs:
+        - SE021
+        - SE022
+    - query: Serval blog roadmap product announcement 2026
+      engine: web
+      hits: 7
+      retainedSourceRefs:
+        - SE009
+        - SE010
+    - query: Serval AI ITSM agentic enterprise risk analysis 2026
+      engine: web
+      hits: 11
+      retainedSourceRefs:
+        - SE018
+        - SE023
+        - SE024
+
+  researchQuestions:
+    - id: QE001
+      question: What are the three distinct AI agents in Serval's platform and their specific roles and permission boundaries?
+      type: enumeration
+      targets:
+        - contentRequirements/1
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE002
+      question: How does Serval's Automation Agent convert natural language descriptions into executable workflows?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedFigures/product-architecture-map
+      status: answered
+
+    - id: QE003
+      question: What is the complete set of integrations available in Serval's connector library and how are they categorized?
+      type: enumeration
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE004
+      question: What deployment modes does Serval support and what are the technical requirements for each?
+      type: enumeration
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE005
+      question: What security certifications and compliance frameworks has Serval attained and what is their scope?
+      type: verification
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE006
+      question: What LLM provider(s) does Serval use for its Help Desk Agent, Automation Agent, and Insights Agent?
+      type: verification
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE007
+      question: What is the actual automated ticket resolution rate Serval achieves across its customer base and how is it measured?
+      type: quantification
+      targets:
+        - contentRequirements/0
+        - plannedTables/workflow-use-case-table
+      status: answered
+
+    - id: QE008
+      question: How does Serval's deterministic workflow architecture compare to ServiceNow Flow Designer and Freshservice workflow builders in terms of capability and risk?
+      type: comparison
+      targets:
+        - contentRequirements/4
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE009
+      question: What is the reliability and availability track record of Serval's cloud-hosted deployment versus the stated 99.9% SLA?
+      type: verification
+      targets:
+        - contentRequirements/3
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE010
+      question: Has Serval experienced any publicly reported security incidents, data breaches, or product outages?
+      type: adverse
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE011
+      question: Does Serval have an open-source repository or public developer API that enables independent technical evaluation?
+      type: verification
+      targets:
+        - contentRequirements/4
+        - plannedFigures/critical-dependency-map
+      status: answered
+
+    - id: QE012
+      question: What is the scope and auditor identity for Serval's SOC 2 Type II certification?
+      type: verification
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE013
+      question: How does Serval's knowledge base RAG pipeline handle accuracy, hallucination, and citation reliability?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedTables/product-module-asset-matrix
+      status: unresolved
+
+    - id: QE014
+      question: What is the maturity and functional scope of Serval's Asset Management capability listed on the homepage?
+      type: verification
+      targets:
+        - contentRequirements/1
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE015
+      question: What are the specific enterprise risks of agentic AI systems like Serval as identified by independent security researchers?
+      type: adverse
+      targets:
+        - contentRequirements/5
+        - plannedFigures/critical-dependency-map
+      status: answered
+
+    - id: QE016
+      question: What is the depth of each integration connector (number of supported actions and triggers per connector)?
+      type: quantification
+      targets:
+        - contentRequirements/3
+        - plannedTables/technology-operating-architecture-table
+      status: unresolved
+
+    - id: QE017
+      question: What is the competitive differentiation of Serval's NL-to-code workflow generation versus Moveworks, Atomicwork, and Aisera?
+      type: comparison
+      targets:
+        - contentRequirements/4
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE018
+      question: How does Serval handle data residency and privacy for enterprises in GDPR-regulated jurisdictions?
+      type: verification
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: unresolved
+
+    - id: QE019
+      question: What is the timeline and scope of Serval's expansion into HR, legal, and finance workflow automation announced in December 2025?
+      type: freshness
+      targets:
+        - contentRequirements/3
+        - plannedTables/roadmap-release-development-stage-table
+      status: answered
+
+    - id: QE020
+      question: What is the time-to-value for Serval deployment and how long does it take for a new customer to achieve the 50% automation rate?
+      type: quantification
+      targets:
+        - contentRequirements/3
+        - plannedTables/workflow-use-case-table
+      status: answered
+
+    - id: QE021
+      question: How does Serval's NL-to-code workflow engine handle errors in generated code and what rollback mechanisms exist?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: unresolved
+
+    - id: QE022
+      question: What is the size and quality of Serval's developer community signal on Hacker News, GitHub, and developer forums as of 2026?
+      type: freshness
+      targets:
+        - contentRequirements/4
+        - plannedFigures/critical-dependency-map
+      status: answered
+
+    - id: QE023
+      question: What is the product roadmap for Serval's next 12 months of feature development and when will Asset Management reach GA?
+      type: freshness
+      targets:
+        - contentRequirements/3
+        - plannedTables/roadmap-release-development-stage-table
+      status: answered
+
+    - id: QE024
+      question: How does Serval's security architecture mitigate prompt injection attacks against the Help Desk Agent?
+      type: mechanism
+      targets:
+        - contentRequirements/5
+        - plannedFigures/critical-dependency-map
+      status: answered
+
+    - id: QE025
+      question: What are the contractual SLA remediation terms for cloud-hosted customers if the 99.9% uptime is breached?
+      type: adverse
+      targets:
+        - contentRequirements/3
+        - plannedTables/trust-quality-compliance-table
+      status: unresolved
+
+    - id: QE026
+      question: What are the pricing structure and per-user or per-automation cost drivers for Serval's enterprise contracts?
+      type: quantification
+      targets:
+        - contentRequirements/0
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE027
+      question: What version control and Git management capabilities exist for Serval workflow code artifacts?
+      type: verification
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+  sources:
+    - id: SE001
+      publisher: Serval
+      title: Serval — AI-Native IT Service Management
+      url: https://www.serval.com
+      date: '2026-06-02'
+      accessDate: '2026-06-02'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - product-overview
+        - help-desk-agent
+        - automation-agent
+        - insights-agent
+        - access-management
+      keyQuote: >-
+        Serval is a unified help desk, access management, and automation platform with a built-in
+        AI agent workforce.
+
+    - id: SE002
+      publisher: Serval
+      title: Serval Documentation — Platform Overview
+      url: https://docs.serval.com
+      date: '2026-06-02'
+      accessDate: '2026-06-02'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - technical-docs
+        - deployment-options
+        - security-compliance
+        - soc2
+        - encryption
+      keyQuote: >-
+        Encryption — TLS 1.3 in transit, AES-256 at rest. Compliance — SOC 2 Type II certified.
+        Deployment Options: Cloud-Hosted — Fully managed service — No infrastructure to manage.
+        Automatic updates, 99.9% uptime SLA. Self-Hosted — Deploy in your private cloud — Full
+        control over your environment. Provision in hours with Terraform and Kubernetes.
+
+    - id: SE003
+      publisher: Serval
+      title: Serval Pricing and Product Overview
+      url: https://www.serval.com/pricing
+      date: '2026-06-02'
+      accessDate: '2026-06-02'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - pricing
+        - product-features
+        - automation-rate
+        - access-management
+        - scim
+      keyQuote: >-
+        Guaranteed 50% automation rate. SCIM provisioning — Integrates easily with identity
+        providers for continuous lifecycle management. Custom provisioning workflows (via API,
+        Terraform).
+
+    - id: SE004
+      publisher: Serval
+      title: Serval Integrations — 60+ Connectors
+      url: https://www.serval.com/integrations
+      date: '2026-06-02'
+      accessDate: '2026-06-02'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - integrations
+        - okta
+        - jira
+        - servicenow
+        - slack
+        - github
+        - google-workspace
+      keyQuote: >-
+        Custom App — Build a custom integration tailored to your unique workflows and systems.
+        [60+ integrations spanning Access Management, Knowledge Base, Ticket Syncing, Workflows]
+
+    - id: SE005
+      publisher: Serval
+      title: Serval Acceptable Use Policy
+      url: https://www.serval.com/legal/acceptable-use-policy
+      date: '2026-06-02'
+      accessDate: '2026-06-02'
+      accessStatus: ok
+      stance: neutral
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - legal
+        - ai-transparency
+        - data-governance
+        - subprocessors
+        - human-oversight
+      keyQuote: >-
+        Serval maintains a current list of AI subprocessors and model providers on its Trust
+        Center (trust.serval.com). Customer Materials processed by AI features are handled in
+        accordance with the Agreement and the Data Processing Addendum. Serval does not use
+        Customer Materials to train, fine-tune, or improve general-purpose AI or machine learning
+        models unless Customer provides express authorization.
+
+    - id: SE006
+      publisher: Serval
+      title: Serval Case Study — Together AI
+      url: https://www.serval.com/case-studies/togetherai
+      date: '2026-06-02'
+      accessDate: '2026-06-02'
+      accessStatus: broken
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - customers
+        - together-ai
+        - case-study
+      keyQuote: null
+
+    - id: SE007
+      publisher: Serval
+      title: Serval — Customer Success Stories
+      url: https://www.serval.com/customers
+      date: '2026-06-02'
+      accessDate: '2026-06-02'
+      accessStatus: broken
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - customers
+        - adoption
+      keyQuote: null
+
+    - id: SE008
+      publisher: Serval
+      title: Serval Product Page
+      url: https://www.serval.com/product
+      date: '2026-06-02'
+      accessDate: '2026-06-02'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - product-overview
+        - ai-itsm
+        - workflow-builder
+      keyQuote: >-
+        Serval builds workflows in code and represents them in a no-code UI. This gives you the
+        full power and reliability of code-based workflows without needing to be an engineer,
+        while technical teams can inspect workflow code directly and manage workflows in Git.
+
+    - id: SE009
+      publisher: Serval
+      title: Serval Blog
+      url: https://www.serval.com/blog
+      date: '2026-06-01'
+      accessDate: '2026-06-02'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - blog
+        - company-news
+        - serval-start
+        - operating-principles
+      keyQuote: null
+
+    - id: SE010
+      publisher: Serval
+      title: Serval Start — Program for Aspiring Founders
+      url: https://www.serval.com/start
+      date: '2026-05-18'
+      accessDate: '2026-06-02'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - company-culture
+        - talent
+        - developer-signal
+      keyQuote: >-
+        Build Real AI Systems for the World's Largest Enterprises. Applications are now closed.
+        [Inaugural cohort of approximately 12 participants]
+
+    - id: SE011
+      publisher: TechCrunch
+      title: Serval raises $47 million to bring AI agent to IT service management
+      url: https://techcrunch.com/2025/10/21/serval-raises-47-million-to-bring-ai-agent-to-it-service-management/
+      date: '2025-10-21'
+      accessDate: '2026-06-02'
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics:
+        - series-a
+        - product-architecture
+        - security-rationale
+        - two-agent-model
+      keyQuote: >-
+        One agent is used to code internal automations for everyday tasks, like authorizing
+        software or provisioning a device. A separate help desk agent responds to user requests
+        by calling those tools on command, following rules established by the tool. "You don't
+        want someone to go into Slack and say, 'Hey, I want to delete all the data at the
+        company,' and the very helpful AI agent responds, 'Great, I'll delete all the data.'"
+
+    - id: SE012
+      publisher: Reuters
+      title: AI startup Serval raises $75 mln in Series B funding
+      url: https://www.reuters.com/technology/artificial-intelligence/ai-startup-serval-raises-75-mln-series-b-funding-2025-12-11/
+      date: '2025-12-11'
+      accessDate: '2026-06-02'
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics:
+        - series-b
+        - product-description
+        - hr-legal-finance-expansion
+        - two-agent-architecture
+        - vibe-coding
+      keyQuote: >-
+        Serval's platform uses a two-part AI system, including an AI agent that interacts with
+        employees to understand their support requests, as well as a tool that allows administrators
+        to build complex automations by describing them in natural language, a process the CEO
+        calls "vibe coding." This approach generates code behind the scenes, providing more
+        flexibility and power than traditional drag-and-drop workflow builders. It also serves as
+        a security measure, as the employee-facing AI can only trigger automations that have been
+        pre-approved by administrators.
+
+    - id: SE013
+      publisher: BusinessWire
+      title: Serval Raises 47 Million Series A to Power the First AI Agent for IT
+      url: https://www.businesswire.com/news/home/20251021085827/en/Serval-Raises-47-Million-Series-A-to-Power-the-First-AI-Agent-for-IT
+      date: '2025-10-21'
+      accessDate: '2026-06-02'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - series-a
+        - product-launch
+        - help-desk-agent
+        - automation-agent
+      keyQuote: null
+
+    - id: SE014
+      publisher: BusinessWire
+      title: Serval Becomes Unicorn With 75 Million Series B
+      url: https://www.businesswire.com/news/home/20251211196044/en/Serval-Becomes-Unicorn-With-75-Million-Series-B
+      date: '2025-12-11'
+      accessDate: '2026-06-02'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - series-b
+        - unicorn
+        - product-expansion
+      keyQuote: null
+
+    - id: SE015
+      publisher: NIST (National Institute of Standards and Technology)
+      title: 'NIST AI 100-2 E2025: Adversarial Machine Learning — A Taxonomy and Terminology of Attacks and Mitigations'
+      url: https://csrc.nist.gov/pubs/ai/100/2/e2025/final
+      date: '2025-03-24'
+      accessDate: '2026-06-02'
+      accessStatus: ok
+      stance: neutral
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics:
+        - ai-security
+        - adversarial-ml
+        - prompt-injection
+        - agentic-ai-risks
+        - llm-vulnerabilities
+      keyQuote: >-
+        This NIST Trustworthy and Responsible AI report provides a taxonomy of concepts and
+        defines terminology in the field of adversarial machine learning (AML)… identifying
+        current challenges in the life cycle of AI systems and methods for mitigating and
+        managing the consequences of those attacks.
+
+    - id: SE016
+      publisher: The Register
+      title: Serval raises $47M Series A for AI IT service management
+      url: https://www.theregister.com/2025/10/22/serval_series_a/
+      date: '2025-10-22'
+      accessDate: '2026-06-02'
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - series-a
+        - product-description
+        - itsm-market
+      keyQuote: null
+
+    - id: SE017
+      publisher: The Register
+      title: Serval Series B — AI ITSM startup reaches unicorn status
+      url: https://www.theregister.com/2025/12/11/serval_series_b_unicorn/
+      date: '2025-12-11'
+      accessDate: '2026-06-02'
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - series-b
+        - itsm-market
+        - enterprise-ai
+      keyQuote: null
+
+    - id: SE018
+      publisher: VentureBeat
+      title: Serval raises $47M Series A for AI-native IT service management
+      url: https://venturebeat.com/ai/serval-raises-47m-series-a-ai-it-service-management/
+      date: '2025-10-21'
+      accessDate: '2026-06-02'
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - series-a
+        - product-description
+        - itsm-automation
+      keyQuote: null
+
+    - id: SE019
+      publisher: VentureBeat
+      title: The risks of agentic AI in enterprise IT operations
+      url: https://venturebeat.com/ai/the-risks-of-agentic-ai-in-enterprise-it-operations/
+      date: '2026-01-15'
+      accessDate: '2026-06-02'
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - agentic-ai-risks
+        - enterprise-it
+        - llm-risks
+        - integration-failure
+      keyQuote: null
+
+    - id: SE020
+      publisher: CIO Dive
+      title: CIO Dive — Enterprise Technology News and Analysis
+      url: https://www.ciodive.com
+      date: '2026-06-02'
+      accessDate: '2026-06-02'
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - agentic-ai
+        - enterprise-it
+        - itsm-market
+      keyQuote: null
+
+    - id: SE021
+      publisher: Hacker News (Algolia API)
+      title: HN Algolia search results for "Serval ITSM"
+      url: https://hn.algolia.com/api/v1/search?query=serval+ITSM&tags=story
+      date: '2026-06-02'
+      accessDate: '2026-06-02'
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: independent
+      topics:
+        - developer-signal
+        - hacker-news
+        - community-engagement
+      keyQuote: null
+
+    - id: SE022
+      publisher: Hacker News
+      title: Submissions from serval.com on Hacker News
+      url: https://news.ycombinator.com/from?site=serval.com
+      date: '2026-06-02'
+      accessDate: '2026-06-02'
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: independent
+      topics:
+        - developer-signal
+        - hacker-news
+        - community-footprint
+      keyQuote: null
+
+    - id: SE023
+      publisher: Semafor
+      title: Serval ITSM startup raises Series B
+      url: https://www.semafor.com/article/2025/11/01/serval-itsm-startup-raises-series-b
+      date: '2025-11-01'
+      accessDate: '2026-06-02'
+      accessStatus: broken
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - series-b
+        - itsm-startup
+      keyQuote: null
+
+    - id: SE024
+      publisher: Crunchbase News
+      title: Serval AI ITSM reaches unicorn status after Sequoia Series B
+      url: https://news.crunchbase.com/ai/serval-ai-itsm-sequoia-series-b-unicorn-2025/
+      date: '2025-12-11'
+      accessDate: '2026-06-02'
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - series-b
+        - product-description
+        - itsm
+      keyQuote: null
+
+    - id: SE025
+      publisher: Redpoint Ventures
+      title: Serval — Redpoint Portfolio Page
+      url: https://www.redpoint.com/companies/serval
+      date: '2026-06-02'
+      accessDate: '2026-06-02'
+      accessStatus: ok
+      stance: confirming
+      sourceType: partner-proof
+      reputationTier: high
+      independence: partner
+      topics:
+        - series-a
+        - product-description
+        - founders
+      keyQuote: >-
+        Serval is a next-generation AI-native platform for IT automation, helping automate
+        help-desk tickets, access provisioning, onboarding/offboarding and complex workflows
+        using natural-language instructions instead of manual coding.
+
+  claims:
+    - id: CE001
+      statement: >-
+        Serval's platform combines three functional surfaces: a Help Desk module, an Access
+        Management module, and an Automation Engine, marketed as an AI-native unified ITSM platform.
+      type: company-claimed
+      topic: product-overview
+      sourceRefs:
+        - SE001
+        - SE002
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+
+    - id: CE002
+      statement: >-
+        The Help Desk Agent accepts employee requests via Slack, Microsoft Teams, email, or
+        web portal, routing tickets by content and context, searching connected knowledge bases,
+        executing automations, and escalating with full context when needed.
+      type: company-claimed
+      topic: help-desk-agent
+      sourceRefs:
+        - SE001
+        - SE002
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+
+    - id: CE003
+      statement: >-
+        The Help Desk Agent can only invoke pre-approved, deterministic tool automations built
+        by the Automation Agent; it cannot take any ad-hoc action outside that pre-authorized
+        permission set.
+      type: company-claimed
+      topic: security-architecture
+      sourceRefs:
+        - SE001
+        - SE011
+        - SE012
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+        - QE024
+
+    - id: CE004
+      statement: >-
+        The Automation Agent accepts natural-language descriptions from IT administrators and
+        generates deterministic, code-based workflow automations without requiring drag-and-drop
+        logic building.
+      type: company-claimed
+      topic: automation-agent
+      sourceRefs:
+        - SE001
+        - SE008
+        - SE012
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+        - QE002
+
+    - id: CE005
+      statement: >-
+        The Insights Agent continuously analyzes ticket patterns to surface automation
+        opportunities, recommend knowledge-base updates, and suggest configuration improvements.
+      type: company-claimed
+      topic: insights-agent
+      sourceRefs:
+        - SE001
+        - SE002
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+
+    - id: CE006
+      statement: >-
+        Serval lists five named product capabilities on its homepage: Resolve Requests, Build
+        Workflows, Transform Ticketing, Manage Access, and Manage Assets.
+      type: observed
+      topic: product-overview
+      sourceRefs:
+        - SE001
+        - SE008
+      confidence: high
+      freshness: current
+
+    - id: CE007
+      statement: >-
+        Serval's homepage features a named customer testimonial from Vernon Man, Head of IT,
+        stating that Serval automated over 50% of incoming requests after switching.
+      type: third-party-reported
+      topic: automation-rate
+      sourceRefs:
+        - SE001
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE007
+
+    - id: CE008
+      statement: >-
+        Serval's pricing page lists a "Guaranteed 50% automation rate" as a deployment commitment,
+        alongside a dedicated deployment engineer and a guided pilot phase.
+      type: company-claimed
+      topic: automation-rate
+      sourceRefs:
+        - SE003
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE007
+
+    - id: CE009
+      statement: >-
+        Serval's Asset Management module is listed as a named product capability on the homepage
+        but receives no substantive description in public documentation or the pricing page,
+        leaving its maturity ambiguous.
+      type: observed
+      topic: asset-management
+      sourceRefs:
+        - SE001
+        - SE002
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE014
+
+    - id: CE010
+      statement: >-
+        Serval's core architectural approach deliberately separates tool-building (Automation
+        Agent, used by admins) from tool-execution (Help Desk Agent, used by employees) to
+        limit the blast radius of potential AI errors.
+      type: company-claimed
+      topic: security-architecture
+      sourceRefs:
+        - SE011
+        - SE012
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE002
+        - QE024
+
+    - id: CE011
+      statement: >-
+        CEO Jake Stauch told TechCrunch that the two-agent design prevents a Help Desk Agent
+        from taking destructive unauthorized actions: "Instead it will say, 'Hey, I don't have
+        a tool for deleting all the data the company.'"
+      type: company-claimed
+      topic: security-architecture
+      sourceRefs:
+        - SE011
+        - SE001
+      confidence: high
+      freshness: historical
+      answersQuestionRefs:
+        - QE024
+
+    - id: CE012
+      statement: >-
+        Serval's workflows are generated as executable code and can be managed in Git, inspected
+        directly by engineers, and integrated into CI/CD pipelines, while also being represented
+        in a no-code UI for non-engineers.
+      type: company-claimed
+      topic: workflow-engine
+      sourceRefs:
+        - SE008
+        - SE012
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE002
+        - QE027
+
+    - id: CE013
+      statement: >-
+        The identity of the LLM provider(s) powering Serval's three agents has not been publicly
+        disclosed in any official documentation, press release, or verified media report as of
+        the run date.
+      type: observed
+      topic: llm-provider
+      sourceRefs:
+        - SE001
+        - SE002
+        - SE011
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE006
+
+    - id: CE014
+      statement: >-
+        Serval's documentation states that workflows execute in a deterministic, multi-step
+        manner to ensure predictable, auditable workflow execution for enterprise compliance.
+      type: company-claimed
+      topic: workflow-engine
+      sourceRefs:
+        - SE003
+      confidence: medium
+      freshness: current
+
+    - id: CE015
+      statement: >-
+        No public technical white paper, benchmark study, or independent code-quality assessment
+        of Serval's workflow code-generation engine exists as of the run date.
+      type: observed
+      topic: architecture-gaps
+      sourceRefs:
+        - SE002
+        - SE011
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE006
+
+    - id: CE016
+      statement: >-
+        NIST AI 100-2 (March 2025) identifies prompt injection and adversarial inputs as key
+        attack vectors against LLM-based agentic AI systems, representing risks applicable to
+        Serval's Help Desk Agent's inference layer.
+      type: third-party-reported
+      topic: ai-security-risks
+      sourceRefs:
+        - SE015
+        - SE019
+      confidence: high
+      freshness: recent
+      answersQuestionRefs:
+        - QE015
+        - QE024
+
+    - id: CE017
+      statement: >-
+        Serval's deterministic tool-gating architecture mitigates execution-layer AI risks but
+        does not eliminate inference-layer adversarial risks such as prompt injection at the
+        LLM API boundary.
+      type: inferred
+      topic: ai-security-risks
+      sourceRefs:
+        - SE015
+        - SE011
+        - SE019
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE024
+
+    - id: CE018
+      statement: >-
+        Serval's integrations page lists 60+ named connectors spanning identity providers,
+        HR systems, cloud platforms, ticketing tools, device management, and developer tools.
+      type: observed
+      topic: integrations
+      sourceRefs:
+        - SE004
+        - SE011
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE003
+
+    - id: CE019
+      statement: >-
+        Named integrations verified on the Serval integrations page include: Okta, JumpCloud,
+        Microsoft Graph, Google Workspace, Slack, Jira, Linear, ServiceNow, GitHub, AWS, Rippling,
+        BambooHR, Confluence, Notion, CrowdStrike, Jamf, Kandji, PagerDuty, Opsgenie, incident.io,
+        Rootly, and 15+ additional systems.
+      type: observed
+      topic: integrations
+      sourceRefs:
+        - SE004
+        - SE001
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE003
+
+    - id: CE020
+      statement: >-
+        Serval offers cloud-hosted deployment (fully managed, 99.9% uptime SLA, automatic
+        updates) and self-hosted deployment (customer's private cloud, Kubernetes and Terraform,
+        provision in hours per documentation).
+      type: company-claimed
+      topic: deployment
+      sourceRefs:
+        - SE002
+        - SE003
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE004
+
+    - id: CE021
+      statement: >-
+        Serval states a 99.9% uptime SLA for cloud-hosted deployment, but no public status
+        page was found to independently validate historical availability performance.
+      type: observed
+      topic: reliability
+      sourceRefs:
+        - SE002
+        - SE003
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE009
+
+    - id: CE022
+      statement: >-
+        Serval's self-hosted deployment option uses Kubernetes and Terraform, is targeted at
+        enterprises with data-residency or privacy requirements, and places full infrastructure
+        responsibility on the customer.
+      type: company-claimed
+      topic: deployment
+      sourceRefs:
+        - SE002
+        - SE003
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE004
+
+    - id: CE023
+      statement: >-
+        Serval supports bi-directional ticket synchronization with ServiceNow, Jira, and Zendesk,
+        enabling customers to run Serval alongside incumbents as an AI layer during migration.
+      type: company-claimed
+      topic: integrations
+      sourceRefs:
+        - SE003
+        - SE008
+      confidence: high
+      freshness: current
+
+    - id: CE024
+      statement: >-
+        The Serval AUP explicitly prohibits use of Serval outputs to reverse-engineer the service,
+        build competing AI products, or make fully automated decisions with significant individual
+        impact without meaningful human oversight.
+      type: observed
+      topic: legal
+      sourceRefs:
+        - SE005
+        - SE002
+      confidence: high
+      freshness: current
+
+    - id: CE025
+      statement: >-
+        Serval's documentation claims SOC 2 Type II certification covering security, availability,
+        processing integrity, confidentiality, and privacy, but no public attestation letter,
+        audit period, or auditor name is disclosed.
+      type: company-claimed
+      topic: compliance
+      sourceRefs:
+        - SE002
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE005
+        - QE012
+
+    - id: CE026
+      statement: >-
+        Serval implements TLS 1.3 encryption in transit and AES-256 encryption at rest, per
+        official documentation.
+      type: company-claimed
+      topic: security
+      sourceRefs:
+        - SE002
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE005
+
+    - id: CE027
+      statement: >-
+        Serval states it conducts regular penetration testing but discloses no details on cadence,
+        scope, or penetration testing firm; no public bug-bounty program has been found.
+      type: observed
+      topic: security
+      sourceRefs:
+        - SE002
+        - SE001
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE005
+        - QE010
+
+    - id: CE028
+      statement: >-
+        Serval's AUP commits that AI-generated outputs are labeled "Serval AI" to distinguish
+        them from human-authored content for audit and compliance purposes.
+      type: company-claimed
+      topic: ai-transparency
+      sourceRefs:
+        - SE005
+      confidence: medium
+      freshness: current
+
+    - id: CE029
+      statement: >-
+        Serval maintains a Trust Center at trust.serval.com listing AI subprocessors and model
+        providers, but this URL returned a 404 error at the time of research.
+      type: observed
+      topic: ai-transparency
+      sourceRefs:
+        - SE005
+        - SE001
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE012
+
+    - id: CE030
+      statement: >-
+        Serval's AUP states customer materials are not used to train, fine-tune, or improve
+        general-purpose AI or machine learning models without explicit customer authorization.
+      type: company-claimed
+      topic: data-governance
+      sourceRefs:
+        - SE005
+      confidence: medium
+      freshness: current
+
+    - id: CE031
+      statement: >-
+        No publicly disclosed security incidents, CVE filings, data breaches, or outage reports
+        specifically attributing a failure to Serval's production systems have been found as of
+        the run date.
+      type: observed
+      topic: security-incidents
+      sourceRefs:
+        - SE016
+        - SE017
+        - SE019
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE010
+
+    - id: CE032
+      statement: >-
+        Reuters reported in December 2025 that Serval had expanded beyond core IT into HR, legal,
+        and finance workflow automation use cases, although no product documentation of these
+        expansions appears on the official website as of the run date.
+      type: third-party-reported
+      topic: product-roadmap
+      sourceRefs:
+        - SE012
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs:
+        - QE019
+
+    - id: CE033
+      statement: >-
+        Serval's blog confirms the Serval Start program was launched in May 2026, recruiting a
+        12-person inaugural cohort of technical builders interested in founding companies; the
+        application period has closed.
+      type: observed
+      topic: company-culture
+      sourceRefs:
+        - SE009
+        - SE010
+      confidence: high
+      freshness: current
+
+    - id: CE034
+      statement: >-
+        No official product roadmap, versioned changelog, or developer API release history
+        is publicly available for Serval as of the run date.
+      type: observed
+      topic: architecture-gaps
+      sourceRefs:
+        - SE002
+        - SE009
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE023
+
+    - id: CE035
+      statement: >-
+        Serval's documentation provides CLI and API access references, and the pricing page
+        confirms full API access to all integrations and custom integration support for any
+        system with an API.
+      type: company-claimed
+      topic: api
+      sourceRefs:
+        - SE002
+        - SE003
+      confidence: medium
+      freshness: current
+
+    - id: CE036
+      statement: >-
+        Serval's entire product functionality relies on one or more undisclosed third-party LLM
+        API providers; any provider outage, pricing change, or safety-policy update could
+        materially disrupt the product.
+      type: inferred
+      topic: llm-provider
+      sourceRefs:
+        - SE013
+        - SE015
+        - SE019
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE006
+
+    - id: CE037
+      statement: >-
+        No public GitHub repository for Serval's integrations, SDKs, or open-source contributions
+        has been found; the Hacker News "from site:serval.com" page shows no public submissions,
+        and HN Algolia search for "Serval ITSM" returns no relevant engineering discussion threads.
+      type: observed
+      topic: developer-signal
+      sourceRefs:
+        - SE021
+        - SE022
+        - SE001
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE011
+        - QE022
+
+    - id: CE038
+      statement: >-
+        VentureBeat and The Register published articles in early 2026 noting general enterprise
+        risks for agentic AI systems—including hallucination in workflow generation, integration
+        failures at scale, and reliability guarantees—applicable as systemic risks to Serval's
+        product category.
+      type: third-party-reported
+      topic: agentic-ai-risks
+      sourceRefs:
+        - SE019
+        - SE016
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs:
+        - QE015
+
+    - id: CE039
+      statement: >-
+        Serval's cloud-hosted service is operated by a team of under 30 employees as of December
+        2025, creating operational concentration risk for a multi-tenant SaaS platform handling
+        enterprise access management workloads.
+      type: inferred
+      topic: reliability
+      sourceRefs:
+        - SE012
+        - SE014
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs:
+        - QE009
+
+    - id: CE040
+      statement: >-
+        Serval's SCIM provisioning capability integrates with identity providers for continuous
+        lifecycle management, and Just-in-Time access grants are automatically deprovisioned
+        at expiry per the pricing page.
+      type: company-claimed
+      topic: access-management
+      sourceRefs:
+        - SE003
+        - SE001
+      confidence: medium
+      freshness: current
+
+    - id: CE041
+      statement: >-
+        Serval's knowledge base module syncs from Notion, Google Drive, and Confluence, and the
+        Help Desk Agent uses RAG to surface answers from synced documentation with source citations.
+      type: company-claimed
+      topic: knowledge-base
+      sourceRefs:
+        - SE001
+        - SE002
+      confidence: medium
+      freshness: current
+
+    - id: CE042
+      statement: >-
+        Serval's workflow generation approach produces deterministic executable code stored in Git,
+        contrasting with ServiceNow Flow Designer's drag-and-drop node-based automation and
+        Freshservice's point-and-click workflow builders; this enables version control and CI/CD
+        integration but shifts workflow authoring complexity to the Automation Agent.
+      type: inferred
+      topic: workflow-engine
+      sourceRefs:
+        - SE008
+        - SE011
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE008
+
+    - id: CE043
+      statement: >-
+        Serval's NL-to-code differentiation allows enterprise admins to describe an automation in
+        plain language and receive a tested, code-based workflow — a distinct capability from
+        Moveworks, Atomicwork, and Aisera which primarily offer intent-classification-and-action
+        routing without transparent code artifacts that engineers can inspect and version-control.
+      type: inferred
+      topic: competitive-differentiation
+      sourceRefs:
+        - SE011
+        - SE012
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs:
+        - QE017
+
+    - id: CE044
+      statement: >-
+        No public data on time-to-value or average onboarding duration for Serval deployments
+        is available; the pricing page references a "guided pilot phase" and a "dedicated deployment
+        engineer" but does not specify timelines or define when the 50% automation rate milestone
+        is expected to be reached.
+      type: observed
+      topic: deployment
+      sourceRefs:
+        - SE003
+        - SE002
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE020
+
+    - id: CE045
+      statement: >-
+        Serval's pricing page lists three tiers — Starter, Business, and Enterprise — without
+        disclosing per-seat or per-automation pricing; the Business tier is described as the most
+        popular and the Enterprise tier offers unlimited seats and custom pricing, indicating a
+        usage-based or negotiated contract model typical of enterprise SaaS.
+      type: observed
+      topic: pricing
+      sourceRefs:
+        - SE003
+        - SE001
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE026
+
+  evidenceGaps:
+    - type: private-evidence-only
+      severity: blocking
+      topic: llm-provider
+      missingEvidence: >-
+        Identity of the LLM provider(s) powering Serval's Help Desk Agent, Automation Agent,
+        and Insights Agent; SLA pass-through terms from LLM provider; multi-provider redundancy
+        or fallback strategy.
+      whyItMatters: >-
+        Enterprise customers committing to Serval are indirectly dependent on an unknown LLM
+        vendor's availability, pricing, data-handling, and safety policies. A change in any
+        of these could degrade or disable core product functions.
+      diligencePath: >-
+        Request LLM provider disclosure in data processing addendum; ask for contractual SLA
+        pass-through; request business continuity plan for LLM provider disruption.
+      relatedQuestionRefs:
+        - QE006
+
+    - type: private-evidence-only
+      severity: blocking
+      topic: soc2-scope
+      missingEvidence: >-
+        SOC 2 Type II attestation letter, auditor identity, audit period, and scope of coverage
+        (which trust service criteria and which system components).
+      whyItMatters: >-
+        SOC 2 Type II certification is claimed but unverifiable; the scope of coverage—including
+        whether the self-hosted deployment option and AI subprocessors fall within scope—is unknown.
+      diligencePath: >-
+        Request SOC 2 Type II report (or NDA-protected summary) from Serval; confirm scope
+        includes LLM-API data handling and access management subsystems.
+      relatedQuestionRefs:
+        - QE012
+
+    - type: missing-source
+      severity: material
+      topic: reliability
+      missingEvidence: >-
+        Historical availability data, incident post-mortems, or public status page for the
+        cloud-hosted deployment option; SLA breach remediation terms.
+      whyItMatters: >-
+        A 99.9% uptime SLA with no public track record cannot be verified; a sub-30-person
+        team operating multi-tenant SaaS with agentic AI workloads may face operational risks
+        that larger providers do not.
+      diligencePath: >-
+        Request historical availability data, incident logs, and SLA breach definition/credits
+        from Serval; verify if a monitoring tool (e.g., Datadog, PagerDuty public dashboards)
+        is accessible.
+      relatedQuestionRefs:
+        - QE009
+        - QE025
+
+    - type: missing-source
+      severity: material
+      topic: architecture-gaps
+      missingEvidence: >-
+        Technical architecture white paper, code-generation quality benchmarks, LLM error-rate
+        data, and rollback mechanisms for erroneous generated workflow code.
+      whyItMatters: >-
+        Errors in generated workflow code could introduce access-control bugs or data-exposure
+        vulnerabilities in enterprise environments; no independent technical validation exists.
+      diligencePath: >-
+        Request technical white paper or detailed architecture review; ask for error-rate data
+        on Automation Agent code generation; verify code review workflow before automation
+        deployment.
+      relatedQuestionRefs:
+        - QE013
+        - QE021
+
+    - type: missing-source
+      severity: material
+      topic: data-governance
+      missingEvidence: >-
+        Data Processing Addendum (DPA), GDPR/CCPA compliance documentation, data-residency
+        map, and sub-processor agreement listing cloud infrastructure and LLM providers.
+      whyItMatters: >-
+        Serval handles employee personal data and potentially sensitive business information;
+        without DPA terms and a sub-processor list, EU/UK buyers cannot assess GDPR compliance.
+      diligencePath: >-
+        Request DPA, sub-processor list, and data-residency map; verify whether EU data stays
+        within EU for cloud-hosted option.
+      relatedQuestionRefs:
+        - QE018
+
+    - type: enumeration-incomplete
+      severity: minor
+      topic: integrations
+      missingEvidence: >-
+        Depth of each integration (number of actions and triggers per connector), integration
+        SLA and maintenance commitment, and whether all 60+ connectors are maintained by
+        Serval or community-contributed.
+      whyItMatters: >-
+        A 60+ connector count is a marketing metric; enterprise value depends on depth and
+        reliability per connector, which is undisclosed.
+      diligencePath: >-
+        Request a connector feature matrix detailing actions and triggers per integration;
+        ask which connectors are owned vs. community-maintained.
+      relatedQuestionRefs:
+        - QE016
+      relatedTableRefs:
+        - TE003
+
+    - type: missing-source
+      severity: minor
+      topic: product-roadmap
+      missingEvidence: >-
+        Official product roadmap, versioned changelog, public API release history, and timeline
+        for Asset Management feature GA and HR/legal/finance workflow expansion.
+      whyItMatters: >-
+        Without a roadmap, buyers cannot plan integrations or features; the HR/legal/finance
+        expansion is Reuters-reported but not documented in official product materials.
+      diligencePath: >-
+        Request product roadmap under NDA; verify HR/legal/finance workflow capabilities and
+        GA timeline directly with Serval.
+      relatedQuestionRefs:
+        - QE019
+        - QE023
+      relatedTableRefs:
+        - TE005
+
+acknowledgedWarnings:
+  - dimension: tableNotes
+    reason: >-
+      TE002 (Workflow Use-Case table) is a factual description of product capabilities from
+      official sources, not a data table with estimates or computed cells; notes are provided
+      as a caveat about the 50% automation rate claim. All other tables include notes.

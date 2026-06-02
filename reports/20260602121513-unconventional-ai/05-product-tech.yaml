@@ -1,0 +1,2463 @@
+{
+  "schemaVersion": "report-v2",
+  "artifact": "product-tech",
+  "slug": "unconventional-ai",
+  "runDate": "2026-06-02",
+  "company": {
+    "name": "Unconventional AI"
+  },
+  "chapter": {
+    "number": 5,
+    "title": "Product & Technology",
+    "summary": "Unconventional AI's product is best understood as a research-stage datacenter inference stack—custom silicon, local-memory architecture, and model/hardware co-design—rather than as a disclosed chip SKU. Official materials support a physics-first, mixed-signal, 1000x-efficiency thesis centered on data movement and Joules-per-token, but the public record still lacks manufacturability, tooling, benchmark, and qualification evidence, so the product case remains more compelling as a research roadmap than as a ship-ready platform."
+  },
+  "sections": [
+    {
+      "id": "product-definition-workloads",
+      "title": "Product definition and target workloads",
+      "body": "Unconventional AI is not presenting a conventional chip catalog today. Its official materials describe a “new physical substrate for intelligence” aimed at biology-scale efficiency, while third-party coverage says Rao envisions both custom silicon and server infrastructure. The clearest workload wedge is datacenter generative-AI inference: the company’s detailed efficiency post defines success as lower Joules per token or Joules per image at matched output quality, and still treats latency, throughput, area, and price as secondary constraints rather than the primary objective. Rao also told The Register that diffusion, flow, and related dynamics-friendly models are natural candidates for this sort of substrate, which implies the first target is not general-purpose compute but inference workloads whose cost is dominated by movement of weights and state.\n\nThe important product implication is that the company is building a stack, not just a die. Public posts imply at least a workload layer, model-design choices shaped by substrate physics, a training or surrogate-model layer, a runtime/compiler layer, and custom silicon plus close memory. But the commercial surface still looks thin. The official site exposes a homepage, technical blog, grant program, and a sparse careers page; it does not expose SKUs, price sheets, benchmark dashboards, API documentation, or named customer deployments. In customer-workflow terms, the product claim is therefore: help power-constrained datacenter inference teams lower energy per output by changing both the model form and the hardware substrate. In market-readiness terms, the public evidence still looks like a research program describing what could be sold later, not a sellable product today.",
+      "claimRefs": [
+        "CE001",
+        "CE002",
+        "CE003",
+        "CE018",
+        "CE020",
+        "CE021",
+        "CE022",
+        "CE024",
+        "CE025",
+        "CE040",
+        "CE044"
+      ],
+      "tableRefs": [
+        "TE001"
+      ],
+      "figureRefs": [
+        "FE001"
+      ]
+    },
+    {
+      "id": "physics-first-architecture",
+      "title": "Physics-first architecture and the 1000x efficiency thesis",
+      "body": "Mechanistically, Unconventional is unusually explicit about what it thinks is broken in current AI hardware. The company’s 1000x post says the relevant comparison is end-to-end system energy, not building-block TOPS/W, and argues that inference energy is dominated by storage, access, and movement rather than arithmetic. Its own rough calculations for a 100B-parameter model put arithmetic energy around 0.007 Joules per token, SRAM reads around 0.2 Joules per token, and HBM reads around 3.9 Joules per token before accounting for KV-cache overhead. That is why the same post keeps returning to locality, parameter reuse, recurrence, alternatives to attention, and possible 3D-integrated memory. The architecture thesis is therefore less “we found a better multiply-accumulate” than “we need a substrate that keeps model state physically close to where it is used.”\n\nThe company’s analog essay is equally important because it narrows the claim. Unconventional does not say analog is a free lunch. It says analog efficiency falls apart at higher precision because thermal noise forces larger capacitance, that analog memory is still unresolved enough to require expensive interface overheads, and that great fJ/op numbers can still lose at the system level if noise, rewrites, or larger models increase traffic and degrade iso-accuracy. In other words, the optimistic case depends on mixed-signal co-design, not on a naive analog-versus-digital narrative. Public materials treat the 1000x target as a stack-level outcome that may come from many smaller wins—better locality, more suitable model classes, recurrence, sparsity, lower movement, and circuits that exploit physics directly where that trade-off is actually favorable.",
+      "claimRefs": [
+        "CE004",
+        "CE005",
+        "CE006",
+        "CE007",
+        "CE008",
+        "CE009",
+        "CE010",
+        "CE011",
+        "CE012",
+        "CE013",
+        "CE014",
+        "CE039"
+      ],
+      "tableRefs": [
+        "TE003"
+      ],
+      "figureRefs": [
+        "FE002"
+      ]
+    },
+    {
+      "id": "software-tooling-and-training",
+      "title": "Software, tooling, and training implications",
+      "body": "The company’s “neural co-evolution” language has major software consequences. If model structure and substrate physics must be co-designed, the product cannot be a drop-in accelerator for arbitrary PyTorch graphs. Unconventional’s dynamics demo makes that concrete: it uses a toy gyroscope-and-spring system, trains physical parameters with differentiable ODE models, and shows that backpropagation can in principle optimize a physical dynamical system. That is an important proof-of-concept for research direction, but it is still a toy classification example rather than evidence of a production inference stack. Moving from that demo to a product would require a behavioral model suitable for training, a compiler or mapping layer that turns learned structures into realizable circuits, a runtime that exposes predictable system behavior, and benchmark tooling that measures energy at the system level.\n\nExternal comparison sources show why this is the hardest part of the story. IEEE Spectrum says neuromorphic hardware still lacks TensorFlow/PyTorch-like tooling, EBRAINS exposes BrainScaleS and SpiNNaker through a PyNN-driven interface, and Intel’s Lava documentation is one of the clearest attempts to create a reusable software abstraction. BrainChip’s public surface goes further in a commercial direction with SDKs, simulation tools, model assets, and benchmarkable hardware access. Relative to those reference points, Unconventional’s current public stack is compelling as a technical thesis but still under-specified as a developer experience. The public challenge is not whether physics can compute; it is whether the company can translate that physics into a usable model-design, software, and runtime workflow for real operators.",
+      "claimRefs": [
+        "CE014",
+        "CE015",
+        "CE016",
+        "CE017",
+        "CE027",
+        "CE028",
+        "CE031",
+        "CE032",
+        "CE033",
+        "CE036",
+        "CE038",
+        "CE043"
+      ],
+      "tableRefs": [
+        "TE002"
+      ],
+      "figureRefs": [
+        "FE004"
+      ]
+    },
+    {
+      "id": "manufacturing-deployment-and-controls",
+      "title": "Manufacturing, deployment, and control-layer constraints",
+      "body": "Manufacturability is where the public record becomes notably thinner. Rao told The Register and DCD that the company is still trying several approaches, that the eventual device is likely to be analog, and that it will be fabbed in silicon. The grant program makes the engineering agenda even clearer by emphasizing unconventional circuits, heterogeneous systems, data-movement-minimizing recurrence, and 3D integration—and by explicitly preferring ideas with a path to volume manufacturing within five years. That combination suggests packaging density, memory proximity, calibration, and yield are first-order determinants of product success, not issues to solve after the architecture is chosen.\n\nYet the reviewed surface does not disclose the core controls that datacenter buyers would eventually ask for. There is no public foundry partner, process node, packaging method, error-budget disclosure, calibration plan, yield target, or reliability qualification regime. There is also no public security, privacy, safety, or compliance documentation for an eventual product stack. Those omissions matter more here than they would for a conventional accelerator roadmap. In a physics-first mixed-signal system, analog noise, drift, reproducibility, and field calibration are inseparable from commercial deployment. Likewise, if the product really is a full system rather than a chip IP block, integration with servers, networking, power delivery, and memory packaging becomes part of the manufacturability question. The result is a credible technical direction with a still-opaque path to productization.",
+      "claimRefs": [
+        "CE018",
+        "CE019",
+        "CE020",
+        "CE022",
+        "CE023",
+        "CE024",
+        "CE041",
+        "CE042"
+      ],
+      "tableRefs": [
+        "TE004"
+      ],
+      "figureRefs": [
+        "FE003"
+      ]
+    },
+    {
+      "id": "maturity-comparisons-and-unknowns",
+      "title": "Comparisons, maturity read-throughs, and technical unknowns",
+      "body": "Comparison sources sharpen the product judgment. Intel, EBRAINS, and BrainChip each show pieces of the platform maturity that Unconventional has not yet exposed publicly: large-scale event-driven hardware, public or semi-public software frameworks, simulation environments, APIs, and in BrainChip’s case a more recognizable commercial and developer surface. None of those examples proves that Unconventional’s thesis is wrong. In fact, they validate that the industry is seriously exploring event-driven, mixed-signal, and memory-local architectures. But they also show that real hardware alone is not enough. IEEE Spectrum’s “killer app” critique and the Frontiers review’s warnings about immature training tools, reliability constraints, noise sensitivity, and fragmented benchmarks all point to the same adoption bottleneck.\n\nThat is why Unconventional’s 1000x claim should be treated as a research goal rather than a product fact. The company has laid out a plausible line of attack on memory movement, analog/digital partitioning, and co-evolved model design. What it has not yet published is the missing conversion layer from thesis to product: real workload results, a manufacturable memory-and-packaging plan, a usable toolchain, and proof that datacenter buyers will accept a non-drop-in workflow if that is what the efficiency win requires. Until those gaps close, the skeptical but fair reading is that Unconventional may be working on an important next-generation compute direction, yet its product posture remains materially behind its conceptual ambition.",
+      "claimRefs": [
+        "CE026",
+        "CE027",
+        "CE028",
+        "CE029",
+        "CE030",
+        "CE031",
+        "CE032",
+        "CE033",
+        "CE034",
+        "CE035",
+        "CE037",
+        "CE043",
+        "CE044",
+        "CE045"
+      ],
+      "tableRefs": [
+        "TE005"
+      ],
+      "figureRefs": []
+    }
+  ],
+  "tables": [
+    {
+      "id": "TE001",
+      "title": "Product module / asset matrix",
+      "columns": [
+        "Module / asset",
+        "Buyer / user",
+        "Current status / maturity",
+        "Differentiation thesis",
+        "Diligence gap"
+      ],
+      "rows": [
+        [
+          "Datacenter inference substrate",
+          "Hyperscaler and model-builder infrastructure teams",
+          "Research-stage; no public SKU or product sheet",
+          "Replace generic digital inference stack with a physics-first substrate optimized for lower Joules per output",
+          "Need public architecture, prototype specs, and benchmark evidence"
+        ],
+        [
+          "Model-hardware co-design loop",
+          "Model architects and silicon architects",
+          "Mission-level and blog-level only",
+          "Treat model form and hardware form as one optimization problem rather than mapping one onto the other late",
+          "Need evidence on real language, image, or multimodal workloads"
+        ],
+        [
+          "Memory-locality / 3D integration path",
+          "Systems and packaging engineers",
+          "Explicit need; implementation undisclosed",
+          "Attack the memory wall and KV-cache cost directly through locality and packaging",
+          "Need memory technology, packaging, and thermals plan"
+        ],
+        [
+          "Dynamics-based compute primitives",
+          "Research ML teams",
+          "Toy-demo maturity only",
+          "Use physical dynamics and recurrence instead of forcing everything into matrix-math primitives",
+          "Need proof on production-scale inference tasks"
+        ],
+        [
+          "Academic grant ecosystem",
+          "External researchers and future hires",
+          "Active in 2026",
+          "Expands the architecture search space across circuits, systems, and theory",
+          "Need clarity on how grant outputs feed the internal roadmap"
+        ],
+        [
+          "Developer / recruiting surface",
+          "Cross-disciplinary engineers",
+          "Careers page and updates form; no docs portal",
+          "Signals need for hardware, software, and algorithm talent under one roof",
+          "Need actual SDK, runtime, and documentation surfaces"
+        ]
+      ],
+      "notes": "Rows distinguish public assets from conceptual program elements. Absence of SKU, docs, or benchmark artifacts means several modules are mission statements rather than sellable components today.",
+      "claimRefs": [
+        "CE001",
+        "CE004",
+        "CE018",
+        "CE020",
+        "CE021",
+        "CE024",
+        "CE044"
+      ]
+    },
+    {
+      "id": "TE002",
+      "title": "Workflow / use-case table",
+      "columns": [
+        "User job",
+        "Current workflow",
+        "Unconventional AI approach",
+        "Potential measurable benefit",
+        "Limitation / adoption blocker"
+      ],
+      "rows": [
+        [
+          "Lower datacenter text-inference energy",
+          "GPU or TPU clusters with heavy HBM traffic and power-constrained racks",
+          "Co-design models and substrate around lower Joules per token",
+          "Lower energy per token and better rack-level throughput under fixed power",
+          "No public benchmark or compatibility proof"
+        ],
+        [
+          "Lower image or video generative-inference cost",
+          "Conventional accelerators plus batching and memory tuning",
+          "Benchmark on Joules per image and redesign workload around local state",
+          "Lower energy per generated artifact",
+          "No disclosed model support, latency, or quality trade-off data"
+        ],
+        [
+          "Reduce long-context serving overhead",
+          "Transformer serving with large KV caches spread across memory tiers",
+          "Favor recurrence or dynamics that reduce attention and state movement",
+          "Lower memory traffic and lower Joules per token at long context",
+          "No public long-context deployment evidence"
+        ],
+        [
+          "Train or emulate dynamics-native models",
+          "Standard ANN training on digital hardware",
+          "Use differentiable ODE or physical-system training to fit substrate physics",
+          "Potential parameter reuse and richer physical expressivity",
+          "Public evidence is limited to a toy classification example"
+        ],
+        [
+          "Evaluate alternatives to mainstream GPU stacks",
+          "Compare against Loihi, BrainScaleS, SpiNNaker, or edge NPUs",
+          "Position as a datacenter full-stack alternative instead of an edge-only neuromorphic chip",
+          "Could create a cloud-scale energy wedge if the stack works",
+          "Competing platforms already expose more tooling and deployable hardware today"
+        ]
+      ],
+      "notes": "Benefits are framed in workflow terms, not shipped metrics. Every row still depends on missing benchmark, tooling, and deployment evidence.",
+      "claimRefs": [
+        "CE002",
+        "CE015",
+        "CE016",
+        "CE017",
+        "CE024",
+        "CE031",
+        "CE032",
+        "CE033",
+        "CE040",
+        "CE043"
+      ]
+    },
+    {
+      "id": "TE003",
+      "title": "Technology / operating architecture table",
+      "columns": [
+        "Layer / component",
+        "Role",
+        "Key dependency",
+        "Primary risk"
+      ],
+      "rows": [
+        [
+          "Workload and model architecture",
+          "Choose recurrent, sparse, or dynamics-friendly forms that fit the substrate",
+          "Customer acceptance of non-drop-in model changes",
+          "If buyers demand drop-in compatibility, efficiency upside may shrink"
+        ],
+        [
+          "Behavioral / training model",
+          "Provide a learnable surrogate for physical dynamics and gradients",
+          "Accurate differentiable models and stable training flow",
+          "Mismatch between simulation and silicon behavior can break results"
+        ],
+        [
+          "Analog or mixed-signal compute fabric",
+          "Exploit nonlinear physical behavior where it is cheaper than digital emulation",
+          "Noise-aware circuit design and calibration",
+          "Precision, drift, and signal-to-noise constraints can erase gains"
+        ],
+        [
+          "Local memory / 3D integration",
+          "Keep weights and state close to computation",
+          "Packaging, density, thermals, and manufacturable memory choices",
+          "Undisclosed packaging and yield path"
+        ],
+        [
+          "Runtime / compiler / API layer",
+          "Map models to substrate and expose measurable system behavior",
+          "Software stack, import formats, and benchmark tooling",
+          "No public docs or SDK surface today"
+        ],
+        [
+          "System / server integration",
+          "Deliver a product buyers can rack, power, and operate",
+          "Silicon fabrication, board design, networking, and power delivery",
+          "Could become a long-cycle systems program instead of a clean chip sale"
+        ]
+      ],
+      "notes": "This stack mixes directly stated components with implied product layers. Compiler, runtime, and system packaging are necessary for deployment but remain publicly under-specified.",
+      "claimRefs": [
+        "CE004",
+        "CE006",
+        "CE009",
+        "CE013",
+        "CE014",
+        "CE018",
+        "CE024",
+        "CE041"
+      ]
+    },
+    {
+      "id": "TE004",
+      "title": "Trust / quality / compliance table",
+      "columns": [
+        "Control / metric",
+        "Public status",
+        "Scope",
+        "What is still missing",
+        "Why it matters"
+      ],
+      "rows": [
+        [
+          "Joules per token or image at iso-quality",
+          "Methodology stated; results not public",
+          "System-level efficiency measurement",
+          "Measured production-workload benchmarks against GPU or TPU baselines",
+          "Core product claim is unproven without it"
+        ],
+        [
+          "Noise-aware training and calibration",
+          "Conceptually acknowledged",
+          "Circuit design and training loop",
+          "Calibration cadence, drift handling, and error budgets",
+          "Analog robustness is a deployment question, not a footnote"
+        ],
+        [
+          "Reliability and qualification testing",
+          "Not publicly disclosed",
+          "Silicon, packaging, and runtime operations",
+          "Yield, MTBF, burn-in, PVT, and field-test data",
+          "Datacenter buyers need repeatability before adoption"
+        ],
+        [
+          "Security, privacy, safety, or compliance documentation",
+          "Not found on reviewed public surface",
+          "Enterprise control layer",
+          "Threat model, secure update path, privacy posture, certifications, and safety controls",
+          "Missing control layer blocks production diligence"
+        ],
+        [
+          "Developer and benchmark tooling",
+          "Thin public surface",
+          "Operator and developer enablement",
+          "Compiler docs, runtime manuals, supported model classes, and public benchmark harnesses",
+          "Programmability is the main category bottleneck"
+        ]
+      ],
+      "notes": "Most cells are intentionally negative because the reviewed public surface is early. The absence of published controls is itself an underwriting signal for a deep-tech infrastructure company.",
+      "claimRefs": [
+        "CE021",
+        "CE027",
+        "CE034",
+        "CE035",
+        "CE039",
+        "CE041",
+        "CE042"
+      ]
+    },
+    {
+      "id": "TE005",
+      "title": "Roadmap / release / development-stage table",
+      "columns": [
+        "Date / stage",
+        "Milestone or signal",
+        "Status",
+        "Implication",
+        "Source"
+      ],
+      "rows": [
+        [
+          "2025-12-08",
+          "Launch from stealth with biology-scale efficiency thesis",
+          "Completed",
+          "Public mission, funding, and product framing appear before any product spec sheet",
+          "Official announcement and launch coverage"
+        ],
+        [
+          "2026-04-02",
+          "Neural co-evolution essay",
+          "Completed",
+          "Signals that model and hardware will be co-designed rather than loosely coupled",
+          "Official blog"
+        ],
+        [
+          "2026-04-30",
+          "Analog / mixed-signal trade-off essay",
+          "Completed",
+          "Shows management recognizes precision, memory, and system-level trade-offs rather than selling analog as magic",
+          "Official blog"
+        ],
+        [
+          "2026-05-07",
+          "Detailed 1000x hardware methodology post",
+          "Completed",
+          "Provides the most concrete public benchmark philosophy and bottleneck model",
+          "Official blog"
+        ],
+        [
+          "2026-05-14 to 2026-08-20",
+          "Academic grant cycle and focus areas",
+          "Active in 2026",
+          "Broadens the search space across circuits, systems, theory, and manufacturable 3D integration",
+          "Grant blog and grant page"
+        ],
+        [
+          "2026-05-21",
+          "Dynamics toy demonstration",
+          "Completed",
+          "Shows trainable physical-system research, not product readiness",
+          "Official blog"
+        ],
+        [
+          "\"Next several years\" / \"no product in two years\"",
+          "Management timeline guidance through press",
+          "Open-ended",
+          "Confirms a long research horizon before commercialization",
+          "The Register and follow-on coverage"
+        ]
+      ],
+      "notes": "This is a research-program timeline, not a release calendar. Public milestones are essays, grants, and demos rather than prototype deliveries or customer pilots.",
+      "claimRefs": [
+        "CE020",
+        "CE022",
+        "CE023",
+        "CE044"
+      ]
+    }
+  ],
+  "figures": [
+    {
+      "id": "FE001",
+      "title": "Product architecture map",
+      "type": "stack",
+      "layout": "standard",
+      "summary": "Layer view of the implied Unconventional AI product stack, from datacenter inference workloads down to mixed-signal silicon and local-memory packaging.",
+      "data": {
+        "layers": [
+          {
+            "label": "Customer workload layer",
+            "detail": "Datacenter text or image inference jobs where power, latency, and memory traffic matter more than generic training flexibility.",
+            "modules": [
+              "LLM or multimodal inference",
+              "Long-context serving",
+              "Power-constrained rack operations"
+            ]
+          },
+          {
+            "label": "Model-design layer",
+            "detail": "Model classes and architectural choices co-evolved with substrate physics, including recurrence, sparsity, and possible alternatives to attention-heavy flows.",
+            "modules": [
+              "Recurrence or state-space patterns",
+              "Sparsity and parameter reuse",
+              "Model architecture specialization"
+            ]
+          },
+          {
+            "label": "Training / surrogate layer",
+            "detail": "Behavioral models and differentiable training flow that let physical parameters be optimized before or alongside silicon realization.",
+            "modules": [
+              "Differentiable ODE or surrogate models",
+              "Gradient-based optimization",
+              "Noise-aware training assumptions"
+            ]
+          },
+          {
+            "label": "Runtime / compiler layer",
+            "detail": "Necessary but unreleased mapping layer that would have to turn model intent into realizable circuits and system behavior.",
+            "modules": [
+              "Model mapping / compiler",
+              "Runtime scheduling",
+              "Benchmark and instrumentation tooling"
+            ]
+          },
+          {
+            "label": "Memory / packaging layer",
+            "detail": "Local or 3D-integrated memory plus short communication paths intended to minimize the dominant movement cost.",
+            "modules": [
+              "On-chip or near-chip memory",
+              "3D integration / packaging",
+              "Locality-aware placement"
+            ]
+          },
+          {
+            "label": "Physical compute layer",
+            "detail": "Silicon circuits exploiting nonlinear dynamics with analog and digital blocks used together where each is strongest.",
+            "modules": [
+              "Mixed-signal compute blocks",
+              "Nonlinear circuit dynamics",
+              "Silicon fabrication and test"
+            ]
+          }
+        ]
+      },
+      "approximationNotes": "The runtime/compiler and packaging layers are inferred necessities from the public thesis, not disclosed product modules. The figure maps how the public story would need to become a real product stack.",
+      "claimRefs": [
+        "CE001",
+        "CE004",
+        "CE005",
+        "CE018",
+        "CE024",
+        "CE039"
+      ]
+    },
+    {
+      "id": "FE002",
+      "title": "Customer workflow / operating flow",
+      "type": "flow",
+      "layout": "standard",
+      "summary": "How a datacenter operator would theoretically move from a power-constrained inference workload to a co-designed Unconventional stack, and where proof is still missing.",
+      "data": {
+        "nodes": [
+          {
+            "id": "f1",
+            "label": "Power-constrained inference demand",
+            "detail": "Operators face rack, cooling, and memory bottlenecks on generative inference.",
+            "tone": "neutral"
+          },
+          {
+            "id": "f2",
+            "label": "System-level baseline",
+            "detail": "Success is measured in Joules per token or image at matched quality.",
+            "tone": "neutral"
+          },
+          {
+            "id": "f3",
+            "label": "Model-hardware co-design",
+            "detail": "Model form and substrate are tuned together instead of mapped late.",
+            "tone": "neutral"
+          },
+          {
+            "id": "f4",
+            "label": "Local-memory physical substrate",
+            "detail": "Mixed-signal silicon and locality are meant to cut movement cost.",
+            "tone": "positive"
+          },
+          {
+            "id": "f5",
+            "label": "Benchmark proof",
+            "detail": "Public system results on real workloads are still missing.",
+            "tone": "negative"
+          },
+          {
+            "id": "f6",
+            "label": "Operational deployment",
+            "detail": "A sellable system would still need tooling, packaging, and enterprise controls.",
+            "tone": "negative"
+          }
+        ],
+        "edges": [
+          {
+            "from": "f1",
+            "to": "f2",
+            "label": "defines the problem"
+          },
+          {
+            "from": "f2",
+            "to": "f3",
+            "label": "pushes away from TOPS/W-only thinking"
+          },
+          {
+            "from": "f3",
+            "to": "f4",
+            "label": "changes both model and hardware"
+          },
+          {
+            "from": "f4",
+            "to": "f5",
+            "label": "must produce credible evidence"
+          },
+          {
+            "from": "f5",
+            "to": "f6",
+            "label": "only then can buyers deploy"
+          }
+        ]
+      },
+      "approximationNotes": "This is a conceptual operating flow. Public sources support the steps and bottlenecks, but not yet a real customer implementation path.",
+      "claimRefs": [
+        "CE002",
+        "CE006",
+        "CE007",
+        "CE008",
+        "CE009",
+        "CE039",
+        "CE040"
+      ]
+    },
+    {
+      "id": "FE003",
+      "title": "Critical dependency map",
+      "type": "dag",
+      "layout": "standard",
+      "summary": "The main technical dependencies that must all work before the Unconventional thesis can become a deployable datacenter product.",
+      "data": {
+        "nodes": [
+          {
+            "id": "d1",
+            "label": "Behavioral training model",
+            "detail": "Need a learnable surrogate for physical dynamics and noise.",
+            "tone": "neutral"
+          },
+          {
+            "id": "d2",
+            "label": "Mixed-signal silicon",
+            "detail": "Analog and digital partitions must be manufacturable in silicon.",
+            "tone": "neutral"
+          },
+          {
+            "id": "d3",
+            "label": "Local / 3D memory path",
+            "detail": "Locality and packaging are central to the claimed 1000x gain.",
+            "tone": "neutral"
+          },
+          {
+            "id": "d4",
+            "label": "Compiler / runtime tooling",
+            "detail": "Operators need a usable mapping and execution layer.",
+            "tone": "negative"
+          },
+          {
+            "id": "d5",
+            "label": "Benchmark credibility",
+            "detail": "System-level proof must survive iso-quality and real-workload scrutiny.",
+            "tone": "negative"
+          },
+          {
+            "id": "d6",
+            "label": "Qualification / controls",
+            "detail": "Reliability, calibration, and enterprise controls must exist.",
+            "tone": "negative"
+          },
+          {
+            "id": "d7",
+            "label": "Customer adoption",
+            "detail": "Buyers must accept any non-drop-in workflow the substrate requires.",
+            "tone": "negative"
+          }
+        ],
+        "edges": [
+          {
+            "from": "d1",
+            "to": "d2",
+            "label": "guides realizable physical designs"
+          },
+          {
+            "from": "d2",
+            "to": "d3",
+            "label": "sets packaging and locality requirements"
+          },
+          {
+            "from": "d1",
+            "to": "d4",
+            "label": "defines mapping requirements"
+          },
+          {
+            "from": "d2",
+            "to": "d5",
+            "label": "creates measurable hardware results"
+          },
+          {
+            "from": "d3",
+            "to": "d5",
+            "label": "movement gains must show up in benchmarks"
+          },
+          {
+            "from": "d4",
+            "to": "d7",
+            "label": "tooling affects adoption friction"
+          },
+          {
+            "from": "d5",
+            "to": "d7",
+            "label": "buyers need proof before switching"
+          },
+          {
+            "from": "d6",
+            "to": "d7",
+            "label": "enterprise deployment requires controls"
+          }
+        ]
+      },
+      "approximationNotes": "The dependencies are inferred from the official thesis plus known neuromorphic commercialization barriers. Every node represents a real gap in the current public record.",
+      "claimRefs": [
+        "CE019",
+        "CE022",
+        "CE023",
+        "CE027",
+        "CE041",
+        "CE042",
+        "CE043"
+      ]
+    },
+    {
+      "id": "FE004",
+      "title": "Product maturity / capability map",
+      "type": "matrix",
+      "layout": "standard",
+      "summary": "Qualitative maturity map of the main Unconventional product capabilities based on what is actually public today.",
+      "data": {
+        "columns": [
+          "Concept clarity",
+          "Public empirical proof",
+          "Tooling / docs visibility",
+          "Commercial readiness"
+        ],
+        "rows": [
+          {
+            "label": "Compute thesis",
+            "values": [
+              "High",
+              "Low",
+              "Low",
+              "Low"
+            ]
+          },
+          {
+            "label": "Model-hardware co-design loop",
+            "values": [
+              "High",
+              "Low",
+              "Low",
+              "Low"
+            ]
+          },
+          {
+            "label": "Dynamics-based training example",
+            "values": [
+              "Moderate",
+              "Moderate",
+              "Low",
+              "Low"
+            ]
+          },
+          {
+            "label": "Memory / packaging path",
+            "values": [
+              "Moderate",
+              "Low",
+              "Low",
+              "Low"
+            ]
+          },
+          {
+            "label": "Runtime / compiler stack",
+            "values": [
+              "Moderate",
+              "Low",
+              "Very low",
+              "Very low"
+            ]
+          },
+          {
+            "label": "Qualification / enterprise controls",
+            "values": [
+              "Low",
+              "Very low",
+              "Very low",
+              "Very low"
+            ]
+          }
+        ]
+      },
+      "approximationNotes": "Cells are qualitative summaries of public evidence only. High concept clarity does not imply shipping maturity; it means the company has publicly described the idea in enough detail to analyze it.",
+      "claimRefs": [
+        "CE015",
+        "CE017",
+        "CE021",
+        "CE039",
+        "CE041",
+        "CE042",
+        "CE044"
+      ]
+    }
+  ],
+  "callouts": [
+    {
+      "calloutType": "insight",
+      "title": "The 1000x thesis is really a memory-locality thesis",
+      "body": "Unconventional's own detailed write-up says the real bottleneck is data movement, not raw arithmetic. That means the company is not just trying to make one block more efficient; it is trying to redesign model form, memory placement, and compute substrate together.",
+      "claimRefs": [
+        "CE006",
+        "CE007",
+        "CE008",
+        "CE009",
+        "CE039"
+      ]
+    },
+    {
+      "calloutType": "risk",
+      "title": "Public evidence still points to a research program, not a product release plan",
+      "body": "The company has published a coherent technical worldview, but management also says there is no product in two years, the exact paradigm is still being chosen, and the public surface lacks product docs, controls, and benchmark proof.",
+      "claimRefs": [
+        "CE021",
+        "CE022",
+        "CE023",
+        "CE041",
+        "CE042",
+        "CE044"
+      ]
+    },
+    {
+      "calloutType": "assumption",
+      "title": "Commercial success may require customers to accept non-drop-in workflows",
+      "body": "If the promised efficiency depends on co-designed model forms and specialized runtimes, buyers may need to change software and deployment habits rather than simply swap one accelerator card for another.",
+      "claimRefs": [
+        "CE004",
+        "CE024",
+        "CE027",
+        "CE038",
+        "CE043"
+      ]
+    }
+  ],
+  "localEvidence": {
+    "searchQueries": [
+      {
+        "query": "Find direct source URLs for Unconventional AI product and technology claims as of 2026, focusing on official pages and technical or skeptical coverage about analog, neuromorphic, mixed-signal, data movement, energy efficiency, manufacturing, and deployment trade-offs. Return direct article/page URLs only.",
+        "engine": "web",
+        "hits": null,
+        "retainedSourceRefs": [
+          "SE001",
+          "SE003",
+          "SE011",
+          "SE012",
+          "SE015"
+        ]
+      },
+      {
+        "query": "Find direct source URLs for Unconventional AI official website pages as of 2026 that describe its product, architecture, careers, blog, grant program, or technical thesis. Include direct URLs under unconventional.ai, www.unconventional.ai, or any active official domain.",
+        "engine": "web",
+        "hits": null,
+        "retainedSourceRefs": [
+          "SE001",
+          "SE002",
+          "SE009",
+          "SE010"
+        ]
+      },
+      {
+        "query": "Find direct URLs as of 2026 for Unconventional AI blog posts about analog, memory bottlenecks, neural co-evolution, grant program, and gyroscope or dynamical systems. Return only direct page URLs on the company's active domain.",
+        "engine": "web",
+        "hits": null,
+        "retainedSourceRefs": [
+          "SE003",
+          "SE004",
+          "SE005",
+          "SE006",
+          "SE007",
+          "SE008"
+        ]
+      },
+      {
+        "query": "Find direct URLs as of 2026 for skeptical or technical third-party coverage relevant to Unconventional AI's analog or neuromorphic datacenter thesis, especially manufacturability, software programmability, noise, and deployment trade-offs. Return direct URLs only.",
+        "engine": "web",
+        "hits": null,
+        "retainedSourceRefs": [
+          "SE011",
+          "SE012",
+          "SE015",
+          "SE020",
+          "SE023"
+        ]
+      },
+      {
+        "query": "Find direct official URLs as of 2026 for Intel Hala Point or Loihi, IBM NorthPole, BrainChip Akida, and Mythic analog AI products or architecture pages relevant to comparing deployment targets and programmability with Unconventional AI. Return direct official URLs only.",
+        "engine": "web",
+        "hits": null,
+        "retainedSourceRefs": [
+          "SE016",
+          "SE017",
+          "SE019"
+        ]
+      },
+      {
+        "query": "Find a direct URL as of 2026 for an IEEE Spectrum or similarly credible article about software, programmability, or killer-application barriers in neuromorphic computing deployment. Return direct article URLs only.",
+        "engine": "web",
+        "hits": null,
+        "retainedSourceRefs": [
+          "SE015"
+        ]
+      },
+      {
+        "query": "Find direct URLs as of 2026 for independent news articles about Unconventional AI that discuss its product or technology thesis, especially no product for years, analog or neuromorphic architecture, datacenter inference, or energy efficiency. Return direct article URLs only.",
+        "engine": "web",
+        "hits": null,
+        "retainedSourceRefs": [
+          "SE011",
+          "SE012",
+          "SE013",
+          "SE014"
+        ]
+      },
+      {
+        "query": "Find direct URLs as of 2026 for academic or technical sources relevant to Unconventional AI's thesis about data movement, analog or mixed-signal computing, and neuromorphic hardware for datacenter inference efficiency. Return direct URLs only.",
+        "engine": "web",
+        "hits": null,
+        "retainedSourceRefs": [
+          "SE021",
+          "SE022",
+          "SE023"
+        ]
+      },
+      {
+        "query": "Find direct URLs as of 2026 for open or readable academic or review sources on neuromorphic computing, analog/mixed-signal AI hardware, data movement, and deployment barriers. Return direct URLs only.",
+        "engine": "web",
+        "hits": null,
+        "retainedSourceRefs": [
+          "SE020",
+          "SE021",
+          "SE022",
+          "SE023"
+        ]
+      },
+      {
+        "query": "Find direct URLs as of 2026 for official or credible pages about Lava software, BrainScaleS, or other tooling or platform efforts relevant to neuromorphic programmability and deployment barriers. Return direct URLs only.",
+        "engine": "web",
+        "hits": null,
+        "retainedSourceRefs": [
+          "SE018",
+          "SE024",
+          "SE025"
+        ]
+      },
+      {
+        "query": "Find direct URLs as of 2026 for additional readable sources supporting product-tech analysis of neuromorphic or analog AI hardware, especially data-center sustainability, software-tooling barriers, or mixed-signal deployment trade-offs. Return direct URLs only.",
+        "engine": "web",
+        "hits": null,
+        "retainedSourceRefs": [
+          "SE023",
+          "SE024",
+          "SE025"
+        ]
+      }
+    ],
+    "researchQuestions": [
+      {
+        "id": "QE001",
+        "question": "What product is Unconventional AI actually trying to deliver to datacenter users?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/0"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE002",
+        "question": "Which workloads are explicitly targeted in public materials?",
+        "type": "enumeration",
+        "targets": [
+          "contentRequirements/0"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE003",
+        "question": "What modules or assets are public today versus still conceptual?",
+        "type": "enumeration",
+        "targets": [
+          "contentRequirements/1"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE004",
+        "question": "How does the company describe its core architecture?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/2"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE005",
+        "question": "What role do analog or mixed-signal circuits play in the thesis?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/2"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE006",
+        "question": "How central is data movement to the claimed efficiency gain?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/2"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE007",
+        "question": "How is the 1000x claim framed and benchmarked?",
+        "type": "quantification",
+        "targets": [
+          "contentRequirements/2"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE008",
+        "question": "What hardware-software co-design assumptions are explicit?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/2"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE009",
+        "question": "What evidence exists that dynamics-based computation is more than rhetoric?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/2"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE010",
+        "question": "How would models be trained or adapted for this substrate?",
+        "type": "mechanism",
+        "targets": [
+          "contentRequirements/2"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE011",
+        "question": "What memory and packaging requirements are implied by the public thesis?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/2"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE012",
+        "question": "What manufacturability constraints are already acknowledged?",
+        "type": "adverse",
+        "targets": [
+          "contentRequirements/2"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE013",
+        "question": "What current maturity or timeline does management disclose?",
+        "type": "freshness",
+        "targets": [
+          "contentRequirements/3"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE014",
+        "question": "What deployment form factor is implied: chip, system, or full stack?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/3"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE015",
+        "question": "What software, runtime, or compiler layer appears necessary for adoption?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/3"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE016",
+        "question": "What external platforms show the closest available comparison set?",
+        "type": "comparison",
+        "targets": [
+          "contentRequirements/4"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE017",
+        "question": "How mature are comparison platforms on tooling and deployability?",
+        "type": "comparison",
+        "targets": [
+          "contentRequirements/4"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE018",
+        "question": "What evidence suggests neuromorphic platforms still face software or killer-app barriers?",
+        "type": "adverse",
+        "targets": [
+          "contentRequirements/4"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE019",
+        "question": "What evidence suggests analog precision or noise can erase block-level efficiency gains?",
+        "type": "adverse",
+        "targets": [
+          "contentRequirements/4"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE020",
+        "question": "What trust, safety, security, or compliance controls are public?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/5"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE021",
+        "question": "What quality or benchmark methodology does the company disclose?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/5"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE022",
+        "question": "Is there public developer or practitioner signal beyond marketing?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/4"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE023",
+        "question": "What does the grant program reveal about technical direction?",
+        "type": "comparison",
+        "targets": [
+          "contentRequirements/4"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE024",
+        "question": "Which technical unknowns remain decisive for diligence?",
+        "type": "adverse",
+        "targets": [
+          "contentRequirements/5"
+        ],
+        "status": "answered"
+      },
+      {
+        "id": "QE025",
+        "question": "Is the public surface proving a sellable product or a research program?",
+        "type": "verification",
+        "targets": [
+          "contentRequirements/3",
+          "contentRequirements/5"
+        ],
+        "status": "answered"
+      }
+    ],
+    "sources": [
+      {
+        "id": "SE001",
+        "publisher": "Unconventional AI",
+        "title": "Unconventional AI",
+        "url": "https://unconv.ai/",
+        "accessDate": "2026-06-02",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "company-surface",
+          "biology-scale-efficiency",
+          "product-thesis"
+        ],
+        "keyQuote": "Unconventional AI is rethinking the foundations of a computer to optimize energy efficiency for AI."
+      },
+      {
+        "id": "SE002",
+        "publisher": "Unconventional AI",
+        "title": "[un] blog - Unconventional AI",
+        "url": "https://unconv.ai/blog/",
+        "accessDate": "2026-06-02",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "blog-index",
+          "roadmap-signals",
+          "technical-surface"
+        ]
+      },
+      {
+        "id": "SE003",
+        "publisher": "Unconventional AI",
+        "title": "Introducing Unconventional AI - Unconventional AI",
+        "url": "https://unconv.ai/blog/introducing-unconventional-ai/",
+        "accessDate": "2026-06-02",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "announcement",
+          "product-thesis",
+          "biology-scale-efficiency",
+          "nonlinear-dynamics"
+        ],
+        "date": "2025-12-08",
+        "keyQuote": "We are building silicon circuits that demonstrate similar non-linear dynamics to build a new substrate for intelligence."
+      },
+      {
+        "id": "SE004",
+        "publisher": "Unconventional AI",
+        "title": "Neural co-evolution - Unconventional AI",
+        "url": "https://unconv.ai/blog/neural-co-evolution-the-inevitability-of-hardware-and-software-co-evolution-for-ai/",
+        "accessDate": "2026-06-02",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "co-design",
+          "neural-coevolution",
+          "system-architecture"
+        ],
+        "date": "2026-04-02",
+        "keyQuote": "Solving for 1000x efficiency means tackling the entire system from day zero."
+      },
+      {
+        "id": "SE005",
+        "publisher": "Unconventional AI",
+        "title": "Analog is dead, long live analog! - Unconventional AI",
+        "url": "https://unconv.ai/blog/analog-is-dead-longlive-analog/",
+        "accessDate": "2026-06-02",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "analog-compute",
+          "mixed-signal",
+          "noise",
+          "memory"
+        ],
+        "date": "2026-04-30",
+        "keyQuote": "For dot products with high-bitwidth operands (>8 bits or so), the analog energy cost rises steeply since thermal noise becomes the dominant non-ideality."
+      },
+      {
+        "id": "SE006",
+        "publisher": "Unconventional AI",
+        "title": "How to improve AI energy efficiency by 1000x - Unconventional AI",
+        "url": "https://unconv.ai/blog/how-to-improve-ai-energy-efficiency-by-1000x/",
+        "accessDate": "2026-06-02",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "1000x-claim",
+          "data-movement",
+          "memory",
+          "datacenter-inference"
+        ],
+        "date": "2026-05-07",
+        "keyQuote": "The metrics we are optimizing for are Joules per token (for GenAI text) or Joules per image (for GenAI images), iso-quality with the existing solutions we are comparing against."
+      },
+      {
+        "id": "SE007",
+        "publisher": "Unconventional AI",
+        "title": "Machine Learning with Dynamics - Unconventional AI",
+        "url": "https://unconv.ai/blog/machine-learning-with-dynamics/",
+        "accessDate": "2026-06-02",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "dynamics",
+          "training",
+          "ode",
+          "toy-demo"
+        ],
+        "date": "2026-05-21",
+        "keyQuote": "We can train both the neural network parameters and the gyroscope, spring, and rod properties in the classifier model using ordinary backpropagation."
+      },
+      {
+        "id": "SE008",
+        "publisher": "Unconventional AI",
+        "title": "Unconventional Grant: Final Call for Proposals - Unconventional AI",
+        "url": "https://unconv.ai/blog/unconventional-grant-final-call-for-proposals/",
+        "accessDate": "2026-06-02",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "grant-program",
+          "research-direction",
+          "data-movement"
+        ],
+        "date": "2026-05-14"
+      },
+      {
+        "id": "SE009",
+        "publisher": "Unconventional AI",
+        "title": "Unconventional Grant - Unconventional AI",
+        "url": "https://unconv.ai/grant/",
+        "accessDate": "2026-06-02",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "official",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "grant-program",
+          "focus-areas",
+          "3d-integration",
+          "manufacturability"
+        ],
+        "date": "2026-05-16"
+      },
+      {
+        "id": "SE010",
+        "publisher": "Unconventional AI",
+        "title": "Careers - Unconventional AI",
+        "url": "https://unconv.ai/careers/",
+        "accessDate": "2026-06-02",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "developer-signal",
+        "reputationTier": "medium",
+        "independence": "company",
+        "topics": [
+          "careers",
+          "developer-signal",
+          "recruiting-surface"
+        ],
+        "date": "2026-04-03"
+      },
+      {
+        "id": "SE011",
+        "publisher": "The Register",
+        "title": "Bezos-backed Unconventional AI addresses datacenter power",
+        "url": "https://www.theregister.com/special-features/2025/12/08/bezos-backed-unconventional-ai-addresses-datacenter-power/2006862",
+        "accessDate": "2026-06-02",
+        "accessStatus": "ok",
+        "stance": "adverse",
+        "sourceType": "news",
+        "reputationTier": "high",
+        "independence": "independent",
+        "topics": [
+          "timeline",
+          "analog-silicon",
+          "research-stage",
+          "target-workloads"
+        ],
+        "date": "2025-12-08",
+        "keyQuote": "We're not going to have a product in two years."
+      },
+      {
+        "id": "SE012",
+        "publisher": "Data Center Dynamics",
+        "title": "Neuromorphic compute startup Unconventional AI raises $475m in seed funding",
+        "url": "https://www.datacenterdynamics.com/en/news/neuromorphic-compute-startup-unconventional-ai-raises-475m-in-seed-funding/",
+        "accessDate": "2026-06-02",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "news",
+        "reputationTier": "medium",
+        "independence": "independent",
+        "topics": [
+          "analog-silicon",
+          "research-stage",
+          "funding-context"
+        ]
+      },
+      {
+        "id": "SE013",
+        "publisher": "Analytics India Magazine",
+        "title": "How is Unconventional AI Revolutionizing Computational Effic | Analytics India Magazine",
+        "url": "https://analyticsindiamag.com/ai-news-updates/unconventional-ai-emerges-from-stealth-with-a-475-mn-haul-to-build-biology-scale-ai-compute/",
+        "accessDate": "2026-06-02",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "news",
+        "reputationTier": "medium",
+        "independence": "independent",
+        "topics": [
+          "software-system",
+          "product-thesis",
+          "launch-context"
+        ]
+      },
+      {
+        "id": "SE014",
+        "publisher": "TechCrunch",
+        "title": "Exclusive: Naveen Rao’s new AI hardware startup targets $5B valuation with backing from a16z",
+        "url": "https://techcrunch.com/2025/10/03/sources-naveen-raos-new-ai-hardware-startup-targets-5b-valuation-with-backing-from-a16z/",
+        "accessDate": "2026-06-02",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "news",
+        "reputationTier": "high",
+        "independence": "independent",
+        "topics": [
+          "system-company",
+          "server-infrastructure",
+          "funding-context"
+        ],
+        "date": "2025-10-03"
+      },
+      {
+        "id": "SE015",
+        "publisher": "IEEE Spectrum",
+        "title": "Neuromorphic Computing Is Ready for the Big Time",
+        "url": "https://spectrum.ieee.org/neuromorphic-computing-2671121824",
+        "accessDate": "2026-06-02",
+        "accessStatus": "ok",
+        "stance": "adverse",
+        "sourceType": "news",
+        "reputationTier": "high",
+        "independence": "independent",
+        "topics": [
+          "commercialization",
+          "tooling-barriers",
+          "killer-app",
+          "neuromorphic-fragmentation"
+        ],
+        "date": "2025-02-13",
+        "keyQuote": "The biggest missing components are the high-level software design tools along the lines of TensorFlow and PyTorch."
+      },
+      {
+        "id": "SE016",
+        "publisher": "Intel",
+        "title": "Intel Builds World’s Largest Neuromorphic System to Enable More Sustainable AI",
+        "url": "https://www.intel.com/content/www/us/en/newsroom/news/intel-builds-worlds-largest-neuromorphic-system.html",
+        "accessDate": "2026-06-02",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "technical-docs",
+        "reputationTier": "high",
+        "independence": "competitor",
+        "topics": [
+          "hala-point",
+          "loihi-2",
+          "scalability",
+          "energy-efficiency"
+        ],
+        "date": "2024-04-17"
+      },
+      {
+        "id": "SE017",
+        "publisher": "Intel",
+        "title": "Neuromorphic Computing and Engineering with AI | Intel®",
+        "url": "https://www.intel.com/content/www/us/en/research/neuromorphic-computing.html",
+        "accessDate": "2026-06-02",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "technical-docs",
+        "reputationTier": "high",
+        "independence": "competitor",
+        "topics": [
+          "lava",
+          "loihi-2",
+          "event-driven-compute",
+          "data-movement"
+        ]
+      },
+      {
+        "id": "SE018",
+        "publisher": "EBRAINS",
+        "title": "Neuromorphic Computing",
+        "url": "https://ebrains.eu/data-tools-services/modelling-simulation/neuromorphic-computing",
+        "accessDate": "2026-06-02",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "technical-docs",
+        "reputationTier": "high",
+        "independence": "independent",
+        "topics": [
+          "brainscales",
+          "spinnaker",
+          "pynn",
+          "mixed-signal-platforms"
+        ]
+      },
+      {
+        "id": "SE019",
+        "publisher": "BrainChip",
+        "title": "Akida Cloud Webinar - BrainChip",
+        "url": "https://brainchip.com/akida/",
+        "accessDate": "2026-06-02",
+        "accessStatus": "ok",
+        "stance": "confirming",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "competitor",
+        "topics": [
+          "akida",
+          "sdk",
+          "simulation-tools",
+          "commercial-surface"
+        ],
+        "date": "2025-10-24"
+      },
+      {
+        "id": "SE020",
+        "publisher": "Frontiers in Neuroscience",
+        "title": "Frontiers | A comparative review of deep and spiking neural networks for edge AI neuromorphic circuits",
+        "url": "https://www.frontiersin.org/articles/10.3389/fnins.2025.1676570/full",
+        "accessDate": "2026-06-02",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "technical-docs",
+        "reputationTier": "high",
+        "independence": "independent",
+        "topics": [
+          "review",
+          "training-tools",
+          "noise",
+          "reliability",
+          "benchmarks"
+        ],
+        "date": "2025-10-02"
+      },
+      {
+        "id": "SE021",
+        "publisher": "arXiv",
+        "title": "Advancing Neuromorphic Computing: Mixed-Signal Design Techniques Leveraging Brain Code Units and Fundamental Code Units",
+        "url": "https://arxiv.org/abs/2403.11563",
+        "accessDate": "2026-06-02",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "independent",
+        "topics": [
+          "mixed-signal",
+          "neuromorphic-architecture",
+          "throughput"
+        ],
+        "date": "2024-03-18"
+      },
+      {
+        "id": "SE022",
+        "publisher": "arXiv",
+        "title": "Waves and symbols in neuromorphic hardware: from analog signal processing to digital computing on the same computational substrate",
+        "url": "https://arxiv.org/abs/2502.20381",
+        "accessDate": "2026-06-02",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "independent",
+        "topics": [
+          "analog-signal-processing",
+          "digital-computation",
+          "mixed-signal"
+        ],
+        "date": "2025-02-27"
+      },
+      {
+        "id": "SE023",
+        "publisher": "arXiv",
+        "title": "Neuromorphic hardware for sustainable AI data centers",
+        "url": "https://arxiv.org/html/2402.02521v2",
+        "accessDate": "2026-06-02",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "independent",
+        "topics": [
+          "data-centers",
+          "sustainable-ai",
+          "commercialization",
+          "ecosystem"
+        ],
+        "keyQuote": "Despite its potential, neuromorphic hardware has not found its way into commercial applications so far."
+      },
+      {
+        "id": "SE024",
+        "publisher": "Open Neuromorphic",
+        "title": "Neuromorphic Hardware Guide",
+        "url": "https://open-neuromorphic.org/neuromorphic-computing/hardware/",
+        "accessDate": "2026-06-02",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "independent",
+        "topics": [
+          "neuromorphic-concepts",
+          "event-driven",
+          "plasticity",
+          "hardware-guide"
+        ]
+      },
+      {
+        "id": "SE025",
+        "publisher": "Lava",
+        "title": "Lava Software Framework — Lava documentation",
+        "url": "https://lava-nc.org/",
+        "accessDate": "2026-06-02",
+        "accessStatus": "ok",
+        "stance": "neutral",
+        "sourceType": "technical-docs",
+        "reputationTier": "medium",
+        "independence": "independent",
+        "topics": [
+          "lava",
+          "software-framework",
+          "event-based-message-passing",
+          "tooling"
+        ],
+        "keyQuote": "Lava is an open-source software framework for developing neuro-inspired applications and mapping them to neuromorphic hardware."
+      }
+    ],
+    "claims": [
+      {
+        "id": "CE001",
+        "statement": "Unconventional AI publicly frames the product as a new physical substrate for intelligence aimed at biology-scale energy efficiency rather than as a conventional accelerator SKU.",
+        "type": "company-claimed",
+        "topic": "product-definition",
+        "sourceRefs": [
+          "SE001",
+          "SE003"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE001"
+        ]
+      },
+      {
+        "id": "CE002",
+        "statement": "The company's explicit workload wedge is datacenter generative-AI inference, with benchmarking framed around Joules per token or Joules per image at iso-quality.",
+        "type": "company-claimed",
+        "topic": "target-workloads",
+        "sourceRefs": [
+          "SE006",
+          "SE001"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE002",
+          "QE007"
+        ]
+      },
+      {
+        "id": "CE003",
+        "statement": "Unconventional's 1000x efficiency target is stated against state-of-the-art models on conventional AI hardware and is intentionally positioned as a system metric rather than a TOPS/W claim.",
+        "type": "company-claimed",
+        "topic": "1000x-benchmarking",
+        "sourceRefs": [
+          "SE006",
+          "SE002"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE007"
+        ]
+      },
+      {
+        "id": "CE004",
+        "statement": "Public technical posts say the company expects models and hardware to co-evolve from the ground up instead of treating the chip as a drop-in target for existing abstractions.",
+        "type": "company-claimed",
+        "topic": "co-design",
+        "sourceRefs": [
+          "SE004",
+          "SE006"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE008"
+        ]
+      },
+      {
+        "id": "CE005",
+        "statement": "The launch materials describe the architecture as silicon circuits using non-linear dynamics and the intrinsic physics of the substrate, exposed through a software interface rather than only digital abstractions.",
+        "type": "company-claimed",
+        "topic": "physics-first-architecture",
+        "sourceRefs": [
+          "SE003",
+          "SE013"
+        ],
+        "confidence": "medium",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QE004",
+          "QE005"
+        ]
+      },
+      {
+        "id": "CE006",
+        "statement": "Unconventional's technical argument is that inference energy is dominated by storage, access, and movement costs more than by arithmetic operations.",
+        "type": "company-claimed",
+        "topic": "memory-bottleneck",
+        "sourceRefs": [
+          "SE006",
+          "SE008"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE006"
+        ]
+      },
+      {
+        "id": "CE007",
+        "statement": "The 1000x essay says off-chip HBM already accounts for more than 20% of GPU power in current generative-AI inference datacenters.",
+        "type": "company-claimed",
+        "topic": "memory-bottleneck",
+        "sourceRefs": [
+          "SE006"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE006",
+          "QE007"
+        ]
+      },
+      {
+        "id": "CE008",
+        "statement": "The same post gives rough reference points of about 0.007 Joules per token for arithmetic alone, 0.2 Joules per token for SRAM reads, and 3.9 Joules per token for HBM reads on a 100B-parameter model.",
+        "type": "company-claimed",
+        "topic": "1000x-benchmarking",
+        "sourceRefs": [
+          "SE006"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE007",
+          "QE011"
+        ]
+      },
+      {
+        "id": "CE009",
+        "statement": "Public materials imply that reaching anything close to 1000x requires local memory, possible 3D-integrated memory, locality-aware placement, and extremely low residual system overhead.",
+        "type": "company-claimed",
+        "topic": "memory-bottleneck",
+        "sourceRefs": [
+          "SE006",
+          "SE009"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE011",
+          "QE012"
+        ]
+      },
+      {
+        "id": "CE010",
+        "statement": "Unconventional's analog essay argues that analog dot-product efficiency deteriorates at higher precision because thermal noise forces much larger capacitance.",
+        "type": "company-claimed",
+        "topic": "analog-tradeoffs",
+        "sourceRefs": [
+          "SE005"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE005",
+          "QE019"
+        ]
+      },
+      {
+        "id": "CE011",
+        "statement": "That same essay says analog memory remains unresolved enough that A/D and D/A interfaces still erode many analog advantages.",
+        "type": "company-claimed",
+        "topic": "analog-tradeoffs",
+        "sourceRefs": [
+          "SE005"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE012",
+          "QE019"
+        ]
+      },
+      {
+        "id": "CE012",
+        "statement": "Unconventional warns that exceptional block-level TOPS/W can still lose at the system level if analog noise, rewrites, or larger models raise memory traffic or inference cost.",
+        "type": "company-claimed",
+        "topic": "analog-tradeoffs",
+        "sourceRefs": [
+          "SE005"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE019",
+          "QE021"
+        ]
+      },
+      {
+        "id": "CE013",
+        "statement": "The company's own conclusion is not that analog alone wins, but that a mixed-signal fabric may be required to combine analog and digital strengths.",
+        "type": "company-claimed",
+        "topic": "analog-tradeoffs",
+        "sourceRefs": [
+          "SE005"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE005",
+          "QE008"
+        ]
+      },
+      {
+        "id": "CE014",
+        "statement": "Unconventional says promising physical circuits must be expressive, parameter-rich, hard to simulate digitally, trainable by gradient descent, and tolerant to noise during training.",
+        "type": "company-claimed",
+        "topic": "training-compatibility",
+        "sourceRefs": [
+          "SE006"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE010",
+          "QE019"
+        ]
+      },
+      {
+        "id": "CE015",
+        "statement": "The dynamics post shows the company exploring trainable physical systems using gyroscopes, springs, and ordinary differential equations rather than only publishing conceptual prose.",
+        "type": "company-claimed",
+        "topic": "dynamics-demo",
+        "sourceRefs": [
+          "SE007"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE009"
+        ]
+      },
+      {
+        "id": "CE016",
+        "statement": "The toy dynamics example explicitly uses ordinary backpropagation through differentiable ODE solvers to train both neural-network weights and physical parameters.",
+        "type": "company-claimed",
+        "topic": "training-compatibility",
+        "sourceRefs": [
+          "SE007"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE010"
+        ]
+      },
+      {
+        "id": "CE017",
+        "statement": "In the PenDigits demonstration, the trained gyroscope-and-spring system reaches 0.834 validation accuracy versus 0.562 for a linear baseline and 0.896 for an LSTM.",
+        "type": "company-claimed",
+        "topic": "dynamics-demo",
+        "sourceRefs": [
+          "SE007"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE009",
+          "QE021"
+        ]
+      },
+      {
+        "id": "CE018",
+        "statement": "The grant program makes the public module map clearer by naming analog mixed-signal circuits, unconventional systems architecture, dynamics-based neural networks, data-movement-minimizing recurrence, and 3D integration as focus areas.",
+        "type": "company-claimed",
+        "topic": "product-modules",
+        "sourceRefs": [
+          "SE009",
+          "SE008"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE003",
+          "QE012",
+          "QE023"
+        ]
+      },
+      {
+        "id": "CE019",
+        "statement": "The grant criteria say preferred 3D-integration ideas should show a path to volume manufacturing in five years, which implies manufacturability is a live gating concern rather than a back-end detail.",
+        "type": "company-claimed",
+        "topic": "manufacturability",
+        "sourceRefs": [
+          "SE009"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE012"
+        ]
+      },
+      {
+        "id": "CE020",
+        "statement": "The grant program funds theory, modeling, simulation, and early prototyping on a one-year cycle, not a near-term commercial product release.",
+        "type": "company-claimed",
+        "topic": "research-program",
+        "sourceRefs": [
+          "SE009"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE013",
+          "QE023"
+        ]
+      },
+      {
+        "id": "CE021",
+        "statement": "The reviewed official surface includes a homepage, blog, grant pages, and a careers page, but it does not expose a public product catalog, price list, API docs, benchmark suite, or named design-partner deployment.",
+        "type": "observed",
+        "topic": "public-surface",
+        "sourceRefs": [
+          "SE001",
+          "SE002",
+          "SE009",
+          "SE010"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE003",
+          "QE020",
+          "QE022"
+        ]
+      },
+      {
+        "id": "CE022",
+        "statement": "Rao told The Register that the company will not have a product in two years and that the next several years are primarily a research effort.",
+        "type": "third-party-reported",
+        "topic": "timeline",
+        "sourceRefs": [
+          "SE011"
+        ],
+        "confidence": "medium",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QE013",
+          "QE025"
+        ]
+      },
+      {
+        "id": "CE023",
+        "statement": "The Register and Data Center Dynamics both report that Unconventional is still testing several approaches and that the eventual device is likely to be an analog chip fabbed in silicon.",
+        "type": "third-party-reported",
+        "topic": "manufacturability",
+        "sourceRefs": [
+          "SE011",
+          "SE012"
+        ],
+        "confidence": "high",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QE012",
+          "QE013"
+        ]
+      },
+      {
+        "id": "CE024",
+        "statement": "TechCrunch reports that Rao's vision spans custom silicon and server infrastructure, implying a systems company rather than a chip-IP-only strategy.",
+        "type": "third-party-reported",
+        "topic": "deployment-model",
+        "sourceRefs": [
+          "SE014"
+        ],
+        "confidence": "medium",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QE014",
+          "QE025"
+        ]
+      },
+      {
+        "id": "CE025",
+        "statement": "Analytics India summarizes the company as pursuing a new computational substrate plus software system inspired by biological intelligence.",
+        "type": "third-party-reported",
+        "topic": "product-definition",
+        "sourceRefs": [
+          "SE013",
+          "SE003"
+        ],
+        "confidence": "medium",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QE001",
+          "QE004"
+        ]
+      },
+      {
+        "id": "CE026",
+        "statement": "IEEE Spectrum says neuromorphic computing still lacks a commercial breakout and may need a genuine killer application before large-scale adoption.",
+        "type": "third-party-reported",
+        "topic": "ecosystem-barriers",
+        "sourceRefs": [
+          "SE015"
+        ],
+        "confidence": "medium",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QE018"
+        ]
+      },
+      {
+        "id": "CE027",
+        "statement": "IEEE Spectrum says the biggest missing ingredients for adoption are high-level software tools comparable to TensorFlow and PyTorch.",
+        "type": "third-party-reported",
+        "topic": "software-tooling",
+        "sourceRefs": [
+          "SE015"
+        ],
+        "confidence": "medium",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QE015",
+          "QE018"
+        ]
+      },
+      {
+        "id": "CE028",
+        "statement": "IEEE Spectrum says platform fragmentation persists because many neuromorphic systems stay lab-specific, while Intel's Lava and the PyNN ecosystem are only partial bridges toward commonality.",
+        "type": "third-party-reported",
+        "topic": "software-tooling",
+        "sourceRefs": [
+          "SE015",
+          "SE025",
+          "SE018"
+        ],
+        "confidence": "high",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QE015",
+          "QE018"
+        ]
+      },
+      {
+        "id": "CE029",
+        "statement": "Intel says Hala Point packages 1,152 Loihi 2 processors, supports 1.15 billion neurons and 128 billion synapses, and fits in a six-rack-unit data-center chassis.",
+        "type": "third-party-reported",
+        "topic": "comparison-platforms",
+        "sourceRefs": [
+          "SE016"
+        ],
+        "confidence": "medium",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QE016",
+          "QE017"
+        ]
+      },
+      {
+        "id": "CE030",
+        "statement": "Intel says Loihi-based systems can perform AI inference and optimization with 100 times less energy and up to 50 times faster speeds than conventional CPU and GPU architectures on selected tasks.",
+        "type": "third-party-reported",
+        "topic": "comparison-platforms",
+        "sourceRefs": [
+          "SE016"
+        ],
+        "confidence": "medium",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QE017"
+        ]
+      },
+      {
+        "id": "CE031",
+        "statement": "Intel Labs describes Loihi 2 as sparse, event-driven, integrated-memory compute and says Lava is an open-source framework for mapping neuro-inspired applications to neuromorphic hardware.",
+        "type": "third-party-reported",
+        "topic": "comparison-platforms",
+        "sourceRefs": [
+          "SE017",
+          "SE025"
+        ],
+        "confidence": "high",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE015",
+          "QE017"
+        ]
+      },
+      {
+        "id": "CE032",
+        "statement": "EBRAINS says BrainScaleS is a physical analogue or mixed-signal emulation system with digital connectivity that runs up to ten thousand times faster than real time, while SpiNNaker uses custom digital multicore chips and a PyNN API.",
+        "type": "third-party-reported",
+        "topic": "comparison-platforms",
+        "sourceRefs": [
+          "SE018"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE016",
+          "QE017"
+        ]
+      },
+      {
+        "id": "CE033",
+        "statement": "BrainChip's public surface shows production-ready ultra-low-power processors plus SDKs, training frameworks, simulation tools, and model assets, which is a much more explicit commercial and developer surface than Unconventional currently shows.",
+        "type": "third-party-reported",
+        "topic": "comparison-platforms",
+        "sourceRefs": [
+          "SE019"
+        ],
+        "confidence": "medium",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QE016",
+          "QE017",
+          "QE022"
+        ]
+      },
+      {
+        "id": "CE034",
+        "statement": "The Frontiers review says spiking systems can be more energy-efficient, but training tools are less mature, analog implementations face reliability and integration challenges, and standardized benchmarks remain limited.",
+        "type": "third-party-reported",
+        "topic": "ecosystem-barriers",
+        "sourceRefs": [
+          "SE020"
+        ],
+        "confidence": "medium",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QE017",
+          "QE018"
+        ]
+      },
+      {
+        "id": "CE035",
+        "statement": "The same review cites noise and spike-timing limitations in analog spiking systems, warning that accuracy can degrade and that rate-based metrics may be more robust than precise timing.",
+        "type": "third-party-reported",
+        "topic": "analog-tradeoffs",
+        "sourceRefs": [
+          "SE020"
+        ],
+        "confidence": "medium",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QE019"
+        ]
+      },
+      {
+        "id": "CE036",
+        "statement": "Recent neuromorphic papers continue to pursue substrates that can combine analog signal processing with digital or symbolic computation, which supports Unconventional's mixed-signal direction without validating its specific implementation.",
+        "type": "third-party-reported",
+        "topic": "mixed-signal-context",
+        "sourceRefs": [
+          "SE021",
+          "SE022"
+        ],
+        "confidence": "medium",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QE005",
+          "QE017"
+        ]
+      },
+      {
+        "id": "CE037",
+        "statement": "The sustainable-AI-data-centers paper says neuromorphic hardware has not yet found commercial footing in data centers and needs coordinated hardware, software, and algorithm integration to matter there.",
+        "type": "third-party-reported",
+        "topic": "ecosystem-barriers",
+        "sourceRefs": [
+          "SE023"
+        ],
+        "confidence": "medium",
+        "freshness": "recent",
+        "answersQuestionRefs": [
+          "QE018",
+          "QE024"
+        ]
+      },
+      {
+        "id": "CE038",
+        "statement": "Open Neuromorphic and Lava documentation show that the current ecosystem is organized around event-driven computation, spiking models, and specialized frameworks rather than mainstream drop-in GPU software flows.",
+        "type": "inferred",
+        "topic": "software-tooling",
+        "sourceRefs": [
+          "SE024",
+          "SE025"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE015",
+          "QE022"
+        ]
+      },
+      {
+        "id": "CE039",
+        "statement": "Unconventional's benchmark rhetoric is system-level—Joules per token or image at iso-quality—but the company has not published measured datacenter results on real production workloads.",
+        "type": "observed",
+        "topic": "benchmark-gap",
+        "sourceRefs": [
+          "SE006",
+          "SE021"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE021",
+          "QE024"
+        ]
+      },
+      {
+        "id": "CE040",
+        "statement": "The public workload story centers on text and image inference plus research into diffusion, flow, energy-based, state-space, and recurrence-heavy models rather than training clusters or general-purpose compute.",
+        "type": "inferred",
+        "topic": "target-workloads",
+        "sourceRefs": [
+          "SE006",
+          "SE011"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE002",
+          "QE014"
+        ]
+      },
+      {
+        "id": "CE041",
+        "statement": "Reviewed official materials do not disclose a foundry partner, process node, packaging method, yield target, calibration scheme, or reliability test plan.",
+        "type": "observed",
+        "topic": "manufacturing-gap",
+        "sourceRefs": [
+          "SE001",
+          "SE003",
+          "SE006",
+          "SE009"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE012",
+          "QE024"
+        ]
+      },
+      {
+        "id": "CE042",
+        "statement": "Reviewed official pages do not expose public security, privacy, safety, or compliance certifications for a product stack.",
+        "type": "observed",
+        "topic": "control-gap",
+        "sourceRefs": [
+          "SE001",
+          "SE002",
+          "SE009",
+          "SE010"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE020",
+          "QE024"
+        ]
+      },
+      {
+        "id": "CE043",
+        "statement": "Compared with Intel, EBRAINS, and BrainChip, Unconventional shows the most radical datacenter-energy thesis but the least public evidence of toolchain maturity or deployable hardware.",
+        "type": "inferred",
+        "topic": "comparison-platforms",
+        "sourceRefs": [
+          "SE015",
+          "SE017",
+          "SE018",
+          "SE019",
+          "SE011"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE016",
+          "QE017",
+          "QE025"
+        ]
+      },
+      {
+        "id": "CE044",
+        "statement": "The near-term public surface reads more like a research program, ecosystem-seeding effort, and recruiting brand than a ship-ready platform.",
+        "type": "inferred",
+        "topic": "research-program",
+        "sourceRefs": [
+          "SE008",
+          "SE009",
+          "SE010",
+          "SE022"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE013",
+          "QE025"
+        ]
+      },
+      {
+        "id": "CE045",
+        "statement": "The comparison set already attacks the same bottlenecks through event-driven spiking, mixed-signal emulation, integrated-memory edge processors, and software frameworks, so Unconventional must prove a specific datacenter advantage rather than architectural novelty alone.",
+        "type": "inferred",
+        "topic": "competitive-context",
+        "sourceRefs": [
+          "SE016",
+          "SE018",
+          "SE019",
+          "SE020",
+          "SE023"
+        ],
+        "confidence": "medium",
+        "freshness": "current",
+        "answersQuestionRefs": [
+          "QE016",
+          "QE024"
+        ]
+      }
+    ],
+    "evidenceGaps": [
+      {
+        "type": "private-evidence-only",
+        "severity": "material",
+        "topic": "manufacturing-gap",
+        "missingEvidence": "Foundry, node, packaging, yield, calibration, and reliability details for the intended silicon and memory stack.",
+        "whyItMatters": "The efficiency thesis depends on local memory, analog behavior, and manufacturability; without these details, the path from research to product cannot be underwritten.",
+        "diligencePath": "Request the silicon roadmap, foundry and packaging plan, calibration strategy, and qualification/yield targets for each prototype stage.",
+        "relatedQuestionRefs": [
+          "QE011",
+          "QE012",
+          "QE024"
+        ],
+        "relatedTableRefs": [
+          "TE003",
+          "TE004"
+        ]
+      },
+      {
+        "type": "private-evidence-only",
+        "severity": "material",
+        "topic": "benchmark-gap",
+        "missingEvidence": "Measured Joules-per-token or Joules-per-image results on real datacenter workloads versus GPU or TPU baselines at matched quality.",
+        "whyItMatters": "The 1000x claim is central to the product story, but public materials stop at methodology and back-of-the-envelope reasoning.",
+        "diligencePath": "Request a benchmark pack with workload definitions, model quality controls, latency/throughput settings, and full power instrumentation.",
+        "relatedQuestionRefs": [
+          "QE007",
+          "QE021",
+          "QE024"
+        ],
+        "relatedTableRefs": [
+          "TE004"
+        ]
+      },
+      {
+        "type": "private-evidence-only",
+        "severity": "material",
+        "topic": "software-tooling",
+        "missingEvidence": "Compiler, runtime, API, model import, and benchmark tooling documentation for the eventual product stack.",
+        "whyItMatters": "Neuromorphic and mixed-signal adoption historically fails when programmability is too hard; public rhetoric does not clear that hurdle.",
+        "diligencePath": "Request architecture docs, supported model classes, compiler flow, runtime surfaces, and developer onboarding materials.",
+        "relatedQuestionRefs": [
+          "QE015",
+          "QE017",
+          "QE022"
+        ],
+        "relatedTableRefs": [
+          "TE001",
+          "TE003",
+          "TE004"
+        ]
+      },
+      {
+        "type": "private-evidence-only",
+        "severity": "material",
+        "topic": "product-roadmap",
+        "missingEvidence": "Milestones from research posts to silicon prototypes, systems packaging, customer pilots, and commercial shipment.",
+        "whyItMatters": "Management says the company is still in research mode, so timing risk is a first-order underwriting issue.",
+        "diligencePath": "Request an internal milestone plan with dated prototype gates, benchmark goals, and criteria for moving from lab demos to external pilots.",
+        "relatedQuestionRefs": [
+          "QE013",
+          "QE025"
+        ],
+        "relatedTableRefs": [
+          "TE005"
+        ]
+      },
+      {
+        "type": "private-evidence-only",
+        "severity": "material",
+        "topic": "control-gap",
+        "missingEvidence": "Noise budgets, error-correction strategy, drift or calibration procedures, and any security, safety, privacy, or compliance controls.",
+        "whyItMatters": "Analog or mixed-signal systems can fail in deployment for reasons that do not show up in headline energy arguments.",
+        "diligencePath": "Request test methodology, calibration cadence, fault models, threat model, and any planned certifications or enterprise control checklists.",
+        "relatedQuestionRefs": [
+          "QE019",
+          "QE020",
+          "QE024"
+        ],
+        "relatedTableRefs": [
+          "TE004"
+        ]
+      },
+      {
+        "type": "private-evidence-only",
+        "severity": "material",
+        "topic": "customer-validation",
+        "missingEvidence": "Named design partners, target deployment environment, and evidence that datacenter buyers will adapt models or software stacks to match the substrate.",
+        "whyItMatters": "A co-designed stack may deliver efficiency but still fail commercially if customers demand drop-in compatibility or standard tooling.",
+        "diligencePath": "Request pilot commitments, target user personas, benchmark environments, and evidence of willingness to adopt a non-drop-in workflow.",
+        "relatedQuestionRefs": [
+          "QE014",
+          "QE016",
+          "QE025"
+        ],
+        "relatedTableRefs": [
+          "TE002",
+          "TE005"
+        ]
+      }
+    ]
+  }
+}
