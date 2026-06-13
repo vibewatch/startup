@@ -1,0 +1,1884 @@
+schemaVersion: report-v2
+artifact: risks
+slug: logicmonitor
+runDate: '2026-06-13'
+company:
+  name: LogicMonitor
+chapter:
+  number: 7
+  title: Risks
+  summary: LogicMonitor is investable only if underwriting gives the most weight to security trust debt, service-availability volatility, and integration/dependency execution rather than to feature breadth alone. The company has real mitigations—FedRAMP authorization, documented security controls, multi-region operations, and an experienced executive bench—but the residual risks are still high enough that repeat security failures, rising outage frequency, or a stalled Catchpoint/AWS execution story should be treated as thesis-break triggers.
+sections:
+- id: ranked-risk-overview
+  title: Severity-ranked risk overview and investment implication
+  body: |-
+    LogicMonitor's risk picture is not dominated by one catastrophic unknown; it is dominated by three residual exposures that can compound into each other. First, the company still carries trust debt from the 2023 customer security incident tied to weak default-password practices and the possibility that privileged monitoring paths can become attack paths if customers over-privilege collectors or admin roles. Second, the platform has enough publicly visible interruption history and maintenance-related access disruption that underwriting should treat availability and change-management discipline as a live operating risk rather than as a solved SaaS hygiene issue. Third, the current growth story depends on successful execution across AWS-aligned migration programs and the Catchpoint integration, both of which extend feature breadth but also create additional dependency and rollout complexity. [CR001] [CR002] [CR006] [CR016] [CR021] [CR024] [CR049]
+
+    The mitigating case is real but conditional. LogicMonitor documents strong controls around SSO, 2FA, least privilege, token use, audit trails, and collector design; it has a real FedRAMP Moderate posture; and the company has assembled a leadership bench with meaningful operating experience across enterprise software, cloud, security, and acquired-product integration. But those mitigations do not fully close the gap because many of them depend on customer configuration discipline, the government boundary excludes several flagship features, and the core autonomy narrative still relies on integrations, alert tuning, and operational adoption to prove itself in the field. The practical investment posture is therefore to underwrite LogicMonitor as a platform with credible defenses and clear commercial upside, but only with explicit kill criteria around repeat security failures, materially worsening outage cadence, and integration slippage that fails to convert into lower noise, better reliability, or easier expansion. [CR007] [CR011] [CR013] [CR026] [CR039] [CR050] [CR051] [CR052]
+  claimRefs:
+  - CR001
+  - CR002
+  - CR006
+  - CR007
+  - CR011
+  - CR013
+  - CR016
+  - CR021
+  - CR024
+  - CR026
+  - CR039
+  - CR049
+  - CR050
+  - CR051
+  - CR052
+  tableRefs:
+  - TR005
+  figureRefs:
+  - FR001
+  - FR002
+- id: security-regulatory-and-legal-risk
+  title: Security, regulatory, and legal risk
+  body: |-
+    The most important adverse fact in the public record is still the 2023 security incident. TechCrunch reported that a small number of customers were affected, that weak default passwords were part of the failure path, and that at least one impacted company believed the compromise could lead to ransomware against monitored systems; SC World separately relayed claims that ransomware was distributed through on-premise collector sensors after customer-account compromise. Even if the most serious exploitation details came from anonymous sources rather than a regulator or court filing, the incident matters because it changed the burden of proof: LogicMonitor must now show that its current controls and customer guidance are strong enough to prevent the monitoring plane from becoming a privileged attack surface. [CR001] [CR002] [CR003] [CR004] [CR009]
+
+    Current controls are better documented than the historical incident path. LogicMonitor's security and support documentation says collectors use outbound TLS, are mutually authenticated, keep sensitive data in memory, and should run with least privilege; it recommends SSO, universal 2FA, API-only users for tokens, conservative assignment of manage permissions, and IP allow lists. Those are sensible mitigations, but the same best-practices guide explicitly admits that users with manage permissions to LogicModules and Collectors can run arbitrary scripts on collectors, which means the platform's security outcome still depends heavily on customer identity, role, and host-hardening discipline. [CR005] [CR006] [CR007] [CR008] [CR033]
+
+    Regulatory posture cuts both ways. FedRAMP Moderate authorization and a reusable security package are real positives, but the FedRAMP environment is gated to approved customers, cannot share accounts or data with commercial tenants, and excludes Edwin AI, tracing, synthetics, local user management, and other commercial features. That creates a bifurcated operating model: regulatory credibility is strong, yet flagship product narratives do not cleanly port into the most compliance-sensitive deployment boundary. Public legal risk is less clear. The reviewed public sources define privacy, processor, export-control, and contract-allocation obligations, but they do not surface enough case-level docket evidence or trust-center document detail to underwrite litigation, IP, or vendor-risk exposure without a targeted legal sweep and document-room access. [CR010] [CR011] [CR012] [CR013] [CR015] [CR043] [CR044] [CR045] [CR046] [CR053]
+  claimRefs:
+  - CR001
+  - CR002
+  - CR003
+  - CR004
+  - CR005
+  - CR006
+  - CR007
+  - CR008
+  - CR009
+  - CR010
+  - CR011
+  - CR012
+  - CR013
+  - CR015
+  - CR033
+  - CR043
+  - CR044
+  - CR045
+  - CR046
+  - CR053
+  tableRefs:
+  - TR001
+- id: operational-and-dependency-risk
+  title: Operational, platform, and dependency risk
+  body: |-
+    LogicMonitor's operational risk is best thought of as a chain rather than a single point. The official status page still disclosed a rolling April 2026 global update that could interrupt portal access during business hours, and third-party monitoring surfaces describe a long history of incidents with a May 28, 2026 outage tied to Account Access. Those data points are imperfect—the long-run incident count comes from an aggregator rather than from LogicMonitor itself—but they are enough to conclude that availability and change management remain underwriting topics, not just background SaaS noise. When the system being sold is the system that tells customers what is broken, even brief access interruptions can damage trust disproportionately. [CR016] [CR018] [CR019] [CR020]
+
+    The dependency map also has real concentration risk. BusinessWire says the platform itself is powered by AWS, the status page exposes a broad AWS regional footprint including GovCloud, and the AWS strategic collaboration agreement is central to LogicMonitor's VMware-migration story. At the same time, the Catchpoint acquisition extends product reach but adds integration complexity: LogicMonitor says the products continue to operate separately in the near term, while the Edwin AI Catchpoint integration requires explicit webhook setup, credentials, scopes, and token refresh before data can flow. The result is that LogicMonitor's differentiation increasingly depends on ecosystems it does not fully control—AWS infrastructure, customer identity providers, partner-led deployments, and the successful fusion of a newly acquired Internet-performance stack into a previously separate observability core. [CR021] [CR022] [CR023] [CR024] [CR025] [CR026] [CR027] [CR028] [CR041] [CR042]
+
+    Customer automation and collector design add one more layer of operational fragility. LogicMonitor's own API documentation says new enhancements happen only on v3, older versions need migration work, and external GET APIs can be auto-throttled when the server is busy. Collector docs also show that the architecture is efficient but not frictionless: one collector can cover hundreds of devices, yet it still requires outbound HTTPS plus unrestricted protocol reachability and can listen for inbound trap, syslog, flow, and custom-monitor traffic. That means operational leverage is high, but so is the penalty for bad deployment design, version lag, or over-privileged collectors in a large estate. [CR029] [CR030] [CR031] [CR032] [CR033]
+  claimRefs:
+  - CR016
+  - CR018
+  - CR019
+  - CR020
+  - CR021
+  - CR022
+  - CR023
+  - CR024
+  - CR025
+  - CR026
+  - CR027
+  - CR028
+  - CR029
+  - CR030
+  - CR031
+  - CR032
+  - CR033
+  - CR041
+  - CR042
+  tableRefs:
+  - TR002
+  - TR003
+  figureRefs:
+  - FR003
+- id: execution-adoption-and-diligence-gaps
+  title: Execution, adoption, and remaining diligence gaps
+  body: |-
+    The public adoption signal is strong, but the execution risk shows up in operator feedback rather than in topline demand. TrustRadius, PeerSpot, and archived Software Advice reviews point in the same direction: customers see real monitoring value, but they also describe alert-tuning complexity, dashboard friction, steep learning curves, configuration burden, pricing expansion at scale, and data gaps when collectors go offline. Those are not fatal flaws for an enterprise observability platform—some complexity is inherent in the category—but they matter because LogicMonitor's commercial story increasingly asks customers to trust the platform with more automation, broader incident routing, and higher-value workflows. A product that still requires material tuning or specialized operator knowledge can win large accounts and still struggle to compound efficiently if time-to-value slips. [CR034] [CR035] [CR036] [CR037] [CR038]
+
+    Leadership depth partially offsets that risk. The current bench includes executives with backgrounds from Salesforce, AWS, Splunk, Slack, and Catchpoint, plus an in-house legal leader and a Catchpoint GM inside the combined organization. That makes the company look more executable than a founder-dependent startup. But it also means the next leg of performance depends on a relatively broad coordination problem: security governance, customer success, channel growth, AI product execution, federal compliance, and acquired-product integration must all improve at once. Public sources do not disclose partner revenue mix, AWS spend concentration, Catchpoint contribution, or FedRAMP economic weight, so investors still need management-level answers before treating the current narrative as de-risked. The correct diligence posture is therefore not to reject the story, but to force precise follow-up on concentration, rollout metrics, post-incident security proof, and whether the autonomy narrative is lowering operator burden in practice. [CR039] [CR040] [CR047] [CR048] [CR049] [CR050] [CR052]
+  claimRefs:
+  - CR034
+  - CR035
+  - CR036
+  - CR037
+  - CR038
+  - CR039
+  - CR040
+  - CR047
+  - CR048
+  - CR049
+  - CR050
+  - CR052
+  tableRefs:
+  - TR004
+tables:
+- id: TR001
+  title: Regulatory / legal risk register
+  columns:
+  - Risk surface
+  - Public evidence
+  - Current status
+  - Likelihood
+  - Severity
+  - Mitigation maturity
+  - Residual exposure
+  - Diligence path
+  rows:
+  - - Security-control / customer-compromise liability
+    - 2023 customer incident tied to weak default-password practices; customer guidance now emphasizes SSO, 2FA, least privilege, and API-only tokens
+    - Historically adverse event; current controls documented
+    - Medium-high
+    - High
+    - Medium
+    - High
+    - Request post-2023 remediation timeline, secure-default changes, and recent penetration-test / incident-response summaries
+  - - FedRAMP boundary mismatch
+    - FedRAMP Moderate exists, but Edwin AI, tracing, synthetics, local user management, and non-US regions remain out of scope
+    - Authorized but feature-split environment
+    - Medium
+    - Medium-high
+    - Medium
+    - Medium-high
+    - Quantify federal attach rate, feature roadmap into FedRAMP scope, and operational cost of split commercial/gov estates
+  - - Privacy / processor / contract allocation
+    - Privacy policy and terms place significant control and compliance obligations on customer organizations and link product processing to DPA / contract terms
+    - Public terms visible; negotiated terms not visible
+    - Medium
+    - Medium
+    - Medium
+    - Medium
+    - Review MSA, DPA, subprocessor list, audit-rights language, and indemnity / breach-notice provisions in the data room
+  - - Litigation / IP / case-level legal exposure visibility
+    - Reviewed public materials did not surface case-level litigation or IP detail sufficient to size exposure
+    - Unresolved from public evidence
+    - Unknown
+    - Medium
+    - Low
+    - Medium
+    - Run paid federal/state docket sweep plus trademark/patent checks and request management representation on active disputes
+  notes: Severity reflects residual investment impact after currently disclosed mitigations, not only the existence of a control. The table is partial because public web review does not replace a docket sweep or contract-room review.
+  enumerationScope:
+    coverage: partial
+    basis: Material public legal, privacy, compliance, and security-control surfaces reviewed directly for this run; excludes paid court databases and NDA-only contract exhibits.
+  claimRefs:
+  - CR001
+  - CR002
+  - CR005
+  - CR006
+  - CR007
+  - CR010
+  - CR011
+  - CR012
+  - CR013
+  - CR015
+  - CR043
+  - CR044
+  - CR045
+  - CR046
+  - CR053
+- id: TR002
+  title: Operational / quality / security risk register
+  columns:
+  - Failure mode
+  - Evidence
+  - Likelihood
+  - Severity
+  - Mitigation maturity
+  - Residual exposure
+  - Unresolved gap
+  rows:
+  - - Portal access or account-service disruption during updates/incidents
+    - Official status page disclosed portal inaccessibility during a rolling global update; IsDown tracks repeated incidents and a May 28, 2026 account-access outage
+    - Medium
+    - High
+    - Medium
+    - High
+    - Need official incident histogram, MTTR by severity, and change-failure metrics
+  - - Collector over-privilege or poor host placement
+    - Best-practices guide warns manage permissions can run arbitrary scripts on collectors; collector docs show multiple required inbound/outbound protocol paths
+    - Medium
+    - High
+    - Medium
+    - High
+    - Need default role review, collector hardening standards, and support-user access controls
+  - - API automation instability or migration friction
+    - API v3 is the only actively enhanced version; GET calls can be auto-throttled with server-busy errors
+    - Medium
+    - Medium
+    - Medium
+    - Medium
+    - Need version mix across installed base and evidence that major customers have migrated cleanly
+  - - Alert noise / tuning / usability drag
+    - Review platforms repeatedly cite dashboard friction, challenging alert rules, and complexity for new users
+    - High
+    - Medium
+    - Medium-low
+    - Medium-high
+    - Need attach/usage data for Edwin and service-level workflows that prove net alert-noise reduction
+  notes: 'Rows combine official disclosures with independent monitoring and review evidence. Residual exposure is rated from an investor lens: whether the issue can drive churn, delayed expansion, or trust loss rather than only technical severity.'
+  claimRefs:
+  - CR006
+  - CR016
+  - CR018
+  - CR019
+  - CR029
+  - CR030
+  - CR031
+  - CR032
+  - CR033
+  - CR035
+  - CR036
+  - CR037
+- id: TR003
+  title: Partner / dependency risk register
+  columns:
+  - Dependency
+  - Counterparty / surface
+  - Role
+  - Concentration visibility
+  - Failure scenario
+  - Severity
+  - Mitigation
+  - Residual exposure
+  rows:
+  - - Cloud infrastructure footprint
+    - AWS commercial regions + GovCloud
+    - Hosts core platform regions and supports AWS-led migration motion
+    - No public AWS spend or workload-share disclosure
+    - Regional issue, pricing change, or strategic conflict disrupts service delivery or economics
+    - High
+    - Multi-region design, GovCloud support, and customer observability use cases already aligned to AWS
+    - High
+  - - Acquired Internet-performance stack
+    - Catchpoint
+    - Adds Internet telemetry, synthetics, and RUM to Edwin / LM Envision
+    - No public revenue or attach-rate disclosure
+    - Integration slips, data fusion disappoints, or product overlap slows roadmap credibility
+    - High
+    - Products remain supported; explicit integration docs and joint positioning exist
+    - High
+  - - Channel and MSP ecosystem
+    - VARs, MSPs, GSIs, strategic technology partners
+    - Important route to market and customer delivery motion
+    - No public partner-revenue mix disclosure
+    - Partner underperformance slows growth, increases implementation variance, or concentrates support burden
+    - Medium-high
+    - Longstanding partner program, broad partner categories, AWS/ServiceNow alignment
+    - Medium-high
+  - - Customer identity / auth stack
+    - Customer IdP and role architecture
+    - Controls SSO, MFA, claim mapping, and group-based authorization
+    - No public misconfiguration-rate disclosure
+    - Weak IdP policy or bad role mapping reopens trust or privilege issues
+    - High
+    - SAML support, 2FA guidance, API-only users, least-privilege recommendations
+    - Medium-high
+  notes: This register emphasizes dependencies that can impair reliability, security, or go-to-market execution even if the core product remains technically functional.
+  claimRefs:
+  - CR007
+  - CR008
+  - CR021
+  - CR022
+  - CR023
+  - CR024
+  - CR025
+  - CR026
+  - CR027
+  - CR028
+  - CR041
+  - CR042
+  - CR047
+- id: TR004
+  title: People / execution risk register
+  columns:
+  - Role / function
+  - Dependency or gap
+  - Public evidence
+  - Likelihood
+  - Severity
+  - Mitigation
+  - Diligence path
+  rows:
+  - - Executive integration capacity
+    - Company must integrate Catchpoint while scaling AWS/federal/channel motions
+    - Leadership bench spans Salesforce, AWS, Splunk, Catchpoint, legal, customer success, and product
+    - Medium
+    - High
+    - Experienced bench lowers key-person risk
+    - Request 12-month integration scorecard, roadmap milestones, and executive KPI ownership
+  - - Security / governance follow-through
+    - Post-incident trust must be maintained through operating discipline, not messaging
+    - Security page, best-practices guide, privacy policy, and legal leadership are visible, but current proof is mostly company-authored
+    - Medium
+    - High
+    - Documented controls, legal ownership, FedRAMP process, audit trails
+    - Ask for security-metric trendlines, privilege-review cadence, and breach tabletop frequency
+  - - Customer-success / implementation burden
+    - Complex products can create slow time-to-value and support-heavy expansion
+    - Review platforms cite complexity, dashboard friction, alert tuning, and pricing pressure
+    - High
+    - Medium-high
+    - Strong customer-success leadership and broad product automation claims
+    - Ask for implementation duration, renewal cohorts, gross retention by segment, and Edwin adoption metrics
+  - - Partner-led execution consistency
+    - Growth motion depends on MSPs, GSIs, and strategic technology partners
+    - Partner ecosystem is broad, but public economics and quality metrics are absent
+    - Medium
+    - Medium-high
+    - Established partner program and training/certification claims
+    - Request partner-sourced ARR, certified-partner counts, and churn / escalation rates for partner-led accounts
+  notes: 'People risk at LogicMonitor is less about a single founder dependency and more about coordinating multiple simultaneously ambitious motions: security hardening, AI product delivery, federal compliance, partner scale, and acquisition integration.'
+  claimRefs:
+  - CR036
+  - CR038
+  - CR039
+  - CR040
+  - CR041
+  - CR042
+  - CR049
+  - CR050
+- id: TR005
+  title: Mitigation and kill criteria table
+  columns:
+  - Risk
+  - Monitorable trigger
+  - Threshold / event
+  - Action implication
+  rows:
+  - - Security trust relapse
+    - Customer-impacting security incident, credential-control failure, or collector-abuse pathway
+    - Any repeat of a LogicMonitor-originated security/control failure with customer compromise
+    - Pause conviction; require root-cause proof, default-setting audit, and customer-remediation evidence before underwriting upside
+  - - Availability / change-management deterioration
+    - Account Access or portal incidents become more frequent or longer
+    - Two or more materially visible incidents in a quarter or change windows that affect business-hours access repeatedly
+    - Discount expansion assumptions and treat reliability as a churn driver rather than a mere support issue
+  - - FedRAMP / compliance split gets wider
+    - High-value federal or regulated use cases depend on still out-of-scope features
+    - Flagship workflows remain outside government boundary without roadmap closure
+    - Reduce confidence in regulated-market upside and ask for product-boundary roadmap before sizing vertical expansion
+  - - Catchpoint integration under-delivers
+    - Joint platform does not show measurable alert-noise reduction, faster RCA, or attach-rate evidence
+    - No clear adoption / outcome proof within 12 months of close
+    - Treat acquisition as complexity cost, not moat expansion; lower multiple tolerance
+  - - Implementation and pricing friction compounds
+    - Review and customer metrics show persistent alert-noise, dashboard friction, or pricing pushback
+    - Evidence of slower deployments, weaker renewals, or pricing-driven objections in large estates
+    - Tighten retention assumptions and require cohort / renewal proof before crediting operating leverage
+  notes: These kill criteria are investor-facing thresholds, not product SLOs. They are designed to force a decision when risk evidence worsens faster than management narratives improve.
+  claimRefs:
+  - CR016
+  - CR021
+  - CR024
+  - CR035
+  - CR036
+  - CR038
+  - CR049
+  - CR050
+  - CR051
+  - CR052
+figures:
+- id: FR001
+  title: Risk heatmap
+  type: matrix
+  layout: wide
+  summary: Ordinal heatmap of the five risks that most directly transmit into churn, slower expansion, or lower underwriting confidence.
+  data:
+    columns:
+    - Likelihood
+    - Impact
+    - Mitigation maturity
+    - Residual exposure
+    rows:
+    - label: Security / trust debt
+      values:
+      - High
+      - High
+      - Medium
+      - High
+    - label: Availability / change management
+      values:
+      - Medium-high
+      - High
+      - Medium
+      - High
+    - label: Catchpoint integration execution
+      values:
+      - Medium-high
+      - High
+      - Medium
+      - High
+    - label: AWS / partner concentration
+      values:
+      - Medium
+      - High
+      - Medium
+      - Medium-high
+    - label: Implementation / pricing friction
+      values:
+      - High
+      - Medium-high
+      - Medium-low
+      - Medium-high
+  approximationNotes: Cells are ordinal synthesis ratings based on the cited public evidence rather than on disclosed internal risk scoring. Residual exposure reflects investment consequence after currently visible mitigations.
+  claimRefs:
+  - CR015
+  - CR018
+  - CR024
+  - CR036
+  - CR049
+  - CR050
+  - CR051
+- id: FR002
+  title: Risk transmission map
+  type: dag
+  layout: standard
+  summary: How primary risks flow into customer trust, operating efficiency, expansion, and valuation confidence.
+  data:
+    nodes:
+    - id: N1
+      label: Security / trust debt
+      detail: 2023 incident legacy and privilege-control burden
+    - id: N2
+      label: Availability / outages
+      detail: Status-page interruptions and incident cadence
+    - id: N3
+      label: Integration / dependency execution
+      detail: Catchpoint + AWS + partner motion
+    - id: N4
+      label: Customer trust
+      detail: Confidence in platform as control plane
+    - id: N5
+      label: Operator burden
+      detail: Alert noise, implementation friction, support load
+    - id: N6
+      label: Retention / expansion
+      detail: Renewal quality and multi-product adoption
+    - id: N7
+      label: Margin / efficiency
+      detail: Support intensity and migration cost
+    - id: N8
+      label: Valuation confidence
+      detail: Multiple tolerance and thesis durability
+    edges:
+    - from: N1
+      to: N4
+      label: erodes confidence after any repeat failure
+    - from: N2
+      to: N4
+      label: damages reliability perception
+    - from: N3
+      to: N5
+      label: adds rollout and tuning complexity
+    - from: N4
+      to: N6
+      label: affects renewal and cross-sell willingness
+    - from: N5
+      to: N6
+      label: slows adoption and time-to-value
+    - from: N5
+      to: N7
+      label: raises support / services cost
+    - from: N6
+      to: N8
+      label: changes growth durability assumptions
+    - from: N7
+      to: N8
+      label: compresses operating leverage narrative
+  claimRefs:
+  - CR021
+  - CR024
+  - CR032
+  - CR049
+  - CR051
+  - CR052
+- id: FR003
+  title: Dependency map
+  type: dag
+  layout: standard
+  summary: Key external and customer-managed dependencies that can change LogicMonitor risk even if feature demand stays strong.
+  data:
+    nodes:
+    - id: D1
+      label: AWS footprint
+      detail: Commercial regions + GovCloud + migration narrative
+    - id: D2
+      label: Catchpoint product
+      detail: Internet telemetry, synthetics, digital experience
+    - id: D3
+      label: Customer IdP / RBAC
+      detail: SSO, MFA, group mapping, least privilege
+    - id: D4
+      label: Collectors in customer estate
+      detail: Host placement, protocol reachability, privilege design
+    - id: D5
+      label: MSPs / GSIs / VARs
+      detail: Distribution and implementation quality
+    - id: D6
+      label: LM Envision core
+      detail: Primary observability control plane
+    - id: D7
+      label: Customer outcomes
+      detail: Reliability, noise reduction, expansion, trust
+    edges:
+    - from: D1
+      to: D6
+      label: hosts service + powers migration motion
+    - from: D2
+      to: D6
+      label: feeds Internet telemetry and AI context
+    - from: D3
+      to: D6
+      label: controls secure user access
+    - from: D4
+      to: D6
+      label: delivers telemetry and local execution path
+    - from: D5
+      to: D6
+      label: shapes deployment quality and sales reach
+    - from: D6
+      to: D7
+      label: determines real operating value
+    - from: D2
+      to: D7
+      label: separates Internet vs infrastructure issues
+  claimRefs:
+  - CR021
+  - CR022
+  - CR024
+  - CR026
+  - CR028
+  - CR032
+  - CR041
+  - CR042
+localEvidence:
+  searchQueries:
+  - query: Find direct sources for LogicMonitor security incident 2023, CISA or government advisories, and reputable coverage relevant to risk analysis in 2026.
+    engine: web_search
+    hits: null
+    retainedSourceRefs:
+    - SR010
+    - SR011
+  - query: Find direct sources for LogicMonitor legal disputes, court records, patent or trademark litigation, or other legal-risk evidence current through 2026.
+    engine: web_search
+    hits: null
+    retainedSourceRefs: []
+  - query: Find direct sources for LogicMonitor FedRAMP, privacy, DPA, compliance, and trust documentation relevant to regulatory and security risk in 2026.
+    engine: web_search
+    hits: null
+    retainedSourceRefs:
+    - SR002
+    - SR004
+    - SR005
+    - SR006
+    - SR015
+    - SR031
+  - query: Find direct sources for LogicMonitor outage/status evidence, AWS or key partner dependency, and Catchpoint integration or acquisition dependency risk in 2026.
+    engine: web_search
+    hits: null
+    retainedSourceRefs:
+    - SR007
+    - SR008
+    - SR012
+    - SR013
+    - SR014
+    - SR030
+  - query: Find direct URLs for 'LogicMonitor' on CourtListener, PACER mirrors, Justia dockets, or USPTO proceedings current through 2026.
+    engine: web_search
+    hits: null
+    retainedSourceRefs: []
+  - query: Find direct URLs for LogicMonitor 2026 customer review complaints about pricing, billing, implementation complexity, or support.
+    engine: web_search
+    hits: null
+    retainedSourceRefs:
+    - SR023
+    - SR024
+    - SR025
+  researchQuestions:
+  - id: QR001
+    question: What direct evidence is there of a recent LogicMonitor customer security incident?
+    type: adverse
+    targets:
+    - contentRequirements/1
+    status: answered
+  - id: QR002
+    question: Did weak or default credentials materially contribute to the 2023 incident path?
+    type: adverse
+    targets:
+    - contentRequirements/1
+    status: answered
+  - id: QR003
+    question: What current platform-side security controls does LogicMonitor publicly document?
+    type: verification
+    targets:
+    - contentRequirements/1
+    status: answered
+  - id: QR004
+    question: What customer-side controls are explicitly required or recommended for secure operation?
+    type: mechanism
+    targets:
+    - contentRequirements/5
+    status: answered
+  - id: QR005
+    question: Does LogicMonitor explicitly recommend SSO and strong MFA for all users?
+    type: verification
+    targets:
+    - contentRequirements/1
+    status: answered
+  - id: QR006
+    question: Which permissions or features can create privileged execution risk on collectors?
+    type: adverse
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QR007
+    question: What does the public record say about visible platform interruptions in 2026?
+    type: freshness
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QR008
+    question: How dependent does the current service footprint look on AWS regions and GovCloud?
+    type: verification
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QR009
+    question: How severe is the historical reliability picture when triangulated through third-party outage monitors?
+    type: quantification
+    targets:
+    - contentRequirements/0
+    status: partial
+  - id: QR010
+    question: What federal or regulatory posture is currently documented for LM for Gov?
+    type: verification
+    targets:
+    - contentRequirements/1
+    status: answered
+  - id: QR011
+    question: Which major features are still outside the current FedRAMP boundary?
+    type: adverse
+    targets:
+    - contentRequirements/1
+    status: answered
+  - id: QR012
+    question: What operational constraints exist between FedRAMP and commercial environments?
+    type: mechanism
+    targets:
+    - contentRequirements/1
+    status: answered
+  - id: QR013
+    question: Is there evidence that LogicMonitor can leverage a reusable federal ATO package?
+    type: verification
+    targets:
+    - contentRequirements/5
+    status: answered
+  - id: QR014
+    question: How much of the current roadmap differentiation depends on successful Catchpoint integration?
+    type: mechanism
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QR015
+    question: What concrete steps are required to enable Edwin AI and Catchpoint event flows?
+    type: mechanism
+    targets:
+    - contentRequirements/5
+    status: answered
+  - id: QR016
+    question: Are Catchpoint and LogicMonitor fully merged operationally today, or still in phased integration?
+    type: freshness
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QR017
+    question: What evidence shows AWS is both a go-to-market and infrastructure dependency?
+    type: verification
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QR018
+    question: How broad is LogicMonitor's partner and channel dependency footprint?
+    type: enumeration
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QR019
+    question: Do public sources disclose partner, cloud, or acquired-product concentration economics?
+    type: adverse
+    targets:
+    - contentRequirements/3
+    status: partial
+  - id: QR020
+    question: What API migration or rate-limit risks could affect large customer automation estates?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QR021
+    question: What collector architecture requirements can turn into deployment or attack-surface risk?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QR022
+    question: What do independent review surfaces say about alert noise, complexity, or usability?
+    type: comparison
+    targets:
+    - contentRequirements/0
+    status: answered
+  - id: QR023
+    question: What do public reviews say about pricing or cost-expansion risk?
+    type: comparison
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QR024
+    question: Do reviews suggest data gaps or workflow friction when collectors or configurations fail?
+    type: adverse
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QR025
+    question: What does the executive bench imply about execution capacity and integration burden?
+    type: verification
+    targets:
+    - contentRequirements/5
+    status: answered
+  - id: QR026
+    question: What public contractual and privacy documents define customer obligations and risk allocation?
+    type: verification
+    targets:
+    - contentRequirements/1
+    status: answered
+  - id: QR027
+    question: Is there clear public case-level evidence of current litigation or IP disputes involving LogicMonitor?
+    type: adverse
+    targets:
+    - contentRequirements/1
+    status: unresolved
+  - id: QR028
+    question: Does the public trust and compliance surface expose enough detail to underwrite vendor-risk terms without NDA access?
+    type: adverse
+    targets:
+    - contentRequirements/5
+    status: partial
+  - id: QR029
+    question: Which risks remain highest after giving credit to currently visible mitigations?
+    type: comparison
+    targets:
+    - contentRequirements/0
+    status: answered
+  - id: QR030
+    question: What diligence asks should be treated as thesis-break follow-ups before full conviction?
+    type: mechanism
+    targets:
+    - contentRequirements/5
+    status: answered
+  sources:
+  - id: SR001
+    publisher: LogicMonitor
+    title: Security
+    url: https://www.logicmonitor.com/security
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - security
+    - controls
+    - collectors
+    keyQuote: Collectors initiate only outbound communications to the LogicMonitor platform, secured with TLS encryption.
+  - id: SR002
+    publisher: LogicMonitor
+    title: Privacy Policy
+    url: https://www.logicmonitor.com/legal/privacy-policy
+    date: '2025-04-01'
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: legal
+    reputationTier: medium
+    independence: company
+    topics:
+    - privacy
+    - DPA
+    - processor
+    - customer obligations
+    keyQuote: This Policy does not apply to the extent that we process personal information in the role of a processor or service provider on behalf of such organizations, which, for clarity, includes the LM Envision Platform and Edwin AI features.
+  - id: SR003
+    publisher: LogicMonitor
+    title: Terms of Use
+    url: https://www.logicmonitor.com/legal/terms-of-use
+    date: '2023-03-01'
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: legal
+    reputationTier: medium
+    independence: company
+    topics:
+    - terms
+    - contracts
+    - export controls
+    - customer obligations
+  - id: SR004
+    publisher: LogicMonitor
+    title: Trust Center
+    url: https://trust.logicmonitor.com/
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - trust center
+    - audit documents
+    - subprocessors
+  - id: SR005
+    publisher: LogicMonitor
+    title: FedRAMP Compliance
+    url: https://www.logicmonitor.com/support/fedramp-compliance
+    date: '2026-01-22'
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - FedRAMP
+    - government
+    - feature scope
+    - GovCloud
+    keyQuote: 'Important: Accounts and the data within cannot be moved between the FedRAMP and Commercial environments.'
+  - id: SR006
+    publisher: FedRAMP
+    title: LM for Gov | FedRAMP Marketplace
+    url: https://www.fedramp.gov/marketplace/products/FR2428168490/
+    date: '2025-07-24'
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: regulatory
+    reputationTier: high
+    independence: independent
+    topics:
+    - FedRAMP
+    - ATO
+    - Rev5
+    - government
+  - id: SR007
+    publisher: LogicMonitor
+    title: LogicMonitor Status
+    url: https://status.logicmonitor.com/
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - status
+    - incidents
+    - AWS regions
+    - maintenance
+    keyQuote: During this activity, most customers may experience brief portal inaccessibility lasting approximately 2–5 minutes.
+  - id: SR008
+    publisher: IsDown
+    title: Is LogicMonitor Down? Check current status and user reports
+    url: https://isdown.app/status/logicmonitor
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: adverse
+    sourceType: other
+    reputationTier: medium
+    independence: independent
+    topics:
+    - outages
+    - incident history
+    - MTTR
+    - status aggregation
+    keyQuote: Over that time, we've documented 552 outages and incidents, averaging 7.6 per month.
+  - id: SR009
+    publisher: Downdetector
+    title: LogicMonitor down? Current problems and outages - US
+    url: https://downdetector.com/status/logicmonitor/
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: review
+    reputationTier: medium
+    independence: independent
+    topics:
+    - user reports
+    - outages
+    - crowdsourced status
+  - id: SR010
+    publisher: TechCrunch
+    title: LogicMonitor customers hit by hackers, because of default passwords
+    url: https://techcrunch.com/2023/08/31/logicmonitor-customers-hit-by-hackers-because-of-default-passwords/
+    date: '2023-08-31'
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: adverse
+    sourceType: news
+    reputationTier: high
+    independence: independent
+    topics:
+    - security incident
+    - default passwords
+    - customer compromise
+    - ransomware
+    keyQuote: We are currently addressing a security incident that has affected a small number of our customers.
+  - id: SR011
+    publisher: SC Media
+    title: Ransomware attacks reportedly impact LogicMonitor customers
+    url: https://www.scworld.com/brief/ransomware-attacks-reportedly-impact-logicmonitor-customers
+    date: '2023-09-01'
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: adverse
+    sourceType: news
+    reputationTier: medium
+    independence: independent
+    topics:
+    - ransomware
+    - collectors
+    - customer incident
+    keyQuote: Ransomware was claimed by the sources to have been distributed through on-premise LogicMonitor Collector sensors.
+  - id: SR012
+    publisher: Catchpoint
+    title: 'The Era of Reactive Observability Is Over: LogicMonitor Acquires Catchpoint'
+    url: https://www.catchpoint.com/press-releases/the-era-of-reactive-observability-is-over-logicmonitor-acquires-catchpoint
+    date: '2025-12-02'
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: confirming
+    sourceType: partner-proof
+    reputationTier: medium
+    independence: partner
+    topics:
+    - Catchpoint
+    - acquisition
+    - integration
+    - AI
+  - id: SR013
+    publisher: GovConWire
+    title: LogicMonitor Completes Acquisition of Internet Performance Monitoring Company Catchpoint
+    url: https://www.govconwire.com/articles/logicmonitor-catchpoint-acquisition-ai
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: news
+    reputationTier: medium
+    independence: independent
+    topics:
+    - Catchpoint
+    - acquisition
+    - observability
+    - integration
+  - id: SR014
+    publisher: Business Wire
+    title: LogicMonitor Signs Strategic Collaboration Agreement with AWS to Simplify VMware Migrations and Modernize Data Centers
+    url: https://www.businesswire.com/news/home/20250318447070/en/LogicMonitor-Signs-Strategic-Collaboration-Agreement-with-AWS-to-Simplify-VMware-Migrations-and-Modernize-Data-Centers
+    date: '2025-03-18'
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: confirming
+    sourceType: news
+    reputationTier: high
+    independence: independent
+    topics:
+    - AWS
+    - VMware migration
+    - partnership
+    - cloud dependency
+    keyQuote: LogicMonitor's hybrid observability platform, which itself is powered by AWS, allows organizations to de-risk and accelerate their migration journeys to AWS.
+  - id: SR015
+    publisher: LogicMonitor
+    title: 'LogicMonitor Is FedRAMP Moderate Authorized: How We Support Federal IT'
+    url: https://www.logicmonitor.com/blog/logicmonitor-fedramp-authorization-ai-powered-observability
+    date: '2025-10-28'
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - FedRAMP
+    - ATO
+    - government
+    - GovCloud
+  - id: SR016
+    publisher: LogicMonitor
+    title: LogicMonitor Security Best Practices
+    url: https://www.logicmonitor.com/support/getting-started/advanced-logicmonitor-setup/logicmonitor-security-best-practices
+    date: '2025-07-25'
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - security best practices
+    - RBAC
+    - collectors
+    - 2FA
+    keyQuote: We recommend that “manage” permissions to LogicModules and Collectors are applied very conservatively as this allows the user to run arbitrary scripts on the Collector.
+  - id: SR017
+    publisher: LogicMonitor
+    title: About the LogicMonitor Collector
+    url: https://www.logicmonitor.com/support/collectors/collector-overview/about-the-logicmonitor-collector
+    date: '2025-07-29'
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - collector
+    - ports
+    - architecture
+    - HTTPS
+  - id: SR018
+    publisher: LogicMonitor
+    title: Single Sign On
+    url: https://www.logicmonitor.com/support/single-sign-on
+    date: '2026-05-19'
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - SSO
+    - SAML
+    - IdP
+    - MFA
+  - id: SR019
+    publisher: LogicMonitor
+    title: Leadership
+    url: https://www.logicmonitor.com/leadership
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - leadership
+    - executives
+    - Catchpoint
+    - legal
+  - id: SR020
+    publisher: LogicMonitor
+    title: Partners
+    url: https://www.logicmonitor.com/partners
+    date: '2026-05-19'
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - partners
+    - MSP
+    - GSI
+    - AWS
+    - ServiceNow
+  - id: SR021
+    publisher: LogicMonitor
+    title: LogicMonitor Doubles Down on Channels and Strategic Alliances
+    url: https://www.logicmonitor.com/press/logicmonitor-doubles-down-on-channels-and-strategic-alliances-with-former-bmc-exec-hire-and-partner-expansion
+    date: '2019-12-19'
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - channels
+    - MSP partners
+    - alliances
+  - id: SR022
+    publisher: LogicMonitor
+    title: LogicMonitor Expands Global Partner Network With Strategic Additions in Europe
+    url: https://www.logicmonitor.com/press/logicmonitor-expands-global-partner-network-with-strategic-additions-in-europe
+    date: '2021-04-15'
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - partner network
+    - Europe
+    - GSI
+    - MSP
+  - id: SR023
+    publisher: PeerSpot
+    title: 'LogicMonitor: Pros and Cons 2026'
+    url: https://www.peerspot.com/products/logicmonitor-pros-and-cons
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: adverse
+    sourceType: review
+    reputationTier: medium
+    independence: independent
+    topics:
+    - pricing
+    - learning curve
+    - alerting
+    - customization
+  - id: SR024
+    publisher: Internet Archive / Software Advice
+    title: LogicMonitor Software Reviews, Pros and Cons
+    url: https://web.archive.org/web/20240807213542/https://www.softwareadvice.com/network-monitoring/logicmonitor-profile/reviews/
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: review
+    reputationTier: medium
+    independence: independent
+    topics:
+    - collector offline
+    - pricing
+    - dashboards
+    - alert rules
+  - id: SR025
+    publisher: TrustRadius
+    title: LogicMonitor Reviews & Ratings 2026
+    url: https://www.trustradius.com/products/logicmonitor/reviews
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: review
+    reputationTier: medium
+    independence: independent
+    topics:
+    - reviews
+    - alerting
+    - dashboards
+    - renewal sentiment
+  - id: SR026
+    publisher: LogicMonitor
+    title: Using LogicMonitor's REST API
+    url: https://www.logicmonitor.com/support/rest-api-developers-guide/overview/using-logicmonitors-rest-api
+    date: '2025-09-29'
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - API v3
+    - rate limits
+    - automation
+    - authentication
+  - id: SR027
+    publisher: LogicMonitor
+    title: REST API v3 Swagger Documentation
+    url: https://www.logicmonitor.com/support/rest-api-v3-swagger-documentation
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - swagger
+    - API reference
+    - v3
+  - id: SR028
+    publisher: LogicMonitor
+    title: Migration from LogicMonitor REST API v1 to API v3
+    url: https://www.logicmonitor.com/support/migration-from-logicmonitor-rest-api-v1-to-api-v3
+    date: '2025-07-25'
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - API migration
+    - basic auth deprecation
+    - versioning
+  - id: SR029
+    publisher: LogicMonitor
+    title: Edwin AI Catchpoint Integration
+    url: https://www.logicmonitor.com/support/edwin-ai-catchpoint-integration
+    date: '2025-12-17'
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - Catchpoint integration
+    - webhooks
+    - event_write
+    - OAuth
+  - id: SR030
+    publisher: LogicMonitor
+    title: 'LogicMonitor + Catchpoint: A New Era of Self-Healing Digital Operations'
+    url: https://www.logicmonitor.com/logicmonitor-catchpoint
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - Catchpoint
+    - integration
+    - self-healing
+    - roadmap
+  - id: SR031
+    publisher: KMWorld
+    title: LogicMonitor achieves FedRAMP Authorization to Operate (ATO)
+    url: https://www.kmworld.com/Articles/ReadArticle.aspx?ArticleID=170742
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: news
+    reputationTier: medium
+    independence: independent
+    topics:
+    - FedRAMP
+    - ATO
+    - government
+    - security posture
+  claims:
+  - id: CR001
+    statement: LogicMonitor confirmed a 2023 security incident affecting a small number of customers.
+    type: third-party-reported
+    topic: security-incident
+    sourceRefs:
+    - SR010
+    - SR011
+    confidence: high
+    freshness: historical
+    answersQuestionRefs:
+    - QR001
+  - id: CR002
+    statement: TechCrunch reported that weak default passwords were part of the incident path for some affected LogicMonitor customers.
+    type: third-party-reported
+    topic: security-incident
+    sourceRefs:
+    - SR010
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QR002
+  - id: CR003
+    statement: A source cited by TechCrunch said one breached company lost more than 400 systems after ransomware exploited the weak default-password path.
+    type: third-party-reported
+    topic: security-incident
+    sourceRefs:
+    - SR010
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QR002
+  - id: CR004
+    statement: SC Media relayed claims that ransomware was distributed through on-premise LogicMonitor Collector sensors after account compromise.
+    type: third-party-reported
+    topic: security-incident
+    sourceRefs:
+    - SR011
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QR001
+  - id: CR005
+    statement: LogicMonitor says collectors initiate outbound TLS communications, are mutually authenticated, keep sensitive data only in memory, and have no inbound network ports vulnerable to attack by default.
+    type: company-claimed
+    topic: security-controls
+    sourceRefs:
+    - SR001
+    - SR016
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR003
+  - id: CR006
+    statement: LogicMonitor warns that manage permissions to LogicModules and Collectors are security-sensitive because they can enable arbitrary script execution on collectors.
+    type: company-claimed
+    topic: security-controls
+    sourceRefs:
+    - SR016
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR004
+    - QR006
+  - id: CR007
+    statement: LogicMonitor recommends SSO, universal two-factor authentication, least privilege, API-only users for tokens, and network allow lists as customer-side security controls.
+    type: company-claimed
+    topic: security-controls
+    sourceRefs:
+    - SR016
+    - SR018
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR004
+    - QR005
+  - id: CR008
+    statement: LogicMonitor's SSO model depends on customer IdP configuration and role/group mapping, including practical limits such as Azure group-claim size.
+    type: company-claimed
+    topic: security-controls
+    sourceRefs:
+    - SR018
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR005
+  - id: CR009
+    statement: The company's documented current controls reduce risk materially, but the 2023 incident means investors should treat trust restoration as ongoing rather than complete.
+    type: inferred
+    topic: security-incident
+    sourceRefs:
+    - SR001
+    - SR010
+    - SR011
+    - SR016
+    confidence: medium
+    freshness: current
+  - id: CR010
+    statement: LogicMonitor's FedRAMP and commercial accounts are separate, and accounts or their data cannot be moved between those environments.
+    type: company-claimed
+    topic: fedramp-boundary
+    sourceRefs:
+    - SR005
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR012
+  - id: CR011
+    statement: LogicMonitor's FedRAMP support documentation explicitly lists Edwin AI, tracing, synthetics, local user management, and non-US website regions as outside the FedRAMP compliance scope.
+    type: company-claimed
+    topic: fedramp-boundary
+    sourceRefs:
+    - SR005
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR011
+  - id: CR012
+    statement: The FedRAMP Marketplace lists LM for Gov as FedRAMP certified at Moderate / Rev5 level.
+    type: observed
+    topic: fedramp-status
+    sourceRefs:
+    - SR006
+    - SR015
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR010
+  - id: CR013
+    statement: LogicMonitor says its federal offering has a formal Authorization to Operate and a reusable security package that agencies can leverage in their own ATO process.
+    type: company-claimed
+    topic: fedramp-status
+    sourceRefs:
+    - SR006
+    - SR015
+    - SR031
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR010
+    - QR013
+  - id: CR014
+    statement: LogicMonitor positions LM Envision for government use across on-prem, AWS GovCloud, Azure Government, and edge environments.
+    type: company-claimed
+    topic: fedramp-status
+    sourceRefs:
+    - SR015
+    - SR031
+    confidence: medium
+    freshness: recent
+  - id: CR015
+    statement: FedRAMP authorization strengthens regulatory credibility but also exposes a product-boundary risk because several flagship commercial features are still outside the authorized environment.
+    type: inferred
+    topic: fedramp-boundary
+    sourceRefs:
+    - SR005
+    - SR015
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR011
+  - id: CR016
+    statement: On the run date, LogicMonitor's official status page disclosed a rolling global update that could cause brief portal inaccessibility during normal business hours.
+    type: observed
+    topic: availability
+    sourceRefs:
+    - SR007
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR007
+  - id: CR017
+    statement: LogicMonitor's official status page exposes commercial AWS regions plus AWS GovCloud as named service locations.
+    type: observed
+    topic: aws-dependency
+    sourceRefs:
+    - SR007
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR008
+  - id: CR018
+    statement: IsDown says it has tracked 552 LogicMonitor outages and incidents since April 2020, averaging 7.6 per month.
+    type: estimated
+    topic: availability
+    sourceRefs:
+    - SR008
+    confidence: low
+    freshness: current
+  - id: CR019
+    statement: IsDown lists LogicMonitor's last outage before the run date as a May 28, 2026 incident investigating impacts to Account Access components.
+    type: third-party-reported
+    topic: availability
+    sourceRefs:
+    - SR008
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR007
+  - id: CR020
+    statement: Downdetector showed no active current problem on the run date, which is directionally useful but not strong evidence against outages because it is a crowdsourced rather than official feed.
+    type: inferred
+    topic: availability
+    sourceRefs:
+    - SR008
+    - SR009
+    confidence: medium
+    freshness: current
+  - id: CR021
+    statement: LogicMonitor's AWS collaboration release says the platform itself is powered by AWS.
+    type: third-party-reported
+    topic: aws-dependency
+    sourceRefs:
+    - SR014
+    - SR007
+    confidence: high
+    freshness: recent
+    answersQuestionRefs:
+    - QR017
+  - id: CR022
+    statement: LogicMonitor's AWS strategic collaboration agreement is designed to help customers migrate VMware workloads to AWS and therefore increases both commercial upside and platform dependency on AWS.
+    type: inferred
+    topic: aws-dependency
+    sourceRefs:
+    - SR014
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QR017
+  - id: CR023
+    statement: The combination of a named AWS regional footprint on the status page and AWS-powered platform positioning implies direct cloud-infrastructure concentration risk.
+    type: inferred
+    topic: aws-dependency
+    sourceRefs:
+    - SR007
+    - SR014
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR008
+  - id: CR024
+    statement: LogicMonitor completed its acquisition of Catchpoint in December 2025 and the companies said integration work was already underway.
+    type: third-party-reported
+    topic: catchpoint-integration
+    sourceRefs:
+    - SR012
+    - SR013
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QR014
+  - id: CR025
+    statement: LogicMonitor says Catchpoint's synthetic, network, and real-user monitoring data will feed Edwin AI and help the platform predict incidents and automate fixes.
+    type: company-claimed
+    topic: catchpoint-integration
+    sourceRefs:
+    - SR012
+    - SR030
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QR014
+  - id: CR026
+    statement: The Edwin AI Catchpoint integration requires explicit webhook setup, credentials with event_write scope, and periodic token refresh before Edwin can process Catchpoint data.
+    type: company-claimed
+    topic: catchpoint-integration
+    sourceRefs:
+    - SR029
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR015
+  - id: CR027
+    statement: LogicMonitor's Catchpoint integration guide depends on linked Catchpoint resources that require a Catchpoint login, showing that enablement still spans separate documentation and permission surfaces.
+    type: company-claimed
+    topic: catchpoint-integration
+    sourceRefs:
+    - SR029
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR015
+  - id: CR028
+    statement: LogicMonitor says Catchpoint and LogicMonitor continue to operate and be supported separately in the near term while deeper product and data integration progresses over time.
+    type: company-claimed
+    topic: catchpoint-integration
+    sourceRefs:
+    - SR030
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR016
+  - id: CR029
+    statement: LogicMonitor's API documentation says all updates and enhancements are made only to REST API v3.
+    type: company-claimed
+    topic: api-risk
+    sourceRefs:
+    - SR026
+    - SR027
+    - SR028
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR020
+  - id: CR030
+    statement: LogicMonitor says external GET API calls can be auto-throttled with a server-busy error when server resource usage is critically high.
+    type: company-claimed
+    topic: api-risk
+    sourceRefs:
+    - SR026
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR020
+  - id: CR031
+    statement: LogicMonitor's API migration guide says basic authentication is no longer supported from API v2 onward and customers should use LMv1 or bearer tokens.
+    type: company-claimed
+    topic: api-risk
+    sourceRefs:
+    - SR026
+    - SR028
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR020
+  - id: CR032
+    statement: LogicMonitor says one collector can usually monitor hundreds of devices, but collectors still require outbound HTTPS plus broad protocol reachability and may listen for inbound trap, syslog, flow, and job-monitor traffic.
+    type: company-claimed
+    topic: collector-risk
+    sourceRefs:
+    - SR017
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR021
+  - id: CR033
+    statement: LogicMonitor describes collector security as a shared-responsibility outcome that depends on least-privilege installation and sufficient customer network security on the collector host.
+    type: company-claimed
+    topic: collector-risk
+    sourceRefs:
+    - SR016
+    - SR017
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR004
+    - QR021
+  - id: CR034
+    statement: TrustRadius shows LogicMonitor with 349 reviews and ratings and a 9.1 out of 10 score on the run date.
+    type: third-party-reported
+    topic: review-signal
+    sourceRefs:
+    - SR025
+    confidence: medium
+    freshness: current
+  - id: CR035
+    statement: TrustRadius review content includes complaints that dashboards should be easier for new users and alerts should be more customizable to avoid too many alerts.
+    type: third-party-reported
+    topic: review-friction
+    sourceRefs:
+    - SR025
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR022
+  - id: CR036
+    statement: PeerSpot summarizes recurring LogicMonitor drawbacks as a steep learning curve, complex alerting, limited customization, and pricing that can be difficult for smaller organizations.
+    type: third-party-reported
+    topic: review-friction
+    sourceRefs:
+    - SR023
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR022
+    - QR023
+  - id: CR037
+    statement: Archived Software Advice reviews say collectors going offline can create data gaps and that dashboard or alert-rule configuration can be cumbersome.
+    type: third-party-reported
+    topic: review-friction
+    sourceRefs:
+    - SR024
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QR022
+    - QR024
+  - id: CR038
+    statement: Archived Software Advice reviews say LogicMonitor pricing can get expensive when customers monitor a large number of servers.
+    type: third-party-reported
+    topic: pricing-risk
+    sourceRefs:
+    - SR024
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QR023
+  - id: CR039
+    statement: LogicMonitor's public leadership bench spans prior executives from Salesforce, AWS, Slack, Splunk, and Catchpoint, plus an in-house legal leader.
+    type: observed
+    topic: execution-bench
+    sourceRefs:
+    - SR019
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR025
+  - id: CR040
+    statement: The breadth of LogicMonitor's current executive bench reduces single-founder dependence but increases the coordination burden across security, partner growth, federal compliance, product, and acquired-product integration.
+    type: inferred
+    topic: execution-bench
+    sourceRefs:
+    - SR019
+    - SR030
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR025
+  - id: CR041
+    statement: LogicMonitor publicly positions VARs, MSPs, GSIs, and strategic technology partners as important routes to market and service delivery.
+    type: company-claimed
+    topic: partner-dependency
+    sourceRefs:
+    - SR020
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR018
+  - id: CR042
+    statement: LogicMonitor's older partner press releases show a long-running effort to build channel scale, including a 500-plus MSP partner or customer milestone and multiple regional partner additions.
+    type: company-claimed
+    topic: partner-dependency
+    sourceRefs:
+    - SR021
+    - SR022
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QR018
+  - id: CR043
+    statement: LogicMonitor's public web terms say subscription terms vary by enterprise, MSP, and reseller contracts, implying that commercial risk allocation lives primarily in negotiated agreements rather than in a single public standard form.
+    type: company-claimed
+    topic: contract-allocation
+    sourceRefs:
+    - SR003
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR026
+  - id: CR044
+    statement: LogicMonitor's privacy policy says customer organizations control information processed by the LM Envision platform and Edwin AI when LogicMonitor acts as a processor or service provider.
+    type: company-claimed
+    topic: contract-allocation
+    sourceRefs:
+    - SR002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR026
+  - id: CR045
+    statement: LogicMonitor's privacy policy says channel partners, lead-generation tools, investors or portfolio companies, and affiliates may provide business contact information to the company.
+    type: company-claimed
+    topic: privacy-governance
+    sourceRefs:
+    - SR002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR026
+  - id: CR046
+    statement: The public trust-center landing page did not surface the underlying DPA, subprocessor, or audit documents in readable text during this run, so contractual and control detail remains incomplete without deeper access.
+    type: open-question
+    topic: trust-center-detail
+    sourceRefs:
+    - SR004
+    confidence: low
+    freshness: current
+  - id: CR047
+    statement: The reviewed public sources do not disclose partner-revenue mix, AWS spend concentration, or Catchpoint revenue contribution, so dependency concentration cannot be sized from public evidence alone.
+    type: open-question
+    topic: partner-concentration
+    sourceRefs:
+    - SR014
+    - SR020
+    - SR030
+    confidence: low
+    freshness: current
+  - id: CR048
+    statement: The reviewed public materials do not quantify FedRAMP customer count or revenue contribution, so the economic importance of the government boundary split is unresolved.
+    type: open-question
+    topic: fedramp-economics
+    sourceRefs:
+    - SR005
+    - SR006
+    - SR015
+    confidence: low
+    freshness: current
+  - id: CR049
+    statement: Security trust, availability, and Catchpoint-integration execution are the three highest residual risks because each can directly impair customer retention and expansion.
+    type: inferred
+    topic: risk-ranking
+    sourceRefs:
+    - SR007
+    - SR010
+    - SR014
+    - SR029
+    - SR030
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR029
+  - id: CR050
+    statement: LogicMonitor's visible mitigations are real, but many of them still depend on customer configuration discipline and successful multi-product execution rather than on fully closed-loop platform safeguards.
+    type: inferred
+    topic: risk-ranking
+    sourceRefs:
+    - SR005
+    - SR016
+    - SR018
+    - SR029
+    - SR030
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR029
+  - id: CR051
+    statement: A repeat LogicMonitor-originated security or access-control failure would be the clearest thesis-break trigger because it would reopen trust debt that the market should currently assume is only partially repaired.
+    type: inferred
+    topic: kill-criteria
+    sourceRefs:
+    - SR010
+    - SR011
+    - SR016
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR028
+    - QR030
+  - id: CR052
+    statement: If Catchpoint integration and AWS-led migration programs do not produce visible noise reduction, reliability gains, or easier expansion, investors should treat the current platform-breadth narrative as complexity rather than moat.
+    type: inferred
+    topic: kill-criteria
+    sourceRefs:
+    - SR014
+    - SR029
+    - SR030
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR030
+  - id: CR053
+    statement: No case-level litigation or IP-dispute evidence was surfaced in the reviewed public materials, so legal exposure beyond contracts and privacy obligations remains unresolved without a docket sweep.
+    type: open-question
+    topic: litigation-visibility
+    sourceRefs: []
+    confidence: low
+    freshness: unknown
+  evidenceGaps:
+  - type: missing-source
+    severity: material
+    topic: outage-history-granularity
+    missingEvidence: An official long-window incident export with severity, duration, and MTTR by component or region.
+    whyItMatters: Third-party outage aggregators are directionally useful but can overstate or misclassify operational pain relative to actual customer impact.
+    diligencePath: Request 12- to 24-month incident logs from LogicMonitor ops leadership plus postmortem counts for P1/P2 events.
+    relatedQuestionRefs:
+    - QR009
+    relatedTableRefs:
+    - TR002
+  - type: missing-source
+    severity: material
+    topic: partner-and-cloud-concentration
+    missingEvidence: Partner-sourced ARR mix, AWS infrastructure spend concentration, and Catchpoint revenue or attach-rate contribution.
+    whyItMatters: Dependency risk cannot be sized if investors cannot tell whether growth, delivery, or gross margin is overly exposed to one partner or acquired product.
+    diligencePath: Ask management for channel mix, top-partner exposure, hyperscaler concentration, and Catchpoint integration KPIs by quarter.
+    relatedQuestionRefs:
+    - QR019
+    relatedTableRefs:
+    - TR003
+  - type: missing-source
+    severity: material
+    topic: public-litigation-and-ip-sweep
+    missingEvidence: Case-level federal/state dockets plus trademark and patent dispute checks covering active and recently resolved matters.
+    whyItMatters: The legal-risk register should not rely on absence of casual web evidence when litigation, IP, or contract disputes can be material even for private companies.
+    diligencePath: Run paid PACER / state docket / TTAB / PTAB searches and obtain management representation on active disputes and threatened claims.
+    relatedQuestionRefs:
+    - QR027
+    relatedTableRefs:
+    - TR001
+  - type: access-blocked
+    severity: material
+    topic: trust-center-document-depth
+    missingEvidence: Readable copies of the DPA, subprocessor list, SOC reports, ISO certificates, and audit-rights language referenced through the trust center.
+    whyItMatters: Public landing pages signal governance maturity, but underwriters still need the underlying legal and audit documents to evaluate breach notice, subprocessors, and contractual control depth.
+    diligencePath: Request trust-center document exports or vendor-security package access under NDA and compare them against public summaries.
+    relatedQuestionRefs:
+    - QR028
+    relatedTableRefs:
+    - TR001
+  - type: missing-source
+    severity: material
+    topic: federal-segment-economics
+    missingEvidence: Revenue, customer count, and roadmap attach data for FedRAMP versus commercial environments.
+    whyItMatters: Without segment economics, investors cannot tell whether the FedRAMP boundary split is a niche compliance constraint or a meaningful growth bottleneck.
+    diligencePath: Ask management for federal pipeline size, live-customer counts, roadmap sequencing for out-of-scope features, and revenue concentration by regulated vertical.
+    relatedQuestionRefs:
+    - QR019
+    - QR030
+    relatedTableRefs:
+    - TR001
+    - TR003
