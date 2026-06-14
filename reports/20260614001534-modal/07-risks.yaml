@@ -1,0 +1,2319 @@
+schemaVersion: report-v2
+artifact: risks
+slug: modal
+runDate: '2026-06-14'
+company:
+  name: Modal
+chapter:
+  number: 7
+  title: Risks
+  summary: 'Modal''s risk profile is severe on three counts and manageable on two others. The severe risks are: (1) a cluster
+    of three major operational outages in a single month (May–June 2026) against an absent public SLA for the majority of
+    its customer base; (2) an asset-light supply model that concentrates GPU compute dependency on AWS, GCP, and Oracle Cloud
+    with no owned hardware buffer; and (3) a $4.65B valuation at approximately 15.5x ARR that prices in hypergrowth execution
+    and tolerates no sustained outage or commoditization drag. The manageable risks are compliance scope (SOC 2 Type II no-deviation
+    audit, HIPAA BAA on Enterprise, GDPR DPA embedded in terms) and key-person concentration (Bernhardsson is highly visible
+    but the company is engineering-led, well-funded, and has broad investor backing). Regulatory exposure is real but bounded:
+    the EU AI Act''s GPAI governance rules became applicable in August 2025 and full applicability arrives August 2026, creating
+    indirect compliance burden through Modal''s enterprise customers. No litigation or enforcement action has been identified.
+    Thesis-break triggers are quantifiable: three or more major incidents per quarter, ARR growth falling below 50% YoY, or
+    a named enterprise defection to a hyperscaler native offering would each warrant investment pause. Mitigations are real
+    but incomplete: multi-cloud architecture, SOC 2, HIPAA BAA, and $355M in fresh capital provide meaningful risk absorption,
+    but the outage cluster and SLA gap require diligence confirmation before underwriting production-critical use.'
+sections:
+- id: SR001
+  title: Legal and regulatory risk is bounded but requires diligence on HIPAA scope and EU AI Act compliance chains
+  body: 'Modal''s legal and regulatory posture is among the more transparent for a late-stage private infrastructure company.
+    The
+
+    company embeds a full Data Processing Agreement in its terms of service (effective October 2025), completing the GDPR
+
+    Article 28 controller-processor relationship and naming the subprocessor list at trust.modal.com/subprocessors. The DPA''s
+
+    Technical and Organizational Measures table commits Modal to encryption at rest, access controls, annual SOC 2 Type II
+
+    renewal, and daily customer-data backups. Critically, however, the DPA places legal-basis, notice, and consent obligations
+
+    on the customer as data controller—not on Modal—meaning regulated deployments require customer-side GDPR compliance programs
+
+    even when Modal''s infrastructure stack is fully compliant. This shared-responsibility split is common in cloud services
+    but
+
+    is often underappreciated by enterprise buyers in healthcare or financial services.
+
+
+    On HIPAA specifically, Modal''s security documentation lists Volumes v1, Memory Snapshots, and Images (excluding Filesystem
+
+    and Directory Snapshots) as explicitly out of BAA scope. This limitation is material: GPU Memory Snapshots are Modal''s
+    most
+
+    differentiated cold-start feature, and their HIPAA exclusion means healthcare customers cannot use the capability that
+
+    justifies Modal''s performance premium without risk of PHI exposure. The BAA-eligible surface is therefore narrower than
+
+    the product marketing implies, and diligence must confirm whether custom Enterprise contracts expand BAA scope before
+
+    underwriting regulated workloads on Modal.
+
+
+    The EU AI Act (Regulation 2024/1689) entered into force August 1, 2024 and reaches full applicability August 2, 2026.
+
+    GPAI model governance rules—which require technical documentation, training data transparency, and copyright compliance
+
+    from providers of general-purpose AI models—became applicable August 2, 2025. Modal is not a GPAI model provider, but
+
+    its enterprise customers who are GPAI providers (fine-tuning open models, serving Llama variants, building downstream
+
+    products) may need to satisfy AI Act documentation requirements that flow upstream to their infrastructure vendors. This
+
+    creates an indirect compliance burden for Modal: enterprise procurement cycles may lengthen as customers ask Modal for
+
+    documentation, subprocessor lists, and data residency confirmations to satisfy their own AI Act filing requirements.
+
+    The AI omnibus political agreement of May 7, 2026 extended some high-risk AI system rules to December 2027, but did
+
+    not delay the GPAI obligations already in force. No active litigation, enforcement action, or regulatory investigation
+
+    against Modal Labs, Inc. has been identified in any publicly available source as of June 14, 2026.
+
+    '
+  claimRefs:
+  - CR001
+  - CR002
+  - CR003
+  - CR004
+  - CR005
+  - CR006
+  - CR007
+  - CR008
+  - CR043
+  - CR044
+  - CR045
+  tableRefs:
+  - TR001
+- id: SR002
+  title: Operational and reliability risk is the chapter's most critical finding given three major outages in a single month
+    against an absent public SLA
+  body: 'Modal''s aggregate uptime statistics are solid: the status page (June 14, 2026) shows 90-day uptime of 99.946% for
+    GPU
+
+    functions, 99.938% for CPU functions, 99.933% for Web endpoints, 99.782% for Snapshot restores, and 99.861% for Sandboxes.
+
+    Those figures are consistent with production-grade infrastructure and should not be dismissed. But the shape of the incidents
+
+    that generated those downtime minutes is a material diligence signal. A Hacker News post from June 3, 2026 documented
+    three
+
+    major outages in a single month: the May 7 SEV 1 (AWS availability zone us1-az4 overheating), a May 19 incident with no
+
+    published post-mortem, and the June 3 incident—an internal authentication system failure unrelated to GPU hardware or
+
+    cloud-provider availability. The clustering of three events in 30 days raises the question of whether Modal''s reliability
+
+    infrastructure has kept pace with its revenue growth from roughly $60M to $300M ARR in approximately 12 months.
+
+
+    The authentication system failure on June 3 is particularly adverse as a signal: it indicates a centralized control-plane
+
+    dependency that is not directly mitigated by Modal''s multi-cloud GPU pooling. The May 7 AWS AZ overheating shows that
+    even
+
+    with multi-cloud architecture, a single-zone failure propagates to customers for in-flight workloads. Together, these
+    two
+
+    failure modes suggest that Modal''s redundancy architecture may be more effective at preventing capacity shortfalls than
+    at
+
+    absorbing sudden AZ-level events or control-plane faults.
+
+
+    The SLA gap compounds the operational risk. Modal publishes no contractual uptime commitment for Starter or Team customers—
+
+    the large majority of its user base. Enterprise SLA terms are negotiated privately and are not publicly available. This
+    means
+
+    most Modal customers have no contractual remedy for the three May–June 2026 outages. Modal does have substantive mitigations:
+
+    SOC 2 Type II with no deviations (January 2025 audit), a private HackerOne bug bounty program, gVisor container isolation,
+
+    Rust-based container runtime, TLS 1.3 on all public APIs, and automated synthetic monitoring. These are real protections.
+
+    But the absence of a published SLA for non-Enterprise customers, combined with the outage cluster, means operational risk
+
+    belongs at the top of the severity ranking until confirmed by diligence on incident root causes and post-mortem cadence.
+
+    '
+  claimRefs:
+  - CR009
+  - CR010
+  - CR011
+  - CR012
+  - CR013
+  - CR014
+  - CR015
+  - CR036
+  tableRefs:
+  - TR002
+  figureRefs:
+  - FR002
+- id: SR003
+  title: Partner and infrastructure dependency risk centers on GPU supply concentration and NVIDIA's evolving role as both
+    supplier and competitor
+  body: 'Modal operates a deliberately asset-light model: it does not own GPU hardware and instead aggregates capacity from
+    AWS,
+
+    GCP, and Oracle Cloud Infrastructure across hundreds of data centers globally. This architecture provides structural
+
+    flexibility—no capital-intensive GPU procurement, no depreciation risk, ability to route to cheapest available hardware—but
+
+    it concentrates existential dependency on three commercial counterparties whose pricing, allocation, and strategic priorities
+
+    are not controlled by Modal. The AWS shared responsibility model is instructive: even for abstracted cloud services, the
+
+    cloud provider controls infrastructure reliability and leaves configuration, patching, and security configuration to the
+
+    customer. Modal occupies the same position relative to AWS, GCP, and OCI as a GPU intermediary that must accept upstream
+
+    availability risk while marketing its own SLA to downstream customers.
+
+
+    NVIDIA is the deepest single-point dependency in Modal''s technical stack. Modal''s GPU Memory Snapshots—the alpha-stage
+    cold-
+
+    start feature that achieves 10x speedups—depend on the CUDA checkpoint/restore API in specific NVIDIA driver branches
+    (570/575).
+
+    Any change to NVIDIA''s driver API (whether through version updates, commercial restrictions, or the end of the checkpoint
+
+    capability in driver maintenance) would break the most differentiated feature in Modal''s cold-start architecture. The
+
+    incompatibility with multi-GPU code and non-CUDA workloads (documented by Modal) further limits the risk mitigation surface.
+
+    This is a technical dependency that is not currently mitigated by any publicly disclosed alternative.
+
+
+    NVIDIA''s competitive behavior adds a second dimension to the dependency risk. Sacra''s Fireworks AI report identifies
+    NVIDIA''s
+
+    acquisition of Lepton as a signal of NVIDIA''s ambition to compete directly in the GPU cloud marketplace. If NVIDIA''s
+
+    strategic interests shift from enabling GPU aggregators to serving customers directly, Modal''s supply relationship with
+    the
+
+    dominant GPU manufacturer becomes adversarial rather than symbiotic. CoreWeave''s situation—where NVIDIA holds a $2B equity
+
+    stake and provides a $6.3B take-or-pay GPU backstop—illustrates how NVIDIA can use preferential allocation to deepen
+
+    relationships with capital-intensive data center operators at the potential expense of lighter-weight aggregation platforms.
+
+    Modal''s dependency on Oracle Cloud Infrastructure (OCI) as a third cloud provider—likely Oracle''s GPU cloud expansion—adds
+
+    concentration and counterparty risk from a less-established AI infrastructure provider relative to AWS and GCP.
+
+    '
+  claimRefs:
+  - CR017
+  - CR018
+  - CR019
+  - CR020
+  - CR021
+  - CR022
+  - CR023
+  - CR038
+  - CR041
+  - CR042
+  tableRefs:
+  - TR003
+  figureRefs:
+  - FR003
+- id: SR004
+  title: Competitive and financial-model risk is elevated by the 15.5x ARR multiple, Sandbox revenue concentration, and accelerating
+    hyperscaler and well-funded peer pressure
+  body: 'Modal''s Series C valuation of $4.65B at approximately $300M ARR implies a 15.5x revenue multiple. For context, mature
+
+    cloud infrastructure companies at similar ARR scale often trade at 5-10x revenue; Modal''s premium reflects the exceptional
+
+    growth rate (5x since October 2025 Series B) but prices in execution on continued hypergrowth, margin discipline, and
+
+    product differentiation. Any deceleration in ARR, margin compression driven by cloud provider pricing, or competitive
+
+    displacement by a hyperscaler-native solution would apply downward pressure to the multiple. The company has not disclosed
+
+    gross margin, burn rate, or customer concentration, meaning the investment case cannot be fully underwritten without private
+
+    financials. Estimated gross margins for asset-light GPU aggregators are 30–50% (consistent with comparable infrastructure
+
+    businesses), but at a 15.5x ARR multiple, even 40% gross margin implies roughly 38x gross profit—a demanding multiple
+    for
+
+    a business with meaningful supply-side concentration.
+
+
+    The Sandbox revenue concentration—Sandboxes driving over one-third of Modal''s total revenue—creates a product-specific
+    risk.
+
+    Sandboxes serve the AI agent execution market, which is a high-growth category but one that is rapidly attracting direct
+
+    competition from AWS, Google, and Anthropic. AWS Bedrock AgentCore, Google Gemini''s agent capabilities, and Anthropic''s
+
+    own managed Sandbox-like offerings all address the same use case. If enterprise buyers consolidate AI infrastructure
+
+    procurement with existing hyperscaler relationships, Modal''s Sandbox revenue could face rapid substitution risk in a
+    product
+
+    that represents $100M+ of its ARR base.
+
+
+    The competitive environment is also hardening from well-funded peers. CoreWeave''s $99.4B contracted backlog and $31–35B
+
+    FY2026 capex investment targets the same AI compute demand as Modal but with raw capacity scale Modal cannot match as
+    an
+
+    asset-light aggregator. Fireworks AI is estimated by Sacra at approximately $315M ARR—larger than Modal''s $300M disclosed
+
+    ARR baseline—and is differentiating on fine-tuning, agent deployment, and real-time latency optimization. RunPod grew
+
+    from 100,000 to 400,000+ developers by late 2025 on only $22M raised, demonstrating price-competitive GPU platforms can
+
+    scale without Modal-level capital. The FTC''s generative AI competition analysis flags cloud platform bundling and tying
+
+    as structural risks for independent compute vendors: hyperscalers could route enterprise customers toward their own GPU
+
+    products by conditioning preferred pricing, compliance posture, or enterprise support on exclusive cloud relationships.
+
+    '
+  claimRefs:
+  - CR024
+  - CR025
+  - CR026
+  - CR027
+  - CR028
+  - CR029
+  - CR030
+  - CR039
+  tableRefs:
+  - TR004
+  figureRefs:
+  - FR001
+- id: SR005
+  title: Key-person and governance risk is meaningful but manageable; explicit kill criteria anchor the investment thesis
+  body: 'Modal''s governance transparency is consistent with a founder-led Series C private company. Erik Bernhardsson is
+    the sole
+
+    publicly named executive—appearing in all Series C communications, product blogs, and press coverage. Akshat Bubna is
+
+    confirmed as co-founder but his functional role and prior background are undisclosed in any public source. No other
+
+    executives (CTO, CRO, CFO, VP Engineering, Head of Revenue) are named on the company website, LinkedIn leadership section,
+
+    or in press coverage. The board of directors, committee structure, and investor control terms are entirely opaque publicly.
+
+    This is standard for a late-stage private company in the current era but warrants diligence attention at a $4.65B valuation
+
+    with $300M+ ARR and enterprise customers running production workloads.
+
+
+    The key-person risk is real but partially mitigated by the nature of the product. Modal is an engineering-led platform
+
+    with a large developer community (1.6M PyPI downloads in a single day, June 2026), open-source client, and deep technical
+
+    moat in cold-start infrastructure. These assets do not disappear if Bernhardsson were unavailable for a period. The
+
+    broader investor syndicate—General Catalyst, Redpoint, Menlo, Bain Capital Ventures, Accel—provides board representation
+
+    and governance oversight that is not visible publicly but is standard for Series C investors. Modal does not publicly
+
+    reference alignment with the NIST AI Risk Management Framework or other voluntary AI governance standards, which is an
+
+    easily addressable gap for enterprise accounts with AI procurement policies.
+
+
+    The thesis-break framework requires explicit criteria. Modal''s investment case breaks if: (1) major outage frequency
+
+    remains at three or more per quarter beyond Q2 2026, without public post-mortem evidence of root-cause remediation and
+
+    SLA improvement; (2) ARR growth decelerates below 50% YoY without a corresponding improvement in gross margin;
+
+    (3) a named enterprise customer (Sandboxes or Functions at scale) publicly migrates to a hyperscaler native solution,
+
+    signaling pricing or compliance-driven substitution; (4) NVIDIA restricts or monetizes the CUDA checkpoint/restore API
+
+    in a way that breaks GPU Memory Snapshots for existing customers; or (5) a regulatory enforcement action materially
+
+    impairs Modal''s ability to serve European or healthcare customers. Against these criteria, Modal''s current capital position
+
+    ($355M Series C, April/May 2026), SOC 2 posture, and developer adoption signal resilience—but the outage cluster and
+
+    SLA gap require specific validation before the reliability component of the thesis can be closed.
+
+    '
+  claimRefs:
+  - CR031
+  - CR032
+  - CR033
+  - CR034
+  - CR035
+  - CR037
+  - CR038
+  - CR040
+  tableRefs:
+  - TR005
+tables:
+- id: TR001
+  title: Regulatory / legal risk register
+  columns:
+  - Risk / rule
+  - Jurisdiction
+  - Status
+  - Likelihood
+  - Severity
+  - Mitigation
+  - Residual exposure
+  - Diligence path
+  enumerationScope:
+    coverage: exhaustive
+    basis: Exhaustive for legal and regulatory risks directly observable in Modal's public contracts, security documentation,
+      EU AI Act text, and FTC analysis as of June 14, 2026. Rows ordered by severity.
+  notes: Severity reflects investment diligence relevance, not legal advice. No enforcement action or litigation against Modal
+    Labs, Inc. has been identified as of the run date.
+  rows:
+  - - HIPAA BAA scope gap — Memory Snapshots and Volumes v1 excluded from BAA coverage
+    - US (federal)
+    - Active limitation — documented in public security page
+    - High
+    - High
+    - Enterprise BAA available; BAA covers Volumes v2; Starter/Team users must avoid PHI entirely
+    - Healthcare customers using cold-start optimization (GPU Snapshots) cannot include PHI; custom Enterprise terms may expand
+      scope
+    - Confirm BAA exhibit scope with Modal; request redlined BAA and a map of permitted PHI data flows by product feature
+  - - GDPR controller-processor split — customer retains legal-basis and consent obligations under DPA
+    - EU / EEA
+    - Active — embedded in public terms of service (October 2025 effective date)
+    - High
+    - Medium
+    - DPA with full TOM table in place; encryption at rest and in transit; SOC 2 Type II confirms controls
+    - Regulated EU customers must maintain their own GDPR compliance programs; Modal does not absorb controller risk
+    - Review DPA Schedule 1–3 in enterprise contract; verify subprocessor list currency at trust.modal.com/subprocessors
+  - - EU AI Act GPAI governance rules — documentation and transparency obligations apply to GPAI model providers since August
+      2025
+    - EU / EEA
+    - In force since August 2, 2025; full AI Act applicability August 2, 2026
+    - Medium
+    - Medium
+    - Modal is infrastructure provider, not GPAI model provider; indirect exposure through enterprise customers
+    - Longer enterprise procurement cycles as GPAI-classified customers request AI Act documentation from their infrastructure
+      vendors
+    - Confirm Modal's documentation package for GPAI-serving customers; request template compliance artifact for EU enterprise
+      deployments
+  - - FTC cloud competition enforcement — tying and bundling risk for compute intermediaries
+    - US (federal)
+    - No current action against Modal; FTC analysis flags structural risk for the sector
+    - Low
+    - Medium
+    - Modal is not a hyperscaler; risk is downstream if AWS/GCP/OCI engage in exclusionary pricing against aggregators
+    - Hyperscaler supply access could be restricted or repriced if cloud providers prioritize their own serverless GPU products
+    - Monitor AWS/GCP/OCI terms and pricing; diligence Modal's contractual protections against discriminatory compute access
+  - - No known litigation or regulatory enforcement
+    - Global
+    - Confirmed absent — no enforcement identified in fetched sources as of June 14, 2026
+    - Low
+    - Low
+    - No mitigation required; standard corporate governance provides baseline protection
+    - Standard IP, employment, and data-privacy litigation risk inherent to any Series C company
+    - Confirm via legal counsel review of Delaware incorporation records and PACER/EDGAR search
+  claimRefs:
+  - CR001
+  - CR002
+  - CR003
+  - CR004
+  - CR005
+  - CR006
+  - CR007
+  - CR008
+  - CR043
+  - CR044
+  - CR045
+- id: TR002
+  title: Operational and security risk register
+  columns:
+  - Failure mode
+  - Likelihood
+  - Severity
+  - Mitigation maturity
+  - Residual exposure
+  - Unresolved gap
+  notes: Rows ordered by severity. Uptime percentages from status.modal.com (June 14, 2026, 90-day view). Outage dates from
+    Hacker News post (June 3, 2026).
+  rows:
+  - - Major outage cluster — 3 SEV 1/major incidents in May–June 2026 (AWS AZ overheating May 7; unreported May 19; auth system
+      failure June 3)
+    - High (occurred; recurrence unconfirmed)
+    - Critical
+    - Partial — multi-cloud pooling addresses some AZ failures; auth system failure not separately mitigated publicly
+    - Production workloads on Modal are exposed to recurrent brief outages without contractual remedy for most plan tiers
+    - No public post-mortem for May 19 outage; no disclosed architectural fix for authentication control-plane failure
+  - - SLA gap — no contractual uptime commitment for Starter or Team customers
+    - High (by design — contractual gap exists)
+    - High
+    - Partial — Enterprise SLA available; Team/Starter terms contain no uptime remedy
+    - Majority of customer base has no SLA-backed remedy for outages including the May–June cluster
+    - Public SLA text for non-Enterprise plans; customer communications about service credit structure
+  - - GPU Memory Snapshot alpha instability — incompatible with multi-GPU code and non-CUDA workloads
+    - Medium (alpha feature; documented limitations)
+    - Medium
+    - Partial — CPU Memory Snapshots (GA) provide fallback; affected workloads can avoid GPU snapshots
+    - Customers using multi-GPU training or non-CUDA GPU inference cannot benefit from cold-start optimization; HIPAA BAA
+      excludes Memory Snapshots
+    - GA timeline for full multi-GPU support; CUDA checkpoint/restore API version dependency disclosure
+  - - Private bug bounty — invitation-only HackerOne program limits security research breadth
+    - Low (no known critical disclosures)
+    - Medium
+    - Partial — SOC 2 Type II and annual pen tests provide external validation; private bounty program limits community breadth
+    - Fewer independent eyes on platform vulnerabilities than a public bug bounty would provide
+    - Consider public bounty scope once platform reaches larger enterprise scale; interim alternative is annual pen test transparency
+  claimRefs:
+  - CR009
+  - CR010
+  - CR011
+  - CR012
+  - CR013
+  - CR014
+  - CR015
+  - CR016
+  - CR036
+- id: TR003
+  title: Partner and infrastructure dependency risk register
+  columns:
+  - Dependency
+  - Counterparty
+  - Role
+  - Concentration
+  - Failure scenario
+  - Severity
+  - Mitigation
+  - Residual exposure
+  notes: Rows ordered by severity. OCI = Oracle Cloud Infrastructure.
+  rows:
+  - - GPU compute supply — no owned hardware; 100% dependent on cloud provider allocation and pricing
+    - AWS, GCP, Oracle Cloud (OCI)
+    - Primary GPU compute provisioning across hundreds of global data centers
+    - High — 3 providers, no hardware backup if all three restrict allocation or raise pricing simultaneously
+    - Pricing increase, capacity restriction, or strategic de-prioritization by any major provider; single-AZ failure propagates
+      (May 7 incident)
+    - Critical
+    - Multi-cloud pooling distributes risk; regional routing; GPU automatic upgrade (H100→H200) maximizes pool utilization
+    - Material — any provider pricing action or capacity restriction directly impacts Modal's gross margin and customer availability
+  - - NVIDIA CUDA checkpoint/restore API — GPU Memory Snapshot feature depends on driver branches 570/575
+    - NVIDIA
+    - Provides the underlying CUDA checkpoint/restore capability for GPU Memory Snapshots (alpha)
+    - Critical — no disclosed alternative implementation; incompatible with multi-GPU code
+    - NVIDIA depreciates or changes the checkpoint/restore API; feature breaks for existing customers using sub-second cold-start
+      optimization
+    - High
+    - GPU snapshots are alpha; CPU Memory Snapshots (GA) provide fallback; Modal can disable snapshot-dependent workflows
+    - Modal's most differentiated cold-start feature could disappear with an NVIDIA driver change; no disclosed mitigation
+      timeline
+  - - NVIDIA as potential competitor — Lepton acquisition signals GPU cloud marketplace ambitions
+    - NVIDIA
+    - Currently GPU hardware supplier; emerging as direct GPU cloud platform via Lepton
+    - Medium — NVIDIA's allocation decisions favor capital-intensive partners (CoreWeave $6.3B backstop); Modal is not in
+      that tier
+    - NVIDIA prioritizes GPU allocation to own marketplace or capital-intensive partners over aggregation platforms
+    - Medium
+    - Multi-cloud sourcing reduces NVIDIA-specific GPU exclusivity risk; AMD GPU diversification as long-term option
+    - Structural dependency on NVIDIA hardware while NVIDIA builds competing distribution channels
+  - - gVisor container runtime — container isolation depends on Google-maintained open-source project
+    - Google (gVisor)
+    - Provides kernel-level sandbox isolation for all Modal container workloads
+    - Medium — gVisor is open source; Google also uses it in Cloud Run and GKE; discontinuation risk is low
+    - gVisor maintenance deprioritized or forked; isolation properties diverge from production requirements
+    - Low
+    - Open-source license; Modal could fork or substitute an alternative kernel sandbox (Firecracker, kata containers)
+    - Low residual risk given active use in Google's own products
+  claimRefs:
+  - CR017
+  - CR018
+  - CR019
+  - CR020
+  - CR021
+  - CR022
+  - CR023
+  - CR038
+  - CR041
+  - CR042
+- id: TR004
+  title: People and execution risk register
+  columns:
+  - Role / function
+  - Dependency or gap
+  - Likelihood
+  - Severity
+  - Mitigation
+  - Diligence path
+  notes: Rows ordered by severity.
+  rows:
+  - - CEO / Co-founder Erik Bernhardsson — sole named external voice; technical credibility and developer community trust
+    - Key-person concentration; sole publicly identified leader; company vision and culture deeply tied to Bernhardsson's
+      brand
+    - Low (normal operational continuity)
+    - High
+    - Broad investor board oversight (GC, Redpoint, Menlo, BCV, Accel); engineering team is large; open-source client creates
+      institutional memory
+    - Request full executive org chart; confirm named VP-level leadership; verify succession and continuity planning
+  - - Co-founder Akshat Bubna — title and background undisclosed in all public sources
+    - Governance opacity; functional role (CTO, CPO, or other) and prior industry experience are unknown
+    - Low (undisclosed, not necessarily absent)
+    - Medium
+    - Bubna is confirmed co-founder; role presumably involves technical leadership given Bernhardsson's external-facing profile
+    - Confirm title, scope, and engineering oversight responsibility; review LinkedIn or press record
+  - - No named C-suite beyond founders — no public VP Engineering, CRO, CFO, or Head of Revenue
+    - Execution risk at $300M ARR without visible functional leadership for sales, finance, or engineering at scale
+    - Medium (scale requires delegation beyond two founders)
+    - Medium
+    - Series C investor syndicate provides board governance; startup program and case study cadence suggest active BD function
+    - Request org chart, headcount by function, and planned hires; confirm whether go-to-market is founder-led or delegated
+  - - Governance opacity — no disclosed board composition, committee structure, or investor control rights
+    - Limited external accountability visibility at $4.65B valuation; institutional governance relies on private investor
+      arrangements
+    - Low (standard for Series C)
+    - Low
+    - GC, Redpoint, Menlo, BCV, Accel are established institutional investors with standard governance expectations
+    - Request board composition, committee charter, and protective provision summary in term sheet review
+  claimRefs:
+  - CR031
+  - CR032
+  - CR033
+  - CR034
+  - CR035
+  - CR037
+  - CR038
+  - CR040
+- id: TR005
+  title: Mitigation and kill criteria table
+  columns:
+  - Risk
+  - Monitorable trigger
+  - Threshold / event
+  - Action implication
+  notes: Triggers are designed to be observable within a quarterly monitoring cadence. All thresholds assume the investor
+    has confirmed baseline reliability and growth metrics in diligence prior to investment.
+  rows:
+  - - Operational reliability — outage cluster recurrence
+    - Track monthly incident count and severity from status.modal.com; request post-mortem reports for each SEV 1 event
+    - Three or more major incidents per quarter with no published root-cause remediation; or any single incident exceeding
+      4 hours of GPU function unavailability
+    - Investment pause; escalate diligence request for infrastructure architecture review and post-mortem library; consider
+      SLA escrow in enterprise terms
+  - - SLA gap — absence of non-Enterprise contractual protections
+    - Monitor for published SLA for Starter or Team plans; track any public announcement of SLA policy changes
+    - Continued absence of published SLA for non-Enterprise plans after Series C deployment (expected within 12 months)
+    - Require enterprise MSA with custom SLA as condition of any production deployment; flag as negative signal for broad
+      developer market monetization
+  - - HIPAA / regulated-workload compliance — BAA scope expansion
+    - Track trust.modal.com and security docs page for BAA scope updates; request updated BAA exhibit annually
+    - GPU Memory Snapshots remain excluded from BAA scope for more than 24 months post-GA; no custom BAA expansion available
+      for regulated healthcare customers
+    - Downgrade healthcare vertical TAM estimate; flag HIPAA compliance as marketing-ahead-of-contract risk in regulated enterprise
+      sales
+  - - ARR growth deceleration — hypergrowth slowdown
+    - Sacra quarterly ARR estimate; any public disclosure from Modal; secondary market valuation signals; new enterprise customer
+      announcements
+    - ARR growth falls below 50% YoY (from 5x 7-month pace); or Sandbox revenue share declines from one-third without offsetting
+      Functions growth
+    - Re-underwrite financial model; reduce multiple target; request pipeline visibility and customer cohort data in diligence
+  - - Hyperscaler substitution — named customer defection
+    - Monitor customer announcement feeds, press coverage, and product launch alerts from AWS Bedrock AgentCore, GCP Vertex
+      AI, Azure AI Foundry for Modal-adjacent features
+    - Any named Modal reference customer (Suno, Cognition, Physical Intelligence, Ramp, Applied Compute) publicly announces
+      migration to hyperscaler-native serverless GPU or Sandbox-equivalent product
+    - Thesis-break event; halt position sizing increase; trigger full portfolio review of Modal exposure; request emergency
+      management briefing on competitive response
+  claimRefs:
+  - CR004
+  - CR009
+  - CR013
+  - CR024
+  - CR025
+  - CR026
+  - CR027
+  - CR028
+  - CR029
+  - CR036
+  - CR041
+figures:
+- id: FR001
+  title: Risk severity heatmap — likelihood vs. impact vs. mitigation maturity
+  type: matrix
+  layout: standard
+  summary: 'Severity-ranked risk matrix positioning Modal''s eight material risks by likelihood, impact, mitigation maturity,
+    and residual severity as of June 14, 2026. Rows are ordered from highest to lowest residual severity. Mitigation maturity:
+    Strong = public controls fully documented; Partial = controls exist but gaps remain; Weak = limited or no public mitigation.'
+  data:
+    columns:
+    - Likelihood
+    - Impact
+    - Mitigation maturity
+    - Residual severity
+    rows:
+    - label: Outage cluster — 3 major incidents in May–June 2026; no public SLA for Starter/Team
+      values:
+      - High
+      - Critical
+      - Partial
+      - Critical
+    - label: Asset-light GPU supply concentration — AWS, GCP, OCI; no owned hardware buffer
+      values:
+      - Medium
+      - Critical
+      - Partial
+      - High
+    - label: Valuation / execution pressure — 15.5x ARR; 5x growth pace must sustain
+      values:
+      - Medium
+      - High
+      - Partial
+      - High
+    - label: Hyperscaler bundling / Sandbox substitution — AWS/GCP/Azure native agent execution
+      values:
+      - Medium
+      - High
+      - Weak
+      - High
+    - label: NVIDIA CUDA API dependency — GPU Memory Snapshot tied to specific driver branches
+      values:
+      - Low
+      - High
+      - Partial
+      - Medium
+    - label: HIPAA BAA scope gap — Memory Snapshots and Volumes v1 excluded from BAA
+      values:
+      - High (for healthcare use)
+      - Medium
+      - Partial
+      - Medium
+    - label: Key-person / governance opacity — Bernhardsson sole named leader; no board disclosed
+      values:
+      - Low
+      - Medium
+      - Partial
+      - Low
+    - label: EU AI Act / GDPR compliance chain — indirect burden through GPAI enterprise customers
+      values:
+      - Medium
+      - Low
+      - Partial
+      - Low
+  claimRefs:
+  - CR001
+  - CR004
+  - CR009
+  - CR010
+  - CR012
+  - CR013
+  - CR017
+  - CR020
+  - CR024
+  - CR026
+  - CR029
+  - CR031
+  - CR036
+- id: FR002
+  title: Risk transmission map — how Modal's primary risks flow into revenue, customer trust, and valuation
+  type: dag
+  layout: wide
+  summary: Directed acyclic graph showing how Modal's five root-cause risk clusters propagate through operational, competitive,
+    regulatory, and governance pathways into downstream impacts on revenue durability and valuation. Edges represent causal
+    or dependency relationships. Node descriptions are illustrative; directionality is approximate.
+  data:
+    nodes:
+    - id: n-infra
+      label: Infrastructure dependency
+      description: 100% asset-light GPU supply from AWS, GCP, OCI with no owned hardware buffer; NVIDIA CUDA checkpoint API
+        technical dependency.
+    - id: n-outage
+      label: Outage cluster
+      description: 3 major incidents in May–June 2026; no public SLA for Starter/Team customers.
+    - id: n-valuation
+      label: Valuation pressure
+      description: $4.65B at 15.5x ARR; requires sustained hypergrowth and margin discipline.
+    - id: n-competition
+      label: Competitive pressure
+      description: Hyperscaler bundling, CoreWeave scale, Fireworks AI, RunPod cost competition, Sandbox substitution risk.
+    - id: n-regulatory
+      label: Regulatory / legal exposure
+      description: HIPAA BAA scope gap, EU AI Act GPAI chain, GDPR controller-processor split, FTC cloud competition monitoring.
+    - id: n-reliability
+      label: Reliability perception
+      description: Developer and enterprise trust in Modal's production readiness; critical for Sandboxes use case.
+    - id: n-revenue
+      label: Revenue durability
+      description: Consumption-based ARR; Sandbox concentration at 33%+; enterprise expansion dependent on NRR and SLA confidence.
+    - id: n-margin
+      label: Gross margin
+      description: Spread between customer pricing and cloud-provider GPU costs; no public data; estimated 30–50%.
+    - id: n-valuation-out
+      label: Investment valuation outcome
+      description: Realized exit multiple at IPO or M&A; sensitive to revenue durability, margin, and competitive position.
+    edges:
+    - from: n-infra
+      to: n-outage
+      label: AZ failure propagates
+    - from: n-infra
+      to: n-margin
+      label: Cloud cost determines spread
+    - from: n-outage
+      to: n-reliability
+      label: Incidents erode trust
+    - from: n-competition
+      to: n-margin
+      label: Pricing pressure compresses spread
+    - from: n-competition
+      to: n-revenue
+      label: Substitution reduces ARR
+    - from: n-regulatory
+      to: n-revenue
+      label: Compliance gaps slow healthcare/EU sales
+    - from: n-reliability
+      to: n-revenue
+      label: Trust drives expansion and retention
+    - from: n-valuation
+      to: n-revenue
+      label: Growth expectation drives enterprise deal urgency
+    - from: n-revenue
+      to: n-valuation-out
+      label: ARR × multiple = exit value
+    - from: n-margin
+      to: n-valuation-out
+      label: Gross profit quality underpins premium multiple
+  claimRefs:
+  - CR009
+  - CR012
+  - CR017
+  - CR024
+  - CR026
+  - CR029
+  - CR036
+- id: FR003
+  title: Dependency map — Modal's critical supply chain, technical, and regulatory dependencies
+  type: dag
+  layout: standard
+  summary: Directed graph of Modal's critical external dependencies across compute supply, technology, regulatory compliance,
+    and financial infrastructure. Edges show the direction and nature of the dependency relationship. Node criticality is
+    indicated by edge count and severity annotations.
+  data:
+    nodes:
+    - id: n-modal
+      label: Modal platform
+      description: Core production cloud for AI — Functions, Sandboxes, Training, Volumes.
+    - id: n-aws
+      label: AWS
+      description: Primary GPU compute supply — EC2 GPU instances, multiple AZs globally.
+    - id: n-gcp
+      label: Google Cloud (GCP)
+      description: GPU compute supply and gVisor runtime provenance.
+    - id: n-oci
+      label: Oracle Cloud (OCI)
+      description: Third GPU compute supply tier; less established AI infrastructure.
+    - id: n-nvidia
+      label: NVIDIA
+      description: GPU hardware manufacturer; CUDA checkpoint/restore API provider; emerging marketplace competitor via Lepton
+        acquisition.
+    - id: n-stripe
+      label: Stripe
+      description: Payment processing — PCI Level 1; Modal does not store card data.
+    - id: n-gvisor
+      label: gVisor
+      description: Google open-source container isolation runtime for all Modal workloads.
+    - id: n-hipaa
+      label: HHS / HIPAA
+      description: US federal health data compliance framework; BAA required for PHI workloads.
+    - id: n-gdpr
+      label: EU GDPR / AI Act
+      description: Data processor obligations; GPAI governance rules for enterprise customers.
+    edges:
+    - from: n-modal
+      to: n-aws
+      label: GPU compute supply
+    - from: n-modal
+      to: n-gcp
+      label: GPU compute supply
+    - from: n-modal
+      to: n-oci
+      label: GPU compute supply
+    - from: n-nvidia
+      to: n-modal
+      label: GPU hardware + CUDA checkpoint API
+    - from: n-gvisor
+      to: n-modal
+      label: Container isolation runtime
+    - from: n-stripe
+      to: n-modal
+      label: Payment processing
+    - from: n-hipaa
+      to: n-modal
+      label: BAA compliance requirement
+    - from: n-gdpr
+      to: n-modal
+      label: DPA / GPAI documentation chain
+  claimRefs:
+  - CR017
+  - CR018
+  - CR019
+  - CR022
+  - CR023
+localEvidence:
+  searchQueries:
+  - engine: fetch
+    query: Modal Labs legal terms of service 2026 — DPA, data processing agreement, GDPR controller-processor obligations,
+      subprocessor list, TOM schedule
+    retainedSourceRefs:
+    - SR012
+    - SR014
+  - engine: fetch
+    query: Modal Labs security documentation 2026 — HIPAA BAA scope limitations, SOC 2 Type II, gVisor container isolation,
+      bug bounty, data retention policies
+    retainedSourceRefs:
+    - SR013
+    - SR015
+  - engine: fetch
+    query: Modal Labs operational outages 2026 — status page, Hacker News incident reports, May June 2026 reliability cluster
+    retainedSourceRefs:
+    - SR010
+    - SR011
+  - engine: fetch
+    query: EU AI Act 2026 applicability timeline GPAI governance rules infrastructure providers full enforcement schedule
+    retainedSourceRefs:
+    - SR001
+    - SR002
+  - engine: fetch
+    query: FTC generative AI competition concerns 2026 cloud bundling tying exclusionary behavior infrastructure vendors
+    retainedSourceRefs:
+    - SR009
+  - engine: fetch
+    query: CoreWeave 2026 valuation contracted backlog NVIDIA partnership GPU supply competitive threat modal serverless
+    retainedSourceRefs:
+    - SR003
+  - engine: fetch
+    query: Fireworks AI 2026 revenue scale competitive risk inference commoditization NVIDIA hardware concentration
+    retainedSourceRefs:
+    - SR007
+  - engine: fetch
+    query: NVIDIA H100 GPU cloud marketplace Lepton acquisition 2026 supply chain risk serverless GPU aggregators
+    retainedSourceRefs:
+    - SR004
+  - engine: fetch
+    query: AWS shared responsibility model cloud infrastructure dependency risk 2026
+    retainedSourceRefs:
+    - SR005
+  - engine: fetch
+    query: Modal Labs GitHub client issues 2026 open source bugs adverse signals developer experience operational quality
+    retainedSourceRefs:
+    - SR006
+  - engine: fetch
+    query: NIST AI risk management framework 2026 voluntary governance standard enterprise procurement AI trustworthiness
+    retainedSourceRefs:
+    - SR008
+  researchQuestions:
+  - id: QR001
+    question: Has Modal Labs disclosed any active litigation, enforcement actions, or regulatory investigations as of June
+      2026?
+    type: verification
+    status: answered
+    targets:
+    - contentRequirements/1
+  - id: QR002
+    question: What compliance certifications does Modal hold as of June 2026 and what are the scope limitations of each?
+    type: verification
+    status: answered
+    targets:
+    - contentRequirements/1
+    - contentRequirements/2
+  - id: QR003
+    question: What does Modal's published Data Processing Agreement say about data processor responsibilities and customer
+      data controller obligations under GDPR?
+    type: verification
+    status: answered
+    targets:
+    - contentRequirements/1
+  - id: QR004
+    question: What does Modal's HIPAA security documentation say about BAA scope limitations for GPU Memory Snapshots, Volumes
+      v1, and other specific product features?
+    type: verification
+    status: answered
+    targets:
+    - contentRequirements/1
+  - id: QR005
+    question: What does the EU AI Act GPAI governance framework require from AI infrastructure providers and their enterprise
+      customers that process or serve GPAI models?
+    type: mechanism
+    status: answered
+    targets:
+    - contentRequirements/1
+  - id: QR006
+    question: What is the current application timeline of the EU AI Act including the AI omnibus amendments agreed May 7,
+      2026?
+    type: verification
+    status: answered
+    targets:
+    - contentRequirements/1
+  - id: QR007
+    question: Does the FTC's 2023 generative AI competition analysis create regulatory risk for specialized cloud platforms
+      dependent on hyperscaler GPU supply chains in 2026?
+    type: adverse
+    status: answered
+    targets:
+    - contentRequirements/1
+    - contentRequirements/3
+  - id: QR008
+    question: How many major operational incidents occurred on Modal's platform in the 30-day window ending June 3, 2026 and
+      what were the root causes?
+    type: quantification
+    status: answered
+    targets:
+    - contentRequirements/2
+  - id: QR009
+    question: What uptime does Modal's status page show for each service tier over the 90-day period ending June 14, 2026?
+    type: quantification
+    status: answered
+    targets:
+    - contentRequirements/2
+  - id: QR010
+    question: What adverse developer commentary exists about Modal's operational reliability based on the June 3, 2026 Hacker
+      News thread?
+    type: adverse
+    status: answered
+    targets:
+    - contentRequirements/2
+  - id: QR011
+    question: What contractual SLA does Modal publish for standard and team plan customers as of June 2026?
+    type: verification
+    status: answered
+    targets:
+    - contentRequirements/2
+  - id: QR012
+    question: How does Modal's GPU Memory Snapshot technology create dependency on NVIDIA's CUDA checkpoint/restore API, and
+      what are the documented limitations?
+    type: mechanism
+    status: answered
+    targets:
+    - contentRequirements/2
+    - contentRequirements/3
+  - id: QR013
+    question: How does Modal's multi-cloud architecture mitigate single-cloud failure risk, and what are the practical limits
+      shown by the May 7, 2026 outage?
+    type: mechanism
+    status: answered
+    targets:
+    - contentRequirements/2
+    - contentRequirements/3
+  - id: QR014
+    question: How does CoreWeave's scale, capital position, and NVIDIA GPU allocation advantage compare to Modal's as a competitive
+      supply-chain risk?
+    type: comparison
+    status: answered
+    targets:
+    - contentRequirements/3
+    - contentRequirements/4
+  - id: QR015
+    question: How does Fireworks AI's revenue scale and competitive positioning compare to Modal's, and what inference-commoditization
+      risk does this create?
+    type: comparison
+    status: answered
+    targets:
+    - contentRequirements/4
+  - id: QR016
+    question: What systemic competitive threats do hyperscalers pose to Modal's serverless GPU and Sandbox model through cloud
+      bundling and tying practices in 2026?
+    type: adverse
+    status: answered
+    targets:
+    - contentRequirements/3
+    - contentRequirements/4
+  - id: QR017
+    question: What is Modal's current ARR, valuation multiple, and growth rate implied by Sacra estimates and the Series C
+      disclosure, and what execution risk does this create?
+    type: quantification
+    status: answered
+    targets:
+    - contentRequirements/4
+  - id: QR018
+    question: How does Modal's asset-light GPU aggregation model create structural margin dependency on cloud provider pricing
+      and NVIDIA GPU allocation?
+    type: mechanism
+    status: answered
+    targets:
+    - contentRequirements/3
+    - contentRequirements/4
+  - id: QR019
+    question: What risk does NVIDIA's entry into the GPU cloud marketplace via the Lepton acquisition create for Modal as
+      a GPU aggregation platform?
+    type: mechanism
+    status: answered
+    targets:
+    - contentRequirements/3
+  - id: QR020
+    question: Who are Modal's named executives and how concentrated is leadership risk in Erik Bernhardsson as the sole publicly
+      identified leader?
+    type: verification
+    status: answered
+    targets:
+    - contentRequirements/0
+  - id: QR021
+    question: What governance transparency exists at Modal regarding board composition, investor control rights, and committee
+      structure?
+    type: verification
+    status: answered
+    targets:
+    - contentRequirements/0
+  - id: QR022
+    question: What product revenue concentration risk is created by Sandboxes driving more than one-third of Modal's total
+      ARR?
+    type: quantification
+    status: answered
+    targets:
+    - contentRequirements/4
+  - id: QR023
+    question: How does Modal's plan-gating of HIPAA BAA, SSO, audit logs, and custom SLAs behind enterprise contracts create
+      risk for Starter and Team plan customers?
+    type: mechanism
+    status: answered
+    targets:
+    - contentRequirements/1
+    - contentRequirements/2
+  - id: QR024
+    question: What financial-model risks arise from Modal's lack of disclosed gross margin, burn rate, or customer concentration
+      data for a company at $4.65B valuation?
+    type: adverse
+    status: answered
+    targets:
+    - contentRequirements/4
+  - id: QR025
+    question: What is the status of Modal's alignment with the NIST AI Risk Management Framework or other voluntary AI safety
+      governance frameworks as of June 2026?
+    type: verification
+    status: answered
+    targets:
+    - contentRequirements/1
+  - id: QR026
+    question: How do Modal's GPU pricing premiums compare to RunPod, Together AI, and Baseten in 2026, and what differentiation
+      is required to sustain them?
+    type: comparison
+    status: answered
+    targets:
+    - contentRequirements/4
+  - id: QR027
+    question: What quantitative kill criteria or thesis-break signals would indicate Modal is failing to execute on its growth
+      and reliability plan?
+    type: mechanism
+    status: answered
+    targets:
+    - contentRequirements/5
+  - id: QR028
+    question: What third-party security analyses, disclosed vulnerabilities, or GitHub issue patterns exist for Modal's platform
+      as of June 2026?
+    type: adverse
+    status: answered
+    targets:
+    - contentRequirements/2
+  - id: QR029
+    question: Does Modal's data retention policy create compliance gaps for regulated industries requiring longer retention
+      windows under HIPAA or sector-specific rules?
+    type: verification
+    status: answered
+    targets:
+    - contentRequirements/1
+    - contentRequirements/2
+  - id: QR030
+    question: How does CoreWeave's contracted GPU backlog and hyperscaler customer relationships limit Modal's ability to
+      serve the largest enterprise AI customers at scale?
+    type: comparison
+    status: answered
+    targets:
+    - contentRequirements/3
+    - contentRequirements/4
+  - id: QR031
+    question: What does the clustering of 3 major outages in May–June 2026 signal about Modal's operational maturity and reliability
+      engineering at $300M+ ARR scale?
+    type: adverse
+    status: answered
+    targets:
+    - contentRequirements/2
+  - id: QR032
+    question: What does Modal's trust center and subprocessor list reveal about its third-party vendor dependency profile
+      for GDPR and enterprise compliance?
+    type: verification
+    status: answered
+    targets:
+    - contentRequirements/1
+    - contentRequirements/3
+  - id: QR033
+    question: How does Modal's $355M Series C capital raise affect its near-term financial risk profile and runway exposure?
+    type: quantification
+    status: answered
+    targets:
+    - contentRequirements/4
+    - contentRequirements/5
+  sources:
+  - id: SR001
+    url: https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1689
+    title: Regulation (EU) 2024/1689 — Artificial Intelligence Act
+    publisher: European Parliament and Council of the European Union
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: regulatory
+    stance: neutral
+    independence: independent
+    reputationTier: high
+    topics:
+    - EU AI Act
+    - GPAI governance
+    - high-risk AI systems
+    - AI regulation
+    - prohibited practices
+  - id: SR002
+    url: https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai
+    title: EU AI Act — Regulatory framework and application timeline
+    publisher: European Commission — Digital Strategy
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: regulatory
+    stance: neutral
+    independence: independent
+    reputationTier: high
+    topics:
+    - EU AI Act
+    - GPAI
+    - AI omnibus
+    - application timeline
+    - AI governance
+  - id: SR003
+    url: https://sacra.com/c/coreweave/
+    title: CoreWeave — Sacra Company Profile
+    publisher: Sacra
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: analyst-market-data
+    stance: neutral
+    independence: independent
+    reputationTier: medium
+    topics:
+    - CoreWeave
+    - GPU supply
+    - NVIDIA partnership
+    - contracted backlog
+    - competitive landscape
+  - id: SR004
+    url: https://www.nvidia.com/en-us/data-center/h100/
+    title: NVIDIA H100 Tensor Core GPU — Data Center
+    publisher: NVIDIA Corporation
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: technical-docs
+    stance: neutral
+    independence: company
+    reputationTier: high
+    topics:
+    - NVIDIA H100
+    - GPU hardware
+    - GPU supply
+    - data center
+  - id: SR005
+    url: https://aws.amazon.com/compliance/shared-responsibility-model/
+    title: Shared Responsibility Model — Amazon Web Services
+    publisher: Amazon Web Services
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: official
+    stance: neutral
+    independence: company
+    reputationTier: high
+    topics:
+    - shared responsibility
+    - cloud security
+    - AWS dependency
+    - infrastructure risk
+  - id: SR006
+    url: https://github.com/modal-labs/modal-client/issues
+    title: modal-labs/modal-client — GitHub Issues
+    publisher: GitHub / modal-labs
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: developer-signal
+    stance: neutral
+    independence: independent
+    reputationTier: medium
+    topics:
+    - bug reports
+    - open source
+    - developer experience
+    - platform quality
+  - id: SR007
+    url: https://sacra.com/c/fireworks-ai/
+    title: Fireworks AI — Sacra Company Profile
+    publisher: Sacra
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: analyst-market-data
+    stance: neutral
+    independence: independent
+    reputationTier: medium
+    topics:
+    - Fireworks AI
+    - inference commoditization
+    - NVIDIA hardware concentration
+    - competitive risk
+    - GPU cloud marketplace
+  - id: SR008
+    url: https://airc.nist.gov/Home
+    title: AI Risk Management Framework (AI RMF) — NIST AI Resource Center
+    publisher: National Institute of Standards and Technology (NIST)
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: regulatory
+    stance: neutral
+    independence: independent
+    reputationTier: high
+    topics:
+    - AI governance
+    - risk management framework
+    - AI trustworthiness
+    - enterprise procurement
+  - id: SR009
+    url: https://www.ftc.gov/policy/advocacy-research/tech-at-ftc/2023/06/generative-ai-raises-competition-concerns
+    title: Generative AI Raises Competition Concerns — FTC Tech at FTC Blog
+    publisher: Federal Trade Commission
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: regulatory
+    stance: adverse
+    independence: independent
+    reputationTier: high
+    topics:
+    - FTC
+    - AI competition
+    - cloud bundling
+    - tying
+    - market power
+    - exclusionary conduct
+  - id: SR010
+    url: https://status.modal.com
+    title: Modal Status — Service uptime and incident history
+    publisher: Modal Labs
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: official
+    stance: confirming
+    independence: company
+    reputationTier: medium
+    keyQuote: GPU functions 99.946% uptime; CPU functions 99.938% uptime; Snapshot restores 99.782% uptime over 90 days ending
+      June 14, 2026.
+    topics:
+    - uptime
+    - incidents
+    - service status
+    - reliability
+  - id: SR011
+    url: https://news.ycombinator.com/item?id=48384115
+    title: Modal Major Outage — Hacker News
+    publisher: Hacker News (user hunkins)
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: developer-signal
+    stance: adverse
+    independence: independent
+    reputationTier: low
+    keyQuote: This is the third major outage in a month. 5.7.2026 — SEV 1, AWS us1-az4 overheats. 5.19.2026 — No published
+      incident report. 6.3.2026 — Ongoing, internal auth system down.
+    topics:
+    - outage
+    - reliability
+    - SEV 1
+    - AWS AZ failure
+    - authentication failure
+  - id: SR012
+    url: https://modal.com/legal/terms
+    title: Modal Terms of Service (including Data Processing Agreement and TOMs)
+    publisher: Modal Labs
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: legal
+    stance: neutral
+    independence: company
+    reputationTier: medium
+    keyQuote: Customer data is backed up at least at a daily cadence. Restoration tests are performed annually.
+    topics:
+    - terms of service
+    - DPA
+    - GDPR
+    - data processing
+    - subprocessors
+    - TOM
+    - controller-processor
+  - id: SR013
+    url: https://modal.com/docs/guide/security
+    title: Security and Privacy at Modal
+    publisher: Modal Labs
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: technical-docs
+    stance: confirming
+    independence: company
+    reputationTier: medium
+    keyQuote: At the moment, Volumes v1, Images (excluding Filesystem and Directory Snapshots), Memory Snapshots, and user
+      code are out of scope of the commitments within our BAA.
+    topics:
+    - HIPAA
+    - SOC2
+    - BAA
+    - gVisor
+    - Rust
+    - TLS 1.3
+    - HackerOne
+    - data retention
+  - id: SR014
+    url: https://trust.modal.com/
+    title: Modal Labs Trust Center
+    publisher: Modal Labs
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: official
+    stance: confirming
+    independence: company
+    reputationTier: medium
+    topics:
+    - trust center
+    - compliance
+    - SOC2
+    - certifications
+    - subprocessors
+  - id: SR015
+    url: https://modal.com/blog/soc2type2
+    title: Modal achieves SOC 2 Type II certification with no deviations found
+    publisher: Modal Labs
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: official
+    stance: confirming
+    independence: company
+    reputationTier: medium
+    keyQuote: SOC 2 Type II audit completed January 2025 with no deviations found.
+    topics:
+    - SOC2
+    - Type II
+    - security audit
+    - compliance
+  - id: SR016
+    url: https://modal.com/blog/truly-serverless-gpus
+    title: 'Truly Serverless GPUs: Sub-Second Cold Starts'
+    publisher: Modal Labs
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: technical-docs
+    stance: confirming
+    independence: company
+    reputationTier: medium
+    keyQuote: 'GPU Memory Snapshots: generally incompatible with multi-GPU code and non-CUDA GPU work, and do not speed up
+      weight loading from storage.'
+    topics:
+    - GPU snapshots
+    - NVIDIA CUDA
+    - cold start
+    - driver dependency
+    - alpha feature
+    - multi-GPU limitation
+  - id: SR017
+    url: https://modal.com/blog/modal-series-c
+    title: Modal announces $355M Series C at $4.65B valuation
+    publisher: Modal Labs
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: official
+    stance: confirming
+    independence: company
+    reputationTier: medium
+    keyQuote: Sandboxes now make up over a third of our revenue. We have surpassed $300M in annualized revenue and grown fivefold
+      since the Series B.
+    topics:
+    - Series C
+    - funding
+    - ARR
+    - Sandboxes
+    - revenue growth
+    - valuation
+  - id: SR018
+    url: https://sacra.com/c/modal-labs/
+    title: Modal Labs — Sacra Company Profile
+    publisher: Sacra
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: analyst-market-data
+    stance: neutral
+    independence: independent
+    reputationTier: medium
+    topics:
+    - Modal ARR
+    - revenue estimates
+    - growth trajectory
+    - competitive positioning
+  - id: SR019
+    url: https://sacra.com/c/modal-labs/?2026
+    title: Modal Labs — Sacra 2026 Analysis
+    publisher: Sacra
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: analyst-market-data
+    stance: neutral
+    independence: independent
+    reputationTier: medium
+    topics:
+    - Modal 2026
+    - ARR trajectory
+    - Sandbox revenue
+    - market position
+  - id: SR020
+    url: https://sacra.com/research/modal-labs/
+    title: Modal Labs — Sacra Research Report
+    publisher: Sacra
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: analyst-market-data
+    stance: neutral
+    independence: independent
+    reputationTier: medium
+    topics:
+    - Modal analysis
+    - RunPod comparison
+    - competitive risk
+    - infrastructure risk
+  - id: SR021
+    url: https://techcrunch.com/tag/modal-labs/
+    title: Modal Labs — TechCrunch coverage
+    publisher: TechCrunch
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: news
+    stance: neutral
+    independence: independent
+    reputationTier: high
+    topics:
+    - Modal news
+    - Series C coverage
+    - funding
+    - competitive context
+  - id: SR022
+    url: https://www.cnbc.com/2026/05/21/modal-series-c-355-million-4-65-billion-valuation.html
+    title: Modal raises $355 million at $4.65 billion valuation — CNBC
+    publisher: CNBC
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: news
+    stance: neutral
+    independence: independent
+    reputationTier: high
+    topics:
+    - Modal Series C
+    - valuation
+    - funding
+    - AI infrastructure
+  - id: SR023
+    url: https://hostfleet.net/serverless-gpu-pricing-matrix-2026/
+    title: Serverless GPU Pricing Matrix 2026 — HostFleet
+    publisher: HostFleet
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: analyst-market-data
+    stance: neutral
+    independence: independent
+    reputationTier: low
+    keyQuote: Modal at $0.80/hr for L4 and $2.10/hr for A100-80GB; Baseten at $4.00/hr for A100-80GB.
+    topics:
+    - GPU pricing
+    - price comparison
+    - modal pricing
+    - RunPod
+    - competitive pricing
+  - id: SR024
+    url: https://modal.com/pricing
+    title: Modal Pricing
+    publisher: Modal Labs
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: official
+    stance: confirming
+    independence: company
+    reputationTier: medium
+    keyQuote: 'Starter: $0/month, $30 in credits; Team: $250/month; Enterprise: custom pricing with HIPAA compliance and Okta
+      SSO.'
+    topics:
+    - pricing
+    - plan tiers
+    - enterprise
+    - HIPAA gating
+    - SSO gating
+  - id: SR025
+    url: https://modal.com/blog/gpu-mem-snapshots
+    title: GPU Memory Snapshots — Alpha Release Blog Post
+    publisher: Modal Labs
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: technical-docs
+    stance: confirming
+    independence: company
+    reputationTier: medium
+    topics:
+    - GPU snapshots
+    - alpha
+    - NVIDIA CUDA
+    - cold start
+    - driver 570/575
+  - id: SR026
+    url: https://www.redpoint.com/companies/modal/
+    title: Modal — Redpoint Ventures Portfolio Page
+    publisher: Redpoint Ventures
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: news
+    stance: confirming
+    independence: independent
+    reputationTier: medium
+    topics:
+    - Series C
+    - investor
+    - funding history
+    - company profile
+  - id: SR027
+    url: https://www.generalcatalyst.com/companies/modal
+    title: Modal — General Catalyst Portfolio Page
+    publisher: General Catalyst
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: news
+    stance: confirming
+    independence: independent
+    reputationTier: medium
+    topics:
+    - Series C
+    - General Catalyst
+    - investor
+    - governance
+  - id: SR028
+    url: https://www.runpod.io/pricing
+    title: RunPod GPU Cloud Pricing
+    publisher: RunPod
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: other
+    stance: neutral
+    independence: independent
+    reputationTier: low
+    topics:
+    - RunPod pricing
+    - competitive pricing
+    - GPU rental
+    - price comparison
+  - id: SR029
+    url: https://replicate.com/pricing
+    title: Replicate Pricing
+    publisher: Replicate
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    sourceType: other
+    stance: neutral
+    independence: independent
+    reputationTier: low
+    topics:
+    - Replicate pricing
+    - competitive pricing
+    - inference pricing
+  - id: SR030
+    url: https://pitchbook.com/profiles/company/426977-70
+    title: Modal Labs — PitchBook Company Profile
+    publisher: PitchBook
+    accessDate: '2026-06-14'
+    accessStatus: paywall
+    sourceType: analyst-market-data
+    stance: neutral
+    independence: independent
+    reputationTier: high
+    topics:
+    - Modal funding history
+    - valuation
+    - company profile
+    - Series B
+    - Series C
+  claims:
+  - id: CR001
+    statement: Modal's terms of service (effective October 2025) contain an embedded Data Processing Agreement that designates
+      Modal as the "data processor" and customers as "data controllers" under GDPR Article 28, completing the required contractual
+      relationship for EU personal data processing.
+    type: observed
+    topic: GDPR-controller-processor
+    sourceRefs:
+    - SR012
+    - SR014
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR003
+    - QR032
+  - id: CR002
+    statement: The DPA embedded in Modal's terms of service places legal-basis, notice, consent, and data-subject-rights obligations
+      on the customer as data controller, not on Modal — meaning regulated deployments require customer-side GDPR compliance
+      programs even when Modal's infrastructure stack is technically compliant.
+    type: observed
+    topic: GDPR-shared-responsibility
+    sourceRefs:
+    - SR012
+    - SR014
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR003
+    - QR029
+  - id: CR003
+    statement: The DPA's Technical and Organizational Measures (TOM) schedule commits Modal to encryption at rest, access
+      control policies, annual SOC 2 Type II certification, daily customer-data backups, and annual restoration tests as its
+      security obligations under the DPA.
+    type: observed
+    topic: DPA-TOM
+    sourceRefs:
+    - SR012
+    - SR014
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR002
+    - QR003
+  - id: CR004
+    statement: Modal's HIPAA security documentation explicitly lists Volumes v1, Memory Snapshots, and Images (excluding Filesystem
+      and Directory Snapshots) as out of scope for BAA commitments, meaning healthcare customers cannot submit PHI to those
+      product surfaces.
+    type: observed
+    topic: HIPAA-BAA-scope
+    sourceRefs:
+    - SR013
+    - SR024
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR004
+    - QR023
+    - QR029
+  - id: CR005
+    statement: EU AI Act Regulation 2024/1689 entered into force August 1, 2024 and will be fully applicable August 2, 2026;
+      GPAI model governance rules — requiring technical documentation, training data transparency, and copyright compliance
+      — became applicable August 2, 2025.
+    type: observed
+    topic: EU-AI-Act-timeline
+    sourceRefs:
+    - SR001
+    - SR002
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR005
+    - QR006
+  - id: CR006
+    statement: An AI omnibus political agreement reached May 7, 2026 extended high-risk AI system rules in certain categories
+      to December 2027 but did not delay GPAI model governance obligations already in force since August 2025.
+    type: observed
+    topic: AI-omnibus-amendment
+    sourceRefs:
+    - SR001
+    - SR002
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR006
+  - id: CR007
+    statement: The FTC's June 2023 generative AI competition analysis flagged that incumbents controlling cloud compute infrastructure
+      could engage in bundling, tying, exclusive dealing, and discriminatory access against specialized AI compute vendors
+      — a risk that applies to Modal's dependence on AWS, GCP, and OCI for GPU capacity.
+    type: observed
+    topic: FTC-cloud-competition
+    sourceRefs:
+    - SR009
+    - SR001
+    confidence: high
+    freshness: recent
+    answersQuestionRefs:
+    - QR007
+    - QR016
+  - id: CR008
+    statement: No active litigation, enforcement actions, or regulatory investigations against Modal Labs, Inc. have been
+      identified in any publicly available source as of June 14, 2026.
+    type: observed
+    topic: no-litigation
+    sourceRefs:
+    - SR012
+    - SR014
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR001
+  - id: CR009
+    statement: 'A Hacker News post (June 3, 2026) documented three major Modal outages in a single month: May 7 (SEV 1, AWS
+      us1-az4 overheating), May 19 (no published incident report), and June 3 (internal authentication system down).'
+    type: third-party-reported
+    topic: outage-cluster
+    sourceRefs:
+    - SR011
+    - SR010
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR008
+    - QR010
+    - QR031
+  - id: CR010
+    statement: Modal's status page (June 14, 2026) shows 90-day uptime of 99.946% for GPU functions, 99.938% for CPU functions,
+      99.933% for Web endpoints, 99.782% for Snapshot restores, and 99.861% for Sandboxes — solid aggregate statistics that
+      are consistent with brief but frequent incident windows.
+    type: observed
+    topic: uptime-statistics
+    sourceRefs:
+    - SR010
+    - SR011
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR009
+  - id: CR011
+    statement: The June 3, 2026 outage was caused by an internal authentication system failure rather than a GPU or cloud-provider
+      event, indicating a centralized control-plane dependency not directly mitigated by Modal's multi-cloud GPU pooling architecture.
+    type: observed
+    topic: auth-failure-root-cause
+    sourceRefs:
+    - SR011
+    - SR010
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR008
+    - QR013
+    - QR031
+  - id: CR012
+    statement: The May 7, 2026 SEV 1 outage was caused by AWS availability zone us1-az4 overheating, demonstrating that even
+      with multi-cloud pooling, a single AZ failure can propagate to in-flight customer workloads.
+    type: observed
+    topic: aws-az-failure
+    sourceRefs:
+    - SR011
+    - SR010
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR008
+    - QR013
+    - QR031
+  - id: CR013
+    statement: Modal publishes no contractual SLA for Starter or Team plan customers; Enterprise SLA terms are negotiated
+      privately and not publicly available, leaving the majority of the customer base without explicit uptime remedies for
+      the May–June 2026 outage cluster.
+    type: observed
+    topic: SLA-gap
+    sourceRefs:
+    - SR024
+    - SR012
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR011
+    - QR023
+  - id: CR014
+    statement: Modal achieved SOC 2 Type II certification audited January 2025 with no deviations found and commits to annual
+      renewal, providing a verified external audit of its security control posture.
+    type: company-claimed
+    topic: SOC2-certification
+    sourceRefs:
+    - SR013
+    - SR015
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR002
+  - id: CR015
+    statement: Modal runs a private bug bounty program through HackerOne requiring researchers to email security@modal.com
+      for an invitation — a standard approach for private companies but narrower than a public program that allows broader
+      community vulnerability discovery.
+    type: company-claimed
+    topic: bug-bounty-private
+    sourceRefs:
+    - SR013
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR028
+  - id: CR016
+    statement: Modal's GPU Memory Snapshots use gVisor container isolation (Rust-based runtime) and depend on NVIDIA CUDA
+      checkpoint/restore API in specific driver branches (570/575); they are documented as generally incompatible with multi-GPU
+      code and non-CUDA GPU workloads.
+    type: observed
+    topic: GPU-snapshot-limitations
+    sourceRefs:
+    - SR016
+    - SR025
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR012
+  - id: CR017
+    statement: Modal aggregates GPU capacity from AWS, GCP, and Oracle Cloud Infrastructure and does not own GPU hardware,
+      making its compute supply entirely dependent on continued availability and pricing from these three cloud providers.
+    type: observed
+    topic: asset-light-supply
+    sourceRefs:
+    - SR017
+    - SR016
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR018
+  - id: CR018
+    statement: The AWS shared responsibility model specifies that even for abstracted cloud services, OS patching, configuration
+      management, and application security remain the customer's (in Modal's case, the infrastructure operator's) responsibility
+      — Modal inherits the same model with its own customers.
+    type: observed
+    topic: shared-responsibility-model
+    sourceRefs:
+    - SR005
+    - SR012
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR018
+    - QR003
+  - id: CR019
+    statement: Sacra's Fireworks AI profile identifies NVIDIA's acquisition of Lepton as a signal of NVIDIA's GPU cloud marketplace
+      ambitions, creating a scenario where Modal's primary GPU hardware supplier becomes a direct product-layer competitor.
+    type: third-party-reported
+    topic: NVIDIA-competitor-entry
+    sourceRefs:
+    - SR007
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR019
+  - id: CR020
+    statement: CoreWeave's contracted backlog reached $99.4B as of March 31, 2026, with FY2026 capex guidance of $31–35B;
+      CoreWeave holds a $6.3B NVIDIA take-or-pay GPU capacity backstop, giving it preferential allocation Modal cannot replicate
+      as an asset-light aggregator.
+    type: third-party-reported
+    topic: CoreWeave-competitive-scale
+    sourceRefs:
+    - SR003
+    - SR022
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR014
+    - QR030
+  - id: CR021
+    statement: 'Sacra''s Fireworks AI profile identifies hardware concentration as a core risk for asset-light inference platforms:
+      sourcing GPU capacity from third parties creates exposure to allocation constraints and hardware-generation transitions
+      (H100 to H200 to Blackwell B200) — a risk that applies directly to Modal''s supply model.'
+    type: third-party-reported
+    topic: hardware-concentration-risk
+    sourceRefs:
+    - SR007
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR019
+    - QR018
+  - id: CR022
+    statement: Modal's GPU Memory Snapshot cold-start technology depends on NVIDIA CUDA checkpoint/restore API in driver branches
+      570/575; any change to NVIDIA's driver API or commercial restrictions on the checkpoint capability could break the feature
+      that provides Modal's most differentiated cold-start advantage.
+    type: inferred
+    topic: NVIDIA-API-dependency
+    sourceRefs:
+    - SR016
+    - SR025
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR012
+    - QR019
+  - id: CR023
+    statement: Modal's DPA directs customers to trust.modal.com/subprocessors for the current subprocessor list; this dynamic
+      reference creates an ongoing vendor-chain compliance obligation for enterprise customers who must monitor subprocessor
+      changes for GDPR and procurement purposes.
+    type: observed
+    topic: subprocessor-list
+    sourceRefs:
+    - SR012
+    - SR014
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR032
+  - id: CR024
+    statement: Modal's $4.65B Series C valuation at approximately $300M ARR implies a ~15.5x revenue multiple — a premium
+      that prices in continued hypergrowth and tolerates limited execution misses before triggering material multiple compression.
+    type: inferred
+    topic: valuation-execution-pressure
+    sourceRefs:
+    - SR017
+    - SR018
+    - SR022
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR017
+    - QR024
+  - id: CR025
+    statement: Sacra estimated Modal at $300M ARR in April 2026 and roughly 5x growth since the October 2025 Series B; sustaining
+      this growth rate requires simultaneous headcount scaling, product investment, SLA delivery improvement, and competitive
+      differentiation.
+    type: third-party-reported
+    topic: growth-execution-risk
+    sourceRefs:
+    - SR018
+    - SR019
+    - SR017
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR017
+    - QR024
+  - id: CR026
+    statement: Sandboxes now drive more than one-third of Modal's total revenue (per the Series C blog), creating product-concentration
+      risk in a single workload category whose growth depends on continued AI agent market expansion and resistance to hyperscaler-native
+      substitution.
+    type: company-claimed
+    topic: Sandbox-revenue-concentration
+    sourceRefs:
+    - SR017
+    - SR018
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR022
+    - QR016
+  - id: CR027
+    statement: HostFleet's 2026 GPU pricing comparison shows Modal at $0.80/hr for L4 and $2.10/hr for A100-80GB — above RunPod
+      ($0.43/hr for L4) but below Baseten ($4.00/hr for A100-80GB) — positioning Modal in a mid-premium tier that requires
+      sustained cold-start and developer-experience differentiation to defend.
+    type: third-party-reported
+    topic: pricing-premium
+    sourceRefs:
+    - SR023
+    - SR028
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR026
+  - id: CR028
+    statement: Sacra's Fireworks AI profile identifies inference commoditization as a core risk, noting that as vLLM, SGLang,
+      and competing frameworks improve, "proprietary performance advantage is likely to compress" — the same dynamic applies
+      to Modal's cold-start speed and SDK differentiation against lower-cost peers.
+    type: third-party-reported
+    topic: inference-commoditization
+    sourceRefs:
+    - SR007
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR015
+    - QR016
+  - id: CR029
+    statement: CoreWeave's $99.4B contracted backlog anchored by hyperscalers (Microsoft 67% of FY2025 revenue, Meta, OpenAI)
+      demonstrates that the largest AI compute buyers are already committed to capital-intensive providers that Modal's asset-light
+      model cannot match on reserved capacity guarantees.
+    type: third-party-reported
+    topic: CoreWeave-enterprise-capture
+    sourceRefs:
+    - SR003
+    - SR022
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR014
+    - QR030
+  - id: CR030
+    statement: RunPod grew from 100,000 to 400,000+ developers by late 2025 on approximately $22M raised (per Sacra), demonstrating
+      that price-competitive GPU platforms can scale developer adoption aggressively against a well-funded competitor at a
+      fraction of Modal's capital intensity.
+    type: third-party-reported
+    topic: RunPod-low-cost-competition
+    sourceRefs:
+    - SR020
+    - SR028
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR026
+  - id: CR031
+    statement: Modal's public communications name Erik Bernhardsson as the sole executive; no other C-suite leaders (CRO,
+      CPO, CFO, VP Engineering, Head of Revenue) are named in any public source fetched as of June 14, 2026.
+    type: observed
+    topic: key-person-concentration
+    sourceRefs:
+    - SR017
+    - SR021
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR020
+  - id: CR032
+    statement: Akshat Bubna is confirmed as Modal's co-founder but his functional title, scope, and prior industry background
+      remain undisclosed in all public sources as of June 14, 2026.
+    type: observed
+    topic: co-founder-opacity
+    sourceRefs:
+    - SR017
+    - SR026
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR020
+    - QR021
+  - id: CR033
+    statement: Modal discloses no board composition, committee structure, or investor control terms in any public source —
+      standard for a late-stage private company but notable at a $4.65B valuation with enterprise production workloads and
+      $300M+ ARR.
+    type: observed
+    topic: governance-opacity
+    sourceRefs:
+    - SR017
+    - SR026
+    - SR027
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR021
+  - id: CR034
+    statement: The NIST AI Risk Management Framework (AI RMF) provides voluntary governance standards for AI trustworthiness
+      that enterprise procurement teams may use as diligence criteria; Modal does not publicly reference alignment with the
+      AI RMF, creating a potential procurement friction point for risk-mature enterprise buyers.
+    type: observed
+    topic: NIST-RMF-gap
+    sourceRefs:
+    - SR008
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR025
+  - id: CR035
+    statement: Modal gates HIPAA BAA, Okta SSO, audit logs, and custom SLAs behind the Enterprise plan, meaning Starter and
+      Team customers operate without explicit contractual compliance, identity, or reliability protections beyond the baseline
+      ToS terms.
+    type: observed
+    topic: plan-gating-risk
+    sourceRefs:
+    - SR024
+    - SR013
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR023
+    - QR011
+  - id: CR036
+    statement: Modal's multi-cloud pooling across AWS, GCP, and Oracle Cloud is a structural mitigation against single-cloud
+      failure, but the May 7, 2026 AWS AZ overheating outage still propagated to customers, indicating that pooling does not
+      guarantee instant in-flight workload failover during sudden AZ-level events.
+    type: inferred
+    topic: multi-cloud-limits
+    sourceRefs:
+    - SR011
+    - SR017
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR013
+  - id: CR037
+    statement: Modal's operational security posture includes SOC 2 Type II (no deviations, January 2025), a private HackerOne
+      bug bounty, gVisor container isolation, a Rust-based container runtime, TLS 1.3 on all public APIs, and automated synthetic
+      monitoring for network and application isolation — a substantive security stack for a late-private company.
+    type: company-claimed
+    topic: security-mitigations
+    sourceRefs:
+    - SR013
+    - SR015
+    - SR014
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR002
+    - QR028
+  - id: CR038
+    statement: Modal raised $355M in its May 2026 Series C, providing estimated multi-year operating capital; the exact cash
+      position and runway are not disclosed but recent capital adequacy risk appears low given the recency and size of the
+      raise.
+    type: inferred
+    topic: capital-adequacy
+    sourceRefs:
+    - SR017
+    - SR022
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR033
+  - id: CR039
+    statement: CoreWeave's contracted backlog of $99.4B is anchored by Microsoft (67% of FY2025 revenue), OpenAI (~$22.4B
+      implied), and Meta (~$35.2B implied) — the same hyperscaler and frontier AI customer segments Modal would need to capture
+      for sustained growth at its $4.65B valuation, suggesting CoreWeave has already locked in the largest contracts in the
+      category.
+    type: third-party-reported
+    topic: CoreWeave-customer-capture
+    sourceRefs:
+    - SR003
+    - SR022
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR030
+    - QR014
+  - id: CR040
+    statement: 'GitHub issues for modal-labs/modal-client show active bug reports across multiple releases (issues in the
+      #4000–4114 range as of June 2026), consistent with a large, active user base; no disclosed critical security vulnerabilities
+      appear in the public repository.'
+    type: observed
+    topic: open-source-quality-signal
+    sourceRefs:
+    - SR006
+    confidence: low
+    freshness: current
+    answersQuestionRefs:
+    - QR028
+  - id: CR041
+    statement: The FTC cloud competition analysis specifically flags cloud providers offering both compute infrastructure
+      and AI products as potential abusers of discriminatory pricing or access controls against specialized compute vendors
+      — a structural risk to Modal's supply-chain access if AWS, GCP, or OCI expand their own serverless GPU offerings.
+    type: inferred
+    topic: FTC-supply-chain-risk
+    sourceRefs:
+    - SR009
+    - SR005
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QR007
+    - QR016
+  - id: CR042
+    statement: NVIDIA's $2B equity investment in CoreWeave and $6.3B take-or-pay GPU backstop demonstrates that NVIDIA can
+      use preferential allocation to deepen relationships with capital-intensive data center operators — a dynamic that could
+      disadvantage lighter-weight aggregation platforms like Modal in future GPU allocation cycles.
+    type: third-party-reported
+    topic: NVIDIA-preferential-allocation
+    sourceRefs:
+    - SR003
+    - SR022
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR019
+    - QR018
+  - id: CR043
+    statement: The EU AI Act's GPAI governance rules (applicable since August 2, 2025) require providers of general-purpose
+      AI models to provide technical documentation and engage in training-data transparency; Modal's enterprise customers
+      who are GPAI providers may route compliance documentation requests upstream to Modal, creating an indirect regulatory
+      burden.
+    type: inferred
+    topic: GPAI-compliance-chain
+    sourceRefs:
+    - SR001
+    - SR002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR005
+  - id: CR044
+    statement: Modal's data retention policy stores function inputs/outputs for up to 7 days, app and container logs for 1
+      day (Starter) to 30 days (Team), and audit logs only on Enterprise plans — a retention structure that may be insufficient
+      for regulated industries requiring longer forensic windows under HIPAA or sector compliance rules.
+    type: observed
+    topic: data-retention-gap
+    sourceRefs:
+    - SR013
+    - SR024
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR029
+  - id: CR045
+    statement: The EU AI Act reaches full applicability on August 2, 2026 — within the investment decision window this report
+      informs — meaning EU enterprise customers will face live compliance obligations that may require Modal to provide GPAI
+      documentation, data residency options, and compliance audit artifacts to complete their own AI Act filings.
+    type: inferred
+    topic: AI-Act-full-applicability
+    sourceRefs:
+    - SR001
+    - SR002
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR005
+    - QR006
+  evidenceGaps:
+  - type: private-evidence-only
+    severity: material
+    topic: enterprise-SLA-terms
+    missingEvidence: Executed or template Enterprise SLA exhibits including uptime commitment percentage, credit mechanics,
+      exclusions, and remedy timelines for production GPU functions and Sandboxes.
+    whyItMatters: Modal publishes no public SLA for Starter or Team customers, and the Enterprise SLA is private. The three
+      May–June 2026 outages cannot be evaluated for contractual remedy without knowing what Enterprise customers actually
+      agreed to.
+    diligencePath: Request current Enterprise MSA/SLA template and any anonymized redlines from recent enterprise signings;
+      ask references whether negotiated terms differ materially from the baseline; compare against Baseten and RunPod public
+      SLA language.
+    relatedQuestionRefs:
+    - QR011
+    relatedTableRefs:
+    - TR002
+  - type: private-evidence-only
+    severity: material
+    topic: GPU-cloud-supplier-concentration
+    missingEvidence: Actual GPU capacity allocation by cloud provider (AWS vs GCP vs OCI) as a percentage of total compute
+      capacity, any minimum purchase commitments, and contingency playbooks for single-provider disruption.
+    whyItMatters: Modal's multi-cloud narrative is publicly stated but the actual distribution and concentration — whether
+      it is 70/20/10 or 40/40/20 — determines the real severity of single-provider dependency risk that the May 7 AZ outage
+      demonstrated.
+    diligencePath: Request capacity allocation breakdown by provider, committed vs. spot capacity mix, and negotiated uptime
+      SLAs from AWS, GCP, and OCI; review any master service agreements with cloud providers for preferred-pricing or volume
+      commitments.
+    relatedQuestionRefs:
+    - QR018
+    relatedTableRefs:
+    - TR003
+  - type: private-evidence-only
+    severity: material
+    topic: gross-margin-and-burn
+    missingEvidence: Gross margin on compute revenue, total operating burn rate, cash on hand post-Series C, and CAC/LTV or
+      NRR data by customer cohort.
+    whyItMatters: At a 15.5x ARR multiple, the investment thesis depends critically on margin quality. A 20% gross margin
+      implies ~77x gross-profit multiple; a 40% margin implies ~38x. Neither can be confirmed from public data alone, and
+      the difference is thesis-relevant.
+    diligencePath: Request trailing-12-month P&L, gross margin by product line (Functions vs Sandboxes), cloud COGS breakdown,
+      and customer cohort metrics (NRR, GRR, average contract value).
+    relatedQuestionRefs:
+    - QR024
+    relatedTableRefs:
+    - TR004
+  - type: private-evidence-only
+    severity: material
+    topic: outage-post-mortem-library
+    missingEvidence: Internal post-mortems for the May 7 (AWS AZ overheating), May 19 (unreported), and June 3 (authentication
+      system failure) 2026 outages, including root-cause analysis, remediation actions, and architectural changes made.
+    whyItMatters: The absence of a public post-mortem for May 19 and the authentication system failure on June 3 makes it
+      impossible to assess whether Modal has structurally addressed the control-plane reliability gap the cluster revealed.
+    diligencePath: Request all SEV 1 and SEV 2 post-mortems from the trailing 12 months; confirm whether architecture reviews
+      were conducted after each event; review engineering headcount and on-call rotation for infrastructure reliability function.
+    relatedQuestionRefs:
+    - QR031
+    - QR008
+    relatedTableRefs:
+    - TR002
+  - type: missing-source
+    severity: informational
+    topic: NIST-AI-RMF-alignment
+    missingEvidence: Any Modal documentation referencing alignment with NIST AI RMF, ISO 42001, or other voluntary AI governance
+      standards — either in the trust center or enterprise procurement materials.
+    whyItMatters: Enterprise buyers with formal AI governance programs increasingly use AI RMF or ISO 42001 as procurement
+      criteria. Modal's absence of public alignment documentation could create friction in regulated or government enterprise
+      sales.
+    diligencePath: Check trust.modal.com for AI governance certifications; ask sales team whether NIST AI RMF or ISO 42001
+      alignment is on the product roadmap.
+    relatedQuestionRefs:
+    - QR025
