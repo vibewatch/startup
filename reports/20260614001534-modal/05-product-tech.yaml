@@ -1,0 +1,2122 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: modal
+runDate: '2026-06-14'
+company:
+  name: Modal
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: 'Modal is a Python-first serverless cloud for AI workloads built around five years of proprietary infrastructure investment. The product surface spans Functions (GPU/CPU), Sandboxes (agent code execution), Training, Volumes, Web Endpoints, Notebooks, Dicts, and Queues—all defined as code via Python decorators, with no YAML required. The architectural moat is a four-pillar cold-start system: cloud buffers of idle GPUs, a content-addressed multi-tier container filesystem, CPU checkpoint/restore, and CUDA GPU checkpoint/restore, which together reduce GPU replica scale-up from kiloseconds to tens of seconds and have demonstrated up to 10x cold-boot speedups in published workloads. The trust posture is strong for a late-private company—SOC 2 Type II, HIPAA-ready Enterprise BAA, gVisor container isolation, TLS 1.3, and a private HackerOne bug-bounty program—but diligence must weigh a cluster of three major outages in May–June 2026 against 99.9%-class uptime statistics, and enterprise SLA terms remain private.'
+sections:
+- id: product-surface
+  title: Product Surface in Customer Workflow Terms
+  body: 'Modal presents itself as a "production cloud for AI" built around a single mental model: any Python function can become an autoscaling, GPU-backed cloud job by adding a decorator. In customer workflow terms, the product covers four distinct use patterns. First, interactive and exploratory compute: Notebooks let ML engineers spin up a GPU-backed browser notebook in seconds, and the `modal shell` command attaches a debug shell directly to a running container. Second, batch and scheduled workloads: Functions with `map()`, `starmap()`, and `for_each()` fan out across thousands of containers in parallel, and `modal.Cron`/`modal.Period` handle time-based triggers without external schedulers. Third, serving and real-time inference: Web Endpoints expose any function as a public HTTPS endpoint via `@modal.fastapi_endpoint`, ASGI, or WSGI apps; input concurrency via `@modal.concurrent` enables continuous batching for LLM serving. Fourth, agent and untrusted-code execution: Sandboxes are ephemeral isolated containers that accept arbitrary code (from an LLM or user), execute it under gVisor isolation, and return stdout/stderr—Lovable used this to support tens of thousands of simultaneous app-creation sessions, and Cognition ran millions of Sandboxes for coding agents. Storage is first-class: Volumes (high-performance distributed filesystem), Dicts (distributed key-value), and Queues (FIFO, multi-producer/consumer) complete the primitive set. The unified SDK means a team can move from a single-function prototype to a production serving cluster and an agent sandbox—all in the same codebase—without changing infrastructure vendors.'
+  claimRefs:
+  - CE001
+  - CE002
+  - CE006
+  - CE007
+  - CE008
+  - CE009
+  - CE010
+  - CE011
+  - CE012
+  - CE036
+  tableRefs:
+  - TE001
+  - TE002
+  figureRefs:
+  - FE002
+
+- id: architecture
+  title: Architecture and Operating Model
+  body: 'Modal''s architecture is layered around a Python SDK that abstracts multi-cloud GPU provisioning, container management, and distributed storage into a single programming interface. Compute containers are defined through the `modal.Image` Python API (method chaining: `Image.debian_slim().pip_install(...)`) with no YAML or Dockerfile required; the image builder then validates and distributes the image to worker nodes. Containers run inside gVisor, Google''s kernel sandbox used in Cloud Run and GKE, providing workload isolation that is stronger than standard container namespacing. The container runtime is written in Rust for performance and memory safety. Capacity is pooled across AWS, GCP, and Oracle Cloud Infrastructure globally—hundreds of data centers—allowing Modal to route each GPU request to the cheapest available hardware without the user reserving capacity. GPU selection is expressed as `@app.function(gpu="H100")` and Modal may automatically upgrade requests (H100→H200, A100-40GB→A100-80GB) at no extra charge to maximize pool utilization. Multi-GPU containers support up to 8 cards per container (B200, H200, H100, A100, L4, T4, L40S). Input concurrency via `@modal.concurrent` enables containers to process multiple requests simultaneously, which is essential for continuous batching in vLLM or SGLang LLM serving. The container lifecycle model (enter/exit hooks via `@modal.enter` and `@modal.exit`) separates one-time initialization from per-request execution, enabling efficient model weight loading patterns. Region selection (up to narrow/wide granularity) and independent routing regions (us-east, us-west, eu-west, ap-south) allow latency-sensitive workloads to pin near databases or robots. Secrets are injected as environment variables via `modal.Secret` without ever reaching the image build layer.'
+  claimRefs:
+  - CE003
+  - CE004
+  - CE005
+  - CE013
+  - CE014
+  - CE030
+  - CE031
+  - CE036
+  - CE037
+  - CE038
+  tableRefs:
+  - TE003
+  figureRefs:
+  - FE001
+
+- id: cold-start-technology
+  title: Cold-Start Technology and Container Innovation
+  body: 'Modal''s most technically distinctive capability is its cold-start engineering, documented in detail in a May 2026 engineering blog post ("Truly Serverless GPUs"). Four layers compound to reduce GPU replica scaling from "multiple kiloseconds to tens of seconds." First, cloud buffers: Modal maintains a pool of healthy, idle GPUs across its network so that most scale-up requests do not wait for hyperscaler instance provisioning. Second, a content-addressed multi-tier container filesystem: a globally distributed cache stores popular container image files in worker memory, yielding 3–5x faster delivery than uncached downloads; torch and other large libraries benefit disproportionately because they are shared across many users. Third, CPU Memory Snapshots (GA since January 2025): a container is snapshotted just before it accepts requests; subsequent cold starts restore directly from the frozen memory state, skipping Python imports and JIT compilation; practical speedups are 3–10x. Fourth, GPU Memory Snapshots (alpha, July 2025): using the CUDA checkpoint/restore API in NVIDIA driver branches 570/575, Modal captures device memory contents (model weights), CUDA kernels, CUDA objects, streams, and memory mappings; on restore, the GPU context is reconstituted without re-running expensive operations like `torch.compile`. Published benchmarks show vLLM serving Qwen2.5-0.5B-Instruct improving from 45s to 5s P0 cold start, and a ViT inference function with `torch.compile` improving from 8.5s to 2.25s P0. In production, Reducto reported an 83% reduction in cold boot time (70s to 12s) for its document-processing models after adopting GPU snapshots. Limitations documented by Modal include: GPU snapshots are generally incompatible with multi-GPU code and non-CUDA GPU work, and they do not speed up weight loading from storage. The overall architecture targets the GPU Allocation Utilization problem—minimizing the gap between GPU-hours paid for and GPU-hours running application code—which Modal argues sits well below 50% in traditional fixed-allocation cloud deployments.'
+  claimRefs:
+  - CE015
+  - CE016
+  - CE017
+  - CE018
+  - CE019
+  - CE020
+  - CE021
+  - CE022
+  - CE023
+  - CE040
+  figureRefs:
+  - FE003
+
+- id: trust-security-reliability
+  title: Trust, Security, and Reliability
+  body: 'Modal''s trust posture is strong by late-stage private-company standards. The security documentation is specific: the worker runtime and storage infrastructure are written in Rust (a memory-safe language), all container workloads run inside gVisor, all public APIs use TLS 1.3, all user data is encrypted in transit and at rest, and automated synthetic monitoring continuously checks for network and application isolation within the runtime. SOC 2 Type II was achieved with no deviations found (audited January 2025) and Modal commits to annual renewal. HIPAA-compliant workloads are available on the Enterprise plan under a BAA, though Volumes v1, Images (excluding Filesystem/Directory Snapshots), and Memory Snapshots are currently excluded from BAA scope; Volumes v2 is in scope. A private bug-bounty program runs through HackerOne with a published severity SLA (Critical: 24 hours; High: 1 week; Medium: 1 month). Stripe handles payment processing under PCI Level 1 certification; Modal does not store credit card information. Corporate security controls include SSO IdP, phishing-resistant MFA, Secureframe MDM, and annual business continuity exercises. The trust portal at trust.modal.com provides access to compliance documents. On the other side of the ledger: the status page (June 14, 2026) shows 90-day uptime of 99.946% for GPU functions, 99.938% for CPU functions, 99.933% for Web endpoints, and 99.782% for Snapshot restores—all solid numbers. However, a Hacker News community post (June 3, 2026) documented three major operational incidents in a single month: May 7 (AWS AZ overheating, SEV 1), May 19 (no published incident report), and June 3 (internal authentication system failure). The aggregate uptime statistics are consistent with brief outages of this type, but the clustering of three in one month is adverse signal. Modal has not disclosed a public contractual SLA for either its Standard or Team plans; enterprise SLA terms are available only under negotiated contracts. Diligence should request the SLA exhibits.'
+  claimRefs:
+  - CE026
+  - CE027
+  - CE028
+  - CE029
+  - CE030
+  - CE031
+  - CE032
+  - CE033
+  tableRefs:
+  - TE004
+
+- id: differentiation-roadmap
+  title: Developer Signal, Differentiation, and Roadmap Direction
+  body: 'Modal''s differentiation sits at the intersection of developer experience and infrastructure depth. On the developer side: no YAML or Dockerfile is required, containers boot in approximately 1 second, scale from zero to 1,000+ GPUs in seconds, and the same SDK covers batch jobs, inference serving, agent sandboxes, and training. The `modal` Python package had 1.6M PyPI downloads in a single day (June 2026) and 13.9M downloads in the prior week—a developer adoption signal consistent with the $300M ARR company in chapter 4. The GitHub repo (modal-labs/modal-client) is open source and supports Python 3.10–3.14 plus JS/TypeScript and Go SDKs. The GPU Glossary (gpu-glossary.com, modal.com/gpu-glossary) is an educational resource covering the entire GPU software stack, used as a community signal and engineering brand asset. On the infrastructure side: the four-pillar cold-start architecture is proprietary R&D, not available from hyperscalers or from simpler serverless GPU peers such as RunPod. Independent pricing comparison (HostFleet, April 2026) shows Modal at $0.80/hr for L4 and $2.10/hr for A100-80GB—not the cheapest (RunPod L4: $0.43/hr; Together AI A100-80GB: $0.99/hr), but competitive with Baseten ($4.00/hr for A100-80GB). Modal''s value proposition is not lowest unit price; it is speed-to-first-output (sub-second cold starts), scale-on-demand (no reservations), and code-defined infrastructure. Versus AWS Lambda (SnapStart, Firecracker isolation) and Google Cloud Run (gVisor, scale-to-zero), Modal adds GPU support, multi-cloud pooling, agent sandboxes, and a unified training-to-inference SDK. The 2025–2026 product additions visible in public sources include Notebooks with GPU memory snapshots (reducing startup 10x), clustered multi-node RDMA GPU workloads (per Sacra), the B200/B200+ GPU tier, input concurrency, and region routing. The Engineering blog cadence and GPU Glossary signal continued investment in deep technical capability and developer community. Key open diligence items are: (1) no independent third-party benchmark methodology for cold-start or throughput claims; (2) private enterprise SLA terms; (3) the scope limitation of HIPAA BAA that excludes Memory Snapshots and Images, which are central to performance; (4) unresolved reliability confidence from the May–June 2026 outage cluster.'
+  claimRefs:
+  - CE025
+  - CE033
+  - CE034
+  - CE035
+  - CE037
+  - CE039
+  - CE041
+  - CE042
+  - CE043
+  tableRefs:
+  - TE005
+  figureRefs:
+  - FE004
+
+tables:
+- id: TE001
+  title: Product Module / Asset Matrix
+  columns:
+  - Module / Asset
+  - Primary user
+  - Status / maturity
+  - Core function
+  - Differentiation
+  - Diligence gap
+  rows:
+  - - Functions
+    - ML engineers and app developers running GPU/CPU workloads
+    - GA / mature core product
+    - Any Python function becomes an autoscaling cloud job via @app.function or @app.cls; supports GPU, concurrency, and lifecycle hooks
+    - Code-only definition; ~1s container cold start; scale from 0 to 1,000+ GPUs without reservation; multi-cloud pool
+    - No independently verified cold-start benchmark methodology or public SLA for standard/team tiers
+  - - Sandboxes
+    - Coding agent and AI app developers executing LLM-generated code
+    - GA / growing rapidly
+    - Isolated gVisor containers launched at runtime with full filesystem/network isolation; support stdin/stdout/stderr, TCP tunnels, volume mounts, lifecycle events
+    - 50,000+ simultaneous Sandboxes (Lovable); 1 billion+ total Sandboxes launched (May 2026); sub-second spin-up
+    - Sandbox-specific SLA terms and maximum count per workspace are not fully public
+  - - Training
+    - ML engineers fine-tuning or training models with GPU clusters
+    - GA / expanding to multi-node
+    - Managed GPU training jobs, multi-node with RDMA networking (per Sacra), distributable across pooled capacity
+    - Same SDK for training and inference removes vendor handoff; direct checkpoint-to-serving path
+    - No dedicated training docs page was accessible in this run; multi-node/RDMA maturity not yet fully public
+  - - Volumes
+    - Engineers storing model weights, datasets, and pipeline outputs
+    - GA (v2 with HIPAA-scope expansion)
+    - Distributed filesystem optimized for write-once, read-many; backed by multi-cloud for high availability; up to 2.5 GB/s bandwidth
+    - Distributed by default, no replica management; integrated with Modal Functions and Sandboxes; v2 is HIPAA-compliant
+    - v1 Volumes are out of HIPAA BAA scope; per-day billing snapshot means deletion takes up to 4 days to reflect
+  - - Web Endpoints
+    - API and application developers serving HTTP traffic from Modal Functions
+    - GA / mature web serving layer
+    - Exposes FastAPI, ASGI, WSGI apps or simple Python functions as public HTTPS endpoints via @modal.fastapi_endpoint or @modal.asgi_app
+    - Scale-to-zero with cold start managed by platform; custom domains available on Team plan
+    - No public contractual uptime for web endpoints; 90-day status shows 99.933%
+  - - Notebooks
+    - ML engineers and researchers in exploratory/collaborative compute
+    - GA (launched 2025 with GPU memory snapshot support)
+    - Browser-based collaborative notebooks backed by any GPU; GPU memory snapshots reduce startup by up to 10x
+    - GPU-backed collaboration notebooks that cold-start as fast as serverless Functions; works with any ML framework
+    - Memory Snapshots are out of current HIPAA BAA scope, limiting use in regulated research environments
+  - - Dicts
+    - Engineers sharing distributed state across modal Functions or Sandboxes
+    - GA / utility primitive
+    - Distributed key-value store accessible from anywhere; cloudpickle serialization; distributed locks
+    - Accessible from any container or SDK call; seamlessly composable with other Modal primitives
+    - 100 MiB/object cap and 7-day inactivity TTL; not guaranteed persistent (recommended for small objects)
+  - - Queues
+    - Engineers building async pipelines, fan-out workflows, and producer/consumer patterns
+    - GA / utility primitive
+    - Multi-producer, multi-consumer FIFO queues partitioned by string key; synchronous/async access; 24-hour TTL
+    - Cloud-native replacement for Redis/Celery queues with no infrastructure management; pairs with Functions for async fan-out
+    - 24-hour TTL means queues are not suitable for durable message persistence; 5,000 items per partition
+  - - Scheduled Functions
+    - Engineers running time-based jobs or pipelines
+    - GA / simple scheduling
+    - Period (interval) and Cron syntax schedules attached to deployed Modal Functions; monitored via dashboard
+    - No external Airflow, Prefect, or cron infrastructure needed; schedule lives next to the function definition
+    - Schedules cannot be paused; must be removed and redeployed; Period resets on redeploy
+  notes: Status reflects Modal public documentation and blog posts as of 2026-06-14. "GA" labels are inferred from active public documentation and customer case studies; Modal does not consistently use GA/alpha labels except for GPU Memory Snapshots (labeled alpha) and Snapshot restores.
+  claimRefs:
+  - CE001
+  - CE002
+  - CE006
+  - CE007
+  - CE008
+  - CE009
+  - CE010
+  - CE011
+  - CE012
+  - CE013
+  - CE014
+  - CE025
+  - CE028
+  - CE036
+  - CE042
+
+- id: TE002
+  title: Workflow / Use-Case Table
+  columns:
+  - User job
+  - Current workflow (without Modal)
+  - Modal solution
+  - Public measurable benefit
+  - Limitation
+  rows:
+  - - Run LLM inference at scale with variable demand
+    - Reserve GPU instances, provision autoscaling, manage cold starts and model loading manually
+    - Functions with GPU type, @modal.concurrent for continuous batching, Memory Snapshots to reduce cold start
+    - 'Reducto: 3x P90 latency reduction, 83% cold boot reduction; Physical Intelligence: ~10-15ms network overhead'
+    - GPU memory snapshots are incompatible with multi-GPU and non-CUDA GPU code; limitations documented
+  - - Execute agent-generated code securely in production
+    - Build or rent custom container orchestration for untrusted code isolation
+    - Sandboxes with gVisor isolation, volume mounts, TCP tunnels; one API call to launch
+    - 'Lovable: tens of thousands of simultaneous app creation sessions; Cognition: millions of Sandboxes for coding agents'
+    - No public SLA for Sandbox availability; 99.861% 90-day uptime on status page
+  - - Run RL training loop (rollouts, grading, inference) end-to-end
+    - Stitch together separate training infra, sandbox environments, and inference servers across vendors
+    - Single SDK covering Sandboxes (rollouts), Functions (grading fan-out), Training (model updates)
+    - 'Applied Compute: used for DoorDash, Cognition, Mercor RL workloads; only platform with all RL primitives'
+    - Multi-node RDMA training maturity not fully public; training docs blocked in this research run
+  - - Deploy and iterate on models with fast feedback
+    - Package model, build container, push to registry, configure deployment YAML, set up monitoring
+    - 'modal deploy <filename>; Image defined in Python; modal serve for live reload; modal shell for debug'
+    - 'Reducto: "2 lines of code" vs "150 lines of code plus CNS and Cloudflare" for equivalent endpoint deployment'
+    - Developer workflow optimized for Python; non-Python model artifacts require manual wrapping
+  - - Scale document or media processing to enterprise throughput
+    - Pre-provision cluster capacity or use queued batch system with complex orchestration
+    - Functions with map() fan-out, parameterized Functions for per-customer pools, region-pinned Functions
+    - 'Reducto: 1,000+ GPUs in under an hour for a 100k pages/minute enterprise load test'
+    - Cost-at-scale is higher than self-managed RunPod or spot instances; enterprise pricing requires direct negotiation
+  notes: Benefits are public outcomes from company-published customer case studies, not guaranteed results. Limitation column reflects documented constraints from official docs or publicly available information.
+  claimRefs:
+  - CE002
+  - CE006
+  - CE007
+  - CE008
+  - CE015
+  - CE016
+  - CE017
+  - CE018
+  - CE022
+  - CE023
+  - CE024
+  - CE025
+  - CE031
+
+- id: TE003
+  title: Technology / Operating Architecture Table
+  columns:
+  - Layer / Component
+  - Role
+  - Key technical detail
+  - Dependency
+  - Risk
+  rows:
+  - - Python SDK / decorator layer
+    - Developer interface; translates decorated Python functions into Modal App objects
+    - '@app.function, @app.cls, @modal.enter, @modal.exit, @modal.fastapi_endpoint, @modal.concurrent; no YAML required'
+    - Python 3.10-3.14; open-source client (modal-labs/modal-client)
+    - Any breaking change to SDK requires downstream developer code changes; v1.5.0 in June 2026
+  - - Container image builder
+    - Converts Python Image definitions into container images distributed to workers
+    - Method chaining from Image.debian_slim(); pip/uv install; Dockerfile fallback; add_local_dir for local code
+    - Modal-controlled build infrastructure; underlying cloud provider storage
+    - Image build 90-day uptime 99.863%; image build failures block deployments
+  - - gVisor container runtime
+    - Provides OS-level isolation for Functions and Sandboxes; kernel sandbox used in GKE and Cloud Run
+    - Each container runs under gVisor; automatic synthetic monitoring checks network/application isolation
+    - Google-maintained gVisor project; NVIDIA CUDA driver compatibility may limit future GPU features
+    - gVisor compatibility with new CUDA features requires driver certification testing
+  - - Rust worker runtime
+    - Executes container lifecycle, handles network I/O, and coordinates with storage layer
+    - Memory-safe implementation for security; handles TLS, gRPC, and container IPC
+    - Internal Modal proprietary component
+    - Core proprietary component; limited external auditability of implementation
+  - - Custom content-addressed container filesystem
+    - Serves image layers from a multi-tier cache (worker memory → cluster → storage); reduces cold start
+    - Files are content-addressed; popular files (torch, etc.) cached in worker memory; 3-5x faster than uncached
+    - Multi-cloud object storage (AWS S3, GCP GCS, Oracle)
+    - Cache effectiveness depends on file popularity distribution; new image builds may cold-start slower initially
+  - - CPU Memory Snapshots
+    - Captures container memory state before first request; restores on cold start, skipping re-initialization
+    - Captures Python imports, JIT compilation results; 3-10x faster cold starts; integrated with @modal.enter(snap=True)
+    - Cloudpickle-compatible serialization; Modal distributed filesystem for snapshot storage
+    - Out of HIPAA BAA scope; incompatible with stateful I/O during snapshot phase
+  - - GPU Memory Snapshots (alpha)
+    - Extends CPU snapshots to capture GPU device memory, CUDA kernels, streams, and memory mappings
+    - Uses NVIDIA CUDA checkpoint/restore API (driver 570/575 branches); cuCheckpointProcessCheckpoint(); up to 10x cold-start reduction
+    - NVIDIA driver compatibility requirement; currently alpha status
+    - Incompatible with multi-GPU and non-CUDA code; torch.compile interactions require workarounds
+  - - Multi-cloud capacity pool
+    - Routes each GPU request to available hardware across AWS, GCP, and Oracle; no user-level reservation needed
+    - Cloud buffers of idle GPUs maintained for each GPU type; automatic upgrade paths (H100→H200, A100→A100-80GB)
+    - AWS, GCP, Oracle Cloud Infrastructure; Oracle partnership cited by Sacra
+    - 'Cloud provider outages directly affect capacity (May 7 SEV1: AWS AZ overheating); single-AZ failures visible in incident history'
+  - - Secrets management
+    - Injects credentials as environment variables into containers without baking them into images
+    - Dashboard, CLI, and Python API to create/update/delete; multiple Secrets per Function; key-value limit 32KB
+    - Modal-controlled secret storage; Dependabot-audited dependencies
+    - No HSM or dedicated secret-store integration noted in public docs
+  notes: Architecture details sourced from official Modal docs and engineering blog posts as of 2026-06-14. Rust runtime and content-addressed filesystem architecture confirmed by Sacra analyst research and Modal's own technical blog.
+  claimRefs:
+  - CE002
+  - CE003
+  - CE004
+  - CE005
+  - CE013
+  - CE014
+  - CE015
+  - CE016
+  - CE017
+  - CE019
+  - CE020
+  - CE021
+  - CE027
+  - CE030
+  - CE037
+  - CE041
+
+- id: TE004
+  title: Trust / Quality / Compliance Table
+  columns:
+  - Control / Certification
+  - Status
+  - Scope / detail
+  - Gap
+  rows:
+  - - SOC 2 Type II
+    - Achieved (no deviations)
+    - Annual third-party audit; January 2025 completion; covers security, availability, confidentiality; trust.modal.com for report access
+    - Audit scope details and control set not public; report requires request from trust.modal.com
+  - - HIPAA
+    - Available on Enterprise plan
+    - BAA required before PHI submission; Volumes v2 in scope; Volumes v1, Images, Memory Snapshots out of scope
+    - Memory Snapshots (a core performance feature) are out of BAA scope—material limitation for regulated healthcare AI teams
+  - - PCI
+    - Stripe Level 1
+    - Payment processing via Stripe PCI Service Provider Level 1; Modal does not store credit card data
+    - Modal's own compute services are not PCI-certified; PCI workloads would require additional controls
+  - - Data encryption
+    - In transit and at rest
+    - TLS 1.3 for all public APIs; client library verifies TLS certificates; user data encrypted at rest
+    - Internal-to-worker data paths not separately described in public documentation
+  - - Container isolation
+    - gVisor (production)
+    - All Functions and Sandboxes run under gVisor; same technology as Google Cloud Run and GKE; synthetic isolation monitoring
+    - gVisor adds syscall overhead vs native containers; CUDA driver compatibility with gVisor is a known engineering constraint
+  - - Bug bounty
+    - Active (private)
+    - Private program via HackerOne; request invite via security@modal.com; severity SLA published (Critical 24h, High 1 wk, Medium 1 mo)
+    - Private program means external security researchers have limited access; no published Hall of Fame or payout history
+  - - Employee access controls
+    - Documented
+    - SSO IdP with phishing-resistant MFA; Secureframe MDM for laptops (FileVault2); annual access audits; PR-based code review
+    - Internal penetration test frequency not disclosed; "external penetration testing firms" mentioned but cadence not stated
+  - - Reliability SLA
+    - No public standard/team SLA
+    - 'Enterprise SLA via contract; no public SLA for Starter/Team plans; 90-day status: GPU 99.946%, CPU 99.938%, Sandboxes 99.861%'
+    - 'May–June 2026: three major incidents in one month; no public RCA for May 19 incident; reliability confidence is open diligence item'
+  notes: Compliance status as of 2026-06-14. HIPAA BAA scope limitation for Memory Snapshots is materially important for healthcare AI customers because snapshots are central to Modal's cold-start performance value proposition.
+  claimRefs:
+  - CE026
+  - CE027
+  - CE028
+  - CE029
+  - CE030
+  - CE031
+  - CE032
+
+- id: TE005
+  title: Roadmap / Release / Development-Stage Table
+  columns:
+  - Date / stage
+  - Feature / milestone
+  - Status
+  - Implication
+  - Source
+  rows:
+  - - January 2025
+    - CPU Memory Snapshots (GA)
+    - GA
+    - Core cold-start technology; 3-10x faster initializations; foundation for GPU snapshot work
+    - Modal blog (memory-snapshots doc)
+  - - July 2025
+    - GPU Memory Snapshots (alpha)
+    - Alpha
+    - 10x cold-boot speedup for CUDA-compatible workloads; restricted to single-GPU and CUDA-only code
+    - Modal blog (gpu-mem-snapshots)
+  - - Late 2025
+    - Notebooks with GPU support
+    - GA
+    - GPU-backed collaborative notebooks; GPU memory snapshots reduce startup 10x; converts exploratory workloads to recurring usage
+    - Sacra analyst data; Modal pricing page
+  - - Late 2025 / 2026
+    - Clustered multi-node RDMA GPU workloads
+    - GA (Sacra-confirmed)
+    - Enables distributed training at scale on Modal; closes training-to-inference gap on a single vendor
+    - Sacra analyst report (April 2026)
+  - - 2026
+    - B200 / B200+ GPU tier
+    - GA; B300 opt-in
+    - Blackwell architecture support; B200+ allows opt-in to B300 at B200 pricing; requires CUDA 13.0+
+    - Modal GPU docs (2026-06-14)
+  - - 2026
+    - '@modal.concurrent decorator (input concurrency)'
+    - GA (v0.73.148+)
+    - Enables continuous batching for LLM inference per container; reduces scale-up overhead for I/O-bound workloads
+    - Modal docs (concurrent-inputs)
+  - - 2026
+    - JavaScript/TypeScript and Go SDKs
+    - GA
+    - Orchestration and Sandbox invocation from non-Python services; reduces lock-in to Python monorepos
+    - GitHub modal-labs/modal-client
+  - - 2026
+    - Region selection and routing regions
+    - GA (pricing multiplier applies)
+    - Sub-10ms network overhead for latency-sensitive workloads like robotics; eu-west and ap-south routing added
+    - Modal docs (region-selection); Physical Intelligence case study
+  - - Undisclosed forward roadmap
+    - Flash Attention, vLLM, SGLang contributions (Series C blog)
+    - In-progress
+    - Team of inference engineers contributing to open-source LLM serving engines; performance gains flow to community
+    - Modal Series C blog (May 2026)
+  notes: 'Dates are inferred from blog post publication dates, doc revision context, and third-party analyst research. Forward roadmap items beyond open-source inference engine contributions are not publicly disclosed. "Sacra-confirmed" means corroboration from Sacra analyst profile; Modal has not independently announced the clustered RDMA feature as a named product.'
+  claimRefs:
+  - CE015
+  - CE016
+  - CE017
+  - CE033
+  - CE034
+  - CE036
+  - CE040
+  - CE041
+  - CE042
+
+figures:
+- id: FE001
+  title: Modal Product Architecture Map
+  type: stack
+  layout: wide
+  summary: Layered view of Modal's public architecture from developer interface through container execution to multi-cloud hardware and storage.
+  data:
+    layers:
+    - id: layer-sdk
+      label: Developer Interface (Python SDK)
+      detail: '@app.function(), @app.cls(), @modal.fastapi_endpoint, @modal.concurrent, @modal.enter/@modal.exit decorators; JS/TS and Go SDKs for Sandbox/Function calls. No YAML required.'
+      sublayers:
+      - id: sdk-function
+        label: Functions / Classes
+        detail: Serverless GPU/CPU compute; lifecycle hooks; map/starmap for parallel fan-out.
+      - id: sdk-sandbox
+        label: Sandboxes
+        detail: Ephemeral isolated containers for agent-generated or untrusted code; TCP tunnels; lifecycle events.
+      - id: sdk-web
+        label: Web Endpoints
+        detail: '@modal.fastapi_endpoint, ASGI, WSGI apps; custom domains; scale-to-zero with cold start managed by platform.'
+      - id: sdk-schedule
+        label: Scheduled Functions
+        detail: modal.Period / modal.Cron syntax; deploys alongside function definition.
+    - id: layer-storage
+      label: Storage Primitives
+      detail: 'Volumes (distributed FS, up to 2.5 GB/s, write-once-read-many optimized), Dicts (KV store, cloudpickle), Queues (FIFO, multi-producer/consumer), Notebooks (GPU-backed interactive).'
+      sublayers:
+      - id: storage-volumes
+        label: Volumes
+        detail: Distributed filesystem; multi-cloud backed; v2 is HIPAA-compliant.
+      - id: storage-dicts
+        label: Dicts
+        detail: Distributed key-value; 100 MiB/object; 7-day TTL; distributed locks.
+      - id: storage-queues
+        label: Queues
+        detail: FIFO; 24-hour TTL; 5,000 items per partition; 100,000 partitions.
+    - id: layer-runtime
+      label: Container Runtime
+      detail: 'Rust-based worker runtime; gVisor kernel sandbox; Python Image builder (method-chain API); content-addressed multi-tier image filesystem cache (3-5x vs uncached).'
+      sublayers:
+      - id: runtime-gvisor
+        label: gVisor Isolation
+        detail: Kernel sandbox; same technology as Google Cloud Run and GKE; automatic synthetic isolation monitoring.
+      - id: runtime-snapshots
+        label: Memory Snapshots
+        detail: 'CPU snapshots (GA, 3-10x speedup); GPU snapshots (alpha, up to 10x speedup via CUDA checkpoint/restore API).'
+      - id: runtime-images
+        label: Image Builder
+        detail: Python-defined; no Dockerfile required; uv/pip install; add_local_dir.
+    - id: layer-infra
+      label: Multi-Cloud Infrastructure
+      detail: 'AWS, GCP, Oracle Cloud Infrastructure; hundreds of data centers globally; cloud buffers of idle GPUs per type; automatic GPU upgrade paths (H100→H200, A100-40GB→A100-80GB).'
+      sublayers:
+      - id: infra-gpu
+        label: GPU Fleet
+        detail: 'T4, L4, A10, L40S, A100-40GB, A100-80GB, H100, H200, B200, B200+ (B300 opt-in); up to 8 GPUs per container.'
+      - id: infra-regions
+        label: Regions
+        detail: 'Container regions (broad 1.5x, narrow 1.75x pricing); routing regions (us-east, us-west, eu-west, ap-south).'
+  claimRefs:
+  - CE001
+  - CE003
+  - CE004
+  - CE005
+  - CE008
+  - CE009
+  - CE010
+  - CE011
+  - CE013
+  - CE014
+  - CE015
+  - CE016
+  - CE019
+  - CE020
+  - CE037
+  - CE038
+
+- id: FE002
+  title: Customer Workflow / Operating Flow
+  type: flow
+  layout: wide
+  summary: How a developer or team moves from a local Python function or model to a production workload on Modal, with branches for inference, agent execution, and batch processing.
+  data:
+    nodes:
+    - id: n1
+      label: Local Python code
+      detail: Developer writes Python functions with standard imports; no cloud config files required.
+    - id: n2
+      label: Add @app.function() decorator
+      detail: Specify GPU type, memory, secrets, volumes, and concurrency inline in code; Image defined via method chain.
+    - id: n3
+      label: modal run / modal serve
+      detail: '"modal run" runs function once; "modal serve" live-reloads on code changes; both create ephemeral apps.'
+    - id: n4
+      label: modal deploy
+      detail: Deploys app persistently; creates stable web endpoints, scheduled functions, or long-lived Sandboxes.
+    - id: n5
+      label: Autoscaling inference endpoint
+      detail: Web Endpoint or Function serves HTTP requests; containers scale from 0 to thousands; input concurrency for batching.
+    - id: n6
+      label: Batch / scheduled job
+      detail: map()/starmap() fans out to thousands of containers in parallel; Cron/Period triggers scheduled execution.
+    - id: n7
+      label: Agent Sandbox execution
+      detail: Sandbox.create() spins up gVisor container at runtime; accepts arbitrary code; returns outputs; lifecycle events for monitoring.
+    - id: n8
+      label: Training / fine-tuning job
+      detail: GPU training functions; multi-node support; direct path from checkpoint to deployed inference endpoint.
+    - id: n9
+      label: Observe and debug
+      detail: 'Real-time logs streamed to terminal; modal shell attaches debug shell to running container; dashboard shows metrics.'
+    edges:
+    - from: n1
+      to: n2
+      label: decorator
+    - from: n2
+      to: n3
+      label: local test
+    - from: n3
+      to: n4
+      label: deploy
+    - from: n4
+      to: n5
+      label: serving path
+    - from: n4
+      to: n6
+      label: batch path
+    - from: n4
+      to: n7
+      label: agent path
+    - from: n4
+      to: n8
+      label: training path
+    - from: n5
+      to: n9
+      label: observe
+    - from: n6
+      to: n9
+      label: observe
+    - from: n7
+      to: n9
+      label: observe
+    - from: n8
+      to: n5
+      label: checkpoint → endpoint
+  claimRefs:
+  - CE001
+  - CE002
+  - CE006
+  - CE007
+  - CE012
+  - CE022
+  - CE023
+  - CE024
+
+- id: FE003
+  title: Critical Dependency Map
+  type: dag
+  layout: wide
+  summary: 'Key external dependencies and internal components that Modal''s platform relies on; highlights single-provider risk concentrations and compliance scope boundaries.'
+  data:
+    nodes:
+    - id: d-clouds
+      label: Cloud GPU providers
+      detail: 'AWS, GCP, Oracle Cloud Infrastructure; cloud buffers of idle GPUs; auto-upgrade paths; Oracle partnership for pricing.'
+    - id: d-nvidia
+      label: NVIDIA CUDA drivers
+      detail: 'GPU Memory Snapshots require NVIDIA driver 570/575 branches for cuCheckpointProcessCheckpoint(); B200+ requires CUDA 13.0+.'
+    - id: d-gvisor
+      label: gVisor (Google)
+      detail: 'Open-source kernel sandbox maintained by Google; Modal uses it for all Function and Sandbox isolation; compatibility must track gVisor releases.'
+    - id: d-rust-runtime
+      label: Modal Rust runtime (proprietary)
+      detail: 'Worker runtime and storage infrastructure; memory-safe; core proprietary component; not open-sourced.'
+    - id: d-fs
+      label: Custom content-addressed FS
+      detail: 'Modal-proprietary multi-tier image filesystem; worker memory → cluster cache → object storage; critical for 3-5x faster cold starts.'
+    - id: d-stripe
+      label: Stripe (payments)
+      detail: 'PCI Level 1 payment processor; Modal does not store card data; Stripe SaaS dependency.'
+    - id: d-sentry
+      label: Observability (Datadog, Sentry)
+      detail: 'Logging and metrics providers; mentioned in security docs; external SaaS dependencies in operational footprint.'
+    - id: d-hackerone
+      label: HackerOne (bug bounty)
+      detail: 'Private bug-bounty program; invite-only; security@modal.com for researcher access.'
+    - id: d-platform
+      label: Modal Platform
+      detail: 'Core product delivered to customers; depends on all upstream nodes.'
+    edges:
+    - from: d-clouds
+      to: d-platform
+      label: GPU capacity
+    - from: d-nvidia
+      to: d-platform
+      label: CUDA snapshot capability
+    - from: d-gvisor
+      to: d-platform
+      label: container isolation
+    - from: d-rust-runtime
+      to: d-platform
+      label: execution engine
+    - from: d-fs
+      to: d-platform
+      label: fast container FS
+    - from: d-stripe
+      to: d-platform
+      label: payment processing
+    - from: d-sentry
+      to: d-platform
+      label: observability
+    - from: d-hackerone
+      to: d-platform
+      label: security research
+  claimRefs:
+  - CE013
+  - CE016
+  - CE019
+  - CE020
+  - CE027
+  - CE030
+  - CE037
+  - CE041
+
+- id: FE004
+  title: Product Maturity / Capability Map
+  type: matrix
+  layout: wide
+  summary: Capability-by-maturity assessment of Modal's main product modules as of 2026-06-14, based on public documentation, customer case studies, and status data.
+  data:
+    columns:
+    - Early / alpha
+    - Operational / GA
+    - Differentiated / strong public signal
+    rows:
+    - label: Functions (GPU/CPU)
+      values:
+      - null
+      - GA; ~1s cold start; scale to 1,000+ GPUs
+      - Multi-cloud pooling, code-only DX, and Sacra-confirmed $300M ARR signal strong adoption
+    - label: Sandboxes
+      values:
+      - null
+      - GA; 1B+ launched; 50,000+ concurrent
+      - Market-leading agent code execution; Lovable, Cognition, Ramp, Applied Compute validation
+    - label: Web Endpoints
+      values:
+      - null
+      - GA; 99.933% 90-day uptime
+      - Fully managed HTTPS serving with scale-to-zero; custom domains on Team plan
+    - label: Volumes
+      values:
+      - null
+      - GA (v2 HIPAA-compliant); 2.5 GB/s
+      - Distributed by default; no replica management; Physical Intelligence uses for checkpoint storage
+    - label: Notebooks
+      values:
+      - null
+      - GA; GPU memory snapshot acceleration
+      - 10x startup speedup with GPU snapshots; collaborative GPU notebooks differentiated from Colab/Jupyter
+    - label: CPU Memory Snapshots
+      values:
+      - null
+      - GA (since Jan 2025); 3-10x speedup
+      - Demonstrated production impact (Reducto 83% cold-boot reduction); core platform differentiator
+    - label: GPU Memory Snapshots
+      values:
+      - Alpha; single-GPU; CUDA-only
+      - null
+      - Requires NVIDIA driver 570/575; 10x speedup demonstrated; limitations for multi-GPU and non-CUDA
+    - label: Training
+      values:
+      - null
+      - GA; multi-node RDMA (per Sacra)
+      - Closes training-to-inference gap on single vendor; Applied Compute RL loop validation
+    - label: Scheduled Functions
+      values:
+      - null
+      - GA; simple Period/Cron interface
+      - No external scheduler needed; schedule lives in the function definition
+    - label: Dicts / Queues
+      values:
+      - null
+      - GA; utility primitives
+      - Low-friction distributed state without Redis/Celery; TTL-limited durability is a constraint
+  claimRefs:
+  - CE006
+  - CE008
+  - CE009
+  - CE010
+  - CE011
+  - CE015
+  - CE016
+  - CE017
+  - CE018
+  - CE022
+  - CE025
+  - CE031
+  - CE042
+
+localEvidence:
+  searchQueries:
+  - query: Modal serverless GPU cold start memory snapshots 2026
+    engine: direct-fetch
+    hits: 3
+    retainedSourceRefs:
+    - SE004
+    - SE005
+    - SE012
+  - query: Modal gVisor Rust runtime container architecture 2026
+    engine: direct-fetch
+    hits: 3
+    retainedSourceRefs:
+    - SE010
+    - SE011
+    - SE027
+  - query: Modal SOC2 Type II HIPAA security compliance 2026
+    engine: direct-fetch
+    hits: 3
+    retainedSourceRefs:
+    - SE019
+    - SE020
+    - SE010
+  - query: Modal GPU pricing comparison serverless 2026
+    engine: direct-fetch
+    hits: 3
+    retainedSourceRefs:
+    - SE022
+    - SE032
+    - SE033
+  - query: Modal Sandbox agent coding execution 2026
+    engine: direct-fetch
+    hits: 2
+    retainedSourceRefs:
+    - SE003
+    - SE029
+  - query: Modal developer signal PyPI downloads GitHub 2026
+    engine: direct-fetch
+    hits: 2
+    retainedSourceRefs:
+    - SE016
+    - SE017
+  - query: Modal outage incident reliability May June 2026
+    engine: direct-fetch
+    hits: 2
+    retainedSourceRefs:
+    - SE018
+    - SE028
+  - query: Modal Series C funding valuation 2026
+    engine: direct-fetch
+    hits: 1
+    retainedSourceRefs:
+    - SE037
+  researchQuestions:
+  - id: QE001
+    question: What named product modules and primitives does Modal expose as of June 2026?
+    type: enumeration
+    targets:
+    - contentRequirements/1
+    - plannedTables/product-module-asset-matrix
+    status: answered
+    answeredBy:
+    - CE001
+    - CE002
+    - CE006
+    - CE007
+    - CE008
+    - CE009
+    - CE010
+    - CE011
+    - CE012
+  - id: QE002
+    question: How does a developer define, test, and deploy a Modal Function using the Python SDK?
+    type: mechanism
+    targets:
+    - contentRequirements/0
+    - contentRequirements/2
+    - plannedFigures/customer-workflow-operating-flow
+    status: answered
+    answeredBy:
+    - CE002
+    - CE013
+    - CE014
+  - id: QE003
+    question: What GPU types and per-container GPU counts does Modal support as of 2026, including Blackwell?
+    type: enumeration
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+    answeredBy:
+    - CE003
+    - CE004
+    - CE005
+  - id: QE004
+    question: How do Modal Sandboxes differ from Modal Functions in isolation model, use case, and lifecycle?
+    type: comparison
+    targets:
+    - contentRequirements/0
+    - contentRequirements/2
+    - plannedTables/product-module-asset-matrix
+    status: answered
+    answeredBy:
+    - CE006
+    - CE007
+    - CE013
+  - id: QE005
+    question: What storage primitives (Volumes, Dicts, Queues) does Modal provide, and how do they differ in durability, size, and use case?
+    type: enumeration
+    targets:
+    - contentRequirements/2
+    - plannedTables/product-module-asset-matrix
+    status: answered
+    answeredBy:
+    - CE008
+    - CE009
+    - CE010
+  - id: QE006
+    question: How does Modal achieve sub-second cold starts, and what are the four technical pillars involved?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    - contentRequirements/4
+    - plannedFigures/product-architecture-map
+    status: answered
+    answeredBy:
+    - CE019
+    - CE020
+    - CE021
+  - id: QE007
+    question: What is CPU Memory Snapshots and how does Modal implement checkpoint/restore for container state?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+    answeredBy:
+    - CE015
+    - CE016
+  - id: QE008
+    question: What is GPU Memory Snapshots, what CUDA APIs underpin it, and what performance gains has Modal published?
+    type: quantification
+    targets:
+    - contentRequirements/2
+    - contentRequirements/4
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+    answeredBy:
+    - CE016
+    - CE017
+    - CE018
+  - id: QE009
+    question: What container runtime and image-definition approach does Modal use, and how does gVisor affect security?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+    answeredBy:
+    - CE013
+    - CE014
+    - CE030
+  - id: QE010
+    question: What web endpoint and HTTP serving capabilities does Modal expose, and how do they scale?
+    type: enumeration
+    targets:
+    - contentRequirements/0
+    - contentRequirements/2
+    - plannedFigures/customer-workflow-operating-flow
+    status: answered
+    answeredBy:
+    - CE011
+  - id: QE011
+    question: What scheduling and batch processing capabilities does Modal provide without external schedulers?
+    type: enumeration
+    targets:
+    - contentRequirements/0
+    status: answered
+    answeredBy:
+    - CE012
+  - id: QE012
+    question: What region selection, routing, and pricing multiplier options are available in Modal?
+    type: enumeration
+    targets:
+    - contentRequirements/3
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+    answeredBy:
+    - CE038
+  - id: QE013
+    question: What are Modal's SOC 2 Type II and HIPAA compliance postures, including BAA scope limitations?
+    type: verification
+    targets:
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+    status: answered
+    answeredBy:
+    - CE026
+    - CE027
+    - CE028
+  - id: QE014
+    question: What data handling, encryption, and access controls does Modal's public security documentation describe?
+    type: enumeration
+    targets:
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+    status: answered
+    answeredBy:
+    - CE027
+    - CE029
+    - CE030
+  - id: QE015
+    question: What public 90-day uptime data exists for Modal's core services as of June 2026?
+    type: adverse
+    targets:
+    - contentRequirements/3
+    - plannedTables/trust-quality-compliance-table
+    status: answered
+    answeredBy:
+    - CE031
+    - CE032
+  - id: QE016
+    question: What developer signal metrics are available for the modal Python package on PyPI?
+    type: quantification
+    targets:
+    - contentRequirements/4
+    - plannedFigures/product-maturity-capability-map
+    status: answered
+    answeredBy:
+    - CE033
+    - CE034
+  - id: QE017
+    question: What customer proof is available for Modal's latency, scale, and cold-start performance claims?
+    type: quantification
+    targets:
+    - contentRequirements/0
+    - plannedTables/workflow-use-case-table
+    status: answered
+    answeredBy:
+    - CE018
+    - CE022
+    - CE023
+    - CE024
+    - CE025
+  - id: QE018
+    question: How does Modal GPU pricing compare to RunPod and Baseten on L4 and A100-80GB as of April 2026?
+    type: comparison
+    targets:
+    - contentRequirements/4
+    - plannedFigures/product-maturity-capability-map
+    status: answered
+    answeredBy:
+    - CE035
+  - id: QE019
+    question: How does Modal's architecture and DX differentiate from AWS Lambda and Google Cloud Run for AI/GPU workloads?
+    type: comparison
+    targets:
+    - contentRequirements/4
+    status: answered
+    answeredBy:
+    - CE034
+    - CE037
+  - id: QE020
+    question: What trust portal and compliance certificates does Modal publish at trust.modal.com?
+    type: verification
+    targets:
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+    status: answered
+    answeredBy:
+    - CE026
+  - id: QE021
+    question: What constraints does the HIPAA BAA scope impose on Memory Snapshots, and why does this matter for healthcare AI teams?
+    type: adverse
+    targets:
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+    status: answered
+    answeredBy:
+    - CE028
+  - id: QE022
+    question: What do Modal's SaaS Terms of Service (effective May 2026) say about enterprise scope and no-fee use?
+    type: verification
+    targets:
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+    status: partial
+    answeredBy:
+    - CE027
+  - id: QE023
+    question: What adverse operational events (outages, incidents) are on record for Modal in May–June 2026?
+    type: adverse
+    targets:
+    - contentRequirements/3
+    - plannedTables/trust-quality-compliance-table
+    status: answered
+    answeredBy:
+    - CE031
+    - CE032
+  - id: QE024
+    question: What 2025–2026 product additions are visible in public Modal sources that signal roadmap direction?
+    type: freshness
+    targets:
+    - contentRequirements/3
+    - plannedTables/roadmap-release-development-stage-table
+    - plannedFigures/product-maturity-capability-map
+    status: answered
+    answeredBy:
+    - CE033
+    - CE036
+    - CE040
+    - CE041
+    - CE042
+  - id: QE025
+    question: What material product-tech diligence gaps remain unresolved from public Modal sources?
+    type: adverse
+    targets:
+    - contentRequirements/5
+    - plannedFigures/critical-dependency-map
+    status: partial
+    answeredBy:
+    - CE043
+
+  claims:
+  - id: CE001
+    statement: Modal exposes Functions (GPU/CPU serverless compute), Sandboxes (isolated code execution), Training, Volumes, Web Endpoints, Notebooks, Dicts, and Queues as its core product primitives.
+    type: observed
+    topic: product-surface
+    sourceRefs:
+    - SE001
+    - SE022
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+  - id: CE002
+    statement: Modal's primary developer interface is the Python SDK; developers add @app.function() and @app.cls() decorators to Python functions to define cloud compute jobs, with GPU type, secrets, volumes, and concurrency specified inline.
+    type: observed
+    topic: python-dx
+    sourceRefs:
+    - SE001
+    - SE030
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+    - QE002
+  - id: CE003
+    statement: 'Modal publicly supports the following GPU types: T4, L4, A10, L40S, A100-40GB, A100-80GB, H100, H200, B200, and B200+ (opt-in to B300); per-container GPU counts go up to 8 for most high-end SKUs.'
+    type: observed
+    topic: gpu-fleet
+    sourceRefs:
+    - SE006
+    - SE027
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE003
+  - id: CE004
+    statement: Modal may automatically upgrade an H100 request to H200 or an A100-40GB request to A100-80GB at no extra charge to the customer, improving pool utilization.
+    type: observed
+    topic: gpu-fleet
+    sourceRefs:
+    - SE006
+    - SE027
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE003
+  - id: CE005
+    statement: The B200+ option allows Modal to run requests on either B200 or B300 hardware billed at B200 pricing; B300 requires CUDA 13.0+; the option widens the effective capacity pool.
+    type: observed
+    topic: gpu-fleet
+    sourceRefs:
+    - SE006
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE003
+  - id: CE006
+    statement: Modal Sandboxes are ephemeral isolated containers launched at runtime via Sandbox.create(); they pass through Created, Scheduled, Started, Ready, and Finished lifecycle states.
+    type: observed
+    topic: sandboxes
+    sourceRefs:
+    - SE003
+    - SE029
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE004
+  - id: CE007
+    statement: Sandboxes support TCP tunnels (automatic TLS termination), QUIC-based portals for real-time bidirectional communication (with UDP hole punching), volume mounts, readiness probes, and exec() for arbitrary in-container commands.
+    type: observed
+    topic: sandboxes
+    sourceRefs:
+    - SE003
+    - SE025
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE004
+    - QE017
+  - id: CE008
+    statement: Modal Volumes are a high-performance distributed filesystem optimized for write-once, read-many ML workloads; they are distributed by default (no replica management needed), backed by multi-cloud storage for high availability, and support up to 2.5 GB/s bandwidth.
+    type: observed
+    topic: volumes
+    sourceRefs:
+    - SE007
+    - SE001
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE005
+  - id: CE009
+    statement: Modal Dicts are a distributed key-value store with cloudpickle serialization, 100 MiB/object limit, 10,000 entries/update limit, a 7-day inactivity TTL, and a locking primitive for distributed coordination.
+    type: observed
+    topic: dicts
+    sourceRefs:
+    - SE008
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE005
+  - id: CE010
+    statement: Modal Queues are multi-producer, multi-consumer FIFO queues with up to 100,000 partitions, 5,000 items per partition, 1 MiB item limit, a 24-hour default TTL, and synchronous/async access.
+    type: observed
+    topic: queues
+    sourceRefs:
+    - SE009
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE005
+  - id: CE011
+    statement: Modal Web Functions support @modal.fastapi_endpoint (wraps a Python function in FastAPI), @modal.asgi_app, and @modal.wsgi_app; each creates a public internet HTTPS endpoint; containers scale to zero between requests.
+    type: observed
+    topic: web-endpoints
+    sourceRefs:
+    - SE002
+    - SE001
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE010
+  - id: CE012
+    statement: Modal supports function scheduling via modal.Period (interval between calls) and modal.Cron (cron syntax) attached to deployed functions, with monitoring via the web dashboard; schedules cannot be paused without redeployment.
+    type: observed
+    topic: scheduling
+    sourceRefs:
+    - SE014
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE011
+  - id: CE013
+    statement: Modal containers run inside gVisor, the sandboxing technology used in Google Cloud Run and GKE; the default container environment is Debian Linux with a Python installation; all Functions and Sandboxes use this isolation.
+    type: observed
+    topic: container-runtime
+    sourceRefs:
+    - SE010
+    - SE011
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE009
+  - id: CE014
+    statement: Modal Images are defined in Python via method chaining (Image.debian_slim().pip_install(...)); no YAML or Dockerfile is required; uv pip_install, add_local_dir, add_local_python_source, and Dockerfile fallback are all supported.
+    type: observed
+    topic: container-images
+    sourceRefs:
+    - SE011
+    - SE001
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE009
+    - QE002
+  - id: CE015
+    statement: CPU Memory Snapshots (GA since January 2025) capture container memory state just before the first request; subsequent cold starts restore directly from the frozen state, skipping Python imports, JIT compilation, and model initialization; practical speedups are 3–10x.
+    type: observed
+    topic: memory-snapshots-cpu
+    sourceRefs:
+    - SE005
+    - SE012
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE006
+    - QE007
+  - id: CE016
+    statement: GPU Memory Snapshots (alpha) use the NVIDIA CUDA checkpoint/restore API (driver branches 570/575) to checkpoint device memory, CUDA kernels, streams, contexts, and memory mappings; the feature requires cuCheckpointProcessCheckpoint() and cuCheckpointProcessRestore().
+    type: observed
+    topic: memory-snapshots-gpu
+    sourceRefs:
+    - SE005
+    - SE012
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE007
+    - QE008
+  - id: CE017
+    statement: 'Modal published GPU Memory Snapshot benchmarks showing: vLLM serving Qwen2.5-0.5B-Instruct from 45s to 5s P0 cold start; a ViT inference function with torch.compile from 8.5s to 2.25s P0; up to 10x faster cold boot overall.'
+    type: company-claimed
+    topic: memory-snapshots-gpu
+    sourceRefs:
+    - SE012
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE008
+    - QE017
+  - id: CE018
+    statement: Reducto achieved an 83% reduction in cold boot time (from approximately 70s to approximately 12s) for its production document-processing models after adopting GPU memory snapshotting on Modal.
+    type: company-claimed
+    topic: customer-proof
+    sourceRefs:
+    - SE026
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE008
+    - QE017
+  - id: CE019
+    statement: 'Modal''s four-pillar cold-start architecture comprises: (1) cloud buffers of idle GPUs maintained for each GPU type; (2) a content-addressed multi-tier container filesystem; (3) CPU checkpoint/restore (Memory Snapshots); (4) CUDA GPU checkpoint/restore (GPU Memory Snapshots).'
+    type: observed
+    topic: cold-start-tech
+    sourceRefs:
+    - SE027
+    - SE004
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE006
+  - id: CE020
+    statement: Modal's custom content-addressed container filesystem caches popular container image files in worker memory; this yields 3–5x faster file delivery than uncached downloads and benefits all users that import commonly used libraries like torch.
+    type: observed
+    topic: cold-start-tech
+    sourceRefs:
+    - SE027
+    - SE012
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE006
+  - id: CE021
+    statement: Modal documentation states that containers boot in approximately 1 second via its custom container stack; initialization time beyond container boot depends on application code (imports, model loading) and is addressed by Memory Snapshots.
+    type: observed
+    topic: cold-start-tech
+    sourceRefs:
+    - SE004
+    - SE027
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE006
+  - id: CE022
+    statement: Reducto achieved a 3x reduction in P90 latency and scaled to over 1,000 GPUs in under an hour for a 100k-pages-per-minute enterprise load test, using independent per-model autoscaling and per-customer compute pools on Modal.
+    type: company-claimed
+    topic: customer-proof
+    sourceRefs:
+    - SE026
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE017
+  - id: CE023
+    statement: Physical Intelligence runs inference for real-time robotic control on Modal with only 10–15ms of network overhead, using a QUIC-based portal over UDP with automatic STUN/NAT traversal, coordinated via Modal Tunnels for rendezvous.
+    type: company-claimed
+    topic: customer-proof
+    sourceRefs:
+    - SE025
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE017
+  - id: CE024
+    statement: Applied Compute used Modal Sandboxes, Functions, and Training as a unified RL loop platform (rollouts, grading fan-out, inference) for enterprise RL customers including DoorDash, Cognition, and Mercor; they found Modal was the only platform with appropriate primitives at each layer.
+    type: company-claimed
+    topic: customer-proof
+    sourceRefs:
+    - SE024
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE017
+  - id: CE025
+    statement: As of May 2026, over 1 billion Sandboxes have been launched on Modal, per Modal's own X/Twitter post cited in the Series C blog.
+    type: company-claimed
+    topic: scale-milestones
+    sourceRefs:
+    - SE039
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE017
+  - id: CE026
+    statement: Modal completed a SOC 2 Type II audit with no deviations found (announced January 2, 2025); the audit covers security, availability, and confidentiality; Modal commits to annual renewal; the report is available on request via trust.modal.com.
+    type: observed
+    topic: trust-compliance
+    sourceRefs:
+    - SE010
+    - SE019
+    - SE020
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE013
+    - QE020
+  - id: CE027
+    statement: Modal's security documentation states that the worker runtime and storage infrastructure are written in Rust; all user data is encrypted in transit (TLS 1.3) and at rest; software dependencies are audited by GitHub Dependabot; code reviews use a PR-based workflow.
+    type: observed
+    topic: security-engineering
+    sourceRefs:
+    - SE010
+    - SE019
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE014
+  - id: CE028
+    statement: Modal supports HIPAA-compliant workloads on the Enterprise plan under a BAA; Volumes v2 is in BAA scope, but Volumes v1, Images (excluding Filesystem/Directory Snapshots), and Memory Snapshots are currently out of scope.
+    type: observed
+    topic: trust-compliance
+    sourceRefs:
+    - SE010
+    - SE019
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE013
+    - QE021
+  - id: CE029
+    statement: Modal operates a private bug-bounty program via HackerOne; access requires email invitation via security@modal.com; Modal publishes a severity SLA (Critical 24 hours; High 1 week; Medium 1 month; Low/Informational 3 months).
+    type: observed
+    topic: security-bug-bounty
+    sourceRefs:
+    - SE010
+    - SE019
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE014
+  - id: CE030
+    statement: Modal uses automated synthetic monitoring test applications that continuously check for network and application isolation within its runtime; employee access is protected by SSO IdP with phishing-resistant MFA and Secureframe MDM.
+    type: observed
+    topic: security-operations
+    sourceRefs:
+    - SE010
+    - SE019
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE014
+  - id: CE031
+    statement: 'Modal''s status page (checked June 14, 2026) shows the following 90-day uptimes: GPU functions 99.946%, CPU functions 99.938%, Web endpoints 99.933%, Snapshot restores (beta) 99.782%, Sandboxes 99.861%, Volumes 99.979%, Image builds 99.863%.'
+    type: observed
+    topic: reliability
+    sourceRefs:
+    - SE028
+    - SE018
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE015
+    - QE023
+  - id: CE032
+    statement: A Hacker News community post (June 3, 2026) documented three major outages in one month—May 7 (AWS AZ SEV1 overheating), May 19 (no published incident report), and June 3 (internal authentication system failure)—as an adverse reliability signal.
+    type: third-party-reported
+    topic: reliability-adverse
+    sourceRefs:
+    - SE018
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE015
+    - QE023
+  - id: CE033
+    statement: The modal PyPI package is at version 1.5.0 as of June 2026, supports Python 3.10–3.14, and had 1,624,766 downloads in a single day and 13,899,772 downloads in the prior week.
+    type: observed
+    topic: developer-signal
+    sourceRefs:
+    - SE017
+    - SE016
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE016
+  - id: CE034
+    statement: The modal-client GitHub repository is open source, hosts the Modal Python SDK and JS/TypeScript and Go SDKs, and supports Python 3.10–3.14; community extensions exist (Ruby modal-rb).
+    type: observed
+    topic: developer-signal
+    sourceRefs:
+    - SE016
+    - SE017
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE016
+    - QE002
+  - id: CE035
+    statement: HostFleet's April 2026 GPU pricing matrix shows Modal at $0.80/hr for L4 and $2.10/hr for A100-80GB, compared with RunPod at $0.43/hr (L4) and $2.17/hr (A100-80GB), and Together AI at $0.99/hr (A100-80GB); Baseten is priced higher than Modal on all comparable SKUs.
+    type: third-party-reported
+    topic: pricing-comparison
+    sourceRefs:
+    - SE032
+    - SE033
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE018
+  - id: CE036
+    statement: The @modal.concurrent decorator (added in SDK v0.73.148) allows containers to process multiple inputs simultaneously and enables continuous batching for LLM inference workloads (e.g., vLLM, SGLang); the decorator sets max_inputs and target_inputs.
+    type: observed
+    topic: input-concurrency
+    sourceRefs:
+    - SE013
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+  - id: CE037
+    statement: Modal pools capacity across AWS, GCP, and Oracle Cloud Infrastructure globally across hundreds of data centers; an Oracle partnership cited by Sacra supports access to competitively priced GPU resources.
+    type: company-claimed
+    topic: multi-cloud
+    sourceRefs:
+    - SE036
+    - SE001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE019
+  - id: CE038
+    statement: 'Modal''s region selection charges pricing multipliers: broad regions (e.g., us) at 1.5x, narrow regions (e.g., us-west) at 1.75x; routing regions (us-east, us-west, eu-west, ap-south) control where inputs/outputs are processed; this enabled Physical Intelligence to achieve ~10ms latency.'
+    type: observed
+    topic: region-selection
+    sourceRefs:
+    - SE015
+    - SE025
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE012
+  - id: CE039
+    statement: Modal maintains a public GPU Glossary at modal.com/gpu-glossary covering the full GPU software stack from hardware architecture to CUDA programming; the glossary is open-source on GitHub and functions as a developer community asset.
+    type: observed
+    topic: developer-community
+    sourceRefs:
+    - SE021
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE016
+  - id: CE040
+    statement: Modal's May 2026 engineering blog post ("Truly Serverless GPUs") argues that GPU Allocation Utilization in fixed-allocation cloud deployments is commonly below 10–20%, and that Modal's four-pillar cold-start architecture reduces GPU replica scaling from "multiple kiloseconds to tens of seconds."
+    type: company-claimed
+    topic: cold-start-framing
+    sourceRefs:
+    - SE027
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE006
+    - QE019
+  - id: CE041
+    statement: Sacra analyst data describes Modal's Rust-based container runtime and custom distributed filesystem as key performance differentiators; Sacra also notes Modal's multi-cloud architecture with automatic hardware selection.
+    type: third-party-reported
+    topic: architecture-differentiation
+    sourceRefs:
+    - SE036
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE019
+  - id: CE042
+    statement: Sacra analyst data (April 2026) confirms Modal introduced clustered computing for multi-node, RDMA-connected GPU workloads as a late-2025/2026 addition, enabling distributed training at scale on a single vendor.
+    type: third-party-reported
+    topic: training-roadmap
+    sourceRefs:
+    - SE036
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE024
+  - id: CE043
+    statement: Material unresolved product-tech diligence gaps include the absence of independent third-party performance benchmarks for cold-start or throughput claims, private enterprise SLA terms, HIPAA BAA scope exclusion of Memory Snapshots (a core performance feature), and unresolved reliability confidence from the May–June 2026 outage cluster.
+    type: inferred
+    topic: diligence-gaps
+    sourceRefs:
+    - SE018
+    - SE028
+    - SE010
+    - SE027
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE025
+
+  evidenceGaps:
+  - type: missing-source
+    severity: material
+    topic: benchmark-methodology
+    missingEvidence: Independent third-party benchmarks for Modal cold-start, throughput, and latency claims across representative GPU workloads.
+    whyItMatters: Modal markets sub-second cold starts and 10x GPU snapshot speedup as core differentiators; investors need reproducible methods, not isolated company-published or customer-reported numbers.
+    diligencePath: Request benchmark harness definitions, GPU type and workload configurations, and customer-approved before/after test outputs; ask for comparison with RunPod, Replicate, and AWS Lambda SnapStart on identical workloads.
+    relatedQuestionRefs:
+    - QE008
+    - QE017
+    - QE025
+  - type: private-evidence-only
+    severity: material
+    topic: enterprise-sla
+    missingEvidence: Public contractual SLA terms for any Modal plan below Enterprise; enterprise SLA exhibit and uptime commitment.
+    whyItMatters: Three major outages in May–June 2026 make reliability commitments relevant; the only available data is status-page statistics, not enforceable SLA terms.
+    diligencePath: Request the standard Enterprise SLA exhibit, uptime commitment percentage, credit mechanism, and any exclusions (scheduled maintenance, cloud-provider outages).
+    relatedQuestionRefs:
+    - QE015
+    - QE022
+    - QE023
+    - QE025
+    relatedTableRefs:
+    - TE004
+  - type: private-evidence-only
+    severity: moderate
+    topic: hipaa-baa-memory-snapshots
+    missingEvidence: Roadmap or timeline for bringing Memory Snapshots into HIPAA BAA scope.
+    whyItMatters: Healthcare AI customers who want HIPAA compliance but also need fast cold starts are currently blocked from using Memory Snapshots (the key performance feature) in a BAA-governed deployment.
+    diligencePath: Ask Modal whether and when Memory Snapshots will be added to BAA scope; ask for examples of healthcare customers operating under the existing BAA constraints.
+    relatedQuestionRefs:
+    - QE021
+    - QE025
+    relatedTableRefs:
+    - TE004
+  - type: private-evidence-only
+    severity: minor
+    topic: training-docs
+    missingEvidence: Public documentation for multi-node RDMA training, distributed training API, and Training product roadmap beyond the currently disclosed features.
+    whyItMatters: Training-to-inference is a stated Series C roadmap priority, but the technical documentation for multi-node training was not accessible in this research run.
+    diligencePath: Obtain product roadmap and technical docs for Training, including multi-node RDMA configuration, supported frameworks, and customer reference deployments.
+    relatedQuestionRefs:
+    - QE024
+    - QE025
+    relatedTableRefs:
+    - TE001
+    - TE005
+
+  sources:
+  - id: SE001
+    publisher: Modal
+    url: https://modal.com/docs/guide
+    title: Modal Documentation — Introduction
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - product-surface
+    - python-dx
+    - architecture
+    keyQuote: 'Modal is an AI infrastructure platform that lets you: Run low latency inference with sub-second cold starts, Scale out batch jobs to run massively in parallel, Spin up thousands of isolated and secure Sandboxes to execute AI generated code.'
+  - id: SE002
+    publisher: Modal
+    url: https://modal.com/docs/guide/webhooks
+    title: Modal Web Functions documentation
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - web-endpoints
+    - product-surface
+    keyQuote: 'You can turn any Python function into a Web Function with a single line of code.'
+  - id: SE003
+    publisher: Modal
+    url: https://modal.com/docs/guide/sandboxes
+    title: Modal Sandboxes documentation
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - sandboxes
+    - isolation
+    keyQuote: 'Modal has a direct interface for defining containers at runtime and securely running arbitrary code inside them.'
+  - id: SE004
+    publisher: Modal
+    url: https://modal.com/docs/guide/cold-start
+    title: Modal Cold Start Performance documentation
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - cold-start-tech
+    - architecture
+    keyQuote: Containers boot in about one second.
+  - id: SE005
+    publisher: Modal
+    url: https://modal.com/docs/guide/memory-snapshots
+    title: Modal Memory Snapshots documentation
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - memory-snapshots-cpu
+    - memory-snapshots-gpu
+    - cold-start-tech
+    keyQuote: 'Modal Memory Snapshots can dramatically reduce the cold start latency of Modal Functions by skipping initialization work on most container boots.'
+  - id: SE006
+    publisher: Modal
+    url: https://modal.com/docs/guide/gpu
+    title: Modal GPU Acceleration documentation
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - gpu-fleet
+    - product-surface
+    keyQuote: 'Modal supports the following GPU types: T4, L4, A10, L40S, A100, A100-40GB, A100-80GB, RTX-PRO-6000, H100, H200, B200, B200+.'
+  - id: SE007
+    publisher: Modal
+    url: https://modal.com/docs/guide/volumes
+    title: Modal Volumes documentation
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - volumes
+    - storage
+    keyQuote: Volumes are a high-performance distributed file system for Modal applications. They are optimized for write-once, read-many I/O workloads.
+  - id: SE008
+    publisher: Modal
+    url: https://modal.com/docs/guide/dicts
+    title: Modal Dicts documentation
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - dicts
+    - storage
+    keyQuote: Modal Dicts provide distributed key-value storage to your Modal Apps.
+  - id: SE009
+    publisher: Modal
+    url: https://modal.com/docs/guide/queues
+    title: Modal Queues documentation
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - queues
+    - storage
+    keyQuote: Modal Queues provide distributed FIFO queues to your Modal Apps.
+  - id: SE010
+    publisher: Modal
+    url: https://modal.com/docs/guide/security
+    title: Modal Security and Privacy documentation
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - trust-compliance
+    - security-engineering
+    keyQuote: We build our software using memory-safe programming languages, including Rust (for our worker runtime and storage infrastructure) and Python (for our API servers and Modal client).
+  - id: SE011
+    publisher: Modal
+    url: https://modal.com/docs/guide/images
+    title: Modal Container Images documentation
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - container-images
+    - container-runtime
+    keyQuote: Modal runs containers using the sandboxed gVisor container runtime.
+  - id: SE012
+    publisher: Modal
+    url: https://modal.com/blog/gpu-mem-snapshots
+    title: 'GPU Memory Snapshots: Supercharging Sub-second Startup — Modal Blog'
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - memory-snapshots-gpu
+    - cold-start-tech
+    keyQuote: We have observed Functions starting up to 10x times faster than baseline.
+  - id: SE013
+    publisher: Modal
+    url: https://modal.com/docs/guide/concurrent-inputs
+    title: Modal Input Concurrency documentation
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - input-concurrency
+    - llm-inference
+    keyQuote: 'Modal supports these workloads with its input concurrency feature, which allows individual containers to process multiple inputs at the same time.'
+  - id: SE014
+    publisher: Modal
+    url: https://modal.com/docs/guide/cron
+    title: Modal Scheduling (Cron) documentation
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - scheduling
+    - product-surface
+    keyQuote: Modal facilitates this through function schedules.
+  - id: SE015
+    publisher: Modal
+    url: https://modal.com/docs/guide/region-selection
+    title: Modal Region Selection documentation
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - region-selection
+    - latency
+    keyQuote: 'Modal has a variety of tools to optimize network latency—even down to ~10ms in extreme cases like real-time robotics.'
+  - id: SE016
+    publisher: GitHub
+    url: https://github.com/modal-labs/modal-client
+    title: modal-labs/modal-client GitHub repository
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: high
+    independence: company
+    topics:
+    - developer-signal
+    - open-source
+    keyQuote: 'The Modal Python SDK provides convenient, on-demand access to serverless cloud compute from Python scripts on your local computer. This library requires Python 3.10 – 3.14.'
+  - id: SE017
+    publisher: PyPI Stats
+    url: https://pypistats.org/packages/modal
+    title: modal Python package — PyPI Download Stats
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics:
+    - developer-signal
+    - package-downloads
+    keyQuote: 'Downloads last day: 1,624,766. Downloads last week: 13,899,772.'
+  - id: SE018
+    publisher: Hacker News
+    url: https://news.ycombinator.com/item?id=48384115
+    title: Modal Major Outage — Hacker News (June 3, 2026)
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: adverse
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics:
+    - reliability-adverse
+    - outages
+    keyQuote: 'This is the third major outage in a month. 5.7.2026 - SEV 1, AWS us1-az4 overheats 5.19.2026 - No published incident report 6.3.2026 - Ongoing, internal auth system down.'
+  - id: SE019
+    publisher: Modal
+    url: https://trust.modal.com/
+    title: Modal Labs Trust Center
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - trust-compliance
+    - soc2
+  - id: SE020
+    publisher: Modal
+    url: https://modal.com/blog/soc2type2
+    title: Modal is SOC 2 Type II Compliant — Modal Blog (January 2025)
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - trust-compliance
+    - soc2
+    keyQuote: We're excited to announce that we've successfully completed our SOC 2 Type II audit. No deviations were found in our audit.
+  - id: SE021
+    publisher: Modal
+    url: https://modal.com/gpu-glossary/readme
+    title: Modal GPU Glossary
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - developer-community
+    - gpu-education
+    keyQuote: We wrote this glossary to solve a problem we ran into working with GPUs here at Modal.
+  - id: SE022
+    publisher: Modal
+    url: https://modal.com/pricing
+    title: Modal Pricing Plans
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - pricing
+    - product-surface
+    keyQuote: 'Enterprise: Volume-based discounts; Higher GPU concurrency; Embedded ML engineering services; Audit logs, Okta SSO, and HIPAA.'
+  - id: SE023
+    publisher: Modal
+    url: https://modal.com/docs/guide/developing-debugging
+    title: Modal Developing and Debugging documentation
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - developer-experience
+    - debugging
+    keyQuote: 'Modal also lets you run interactive commands on your running Containers from the terminal — much like ssh-ing into a traditional machine or cloud VM.'
+  - id: SE024
+    publisher: Modal
+    url: https://modal.com/blog/applied-compute-reinforcement-learning
+    title: Scaling Reinforcement Learning at Applied Compute — Modal Blog (May 2026)
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: customer-proof
+    reputationTier: high
+    independence: partner
+    topics:
+    - customer-proof
+    - rl-training
+    - sandboxes
+    keyQuote: Modal was clearly very flexible, structured in a way where we could build these complex environments, and really focused on performance and reliability.
+  - id: SE025
+    publisher: Modal
+    url: https://modal.com/blog/physical-intelligence-runs-real-time-remote-inference-for-robotic-control-on-modal
+    title: Real-time inference for robots at Physical Intelligence — Modal Blog (April 2026)
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: customer-proof
+    reputationTier: high
+    independence: partner
+    topics:
+    - customer-proof
+    - latency
+    - robotics
+    keyQuote: Running this compute on Modal simplified operations and enabled rapid experimentation with larger models, while only adding 10-15ms of network overhead.
+  - id: SE026
+    publisher: Modal
+    url: https://modal.com/blog/reducto-case-study
+    title: How Reducto improved enterprise-scale document processing latency by 3x — Modal Blog (November 2025)
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: customer-proof
+    reputationTier: high
+    independence: partner
+    topics:
+    - customer-proof
+    - cold-start-tech
+    - gpu-snapshots
+    keyQuote: GPU memory snapshotting for several models. This reduced cold boots by 83%, from ~70s to ~12s.
+  - id: SE027
+    publisher: Modal
+    url: https://modal.com/blog/truly-serverless-gpus
+    title: How we achieved truly serverless GPUs — Modal Engineering Blog (May 2026)
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - cold-start-tech
+    - architecture
+    - gpu-allocation-utilization
+    keyQuote: 'Together, they take AI inference server replica scaling from multiple kiloseconds to just tens of seconds.'
+  - id: SE028
+    publisher: Modal
+    url: https://status.modal.com/
+    title: Modal Labs Status Page (June 14, 2026)
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - reliability
+    - uptime
+    keyQuote: 'GPU functions: 99.946% uptime. CPU functions: 99.938% uptime.'
+  - id: SE029
+    publisher: Modal
+    url: https://modal.com/solutions/coding-agents
+    title: Modal Coding Agents Solution Page
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - sandboxes
+    - coding-agents
+    keyQuote: Spin up 50,000+ simultaneous code execution sandboxes for production use cases.
+  - id: SE030
+    publisher: Modal
+    url: https://modal.com/docs/guide/lifecycle-functions
+    title: Modal Container Lifecycle Hooks documentation
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - container-lifecycle
+    - python-dx
+    keyQuote: '@modal.enter for one-time initialization (remote); @modal.exit for one-time cleanup (remote).'
+  - id: SE031
+    publisher: Modal
+    url: https://modal.com/docs/guide/secrets
+    title: Modal Secrets documentation
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - secrets-management
+    - security
+    keyQuote: Securely provide credentials and other sensitive information to your Modal Functions with Secrets.
+  - id: SE032
+    publisher: HostFleet
+    url: https://hostfleet.net/serverless-gpu-pricing-matrix-2026/
+    title: Every serverless GPU host compared — HostFleet (April 2026)
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: review
+    reputationTier: medium
+    independence: independent
+    topics:
+    - pricing-comparison
+    - competitive-positioning
+    keyQuote: 'L4 24GB — Runpod $0.43/hr, Modal $0.80/hr. A100 80GB — Runpod $2.17/hr, Modal $2.10/hr, Baseten $4.00/hr.'
+  - id: SE033
+    publisher: RunPod
+    url: https://www.runpod.io/
+    title: RunPod — The AI Developer Cloud
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: medium
+    independence: competitor
+    topics:
+    - competitive-positioning
+    - pricing-comparison
+    keyQuote: 0 to hundreds of concurrent workers in under 250ms.
+  - id: SE034
+    publisher: Amazon Web Services
+    url: https://aws.amazon.com/lambda/features/
+    title: AWS Lambda Features
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: high
+    independence: competitor
+    topics:
+    - competitive-positioning
+    - serverless-comparison
+    keyQuote: AWS Lambda SnapStart delivers faster startup performance by up to 10x for Java, and from several seconds to as low as sub-second for Python and .NET.
+  - id: SE035
+    publisher: Google Cloud
+    url: https://cloud.google.com/run/docs/overview/what-is-cloud-run
+    title: What is Cloud Run — Google Cloud Documentation
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: high
+    independence: competitor
+    topics:
+    - competitive-positioning
+    - container-runtime
+    keyQuote: 'Cloud Run lets developers spend their time writing their code, and very little time operating, configuring, and scaling their Cloud Run service.'
+  - id: SE036
+    publisher: Sacra
+    url: https://sacra.com/c/modal-labs/?2026
+    title: Modal Labs — Sacra Analyst Research (accessed June 2026)
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: analyst-market-data
+    reputationTier: medium
+    independence: independent
+    topics:
+    - architecture-differentiation
+    - training-roadmap
+    - multi-cloud
+    keyQuote: Modal's custom Rust-based container runtime, image builder, and distributed file system enable the fast startup times that differentiate it from traditional cloud platforms.
+  - id: SE037
+    publisher: Modal
+    url: https://modal.com/legal/terms
+    title: Modal Labs SaaS Agreement (Terms of Service, effective May 2026)
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: legal
+    reputationTier: high
+    independence: company
+    topics:
+    - enterprise-terms
+    - legal
+    keyQuote: This Software as a Service Agreement is between the entity named below and Modal Labs, Inc., a Delaware corporation.
+  - id: SE038
+    publisher: LinkedIn
+    url: https://www.linkedin.com/company/modal-labs/
+    title: Modal Labs LinkedIn Company Page
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - company-profile
+    - developer-signal
+    keyQuote: Modal — The production cloud for AI.
+  - id: SE039
+    publisher: Modal
+    url: https://modal.com/blog/modal-series-c
+    title: Modal Series C Announcement Blog (May 2026)
+    accessDate: '2026-06-14'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - scale-milestones
+    - roadmap
+    keyQuote: 'Over 1 billion sandboxes have been launched on Modal. We''ve spent the last five years going very deep on technology, including building our own storage and compute layer from the ground up.'

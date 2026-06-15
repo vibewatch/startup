@@ -1,0 +1,1747 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: cast-ai
+runDate: '2026-06-05'
+company:
+  name: Cast AI
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: Cast AI's product stack is best understood as a Kubernetes control layer that combines cost monitoring, autoscaling, workload rightsizing, Spot-aware provisioning, and an increasingly important GPU / multicloud compute plane. The core automation features look mature, with Terraform, Helm, console, and case-study evidence across large production customers, while OMNI Compute remains explicitly early access and the security surface is still being refactored in the documentation. The strongest technical moat signals are cross-cloud node orchestration, runtime bin packing, GPU sharing, and IaC-friendly operator controls; the biggest technology risks are platform complexity, dependence on cloud-provider primitives, and the fact that some newer security and multicloud surfaces are still evolving.
+sections:
+- id: platform-definition-and-module-map
+  title: Platform Definition and Module Map
+  body: 'Cast AI''s own materials consistently describe more than a dashboard or recommendation engine. The product starts from Kubernetes cost monitoring and optimization suggestions, but the real center of gravity is execution: autoscaling, node selection, rightsizing, Spot orchestration, bin packing, and policy controls that alter how clusters actually run. The module map now extends beyond that original core. Cluster hibernation lets non-production environments scale to zero while keeping the control plane intact. OMNI adds a multicloud or cross-region compute control layer for scarce GPU and compute capacity. GPU Optimization for AI Infrastructure adds workload partitioning, Dynamic Resource Allocation, and throughput optimization for expensive accelerators. Security broadens the surface again through Kvisor, which Cast documents as an open-source security agent for runtime monitoring, image scanning, and network observability. The result is a stack with at least five meaningful product
+    layers: monitoring, autoscaling, cost optimization, AI/GPU orchestration, and security or compliance tooling. That breadth is exactly what differentiates Cast AI from point tools but also raises complexity, implementation scope, and documentation demands.'
+  claimRefs:
+  - CE001
+  - CE002
+  - CE005
+  - CE006
+  - CE008
+  - CE009
+  - CE010
+  - CE026
+  - CE027
+  - CE033
+  - CE034
+  - CE040
+  tableRefs:
+  - TE001
+  figureRefs:
+  - FE001
+- id: architecture-and-operating-model
+  title: Architecture and Operating Model
+  body: 'The technical operating model is best read as a continuous control loop around existing Kubernetes clusters. In the core product, Cast AI agents and policies monitor demand, compare pricing and capacity, and then drive node-level and workload-level actions such as rightsizing, autoscaling, or smart eviction. The Mercedes-Benz.io engineering write-up gives unusually concrete outside evidence of how this works in production: the team moved from static node autoscaling to dynamic workload-aware autoscaling, runtime bin packing, and smart eviction under zero-downtime constraints. Hibernation shows another part of the operating model, where essential components are deliberately brought back first via resume nodes before normal workloads return. OMNI extends the architecture beyond one region or provider by letting the autoscaler evaluate external locations and scarce GPU capacity across clouds. GPU Optimization then layers on partitioning, sharing, and placement logic for accelerators.
+    This makes the platform technically ambitious and operationally valuable, but it also means Cast is deeply dependent on provider APIs, permissions, scheduler behavior, capacity signals, and correct orchestration of its own critical components.'
+  claimRefs:
+  - CE002
+  - CE003
+  - CE004
+  - CE006
+  - CE007
+  - CE008
+  - CE009
+  - CE013
+  - CE015
+  - CE019
+  - CE035
+  - CE037
+  - CE038
+  - CE039
+  - CE040
+  tableRefs:
+  - TE002
+  - TE003
+  figureRefs:
+  - FE002
+  - FE003
+- id: deployment-integrations-and-developer-signal
+  title: Deployment, Integrations, and Developer Signal
+  body: The developer signal around Cast AI is stronger than for many private infrastructure startups because the product is exposed through infrastructure-as-code and public operator examples, not only through marketing copy. Cast publishes a Terraform provider, GitHub documentation for the autoscaler resource, Helm-based security configuration, and multiple product docs that assume platform teams will automate policy and cluster settings. The Terraform resource itself exposes cluster limits, node-downscaler settings, evictor behavior, and timing controls, which is a strong sign that the product is intended to be tuned as part of a larger platform engineering workflow. External developer-style surfaces reinforce that point. A Dev.to step-by-step EKS integration guide shows the product is concrete enough to be implemented by practitioners outside the company. The AWS Marketplace listing adds review-like operator feedback on usability, monthly cloud savings, and cluster policy control. Case
+    studies from Akamai, project44, Branch, and ALLEN Digital then show that the platform is being used on real systems with demanding performance, AI, or SLA requirements. This gives Cast more technical credibility than a startup with only slideware, even if some sources are vendor-authored.
+  claimRefs:
+  - CE011
+  - CE012
+  - CE014
+  - CE015
+  - CE016
+  - CE017
+  - CE018
+  - CE021
+  - CE022
+  - CE023
+  - CE024
+  - CE036
+  tableRefs:
+  - TE004
+  figureRefs:
+  - FE004
+- id: trust-security-and-technology-risks
+  title: Trust, Security, and Technology Risks
+  body: Trust and quality controls are real but unevenly mature in the public file. On the positive side, Cast documents Kvisor as an open-source security agent that can scan images, monitor runtime behavior, observe network activity, and expose centralized compliance views in the security dashboard. Cast also publicized CIS Benchmark certification for its Security Report across major managed-Kubernetes environments, which is a meaningful trust signal for regulated or enterprise buyers. At the same time, the documentation repeatedly warns that the Kubernetes security feature set is undergoing significant changes and that some features are being deprecated or moved in the console. That warning is valuable because it reveals product evolution honestly, but it also highlights transition risk. Reliability signals are similar. StatusGator and IsDown show that the platform has public incident history, and several 2026 signals point to short cloud-provider-related degradations rather than perfect
+    invisibility. Together, these sources suggest the technology is production-worthy and improving, but not frictionless. Cast's moat is technical depth; its risk is that the same depth requires careful permissions, documentation, and incident handling to keep customer trust high.
+  claimRefs:
+  - CE020
+  - CE025
+  - CE026
+  - CE027
+  - CE028
+  - CE029
+  - CE030
+  - CE031
+  - CE032
+  - CE033
+  - CE035
+  - CE038
+  tableRefs:
+  - TE005
+tables:
+- id: TE001
+  title: Product Module / Asset Matrix
+  columns:
+  - Module / asset
+  - User problem
+  - Technical mechanism
+  - Evidence of maturity
+  - Current status
+  rows:
+  - - Core autoscaler / optimization
+    - Overprovisioned clusters and inefficient node mix
+    - Autoscaling, rightsizing, spot automation, bin packing, policy controls
+    - Docs, Terraform resource, AWS Marketplace, multiple customer cases
+    - Mature core product
+  - - Cluster hibernation
+    - Non-production clusters incur unnecessary 24/7 compute spend
+    - Scale-to-zero while preserving control plane and resuming critical components first
+    - Dedicated documentation with manual, scheduled, API, and Terraform workflows
+    - Shipped / documented
+  - - OMNI Compute
+    - GPU scarcity and multicloud / cross-region capacity fragmentation
+    - Extend clusters to other regions and clouds; autoscaler compares price and availability
+    - Docs, launch press, and external news coverage
+    - Early access
+  - - GPU optimization / AI infrastructure
+    - Low GPU utilization and expensive AI workloads
+    - GPU sharing, partitioning, Dynamic Resource Allocation, bin packing
+    - GPU product page, benchmark report, ALLEN Digital case study
+    - Active growth area
+  - - Kvisor security
+    - Need runtime security, vulnerability scanning, and compliance
+    - Open-source agent plus dashboard, scans, and network observability
+    - Security docs, CIS certification press, GitHub repo
+    - Live but undergoing changes
+  notes: Rows reflect the major product surfaces visible in reviewed public materials as of the 2026 run date; status labels capture the maturity signals those materials explicitly provide.
+  enumerationScope:
+    coverage: partial
+    basis: The table covers the principal modules clearly evidenced by product pages, docs, and case studies rather than every sub-feature or console widget available in the platform.
+  claimRefs:
+  - CE001
+  - CE002
+  - CE005
+  - CE006
+  - CE008
+  - CE010
+  - CE026
+  - CE027
+  - CE030
+  - CE033
+- id: TE002
+  title: Workflow / Use-Case Table
+  columns:
+  - Use case
+  - Primary user
+  - Workflow trigger
+  - Cast AI action
+  - Outcome
+  rows:
+  - - Production Kubernetes cost optimization
+    - Platform engineering / SRE
+    - Persistent overprovisioning or volatile traffic
+    - Autoscaler, rightsizing, node selection, smart eviction
+    - Lower cost with maintained reliability
+  - - Development / staging shutdown
+    - Platform engineering
+    - Known idle windows outside business hours
+    - Cluster hibernation to zero nodes
+    - Compute spend reduced to control-plane floor
+  - - Cross-cloud GPU acquisition
+    - AI infrastructure team
+    - Primary region has no affordable GPU capacity
+    - OMNI extends cluster to new region or provider
+    - AI jobs keep running without refactoring
+  - - Security hardening and compliance review
+    - Security / platform team
+    - Need posture and vulnerability visibility
+    - Kvisor scans, dashboard insights, CIS-aligned controls
+    - Higher security visibility and audit readiness
+  - - IaC-driven cluster policy management
+    - Platform engineer / DevOps
+    - Need repeatable autoscaler settings across clusters
+    - Terraform resource and Helm configuration
+    - Policy changes move into standard platform workflows
+  notes: The workflows focus on customer-facing operating motions described in docs, marketplace pages, and engineering case studies instead of generic feature labels.
+  claimRefs:
+  - CE002
+  - CE003
+  - CE006
+  - CE012
+  - CE015
+  - CE017
+  - CE026
+  - CE029
+  - CE036
+  - CE039
+- id: TE003
+  title: Technology / Operating Architecture Table
+  columns:
+  - Architecture layer
+  - Role
+  - Key dependency
+  - Observed risk
+  - Why it matters
+  rows:
+  - - Agents and controllers
+    - Collect cluster state and apply automation logic
+    - Correct cluster permissions and agent scheduling
+    - Permission misconfiguration or failed critical-component resume
+    - Without agents, Cast cannot execute savings actions
+  - - Autoscaler policy engine
+    - Turns demand and price signals into node actions
+    - Pricing data, workload metadata, scheduler constraints
+    - Bad policy tuning can hurt reliability
+    - This is the core control loop
+  - - Smart eviction / bin packing
+    - Rebalances workloads onto fewer or better nodes
+    - Pod disruption behavior and runtime safety
+    - Operational risk during rebalance
+    - Key to delivering higher utilization
+  - - OMNI multicloud extension
+    - Finds external regions and providers for scarce capacity
+    - Cloud-provider capacity and cross-cloud connectivity
+    - Early-access change risk and GPU availability volatility
+    - Critical for AI / GPU differentiation
+  - - Security layer (Kvisor)
+    - Adds scans, runtime monitoring, and compliance views
+    - Helm / console deployment and dashboard integration
+    - Docs warn the feature set is still changing
+    - Important for enterprise trust and platform breadth
+  notes: The architecture table captures the main operating layers visible in the technical docs and practitioner write-ups, emphasizing dependencies and failure modes rather than claiming secret internal architecture.
+  claimRefs:
+  - CE003
+  - CE004
+  - CE005
+  - CE006
+  - CE015
+  - CE019
+  - CE026
+  - CE028
+  - CE032
+  - CE035
+  - CE038
+  - CE040
+- id: TE004
+  title: Trust / Quality / Compliance Table
+  columns:
+  - Control area
+  - Public evidence
+  - Mechanism
+  - Confidence
+  - Gap or caveat
+  rows:
+  - - Runtime security
+    - Kvisor overview
+    - Open-source agent scanning images and runtime behavior
+    - Medium
+    - Security docs say the feature set is changing
+  - - Configuration and scan control
+    - Kvisor configuration docs
+    - Helm-based settings for intervals, scans, and features
+    - High
+    - Operational burden still sits with the platform team
+  - - Security posture dashboard
+    - Security dashboard docs
+    - Centralized posture and CIS-compliance visibility
+    - Medium
+    - Docs describe capability, not customer-specific effectiveness
+  - - CIS benchmark trust signal
+    - CIS certification press release
+    - Security Report certified against CIS Kubernetes benchmarks
+    - Medium
+    - Certification is useful, but not a substitute for live customer audit evidence
+  - - Open-source transparency
+    - GitHub Kvisor repository
+    - Public repo and Apache 2.0 license
+    - Medium
+    - Open source alone does not guarantee maturity or support quality
+  - - Operational reliability
+    - StatusGator and IsDown
+    - Public incident reporting and outage aggregation
+    - Medium
+    - Aggregator snapshots do not replace detailed root-cause reporting
+  notes: This table records the trust controls publicly evidenced for the product surface and also preserves the explicit caveat that some security features are mid-transition in the docs.
+  claimRefs:
+  - CE025
+  - CE026
+  - CE027
+  - CE028
+  - CE029
+  - CE030
+  - CE031
+  - CE032
+- id: TE005
+  title: Roadmap / Release / Development-Stage Table
+  columns:
+  - Capability
+  - Latest public release signal
+  - Stage
+  - Strategic implication
+  - Diligence ask
+  rows:
+  - - Core autoscaler and cluster optimization
+    - Continuing case-study and marketplace evidence in 2026
+    - Production / mature
+    - Main commercial engine appears battle-tested
+    - Request uptime, rollback, and adoption statistics by cloud
+  - - OMNI Compute
+    - 2026 launch plus docs marked early access
+    - Early access
+    - Potentially strongest new moat in AI / GPU era
+    - Clarify GA availability timeline and production design partners
+  - - GPU optimization
+    - Dedicated 2026 product page and GPU utilization benchmark report
+    - Expansion stage
+    - Meaningful adjacency to AI infrastructure budget
+    - Disclose attach rate and production scale
+  - - AI Enabler / LLM tooling
+    - 2025 launch press around model-selection automation
+    - Expansion stage
+    - Pushes Cast beyond pure infrastructure tuning
+    - Show customer references and model-governance boundaries
+  - - Kubernetes security / Kvisor
+    - Docs explicitly say significant changes are underway
+    - Transitional
+    - Potential trust differentiator, but feature churn adds implementation risk
+    - Explain roadmap, deprecations, and support guarantees during transition
+  notes: Stage labels come from explicit public cues such as launch timing, docs language, and case-study depth rather than from internal product-roadmap disclosures.
+  claimRefs:
+  - CE005
+  - CE010
+  - CE011
+  - CE018
+  - CE020
+  - CE021
+  - CE026
+  - CE032
+  - CE033
+figures:
+- id: FE001
+  title: Product Architecture Map
+  type: dag
+  layout: wide
+  summary: Cast AI sits as an execution layer between workload demand, cluster state, cloud-provider capacity, and security visibility.
+  data:
+    nodes:
+    - id: workloads
+      label: Customer Workloads
+      detail: Kubernetes apps, AI inference, and GPU jobs
+    - id: cast
+      label: Cast AI Control Layer
+      detail: Monitoring, autoscaler, rightsizing, and policy engine
+    - id: providers
+      label: Cloud / Region Capacity
+      detail: AWS, GCP, Azure, and OMNI edge locations
+    - id: security
+      label: Kvisor Security Layer
+      detail: Runtime scans, observability, and compliance views
+    - id: operators
+      label: Platform Operators
+      detail: Console, API, Terraform, and Helm users
+    edges:
+    - from: workloads
+      to: cast
+      label: generate demand for
+    - from: cast
+      to: providers
+      label: orchestrates across
+    - from: providers
+      to: cast
+      label: feed price / availability to
+    - from: cast
+      to: security
+      label: augmented by
+    - from: operators
+      to: cast
+      label: configure and govern
+  claimRefs:
+  - CE001
+  - CE006
+  - CE008
+  - CE012
+  - CE026
+  - CE034
+  - CE040
+- id: FE002
+  title: Customer Workflow / Operating Flow
+  type: flow
+  layout: wide
+  summary: The operator workflow runs from onboarding and policy setup into continuous optimization and optional AI / GPU expansion.
+  data:
+    nodes:
+    - id: onboard
+      label: Onboard Cluster
+      detail: Connect cluster and deploy Cast components
+    - id: policy
+      label: Set Policies
+      detail: Terraform, console, API, or Helm configuration
+    - id: optimize
+      label: Continuous Optimization
+      detail: Autoscaling, rightsizing, bin packing, and hibernation
+    - id: observe
+      label: Observe Outcomes
+      detail: Savings, reliability, utilization, and security views
+    - id: expand
+      label: Expand to AI / GPU
+      detail: OMNI and GPU optimization for scarce accelerators
+    edges:
+    - from: onboard
+      to: policy
+      label: enables
+    - from: policy
+      to: optimize
+      label: drives
+    - from: optimize
+      to: observe
+      label: produces
+    - from: observe
+      to: expand
+      label: can justify
+  claimRefs:
+  - CE002
+  - CE003
+  - CE011
+  - CE014
+  - CE017
+  - CE018
+  - CE021
+  - CE039
+- id: FE003
+  title: Critical Dependency Map
+  type: dag
+  layout: wide
+  summary: The product depends on correct permissions, cloud-provider signals, cluster scheduling behavior, and scarce GPU capacity.
+  data:
+    nodes:
+    - id: iam
+      label: Permissions / IAM
+      detail: Cluster and cloud credentials required for execution
+    - id: pricing
+      label: Price & Availability Data
+      detail: Provider price / capacity signals
+    - id: scheduler
+      label: Kubernetes Scheduling
+      detail: Pod priorities, disruption rules, and node lifecycle
+    - id: gpu
+      label: Scarce GPU Supply
+      detail: Availability across clouds and regions
+    - id: castcore
+      label: Cast Core Components
+      detail: Autoscaler, agents, resume nodes, and policies
+    - id: operator
+      label: Operator Automation
+      detail: Terraform, Helm, and API configuration
+    edges:
+    - from: iam
+      to: castcore
+      label: authorizes
+    - from: pricing
+      to: castcore
+      label: informs
+    - from: scheduler
+      to: castcore
+      label: constrains
+    - from: gpu
+      to: castcore
+      label: limits
+    - from: operator
+      to: castcore
+      label: configures
+  claimRefs:
+  - CE003
+  - CE004
+  - CE006
+  - CE015
+  - CE019
+  - CE035
+  - CE038
+- id: FE004
+  title: Product Maturity / Capability Map
+  type: matrix
+  layout: wide
+  summary: 'Capability maturity is uneven: core autoscaling is mature, OMNI is early access, and security is live but in transition.'
+  data:
+    columns:
+    - Maturity
+    - Primary evidence
+    - Main dependency
+    - Observed risk
+    rows:
+    - label: Core autoscaler
+      values:
+      - High
+      - Docs + IaC + case studies
+      - Cluster permissions and provider APIs
+      - Operational tuning complexity
+    - label: Cluster hibernation
+      values:
+      - Medium-High
+      - Detailed docs and automation controls
+      - Resume-node behavior
+      - Incorrect resume sequencing
+    - label: OMNI Compute
+      values:
+      - Medium
+      - Launch coverage + docs
+      - Cross-cloud connectivity and GPU supply
+      - Early-access changes
+    - label: GPU optimization
+      values:
+      - Medium
+      - Product page + benchmark + customer case
+      - GPU availability and workload fit
+      - Utilization / isolation trade-offs
+    - label: Kvisor security
+      values:
+      - Medium
+      - Docs + CIS press + GitHub
+      - Helm configuration and dashboard evolution
+      - Feature-set transition
+  claimRefs:
+  - CE005
+  - CE009
+  - CE010
+  - CE021
+  - CE026
+  - CE030
+  - CE032
+  - CE033
+callouts:
+- calloutType: strength
+  title: IaC exposure makes the product feel real to platform teams
+  body: Cast AI is unusually concrete for a private infrastructure vendor because core controls show up in Terraform resources, Helm examples, public docs, and third-party implementation guides rather than only in marketing screenshots.
+  claimRefs:
+  - CE014
+  - CE015
+  - CE016
+  - CE018
+  - CE036
+- calloutType: risk
+  title: Product breadth creates both moat and execution risk
+  body: The same breadth that gives Cast AI technical differentiation—multicloud autoscaling, hibernation, GPU orchestration, and security—also increases dependency count and raises the chance that docs, permissions, or evolving features become adoption friction.
+  claimRefs:
+  - CE025
+  - CE032
+  - CE033
+  - CE035
+  - CE038
+localEvidence:
+  searchQueries:
+  - query: Cast AI product technology docs autoscaler spot bin packing GPU OMNI Compute 2026
+    engine: web
+    hits: null
+    retainedSourceRefs:
+    - SE001
+    - SE002
+    - SE004
+    - SE005
+    - SE006
+    - SE007
+    - SE008
+    - SE009
+    - SE021
+  - query: Cast AI documentation autoscaler rightsizing hibernation security developer signal 2026
+    engine: web
+    hits: null
+    retainedSourceRefs:
+    - SE003
+    - SE011
+    - SE012
+    - SE022
+    - SE023
+    - SE027
+    - SE028
+    - SE029
+    - SE031
+  - query: Cast AI status page reliability incidents developer signal 2026
+    engine: web
+    hits: null
+    retainedSourceRefs:
+    - SE010
+    - SE024
+  - query: Cast AI Hugging Face OMNI Compute GPU provisioning Kubernetes 2026 technical launch
+    engine: web
+    hits: null
+    retainedSourceRefs:
+    - SE004
+    - SE005
+    - SE007
+    - SE008
+    - SE020
+    - SE021
+  researchQuestions:
+  - id: QE001
+    question: What does Cast AI officially define as its core product today?
+    type: verification
+    targets:
+    - contentRequirements/0
+    - plannedTables/product-module-asset-matrix
+    - plannedFigures/product-architecture-map
+    status: answered
+  - id: QE002
+    question: Which major product modules are publicly visible beyond core cost monitoring?
+    type: enumeration
+    targets:
+    - contentRequirements/1
+    - plannedTables/product-module-asset-matrix
+    status: answered
+  - id: QE003
+    question: How does cluster hibernation technically work and what is it for?
+    type: mechanism
+    targets:
+    - contentRequirements/3
+    - plannedTables/workflow-use-case-table
+    - plannedFigures/customer-workflow-operating-flow
+    status: answered
+  - id: QE004
+    question: How does OMNI change the product architecture for cross-cloud compute?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+    - plannedFigures/product-architecture-map
+    status: answered
+  - id: QE005
+    question: Is OMNI generally available or still an early-stage product surface?
+    type: freshness
+    targets:
+    - contentRequirements/3
+    - plannedTables/roadmap-release-development-stage-table
+    status: answered
+  - id: QE006
+    question: What is the primary technical use case for OMNI in 2026?
+    type: verification
+    targets:
+    - contentRequirements/2
+    - plannedTables/workflow-use-case-table
+    status: answered
+  - id: QE007
+    question: How does Cast AI describe GPU optimization and capacity sharing?
+    type: verification
+    targets:
+    - contentRequirements/2
+    - plannedTables/product-module-asset-matrix
+    status: answered
+  - id: QE008
+    question: What utilization data supports the need for Cast AI’s GPU and optimization features?
+    type: quantification
+    targets:
+    - contentRequirements/4
+    - plannedTables/roadmap-release-development-stage-table
+    status: answered
+  - id: QE009
+    question: What does the AI Enabler / Hugging Face material say about AI workload features?
+    type: verification
+    targets:
+    - contentRequirements/1
+    - plannedTables/product-module-asset-matrix
+    status: answered
+  - id: QE010
+    question: Is the autoscaler configurable as code for platform engineering teams?
+    type: verification
+    targets:
+    - contentRequirements/3
+    - plannedTables/workflow-use-case-table
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+  - id: QE011
+    question: What Terraform controls are publicly exposed for the autoscaler resource?
+    type: enumeration
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+  - id: QE012
+    question: What external developer signal shows engineers can implement Cast AI outside official docs?
+    type: verification
+    targets:
+    - contentRequirements/3
+    - plannedTables/workflow-use-case-table
+    status: answered
+  - id: QE013
+    question: What technical behaviors are visible in practitioner write-ups like Mercedes-Benz.io?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+  - id: QE014
+    question: Which customer proofs show the platform in demanding production workflows?
+    type: enumeration
+    targets:
+    - contentRequirements/1
+    - plannedTables/workflow-use-case-table
+    status: answered
+  - id: QE015
+    question: What does the AWS Marketplace listing reveal about technical value in production?
+    type: verification
+    targets:
+    - contentRequirements/3
+    - plannedTables/workflow-use-case-table
+    status: answered
+  - id: QE016
+    question: What public evidence exists for open-source or transparent security components?
+    type: verification
+    targets:
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+    status: answered
+  - id: QE017
+    question: What does Kvisor actually do inside the Cast AI stack?
+    type: mechanism
+    targets:
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+    status: answered
+  - id: QE018
+    question: How configurable is Kvisor from a DevOps or platform-ops perspective?
+    type: mechanism
+    targets:
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+    status: answered
+  - id: QE019
+    question: What compliance or trust signal is publicly available for the security layer?
+    type: verification
+    targets:
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+    status: answered
+  - id: QE020
+    question: What reliability or outage signal is visible to external developers and operators?
+    type: adverse
+    targets:
+    - contentRequirements/3
+    - plannedTables/trust-quality-compliance-table
+    status: answered
+  - id: QE021
+    question: What product surfaces appear most mature versus most transitional?
+    type: comparison
+    targets:
+    - contentRequirements/3
+    - plannedTables/roadmap-release-development-stage-table
+    - plannedFigures/product-maturity-capability-map
+    status: answered
+  - id: QE022
+    question: What are the main technical dependencies that could break the product promise?
+    type: adverse
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+    - plannedFigures/critical-dependency-map
+    status: answered
+  - id: QE023
+    question: Does the product really function as a control loop rather than a reporting layer?
+    type: comparison
+    targets:
+    - contentRequirements/0
+    - plannedFigures/product-architecture-map
+    status: answered
+  - id: QE024
+    question: Where does documentation itself signal immaturity or transition risk?
+    type: adverse
+    targets:
+    - contentRequirements/3
+    - plannedTables/roadmap-release-development-stage-table
+    - plannedTables/trust-quality-compliance-table
+    status: answered
+  - id: QE025
+    question: What unresolved technical questions remain most important for diligence?
+    type: verification
+    targets:
+    - contentRequirements/4
+    - plannedTables/roadmap-release-development-stage-table
+    status: partial
+  sources:
+  - id: SE001
+    publisher: Cast AI
+    title: Kubernetes Optimization Platform for Performance - Cast AI
+    url: https://cast.ai/
+    date: null
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - platform
+    - kubernetes-optimization
+    - automation
+  - id: SE002
+    publisher: Cast AI
+    title: Cast AI Documentation | Getting Started | Cast AI Docs
+    url: https://docs.cast.ai/docs/getting-started
+    date: null
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - docs
+    - monitoring
+    - optimization
+    keyQuote: Cast AI is an all-in-one Kubernetes automation, optimization, security, and cost management platform.
+  - id: SE003
+    publisher: Cast AI
+    title: Cluster Hibernation | Node Autoscaling | Cast AI Docs
+    url: https://docs.cast.ai/docs/autoscaling-cluster-hibernation
+    date: null
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - hibernation
+    - autoscaling
+    - terraform
+    keyQuote: Cluster hibernation allows you to optimize costs by temporarily scaling your cluster to zero nodes while preserving the control plane and cluster state.
+  - id: SE004
+    publisher: Cast AI
+    title: Cast AI Omni | Multi-Cloud Compute Overview | Cast AI Docs
+    url: https://docs.cast.ai/docs/omni-overview
+    date: null
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - omni
+    - multicloud
+    - gpu
+    keyQuote: OMNI extends your Kubernetes cluster to additional regions and cloud providers.
+  - id: SE005
+    publisher: Cast AI
+    title: GPU Optimization for AI Infrastructure - Cast AI
+    url: https://cast.ai/gpu-optimization/
+    date: null
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - gpu-optimization
+    - ai
+    - omni
+    keyQuote: Deploy more AI workloads on fewer GPUs anywhere.
+  - id: SE006
+    publisher: Cast AI
+    title: CAST AI Launches AI Enabler to Optimize LLM Deployment and Automate Model Selection
+    url: https://cast.ai/press-release/ai-enabler-optimize-llm-launch/
+    date: '2025-10-09'
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - llm
+    - ai-enabler
+    - model-selection
+  - id: SE007
+    publisher: Cast AI
+    title: Hugging Face partners with CAST AI to Optimize AI Workloads on AWS and Google
+    url: https://cast.ai/press-release/hugging-face-partners-with-cast-ai-to-optimize-ai-workloads/
+    date: '2025-12-09'
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: partner-proof
+    reputationTier: high
+    independence: partner
+    topics:
+    - hugging-face
+    - ai-workloads
+    - aws
+    - gcp
+  - id: SE008
+    publisher: Cast AI
+    title: Cast AI Valued at Over $1 Billion With the Launch of its GPU Marketplace
+    url: https://cast.ai/press-release/cast-ai-valued-at-over-1-billion-with-the-launch-of-its-gpu-marketplace/
+    date: '2026-01-12'
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - omni
+    - gpu-marketplace
+    - launch
+  - id: SE009
+    publisher: Cast AI
+    title: Cast AI's 2026 State of Kubernetes Optimization Report Reveals GPU Utilization at 5%
+    url: https://cast.ai/press-release/2026-state-of-kubernetes-optimization-report/
+    date: '2026-05-20'
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - benchmark-report
+    - gpu-utilization
+    - cpu-utilization
+    keyQuote: GPU utilization averaged just 5% across the clusters analyzed.
+  - id: SE010
+    publisher: StatusGator
+    title: CAST AI Status. Check if CAST AI is down or having an outage.
+    url: https://statusgator.com/services/cast-ai
+    date: '2024-11-13'
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics:
+    - status
+    - outages
+    - developer-signal
+  - id: SE011
+    publisher: GitHub
+    title: terraform-provider-castai/docs/resources/autoscaler.md at master · castai/terraform-provider-castai
+    url: https://github.com/castai/terraform-provider-castai/blob/master/docs/resources/autoscaler.md
+    date: null
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: high
+    independence: company
+    topics:
+    - terraform
+    - autoscaler
+    - iac
+    keyQuote: CAST AI autoscaler resource to manage autoscaler settings.
+  - id: SE012
+    publisher: GitHub
+    title: 'GitHub - castai/terraform-provider-castai: Terraform provider for CAST AI platform'
+    url: https://github.com/castai/terraform-provider-castai
+    date: null
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: high
+    independence: company
+    topics:
+    - terraform-provider
+    - github
+    - iac
+  - id: SE013
+    publisher: AWS Marketplace
+    title: Cast AI - EKS fully automated cost optimization and monitoring
+    url: https://aws.amazon.com/marketplace/pp/prodview-vtvxyzbzs3huy
+    date: null
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: high
+    independence: independent
+    topics:
+    - aws-marketplace
+    - eks
+    - reviews
+    keyQuote: Get EKS monitoring and automated cost optimization in one easy-to-use platform.
+  - id: SE014
+    publisher: Mercedes-Benz.io
+    title: 'Node Scaling Optimization at Scale: Cut your Kubernetes cluster costs while assuring zero downtime'
+    url: https://www.mercedes-benz.io/blog/2026-02-03-node-scaling-optimization-at-scale-cut-your-kubernetes-cluster-costs-while-assuring-zero-downtime
+    date: '2026-02-03'
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: customer
+    topics:
+    - mercedes-benz-io
+    - autoscaling
+    - smart-eviction
+    keyQuote: We solved it by partnering with Cast.ai to bring dynamic, workload-aware autoscaling to life.
+  - id: SE015
+    publisher: Cast AI
+    title: Mercedes-Benz.io
+    url: https://cast.ai/case-studies/mercedes-benz-io/
+    date: null
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: customer-proof
+    reputationTier: high
+    independence: customer
+    topics:
+    - mercedes-benz-io
+    - customer-proof
+    - automation
+  - id: SE016
+    publisher: Cast AI
+    title: ALLEN Digital
+    url: https://cast.ai/case-studies/allen-digital/
+    date: null
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: customer-proof
+    reputationTier: high
+    independence: customer
+    topics:
+    - allen-digital
+    - gpu
+    - kimchi-inference
+    keyQuote: Discover how ALLEN Digital dramatically increased GPU utilization and saved 71% on LLM costs with Kimchi Inference.
+  - id: SE017
+    publisher: Cast AI
+    title: Akamai Kubernetes Optimization Case Study - Cast AI
+    url: https://cast.ai/case-studies/akamai/
+    date: null
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: customer-proof
+    reputationTier: high
+    independence: customer
+    topics:
+    - akamai
+    - bin-packing
+    - spot-automation
+    keyQuote: 'Cast AI offered a robust set of features that perfectly matched Akamai’s use cases and requirements: maximized resource utilization with bin packing, automatic selection of the most cost-efficient compute instances, Spot instance automation throughout the entire instance lifecycle.'
+  - id: SE018
+    publisher: Cast AI
+    title: How project44 Saved 50% on GKE in One Month – Cast AI
+    url: https://cast.ai/case-studies/project44/
+    date: null
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: customer-proof
+    reputationTier: high
+    independence: customer
+    topics:
+    - project44
+    - gke
+    - time-to-value
+  - id: SE019
+    publisher: Cast AI
+    title: How Branch Saved Millions in AWS Cloud Spend – Cast AI
+    url: https://cast.ai/case-studies/branch/
+    date: null
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: customer-proof
+    reputationTier: high
+    independence: customer
+    topics:
+    - branch
+    - aws
+    - savings
+  - id: SE020
+    publisher: Business Wire
+    title: Cast AI Valued at Over $1 Billion With the Launch of Its GPU Marketplace
+    url: https://www.businesswire.com/news/home/20260112261202/en/Cast-AI-Valued-at-Over-%241-Billion-With-the-Launch-of-Its-GPU-Marketplace
+    date: '2026-01-12'
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - gpu-marketplace
+    - omni
+    - launch
+  - id: SE021
+    publisher: SDxCentral
+    title: Cast AI hits unicorn status & launches multicloud platform to make GPUs fungible
+    url: https://www.sdxcentral.com/news/cast-ai-hits-unicorn-status-launches-multicloud-platform-to-make-gpus-fungible/
+    date: '2026-01-12'
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: news
+    reputationTier: medium
+    independence: independent
+    topics:
+    - omni
+    - gpu
+    - multicloud
+  - id: SE022
+    publisher: DEV Community
+    title: CAST AI Integration with Amazon EKS — Step-by-Step Guide
+    url: https://dev.to/prithiviraj_rengarajan/cast-ai-integration-with-amazon-eks-step-by-step-guide-2pi4
+    date: null
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics:
+    - eks
+    - integration-guide
+    - developer-signal
+  - id: SE023
+    publisher: DeepWiki
+    title: castai/terraform-provider-castai | DeepWiki
+    url: https://deepwiki.com/castai/terraform-provider-castai
+    date: null
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics:
+    - terraform-provider
+    - developer-reference
+    - iac
+  - id: SE024
+    publisher: IsDown
+    title: Is CAST Down? Check current status and user reports
+    url: https://isdown.app/status/cast
+    date: null
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics:
+    - status
+    - incidents
+    - developer-signal
+  - id: SE025
+    publisher: FinOps Foundation
+    title: Usage Optimization FinOps Framework Capability
+    url: https://www.finops.org/framework/capabilities/usage-optimization/
+    date: null
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: other
+    reputationTier: high
+    independence: independent
+    topics:
+    - finops
+    - optimization
+    - workload-usage
+  - id: SE026
+    publisher: CloudZero
+    title: 'CAST AI vs Kubecost: Kubernetes Cost Tools Compared (2026)'
+    url: https://www.cloudzero.com/blog/kubecost-vs-castai/
+    date: '2026-05-06'
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: other
+    reputationTier: medium
+    independence: competitor
+    topics:
+    - comparison
+    - gpu
+    - database-optimization
+  - id: SE027
+    publisher: Cast AI Docs
+    title: Kvisor Overview | Kubernetes Security | Cast AI Docs
+    url: https://docs.cast.ai/docs/sec-kvisor-overview
+    date: null
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - kvisor
+    - security
+    - open-source
+    keyQuote: Kvisor is an open-source security agent designed to enhance the security posture of your Kubernetes clusters.
+  - id: SE028
+    publisher: Cast AI Docs
+    title: Configuring Kvisor Features | Kubernetes Security | Cast AI Docs
+    url: https://docs.cast.ai/docs/sec-configuring-kvisor
+    date: null
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - kvisor
+    - helm
+    - security-config
+    keyQuote: Kvisor supports multiple configuration options that can be set via Helm during installation or upgrade.
+  - id: SE029
+    publisher: Cast AI Docs
+    title: Security Dashboard | Kubernetes Security | Cast AI Docs
+    url: https://docs.cast.ai/docs/security-dashboard
+    date: null
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - security-dashboard
+    - compliance
+    - cis
+    keyQuote: The Security dashboard provides a comprehensive overview of your Kubernetes clusters’ security posture.
+  - id: SE030
+    publisher: Cast AI
+    title: CAST AI & Security Report awarded CIS Benchmark™ Certification
+    url: https://cast.ai/press-release/cast-ai-security-report-awarded-cis-benchmark-certification/
+    date: '2025-04-28'
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - cis
+    - security-report
+    - certification
+    keyQuote: CAST AI’s Security Report has been certified by the Center for Internet Security.
+  - id: SE031
+    publisher: GitHub
+    title: 'GitHub - castai/kvisor: Real time Kubernetes issues and vulnerabilities scanning'
+    url: https://github.com/castai/kvisor
+    date: null
+    accessDate: '2026-06-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: high
+    independence: company
+    topics:
+    - kvisor
+    - github
+    - apache-2
+    keyQuote: Real time Kubernetes issues detection and vulnerabilities scanning and runtime.
+  claims:
+  - id: CE001
+    statement: Cast AI documentation describes the platform as an all-in-one Kubernetes automation, optimization, security, and cost-management product.
+    type: company-claimed
+    topic: platform-definition
+    sourceRefs:
+    - SE001
+    - SE002
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+  - id: CE002
+    statement: Cluster hibernation scales a Kubernetes cluster to zero nodes while preserving the control plane and cluster state.
+    type: company-claimed
+    topic: hibernation
+    sourceRefs:
+    - SE003
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE003
+  - id: CE003
+    statement: Cast AI says hibernation can be managed through the console, API, and Terraform with both manual and scheduled automation.
+    type: company-claimed
+    topic: hibernation
+    sourceRefs:
+    - SE003
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE003
+    - QE010
+  - id: CE004
+    statement: When a hibernated cluster resumes, Cast AI relies on resume nodes and system-cluster-critical priority so essential components are scheduled first.
+    type: company-claimed
+    topic: hibernation
+    sourceRefs:
+    - SE003
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE003
+    - QE022
+  - id: CE005
+    statement: OMNI is explicitly documented as an early-access feature that should be tested in non-production environments first.
+    type: company-claimed
+    topic: omni-maturity
+    sourceRefs:
+    - SE004
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE004
+    - QE005
+    - QE021
+  - id: CE006
+    statement: OMNI extends Kubernetes clusters to additional regions and cloud providers so Cast AI’s autoscaler can choose the most cost-effective location based on pricing and availability.
+    type: company-claimed
+    topic: omni-architecture
+    sourceRefs:
+    - SE004
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE004
+    - QE006
+  - id: CE007
+    statement: Cast AI says the primary use case for OMNI is unlocking GPU capacity when the main cluster region lacks supply.
+    type: company-claimed
+    topic: omni-gpu
+    sourceRefs:
+    - SE004
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE006
+  - id: CE008
+    statement: The GPU optimization product page says AI teams can operate scarce GPU and compute capacity across clouds and regions without refactoring applications.
+    type: company-claimed
+    topic: gpu-optimization
+    sourceRefs:
+    - SE005
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE007
+  - id: CE009
+    statement: Cast AI’s GPU product materials emphasize sharing and partitioning GPUs, bin packing, and Dynamic Resource Allocation to improve throughput.
+    type: company-claimed
+    topic: gpu-optimization
+    sourceRefs:
+    - SE005
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE007
+  - id: CE010
+    statement: Cast AI’s 2026 optimization report said average GPU utilization was 5 percent, average CPU utilization 8 percent, and average memory utilization 20 percent in non-optimized clusters.
+    type: company-claimed
+    topic: benchmark-data
+    sourceRefs:
+    - SE009
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE008
+    - QE021
+  - id: CE011
+    statement: Cast AI publicly launched AI Enabler as a product surface for optimizing LLM deployment and automating model selection.
+    type: company-claimed
+    topic: ai-enabler
+    sourceRefs:
+    - SE006
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE009
+    - QE021
+  - id: CE012
+    statement: The Hugging Face partnership shows Cast AI positioning its platform as a way to optimize AI workloads on AWS and Google.
+    type: company-claimed
+    topic: ai-enabler
+    sourceRefs:
+    - SE007
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE009
+  - id: CE013
+    statement: Business Wire and SDxCentral described the 2026 OMNI launch as a multicloud GPU marketplace or platform that makes GPUs fungible across clouds.
+    type: third-party-reported
+    topic: omni-launch
+    sourceRefs:
+    - SE020
+    - SE021
+    confidence: high
+    freshness: recent
+    answersQuestionRefs:
+    - QE004
+  - id: CE014
+    statement: Cast AI maintains a public Terraform provider for the platform on GitHub.
+    type: observed
+    topic: iac
+    sourceRefs:
+    - SE011
+    - SE012
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE010
+  - id: CE015
+    statement: The public autoscaler resource documentation exposes cluster limits, node-downscaler settings, and evictor behavior as code.
+    type: observed
+    topic: iac
+    sourceRefs:
+    - SE011
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE011
+  - id: CE016
+    statement: DeepWiki mirrors and summarizes the Cast AI Terraform provider docs, which is a sign of external developer reuse of the IaC surface.
+    type: third-party-reported
+    topic: developer-signal
+    sourceRefs:
+    - SE023
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE012
+  - id: CE017
+    statement: The AWS Marketplace listing positions Cast AI as fully automated cost optimization and monitoring for EKS and includes recent review text about cost reduction and GPU-aware optimization.
+    type: third-party-reported
+    topic: developer-signal
+    sourceRefs:
+    - SE013
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE015
+  - id: CE018
+    statement: A Dev.to step-by-step EKS integration guide shows Cast AI can be implemented by practitioners outside the company’s official docs.
+    type: third-party-reported
+    topic: developer-signal
+    sourceRefs:
+    - SE022
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE012
+  - id: CE019
+    statement: Mercedes-Benz.io’s engineering blog describes using Cast AI for dynamic workload-aware autoscaling, smart eviction, and runtime bin packing under zero-downtime constraints.
+    type: third-party-reported
+    topic: customer-architecture
+    sourceRefs:
+    - SE014
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE013
+  - id: CE020
+    statement: The Mercedes-Benz.io case study says Cast AI reduced Kubernetes operational overhead and costs using automation.
+    type: company-claimed
+    topic: customer-proof
+    sourceRefs:
+    - SE015
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE014
+  - id: CE021
+    statement: The ALLEN Digital case study says Kimchi Inference increased GPU utilization and saved 71 percent on LLM costs.
+    type: company-claimed
+    topic: customer-proof
+    sourceRefs:
+    - SE016
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE014
+    - QE021
+  - id: CE022
+    statement: The Akamai case study highlights bin packing, cost-efficient instance selection, Spot automation, and deep Kubernetes cost analytics as part of the product workflow.
+    type: company-claimed
+    topic: customer-proof
+    sourceRefs:
+    - SE017
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE014
+  - id: CE023
+    statement: The project44 case study says Cast AI delivered 50 percent savings on GKE in one month.
+    type: company-claimed
+    topic: customer-proof
+    sourceRefs:
+    - SE018
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE014
+  - id: CE024
+    statement: The Branch case study says Cast AI saved several million dollars annually in AWS cloud spend.
+    type: company-claimed
+    topic: customer-proof
+    sourceRefs:
+    - SE019
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE014
+  - id: CE025
+    statement: StatusGator and IsDown provide public incident or outage surfaces for Cast AI, showing the platform is observable to operators rather than invisible when degraded.
+    type: observed
+    topic: reliability
+    sourceRefs:
+    - SE010
+    - SE024
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE020
+  - id: CE026
+    statement: Kvisor is documented as an open-source security agent that runs as both a controller and an agent inside Kubernetes clusters.
+    type: company-claimed
+    topic: security
+    sourceRefs:
+    - SE027
+    - SE031
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE016
+    - QE017
+  - id: CE027
+    statement: Kvisor provides image scanning, runtime security monitoring, and network observability according to the Cast docs.
+    type: company-claimed
+    topic: security
+    sourceRefs:
+    - SE027
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE017
+  - id: CE028
+    statement: Kvisor behavior is configurable through Helm, including scan frequencies and specialized feature toggles.
+    type: company-claimed
+    topic: security
+    sourceRefs:
+    - SE028
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE018
+  - id: CE029
+    statement: The security dashboard docs describe centralized Kubernetes security posture and CIS-compliance visibility across clusters.
+    type: company-claimed
+    topic: security
+    sourceRefs:
+    - SE029
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE019
+  - id: CE030
+    statement: Cast AI announced CIS Benchmark certification for its Security Report across AWS, Azure, and GCP managed Kubernetes environments.
+    type: company-claimed
+    topic: compliance
+    sourceRefs:
+    - SE030
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE019
+  - id: CE031
+    statement: The public Kvisor repository is available on GitHub and states an Apache 2.0 license.
+    type: observed
+    topic: open-source
+    sourceRefs:
+    - SE031
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE016
+  - id: CE032
+    statement: Multiple Kvisor and security docs warn that the Kubernetes Security feature set is undergoing significant changes and that some features are being deprecated or moved.
+    type: company-claimed
+    topic: maturity-risk
+    sourceRefs:
+    - SE027
+    - SE028
+    - SE029
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE024
+    - QE021
+  - id: CE033
+    statement: Core autoscaling appears more mature than OMNI and Kvisor because the former is supported by extensive IaC surfaces and customer cases, while OMNI is early access and security docs are in transition.
+    type: inferred
+    topic: maturity-map
+    sourceRefs:
+    - SE003
+    - SE004
+    - SE011
+    - SE014
+    - SE027
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE021
+  - id: CE034
+    statement: Cast AI’s technical moat centers on combining cross-cloud autoscaling, runtime bin packing, GPU orchestration, and infrastructure-as-code controls in one platform.
+    type: inferred
+    topic: differentiation
+    sourceRefs:
+    - SE004
+    - SE005
+    - SE011
+    - SE014
+    - SE017
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+    - QE023
+  - id: CE035
+    statement: The product depends on correct permissions, provider price and availability data, Kubernetes scheduling behavior, and scarce GPU supply.
+    type: inferred
+    topic: dependency-risk
+    sourceRefs:
+    - SE003
+    - SE004
+    - SE014
+    - SE021
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE022
+  - id: CE036
+    statement: Cast AI exposes console, API, Terraform, and Helm control surfaces, which fits standard platform-engineering workflows.
+    type: inferred
+    topic: developer-signal
+    sourceRefs:
+    - SE003
+    - SE011
+    - SE022
+    - SE028
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE010
+    - QE012
+  - id: CE037
+    statement: Cast AI says GPU capacity can be added across clouds and regions without code changes to the workload.
+    type: company-claimed
+    topic: gpu-optimization
+    sourceRefs:
+    - SE004
+    - SE005
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE004
+    - QE007
+  - id: CE038
+    statement: Technical risk remains because dynamic autoscaling, smart eviction, and resume sequencing can create reliability challenges if policies or dependencies are wrong.
+    type: inferred
+    topic: operational-risk
+    sourceRefs:
+    - SE003
+    - SE014
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE020
+    - QE022
+  - id: CE039
+    statement: The product workflow begins with onboarding and policy definition, then moves into continuous optimization, observability, and optional AI/GPU expansion.
+    type: inferred
+    topic: workflow
+    sourceRefs:
+    - SE003
+    - SE004
+    - SE011
+    - SE017
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE003
+    - QE023
+  - id: CE040
+    statement: The reviewed source set supports treating Cast AI as an execution layer or control loop rather than a passive reporting layer.
+    type: inferred
+    topic: control-loop
+    sourceRefs:
+    - SE002
+    - SE003
+    - SE011
+    - SE014
+    - SE017
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE023
+  evidenceGaps:
+  - type: private-evidence-only
+    severity: material
+    topic: omni-ga
+    missingEvidence: GA timeline, design-partner count, and production-scale deployment data for OMNI Compute.
+    whyItMatters: OMNI is central to the AI / GPU moat narrative, but early-access status means production maturity is not yet obvious.
+    diligencePath: Request OMNI customer references, SLA model, and GA roadmap with production-scale usage metrics.
+    relatedQuestionRefs:
+    - QE005
+    - QE025
+    relatedTableRefs:
+    - TE005
+  - type: private-evidence-only
+    severity: material
+    topic: security-transition
+    missingEvidence: Detailed roadmap for deprecated and moved Kvisor / security features, including support guarantees during migration.
+    whyItMatters: Security tooling that is in transition can create implementation risk for enterprise buyers with strict trust requirements.
+    diligencePath: Ask product leadership for the current security roadmap, deprecation schedule, and customer communication plan.
+    relatedQuestionRefs:
+    - QE024
+    - QE025
+    relatedTableRefs:
+    - TE004
+    - TE005
+  - type: missing-source
+    severity: minor
+    topic: incident-detail
+    missingEvidence: First-party postmortems or incident reports quantifying customer impact for the public outages seen in aggregator tools.
+    whyItMatters: Status aggregators show reliability surface area but do not explain severity, root cause, or remediation quality.
+    diligencePath: Request incident history, MTTR metrics, and postmortem examples for 2025-2026 service degradations.
+    relatedQuestionRefs:
+    - QE020
+    relatedTableRefs:
+    - TE004
+  - type: private-evidence-only
+    severity: material
+    topic: gpu-scale
+    missingEvidence: Production GPU-scale metrics such as number of GPU-enabled customers, peak capacity orchestrated, and reliability performance under OMNI.
+    whyItMatters: GPU differentiation is one of the strongest product claims, but public sources do not quantify production depth.
+    diligencePath: Request customer count, deployed GPU-hours, and performance benchmarks for OMNI and GPU Optimization.
+    relatedQuestionRefs:
+    - QE008
+    - QE025
+    relatedTableRefs:
+    - TE001
+    - TE005

@@ -1,0 +1,1679 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: rhoda-ai
+runDate: '2026-06-09'
+company:
+  name: Rhoda AI
+  website: https://www.rhoda.ai/
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: 'Rhoda AI’s product thesis is FutureVision: a hardware-agnostic intelligence layer built on a Direct Video Action architecture that turns causal video prediction into closed-loop robot control through an inverse-dynamics translator. Official materials make the stack unusually explicit — including context amortization, long-context visual memory, leapfrog inference and one-shot demonstration following — and claim industrial tasks can be learned with roughly 10–20 hours of robot data. The product is technically differentiated from VLA-heavy alternatives, but independent benchmarking, external safety proof and a public developer ecosystem remain materially incomplete.'
+sections:
+- id: product-definition
+  title: Product Definition and DVA Architecture
+  body: |-
+    Rhoda’s delivered product is not just a robot demo and not merely a research model; it is a proposed intelligence layer called FutureVision. In customer terms, FutureVision is meant to sit between sensors and actuation, observe the world continuously, predict future states as video and then convert those predictions into actions quickly enough for real-world control. That architecture matters because Rhoda is arguing against the dominant framing of robot foundation models as primarily vision-language-action systems. In Rhoda’s framing, language can still condition the model, but the center of gravity is causal video prediction: the world moves in time, so the control policy should learn motion, physics and physical interaction directly from video rather than rely mostly on teleoperated robot trajectories.
+
+    The official research blog makes the architecture unusually explicit. DVA starts with a causal video model trained from scratch on web-scale video. Rather than predicting only a few frames after encoding an entire sequence, Rhoda uses a training method called Context Amortization to predict future frames at every position in a long history of clean context. At runtime, KV-caching reuses the encoded context so the system does not repeatedly pay the full compute cost of long-horizon conditioning. The predicted future is then handed to a separate inverse-dynamics model that infers the precise end-effector motion needed to realize the imagined outcome. Rhoda’s Leapfrog Inference overlaps ongoing action execution with the next prediction cycle so the system keeps moving while the model thinks. This is a specific and coherent stack, and it is the chapter’s key technical differentiator.
+  claimRefs:
+  - CE001
+  - CE002
+  - CE003
+  - CE004
+  - CE005
+  - CE006
+  - CE007
+  - CE008
+  tableRefs:
+  - TE001
+  - TE003
+  figureRefs:
+  - FE001
+- id: data-efficiency-and-demos
+  title: Data Efficiency, Long-Context Memory and Use-Case Evidence
+  body: |-
+    Rhoda’s strongest product claim is data efficiency. The company says DVA can learn new long-horizon industrial tasks with roughly 10–20 hours of robot data once the causal video model has already absorbed motion priors from web-scale video. The two flagship use cases are both intentionally ugly: bearing decanting and Contico container breakdown. Bearing decanting reportedly required only 11 hours of task data yet still handled broken straps, torn bags, off-angle boxes and other corner cases for 1.5 hours of continuous operation. Container breakdown reportedly used 17 hours of robot data and then ran for 160 minutes continuously while dealing with heavy boxes, partial observability and random debris. The official materials frame both as production-style customer proofs of concept rather than controlled lab benchmarks.
+
+    Long-context visual memory is the second defining capability. Rhoda explicitly contrasts hundreds of frames of native context with VLA systems that often operate on only a few frames. The shell-game example is a toy benchmark for this capability: the object disappears, shells shuffle, and the model must still keep state over time. More commercially relevant is returns processing, which Rhoda says runs end-to-end without hand-engineered progress indicators or multi-stage scaffolding. The one-shot sorting and drawing demos extend the same idea from memory to in-context imitation: a single human demonstration is injected into the context window and the robot imitates the demonstrated intent without weight updates. These are compelling mechanisms and demos, but they are still company-authored evidence rather than independent benchmark results.
+  claimRefs:
+  - CE009
+  - CE010
+  - CE011
+  - CE012
+  - CE013
+  - CE014
+  - CE015
+  tableRefs:
+  - TE002
+  figureRefs:
+  - FE002
+  - FE004
+- id: positioning-vs-vlas
+  title: How FutureVision Differs from VLA-Heavy Approaches
+  body: |-
+    The sharpest way to state Rhoda’s thesis is this: many VLA systems are still too language-first and too short-context to close the “real-world gap.” Rhoda is not alone in using video or web-scale data, but it is more radical than most peers in making causal video prediction the policy itself. The system imagines the next part of the world and only then converts that imagined future into action. That differs from GR00T, GR-2 and Gemini Robotics, all of which remain clearly inside the VLA family even when they become more multimodal or use human video at scale. External commentary helps explain why Rhoda thinks this matters. Mimic Robotics argues VLA backbones inherit semantics but not physical dynamics, leaving expensive embodiment learning to scarce robot trajectories. The Kempner Institute similarly argues web-scale video captures physical transformations in a way image-text pretraining does not.
+
+    That does not mean Rhoda has the field to itself. DreamGen and other world-model efforts show that more of the market is moving toward richer video pretraining. NVIDIA’s GR00T path is more open and benchmark-oriented, and Google’s Gemini Robotics claims stronger generalization metrics and broader embodiment reach through a VLA stack. In other words, Rhoda’s thesis is differentiated, but not isolated. The real question is whether its causal-video-first formulation delivers materially better robustness, sample efficiency and operational debugging in production. Public sources support the plausibility of that thesis, especially on context length and interpretability, but they do not yet prove it against standardized third-party baselines.
+  claimRefs:
+  - CE016
+  - CE026
+  - CE027
+  - CE028
+  - CE029
+  - CE030
+  - CE031
+  - CE032
+  - CE037
+  figureRefs:
+  - FE003
+- id: deployment-and-trust
+  title: Deployment Model, Developer Signal and Trust Gaps
+  body: |-
+    Rhoda’s product story ends with a hardware-agnostic licensing thesis. FutureVision is supposed to start inside Rhoda systems and then spread across partner platforms. That is strategically attractive because it could let Rhoda sell intelligence without absorbing all the capex and manufacturing burden of being a full robot OEM. It also aligns with the company’s recruiting posture. Team and job pages show a decidedly full-stack buildout: hardware, world models, cloud infrastructure, field operations and model training all sit inside the same platform. The company is clearly investing in the machinery needed for data collection, fleet support and model iteration, which is exactly what a neutral brain vendor needs if it wants to support heterogeneous deployments.
+
+    The problem is not absence of technical detail; it is absence of independent validation. Coey’s critique is fair: ten hours of data is not the real underwriting question. The real question is operationalization under messy failure recovery, logging, monitoring and customer-specific edge cases. No public third-party safety certification, formal model audit, or standardized benchmark for DVA was found in the sources reviewed for this chapter. The official site advertises safety-rated vision, actuator brakes and a three-year reliability claim, and the research blog argues video rollouts help interpretability and safe-behavior inspection. Those are positive signals, but they are still internal signals. Likewise, developer signal currently comes more from hiring than from a public ecosystem surface; no public SDK, API docs or repository were found on the reviewed official materials. That does not invalidate the product, but it does mean the external proof stack is still narrower than the technical narrative suggests.
+  claimRefs:
+  - CE017
+  - CE018
+  - CE019
+  - CE020
+  - CE021
+  - CE022
+  - CE023
+  - CE024
+  - CE025
+  - CE033
+  - CE034
+  - CE035
+  - CE036
+  - CE038
+  tableRefs:
+  - TE004
+  - TE005
+tables:
+- id: TE001
+  title: Product Module / Asset Matrix
+  notes: Maturity ratings reflect public launch and demo evidence, not a disclosed internal TRL framework.
+  columns:
+  - Module / asset
+  - Primary user
+  - Status / maturity
+  - Key differentiation
+  - Diligence gap
+  rows:
+  - - FutureVision
+    - Industrial customer / OEM partner
+    - Commercial platform thesis; public launch Mar 2026
+    - Hardware-agnostic intelligence layer rather than a fixed robot app
+    - No public pricing or partner integration reference architecture
+  - - DVA causal video backbone
+    - Rhoda research and deployment teams
+    - Research-backed; used in public demos
+    - Video prediction is the policy core rather than an auxiliary planner
+    - No third-party benchmark versus named VLA baselines
+  - - Inverse-dynamics translator
+    - Embodiment integration team
+    - Operational in demos; small-model adapter
+    - Maps predicted futures to actions with small embodiment-specific datasets
+    - No published latency and control-frequency table
+  - - Long-context memory / in-context demo mode
+    - Workflow designer / operator
+    - Shown in research demos
+    - Hundreds of visual frames enable one-shot imitation and end-to-end task memory
+    - Generalization across more tasks and customers is still unverified
+  - - Rhoda robot platform
+    - On-site operator / integrator
+    - Publicly shown hardware capabilities
+    - 25kg rated payload, 40kg peak, safety-rated vision, actuator brakes
+    - No detailed BOM, maintenance schedule or certification dossier
+  - - Evaluation and rollout tooling
+    - Research / reliability engineers
+    - Implied by autoregressive video rollouts and infra hiring
+    - Debuggable video rollouts plus cloud workflows for data collection and model evaluation
+    - No public observability tooling or customer incident case studies
+  claimRefs:
+  - CE001
+  - CE002
+  - CE007
+  - CE015
+  - CE017
+  - CE020
+  - CE023
+  - CE024
+- id: TE002
+  title: Workflow / Use-Case Table
+  notes: Benefits reflect company-reported runtime or data-efficiency claims and should not be read as independently audited KPI distributions.
+  columns:
+  - User job
+  - Current workflow
+  - Rhoda solution
+  - Measured / claimed benefit
+  - Limitation
+  rows:
+  - - Bearing decanting
+    - Manual unpacking, decanting and packaging sort
+    - Bimanual DVA policy with long-horizon recovery behavior
+    - 11h of robot data; 1.5h autonomous run claimed
+    - No external benchmark or unit-economics disclosure
+  - - Contico container breakdown
+    - Manual debris clearing, unlatching and box collapse
+    - DVA policy with heavy-object reasoning and long-context memory
+    - 17h of robot data; 160-minute continuous run claimed
+    - Only company-authored evidence available
+  - - Returns processing
+    - Multi-step clothing inspection, folding and repack workflow
+    - End-to-end long-context policy without engineered progress indicators
+    - Handles ambiguous visually similar states using history
+    - No throughput distribution across sites or SKUs
+  - - One-shot sorting
+    - Human demonstrates target/container mapping
+    - Demo inserted into context window for in-context imitation
+    - Single-shot learning without model-weight updates claimed
+    - Shown in demo settings, not standardized customer benchmark
+  - - One-shot drawing
+    - Human demonstrates target shape and stroke order
+    - Context-conditioned imitation of final shape and sequence
+    - Transfers demonstration intent rather than only motion trace
+    - Commercial relevance is indirect; mainly a capability proof
+  claimRefs:
+  - CE010
+  - CE011
+  - CE014
+  - CE015
+- id: TE003
+  title: Technology / Operating Architecture Table
+  notes: This table mixes official mechanism claims with identified risk surfaces where public evidence remains thin.
+  columns:
+  - Layer / process
+  - Role
+  - Dependency
+  - Primary upside
+  - Risk
+  rows:
+  - - Web-video pretraining
+    - Learns motion and physics priors
+    - Large-scale general video data
+    - Cheaply expands training diversity beyond robot demonstrations
+    - Unknown data provenance and copyright exposure
+  - - Causal video model
+    - Predicts future visual states
+    - Long context and efficient training objective
+    - Keeps dynamics at the center of control
+    - May be compute-intensive without careful caching and overlap
+  - - Context Amortization
+    - Trains future prediction at every sequence position
+    - Long clean context windows
+    - Makes hundreds-of-frame training tractable
+    - Public evidence does not quantify absolute compute cost
+  - - KV-cached inference
+    - Reuses encoded context between steps
+    - Stable long-context runtime path
+    - Cuts redundant computation
+    - Latency numbers are not publicly disclosed
+  - - Leapfrog Inference
+    - Overlaps action execution with next prediction
+    - Action-conditioned future overlap
+    - Supports continuous control despite inference delay
+    - No public latency or jerk metric versus simpler loops
+  - - Inverse dynamics
+    - Converts predicted future into end-effector actions
+    - Embodiment-specific data and translation model
+    - Needs far less embodiment data than full policy retraining
+    - Adapter performance across many robot types is not benchmarked publicly
+  - - Closed-loop execution
+    - Observe → predict → act → re-observe
+    - Robot sensors and actuator stack
+    - Responds to layout and object changes on the fly
+    - Safety case still depends on undisclosed low-level controls and validation
+  claimRefs:
+  - CE002
+  - CE005
+  - CE006
+  - CE007
+  - CE008
+- id: TE004
+  title: Trust / Quality / Compliance Table
+  notes: Rows distinguish claimed controls from externally verified controls; absence in the reviewed source set is not proof of non-existence, but it is a real diligence gap.
+  columns:
+  - Control / metric
+  - Current public status
+  - Scope
+  - Gap
+  rows:
+  - - Safety-rated vision
+    - Claimed on homepage
+    - Robot platform hardware
+    - No public certification packet or test protocol
+  - - Brakes in every actuator
+    - Claimed on homepage
+    - Robot hardware fail-safe posture
+    - No public fault-tree or controller audit
+  - - 3-year continuous-operation claim
+    - Claimed on homepage
+    - Reliability / durability
+    - No public duty-cycle methodology or field cohort
+  - - Autoregressive video rollouts
+    - Explained in research blog
+    - Interpretability / model debugging
+    - No evidence that regulators or customers accept this as a formal safety artifact
+  - - Closed-loop re-planning
+    - Claimed in press and research
+    - Operational robustness
+    - No published standardized failure taxonomy
+  - - Formal safety certification
+    - Not found in reviewed sources
+    - External trust / procurement
+    - Material diligence blocker for scaled industrial underwriting
+  - - Public security / data policy docs
+    - Not found in reviewed sources
+    - Customer assurance and data governance
+    - No public SDK, docs or explicit data-handling controls surfaced in this review
+  claimRefs:
+  - CE017
+  - CE021
+  - CE022
+  - CE035
+  - CE036
+- id: TE005
+  title: Roadmap / Release / Development-Stage Table
+  notes: Final row is an analyst synthesis of what must happen next, not a company-issued roadmap item.
+  columns:
+  - Date / stage
+  - Feature or milestone
+  - Status
+  - Implication
+  - Source
+  rows:
+  - - Mar 2026
+    - Public launch after 18 months in stealth
+    - Completed
+    - Moves Rhoda from quiet R&D into explicit commercial positioning
+    - SE003
+  - - Mar 2026
+    - Research blog publishing DVA, inverse dynamics, context amortization and leapfrog inference
+    - Completed
+    - Provides unusually detailed technical disclosure for a newly public robot startup
+    - SE002
+  - - Mar 2026
+    - High-volume manufacturing evaluation under two minutes per cycle
+    - Claimed
+    - Signals movement from lab demos toward plant-level KPI language
+    - SE003
+  - - '2026'
+    - FutureVision licensing across partner hardware/software
+    - Planned / thesis
+    - Core to hardware-agnostic revenue model
+    - SE003
+  - - '2026'
+    - Active infrastructure and platform hiring in Palo Alto
+    - Ongoing
+    - Suggests investment in fleet ops, training and internal tools rather than only research demos
+    - SE013
+  - - 2026+
+    - Broader safety, benchmark and ecosystem proof
+    - Needed
+    - Required to convert technical novelty into procurement trust
+    - SE011
+  claimRefs:
+  - CE001
+  - CE017
+  - CE023
+  - CE034
+  - CE035
+figures:
+- id: FE001
+  title: Product Architecture Map
+  type: stack
+  layout: wide
+  summary: Five-layer stack showing how Rhoda turns web-scale video into deployed robot behavior.
+  data:
+    layers:
+    - id: l1
+      label: FutureVision Licensing Layer
+      detail: Intelligence layer intended to power Rhoda systems first and partner platforms over time
+    - id: l2
+      label: Closed-Loop DVA Policy
+      detail: Observe → predict future video → translate to action → re-observe
+    - id: l3
+      label: Inverse-Dynamics Translator
+      detail: Small embodiment adapter converting predicted future into end-effector motion
+    - id: l4
+      label: Causal Video World Model
+      detail: Long-context visual predictor trained from scratch on web-scale video
+    - id: l5
+      label: Training and Data Engine
+      detail: Web video, context amortization, KV-cached inference, leapfrog control, robot post-training
+  claimRefs:
+  - CE001
+  - CE002
+  - CE005
+  - CE006
+  - CE007
+  - CE008
+- id: FE002
+  title: Customer Workflow / Operating Flow
+  type: flow
+  layout: wide
+  summary: Operating flow from messy real-world task observation through DVA prediction, action translation and continuous recovery.
+  data:
+    nodes:
+    - id: scene
+      label: Observed work scene
+      detail: Camera, proprioception and optional language capture current state
+    - id: context
+      label: Long-context history
+      detail: Hundreds of frames preserve task progress and visual memory
+    - id: predict
+      label: Future video prediction
+      detail: Causal video model imagines the near future
+    - id: translate
+      label: Inverse dynamics
+      detail: Predicted future becomes robot action
+    - id: act
+      label: Robot executes
+      detail: Actions run while next prediction is prepared
+    - id: recover
+      label: Closed-loop recovery
+      detail: System re-observes, adapts and continues through edge cases
+    edges:
+    - from: scene
+      to: context
+      label: Appends observation
+    - from: context
+      to: predict
+      label: Conditioning
+    - from: predict
+      to: translate
+      label: Desired future
+    - from: translate
+      to: act
+      label: Motor targets
+    - from: act
+      to: recover
+      label: Real-world outcome
+    - from: recover
+      to: context
+      label: Fresh state
+  claimRefs:
+  - CE002
+  - CE006
+  - CE007
+  - CE014
+  - CE015
+- id: FE003
+  title: Critical Dependency Map
+  type: dag
+  layout: wide
+  summary: Dependency graph highlighting what Rhoda needs beyond the core model to make DVA commercially credible.
+  data:
+    nodes:
+    - id: futurevision
+      label: FutureVision
+      detail: Commercial intelligence layer
+    - id: webvideo
+      label: Web-video corpus
+      detail: Scalable motion and physics pretraining signal
+    - id: robotdata
+      label: Robot post-training data
+      detail: 10–20h task data and embodiment adapter training
+    - id: infra
+      label: Cloud / data platform
+      detail: Data collection, robot ops and model evaluation workflows
+    - id: hardware
+      label: Robot hardware stack
+      detail: Custom actuators, brakes, safety-rated vision
+    - id: trust
+      label: Safety and benchmark proof
+      detail: Missing external certifications and standardized benchmarks
+    edges:
+    - from: webvideo
+      to: futurevision
+      label: Pretraining prior
+    - from: robotdata
+      to: futurevision
+      label: Embodiment specialization
+    - from: infra
+      to: robotdata
+      label: Collects and evaluates data
+    - from: hardware
+      to: robotdata
+      label: Produces control traces
+    - from: hardware
+      to: futurevision
+      label: Executes actions
+    - from: trust
+      to: futurevision
+      label: Determines procurement readiness
+  claimRefs:
+  - CE018
+  - CE021
+  - CE023
+  - CE024
+  - CE035
+  - CE036
+- id: FE004
+  title: Product Maturity / Capability Map
+  type: matrix
+  layout: wide
+  summary: Capability maturity by module. This figure separates what is technically demonstrated from what is commercially validated.
+  data:
+    columns:
+    - id: demo
+      label: Demo evidence
+    - id: customer
+      label: Customer-like workflow
+    - id: public-benchmark
+      label: Public benchmark
+    - id: external-trust
+      label: External trust proof
+    rows:
+    - id: dva
+      label: DVA core loop
+      values:
+      - H
+      - M
+      - L
+      - L
+      claimRefs:
+      - CE002
+      - CE018
+      - CE035
+    - id: memory
+      label: Long-context memory
+      values:
+      - H
+      - M
+      - L
+      - L
+      claimRefs:
+      - CE012
+      - CE013
+      - CE014
+    - id: oneshot
+      label: One-shot imitation
+      values:
+      - H
+      - L
+      - L
+      - L
+      claimRefs:
+      - CE015
+    - id: hardware
+      label: Robot platform
+      values:
+      - M
+      - M
+      - L
+      - L
+      claimRefs:
+      - CE020
+      - CE021
+      - CE022
+    - id: licensing
+      label: Partner licensing thesis
+      values:
+      - M
+      - L
+      - L
+      - L
+      claimRefs:
+      - CE001
+      - CE018
+  approximationNotes: H/M/L are analyst judgments reflecting the difference between demonstrated mechanics and externally validated commercial readiness.
+  claimRefs:
+  - CE001
+  - CE002
+  - CE012
+  - CE015
+  - CE018
+  - CE020
+  - CE021
+  - CE022
+  - CE035
+callouts:
+- calloutType: strength
+  title: DVA is a real architectural thesis, not just a slogan
+  body: Rhoda’s research blog is unusually explicit about context amortization, inverse dynamics, KV-caching and leapfrog control. The company is not merely saying “video helps” — it is specifying how video prediction becomes the control policy.
+  claimRefs:
+  - CE002
+  - CE005
+  - CE006
+  - CE007
+- calloutType: strength
+  title: The sample-efficiency claim is directionally credible
+  body: 'Multiple official and independent sources repeat the same core message: Rhoda is trying to compress embodiment data needs into roughly 10–20 hours by borrowing physical priors from web-scale video.'
+  claimRefs:
+  - CE008
+  - CE010
+  - CE011
+  - CE012
+- calloutType: risk
+  title: Independent benchmarking is the biggest missing proof point
+  body: The strongest public evidence remains company-authored demos and partner-style media coverage. There is still no standardized external benchmark that lets an investor compare Rhoda’s DVA stack against named VLA or world-model baselines on the same task set.
+  claimRefs:
+  - CE034
+  - CE035
+  - CE038
+- calloutType: risk
+  title: Developer signal is hiring-led, not ecosystem-led
+  body: Rhoda is clearly investing in the platform internally, but the current public surface is mostly jobs and demos rather than SDKs, repos or public docs that would let outside developers or integrators build around the stack.
+  claimRefs:
+  - CE023
+  - CE024
+  - CE025
+  - CE036
+localEvidence:
+  sources:
+  - id: SE001
+    publisher: Rhoda AI
+    title: Rhoda AI
+    url: https://www.rhoda.ai/
+    date: null
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - homepage
+    - FutureVision
+    - use cases
+    - robot platform
+    keyQuote: FutureVision brings the capability to handle real world industrial tasks autonomously.
+  - id: SE002
+    publisher: Rhoda AI
+    title: Causal Video Models Are Data-Efficient Robot Policy Learners
+    url: https://www.rhoda.ai/research/direct-video-action
+    date: '2026-03-01'
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - DVA
+    - causal video
+    - inverse dynamics
+    - long-context
+    - one-shot learning
+    keyQuote: Our Direct Video-Action Model (DVA) reformulates robot policies as video generation.
+  - id: SE003
+    publisher: Rhoda AI
+    title: Press Release | Rhoda AI
+    url: https://www.rhoda.ai/news/press-release
+    date: '2026-03-10'
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - FutureVision
+    - licensing
+    - production evaluation
+    keyQuote: The resulting system continuously observes its environment, predicts future states as video, converts those predictions into actions, executes them, and re-observes the world.
+  - id: SE004
+    publisher: Rhoda AI
+    title: Team | Rhoda AI
+    url: https://www.rhoda.ai/team
+    date: null
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - leadership
+    - team
+  - id: SE005
+    publisher: BusinessWire
+    title: Rhoda AI Exits Stealth with $450 Million Series A to Bring Robots Out of the Lab and Into the Real World
+    url: https://www.businesswire.com/news/home/20260310715139/en/Rhoda-AI-Exits-Stealth-with-%24450-Million-Series-A-to-Bring-Robots-Out-of-the-Lab-and-Into-the-Real-World
+    date: '2026-03-10'
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: confirming
+    sourceType: news
+    reputationTier: high
+    independence: independent
+    topics:
+    - Rhoda
+    - funding
+    - FutureVision
+    - closed loop
+  - id: SE006
+    publisher: RoboticsTomorrow
+    title: Rhoda AI Exits Stealth with $450 Million Series A to Bring Robots Out of the Lab and Into the Real World
+    url: https://www.roboticstomorrow.com/news/2026/03/10/rhoda-ai-exits-stealth-with-450-million-series-a-to-bring-robots-out-of-the-lab-and-into-the-real-world/26240/
+    date: '2026-03-10'
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: neutral
+    sourceType: news
+    reputationTier: medium
+    independence: independent
+    topics:
+    - Rhoda
+    - funding
+    - industrial robotics
+  - id: SE007
+    publisher: Robotics and Automation News
+    title: Rhoda AI launches with $450 million Series A to bring robots out of the lab and into the real world
+    url: https://roboticsandautomationnews.com/2026/03/12/rhoda-ai-launches-with-450-million-series-a-to-bring-robots-out-of-the-lab-and-into-the-real-world/99512/
+    date: '2026-03-12'
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: neutral
+    sourceType: news
+    reputationTier: medium
+    independence: independent
+    topics:
+    - Rhoda
+    - FutureVision
+    - funding
+  - id: SE008
+    publisher: Humanoids Daily
+    title: Rhoda AI Hits $1.7B Valuation, Unveils "Direct Video-Action" Model to Bridge the Real-World Gap
+    url: https://www.humanoidsdaily.com/news/rhoda-ai-hits-1-7b-valuation-unveils-direct-video-action-model-to-bridge-the-real-world-gap
+    date: '2026-03-10'
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: neutral
+    sourceType: news
+    reputationTier: medium
+    independence: independent
+    topics:
+    - Rhoda
+    - valuation
+    - DVA
+  - id: SE009
+    publisher: RoboHorizon
+    title: Rhoda AI Unveils Video-Trained Robots, Nabs $450M at $1.7B Valuation
+    url: https://robohorizon.com/en-us/news/2026/03/rhoda-ai-unveils-video-trained-robots-nabs-450m-at-17b-valuation/
+    date: '2026-03-10'
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: neutral
+    sourceType: news
+    reputationTier: medium
+    independence: independent
+    topics:
+    - Rhoda
+    - video trained robots
+    - valuation
+  - id: SE010
+    publisher: Interesting Engineering
+    title: Robot AI trained on millions of videos aims to work beyond labs
+    url: https://interestingengineering.com/ai-robotics/rhoda-futurevision-robot-ai-video-prediction
+    date: null
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: neutral
+    sourceType: news
+    reputationTier: medium
+    independence: independent
+    topics:
+    - Rhoda
+    - FutureVision
+    - component processing
+    keyQuote: The company says FutureVision will eventually serve as a foundation model that can be licensed to partners building robotic hardware and software platforms.
+  - id: SE011
+    publisher: Coey
+    title: Rhoda AI’s Direct Video-Action Model Wants to Make Robots “Web-Trained” and Factory-Ready
+    url: https://coey.com/resources/blog/2026/03/10/rhoda-ais-direct-video-action-model-wants-to-make-robots-web-trained-and-factory-ready/
+    date: '2026-03-10'
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: adverse
+    sourceType: other
+    reputationTier: medium
+    independence: independent
+    topics:
+    - Rhoda
+    - DVA
+    - benchmarking caveats
+    keyQuote: The exact conditions vary by demo and are not yet standardized by third-party benchmarking.
+  - id: SE012
+    publisher: Assembly Magazine
+    title: New Robotic AI Platform Targets High-Variability Manufacturing Tasks
+    url: https://www.assemblymag.com/articles/99908-new-robotic-ai-platform-targets-high-variability-manufacturing-tasks
+    date: null
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: neutral
+    sourceType: news
+    reputationTier: medium
+    independence: independent
+    topics:
+    - Rhoda
+    - manufacturing
+    - 10 hours of teleoperation
+    keyQuote: The system’s video-based pretraining allows it to learn new tasks quickly — often with as little as 10 hours of teleoperation data.
+  - id: SE013
+    publisher: CareersInRobotics
+    title: Rhoda ai Careers | 6 jobs
+    url: https://careersinrobotics.com/organizations/rhoda-ai
+    date: null
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics:
+    - hiring
+    - Palo Alto
+    - robotics jobs
+  - id: SE014
+    publisher: Mayfield
+    title: Cloud Infrastructure Engineer | Rhoda AI
+    url: https://mayfield.getro.com/companies/rhoda-ai-2/jobs/74360458-cloud-infrastructure-engineer
+    date: null
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: partner
+    topics:
+    - cloud infrastructure
+    - data collection
+    - robot operations
+    - training
+  - id: SE015
+    publisher: Ashby
+    title: Fullstack Engineer @ Rhoda AI
+    url: https://jobs.ashbyhq.com/rhoda-ai/ea042112-7732-451e-a5e3-191c5d490930
+    date: null
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics:
+    - fullstack
+    - internal tools
+  - id: SE016
+    publisher: YouTube
+    title: 'Rhoda AI: Returns Processing Demo'
+    url: https://www.youtube.com/watch?v=L4ip7JzA_dI
+    date: null
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - returns processing
+    - demo
+  - id: SE017
+    publisher: YouTube
+    title: 'Rhoda AI: Container Breakdown Demo'
+    url: https://www.youtube.com/watch?v=KhFcvFzCKxo
+    date: null
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - container breakdown
+    - demo
+  - id: SE018
+    publisher: arXiv
+    title: 'GR00T N1: An Open Foundation Model for Generalist Humanoid Robots'
+    url: https://arxiv.org/abs/2503.14734
+    date: '2025-03-19'
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: independent
+    topics:
+    - GR00T
+    - VLA
+    - benchmark
+    - open model
+  - id: SE019
+    publisher: arXiv
+    title: 'GR-2: A Generative Video-Language-Action Model with Web-Scale Knowledge for Robot Manipulation'
+    url: https://arxiv.org/abs/2410.06158
+    date: '2024-10-08'
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: independent
+    topics:
+    - GR-2
+    - VLA
+    - web-scale knowledge
+  - id: SE020
+    publisher: arXiv
+    title: 'DreamGen: Unlocking Generalization in Robot Learning through Video World Models'
+    url: https://arxiv.org/abs/2505.12705
+    date: '2025-05-17'
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: independent
+    topics:
+    - DreamGen
+    - video world models
+    - generalization
+  - id: SE021
+    publisher: arXiv
+    title: 'Foundation Model Driven Robotics: A Comprehensive Review'
+    url: https://arxiv.org/abs/2507.10087
+    date: '2025-07-14'
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: independent
+    topics:
+    - review
+    - safety
+    - compute
+    - embodiment
+  - id: SE022
+    publisher: Kempner Institute
+    title: 'Large Video Planner: A New Foundation Model for General-Purpose Robots'
+    url: https://kempnerinstitute.harvard.edu/research/deeper-learning/large-video-planner-a-new-foundation-model-for-general-purpose-robots/
+    date: null
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: independent
+    topics:
+    - video planner
+    - web-scale video
+    - robotics
+  - id: SE023
+    publisher: Mimic Robotics
+    title: 'Video-Action Models: Are video model backbones the future of VLAs?'
+    url: https://www.mimicrobotics.com/blog/video-action-models-are-video-model-backbones-the-future-of-vlas
+    date: null
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: neutral
+    sourceType: other
+    reputationTier: medium
+    independence: independent
+    topics:
+    - VLA critique
+    - video model backbones
+    - sample efficiency
+  - id: SE024
+    publisher: GitHub
+    title: Awesome Robot Foundation Models 2025-2026
+    url: https://github.com/jinruih2/Awesome-Robot-Foundation-Models-2025-2026
+    date: null
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics:
+    - robot foundation models
+    - ecosystem
+  - id: SE025
+    publisher: Google DeepMind
+    title: Introducing Gemini Robotics and Gemini Robotics-ER, AI models designed for robots to understand, act and react to the physical world.
+    url: https://deepmind.google/blog/gemini-robotics-brings-ai-into-the-physical-world/
+    date: '2025-03-12'
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - Gemini Robotics
+    - VLA
+    - generalization
+  - id: SE026
+    publisher: JobScroller
+    title: Rhoda AI Jobs (June 2026) – 33 Open Roles
+    url: https://www.jobscroller.net/companies/rhoda-ai
+    date: null
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: low
+    independence: independent
+    topics:
+    - jobs
+    - open roles
+    - hiring
+  - id: SE027
+    publisher: YouTube
+    title: Rhoda AI - YouTube
+    url: https://www.youtube.com/@rhoda_ai
+    date: null
+    accessDate: '2026-06-09'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - video channel
+    - demos
+  claims:
+  - id: CE001
+    statement: FutureVision is Rhoda’s intelligence layer and is intended to power Rhoda systems before expanding to partner hardware and software platforms.
+    type: company-claimed
+    topic: futurevision
+    sourceRefs:
+    - SE001
+    - SE003
+    - SE010
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+    - QE015
+  - id: CE002
+    statement: Rhoda defines Direct Video Action as a policy where a causal video model predicts future frames and a separate inverse-dynamics model translates those predictions into robot actions in streaming closed loop.
+    type: company-claimed
+    topic: dva-architecture
+    sourceRefs:
+    - SE002
+    - SE003
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE002
+    - QE004
+  - id: CE003
+    statement: Rhoda pre-trains its video model from scratch on general web videos rather than distilling from a pre-trained bidirectional model.
+    type: company-claimed
+    topic: causal-pretraining
+    sourceRefs:
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE003
+    - QE004
+  - id: CE004
+    statement: Rhoda says video-scale pretraining gives the model priors on 3D structure, physics, behavior and conventions.
+    type: company-claimed
+    topic: motion-prior
+    sourceRefs:
+    - SE002
+    - SE005
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE003
+  - id: CE005
+    statement: Context Amortization predicts future video at every position in a long history so Rhoda can train causal video generation efficiently with hundreds of frames of context.
+    type: company-claimed
+    topic: context-amortization
+    sourceRefs:
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE005
+  - id: CE006
+    statement: Rhoda’s Leapfrog Inference overlaps inference with action execution and conditions each new prediction on the action currently being executed to smooth trajectories.
+    type: company-claimed
+    topic: leapfrog-inference
+    sourceRefs:
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE006
+  - id: CE007
+    statement: Rhoda uses KV-caching at inference so encoded context can be reused across steps instead of recomputed from scratch.
+    type: company-claimed
+    topic: kv-cache
+    sourceRefs:
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE006
+  - id: CE008
+    statement: The inverse-dynamics model performs video-to-action translation and Rhoda says it can be trained with as little as about 10 hours of embodiment data.
+    type: company-claimed
+    topic: inverse-dynamics
+    sourceRefs:
+    - SE002
+    - SE012
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE004
+    - QE007
+  - id: CE009
+    statement: Rhoda says inverse-dynamics training can use random motions rather than only high-quality task demonstrations.
+    type: company-claimed
+    topic: inverse-dynamics-data
+    sourceRefs:
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE007
+  - id: CE010
+    statement: Rhoda reports that complex long-horizon tasks can be learned with 10–20 hours of robot data collected within a few days.
+    type: company-claimed
+    topic: data-efficiency
+    sourceRefs:
+    - SE002
+    - SE011
+    - SE012
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE008
+    - QE019
+  - id: CE011
+    statement: The bearing-decanting task used 11 hours of robot data and Rhoda says the system operated autonomously for 1.5 hours.
+    type: company-claimed
+    topic: bearing-decanting
+    sourceRefs:
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE009
+  - id: CE012
+    statement: The Contico container-breakdown task used 17 hours of robot data and Rhoda says the system ran for 160 minutes continuously.
+    type: company-claimed
+    topic: container-breakdown
+    sourceRefs:
+    - SE002
+    - SE017
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE010
+  - id: CE013
+    statement: Rhoda says its models have hundreds of frames of visual context while many VLA systems operate with only a few frames.
+    type: company-claimed
+    topic: long-context
+    sourceRefs:
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE011
+    - QE019
+  - id: CE014
+    statement: The shell-game demo is meant to show persistent visual memory through multiple swaps of hidden objects.
+    type: company-claimed
+    topic: shell-game
+    sourceRefs:
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE011
+  - id: CE015
+    statement: Rhoda frames returns processing as an end-to-end workflow solved with long-context memory instead of hand-engineered progress indicators or multi-stage scaffolding.
+    type: company-claimed
+    topic: returns-processing
+    sourceRefs:
+    - SE001
+    - SE002
+    - SE016
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE012
+  - id: CE016
+    statement: Rhoda says one-shot pick-and-place and drawing demos use in-context learning from a single human demonstration without updating model weights.
+    type: company-claimed
+    topic: one-shot-learning
+    sourceRefs:
+    - SE001
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE013
+  - id: CE017
+    statement: Rhoda argues DVA improves interpretability because autoregressive video rollouts let engineers inspect model decisions, compare model variants and verify safe behavior.
+    type: company-claimed
+    topic: interpretability
+    sourceRefs:
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE014
+  - id: CE018
+    statement: Rhoda says a high-volume manufacturing workflow completed in under two minutes per cycle without human intervention during a customer evaluation.
+    type: company-claimed
+    topic: production-evidence
+    sourceRefs:
+    - SE003
+    - SE010
+    - SE012
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE015
+  - id: CE019
+    statement: Rhoda publicly names automotive, manufacturing, logistics and ecommerce as current commercial verticals.
+    type: company-claimed
+    topic: commercial-verticals
+    sourceRefs:
+    - SE001
+    - SE003
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE016
+  - id: CE020
+    statement: Rhoda’s homepage advertises custom actuators with a 25 kg rated payload and 40 kg peak payload.
+    type: company-claimed
+    topic: robot-platform
+    sourceRefs:
+    - SE001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE017
+  - id: CE021
+    statement: Rhoda’s homepage says the robot platform includes brakes in every actuator and safety-rated vision.
+    type: company-claimed
+    topic: robot-safety-features
+    sourceRefs:
+    - SE001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE017
+    - QE023
+  - id: CE022
+    statement: Rhoda’s homepage claims three years of continuous operation at rated payload.
+    type: company-claimed
+    topic: robot-reliability
+    sourceRefs:
+    - SE001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE017
+  - id: CE023
+    statement: Rhoda’s team and hiring materials describe the company as a full-stack effort spanning hardware, world models, cloud infrastructure, robot field operations and model training.
+    type: third-party-reported
+    topic: full-stack-platform
+    sourceRefs:
+    - SE004
+    - SE014
+    - SE015
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE018
+  - id: CE024
+    statement: A Mayfield-hosted job posting says Rhoda’s cloud infrastructure supports data collection pipelines, robot operations and model training/evaluation workflows.
+    type: third-party-reported
+    topic: cloud-infra
+    sourceRefs:
+    - SE014
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE018
+  - id: CE025
+    statement: Careers-oriented sources place Rhoda in Palo Alto and show active hiring for infrastructure and robotics roles in 2026.
+    type: third-party-reported
+    topic: developer-signal
+    sourceRefs:
+    - SE013
+    - SE026
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE018
+    - QE024
+  - id: CE026
+    statement: Independent commentary describes Rhoda as video-first and explicitly different from VLA systems that treat language as the primary control surface.
+    type: third-party-reported
+    topic: video-first-positioning
+    sourceRefs:
+    - SE010
+    - SE011
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE019
+  - id: CE027
+    statement: Mimic Robotics argues VLA backbones inherit semantics but not physical dynamics, which can make them less sample-efficient than video-model backbones.
+    type: third-party-reported
+    topic: vla-critique
+    sourceRefs:
+    - SE023
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE020
+  - id: CE028
+    statement: The Kempner Institute argues web-scale video offers richer physical dynamics than static image-text pretraining for general-purpose robot planners.
+    type: third-party-reported
+    topic: video-planner-thesis
+    sourceRefs:
+    - SE022
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE020
+  - id: CE029
+    statement: GR00T N1 is an open VLA model rather than a causal-video policy and is built around multimodal inputs plus an action head.
+    type: third-party-reported
+    topic: gr00t-vs-dva
+    sourceRefs:
+    - SE018
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE021
+  - id: CE030
+    statement: GR00T N1.7 is commercially licensable under Apache 2.0 and pretrains on 20,000 hours of EgoScale human video, showing a more open benchmark path than Rhoda’s proprietary stack.
+    type: third-party-reported
+    topic: gr00t-open-model
+    sourceRefs:
+    - SE018
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE021
+  - id: CE031
+    statement: GR-2 illustrates that major rivals still keep language as a first-class control interface even when they add video generation and web-scale knowledge.
+    type: third-party-reported
+    topic: gr2-vla
+    sourceRefs:
+    - SE019
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE019
+    - QE021
+  - id: CE032
+    statement: DreamGen shows that world-model approaches are converging on richer video pretraining to improve robot generalization outside narrow robot-demonstration corpora.
+    type: third-party-reported
+    topic: dreamgen
+    sourceRefs:
+    - SE020
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE021
+  - id: CE033
+    statement: The 2025 robotics foundation-model review says safety, data diversity, embodiment and compute remain unresolved bottlenecks across the category.
+    type: third-party-reported
+    topic: review-risks
+    sourceRefs:
+    - SE021
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE025
+  - id: CE034
+    statement: Coey argues Rhoda’s current public evidence is still demo-led and not standardized by third-party benchmarking.
+    type: third-party-reported
+    topic: benchmark-gap
+    sourceRefs:
+    - SE011
+    confidence: low
+    freshness: current
+    answersQuestionRefs:
+    - QE022
+    - QE025
+  - id: CE035
+    statement: No public third-party safety certification, formal audit or standardized benchmark for Rhoda’s DVA stack was found in the reviewed sources.
+    type: inferred
+    topic: trust-gap
+    sourceRefs:
+    - SE001
+    - SE002
+    - SE003
+    - SE011
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE022
+    - QE023
+  - id: CE036
+    statement: No public SDK, API documentation or developer repository was found in the reviewed official materials, so Rhoda’s current developer signal is hiring-oriented rather than ecosystem-oriented.
+    type: inferred
+    topic: developer-gap
+    sourceRefs:
+    - SE001
+    - SE004
+    - SE013
+    - SE014
+    confidence: low
+    freshness: current
+    answersQuestionRefs:
+    - QE024
+  - id: CE037
+    statement: Google DeepMind’s Gemini Robotics claims a different VLA path to robustness, with benchmark and embodiment claims that increase competitive pressure on Rhoda’s narrative.
+    type: third-party-reported
+    topic: gemini-pressure
+    sourceRefs:
+    - SE025
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE021
+    - QE025
+  - id: CE038
+    statement: Rhoda’s official videos and blog show production-style demos, but public sources still lack standardized customer-by-customer pass/fail distributions or uptime cohorts.
+    type: inferred
+    topic: deployment-gap
+    sourceRefs:
+    - SE002
+    - SE016
+    - SE017
+    - SE011
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE022
+    - QE025
+  searchQueries:
+  - query: Find 2026 sources on Rhoda AI Direct Video Action, FutureVision, causal video models, inverse dynamics, long-context visual memory, and comparisons with VLA robotics approaches. Prioritize official Rhoda sources plus independent technical commentary or benchmark discussion.
+    engine: web_search
+    hits: null
+    retainedSourceRefs:
+    - SE001
+    - SE002
+    - SE003
+    - SE005
+    - SE008
+    - SE009
+    - SE010
+    - SE011
+    - SE012
+  - query: Find 2026 developer-signal or practitioner-signal sources for Rhoda AI, such as careers pages, engineering talks, GitHub presence, conference talks, or robotics community discussion.
+    engine: web_search
+    hits: null
+    retainedSourceRefs:
+    - SE013
+    - SE014
+    - SE015
+    - SE026
+  - query: Find 2026 or 2025 sources critiquing robotics foundation models trained on web video or comparing world-model / video-prediction control against VLA approaches, including sample efficiency, real-world robustness, or benchmarking caveats.
+    engine: web_search
+    hits: null
+    retainedSourceRefs:
+    - SE018
+    - SE019
+    - SE020
+    - SE021
+    - SE022
+    - SE023
+    - SE025
+  - query: Find 2026 official or independent sources for Rhoda AI customer or partner task demos like returns processing, bearing decanting, Contico container breakdown, and one-shot demo following.
+    engine: web_search
+    hits: null
+    retainedSourceRefs:
+    - SE001
+    - SE002
+    - SE010
+    - SE012
+    - SE016
+    - SE017
+    - SE027
+  researchQuestions:
+  - id: QE001
+    question: What exactly is FutureVision in customer-facing product terms?
+    type: verification
+    status: answered
+    answer: FutureVision is Rhoda’s intelligence layer rather than a single fixed application, and the company expects it to expand across partner platforms over time.
+    targets:
+    - contentRequirements/0
+    - plannedTables/product-module-asset-matrix
+  - id: QE002
+    question: How does Rhoda’s Direct Video Action architecture work mechanically?
+    type: mechanism
+    status: answered
+    answer: A causal video model predicts future states from long context and a separate inverse-dynamics model converts those predictions into actions in closed loop.
+    targets:
+    - contentRequirements/2
+    - plannedFigures/product-architecture-map
+  - id: QE003
+    question: Why does Rhoda pre-train on web-scale video instead of relying mainly on robot trajectories?
+    type: mechanism
+    status: answered
+    answer: Rhoda argues web video is the most scalable source of physical interaction data and builds stronger motion and physics priors than scarce robot-only data.
+    targets:
+    - contentRequirements/2
+  - id: QE004
+    question: What are the major stages in Rhoda’s training and inference stack?
+    type: enumeration
+    status: answered
+    answer: The public stack is web-video pretraining, context-efficient causal video learning, inverse-dynamics training, then closed-loop execution with overlap between inference and action.
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+  - id: QE005
+    question: What is Context Amortization and why does it matter to DVA?
+    type: mechanism
+    status: answered
+    answer: It turns long-context training into a next-token-style prediction problem over video so Rhoda can train on hundreds of context frames efficiently.
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+  - id: QE006
+    question: How does Rhoda keep the system responsive enough for real-time control?
+    type: mechanism
+    status: answered
+    answer: It uses KV-caching to reuse encoded context and Leapfrog Inference to overlap action execution with the next prediction cycle.
+    targets:
+    - contentRequirements/3
+    - plannedFigures/customer-workflow-operating-flow
+  - id: QE007
+    question: How much embodiment-specific data does the inverse-dynamics adapter reportedly need?
+    type: quantification
+    status: answered
+    answer: Rhoda says roughly 10 hours can be enough and that even random motions may be sufficient for inverse-dynamics training.
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+  - id: QE008
+    question: How data-efficient is Rhoda on real customer-style industrial tasks?
+    type: quantification
+    status: answered
+    answer: Rhoda’s public claim is roughly 10–20 hours of robot data for long-horizon tasks, which is much lower than most teleop-heavy robotics narratives.
+    targets:
+    - contentRequirements/4
+    - plannedTables/workflow-use-case-table
+  - id: QE009
+    question: What does the public evidence show about the bearing-decanting task?
+    type: verification
+    status: answered
+    answer: Rhoda says the task used 11 hours of robot data and then operated autonomously for 1.5 hours while handling multiple edge cases.
+    targets:
+    - contentRequirements/0
+    - plannedTables/workflow-use-case-table
+  - id: QE010
+    question: What does the public evidence show about the container-breakdown task?
+    type: verification
+    status: answered
+    answer: Rhoda says the task used 17 hours of robot data and ran for 160 minutes continuously while handling heavy boxes and random debris.
+    targets:
+    - contentRequirements/0
+    - plannedTables/workflow-use-case-table
+  - id: QE011
+    question: How important is long-context visual memory to Rhoda’s product thesis?
+    type: mechanism
+    status: answered
+    answer: It is central because the company explicitly ties hundreds of frames of context to task-progress tracking, shell-game memory and end-to-end workflow execution.
+    targets:
+    - contentRequirements/2
+    - plannedFigures/product-maturity-capability-map
+  - id: QE012
+    question: What does Rhoda claim for returns processing beyond a one-off demo clip?
+    type: verification
+    status: answered
+    answer: Rhoda frames it as an end-to-end ambiguous workflow that can run without task-progress indicators because the model remembers long task history.
+    targets:
+    - contentRequirements/1
+    - plannedTables/workflow-use-case-table
+  - id: QE013
+    question: Does Rhoda show credible one-shot learning or only repeated scripted behavior?
+    type: verification
+    status: answered
+    answer: The official research materials show one-shot sorting and drawing examples where a single human demonstration conditions the next robot attempt.
+    targets:
+    - contentRequirements/1
+    - plannedTables/workflow-use-case-table
+  - id: QE014
+    question: What practical advantage does video generation give Rhoda beyond action prediction?
+    type: comparison
+    status: answered
+    answer: Rhoda argues it improves interpretability because engineers can inspect generated rollouts, compare model variants and reason about safe behavior before or during deployment.
+    targets:
+    - contentRequirements/4
+    - plannedFigures/product-architecture-map
+  - id: QE015
+    question: What public evidence supports the hardware-agnostic licensing thesis behind FutureVision?
+    type: freshness
+    status: answered
+    answer: 'The strongest public evidence is the press-language itself: FutureVision is explicitly described as an intelligence layer expected to be licensed across different robotic hardware and software platforms.'
+    targets:
+    - contentRequirements/4
+    - plannedTables/product-module-asset-matrix
+  - id: QE016
+    question: Which user workflows and verticals are publicly disclosed today?
+    type: enumeration
+    status: answered
+    answer: Automotive, manufacturing, logistics and ecommerce are the clearest disclosed sectors, with bearing decanting, returns processing and container breakdown as flagship tasks.
+    targets:
+    - contentRequirements/0
+    - plannedTables/workflow-use-case-table
+  - id: QE017
+    question: What is actually disclosed about Rhoda’s robot hardware and reliability posture?
+    type: verification
+    status: answered
+    answer: Public disclosures are limited to payload, actuator brakes, safety-rated vision and a three-year continuous-operation claim; deeper engineering detail is absent.
+    targets:
+    - contentRequirements/1
+    - plannedTables/trust-quality-compliance-table
+  - id: QE018
+    question: What does public hiring signal about the product and operating model?
+    type: verification
+    status: answered
+    answer: Hiring suggests Rhoda is building a full-stack platform that includes field ops, data pipelines, model evaluation and backend services rather than only research demos.
+    targets:
+    - contentRequirements/3
+    - plannedTables/product-module-asset-matrix
+  - id: QE019
+    question: How is Rhoda’s DVA approach materially different from VLA-heavy alternatives?
+    type: comparison
+    status: answered
+    answer: Rhoda makes causal video prediction the core policy objective, whereas GR00T, GR-2 and Gemini remain VLA systems even when they use more video and multimodal inputs.
+    targets:
+    - contentRequirements/4
+    - plannedFigures/product-architecture-map
+  - id: QE020
+    question: What do external technical commentators say about video-world-model approaches versus VLA backbones?
+    type: comparison
+    status: answered
+    answer: Commentators such as Mimic and the Kempner Institute argue that video-centric models can learn physical dynamics more naturally and more data-efficiently than image-text-first VLA backbones.
+    targets:
+    - contentRequirements/4
+  - id: QE021
+    question: How do competitor benchmark paths like GR00T, GR-2, DreamGen and Gemini change the product-tech risk for Rhoda?
+    type: comparison
+    status: answered
+    answer: They show Rhoda is not alone in moving beyond pure teleop-only policies; rival paths already publish more benchmark or model-surface detail and therefore raise the bar for Rhoda’s proof requirements.
+    targets:
+    - contentRequirements/4
+    - plannedTables/roadmap-release-development-stage-table
+  - id: QE022
+    question: Are there independent standardized benchmarks proving Rhoda’s superiority today?
+    type: adverse
+    status: answered
+    answer: No; the strongest public evidence remains Rhoda-authored demos and repeat coverage of those demos by trade media rather than independent standardized testing.
+    targets:
+    - contentRequirements/5
+  - id: QE023
+    question: What trust, safety and compliance proof is still missing from the public record?
+    type: adverse
+    status: unresolved
+    answer: null
+    targets:
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+  - id: QE024
+    question: Does Rhoda currently have a public developer ecosystem or only hiring-led developer signal?
+    type: freshness
+    status: partial
+    answer: The public developer signal retrieved this run is mainly recruiting and demo videos, not SDKs or repositories.
+    targets:
+    - contentRequirements/3
+  - id: QE025
+    question: What are the main technical caveats that survive after reviewing all public sources?
+    type: adverse
+    status: answered
+    answer: The big caveats are missing standardized benchmarks, missing external safety proof, missing deployment cohort data and an ecosystem surface that is still mostly internal.
+    targets:
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+  evidenceGaps:
+  - type: missing-source
+    severity: blocking
+    topic: safety-certification
+    missingEvidence: Third-party safety certification, external audit, or formal validation documents for the DVA stack and robot platform.
+    whyItMatters: Industrial underwriting needs more than homepage safety language and research-blog interpretability claims.
+    diligencePath: Request certification status, test protocols, incident logs and external audit artifacts.
+    relatedQuestionRefs:
+    - QE023
+    relatedTableRefs:
+    - TE004
+  - type: private-evidence-only
+    severity: material
+    topic: benchmarking
+    missingEvidence: Independent standardized task benchmarks versus named VLA and world-model baselines.
+    whyItMatters: Without apples-to-apples comparisons, architecture differentiation remains plausible but not fully proved.
+    diligencePath: Ask Rhoda for side-by-side evaluations against at least GR00T, Gemini or another published baseline.
+    relatedQuestionRefs:
+    - QE022
+    - QE025
+  - type: private-evidence-only
+    severity: material
+    topic: developer-ecosystem
+    missingEvidence: Public SDK, API docs, developer repos, or integration guides.
+    whyItMatters: A hardware-agnostic licensing business is easier to trust when outside developers and integrators can inspect the surface area.
+    diligencePath: Request partner docs, public API roadmaps and any private beta materials.
+    relatedQuestionRefs:
+    - QE024
+  - type: private-evidence-only
+    severity: material
+    topic: deployment-cohorts
+    missingEvidence: Customer-by-customer uptime, failure-rate, and pilot-to-production conversion cohorts.
+    whyItMatters: Demos do not reveal whether DVA scales across sites, products or changing edge cases.
+    diligencePath: Request deployment dashboards, incident postmortems and cohort retention data.
+    relatedQuestionRefs:
+    - QE025
+    relatedTableRefs:
+    - TE002

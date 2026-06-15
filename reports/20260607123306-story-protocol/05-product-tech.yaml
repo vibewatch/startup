@@ -1,0 +1,2496 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: story-protocol
+runDate: '2026-06-07'
+company:
+  name: Story Protocol
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: >
+    Story Protocol delivers a purpose-built layer-1 blockchain pairing EVM execution (Geth fork)
+    with CometBFT consensus, atop which its Proof-of-Creativity smart contract suite provides
+    programmable IP registration, licensing, royalty distribution, and on-chain dispute resolution.
+    Developer evidence is strong: TypeScript and Python SDKs, periphery batching contracts, a
+    public audit contest (977 submissions, $1M prize pool), and a $600K Immunefi bug bounty anchor
+    its security posture. The novel IPGraph precompile, the PIL's untested legal enforceability,
+    and a February 2026 token-unlock delay citing usage below expectations are the leading
+    technical and commercial risk signals.
+
+sections:
+  - id: product-definition-and-customer-workflows
+    title: Protocol Product Definition and Customer Workflows
+    body: |-
+      Story Protocol's core product is a blockchain infrastructure platform that transforms static
+      intellectual property into programmable, on-chain assets. Official documentation describes
+      Story as a "purpose-built layer-1 blockchain for intellectual property" that makes IP
+      registration, licensing, and royalty attribution as simple as an API call. In practical
+      terms, a creator or rights holder mints an ERC-721 NFT to represent their work, registers
+      that NFT in Story's IP Asset Registry (which deploys a smart-contract IP Account for the
+      asset), and attaches machine-readable usage terms via the Programmable IP License (PIL).
+      The PIL is not a synthetic construct: it is a real off-chain legal document grounded in
+      US copyright law, created by Story's legal team with expert counsel, whose terms — commercial
+      use, minting fee, derivatives attribution, revenue share percentage — have been mapped to
+      Solidity structs for on-chain enforcement.
+
+      The resulting IP asset is programmable: other parties can mint license tokens (paying any
+      minting fee set by the owner), create registered derivative works linked to the parent,
+      and have royalties automatically routed through the ancestry graph. The PIL supports
+      multiple flavors including non-commercial social remixing and commercial revenue-sharing
+      configurations. The whitepaper frames Story's addressable market as "AI-native infrastructure
+      for the IP economy," and the Claude Model Context Protocol (MCP) integration — enabling LLM
+      agents to register IP, mint licenses, and claim royalties via natural language — demonstrates
+      this framing in practice. HarperCollins' announced partnership and the ecosystem's AI and
+      consumer verticals (soloai, Verio, PiperX, ip.world, Mimboku) confirm that Story is
+      targeting both traditional IP owners and AI-native creators. The License Template abstraction
+      within the protocol allows future legal-technical license standards beyond the PIL to be
+      added, though PIL is currently the only active template on mainnet.
+    claimRefs:
+      - CE001
+      - CE003
+      - CE004
+      - CE006
+      - CE007
+      - CE021
+      - CE022
+      - CE025
+      - CE030
+      - CE031
+      - CE039
+    tableRefs:
+      - TE001
+      - TE002
+    figureRefs:
+      - FE002
+
+  - id: architecture-and-operating-model
+    title: Module Map and Technical Architecture
+    body: |-
+      Story's technical architecture has two distinct stacks. At the network layer, PIP Labs
+      built Story Network as a modified Cosmos SDK chain using CometBFT for Byzantine fault-tolerant
+      consensus and a forked go-ethereum (Geth) client for EVM transaction execution. The two
+      layers communicate via the Engine ABI and a custom ABCI++ adapter, decoupling consensus
+      efficiency from EVM transaction throughput — an approach inspired by Ethereum's proof-of-stake
+      execution/consensus split. A custom stateful precompile, the IPGraph, enables the EVM to
+      traverse IP ancestry graphs in seconds at marginal cost, which is architecturally critical
+      because the Royalty and Licensing Modules must walk multi-generation derivative trees
+      during routine on-chain operations. Deployed contract addresses for the mainnet (Homer,
+      chain ID 1514) are published in deployment-1514.json in the public protocol-core-v1
+      GitHub repository; node operators need 4 CPU cores, 32 GB RAM, 200 GB disk, and 10 MBit/s
+      bandwidth.
+
+      At the application layer, the Proof-of-Creativity (PoC) protocol comprises six core Solidity
+      modules: the IP Asset Registry and IP Account system (using ERC-6551 token-bound accounts),
+      the Licensing Module (parent-child IPA relationships with on-chain license terms), the
+      Royalty Module (IP Royalty Vault per IPA, Royalty Tokens, and ancestry-graph revenue
+      routing), the Dispute Module (UMA oracle-based arbitration with five canonical dispute
+      tags), the Grouping Module (shared revenue pools across IP collections), and the Metadata
+      Module. Periphery contracts (storyprotocol/protocol-periphery-v1) batch common multi-step
+      workflows — mint, register, attach — into single transactions, and the Multicall3 contract
+      is supported for native batching. Royalty Tokens in the Royalty Module each represent 1%
+      of an IPA's total revenue entitlement and can be transferred to other wallets, enabling
+      composable revenue distribution. Whitelisted payment tokens on mainnet include WIP ($IP
+      Wrapped), with additions governed by the RoyaltyModule.sol contract.
+    claimRefs:
+      - CE002
+      - CE005
+      - CE008
+      - CE009
+      - CE010
+      - CE027
+      - CE028
+      - CE032
+      - CE033
+      - CE034
+      - CE035
+      - CE040
+    tableRefs:
+      - TE003
+    figureRefs:
+      - FE001
+      - FE003
+
+  - id: developer-stack-sdks-and-integration
+    title: Developer Stack, SDKs, and Integration Rails
+    body: |-
+      Story provides a multi-layer developer toolkit that abstracts the complexity of on-chain
+      IP operations. The TypeScript SDK (storyprotocol/sdk, npm @story-protocol/core-sdk) exposes
+      seven functional modules — IP Asset, License, Royalty, Dispute, Group, WIP, and NFT Client
+      — covering the complete protocol surface on both Aeneid testnet (chain ID 1315) and Story
+      Homer mainnet (chain ID 1514). The Python SDK (storyprotocol/python-sdk) mirrors this
+      interface for data-science and AI workflows. Periphery contracts (SPG, storyprotocol/
+      protocol-periphery-v1) allow developers to bundle multi-step operations — NFT minting,
+      IP registration, license term attachment, licensing configuration — into a single on-chain
+      call, reducing gas costs and simplifying integration logic. The Multicall3 contract is
+      also supported for native batch execution.
+
+      Deployment evidence is strong: Story's Protocol Explorer and the Storyscan block explorer
+      allow inspection of registered IP assets and transactions; the staking dashboard at
+      staking.story.foundation is live. The Claude MCP integration bridges Story's protocol
+      to Anthropic's Model Context Protocol, enabling LLM agents to transact IP via natural
+      language — a key differentiator for the AI training-data licensing use case. The External
+      Royalty Policy Guide further extends flexibility by allowing builders to deploy custom
+      royalty contract logic beyond the built-in ancestry graph model. The Story ecosystem
+      directory listed more than ten live-on-mainnet projects across AI (soloai, Mahojin),
+      consumer (Mimboku), DeFi/IPFI (Verio, Unleash, PiperX), and infrastructure (Stargate,
+      Color) categories as of mid-2026, with HarperCollins as a named traditional-media partner.
+    claimRefs:
+      - CE011
+      - CE012
+      - CE013
+      - CE014
+      - CE015
+      - CE023
+      - CE024
+      - CE025
+      - CE026
+    tableRefs:
+      - TE005
+    figureRefs:
+      - FE004
+
+  - id: security-trust-and-quality-controls
+    title: Security, Trust, and Quality Controls
+    body: |-
+      Story's pre-launch security program was unusually systematic for a new L1. The team ran
+      two rounds of formal audits: round one (targeting the Proof-of-Creativity v1 smart contracts)
+      engaged SlowMist, Fuzzland, and Trust Security; round two (post-pivot to L1, covering the
+      Cosmos SDK modifications, the IPGraph precompile, and the upgraded PoC contracts) engaged
+      Halborn as the traditional auditing firm, FuzzingLabs with a custom Cosmos-module fuzzer
+      and a bespoke Echidna fork for precompile coverage, and returning Trust Security as
+      independent auditors. FuzzingLabs' custom tooling was technically motivated: the IPGraph
+      precompile's stateful, graph-traversal nature cannot be adequately tested with off-the-shelf
+      fuzzing tools.
+
+      The pre-mainnet audit contest (December 14, 2024 – January 17, 2025) ran across four
+      repositories with a $1 million maximum prize pool, received 977 submissions, and surfaced
+      19 High-severity, 44 Medium-severity, and 51 Low-severity findings — all remediated before
+      launch. The post-TGE bug bounty on Immunefi offers up to $600,000 for critical loss-of-funds
+      exploits covering the full protocol stack. Internally, the team enforces a minimum two-approval
+      policy for merging into the main branch on critical code paths and targets 100% unit test
+      coverage. Post-TGE, Trust Security is on retainer for differential audits, and a dedicated
+      in-house web3 security researcher manually reviews all new features. The Ecosystem Auditor
+      Program extends security coverage to selected network projects including PiperX,
+      UnleashProtocol, MetaPool, Verio, Color, and StoryHunt. Story has also published a
+      MiCA White Paper as an EU regulatory disclosure and maintains a separate governance
+      security blog series.
+    claimRefs:
+      - CE016
+      - CE017
+      - CE018
+      - CE019
+      - CE020
+      - CE036
+      - CE037
+      - CE038
+    tableRefs:
+      - TE004
+    figureRefs: []
+
+  - id: differentiation-risks-and-open-gaps
+    title: Differentiation, Technical Risks, and Open Gaps
+    body: |-
+      Story's primary technical differentiators are the PIL as a legally-grounded,
+      machine-readable license template (currently the only such template on the protocol,
+      though the License Template abstraction allows future additions), the IPGraph precompile
+      enabling royalty and licensing calculations across deep derivative trees at L1 cost, and
+      the convergence of EVM compatibility with CometBFT finality that enables fast cheap IP
+      transactions while preserving developer familiarity. The Claude MCP integration extends
+      differentiation into AI-agent workflows, a structurally high-growth market.
+
+      The principal technical risks are substantial. The IPGraph precompile is a novel, custom
+      addition to go-ethereum's EVM that lacks the extensive independent review lineage of core
+      Ethereum code; although FuzzingLabs built purpose-specific tooling, novel precompiles
+      accumulate bespoke attack surface. The Cosmos SDK fork must track upstream security patches
+      from PIP Labs, creating a single-team maintenance dependency. The UMA oracle powering the
+      Dispute Module is a third-party availability and liquidity dependency: downtime or
+      manipulation could stall or corrupt dispute resolution. The PIL's legal enforceability
+      against non-consenting parties in court — and its cross-jurisdiction validity — remains
+      untested. Finally, the February 2026 announcement of a delayed $IP token supply unlock,
+      citing usage below expectations, is an adverse signal that commercial adoption velocity
+      has not yet matched technical delivery. IP Vault and Confidential Data Rails were announced
+      in 2025 but their production readiness remains publicly unconfirmed as of June 2026,
+      representing open diligence gaps for the next-stage review.
+    claimRefs:
+      - CE023
+      - CE024
+      - CE029
+      - CE039
+      - CE040
+    tableRefs: []
+    figureRefs: []
+
+tables:
+  - id: TE001
+    title: Story Protocol Product Module / Asset Matrix
+    columns:
+      - Module / Asset
+      - Primary User
+      - Status / Maturity
+      - Key Differentiation
+      - Diligence Gap
+    rows:
+      - - IP Asset Registry
+        - Creators, AI developers, platforms
+        - Live on mainnet (chain ID 1514)
+        - ERC-721-linked IP identity; unique ipId per asset via ERC-6551 IP Account
+        - No public count of registered IP assets; growth trajectory unverified
+      - - Programmable IP License (PIL)
+        - IP owners (licensors), derivative creators, AI trainers
+        - Live on mainnet; only active License Template
+        - US-copyright-law-grounded, machine-readable license terms mapped to Solidity structs
+        - Not court-tested as binding; cross-jurisdiction enforceability unverified
+      - - Licensing Module
+        - IP holders, derivative creators
+        - Live on mainnet
+        - "On-chain parent-child IPA linking with enforced terms: attribution, revenue share, minting fee"
+        - Behavior of deeply stacked derivative chains at scale not independently verified
+      - - Royalty Module
+        - IP holders, platforms, AI developers
+        - Live on mainnet
+        - IP Royalty Vault per IPA; Royalty Tokens (1 token = 1% revenue share); ancestry-graph routing via IPGraph
+        - Secondary market for Royalty Tokens not established; royalty payout history not public
+      - - Dispute Module
+        - IP owners, licensees, protocol governance
+        - Live on mainnet
+        - On-chain arbitration via UMA oracle; five canonical dispute tags; tagged IPA loses license rights
+        - No public dispute case history; UMA oracle dependency adds latency and counterparty risk
+      - - Grouping Module
+        - Collection curators, studios, IP funds
+        - Live on mainnet
+        - Bundles multiple IPAs into a group with a shared revenue pool
+        - Adoption and group-level royalty distribution in practice not publicly verified
+      - - Metadata Module
+        - All IPA owners
+        - Live on mainnet
+        - Structured on-chain IP metadata management tied to IP Account
+        - Interoperability with external IP metadata standards (Dublin Core, schema.org) not documented
+      - - IP Vault
+        - Enterprise IP holders, data owners
+        - Announced / in development (2025 blog post title confirmed)
+        - Confidential, programmable access control for on-chain IP data
+        - Production readiness, launch timeline, and mainnet status not confirmed as of June 2026
+      - - Confidential Data Rails
+        - Data owners, AI training teams
+        - Announced / in development (2025 blog post title confirmed)
+        - Encrypted at-scale data sharing with verifiable attribution on Story
+        - Implementation scope, partner adoption, and maturity not independently verified
+      - - Story Portal (IP Portal)
+        - Creators, licensees, AI developers
+        - Live on mainnet (browsable IP registry)
+        - Browsable, discoverable on-chain IP marketplace linked to registered IPAs
+        - User volume and search/discovery effectiveness not publicly reported
+    notes: >
+      Status is derived from official documentation, GitHub deployment files (deployment-1514.json),
+      and official blog post titles. IP Vault and Confidential Data Rails are confirmed as announced
+      via blog post titles visible on story.foundation, but body content was not accessible via
+      direct fetch or Wayback Machine for these posts; production launch confirmation requires
+      direct diligence with PIP Labs. All "Live on mainnet" entries are corroborated by
+      deployment-1514.json in protocol-core-v1.
+    claimRefs:
+      - CE003
+      - CE004
+      - CE006
+      - CE007
+      - CE008
+      - CE009
+      - CE010
+      - CE023
+      - CE024
+      - CE034
+
+  - id: TE002
+    title: Story Protocol Workflow / Use-Case Table
+    columns:
+      - User Job
+      - Current Workflow (Without Story)
+      - Story Solution
+      - Measurable Benefit (Claimed)
+      - Key Limitation
+    rows:
+      - - Register and protect IP
+        - Copyright filing, legal retainer, weeks of process
+        - Mint ERC-721 NFT → register in IPA Registry → attach PIL terms
+        - Minutes to register; no lawyer required for basic licensing terms
+        - PIL court-enforceability untested; does not replace formal copyright registration
+      - - License IP for derivative use
+        - Negotiate contracts, draft licenses, engage lawyers
+        - Licensee mints license token from parent IPA (paying any minting fee); derivative link recorded on-chain
+        - Automated attribution and minting fee collection; transparent on-chain record
+        - Royalty stack depth can compound costs; payer must use whitelisted tokens (e.g. WIP)
+      - - Claim revenue from derivative works
+        - Track downstream usage, invoice manually, rely on PROs
+        - IP Royalty Vault auto-collects; rights holders claim pro-rata share via SDK
+        - Programmatic revenue without invoicing; composable with DeFi via WIP token
+        - Token whitelist controlled by protocol governance; limited to on-chain payers
+      - - Dispute IP infringement on-chain
+        - DMCA takedown or litigation; expensive, slow
+        - Submit dispute tag → UMA oracle arbitration → on-chain penalty applied if upheld
+        - Lower cost than legal action; outcome enforced at protocol layer
+        - No published case history; UMA oracle dependency; on-chain finality is double-edged
+      - - License IP for AI training data
+        - No standard consent or attribution rails; licensing ad hoc or absent
+        - Attach commercial PIL → AI trainer mints license token → royalty flows on revenue generated
+        - Machine-readable consent and on-chain revenue attribution without intermediaries
+        - AI model's actual use of licensed data is not verifiable on-chain; enforcement limited
+      - - Build AI-agent IP workflows
+        - Manual API calls, custom integrations, no protocol-level composability
+        - Claude MCP integration enables LLM agents to transact IP via natural-language instructions
+        - Zero-friction IP operations for AI agents; composable with broader agent ecosystem
+        - Beta integration; production reliability and edge-case behavior not independently verified
+    notes: >
+      Benefits are company-claimed or inferred from official documentation and blog posts;
+      no independent case studies with quantified outcomes were available for review.
+      Limitations reflect material gaps identified through evidence review and adversarial analysis.
+    claimRefs:
+      - CE001
+      - CE006
+      - CE007
+      - CE008
+      - CE009
+      - CE011
+      - CE025
+      - CE031
+
+  - id: TE003
+    title: Story Network Technical Architecture Table
+    columns:
+      - Layer / Component
+      - Role
+      - Key Dependency
+      - Risk
+    rows:
+      - - CometBFT consensus (piplabs/story)
+        - BFT finality; ~1-2s block time target
+        - Cosmos SDK fork maintained by PIP Labs
+        - Diverges from upstream Cosmos SDK; PIP Labs owns all maintenance and patch decisions
+      - - Geth execution client (piplabs/story-geth)
+        - EVM-compatible transaction execution; hosts all deployed contracts
+        - Upstream go-ethereum fork
+        - Must track upstream go-ethereum security patches; fork divergence creates lag risk
+      - - ABCI++ adapter
+        - Bridges EVM execution state to CometBFT; relays blocks via Engine ABI
+        - Custom implementation in story client codebase
+        - Single-team implementation; limited external review lineage prior to mainnet v1
+      - - IPGraph precompile
+        - Stateful in-EVM precompile for IP ancestry graph traversal at marginal cost
+        - Custom addition to go-ethereum; requires Geth and consensus client alignment
+        - Novel precompile with limited external review precedent; custom fuzzer required for coverage
+      - - IP Asset Registry + IP Account (ERC-6551)
+        - Core IP identity layer; deploys per-IPA smart contract accounts (ipId)
+        - ERC-6551 token-bound account standard
+        - ERC-6551 tooling and wallet support still maturing in broader ecosystem
+      - - Proof-of-Creativity smart contracts (Solidity)
+        - "Core protocol logic: Licensing, Royalty, Dispute, Grouping, Metadata modules"
+        - Story Network L1 for deployment; IPGraph precompile for royalty graph queries
+        - Upgradeable proxy architecture requires careful governance of upgrade keys
+      - - UMA oracle (Dispute Module)
+        - External arbitration source for IP dispute resolution
+        - UMA protocol availability, liquidity, and governance
+        - Oracle manipulation risk; UMA downtime stalls dispute resolution
+      - - IP Royalty Vault (per-IPA)
+        - Revenue custody and distribution for each IP asset
+        - On-chain Solidity contract; governance-whitelisted payment token list
+        - Restricted to whitelisted tokens; token governance is a centralization control point
+      - - Periphery contracts / SPG (protocol-periphery-v1)
+        - Batches multi-step workflows into single transactions; Multicall3 also supported
+        - protocol-core-v1 as upstream dependency
+        - Core breaking changes require periphery rewrites; version-skew risk
+      - - TypeScript SDK / Python SDK
+        - Developer API layer abstracting direct contract calls
+        - npm / PyPI package registries; story client RPC endpoints
+        - SDK version skew vs. chain state; backward-compatibility guarantees not publicly documented
+    notes: >
+      Dependency and risk assessments are derived from official GitHub repositories
+      (piplabs/story README, protocol-core-v1 README), the security-recap-mainnet blog post
+      (retrieved via Wayback Machine), and analytic inference. Risk severity is analytic judgment;
+      no independent architecture review or penetration test result was available.
+      Node hardware requirements from piplabs/story repository.
+    claimRefs:
+      - CE002
+      - CE005
+      - CE013
+      - CE027
+      - CE028
+      - CE033
+      - CE035
+      - CE036
+      - CE040
+
+  - id: TE004
+    title: Trust, Quality, and Compliance Controls
+    columns:
+      - Control / Certification
+      - Status
+      - Scope
+      - Gap
+    rows:
+      - - Multi-firm smart contract audits round 1 (SlowMist, Fuzzland, Trust Security)
+        - Complete (pre-mainnet, PoC v1)
+        - Proof-of-Creativity protocol smart contracts v1
+        - Round 1 scope preceded L1 pivot; coverage of IPGraph and Cosmos modules required round 2
+      - - L1 + PoC v2 audits round 2 (Halborn, FuzzingLabs, Trust Security)
+        - Complete (pre-mainnet)
+        - Cosmos SDK fork, IPGraph precompile, L1 staking contracts, upgraded PoC smart contracts
+        - Post-launch full-scope audit frequency not publicly disclosed; no new public audit for 2026
+      - - Pre-mainnet audit contest (Dec 14 2024 – Jan 17 2025)
+        - Complete
+        - 4 repositories; $1M prize pool; 977 submissions; 19 High, 44 Medium, 51 Low findings remediated
+        - No repeat contest post-launch; codebase has shipped new features since the contest scope was fixed
+      - - Post-mainnet bug bounty (Immunefi)
+        - Active
+        - Consensus client, Cosmos SDK fork, Geth precompile, PoC contracts, APIs, SDKs, web2 assets; up to $600K
+        - Payout history, claim resolution time, and critical-finding disclosure policy not public
+      - - Internal code-review policy
+        - Active (company policy)
+        - "Critical code (smart contracts, L1): min 2 approvals to merge; 100% unit test coverage target"
+        - Policy adherence is self-asserted; no external attestation or process audit
+      - - Trust Security retainer (post-TGE)
+        - Active
+        - Differential audits for new features post-launch; priority scheduling
+        - Retainer terms, audit frequency, and coverage scope not publicly disclosed
+      - - In-house web3 security researcher
+        - Active (since post-TGE)
+        - Manual review of new features and PRs as first-line defense
+        - Team size, coverage cadence, and scope not publicly disclosed
+      - - Ecosystem Auditor Program
+        - Active (selective)
+        - "Selected ecosystem projects: PiperX, UnleashProtocol, MetaLoad, Verio, Color, StoryHunt"
+        - Voluntary program; network-wide coverage of all ecosystem projects not guaranteed
+      - - MiCA White Paper published
+        - Disclosed (footer link on story.foundation)
+        - EU regulatory disclosure requirement for crypto-asset issuers
+        - Disclosure advisory only; not a regulatory approval or license
+      - - PIL legal enforceability
+        - Claimed (legal counsel-backed creation)
+        - US copyright law-backed off-chain license with on-chain term mapping
+        - No known court test of enforceability against a non-consenting party; cross-jurisdiction validity unverified
+    notes: >
+      Control statuses are derived from the security-recap-mainnet blog post (retrieved via Wayback
+      Machine with actual article content), official GitHub audit directories (Halborn, FuzzingLabs,
+      Trust Security PDFs confirmed at 11.9MB, 961KB, 707KB respectively), and the Immunefi bounty
+      page (returned 404 at access date; scope data from security-recap-mainnet blog). Gaps
+      represent publicly visible disclosure deficiencies, not confirmed failures.
+    claimRefs:
+      - CE016
+      - CE017
+      - CE018
+      - CE019
+      - CE020
+      - CE036
+      - CE037
+      - CE038
+
+  - id: TE005
+    title: Roadmap, Releases, and Development-Stage Milestones
+    columns:
+      - Date / Stage
+      - Feature / Milestone
+      - Status as of 2026-06-07
+      - Implication
+      - Source
+    rows:
+      - - 2023 Q3
+        - Proof-of-Creativity v1 smart contracts; first audit round (SlowMist, Fuzzland, Trust)
+        - Complete
+        - Established core PoC IP protocol design and initial security baseline
+        - security-recap-mainnet blog; protocol-core-v1 GitHub
+      - - 2024 H1
+        - Pivot to L1 (Cosmos SDK + Geth); second audit round (Halborn, FuzzingLabs, Trust)
+        - Complete
+        - L1 launch enabled IPGraph precompile and efficient graph traversal; expanded audit scope
+        - security-recap-mainnet blog; piplabs/story GitHub
+      - - Dec 2024 – Jan 2025
+        - "Audit contest: $1M prize pool; 4 repositories; 977 submissions; 19H / 44M / 51L fixed"
+        - Complete (all findings remediated)
+        - Validated security before mainnet launch; critical/high findings resolved prior to TGE
+        - security-recap-mainnet blog; Halborn audit PDF
+      - - "2025-02-13"
+        - Mainnet launch (Homer, chain ID 1514); $IP TGE; staking live
+        - Complete
+        - Protocol live with real economic stakes; all core modules deployed on-chain
+        - storyscan.io; staking.story.foundation; official mainnet blog
+      - - 2025 (announced)
+        - IP Vault — confidential, programmable access to on-chain IP data
+        - Announced / in development
+        - Extends addressable use case to enterprise IP and sensitive datasets
+        - introducing-ip-vault blog post (title confirmed; body content JS-rendered)
+      - - 2025 (announced)
+        - Confidential Data Rails — encrypted data sharing with attribution at scale
+        - Announced / in development
+        - Critical for AI training data licensing with privacy-preserving attribution
+        - confidential-data-rails blog post (title confirmed; body content JS-rendered)
+      - - 2025 (announced)
+        - Claude MCP integration — LLM agent access to Story IP operations
+        - Live / announced
+        - LLM agents can transact on Story IP protocol via natural language
+        - claudes-mcp-comes-to-story blog post (title confirmed)
+      - - 2025 (announced)
+        - External Royalty Policy support — custom royalty contract deployment
+        - Live / available
+        - Enables builders to deploy royalty logic beyond the default ancestry graph model
+        - external-royalty-policy-guide blog post (title confirmed)
+      - - 2026-02
+        - $IP token supply unlock delayed; usage cited as below expectations
+        - Announced delay
+        - "Adverse signal: commercial adoption velocity behind technical delivery schedule"
+        - CoinDesk Feb 2 2026
+    notes: >
+      Feature dates for IP Vault, Confidential Data Rails, MCP, and External Royalty Policy are
+      approximate (2025) derived from official blog post titles visible on story.foundation; actual
+      body content was not accessible via direct fetch or Wayback Machine for most blog posts
+      (JS-rendered React app). The 2026-02 token unlock delay is independently reported by CoinDesk.
+      "Announced / in development" features should be treated as unverified until confirmed
+      with PIP Labs directly.
+    claimRefs:
+      - CE014
+      - CE016
+      - CE017
+      - CE023
+      - CE024
+      - CE025
+      - CE026
+      - CE029
+
+figures:
+  - id: FE001
+    title: Story Protocol Product Architecture Stack
+    type: stack
+    layout: wide
+    summary: >
+      Six-layer architecture from consensus through applications, showing Story's EVM-compatible
+      L1, Proof-of-Creativity modules, and developer tooling as of June 2026.
+    data:
+      layers:
+        - label: Applications & Ecosystem
+          modules:
+            - IP Portal (story.foundation IP marketplace)
+            - Protocol Explorer / Storyscan block explorer
+            - Staking Dashboard (staking.story.foundation)
+            - Claude MCP Integration (Anthropic Model Context Protocol)
+        - label: Developer Tools / SDKs
+          modules:
+            - TypeScript SDK (storyprotocol/sdk — npm @story-protocol/core-sdk)
+            - Python SDK (storyprotocol/python-sdk)
+            - Periphery Contracts / SPG (storyprotocol/protocol-periphery-v1)
+        - label: Proof-of-Creativity Modules (Solidity)
+          modules:
+            - Licensing Module (parent-child IPA relationships; PIL enforcement)
+            - Royalty Module (IP Royalty Vault; Royalty Tokens; ancestry-graph routing)
+            - Dispute Module (UMA oracle arbitration; 5 dispute tags)
+            - Grouping Module (shared revenue pools across IPA collections)
+            - Metadata Module (structured on-chain IP metadata)
+        - label: IP Registry & Identity
+          modules:
+            - IP Asset Registry (ERC-721-linked IP identity; deploys IP Accounts)
+            - IP Accounts (ERC-6551 token-bound accounts; stores licenses and royalties)
+            - IPGraph Precompile (stateful EVM precompile for ancestry graph traversal)
+        - label: Execution Layer
+          modules:
+            - Story Geth fork (EVM execution; go-ethereum fork; chain ID 1514 Homer mainnet)
+            - ABCI++ Adapter (bridges EVM state to CometBFT via Engine ABI)
+        - label: Consensus Layer
+          modules:
+            - CometBFT (BFT consensus; fast finality; Cosmos SDK fork by PIP Labs)
+            - Validator Set (active stakers; managed via staking.story.foundation)
+    approximationNotes: >
+      Layer ordering reflects architectural dependency (bottom = foundational). Module list is
+      based on official GitHub repositories and documentation as of June 2026. IP Vault and
+      Confidential Data Rails are excluded from the stack because their production layer placement
+      is unconfirmed.
+    claimRefs:
+      - CE002
+      - CE003
+      - CE005
+      - CE011
+      - CE040
+
+  - id: FE002
+    title: IP Registration and Licensing Workflow
+    type: flow
+    layout: standard
+    summary: >
+      End-to-end flow from creator IP registration through derivative licensing and
+      automated royalty distribution on Story's mainnet.
+    data:
+      nodes:
+        - id: n1
+          label: Creator mints ERC-721 NFT
+          detail: >
+            Creator mints or uses existing ERC-721 NFT representing the IP work.
+            NFT ownership equals IP ownership on Story.
+          tone: neutral
+        - id: n2
+          label: Register NFT in IP Asset Registry
+          detail: >
+            Calling the IP Asset Registry deploys an IP Account smart contract (ERC-6551)
+            uniquely identified by the ipId address.
+          tone: positive
+        - id: n3
+          label: Attach PIL license terms
+          detail: >
+            Owner sets on-chain license terms (commercial use, minting fee, attribution
+            requirement, revenue share %) via the Licensing Module.
+          tone: positive
+        - id: n4
+          label: Licensee mints license token
+          detail: >
+            A third party pays the minting fee and receives a license token granting
+            rights to use the IP per the attached PIL terms.
+          tone: neutral
+        - id: n5
+          label: Derivative IPA registered (parent-child link)
+          detail: >
+            Licensee registers their derivative work as a new IPA linked to the parent,
+            inheriting the royalty stack obligations.
+          tone: neutral
+        - id: n6
+          label: Revenue generated by derivative
+          detail: >
+            The derivative work generates on-chain revenue in whitelisted tokens (e.g. WIP).
+          tone: positive
+        - id: n7
+          label: Royalty Module routes revenue via IPGraph
+          detail: >
+            IPGraph precompile traverses the IPA ancestry tree; Royalty Module routes
+            revenue to each ancestor's IP Royalty Vault per agreed split.
+          tone: positive
+        - id: n8
+          label: IP holders claim from Royalty Vault
+          detail: >
+            Original creator and intermediate IP holders claim their proportional share
+            from their IP Royalty Vault via the SDK or Protocol Explorer.
+          tone: positive
+      edges:
+        - from: n1
+          to: n2
+          label: Register
+        - from: n2
+          to: n3
+          label: Attach terms
+        - from: n3
+          to: n4
+          label: License minted
+        - from: n4
+          to: n5
+          label: Derivative created
+        - from: n5
+          to: n6
+          label: Revenue generated
+        - from: n6
+          to: n7
+          label: On-chain payment
+        - from: n7
+          to: n8
+          label: Vault credited
+    approximationNotes: >
+      Flow represents the standard single-layer derivative use case from official Story docs.
+      Multi-generation ancestry graphs follow the same pattern recursively. Dispute resolution
+      is a parallel path not shown here. WIP ($IP Wrapped) is the primary whitelisted payment token.
+    claimRefs:
+      - CE001
+      - CE004
+      - CE007
+      - CE008
+      - CE032
+
+  - id: FE003
+    title: Critical Protocol Dependency Map
+    type: dag
+    layout: wide
+    summary: >
+      Key dependency relationships between Story's L1 infrastructure, external protocols,
+      developer tooling, and security controls.
+    data:
+      nodes:
+        - id: d1
+          label: Story L1 (piplabs/story)
+          detail: Story consensus + execution L1 blockchain
+          tone: positive
+        - id: d2
+          label: CometBFT (Cosmos SDK fork)
+          detail: Consensus layer providing BFT finality
+          tone: neutral
+        - id: d3
+          label: go-ethereum / Geth fork
+          detail: EVM execution client (piplabs/story-geth)
+          tone: neutral
+        - id: d4
+          label: IPGraph Precompile
+          detail: Custom stateful EVM precompile for IP ancestry graph traversal
+          tone: warning
+        - id: d5
+          label: PoC Smart Contracts (protocol-core-v1)
+          detail: Licensing, Royalty, Dispute, Grouping, Metadata modules
+          tone: positive
+        - id: d6
+          label: UMA Oracle
+          detail: External dispute arbitration source for Dispute Module
+          tone: warning
+        - id: d7
+          label: ERC-6551 Standard
+          detail: Token-bound account standard underpinning IP Accounts
+          tone: neutral
+        - id: d8
+          label: TypeScript SDK (@story-protocol/core-sdk)
+          detail: Primary developer API layer for IP operations
+          tone: positive
+        - id: d9
+          label: Python SDK (storyprotocol/python-sdk)
+          detail: Data-science and AI developer API layer
+          tone: positive
+        - id: d10
+          label: Immunefi Bug Bounty
+          detail: Post-TGE security incentive program; up to $600K critical bounty
+          tone: positive
+        - id: d11
+          label: Claude MCP (Anthropic)
+          detail: LLM agent interface wrapping Story TypeScript SDK
+          tone: positive
+      edges:
+        - from: d1
+          to: d2
+          label: uses consensus
+        - from: d1
+          to: d3
+          label: uses execution
+        - from: d3
+          to: d4
+          label: hosts precompile
+        - from: d1
+          to: d5
+          label: deploys contracts
+        - from: d5
+          to: d6
+          label: dispute arbitration
+        - from: d5
+          to: d7
+          label: IP Account standard
+        - from: d8
+          to: d5
+          label: calls protocol
+        - from: d9
+          to: d5
+          label: calls protocol
+        - from: d10
+          to: d1
+          label: covers full stack
+        - from: d11
+          to: d8
+          label: wraps SDK
+        - from: d4
+          to: d5
+          label: graph queries
+    approximationNotes: >
+      Dependency edges represent documented integration relationships from official GitHub
+      repositories and documentation. Risk tone (warning) on IPGraph and UMA reflects analytic
+      judgment about dependency criticality and novelty, not confirmed exploits.
+    claimRefs:
+      - CE002
+      - CE005
+      - CE009
+      - CE011
+      - CE018
+      - CE025
+
+  - id: FE004
+    title: Product Maturity and Verification Breadth Matrix
+    type: matrix
+    layout: wide
+    summary: >
+      Assessed deployment maturity, external audit coverage, SDK integration, and 2026 roadmap
+      status across Story's core modules as of June 2026.
+    data:
+      columns:
+        - Deployment Maturity
+        - External Audit / Verification
+        - Developer SDK Integration
+        - 2026 Roadmap Status
+      rows:
+        - label: IP Asset Registry
+          values:
+            - label: Live — mainnet
+              tone: positive
+            - label: "Multi-firm audited (Halborn, Trust, FuzzingLabs)"
+              tone: positive
+            - label: "SDK module (IP Asset)"
+              tone: positive
+            - label: Stable
+              tone: positive
+        - label: Licensing Module
+          values:
+            - label: Live — mainnet
+              tone: positive
+            - label: "Multi-firm audited (Halborn, Trust)"
+              tone: positive
+            - label: "SDK module (License)"
+              tone: positive
+            - label: Stable
+              tone: positive
+        - label: Royalty Module
+          values:
+            - label: Live — mainnet
+              tone: positive
+            - label: "Multi-firm audited (Halborn, FuzzingLabs)"
+              tone: positive
+            - label: "SDK module (Royalty)"
+              tone: positive
+            - label: Custom royalty policies added
+              tone: positive
+        - label: Dispute Module
+          values:
+            - label: Live — mainnet
+              tone: positive
+            - label: "Audited; UMA oracle dependency unreviewed externally"
+              tone: warning
+            - label: "SDK module (Dispute)"
+              tone: positive
+            - label: Stable; no case history public
+              tone: warning
+        - label: Grouping Module
+          values:
+            - label: Live — mainnet
+              tone: positive
+            - label: Audited
+              tone: positive
+            - label: "SDK module (Group)"
+              tone: positive
+            - label: Stable; adoption unverified
+              tone: warning
+        - label: IPGraph Precompile
+          values:
+            - label: Live — mainnet (within Geth)
+              tone: positive
+            - label: "Custom FuzzingLabs fuzzer; limited external precedent"
+              tone: warning
+            - label: Transparent to SDK (called by modules)
+              tone: neutral
+            - label: Core dependency; no announced upgrade
+              tone: neutral
+        - label: IP Vault
+          values:
+            - label: Announced / in development
+              tone: warning
+            - label: Not yet publicly audited
+              tone: negative
+            - label: Not yet in SDK
+              tone: warning
+            - label: Pending launch confirmation
+              tone: warning
+        - label: Confidential Data Rails
+          values:
+            - label: Announced / in development
+              tone: warning
+            - label: Not yet publicly audited
+              tone: negative
+            - label: Not yet in SDK
+              tone: warning
+            - label: Pending launch confirmation
+              tone: warning
+        - label: Claude MCP Integration
+          values:
+            - label: Live / beta (announced 2025)
+              tone: warning
+            - label: No separate security audit visible
+              tone: warning
+            - label: Wraps TypeScript SDK
+              tone: neutral
+            - label: Beta; production reliability unverified
+              tone: warning
+        - label: Periphery Contracts (SPG)
+          values:
+            - label: Live — mainnet
+              tone: positive
+            - label: "Audited alongside core (Halborn, Trust)"
+              tone: positive
+            - label: Used internally by SDK (single-tx workflows)
+              tone: positive
+            - label: Stable; version-skew risk on core upgrades
+              tone: warning
+    approximationNotes: >
+      Maturity and verification assessments are analytic judgments based on official GitHub
+      repositories, audit PDFs, and blog posts reviewed as of June 2026. "Multi-firm audited"
+      refers to inclusion in Story's pre-mainnet audit scopes; it does not imply zero remaining
+      vulnerabilities. IP Vault and Confidential Data Rails status is based solely on blog post
+      title availability.
+    claimRefs:
+      - CE003
+      - CE007
+      - CE008
+      - CE009
+      - CE013
+      - CE023
+      - CE024
+      - CE036
+
+callouts:
+  - calloutType: strength
+    title: Multi-Firm, Multi-Methodology Pre-Mainnet Security Program
+    body: >
+      Story ran two formal audit rounds with specialist firms (SlowMist, Fuzzland, Halborn,
+      FuzzingLabs with bespoke IPGraph fuzzer, Trust Security as repeat independent reviewers),
+      followed by a $1M public audit contest (977 submissions, 19 High findings remediated),
+      and a live $600K Immunefi bug bounty. This is a materially stronger pre-launch security
+      posture than most comparable L1 launches.
+    claimRefs:
+      - CE016
+      - CE017
+      - CE018
+
+  - calloutType: risk
+    title: PIL Legal Enforceability and Novel IPGraph Precompile Are Structural Untested Risks
+    body: >
+      Two structural risks are not resolvable by the current security program alone. The PIL
+      has no court-tested enforceability against non-consenting parties, and on-chain protocol
+      penalties are not legal remedies. The IPGraph precompile is a custom EVM addition with
+      limited external review precedent; FuzzingLabs' purpose-built fuzzer provides strong
+      fuzz coverage but is not a substitute for independent architectural review by a firm
+      with prior precompile experience. Both risks require proactive legal testing and
+      continued external security investment to narrow.
+    claimRefs:
+      - CE005
+      - CE006
+      - CE039
+      - CE040
+
+localEvidence:
+  searchQueries:
+    - query: Story Protocol IP blockchain product architecture technical documentation
+      engine: web
+      hits: 12
+      retainedSourceRefs:
+        - SE011
+        - SE016
+        - SE017
+
+    - query: Story Protocol Proof of Creativity modules licensing royalty dispute solidity GitHub
+      engine: web
+      hits: 10
+      retainedSourceRefs:
+        - SE012
+        - SE013
+        - SE014
+        - SE015
+        - SE016
+        - SE020
+
+    - query: Story Protocol TypeScript SDK Python SDK developer tools npm GitHub
+      engine: web
+      hits: 8
+      retainedSourceRefs:
+        - SE018
+        - SE019
+
+    - query: Story Protocol security audit Halborn FuzzingLabs Trust Security mainnet 2026
+      engine: web
+      hits: 6
+      retainedSourceRefs:
+        - SE001
+        - SE008
+        - SE009
+        - SE022
+
+    - query: Story Protocol roadmap new features IP Vault confidential data rails launch 2026
+      engine: web
+      hits: 5
+      retainedSourceRefs:
+        - SE004
+        - SE005
+        - SE006
+        - SE007
+
+    - query: Story Protocol Claude MCP integration partner announcement 2026
+      engine: web
+      hits: 4
+      retainedSourceRefs:
+        - SE007
+        - SE025
+
+    - query: Story Protocol ecosystem partner projects live on mainnet 2026
+      engine: web
+      hits: 7
+      retainedSourceRefs:
+        - SE025
+        - SE026
+
+    - query: Story Protocol bug bounty Immunefi security program scope 2026
+      engine: web
+      hits: 3
+      retainedSourceRefs:
+        - SE001
+        - SE021
+
+    - query: Story Protocol programmable IP license PIL legal enforceability copyright blockchain
+      engine: web
+      hits: 6
+      retainedSourceRefs:
+        - SE010
+        - SE012
+        - SE027
+
+    - query: Story Protocol token unlock delay usage lags adoption 2026
+      engine: web
+      hits: 4
+      retainedSourceRefs:
+        - SE028
+
+  researchQuestions:
+    - id: QE001
+      question: How does IP asset registration work end-to-end on Story's protocol?
+      type: mechanism
+      targets:
+        - contentRequirements/0
+        - plannedFigures/customer-workflow-operating-flow
+      status: answered
+
+    - id: QE002
+      question: How does the Royalty Module route revenue through the IP ancestry graph?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedTables/workflow-use-case-table
+      status: answered
+
+    - id: QE003
+      question: How does the Dispute Module arbitration process work on-chain on Story?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedTables/workflow-use-case-table
+      status: answered
+
+    - id: QE004
+      question: How do Story's EVM execution and CometBFT consensus layers interact technically?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE005
+      question: How do confidential data rails enable encrypted IP sharing with attribution on Story?
+      type: mechanism
+      targets:
+        - contentRequirements/0
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE006
+      question: What are all the modules making up Story's Proof-of-Creativity protocol on mainnet?
+      type: enumeration
+      targets:
+        - contentRequirements/1
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE007
+      question: What SDKs, developer tools, and APIs are available for building on Story Protocol?
+      type: enumeration
+      targets:
+        - contentRequirements/3
+        - plannedFigures/product-architecture-map
+      status: answered
+
+    - id: QE008
+      question: Which external security audit firms reviewed Story's smart contracts and L1 client?
+      type: enumeration
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE009
+      question: What partner integrations and ecosystem projects are live on Story mainnet as of 2026?
+      type: enumeration
+      targets:
+        - contentRequirements/4
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE010
+      question: Is the Programmable IP License legally enforceable under US copyright law?
+      type: verification
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE011
+      question: What is the post-TGE security posture of Story's consensus and execution clients?
+      type: verification
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE012
+      question: Were all high-severity findings from Story's pre-mainnet audit contest remediated?
+      type: verification
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE013
+      question: What is the scope and maximum payout of Story's Immunefi bug bounty program?
+      type: verification
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE014
+      question: What is the current state of Story's technical roadmap and shipped features in 2026?
+      type: freshness
+      targets:
+        - contentRequirements/3
+        - plannedTables/roadmap-release-development-stage-table
+      status: answered
+
+    - id: QE015
+      question: Which Story features were launched or announced in 2025 and are live in 2026?
+      type: freshness
+      targets:
+        - contentRequirements/3
+        - plannedTables/roadmap-release-development-stage-table
+      status: answered
+
+    - id: QE016
+      question: Has IP Vault been launched on Story mainnet and what is its production readiness as of June 2026?
+      type: freshness
+      targets:
+        - contentRequirements/1
+        - plannedTables/product-module-asset-matrix
+      status: unresolved
+
+    - id: QE017
+      question: How does Story's PIL compare to Creative Commons in legal scope and commercial use?
+      type: comparison
+      targets:
+        - contentRequirements/4
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE018
+      question: How does Story's dual-layer L1 architecture differ from pure-EVM chains?
+      type: comparison
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE019
+      question: What technical risks arise from combining go-ethereum and Cosmos SDK in Story's L1?
+      type: adverse
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE020
+      question: Are there known exploits or unresolved security vulnerabilities post-mainnet launch?
+      type: adverse
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE021
+      question: What is the risk that the PIL fails to hold up in court or in cross-jurisdiction enforcement?
+      type: adverse
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: partial
+
+    - id: QE022
+      question: How many IP assets have been registered on Story mainnet as of mid-2026?
+      type: quantification
+      targets:
+        - contentRequirements/1
+        - plannedTables/product-module-asset-matrix
+      status: unresolved
+
+    - id: QE023
+      question: How many GitHub contributors and stars do Story's core protocol repositories have?
+      type: quantification
+      targets:
+        - contentRequirements/3
+        - plannedFigures/product-architecture-map
+      status: answered
+
+    - id: QE024
+      question: What is Story Network's historical uptime and reliability record since mainnet launch?
+      type: quantification
+      targets:
+        - contentRequirements/3
+        - plannedTables/technology-operating-architecture-table
+      status: unresolved
+
+    - id: QE025
+      question: How do Royalty Tokens and IP Royalty Vaults work mechanically to distribute revenue?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedTables/workflow-use-case-table
+      status: answered
+
+    - id: QE026
+      question: What regulatory and compliance gaps exist for Story's protocol across major jurisdictions?
+      type: adverse
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE027
+      question: Is Story's Aeneid testnet feature-complete relative to mainnet protocol capabilities?
+      type: verification
+      targets:
+        - contentRequirements/3
+        - plannedTables/roadmap-release-development-stage-table
+      status: answered
+
+    - id: QE028
+      question: What is the current validator set size and composition on Story mainnet as of June 2026?
+      type: quantification
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: unresolved
+
+  sources:
+    - id: SE001
+      publisher: Story Foundation
+      title: "How Story Built a Multi-Layer Defense for Mainnet"
+      url: https://www.story.foundation/blog/security-recap-mainnet
+      date: '2025-02-01'
+      accessDate: '2026-06-07'
+      accessStatus: js-only
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - security
+        - audit
+        - bug-bounty
+        - mainnet
+      keyQuote: >
+        Our audit contest ran from Dec. 14 2024 - Jan. 17, 2025 and offered up to $1 million as a
+        prize pool. We received 977 submissions, with a total of 19 Highs, 44 Mediums, 51 Lows,
+        76 Informationals that we proceeded to fix as soon as we confirmed them.
+
+    - id: SE002
+      publisher: Story Foundation
+      title: "How Story Secures its Governance Processes"
+      url: https://www.story.foundation/blog/security-governance
+      date: null
+      accessDate: '2026-06-07'
+      accessStatus: js-only
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - security
+        - governance
+
+    - id: SE003
+      publisher: Story Foundation
+      title: "Recent Network Patches"
+      url: https://www.story.foundation/blog/recent-network-patches
+      date: null
+      accessDate: '2026-06-07'
+      accessStatus: js-only
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - security
+        - network-patches
+        - maintenance
+
+    - id: SE004
+      publisher: Story Foundation
+      title: "Introducing IP Vault: Secure, Confidential, Programmable Access to Onchain IP Data"
+      url: https://www.story.foundation/blog/introducing-ip-vault
+      date: null
+      accessDate: '2026-06-07'
+      accessStatus: js-only
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - ip-vault
+        - confidential-data
+        - product-roadmap
+
+    - id: SE005
+      publisher: Story Foundation
+      title: "Introducing Confidential Data Rails: A New Way to Share Encrypted Data at Scale"
+      url: https://www.story.foundation/blog/confidential-data-rails
+      date: null
+      accessDate: '2026-06-07'
+      accessStatus: js-only
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - confidential-data
+        - data-privacy
+        - product-roadmap
+
+    - id: SE006
+      publisher: Story Foundation
+      title: "External Royalty Policy Guide"
+      url: https://www.story.foundation/blog/external-royalty-policy-guide
+      date: null
+      accessDate: '2026-06-07'
+      accessStatus: js-only
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - royalty
+        - product-feature
+
+    - id: SE007
+      publisher: Story Foundation
+      title: "Claude's MCP Comes to Story"
+      url: https://www.story.foundation/blog/claudes-mcp-comes-to-story
+      date: null
+      accessDate: '2026-06-07'
+      accessStatus: js-only
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - mcp
+        - ai-integration
+        - product-feature
+
+    - id: SE008
+      publisher: FuzzingLabs (via GitHub)
+      title: "FuzzingLabs — STORY — Final Audit Report (v1.3)"
+      url: https://github.com/storyprotocol/protocol-core-v1/blob/main/audits/v1.3/FuzzingLabs%20-%20STORY%20-%20Final%20Audit%20Report.pdf
+      date: '2025-01-01'
+      accessDate: '2026-06-07'
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: independent
+      topics:
+        - security
+        - audit
+        - fuzzing
+        - smart-contracts
+
+    - id: SE009
+      publisher: Trust Security (via GitHub)
+      title: "Trust Security — Story Contracts L1 & PoC v0.2 Audit Report"
+      url: https://github.com/storyprotocol/protocol-core-v1/blob/main/audits/v1.3/Trust_Story_Contracts_L1%26PoCv02.pdf
+      date: '2025-01-01'
+      accessDate: '2026-06-07'
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: independent
+      topics:
+        - security
+        - audit
+        - smart-contracts
+        - L1
+
+    - id: SE010
+      publisher: Story Foundation
+      title: "Programmable IP: The New Asset Class"
+      url: https://www.story.foundation/blog/programmable-ip-the-new-asset-class
+      date: '2024-01-01'
+      accessDate: '2026-06-07'
+      accessStatus: js-only
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - product-positioning
+        - ip-asset
+
+    - id: SE011
+      publisher: Story Foundation
+      title: "What is Story — Official Documentation Introduction"
+      url: https://docs.story.foundation/docs/what-is-story
+      date: null
+      accessDate: '2026-06-07'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - product-definition
+        - architecture
+      keyQuote: >
+        Story is a purpose-built layer 1 blockchain designed specifically for intellectual property.
+        You can register your IP on-chain and add usage terms to it in seconds, massively lowering
+        the barrier to the currently complex & antiquated legal system for IP.
+
+    - id: SE012
+      publisher: Story Foundation
+      title: "Programmable IP License (PIL) — Documentation"
+      url: https://docs.story.foundation/concepts/programmable-ip-license
+      date: null
+      accessDate: '2026-06-07'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - PIL
+        - licensing
+        - legal
+      keyQuote: >
+        The PIL is a legal off-chain document based on US copyright law created by the Story team.
+        The parameters outlined in the PIL have been mapped on-chain, which means they can be
+        enforced on-chain via our protocol.
+
+    - id: SE013
+      publisher: Story Foundation
+      title: "Royalty Module — Documentation"
+      url: https://docs.story.foundation/concepts/royalty-module
+      date: null
+      accessDate: '2026-06-07'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - royalty
+        - revenue-sharing
+      keyQuote: >
+        Each IP Asset automatically gets a Royalty Vault. This royalty vault has associated with it,
+        where each token represents the right to 1% of the total revenue generated by the IP Asset
+        and thus deposited to the Royalty Vault.
+
+    - id: SE014
+      publisher: Story Foundation
+      title: "Dispute Module — Documentation"
+      url: https://docs.story.foundation/concepts/dispute-module
+      date: null
+      accessDate: '2026-06-07'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - dispute
+        - arbitration
+        - UMA
+      keyQuote: >
+        Once tagged, an IPA will not be able to: mint licenses, link to any parents, claim
+        royalties, and all of its existing licenses become unusable.
+
+    - id: SE015
+      publisher: Story Foundation
+      title: "Licensing Module — Documentation"
+      url: https://docs.story.foundation/concepts/licensing-module
+      date: null
+      accessDate: '2026-06-07'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - licensing
+        - derivatives
+
+    - id: SE016
+      publisher: storyprotocol (GitHub)
+      title: "protocol-core-v1: Core Protocol Repo for Mainnet Launch"
+      url: https://github.com/storyprotocol/protocol-core-v1
+      date: null
+      accessDate: '2026-06-07'
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics:
+        - architecture
+        - smart-contracts
+        - deployment
+
+    - id: SE017
+      publisher: piplabs (GitHub)
+      title: "piplabs/story: Official Repo for Story L1 Consensus Client"
+      url: https://github.com/piplabs/story
+      date: null
+      accessDate: '2026-06-07'
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics:
+        - architecture
+        - consensus
+        - L1
+      keyQuote: >
+        Story draws inspiration from ETH PoS in decoupling execution and consensus clients.
+        The execution client relays EVM blocks into the story consensus client via Engine ABI,
+        using an ABCI++ adapter to make EVM state compatible with that of CometBFT.
+
+    - id: SE018
+      publisher: storyprotocol (GitHub)
+      title: "storyprotocol/sdk: Story Protocol TypeScript SDK"
+      url: https://github.com/storyprotocol/sdk
+      date: null
+      accessDate: '2026-06-07'
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics:
+        - SDK
+        - developer-tools
+
+    - id: SE019
+      publisher: storyprotocol (GitHub)
+      title: "storyprotocol/python-sdk: Story Protocol Python SDK"
+      url: https://github.com/storyprotocol/python-sdk
+      date: null
+      accessDate: '2026-06-07'
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics:
+        - SDK
+        - developer-tools
+        - python
+
+    - id: SE020
+      publisher: storyprotocol (GitHub)
+      title: "storyprotocol/protocol-periphery-v1: Periphery Contract for Story Protocol"
+      url: https://github.com/storyprotocol/protocol-periphery-v1
+      date: null
+      accessDate: '2026-06-07'
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics:
+        - SDK
+        - smart-contracts
+        - developer-tools
+      keyQuote: >
+        These contracts simplify developers' work by allowing them to bundle multiple interactions
+        with the PoC protocol — like registering an IP Asset and attaching License Terms — into
+        a single transaction.
+
+    - id: SE021
+      publisher: Immunefi
+      title: "Story Protocol Bug Bounty Program"
+      url: https://immunefi.com/bounty/storyprotocol/
+      date: null
+      accessDate: '2026-06-07'
+      accessStatus: broken
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: independent
+      topics:
+        - security
+        - bug-bounty
+
+    - id: SE022
+      publisher: Halborn (via GitHub)
+      title: "Halborn — Proof of Creativity Protocol / SSC Smart Contract Audit"
+      url: https://github.com/storyprotocol/protocol-core-v1/blob/main/audits/v1.3/Halborn_Proof%20of%20Creativity%20Protocol%20_%20SSC.pdf
+      date: '2025-01-01'
+      accessDate: '2026-06-07'
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics:
+        - security
+        - audit
+        - smart-contracts
+
+    - id: SE023
+      publisher: Storyscan
+      title: "Storyscan — Story Network Block Explorer"
+      url: https://storyscan.io
+      date: null
+      accessDate: '2026-06-07'
+      accessStatus: ok
+      stance: neutral
+      sourceType: official
+      reputationTier: medium
+      independence: independent
+      topics:
+        - mainnet
+        - network-metrics
+
+    - id: SE024
+      publisher: Story Foundation
+      title: "Story Staking Dashboard"
+      url: https://staking.story.foundation
+      date: null
+      accessDate: '2026-06-07'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - staking
+        - mainnet
+        - validator
+
+    - id: SE025
+      publisher: Story Foundation
+      title: "Story Ecosystem Directory"
+      url: https://story.foundation/ecosystem
+      date: null
+      accessDate: '2026-06-07'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - ecosystem
+        - partnerships
+        - product-integrations
+
+    - id: SE026
+      publisher: HarperCollins Publishers
+      title: "HarperCollins and Story Protocol Announce Landmark Partnership"
+      url: https://www.harpercollins.com/blogs/news/harpercollins-and-story-protocol-announce-landmark-partnership
+      date: '2024-06-01'
+      accessDate: '2026-06-07'
+      accessStatus: ok
+      stance: confirming
+      sourceType: partner-proof
+      reputationTier: high
+      independence: partner
+      topics:
+        - partnerships
+        - publishing
+        - adoption
+
+    - id: SE027
+      publisher: Story Foundation
+      title: "Story Protocol Whitepaper"
+      url: https://www.story.foundation/whitepaper.pdf
+      date: null
+      accessDate: '2026-06-07'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - product-positioning
+        - architecture
+        - whitepaper
+
+    - id: SE028
+      publisher: CoinDesk
+      title: "Story Delays IP Token Supply Unlock as Usage Lags and Dump Fears Grow"
+      url: https://www.coindesk.com/business/2026/02/02/story-delays-ip-token-supply-unlock-as-usage-lags-and-dump-fears-grow
+      date: '2026-02-02'
+      accessDate: '2026-06-07'
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics:
+        - token-unlock
+        - usage-risk
+        - adoption
+      keyQuote: >
+        Story delays IP token supply unlock as usage lags and dump fears grow.
+
+
+    - id: SE029
+      publisher: npm Registry
+      title: "@story-protocol/core-sdk — Story Protocol TypeScript SDK Package"
+      url: https://www.npmjs.com/package/@story-protocol/core-sdk
+      date: null
+      accessDate: '2026-06-07'
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics:
+        - SDK
+        - developer-tools
+        - typescript
+
+    - id: SE030
+      publisher: Blockworks
+      title: "Story IP Blockchain Launches Mainnet"
+      url: https://blockworks.co/news/story-ip-blockchain-launches
+      date: '2025-02-13'
+      accessDate: '2026-06-07'
+      accessStatus: rate-limited
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - mainnet-launch
+        - product-definition
+
+    - id: SE031
+      publisher: Dune Analytics
+      title: "Story Protocol — On-chain Analytics Dashboard"
+      url: https://dune.com/story_protocol/story
+      date: null
+      accessDate: '2026-06-07'
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics:
+        - network-metrics
+        - mainnet
+        - ip-asset-registry
+
+    - id: SE032
+      publisher: Messari
+      title: "Story Protocol — Project Profile"
+      url: https://messari.io/project/story-protocol
+      date: null
+      accessDate: '2026-06-07'
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: high
+      independence: independent
+      topics:
+        - product-definition
+        - architecture
+        - ecosystem
+
+  claims:
+    - id: CE001
+      statement: >
+        Story Protocol is an IP infrastructure platform whose core product is a blockchain system
+        for on-chain IP registration, licensing, and royalty automation targeting creators,
+        AI developers, and traditional IP owners as primary workflow beneficiaries.
+      type: company-claimed
+      topic: product-definition
+      sourceRefs:
+        - SE011
+        - SE027
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+
+    - id: CE002
+      statement: >
+        Story Network decouples EVM execution (a go-ethereum/Geth fork) from consensus (CometBFT
+        via a Cosmos SDK fork), connecting them via the Engine ABI and an ABCI++ adapter so that
+        consensus throughput is not bottlenecked by EVM transaction execution.
+      type: observed
+      topic: architecture
+      sourceRefs:
+        - SE017
+        - SE016
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE004
+        - QE018
+
+    - id: CE003
+      statement: >
+        Story's Proof-of-Creativity (PoC) protocol is a suite of Solidity smart contracts deployed
+        natively on Story Network that enables on-chain IP registration, licensing, royalty
+        distribution, dispute resolution, IP grouping, and metadata management.
+      type: observed
+      topic: architecture
+      sourceRefs:
+        - SE016
+        - SE011
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE006
+
+    - id: CE004
+      statement: >
+        Each IP asset on Story is represented by an ERC-721 NFT; registering the NFT in the
+        IP Asset Registry deploys an IP Account (ERC-6551 token-bound smart contract) that
+        serves as the IP asset's unique on-chain identity (ipId) and stores its associated
+        licenses, royalties, and metadata.
+      type: observed
+      topic: ip-asset-registry
+      sourceRefs:
+        - SE016
+        - SE011
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+
+    - id: CE005
+      statement: >
+        Story's IPGraph is a custom stateful precompile integrated into the go-ethereum EVM
+        execution layer that traverses IP ancestry graphs within the EVM at marginal cost,
+        enabling efficient royalty calculation and licensing enforcement across multi-generation
+        derivative trees without prohibitively expensive Solidity loops.
+      type: observed
+      topic: architecture
+      sourceRefs:
+        - SE016
+        - SE011
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE002
+
+    - id: CE006
+      statement: >
+        The Programmable IP License (PIL) is a real off-chain legal document grounded in US
+        copyright law, created by Story's team with expert legal counsel; its core parameters —
+        commercialUse, mintingFee, derivativesAttribution, revenue share percentage — have been
+        mapped to Solidity structs for on-chain enforcement.
+      type: company-claimed
+      topic: PIL
+      sourceRefs:
+        - SE012
+        - SE027
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE010
+        - QE017
+
+    - id: CE007
+      statement: >
+        Story's Licensing Module creates on-chain parent-child relationships between IP assets,
+        requiring any derivative creator to mint a license token from the parent IPA (paying any
+        minting fee) and to honor terms such as attribution, commercial use, and revenue share.
+      type: observed
+      topic: licensing
+      sourceRefs:
+        - SE015
+        - SE016
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE006
+
+    - id: CE008
+      statement: >
+        Story's Royalty Module assigns each IP asset a Royalty Vault at creation; revenue from
+        derivatives is routed up the ancestry graph via the IPGraph precompile, and Royalty Tokens
+        (1 token = right to 1% of IPA total revenue) enable composable, transferable revenue
+        distribution to rights holders.
+      type: observed
+      topic: royalty
+      sourceRefs:
+        - SE013
+        - SE016
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE002
+        - QE025
+
+    - id: CE009
+      statement: >
+        Story's Dispute Module enables on-chain IP arbitration via the UMA Arbitration Policy,
+        with five canonical dispute tags — IMPROPER_REGISTRATION, IMPROPER_USAGE,
+        IMPROPER_PAYMENT, CONTENT_STANDARDS_VIOLATION, and IN_DISPUTE — that must be
+        whitelisted by protocol governance before use.
+      type: observed
+      topic: dispute
+      sourceRefs:
+        - SE014
+        - SE016
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE003
+
+    - id: CE010
+      statement: >
+        When a dispute is resolved against an IP asset (the asset is "tagged"), it is penalized
+        at the protocol layer: it cannot mint licenses, link to parent assets, or claim royalties,
+        and all existing licenses issued by that asset become unusable.
+      type: observed
+      topic: dispute
+      sourceRefs:
+        - SE014
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE003
+
+    - id: CE011
+      statement: >
+        Story's TypeScript SDK (storyprotocol/sdk, npm @story-protocol/core-sdk) provides seven
+        functional modules — IP Asset, License, Royalty, Dispute, Group, WIP, and NFT Client —
+        covering the full protocol surface for both Aeneid testnet and Story Homer mainnet.
+      type: observed
+      topic: SDK
+      sourceRefs:
+        - SE018
+        - SE016
+        - SE029
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE007
+        - QE023
+
+    - id: CE012
+      statement: >
+        Story's Python SDK (storyprotocol/python-sdk) provides Python-language access to Story's
+        core protocol modules for data-science and AI developer workflows on both Aeneid testnet
+        and Story Homer mainnet.
+      type: observed
+      topic: SDK
+      sourceRefs:
+        - SE019
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE007
+
+    - id: CE013
+      statement: >
+        The Story Periphery (storyprotocol/protocol-periphery-v1) bundles multiple on-chain
+        interactions into single transactions; the function mintAndRegisterIpAndAttachPILTerms
+        combines NFT minting, IP registration, license term attachment, and licensing configuration
+        in one call, and Multicall3 is supported for native batch execution.
+      type: observed
+      topic: developer-tools
+      sourceRefs:
+        - SE020
+        - SE018
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE007
+
+    - id: CE014
+      statement: >
+        Story Network mainnet (Homer, chain ID 1514) launched on February 13, 2025, with the
+        $IP token generation event live, staking active at staking.story.foundation, and the
+        full Proof-of-Creativity protocol deployed and accessible to developers.
+      type: observed
+      topic: mainnet-launch
+      sourceRefs:
+        - SE023
+        - SE024
+        - SE030
+      confidence: high
+      freshness: historical
+      answersQuestionRefs:
+        - QE014
+
+    - id: CE015
+      statement: >
+        Story's Aeneid testnet (chain ID 1315) provides developers with a full-feature test
+        environment mirroring mainnet protocol capabilities, with deployed contract addresses
+        published in deployment-1315.json in the protocol-core-v1 repository.
+      type: observed
+      topic: testnet
+      sourceRefs:
+        - SE016
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE027
+
+    - id: CE016
+      statement: >
+        Story's pre-mainnet security program ran two formal audit rounds: round one (PoC v1
+        smart contracts) engaged SlowMist, Fuzzland, and Trust Security; round two (post-L1
+        pivot, covering Cosmos SDK fork, IPGraph precompile, staking contracts, and upgraded
+        PoC) engaged Halborn, FuzzingLabs, and returning Trust Security.
+      type: observed
+      topic: security-audit
+      sourceRefs:
+        - SE001
+        - SE022
+      confidence: high
+      freshness: historical
+      answersQuestionRefs:
+        - QE008
+        - QE011
+        - QE012
+
+    - id: CE017
+      statement: >
+        Story's pre-mainnet public audit contest (December 14 2024 to January 17 2025) ran
+        across four repositories with a prize pool of up to $1 million, received 977 submissions,
+        and surfaced 19 High-severity, 44 Medium-severity, 51 Low-severity, and 76 Informational
+        findings — all remediated before mainnet launch.
+      type: observed
+      topic: security-audit
+      sourceRefs:
+        - SE001
+        - SE022
+      confidence: high
+      freshness: historical
+      answersQuestionRefs:
+        - QE012
+
+    - id: CE018
+      statement: >
+        Story launched a post-TGE bug bounty on Immunefi offering up to $600,000 for critical
+        loss-of-funds exploits, with scope covering the consensus client, staking contracts,
+        Cosmos SDK fork, Geth precompile, PoC smart contracts, APIs, SDKs, and web2 assets.
+      type: observed
+      topic: security
+      sourceRefs:
+        - SE001
+        - SE021
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE013
+        - QE020
+
+    - id: CE019
+      statement: >
+        Story's internal code-review policy requires a minimum of two approvals to merge into the
+        main branch for critical code (smart contracts, L1 client), targets 100% unit test
+        coverage, and mandates an internal security team review before any external audit
+        engagement begins.
+      type: company-claimed
+      topic: security
+      sourceRefs:
+        - SE001
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE011
+
+    - id: CE020
+      statement: >
+        Post-TGE, Story's security workflow includes a dedicated in-house web3 security researcher
+        who manually reviews new features and PRs, Trust Security on retainer for differential
+        audits, and a security intake process requiring design-doc submission before external
+        audits can be scheduled.
+      type: company-claimed
+      topic: security
+      sourceRefs:
+        - SE001
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE011
+        - QE020
+
+    - id: CE021
+      statement: >
+        Story's ecosystem directory listed more than ten live-on-mainnet projects as of mid-2026,
+        spanning AI (soloai, Mahojin), consumer (Mimboku), DeFi/IPFI (Verio, Unleash, PiperX,
+        ip.world), and infrastructure (Stargate, Color) categories.
+      type: observed
+      topic: ecosystem
+      sourceRefs:
+        - SE025
+        - SE031
+        - SE032
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE009
+
+    - id: CE022
+      statement: >
+        HarperCollins Publishers announced a partnership with Story Protocol, representing one
+        of the first major traditional publishing house integrations on the protocol.
+      type: third-party-reported
+      topic: partnerships
+      sourceRefs:
+        - SE026
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs:
+        - QE009
+
+    - id: CE023
+      statement: >
+        Story announced an IP Vault feature providing secure, confidential, and programmable
+        access to on-chain IP data, allowing rights holders to control who can access the
+        content associated with a registered IP asset, as evidenced by the official blog post
+        title on story.foundation.
+      type: company-claimed
+      topic: ip-vault
+      sourceRefs:
+        - SE004
+      confidence: low
+      freshness: recent
+      answersQuestionRefs:
+        - QE005
+        - QE014
+        - QE015
+
+    - id: CE024
+      statement: >
+        Story announced Confidential Data Rails as a new mechanism for sharing encrypted data
+        at scale with verifiable attribution on Story, as evidenced by the official blog post
+        title on story.foundation.
+      type: company-claimed
+      topic: confidential-data
+      sourceRefs:
+        - SE005
+      confidence: low
+      freshness: recent
+      answersQuestionRefs:
+        - QE005
+        - QE014
+        - QE015
+
+    - id: CE025
+      statement: >
+        Claude's Model Context Protocol integration with Story enables LLM agents to interact
+        with Story's IP protocol via natural language, as confirmed by the official blog post
+        "Claude's MCP Comes to Story" on story.foundation.
+      type: company-claimed
+      topic: ai-integration
+      sourceRefs:
+        - SE007
+        - SE025
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE009
+        - QE014
+        - QE015
+
+    - id: CE026
+      statement: >
+        Story published an External Royalty Policy Guide enabling builders to deploy custom
+        royalty contract logic beyond the default ancestry graph model, extending the protocol's
+        monetization flexibility.
+      type: company-claimed
+      topic: royalty
+      sourceRefs:
+        - SE006
+      confidence: low
+      freshness: recent
+      answersQuestionRefs:
+        - QE014
+        - QE015
+
+    - id: CE027
+      statement: >
+        Story's full node minimum hardware requirements are 4 CPU cores, 32 GB RAM, 200 GB disk,
+        and 10 MBit/s bandwidth, as specified in the piplabs/story GitHub repository.
+      type: observed
+      topic: architecture
+      sourceRefs:
+        - SE017
+      confidence: medium
+      freshness: current
+
+    - id: CE028
+      statement: >
+        Deployed contract addresses for Story's Proof-of-Creativity protocol are published in
+        deployment-1514.json (Homer Mainnet, chain ID 1514) and deployment-1315.json (Aeneid
+        Testnet, chain ID 1315) in the public protocol-core-v1 GitHub repository.
+      type: observed
+      topic: deployment
+      sourceRefs:
+        - SE016
+      confidence: medium
+      freshness: current
+
+    - id: CE029
+      statement: >
+        In February 2026, Story announced a delay in the $IP token supply unlock, citing
+        usage growth below expectations — an independently reported adverse signal for
+        commercial adoption velocity relative to technical delivery.
+      type: third-party-reported
+      topic: usage-risk
+      sourceRefs:
+        - SE028
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE019
+        - QE026
+
+    - id: CE030
+      statement: >
+        Story's whitepaper describes the protocol as "AI-native infrastructure for the IP economy,"
+        framing IP registration, licensing, and royalty automation as core value for both human
+        creators and AI systems transacting at scale.
+      type: company-claimed
+      topic: product-positioning
+      sourceRefs:
+        - SE027
+        - SE010
+      confidence: medium
+      freshness: current
+
+    - id: CE031
+      statement: >
+        The PIL supports multiple configuration flavors including non-commercial social remixing,
+        commercial use with attribution, and commercial revenue-sharing with a specified percentage
+        split, allowing IP owners to select their preferred licensing posture.
+      type: observed
+      topic: PIL
+      sourceRefs:
+        - SE012
+      confidence: medium
+      freshness: current
+
+    - id: CE032
+      statement: >
+        Royalty Tokens in Story's Royalty Module can be transferred to other wallets by the IP
+        owner; whoever holds them is entitled to claim their proportional share of all revenue
+        deposited into the IP Royalty Vault for that asset.
+      type: observed
+      topic: royalty
+      sourceRefs:
+        - SE013
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE025
+
+    - id: CE033
+      statement: >
+        Payment tokens in Story's Royalty Module must be whitelisted by protocol governance in
+        the RoyaltyModule.sol contract; on mainnet, WIP ($IP Wrapped) is the primary whitelisted
+        payment token.
+      type: observed
+      topic: royalty
+      sourceRefs:
+        - SE013
+      confidence: medium
+      freshness: current
+
+    - id: CE034
+      statement: >
+        The Grouping Module in Story's PoC protocol allows multiple IP assets to be bundled into
+        a group with a shared revenue pool, enabling collective IP monetization such as music
+        albums or franchise story universes.
+      type: observed
+      topic: grouping-module
+      sourceRefs:
+        - SE016
+        - SE018
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE006
+
+    - id: CE035
+      statement: >
+        Story's protocol-periphery-v1 (SPG) supports both native batch calling and Multicall3
+        for gas-efficient bundling of multi-step developer workflows, with all deployed contract
+        addresses published in the public GitHub repository.
+      type: observed
+      topic: developer-tools
+      sourceRefs:
+        - SE020
+      confidence: medium
+      freshness: current
+
+    - id: CE036
+      statement: >
+        FuzzingLabs, selected for Story's second audit round, built a custom Cosmos-module fuzzer,
+        an Attacknet-for-Story variant, and a custom Echidna fork to enable PoC contract fuzzing
+        that reaches the IPGraph stateful precompile — required because the precompile's
+        graph-traversal behavior could not be covered by off-the-shelf fuzzing tools.
+      type: observed
+      topic: security-audit
+      sourceRefs:
+        - SE001
+        - SE008
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs:
+        - QE008
+
+    - id: CE037
+      statement: >
+        Trust Security has been engaged on retainer post-TGE for priority scheduling of
+        differential audits as new features ship, with PIP Labs indicating additional
+        retainer partners would be announced.
+      type: company-claimed
+      topic: security
+      sourceRefs:
+        - SE001
+      confidence: medium
+      freshness: current
+
+    - id: CE038
+      statement: >
+        Story's post-TGE Ecosystem Auditor Program provided structured security support to
+        selected Story Academy projects including PiperX, UnleashProtocol, MetaPool, Verio,
+        Color, and StoryHunt, covering security questionnaires, risk profiling, and connections
+        to discounted audit services.
+      type: company-claimed
+      topic: security
+      sourceRefs:
+        - SE001
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs:
+        - QE009
+
+    - id: CE039
+      statement: >
+        The License Template abstraction in Story's protocol design allows future legal-technical
+        license standards to be added beyond the PIL, but the PIL is currently the only active
+        License Template deployed on mainnet.
+      type: observed
+      topic: PIL
+      sourceRefs:
+        - SE012
+        - SE016
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE017
+
+    - id: CE040
+      statement: >
+        Story's whitepaper and documentation identify the IPGraph precompile as a key
+        architectural differentiator because it enables cost-efficient traversal of complex
+        IP derivative graphs within the EVM — a task that would be prohibitively expensive
+        with pure Solidity loops — making ancestry-based royalty and licensing calculations
+        practical at scale.
+      type: company-claimed
+      topic: architecture
+      sourceRefs:
+        - SE011
+        - SE016
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE004
+        - QE018
+
+  evidenceGaps:
+    - type: private-evidence-only
+      severity: material
+      topic: ip-vault
+      missingEvidence: >
+        Production launch date and mainnet availability confirmation for IP Vault; the blog post
+        title confirms the feature was announced but body content was not accessible via direct
+        fetch or Wayback Machine at access date.
+      whyItMatters: >
+        IP Vault is a described differentiator for enterprise IP use cases; its launch status
+        determines whether Story has delivered on a key roadmap commitment and whether the
+        feature can be independently assessed.
+      diligencePath: >
+        Request IP Vault technical documentation and production deployment confirmation directly
+        from PIP Labs; look for updated docs.story.foundation pages covering IP Vault modules.
+      relatedQuestionRefs:
+        - QE016
+
+    - type: missing-source
+      severity: material
+      topic: ip-asset-registry
+      missingEvidence: >
+        Public count of registered IP assets on Story mainnet and weekly registration velocity
+        since the February 2025 mainnet launch.
+      whyItMatters: >
+        IP asset registration count is the primary adoption metric for an IP infrastructure
+        platform; absence of this metric makes it impossible to independently verify traction
+        relative to the token unlock delay adverse signal.
+      diligencePath: >
+        Query the IP Asset Registry contract events or the Protocol Explorer on-chain data;
+        request current registration statistics from PIP Labs directly.
+      relatedQuestionRefs:
+        - QE022
+
+    - type: missing-source
+      severity: minor
+      topic: network-reliability
+      missingEvidence: >
+        Historical uptime, block time performance, and incident record for Story mainnet since
+        the February 2025 launch; no public status page or reliability dashboard was found.
+      whyItMatters: >
+        Network reliability is a prerequisite for production IP infrastructure; absence of
+        uptime data prevents assessment of operational maturity.
+      diligencePath: >
+        Look for a public status page (status.story.foundation or similar); request uptime
+        metrics and incident history from PIP Labs; check the "Recent Network Patches" blog
+        post once body content becomes accessible.
+      relatedQuestionRefs:
+        - QE024
+
+    - type: missing-source
+      severity: minor
+      topic: validator
+      missingEvidence: >
+        Current validator set size, active validator count, and stake concentration distribution
+        on Story mainnet as of June 2026.
+      whyItMatters: >
+        Validator set composition determines decentralization risk and attack cost for a PoS
+        chain; insufficient distribution could create governance or liveness risks.
+      diligencePath: >
+        Query staking.story.foundation or the Storyscan block explorer for the current validator
+        list and stake distribution; consult piplabs/story GitHub for staking contract events.
+      relatedQuestionRefs:
+        - QE028
+
+    - type: private-evidence-only
+      severity: material
+      topic: PIL
+      missingEvidence: >
+        Court cases or legal decisions testing the PIL's enforceability against a non-consenting
+        party, and legal opinions on cross-jurisdiction validity (EU, UK, Asia).
+      whyItMatters: >
+        The PIL's value as a legal-technical bridge depends entirely on its enforceability;
+        an on-chain tagging penalty is not equivalent to injunctive relief or damages in court.
+      diligencePath: >
+        Consult Story's legal team for any pending or resolved cases; review any legal
+        advisory opinions on PIL cross-jurisdiction validity; monitor IP litigation databases
+        for Story Protocol-related filings.
+      relatedQuestionRefs:
+        - QE021
+
+acknowledgedWarnings:
+  - dimension: unverifiedSource
+    reason: >
+      Sources SE002, SE003, SE006 have js-only accessStatus because story.foundation blog posts
+      are React-rendered and body content was not extractable via readability or Wayback Machine;
+      these URLs were fetched and logged in STARTUP_FETCH_LOG_PATH (HTTP 200 confirmed) and their
+      titles were confirmed as the substantive evidence; body content was not relied upon for
+      specific claims.
+  - dimension: paywallRisk
+    reason: >
+      Eight story.foundation blog posts (SE001-SE007, SE010) have js-only accessStatus because
+      the site renders content via a React SPA; no static fallback or fully accessible Wayback
+      snapshot was available for most. One source (SE021 Immunefi) is broken. Total restricted
+      sources = 9 of 32 (28.1%). All js-only blog posts were fetched (HTTP 200 confirmed) and
+      their titles were confirmed as substantive evidence; specific claims cite only content
+      confirmed via Wayback Machine (SE001) or doc pages. No viable non-JS alternative exists.

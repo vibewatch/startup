@@ -1,0 +1,1960 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: modular
+runDate: '2026-06-13'
+company:
+  name: Modular
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: 'Modular now sells a layered product stack: MAX for inference and model execution, Mammoth for Kubernetes-native multi-model orchestration, Mojo for portable kernel development, and managed or bring-your-own-cloud deployment surfaces that turn hardware portability into a production offer. Public docs support real technical depth—custom model bring-up, speculative decoding, prefix caching, structured output, multi-GPU serving, and cross-vendor GPU support—but the stack is still partly in preview or under contract-governed licensing, with trust and compliance evidence materially thinner than the product narrative. The chapter verdict is that Modular has a technically credible and differentiated platform for portability-sensitive AI teams, but enterprise readiness still depends on proving Mammoth maturity, broader ecosystem depth, and stronger public security and compliance disclosure.'
+sections:
+- id: platform-map-and-customer-workflow
+  title: Platform map and the customer-facing workflow
+  body: |-
+    Modular’s customer-facing product is no longer just “a programming language” or “an inference engine.” The public surface now resolves into four linked layers. First, MAX is the serving and model-execution framework: it exposes an OpenAI-compatible endpoint, runs self-hosted through the CLI or Docker, and gives developers a PyTorch-like path for custom models and custom ops. Second, Mammoth is the scale-out orchestration layer: a Kubernetes-native control plane for organizations that need to place multiple models across heterogeneous GPU fleets and automatically balance performance against cost. Third, Mojo is the kernel-focused language underneath the stack. Modular presents it as the way developers extend MAX, write hardware-agnostic GPU kernels, and preserve portability across NVIDIA, AMD, Apple, and CPUs. Fourth, Modular wraps the software in several deployment surfaces—self-hosted endpoints, managed serverless or dedicated endpoints, and a bring-your-own-cloud option that keeps inference traffic in a customer VPC.
+
+    In customer workflow terms, the architecture is straightforward even if the implementation is ambitious. A team starts by selecting a supported model or porting an adjacent Hugging Face architecture into MAX, serves it behind the OpenAI-compatible API, and then chooses whether to keep the endpoint local, move into Modular’s managed cloud, or adopt a VPC-resident deployment. If the workload becomes large, multi-model, or heterogeneous, Mammoth is the next layer that coordinates model placement and distributed inference. That sequencing matters because it makes the product legible: MAX is the execution layer, Mammoth is the fleet-management layer, and Mojo is the extensibility layer. The best evidence supports a real module map rather than a marketing umbrella, although the line between community/open entry points and contract-governed commercial use still needs diligence.
+  claimRefs:
+  - CE001
+  - CE002
+  - CE003
+  - CE004
+  - CE005
+  - CE007
+  - CE008
+  - CE009
+  - CE010
+  - CE012
+  - CE013
+  - CE024
+  - CE025
+  tableRefs:
+  - TE001
+  - TE002
+  figureRefs:
+  - FE001
+  - FE002
+- id: architecture-deployment-and-operating-model
+  title: Architecture, deployment model, and how the stack actually works
+  body: |-
+    The technical story is strongest where Modular explains how MAX organizes models and serving internals. Public documentation shows that MAX treats model support as a set of architecture packages that define compute graphs, typed configs, weight adapters, and any custom layers needed to map Hugging Face checkpoints into MAX’s graph format. That is more than a shallow wrapper: the platform claims hardware-optimized kernels, production batching, KV-cache management, and multi-GPU distribution without forcing the user to rebuild the serving layer from scratch. The runtime optimization surface is also concrete. MAX documents speculative decoding, prefix caching, and structured output as first-class serving features, with explicit limits such as speculative decoding being incompatible with structured output. The docs further state that prefix caching is enabled by default and that structured output is currently GPU-only.
+
+    Deployment architecture is similarly specific. Modular’s managed cloud offers serverless, dedicated, custom-model, and batch-inference modes. The bring-your-own-cloud option keeps the data plane inside the customer VPC while leaving endpoint lifecycle, scaling policy, monitoring, and model registration in a Modular-operated control plane. That split is attractive for teams with data-residency requirements, but it is also a real governance boundary that an enterprise buyer has to accept. Modular reinforces the managed-service posture with forward-deployed engineering support and explicit promises to tune throughput, latency, and even custom Mojo kernels. In other words, the product is not just a downloadable runtime. It is a software-and-expert-ops offer whose operating model spans graph compilation, kernel specialization, deployment policy, and human tuning support.
+  claimRefs:
+  - CE014
+  - CE015
+  - CE016
+  - CE017
+  - CE018
+  - CE019
+  - CE020
+  - CE021
+  - CE022
+  - CE023
+  - CE024
+  - CE025
+  - CE026
+  - CE027
+  tableRefs:
+  - TE003
+  figureRefs:
+  - FE003
+- id: differentiation-roadmap-and-developer-signal
+  title: Differentiation, roadmap, and the strength of the developer surface
+  body: |-
+    Modular’s clearest differentiation claim is not merely speed; it is portable performance. The company repeatedly argues that the same MAX and Mojo code can move across NVIDIA, AMD, and Apple hardware without inheriting CUDA lock-in, and the public evidence is more concrete than a generic “write once, run anywhere” slogan. The 25.6, AMD-partnership, and MI355 bring-up materials show the company anchoring its narrative around rapid hardware enablement, public benchmark scripts, and a kernel architecture designed to specialize components without rewriting whole kernels. The structured-kernels series is especially revealing because it describes portability as a software-architecture property: common kernel control flow with hardware-specific TileIO, TilePipeline, and TileOp components. If true in practice, that is the most meaningful product wedge in the entire stack.
+
+    The roadmap also looks active rather than static. MAX’s Python API graduated out of experimental in 26.1 with eager mode and model.compile for production. Mojo moved from a “future language” story toward an actual 1.0 process: the path-to-1.0 post set the stability goals, while 26.3 announced a beta, a later-2026 finalization target, and a new standalone Mojo site. The developer surface is real but still uneven. GitHub shows stable and nightly release discipline, external contributions, community meetings, and a large open repository; PyPI distributes the modular package in standard Python packaging; Meetup, Discord, and YouTube give the project visible community surfaces. At the same time, the mainstream troubleshooting footprint remains early: the Stack Overflow mojo-lang tag had zero questions at fetch time, and independent reviews still frame MAX as promising but narrower than vLLM on ecosystem breadth. The result is a credible but still maturing developer moat.
+  claimRefs:
+  - CE028
+  - CE029
+  - CE030
+  - CE031
+  - CE032
+  - CE033
+  - CE034
+  - CE035
+  - CE036
+  - CE037
+  - CE038
+  - CE039
+  - CE040
+  - CE041
+  - CE042
+  - CE049
+  - CE050
+  tableRefs:
+  - TE005
+  figureRefs:
+  - FE004
+- id: trust-governance-and-open-risks
+  title: Trust, governance, and the product risks that remain open
+  body: |-
+    Modular does have visible trust controls, but the public pack is stronger on policy than on attestation. The privacy policy describes technical and organizational safeguards and maps to GDPR and CPRA-style rights. The report-issue page routes privacy, safety, and security concerns to a dedicated security team. The Acceptable Use Policy explicitly covers MAX Platform, Modular Cloud, and AI-powered features, and requires human review for legal, medical, and financial advice use cases. Those are meaningful controls. So is the BYOC model, which keeps inference traffic inside the customer VPC. For buyers that mainly want proof that the company has thought about privacy, misuse, and incident intake, the basics are present.
+
+    But the diligence gaps are still material. The public material reviewed here did not surface a SOC 2 report, ISO 27001 certificate, public uptime commitments, or a detailed security architecture white paper. The legal structure also introduces governance friction. Modular has open-sourced large parts of MAX and Mojo, yet the Community License remains contract-governed, allows telemetry usage, restricts reverse engineering and standalone redistribution, and requires approval for custom hardware use beyond supported targets. Independent commentary makes the bigger risk explicit: the Mojo standard library may be open, but the MAX compiler remaining closed is still a compliance and auditability concern for some enterprises. Product verdict: Modular looks technically differentiated and directionally enterprise-aware, but a risk-conscious buyer should still treat certifications, SLA proof, compiler governance, and preview-to-GA transitions as open diligence items rather than solved problems.
+  claimRefs:
+  - CE025
+  - CE043
+  - CE044
+  - CE045
+  - CE046
+  - CE047
+  - CE048
+  - CE049
+  - CE050
+  tableRefs:
+  - TE004
+tables:
+- id: TE001
+  title: Product module / asset matrix
+  columns:
+  - Module / asset
+  - Primary user
+  - Status / maturity
+  - Differentiation
+  - Diligence gap
+  rows:
+  - - MAX serving framework
+    - Inference engineers and platform teams
+    - Publicly shipped; docs, PyPI package, GitHub repo, and release branches all active
+    - OpenAI-compatible serving plus cross-vendor portability and custom-kernel extensibility
+    - Need customer-level proof on production uptime and migration friction from incumbent stacks
+  - - MAX custom model workflow
+    - Model developers adapting Hugging Face checkpoints
+    - Publicly documented with reference architectures and weight-adapter workflow
+    - Lets teams reuse existing architectures and only override graph pieces that differ
+    - Need proof of how often non-trivial architectures require deeper rewrites than docs imply
+  - - Mammoth orchestration layer
+    - Enterprise AI infra teams running many models across mixed GPU fleets
+    - Public preview
+    - Kubernetes-native control plane, multi-model orchestration, and disaggregated inference on heterogeneous hardware
+    - Need GA timing, customer references, and independent proof of large-cluster operations
+  - - Managed cloud
+    - Teams that want Modular-operated production inference
+    - Publicly offered with serverless, dedicated, custom-model, and batch patterns
+    - Kernel-to-cloud optimization with forward-deployed engineering support
+    - Public SLA detail, certification evidence, and per-surface reliability metrics remain thin
+  - - Bring-your-own-cloud
+    - Regulated or security-sensitive buyers with existing cloud commitments
+    - Publicly offered
+    - Keeps data plane in customer VPC while preserving Modular control-plane tooling and GPU portability
+    - Control-plane boundary, telemetry, and security-review burden need procurement diligence
+  - - Mojo language
+    - Kernel developers and advanced systems programmers
+    - 1.0 beta; broader roadmap still in progress
+    - Pythonic syntax with compile-time metaprogramming, hardware dispatch, and portable kernel authoring
+    - Need final 1.0 timeline confidence and clarity on compiler governance after beta
+  - - Community and channel surfaces
+    - Developers, evaluators, and enterprise buyers
+    - Active but still maturing
+    - GitHub, PyPI, Meetup, Discord, YouTube, and AWS Marketplace create multiple acquisition paths
+    - Mainstream troubleshooting and independent ecosystem breadth still trail older OSS incumbents
+  notes: Rows separate execution-layer products from orchestration, deployment, language, and developer-acquisition surfaces because Modular now sells a stack rather than a single runtime.
+  claimRefs:
+  - CE001
+  - CE003
+  - CE007
+  - CE012
+  - CE014
+  - CE024
+  - CE025
+  - CE036
+  - CE038
+  - CE040
+  - CE041
+  - CE042
+- id: TE002
+  title: Workflow / use-case table
+  columns:
+  - User job
+  - Current workflow
+  - Modular solution
+  - Measurable benefit
+  - Limitation
+  rows:
+  - - Launch a standard open model quickly
+    - Pull a Hugging Face model, stand up an endpoint, wire an OpenAI client
+    - max serve or Docker starts an OpenAI-compatible endpoint
+    - Minimal code changes and fast self-hosted validation
+    - Benefit is implementation speed, not proof of enterprise durability
+  - - Port a custom or adjacent architecture
+    - Adapt config fields, checkpoint names, and custom layers manually
+    - MAX reference architectures plus arch.py, model_config.py, model.py, and weight_adapters.py workflow
+    - Reuse of existing compute graph and kernels instead of building a serving stack from scratch
+    - Deeply novel architectures may still require new graph components
+  - - Improve throughput on repeat-prompt workloads
+    - Serve repeated system prompts or long chats with redundant KV-cache work
+    - Prefix caching enabled by default through PagedAttention
+    - Lower TTFT and better effective throughput when prefixes repeat
+    - Little gain for unique prompts or decode-dominated workloads
+  - - Raise token-generation efficiency on supported models
+    - Run target model step by step and accept full verification cost each token
+    - Speculative decoding with EAGLE, EAGLE3, MTP, or standalone draft models
+    - Multiple tokens can be accepted per step, improving compute use
+    - Structured output and echo are not supported when speculative decoding is enabled
+  - - Enforce schema-safe responses in app workflows
+    - Parse free-form model text downstream in Python or middleware
+    - Structured output with llguidance, JSON schema, or Pydantic
+    - Predictable output contracts for downstream systems
+    - GPU-only today and requires careful testing because model training still matters
+  - - Run large, multi-model production fleets
+    - Manually place models across different GPU types and handle scaling by hand
+    - Mammoth control plane with model placement, auto-scaling, and disaggregated inference
+    - Better hardware utilization and multi-model orchestration across mixed fleets
+    - Public evidence is mostly company-authored preview material, not broad field proof yet
+  notes: The rows intentionally follow real buyer jobs rather than product branding so the workflow table stays anchored in what a team is trying to do with the stack.
+  claimRefs:
+  - CE002
+  - CE005
+  - CE009
+  - CE010
+  - CE014
+  - CE017
+  - CE019
+  - CE020
+  - CE021
+  - CE022
+  - CE023
+- id: TE003
+  title: Technology / operating architecture table
+  columns:
+  - Layer / component
+  - Role
+  - Dependency
+  - Risk
+  rows:
+  - - Hugging Face / model architecture mapping
+    - Supplies checkpoints, config metadata, and the source model family MAX adapts
+    - Depends on MAX reference architectures and weight adapters staying current
+    - Novel or fast-moving architectures can create bring-up lag
+  - - MAX graph and model layer
+    - Builds typed configs, compute graphs, quantization settings, and multi-GPU execution plans
+    - Depends on architecture packages such as arch.py, model.py, and model_config.py
+    - Unsupported graph differences can force custom engineering
+  - - Serving runtime
+    - Exposes OpenAI-compatible endpoints, batching, KV-cache management, and runtime features
+    - Depends on graph compilation, cache formats, and endpoint flags
+    - Feature combinations have explicit limits such as speculative decoding versus structured output
+  - - Mojo kernel layer
+    - Implements portable GPU and CPU kernels plus custom-ops extensibility
+    - Depends on Mojo language maturity and compiler behavior across targets
+    - Closed-compiler governance remains a diligence issue for auditable toolchains
+  - - Deployment control plane
+    - Handles endpoint lifecycle, scaling, observability, and in Mammoth’s case workload placement
+    - Depends on Modular-operated control services even in BYOC mode
+    - Customer control is reduced relative to pure self-hosting, especially for regulated buyers
+  - - Human support layer
+    - Forward-deployed engineers tune workloads and write custom kernels for enterprise deployments
+    - Depends on service capacity and Modular’s own engineering bandwidth
+    - Economic and operational scalability may be weaker than pure software margins imply
+  notes: This architecture table highlights both software components and the operating model because Modular’s enterprise offer includes expert services as part of product delivery.
+  claimRefs:
+  - CE014
+  - CE015
+  - CE017
+  - CE019
+  - CE022
+  - CE025
+  - CE027
+  - CE049
+- id: TE004
+  title: Trust / quality / compliance table
+  columns:
+  - Control / signal
+  - Status
+  - Scope
+  - Gap
+  rows:
+  - - Privacy policy
+    - Public and current
+    - Covers website and platform data handling, GDPR/CPRA rights, and security measures
+    - Describes controls at policy level but is not an independent certification
+  - - Security / safety report intake
+    - Public and current
+    - Dedicated issue-report form for safety, privacy, and security concerns
+    - No public disclosure timetable or bug-bounty detail was surfaced in the reviewed pack
+  - - Acceptable AI Use Policy
+    - Public and current
+    - Governs MAX Platform, Modular Cloud, and AI-powered features; adds human-review requirements for sensitive advice use cases
+    - Policy language exists, but enforcement evidence is not publicly described in depth
+  - - BYOC VPC data-plane isolation
+    - Publicly documented
+    - Keeps inference traffic inside customer infrastructure while Modular runs control services
+    - Still requires review of control-plane access, telemetry, and operational boundaries
+  - - Community license and terms
+    - Public and current
+    - Defines redistribution, custom-hardware approval, telemetry, and reverse-engineering restrictions
+    - Contract-governed SDK use limits openness for some enterprise buyers
+  - - Independent compliance proof
+    - Not publicly surfaced in reviewed sources
+    - Would normally include certifications, uptime commitments, or external security attestations
+    - No public SOC 2, ISO 27001, or detailed security architecture artifact was located in the source pack
+  notes: This table separates policy presence from independent assurance because Modular’s reviewed public trust surface is document-rich but attestation-light.
+  claimRefs:
+  - CE025
+  - CE043
+  - CE044
+  - CE045
+  - CE046
+  - CE047
+  - CE048
+  - CE049
+- id: TE005
+  title: Roadmap / release / development-stage table
+  columns:
+  - Date / stage
+  - Feature / milestone
+  - Status
+  - Implication
+  - Source
+  rows:
+  - - 2025-06
+    - AMD GPU general availability via Modular partnership
+    - Shipped
+    - Portability story moved from NVIDIA-only perception to real AMD production support
+    - Modular + AMD blog
+  - - 2025-09
+    - Modular 25.6 adds B200, MI355X, Apple Silicon support, pip install mojo, and benchmark scripts
+    - Shipped
+    - Reinforces hardware-portability wedge and lowers developer setup friction
+    - 25.6 release blog
+  - - 2025-12
+    - Path to Mojo 1.0 announced
+    - Announced
+    - Signals shift from experimental language velocity toward compatibility expectations
+    - Path to Mojo 1.0 blog
+  - - 2026-01
+    - Modular 26.1 graduates MAX Python API and model.compile()
+    - Shipped
+    - Strengthens story for porting PyTorch-trained models into production MAX graphs
+    - 26.1 release blog
+  - - 2026-04
+    - Structured-kernel portability series demonstrates specialization across NVIDIA and AMD
+    - Shipped / engineering proof
+    - Suggests kernel portability is becoming an architecture discipline rather than a one-off benchmark trick
+    - Structured kernels part 4
+  - - 2026-05
+    - Modular 26.3 launches Mojo 1.0 beta and video generation in MAX
+    - Beta / shipped mix
+    - Shows product breadth expansion while language stability is nearing a formal 1.0 line
+    - 26.3 release blog and GitHub releases
+  - - 2026 (forward)
+    - Mammoth to managed endpoints; final Mojo 1.0 later in year
+    - Roadmap / preview
+    - Most important maturity transition still ahead, especially for orchestration and compiler governance
+    - 2025 year in review and 26.3 blog
+  notes: Dates are based on the publication timing embedded in release posts and version artifacts; the forward-looking rows remain roadmap claims rather than shipped proof.
+  claimRefs:
+  - CE028
+  - CE030
+  - CE033
+  - CE035
+  - CE036
+  - CE037
+figures:
+- id: FE001
+  title: Product architecture map
+  type: stack
+  layout: wide
+  summary: Modular’s public stack runs from managed or VPC-resident deployment surfaces down through MAX serving and model graphs to Mojo kernels and heterogeneous hardware targets.
+  approximationNotes: This stack is synthesized from product pages, docs, and release notes rather than copied from a single vendor system diagram.
+  data:
+    layers:
+    - id: deploy
+      label: Deployment surfaces
+      detail: Self-hosted endpoints, Modular-managed serverless and dedicated endpoints, and bring-your-own-cloud VPC deployment.
+    - id: orchestration
+      label: Orchestration and control plane
+      detail: Endpoint lifecycle, scaling, monitoring, and Mammoth’s multi-model placement and disaggregated inference controls.
+    - id: serve
+      label: MAX serving and model layer
+      detail: OpenAI-compatible APIs, model graphs, batching, KV-cache management, multi-GPU execution, custom architectures.
+    - id: kernels
+      label: Mojo kernel and compiler layer
+      detail: Portable GPU and CPU kernels, custom ops, graph compilation, and structured-kernel specialization across hardware.
+    - id: hardware
+      label: Heterogeneous hardware targets
+      detail: NVIDIA, AMD, Apple Silicon, CPUs, and cloud or on-prem GPU fleets.
+  claimRefs:
+  - CE001
+  - CE002
+  - CE003
+  - CE007
+  - CE012
+  - CE013
+  - CE025
+- id: FE002
+  title: Customer workflow / operating flow
+  type: flow
+  layout: wide
+  summary: A typical Modular workflow starts with choosing or adapting a model, serving it behind the MAX API, then scaling into managed cloud, BYOC, or Mammoth depending on workload complexity.
+  approximationNotes: The flow emphasizes customer action points rather than every internal scheduler step.
+  data:
+    nodes:
+    - id: choose-model
+      label: Choose a supported model or checkpoint
+      detail: Start with a supported Hugging Face architecture or a close reference model.
+      tone: neutral
+    - id: adapt-model
+      label: Adapt config and weights when needed
+      detail: Use MAX architecture packages, config mapping, and weight adapters for custom bring-up.
+      tone: positive
+    - id: serve-endpoint
+      label: Launch MAX endpoint
+      detail: Expose a CLI or Docker-hosted OpenAI-compatible endpoint for self-hosted validation.
+      tone: positive
+    - id: optimize-runtime
+      label: Enable runtime optimizations
+      detail: Add prefix caching, speculative decoding, or structured output depending on workload shape and constraints.
+      tone: positive
+    - id: choose-deployment
+      label: Choose deployment model
+      detail: Stay self-hosted, move to managed serverless or dedicated endpoints, or place the data plane in a customer VPC.
+      tone: neutral
+    - id: scale-fleet
+      label: Scale into Mammoth or enterprise ops
+      detail: Use multi-model orchestration, disaggregated inference, and forward-deployed tuning support when fleets become heterogeneous or large.
+      tone: warning
+    edges:
+    - from: choose-model
+      to: adapt-model
+      label: if architecture differs
+    - from: adapt-model
+      to: serve-endpoint
+      label: compile and register
+    - from: serve-endpoint
+      to: optimize-runtime
+      label: tune serving path
+    - from: optimize-runtime
+      to: choose-deployment
+      label: decide where to run
+    - from: choose-deployment
+      to: scale-fleet
+      label: scale workloads
+  claimRefs:
+  - CE002
+  - CE003
+  - CE014
+  - CE017
+  - CE020
+  - CE022
+  - CE024
+- id: FE003
+  title: Critical dependency map
+  type: dag
+  layout: wide
+  summary: Modular’s execution stack depends on external model ecosystems, Modular-operated control services, and hardware vendors even though it tries to reduce dependence on any one accelerator stack.
+  approximationNotes: The map focuses on operational dependency rather than ownership or exclusive contracts.
+  data:
+    nodes:
+    - id: modular-core
+      label: Modular execution stack
+      type: system
+      detail: MAX serving, graph compiler, Mojo kernels, and cloud deployment surfaces.
+    - id: hf-models
+      label: Hugging Face model ecosystem
+      type: dependency
+      detail: Configs, checkpoints, and model-family conventions that MAX maps into its own graph format.
+    - id: control-plane
+      label: Modular control plane / Mammoth
+      type: dependency
+      detail: Endpoint lifecycle, scaling, monitoring, and multi-model orchestration.
+    - id: hardware
+      label: NVIDIA / AMD / Apple hardware targets
+      type: dependency
+      detail: Underlying accelerator capabilities that MAX and Mojo specialize toward.
+    - id: customer-vpc
+      label: Customer cloud / VPC
+      type: dependency
+      detail: BYOC data plane, cloud commitments, and regulated deployment boundary.
+    - id: legal-governance
+      label: License, privacy, and AUP governance
+      type: dependency
+      detail: Community license, telemetry terms, privacy policy, and acceptable-use rules governing SDK and platform use.
+    - id: dev-community
+      label: Developer ecosystem
+      type: dependency
+      detail: GitHub, PyPI, Meetup, Discord, YouTube, and broader community support for adoption and debugging.
+    edges:
+    - from: modular-core
+      to: hf-models
+      label: model intake dependency
+    - from: modular-core
+      to: control-plane
+      label: managed-scale dependency
+    - from: modular-core
+      to: hardware
+      label: performance and portability dependency
+    - from: control-plane
+      to: customer-vpc
+      label: BYOC operational boundary
+    - from: modular-core
+      to: legal-governance
+      label: contractual and policy boundary
+    - from: modular-core
+      to: dev-community
+      label: adoption and support flywheel
+  claimRefs:
+  - CE014
+  - CE025
+  - CE026
+  - CE038
+  - CE043
+  - CE046
+  - CE048
+  - CE049
+- id: FE004
+  title: Product maturity / capability map
+  type: matrix
+  layout: wide
+  summary: Public proof is strongest for MAX serving, portability claims, and developer tooling; weaker for security attestation, mainstream ecosystem depth, and Mammoth field maturity.
+  approximationNotes: The matrix reflects only what was supported in the reviewed public source pack.
+  data:
+    columns:
+    - Proof-light / still open
+    - Operational today
+    - Strongest public proof
+    rows:
+    - label: MAX serving and API surface
+      values:
+      - label: n/a
+        tone: neutral
+      - label: Self-hosted, managed, and BYOC docs are concrete
+        tone: positive
+      - label: OpenAI-compatible endpoint and model docs are detailed
+        tone: positive
+    - label: Custom model bring-up
+      values:
+      - label: Migration effort for unusual graphs remains situational
+        tone: warning
+      - label: Reference architectures and adapters are documented
+        tone: positive
+      - label: n/a
+        tone: neutral
+    - label: Multi-model orchestration
+      values:
+      - label: Independent large-scale proof remains thin
+        tone: warning
+      - label: Mammoth preview and architecture are public
+        tone: warning
+      - label: n/a
+        tone: neutral
+    - label: Hardware portability
+      values:
+      - label: Some benchmark claims are company-authored
+        tone: warning
+      - label: AMD, NVIDIA, and Apple support are documented
+        tone: positive
+      - label: Structured-kernel and MI355 bring-up posts show real engineering depth
+        tone: positive
+    - label: Security / compliance proof
+      values:
+      - label: Public certification evidence not located
+        tone: warning
+      - label: Policies, VPC isolation, and issue intake are visible
+        tone: warning
+      - label: n/a
+        tone: neutral
+    - label: Developer ecosystem maturity
+      values:
+      - label: Stack Overflow footprint is still minimal
+        tone: warning
+      - label: GitHub, PyPI, Meetup, Discord, and YouTube surfaces are active
+        tone: positive
+      - label: n/a
+        tone: neutral
+  claimRefs:
+  - CE017
+  - CE024
+  - CE025
+  - CE034
+  - CE035
+  - CE038
+  - CE040
+  - CE041
+  - CE042
+  - CE043
+  - CE049
+  - CE050
+callouts:
+- calloutType: strength
+  title: Portability is the real wedge, not just another OpenAI-compatible endpoint
+  body: Modular’s most defensible product advantage is that MAX, Mojo, and the surrounding tooling are all organized around moving quickly across NVIDIA, AMD, and Apple targets without inheriting CUDA-only lock-in. The official docs, release notes, and kernel-portability writeups make that claim substantially more credible than generic infra marketing usually does.
+  claimRefs:
+  - CE006
+  - CE031
+  - CE033
+  - CE034
+  - CE035
+- calloutType: risk
+  title: Mammoth and enterprise trust are the two biggest execution gaps
+  body: Public materials show a promising orchestration layer and several policy controls, but the strongest sources still stop short of broad field proof on Mammoth, public security attestations, or explicit uptime and compliance commitments. Those are not fatal gaps, but they matter for buyers who need more than performance narratives.
+  claimRefs:
+  - CE007
+  - CE011
+  - CE025
+  - CE043
+  - CE045
+  - CE049
+- calloutType: recommendation
+  title: Treat compiler governance, control-plane boundaries, and certification proof as priority diligence asks
+  body: Before underwriting Modular as a default enterprise platform, diligence should pin down the post-1.0 compiler open-source plan, the exact operational and access boundaries in BYOC deployments, and whether public certification or audit evidence exists beyond policies and intake forms.
+  claimRefs:
+  - CE025
+  - CE036
+  - CE046
+  - CE047
+  - CE049
+localEvidence:
+  searchQueries:
+  - query: Modular MAX Mojo product docs deployment portability 2026
+    engine: web_search
+    hits: null
+    retainedSourceRefs:
+    - SE001
+    - SE013
+    - SE015
+    - SE021
+  - query: Modular Mammoth orchestration Kubernetes disaggregated inference 2026
+    engine: web_search
+    hits: null
+    retainedSourceRefs:
+    - SE002
+    - SE012
+  - query: Modular AI AWS Marketplace MAX developer surfaces GitHub PyPI Meetup 2026
+    engine: web_search
+    hits: null
+    retainedSourceRefs:
+    - SE011
+    - SE022
+    - SE023
+    - SE025
+    - SE026
+    - SE035
+    - SE036
+  - query: Modular MAX Mojo independent review vLLM portability 2026
+    engine: web_search
+    hits: null
+    retainedSourceRefs:
+    - SE033
+    - SE034
+  - query: Modular privacy acceptable use community license security report issue 2026
+    engine: web_search
+    hits: null
+    retainedSourceRefs:
+    - SE028
+    - SE029
+    - SE030
+    - SE031
+    - SE032
+  researchQuestions:
+  - id: QE001
+    question: What concrete product surfaces does Modular expose across MAX, Mammoth, Mojo, and cloud deployment in 2026?
+    type: enumeration
+    targets:
+    - contentRequirements/0
+    - contentRequirements/1
+    - plannedTables/product-module-asset-matrix
+    status: answered
+  - id: QE002
+    question: How does a user self-host a model and reach an OpenAI-compatible endpoint with Modular?
+    type: mechanism
+    targets:
+    - contentRequirements/0
+    - plannedTables/workflow-use-case-table
+    - plannedFigures/customer-workflow-operating-flow
+    status: answered
+  - id: QE003
+    question: How many models does MAX publicly support and how broad is the visible model menu?
+    type: quantification
+    targets:
+    - contentRequirements/1
+    - plannedTables/product-module-asset-matrix
+    status: answered
+  - id: QE004
+    question: Can customers bring their own weights or architectures instead of only using canned MAX pipelines?
+    type: verification
+    targets:
+    - contentRequirements/0
+    - contentRequirements/2
+    - plannedTables/workflow-use-case-table
+    status: answered
+  - id: QE005
+    question: What core layers make the stack portable across NVIDIA, AMD, Apple, and CPUs?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    - plannedFigures/product-architecture-map
+    status: answered
+  - id: QE006
+    question: What is Mammoth and what job does it perform beyond the MAX runtime itself?
+    type: verification
+    targets:
+    - contentRequirements/1
+    - plannedTables/product-module-asset-matrix
+    status: answered
+  - id: QE007
+    question: How does Mammoth schedule multi-model workloads across heterogeneous GPU fleets?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+    - plannedFigures/critical-dependency-map
+    status: answered
+  - id: QE008
+    question: What public reliability and observability claims are visible for Mammoth or managed deployment?
+    type: verification
+    targets:
+    - contentRequirements/3
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+    status: answered
+  - id: QE009
+    question: What exact role does Mojo play inside the commercial product stack?
+    type: mechanism
+    targets:
+    - contentRequirements/1
+    - contentRequirements/2
+    - plannedFigures/product-architecture-map
+    status: answered
+  - id: QE010
+    question: How much engineering work does MAX claim is needed to port a new model family?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+  - id: QE011
+    question: Which weight formats and quantization schemes are publicly supported in the bring-up workflow?
+    type: enumeration
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+  - id: QE012
+    question: Which serving optimizations are first-class MAX features in the 2026 docs set?
+    type: enumeration
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+  - id: QE013
+    question: What limits or feature conflicts remain when speculative decoding is enabled?
+    type: adverse
+    targets:
+    - contentRequirements/3
+    - contentRequirements/5
+    - plannedTables/workflow-use-case-table
+    status: answered
+  - id: QE014
+    question: Where does data live in BYOC deployments and what remains under Modular control?
+    type: mechanism
+    targets:
+    - contentRequirements/3
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+    - plannedFigures/critical-dependency-map
+    status: answered
+  - id: QE015
+    question: What deployment and commercial surfaces are visible in Modular managed cloud?
+    type: enumeration
+    targets:
+    - contentRequirements/3
+    - plannedTables/product-module-asset-matrix
+    - plannedTables/workflow-use-case-table
+    status: answered
+  - id: QE016
+    question: How much hands-on support is embedded in the enterprise operating model?
+    type: verification
+    targets:
+    - contentRequirements/3
+    - plannedTables/trust-quality-compliance-table
+    status: answered
+  - id: QE017
+    question: What roadmap evidence shows MAX is maturing from experimental APIs to production-ready frameworks?
+    type: freshness
+    targets:
+    - contentRequirements/4
+    - plannedTables/roadmap-release-development-stage-table
+    status: answered
+  - id: QE018
+    question: What language and runtime upgrades landed around Mojo 1.0 and developer ergonomics?
+    type: freshness
+    targets:
+    - contentRequirements/4
+    - plannedTables/roadmap-release-development-stage-table
+    status: answered
+  - id: QE019
+    question: How strong is the hardware-portability claim on actual new GPUs and not just on paper?
+    type: comparison
+    targets:
+    - contentRequirements/4
+    - plannedFigures/product-maturity-capability-map
+    status: answered
+  - id: QE020
+    question: What independent evidence exists that MAX can outperform alternative serving stacks?
+    type: comparison
+    targets:
+    - contentRequirements/4
+    - contentRequirements/5
+    - plannedFigures/product-maturity-capability-map
+    status: answered
+  - id: QE021
+    question: What developer-distribution signals show this is more than a closed demo stack?
+    type: verification
+    targets:
+    - contentRequirements/4
+    - plannedTables/roadmap-release-development-stage-table
+    status: answered
+  - id: QE022
+    question: Is the external community footprint already mainstream, or is it still early relative to mature infra projects?
+    type: adverse
+    targets:
+    - contentRequirements/4
+    - contentRequirements/5
+    - plannedFigures/product-maturity-capability-map
+    status: answered
+  - id: QE023
+    question: What formal trust, privacy, and safety controls are publicly documented for the platform?
+    type: verification
+    targets:
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+    status: answered
+  - id: QE024
+    question: What license or governance constraints remain despite Modular’s open-source messaging?
+    type: adverse
+    targets:
+    - contentRequirements/4
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+    status: answered
+  - id: QE025
+    question: Are public security certifications, SLAs, or independent compliance attestations visible in the reviewed source pack?
+    type: adverse
+    targets:
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+    status: partial
+  - id: QE026
+    question: Is Mammoth already generally available and independently benchmarked across production deployments?
+    type: freshness
+    targets:
+    - contentRequirements/3
+    - contentRequirements/4
+    - plannedTables/roadmap-release-development-stage-table
+    - plannedFigures/product-maturity-capability-map
+    status: partial
+  sources:
+  - id: SE001
+    publisher: Modular
+    title: 'MAX: A high-performance inference framework for AI'
+    url: https://www.modular.com/open-source/max
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - max
+    - serving
+    - portability
+    - open-source
+    keyQuote: MAX doesn't depend on PyTorch, CUDA, or ROCm, so there's nothing to bundle, patch, or keep in sync.
+  - id: SE002
+    publisher: Modular
+    title: 'Modular: Introducing Mammoth: Enterprise-Scale GenAI Deployments Made Simple'
+    url: https://www.modular.com/blog/introducing-mammoth-enterprise-scale-genai-deployments-made-simple
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - mammoth
+    - orchestration
+    - kubernetes
+    - disaggregated-inference
+    keyQuote: Mammoth's intelligent control plane sets it apart—it acts as the brain of your AI infrastructure, automatically optimizing model placement based on performance needs, cluster state, and hardware capabilities.
+  - id: SE003
+    publisher: Modular
+    title: 'Modular: The path to Mojo 1.0'
+    url: https://www.modular.com/blog/the-path-to-mojo-1-0
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - mojo
+    - roadmap
+    - stability
+  - id: SE004
+    publisher: Modular
+    title: 'Modular: The Next Big Step in Mojo Open Source'
+    url: https://www.modular.com/blog/the-next-big-step-in-mojo-open-source
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - mojo
+    - open-source
+    - licensing
+  - id: SE005
+    publisher: Modular
+    title: 'Modular: Modular 26.3: Mojo 1.0 Beta, MAX Video Gen, and more'
+    url: https://www.modular.com/blog/modular-26-3-mojo-1-0-beta-max-video-gen-and-more
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - release
+    - mojo
+    - video-generation
+    - max
+  - id: SE006
+    publisher: Modular
+    title: 'Modular: Modular 26.1: A Big Step Towards More Programmable and Portable AI Infrastructure'
+    url: https://www.modular.com/blog/modular-26-1-a-big-step-towards-more-programmable-and-portable-ai-infrastructure
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - release
+    - model-api
+    - apple-silicon
+    - mojo
+  - id: SE007
+    publisher: Modular
+    title: 'Modular: Modular 25.6: Unifying the latest GPUs from NVIDIA, AMD, and Apple'
+    url: https://www.modular.com/blog/modular-25-6-unifying-the-latest-gpus-from-nvidia-amd-and-apple
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - portability
+    - benchmarks
+    - apple-silicon
+    - amd
+    - nvidia
+  - id: SE008
+    publisher: Modular
+    title: 'Modular: MAX 25.2: Unleash the power of your H200''s–without CUDA!'
+    url: https://www.modular.com/blog/max-25-2-unleash-the-power-of-your-h200s-without-cuda
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - max
+    - nvidia
+    - multi-gpu
+    - containers
+  - id: SE009
+    publisher: Modular
+    title: 'Modular: Modular + AMD: Unleashing AI performance on AMD GPUs'
+    url: https://www.modular.com/blog/modular-x-amd-unleashing-ai-performance-on-amd-gpus
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - amd
+    - ga
+    - mammoth
+    - portability
+  - id: SE010
+    publisher: Modular
+    title: 'Modular: Achieving State-of-the-Art Performance on AMD MI355 — in Just 14 Days'
+    url: https://www.modular.com/blog/achieving-state-of-the-art-performance-on-amd-mi355----in-just-14-days
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - amd
+    - mi355
+    - kernel-portability
+    - bringup
+    keyQuote: Because 99.9% of the stack is architecture-agnostic, adding support for a new GPU mostly involves updating a few kernels.
+  - id: SE011
+    publisher: Modular
+    title: 'Modular: AI Agents for AWS Marketplace'
+    url: https://www.modular.com/blog/ai-agents-for-aws-marketplace
+    date: '2025-07-16'
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - aws-marketplace
+    - max
+    - packaging
+    - channel
+  - id: SE012
+    publisher: Modular
+    title: 'Modular: 2025 Year in Review'
+    url: https://www.modular.com/blog/modular-2025-year-in-review
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - roadmap
+    - mammoth
+    - open-source
+    - community
+  - id: SE013
+    publisher: Modular Docs
+    title: 'What is Modular | Modular'
+    url: https://docs.modular.com/max/intro/
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - docs
+    - max
+    - deployment
+    - capabilities
+  - id: SE014
+    publisher: Modular Docs
+    title: 'Quickstart | Modular'
+    url: https://docs.modular.com/max/get-started/
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - quickstart
+    - endpoint
+    - api
+  - id: SE015
+    publisher: Modular Docs
+    title: 'Cloud deployments with Modular | Modular'
+    url: https://docs.modular.com/max/deploy/cloud/
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - managed-cloud
+    - byoc
+    - vpc
+    - support
+  - id: SE016
+    publisher: Modular Docs
+    title: 'Model bring-up workflow | Modular'
+    url: https://docs.modular.com/max/develop/model-bringup-workflow/
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - bringup
+    - architectures
+    - weights
+    - quantization
+  - id: SE017
+    publisher: Modular Docs
+    title: 'Speculative decoding | Modular'
+    url: https://docs.modular.com/max/serve/speculative-decoding/
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - speculative-decoding
+    - serving
+    - performance
+  - id: SE018
+    publisher: Modular Docs
+    title: 'Prefix caching with PagedAttention | Modular'
+    url: https://docs.modular.com/max/serve/prefix-caching/
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - prefix-caching
+    - pagedattention
+    - kv-cache
+  - id: SE019
+    publisher: Modular Docs
+    title: 'Structured output | Modular'
+    url: https://docs.modular.com/max/serve/structured-output/
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - structured-output
+    - llguidance
+    - gpu-only
+  - id: SE020
+    publisher: Modular Docs
+    title: 'Supported models | Modular'
+    url: https://docs.modular.com/max/models/
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - models
+    - supported-architectures
+    - multi-gpu
+  - id: SE021
+    publisher: Mojo
+    title: Mojo
+    url: https://mojolang.org/
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - mojo
+    - gpu-programming
+    - metaprogramming
+    - roadmap
+  - id: SE022
+    publisher: GitHub
+    title: 'GitHub - modular/modular: The Modular Platform (includes MAX & Mojo)'
+    url: https://github.com/modular/modular
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: high
+    independence: company
+    topics:
+    - github
+    - open-source
+    - branches
+    - community
+  - id: SE023
+    publisher: GitHub
+    title: 'Releases · modular/modular'
+    url: https://github.com/modular/modular/releases
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: high
+    independence: company
+    topics:
+    - releases
+    - changelog
+    - versioning
+  - id: SE024
+    publisher: GitHub
+    title: 'Issues · modular/modular'
+    url: https://github.com/modular/modular/issues
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: high
+    independence: company
+    topics:
+    - issues
+    - bug-reports
+    - activity
+  - id: SE025
+    publisher: Python Package Index
+    title: modular
+    url: https://pypi.org/project/modular/
+    date: '2026-05-07'
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: high
+    independence: company
+    topics:
+    - pypi
+    - packaging
+    - distribution
+  - id: SE026
+    publisher: Meetup
+    title: 'Modular Meetup Group | Meetup'
+    url: https://www.meetup.com/modular-meetup-group/
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: company
+    topics:
+    - meetup
+    - community
+    - developer-signal
+  - id: SE027
+    publisher: Stack Overflow
+    title: "Newest 'mojo-lang' Questions"
+    url: https://stackoverflow.com/questions/tagged/mojo-lang
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: high
+    independence: independent
+    topics:
+    - stackoverflow
+    - community
+    - q-and-a
+  - id: SE028
+    publisher: Modular
+    title: 'Modular: Privacy Policy'
+    url: https://www.modular.com/legal/privacy
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: legal
+    reputationTier: high
+    independence: company
+    topics:
+    - privacy
+    - gdpr
+    - cpra
+    - security
+  - id: SE029
+    publisher: Modular
+    title: 'Modular: Terms of Service'
+    url: https://www.modular.com/legal/terms
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: legal
+    reputationTier: high
+    independence: company
+    topics:
+    - terms
+    - platform
+    - security
+  - id: SE030
+    publisher: Modular
+    title: 'Modular: Report Issue'
+    url: https://www.modular.com/company/report-issue
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: legal
+    reputationTier: medium
+    independence: company
+    topics:
+    - security
+    - incident-reporting
+    - privacy
+  - id: SE031
+    publisher: Modular
+    title: 'Modular: Acceptable Use Policy'
+    url: https://www.modular.com/legal/aup
+    date: '2026-03-30'
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: legal
+    reputationTier: high
+    independence: company
+    topics:
+    - acceptable-use
+    - safety
+    - ai-governance
+  - id: SE032
+    publisher: Modular
+    title: 'Modular: Community License'
+    url: https://www.modular.com/legal/community
+    date: '2026-03-20'
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: legal
+    reputationTier: high
+    independence: company
+    topics:
+    - licensing
+    - telemetry
+    - redistribution
+    - hardware-support
+  - id: SE033
+    publisher: Spheron Network
+    title: 'Modular MAX and Mojo on GPU Cloud: Deploy an LLM Inference Engine That Outperforms vLLM'
+    url: https://www.spheron.network/blog/modular-max-mojo-gpu-cloud-llm-inference/
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: review
+    reputationTier: medium
+    independence: independent
+    topics:
+    - benchmark
+    - vllm
+    - portability
+    - max
+    keyQuote: Use MAX if you serve dense models at high concurrency on NVIDIA or AMD hardware and want kernel-level control without writing CUDA C++.
+  - id: SE034
+    publisher: krun.pro
+    title: 'Mojo Ecosystem 2026: Infrastructure, Libraries, and the MAX Engine'
+    url: https://krun.pro/mojo-ecosystem/
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: adverse
+    sourceType: review
+    reputationTier: low
+    independence: independent
+    topics:
+    - mojo
+    - compiler
+    - ecosystem
+    - compliance
+    keyQuote: The closed compiler is a real compliance consideration — especially for teams with build toolchain auditability requirements.
+  - id: SE035
+    publisher: YouTube
+    title: 'Modular - YouTube'
+    url: https://www.youtube.com/@modularinc
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: company
+    topics:
+    - youtube
+    - community
+    - developer-signal
+  - id: SE036
+    publisher: Discord
+    title: Modular
+    url: https://discord.gg/modular
+    accessDate: '2026-06-13'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: company
+    topics:
+    - discord
+    - community
+    - developer-signal
+  claims:
+  - id: CE001
+    statement: Modular publicly describes the platform as a vertically integrated suite for AI development and deployment rather than a single-point inference tool.
+    type: company-claimed
+    topic: platform-scope
+    sourceRefs:
+    - SE013
+    - SE022
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+  - id: CE002
+    statement: MAX exposes an OpenAI-compatible serving interface through the CLI, Docker, and REST-oriented client examples.
+    type: observed
+    topic: max-serving
+    sourceRefs:
+    - SE001
+    - SE013
+    - SE014
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+    - QE002
+  - id: CE003
+    statement: Modular offers self-hosted endpoints, Modular-managed cloud endpoints, and a bring-your-own-cloud deployment model.
+    type: observed
+    topic: deployment-surfaces
+    sourceRefs:
+    - SE013
+    - SE015
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+    - QE002
+    - QE015
+  - id: CE004
+    statement: MAX publicly claims support for more than 500 models or architectures across its serving surface.
+    type: company-claimed
+    topic: model-breadth
+    sourceRefs:
+    - SE011
+    - SE013
+    - SE020
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE003
+  - id: CE005
+    statement: Modular says users can serve supported Hugging Face models, load fine-tuned weights, and extend MAX with custom architectures instead of staying inside a fixed catalog.
+    type: observed
+    topic: custom-models
+    sourceRefs:
+    - SE001
+    - SE013
+    - SE016
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE004
+  - id: CE006
+    statement: Modular’s official product and docs pages frame MAX as hardware-agnostic and free from CUDA lock-in across diverse accelerator targets.
+    type: company-claimed
+    topic: portability
+    sourceRefs:
+    - SE001
+    - SE013
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE005
+  - id: CE007
+    statement: Mammoth is presented as a Kubernetes-native public-preview orchestration layer for enterprise-scale GenAI serving.
+    type: company-claimed
+    topic: mammoth
+    sourceRefs:
+    - SE002
+    - SE012
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE006
+    - QE026
+  - id: CE008
+    statement: Mammoth’s control plane is described as automatically placing models according to performance needs, cluster state, and hardware capabilities.
+    type: company-claimed
+    topic: mammoth
+    sourceRefs:
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE007
+  - id: CE009
+    statement: Mammoth publicly claims multi-model and multi-hardware orchestration plus intelligent auto-scaling across heterogeneous GPU fleets.
+    type: company-claimed
+    topic: mammoth
+    sourceRefs:
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE007
+  - id: CE010
+    statement: Mammoth documents disaggregated inference that separates prompt prefill nodes from decode nodes for distributed optimization.
+    type: company-claimed
+    topic: mammoth
+    sourceRefs:
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE007
+  - id: CE011
+    statement: Mammoth is marketed as enterprise-grade because it is built on Kubernetes with fault tolerance and observability patterns.
+    type: company-claimed
+    topic: mammoth
+    sourceRefs:
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE008
+    - QE026
+  - id: CE012
+    statement: Mojo is described as a kernel-focused systems language that combines Pythonic syntax with high-performance CPU and GPU programming features.
+    type: company-claimed
+    topic: mojo
+    sourceRefs:
+    - SE013
+    - SE021
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+    - QE009
+  - id: CE013
+    statement: Modular states that MAX’s kernels are written in Mojo and that Mojo can be used to extend MAX models with novel algorithms or custom operations.
+    type: company-claimed
+    topic: mojo
+    sourceRefs:
+    - SE013
+    - SE021
+    - SE022
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE005
+    - QE009
+  - id: CE014
+    statement: MAX’s model bring-up workflow centers on architecture packages that include arch.py, model_config.py, model.py, weight_adapters.py, and optional custom layers.
+    type: observed
+    topic: model-bringup
+    sourceRefs:
+    - SE016
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE004
+    - QE010
+  - id: CE015
+    statement: MAX docs say many new checkpoints can reuse an existing reference architecture with only config overrides or weight-name remapping.
+    type: observed
+    topic: model-bringup
+    sourceRefs:
+    - SE016
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE010
+  - id: CE016
+    statement: The public bring-up docs show support for multiple weight formats including Safetensors and GGUF plus explicit handling for FP8 and FP4 quantized checkpoints.
+    type: observed
+    topic: model-bringup
+    sourceRefs:
+    - SE016
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE011
+  - id: CE017
+    statement: MAX documents speculative decoding as a native serving feature with EAGLE, EAGLE3, MTP, and standalone draft-model modes.
+    type: observed
+    topic: serving-optimizations
+    sourceRefs:
+    - SE017
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE012
+  - id: CE018
+    statement: For EAGLE and MTP, MAX reports a unified startup architecture because it compiles the target, draft, and verifier into a single graph.
+    type: observed
+    topic: serving-optimizations
+    sourceRefs:
+    - SE017
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE012
+  - id: CE019
+    statement: Structured output is not supported alongside speculative decoding in MAX, and --enable-echo is also excluded in that mode.
+    type: observed
+    topic: serving-optimizations
+    sourceRefs:
+    - SE017
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE013
+  - id: CE020
+    statement: Prefix caching is enabled by default in MAX and is implemented on top of PagedAttention-based KV-cache management.
+    type: observed
+    topic: serving-optimizations
+    sourceRefs:
+    - SE018
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE012
+  - id: CE021
+    statement: MAX docs say prefix caching works on both CPU and GPU and helps when requests share prefixes by improving TTFT and effective throughput.
+    type: observed
+    topic: serving-optimizations
+    sourceRefs:
+    - SE018
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE012
+  - id: CE022
+    statement: Structured output in MAX uses llguidance and supports either JSON schema or Pydantic-defined response contracts.
+    type: observed
+    topic: structured-output
+    sourceRefs:
+    - SE019
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE012
+  - id: CE023
+    statement: MAX’s structured output feature is documented as GPU-only even though all text-generation models are intended to support it at the pipeline level.
+    type: observed
+    topic: structured-output
+    sourceRefs:
+    - SE019
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE013
+  - id: CE024
+    statement: Modular’s managed cloud publicly offers serverless endpoints, dedicated endpoints, custom-model inference, and batch inference.
+    type: observed
+    topic: managed-cloud
+    sourceRefs:
+    - SE015
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+    - QE015
+  - id: CE025
+    statement: In BYOC mode, Modular says the data plane stays inside the customer VPC while a Modular-operated control plane manages endpoint lifecycle, scaling, monitoring, and model registration.
+    type: observed
+    topic: byoc
+    sourceRefs:
+    - SE015
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE014
+    - QE025
+  - id: CE026
+    statement: Modular’s BYOC docs claim support across AWS, GCP, Azure, and OCI with NVIDIA, AMD, and Apple Silicon targets.
+    type: company-claimed
+    topic: byoc
+    sourceRefs:
+    - SE015
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE014
+  - id: CE027
+    statement: Modular includes forward-deployed engineers in its public cloud-deployment story for workload profiling, bottleneck analysis, and custom Mojo-kernel work.
+    type: company-claimed
+    topic: services-layer
+    sourceRefs:
+    - SE015
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE016
+  - id: CE028
+    statement: Modular 26.1 graduated the MAX Python API out of experimental with PyTorch-like eager mode and model.compile for production use.
+    type: company-claimed
+    topic: roadmap
+    sourceRefs:
+    - SE006
+    - SE022
+    confidence: high
+    freshness: recent
+    answersQuestionRefs:
+    - QE017
+  - id: CE029
+    statement: Modular 26.1 added compile-time reflection, linear types, typed errors, and better error messages to Mojo.
+    type: company-claimed
+    topic: mojo-roadmap
+    sourceRefs:
+    - SE006
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE018
+  - id: CE030
+    statement: Modular 25.6 added Apple Silicon GPU support and pip install mojo with a bundled compiler, LSP server, and debugger.
+    type: company-claimed
+    topic: mojo-roadmap
+    sourceRefs:
+    - SE007
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE018
+  - id: CE031
+    statement: MAX 25.2 added multi-GPU H100 and H200 support and promoted a 1.3 GB compressed slim serving container that avoids bundling CUDA.
+    type: company-claimed
+    topic: portability
+    sourceRefs:
+    - SE008
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE019
+  - id: CE032
+    statement: Modular 25.6 publicly claimed industry-leading performance on NVIDIA B200 and AMD MI355X with reproducible benchmarking scripts.
+    type: company-claimed
+    topic: portability
+    sourceRefs:
+    - SE007
+    - SE023
+    confidence: high
+    freshness: recent
+    answersQuestionRefs:
+    - QE019
+  - id: CE033
+    statement: Modular’s AMD partnership announcement said the platform became generally available across AMD’s MI300 and MI325 GPU portfolio.
+    type: company-claimed
+    topic: amd-support
+    sourceRefs:
+    - SE009
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE019
+  - id: CE034
+    statement: Modular’s MI355 bring-up post says rapid hardware enablement was possible because almost all of the stack is architecture-agnostic and only a small kernel subset needed updating.
+    type: company-claimed
+    topic: kernel-portability
+    sourceRefs:
+    - SE010
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE019
+  - id: CE035
+    statement: The structured-kernels series argues that Modular can keep a common kernel structure while progressively specializing TileIO, TilePipeline, and TileOp components per hardware target.
+    type: company-claimed
+    topic: kernel-portability
+    sourceRefs:
+    - SE010
+    - SE023
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE019
+  - id: CE036
+    statement: Modular 26.3 announced a Mojo 1.0 beta, video generation in MAX with Wan 2.2, and a plan to finalize Mojo 1.0 later in 2026.
+    type: company-claimed
+    topic: roadmap
+    sourceRefs:
+    - SE005
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE017
+    - QE018
+  - id: CE037
+    statement: Modular’s 2025 year-in-review post says Mammoth is intended to come to managed endpoints in 2026 while MAX kernels and the MAX Python API became open-source milestones in 2025.
+    type: company-claimed
+    topic: roadmap
+    sourceRefs:
+    - SE012
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE017
+    - QE026
+  - id: CE038
+    statement: The main GitHub repository advertises nightly and stable release branches, monthly community meetings, and a public bug-report and contribution path.
+    type: observed
+    topic: developer-signal
+    sourceRefs:
+    - SE022
+    - SE024
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE021
+  - id: CE039
+    statement: The GitHub repository says that as of May 2025 it included more than 450,000 lines of code from over 6,000 contributors.
+    type: company-claimed
+    topic: developer-signal
+    sourceRefs:
+    - SE022
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QE021
+  - id: CE040
+    statement: The modular package was distributed through PyPI as version 26.3.0 with a file upload date of May 7, 2026.
+    type: observed
+    topic: developer-signal
+    sourceRefs:
+    - SE025
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE021
+  - id: CE041
+    statement: Modular maintains a Meetup group for developers and AI practitioners interested in Mojo and the MAX platform.
+    type: observed
+    topic: developer-signal
+    sourceRefs:
+    - SE026
+    - SE035
+    - SE036
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE022
+  - id: CE042
+    statement: The Stack Overflow mojo-lang tag showed zero questions at fetch time, indicating that mainstream external Q-and-A footprint is still very early.
+    type: observed
+    topic: developer-signal
+    sourceRefs:
+    - SE027
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE022
+  - id: CE043
+    statement: Modular’s privacy policy says it uses technical, organizational, and administrative security measures but explicitly notes that no method of transmission or storage is completely secure.
+    type: observed
+    topic: trust-controls
+    sourceRefs:
+    - SE028
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE023
+    - QE025
+  - id: CE044
+    statement: Modular provides a public issue-report workflow for safety, privacy, and security concerns that routes reports to its security team.
+    type: observed
+    topic: trust-controls
+    sourceRefs:
+    - SE030
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE023
+  - id: CE045
+    statement: Modular’s Acceptable Use Policy governs the MAX Platform, Modular Cloud, and AI-powered features and requires human review when outputs inform legal, medical, or financial advice.
+    type: observed
+    topic: trust-controls
+    sourceRefs:
+    - SE031
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE023
+  - id: CE046
+    statement: Modular’s Community License is contract-governed, permits telemetry usage, and requires approval for custom hardware use beyond supported targets.
+    type: observed
+    topic: licensing
+    sourceRefs:
+    - SE032
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE024
+  - id: CE047
+    statement: The Community License forbids reverse engineering the SDK and redistributing the SDK as a standalone component.
+    type: observed
+    topic: licensing
+    sourceRefs:
+    - SE032
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE024
+  - id: CE048
+    statement: Modular’s Terms of Service incorporate the privacy policy, acceptable-use policy, and community license into overall platform use.
+    type: observed
+    topic: licensing
+    sourceRefs:
+    - SE029
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE023
+  - id: CE049
+    statement: One independent ecosystem review argues that Mojo’s open standard library does not remove the compliance concern created by a still-closed MAX compiler for auditable toolchains.
+    type: third-party-reported
+    topic: governance-risk
+    sourceRefs:
+    - SE034
+    confidence: low
+    freshness: current
+    answersQuestionRefs:
+    - QE024
+  - id: CE050
+    statement: An independent 2026 benchmark review says MAX is compelling for dense models and hardware portability but that vLLM still remains the broader general-purpose production default.
+    type: third-party-reported
+    topic: competitive-proof
+    sourceRefs:
+    - SE033
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE020
+  evidenceGaps:
+  - type: missing-source
+    severity: material
+    topic: security-attestation
+    missingEvidence: Public certification or attestation artifacts such as SOC 2, ISO 27001, or a detailed third-party security review.
+    whyItMatters: Policy pages show intent, but enterprise buyers often require independent assurance before approving a platform that touches production models or regulated data.
+    diligencePath: Request current audit reports, certification status, pen-test summaries, and any customer-shareable security architecture documentation.
+    relatedQuestionRefs:
+    - QE025
+    relatedTableRefs:
+    - TE004
+  - type: missing-source
+    severity: material
+    topic: sla-reliability
+    missingEvidence: Public uptime commitments, support response commitments, incident history, or status-page evidence for managed endpoints and Mammoth.
+    whyItMatters: Managed-service positioning is central to the product thesis, but public reliability proof is still much thinner than the feature narrative.
+    diligencePath: Ask for standard SLA language, status-page history, postmortem process, and customer references discussing production operations.
+    relatedQuestionRefs:
+    - QE025
+    - QE026
+    relatedTableRefs:
+    - TE001
+    - TE004
+  - type: missing-source
+    severity: material
+    topic: mammoth-proof
+    missingEvidence: Independent or customer-authored evidence showing Mammoth operating at scale beyond Modular’s own preview materials.
+    whyItMatters: Mammoth is central to Modular’s scale-out story, but preview-stage evidence leaves uncertainty about real-world maturity and operational overhead.
+    diligencePath: Request design-partner references, architecture deep dives, production case studies, and benchmark methodology for multi-model deployments.
+    relatedQuestionRefs:
+    - QE026
+    relatedTableRefs:
+    - TE001
+    - TE005
+  - type: private-evidence-only
+    severity: material
+    topic: compiler-governance
+    missingEvidence: A precise post-beta roadmap for compiler openness, auditability, telemetry controls, and customer rights if Modular changes license terms.
+    whyItMatters: Regulated or security-conscious buyers may accept proprietary tooling, but only if they understand governance, audit, and continuity risks clearly.
+    diligencePath: Request a roadmap memo covering compiler-source timing, telemetry controls, escrow or continuity options, and enterprise-negotiated license carve-outs.
+    relatedQuestionRefs:
+    - QE024
+    relatedTableRefs:
+    - TE004

@@ -1,0 +1,1840 @@
+schemaVersion: "report-v2"
+artifact: product-tech
+slug: polymarket
+runDate: "2026-05-30"
+company:
+  name: Polymarket
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: >-
+    Polymarket is a non-custodial prediction market platform on Polygon PoS that combines an
+    off-chain Central Limit Order Book (CLOB V2, live April 28 2026) with on-chain settlement via
+    the Conditional Token Framework (CTF Exchange V2) and decentralized resolution through UMA's
+    Optimistic Oracle. The April 2026 infrastructure overhaul delivered a 10x throughput improvement
+    (10,000+ orders/second), pUSD as a native 1:1 USDC-backed collateral token, and EIP-1271 support
+    for institutional smart-contract wallets. ICE became the exclusive institutional data distributor
+    in February 2026, and the CFTC-regulated QCX LLC DCM opened US access in December 2025 via
+    FCM-intermediated onboarding with full KYC/AML. A May 22 2026 private-key compromise drained
+    approximately $600K from a legacy operational wallet — no user funds or core contracts were
+    affected — but surfaced material key-management risk that requires a post-incident audit trail.
+
+sections:
+  - id: section-product-overview
+    title: Platform Overview and User Workflow
+    body: >-
+      Polymarket operates as the world's largest prediction market, enabling any user with a
+      non-custodial crypto wallet to trade binary or multi-outcome event tokens denominated in
+      USDC-backed pUSD on the Polygon PoS network. On the platform, a "market" represents a
+      question about a real-world outcome (politics, economics, sports, crypto, weather) and
+      each outcome is tokenized as an ERC-1155 conditional token priced between $0.00 and $1.00,
+      where the price reflects the crowd's probability estimate. Winning tokens redeem for exactly
+      $1.00 when the market resolves; losing tokens expire worthless.
+
+      From a user perspective, the end-to-end workflow involves four stages: (1) connect a Web3
+      wallet (or complete KYC via an FCM broker for US access) and convert USDC to pUSD through
+      the on-chain collateral ramp; (2) browse the prediction-market feed — available on web at
+      polymarket.com, iOS (4.7 stars, 30,000+ reviews), and Android (3.7 stars, 7,100+ reviews)
+      — and select a market; (3) place a limit or market order through the CLOB V2 engine; and
+      (4) hold tokens through event resolution, which triggers automatic payout via the UMA oracle.
+      As of May 2026, the platform hosts 214,735+ markets across a lifetime base of over 2.4
+      million traders and approximately $62 billion in total trading volume.
+
+      The platform carries two distinct product surfaces: the global non-custodial wallet-based
+      platform (no mandatory KYC) and Polymarket US (QCX LLC DCM), which launched in December
+      2025 via a waitlist iOS rollout requiring full KYC/AML verification and FCM intermediation.
+      This dual architecture allows Polymarket to serve both crypto-native retail users and
+      regulated institutional participants within a single brand.
+    claimRefs:
+      - CE001
+      - CE016
+      - CE018
+      - CE019
+      - CE030
+      - CE031
+    tableRefs:
+      - TE002
+    figureRefs:
+      - FE002
+
+  - id: section-smart-contracts
+    title: Smart Contract Infrastructure and CLOB V2
+    body: >-
+      Polymarket's on-chain architecture is built on the Gnosis Conditional Token Framework (CTF),
+      a standard for tokenizing event outcomes as ERC-1155 tokens on Polygon mainnet (Chain ID 137).
+      The core contracts are the CTF Exchange V2 (0xE111180000d2663C0091e4f400237545B87B996B),
+      which handles operator-driven order matching and settlement, and the Conditional Tokens contract
+      (0x4D97DCd97eC945f40cF65F87097ACe5EA0476045), which governs splitting, merging, and redeeming
+      outcome shares. Multi-outcome markets with correlated Yes/No legs are handled by the Neg Risk
+      CTF Exchange (0xe2222d279d744050d28e00520010520000310F59).
+
+      The April 2026 infrastructure overhaul (announced April 7, live April 28) was the most
+      significant platform change since launch. CLOB V2 replaced V1's matching engine and delivers
+      10,000+ orders per second versus 800-1,200 on V1, reduces order matching latency from 800-2,000
+      ms to 80-150 ms, and cuts per-trade gas fees from $0.15-$0.45 to $0.02-$0.08. CTF Exchange V2
+      adds EIP-1271 support (enabling multi-sig and smart-contract wallet access for institutional
+      traders), builder codes for on-chain API attribution, and simplified order structs with
+      proxy upgradeability.
+
+      Simultaneously, Polymarket migrated its collateral from bridged USDC.e to pUSD (Polymarket
+      USD), a proprietary stablecoin backed 1:1 by Circle USDC. The pUSD Collateral Onramp contract
+      (0x93070a847efEf7F70739046A929D47a521F5B8ee) handles conversion; users on the web frontend
+      needed only a single approval prompt. pUSD is a collateral instrument only — it is not a
+      tradeable asset — and its introduction removes the platform's dependence on a Polygon-to-Ethereum
+      bridged stablecoin, reducing bridge counterparty risk. The POLY governance token airdrop,
+      confirmed by Polymarket's CMO in October 2025, remains pending the full US consumer rollout.
+    claimRefs:
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE006
+      - CE007
+      - CE008
+      - CE009
+      - CE010
+      - CE015
+      - CE032
+      - CE033
+      - CE034
+      - CE037
+    tableRefs:
+      - TE001
+      - TE003
+    figureRefs:
+      - FE001
+
+  - id: section-oracle-resolution
+    title: Oracle Resolution and Settlement Mechanics
+    body: >-
+      Polymarket uses UMA Protocol's Optimistic Oracle (upgraded to MOOV2 in 2025) for decentralized,
+      permissionless market resolution. Every market specifies pre-defined resolution criteria
+      (resolution source, end date, edge-case handling) published alongside the market question.
+      After a market closes, a whitelisted proposer posts a $750 USDC bond and submits the outcome
+      on-chain. The proposal is "optimistically" treated as correct for a 2-hour challenge window.
+      If no one disputes within that period, the market settles automatically and winning tokens
+      become redeemable for $1.00 each in pUSD.
+
+      If a dispute is filed, the proposer's bond is voided and a new proposal round opens. A second
+      dispute escalates the question to UMA's Data Verification Mechanism (DVM), where UMA token
+      holders vote using a Schelling-point mechanism (majority rules). DVM votes typically complete
+      in 48-96 hours. Per SettleRisk's February 2026 quantitative analysis, more than 98.5% of
+      Polymarket markets resolve cleanly in a single proposal cycle without DVM escalation. The 1.5%
+      that escalate to DVM voting are typically ambiguous events, contested geopolitical outcomes,
+      or cases where resolution criteria are vague.
+
+      The UMA CTF Adapter (audited by OpenZeppelin) bridges the UMA oracle result into the CTF
+      so winning conditional tokens can be redeemed. This resolution infrastructure is materially
+      dependent on UMA token-holder governance, creating a systemic risk if whale concentration
+      allows coordinated manipulation of DVM votes — a concern documented by SettleRisk's analysis
+      of a $7M market that resolved incorrectly in March 2025 due to governance gaming. The
+      $750 bond is modest relative to large-market stakes, and sophisticated actors with enough
+      UMA tokens could exploit ambiguously worded markets.
+    claimRefs:
+      - CE011
+      - CE012
+      - CE013
+      - CE014
+      - CE040
+    figureRefs:
+      - FE003
+
+  - id: section-developer-ecosystem
+    title: Developer Ecosystem, APIs, and SDK
+    body: >-
+      Polymarket maintains an active open-source developer ecosystem on GitHub (18+ repositories)
+      and publishes three primary API surfaces: the Gamma API (market discovery and metadata, no
+      auth required), the CLOB API (order placement and order-book access, auth required), and the
+      Data API (user activity and analytics, no auth). Real-time updates are delivered via WebSocket
+      streams. The Polymarket US DCM product adds a streaming-first institutional REST API with
+      gRPC streams for real-time market data and order tracking, documented at docs.polymarket.us.
+
+      Official SDKs exist in Python (polymarket-client, released in beta in 2026), TypeScript, Go,
+      and Rust (CLI). The legacy py-clob-client Python library was archived in favor of the unified
+      py-sdk. The unified polymarket-apis package on PyPI (last updated May 24, 2026) packages Clob,
+      Gamma, Data, Web3, WebSocket, and GraphQL clients in a single Pydantic-validated interface.
+      CLOB V2 introduced builder codes, enabling on-chain attribution of orders to specific API
+      integrators via a new builderCode field added to the leaderboard and volume endpoints (May
+      18 changelog).
+
+      ICE's February 2026 launch of the Polymarket Signals and Sentiment tool represents a parallel
+      institutional API channel: ICE normalizes Polymarket market data, maps signals to ICE security
+      IDs (equities, commodities, etc.), and delivers the feed through ICE Consolidated Feed and
+      ICE Consolidated History for backtesting. This positions Polymarket data as a complementary
+      signal alongside traditional pricing, fundamental, and sentiment data for institutional
+      quantitative strategies. Polymarket benefits from ICE's global distribution to investment
+      banks, asset managers, and hedge funds without building institutional data infrastructure
+      itself. Developer community engagement is sustained via the Discord #devs channel, open-source
+      bug bounty, and documentation maintained at docs.polymarket.com.
+    claimRefs:
+      - CE025
+      - CE026
+      - CE027
+      - CE028
+      - CE029
+      - CE036
+      - CE038
+    tableRefs:
+      - TE005
+    figureRefs:
+      - FE004
+
+  - id: section-compliance-security
+    title: Compliance, Security, and Trust Infrastructure
+    body: >-
+      Polymarket US (QCX LLC) received CFTC Amended Order of Designation in November 2025 (announced
+      via PR Newswire), making it only the second US prediction market to hold Designated Contract
+      Market (DCM) status alongside Kalshi. Under the amended order, Polymarket developed enhanced
+      market surveillance systems, market supervision policies, clearing procedures, and Part-16
+      regulatory reporting capabilities. US participants access the platform exclusively through
+      FCM (Futures Commission Merchant) intermediaries with full KYC and AML verification; direct
+      wallet access is not available for US users under the DCM structure. The regulatory page at
+      polymarketexchange.com publishes the full rulebook, risk disclosure statement, and exchange
+      member application materials consistent with Commodity Exchange Act requirements.
+
+      On the security side, the core CTF exchange contracts have been audited by ChainSecurity (V1)
+      and Quantstamp and Cantina (V2, March 2026). ChainSecurity's audit found "a high level of
+      security" with adequate functional correctness and signature handling. A Cantina-hosted bug
+      bounty program provides ongoing incentive for responsible disclosure.
+
+      On May 22, 2026, on-chain investigator ZachXBT flagged suspicious outflows from Polymarket's
+      UMA CTF Adapter-adjacent addresses on Polygon. The total drained was approximately $520,000
+      to $660,000 in POL tokens and USDC.e. Polymarket VP of Engineering Josh Stevens confirmed
+      this was not a smart contract exploit but a compromise of a six-year-old private key for an
+      internal backend "refiller" wallet used for liquidity top-ups. All permissions tied to the key
+      were revoked; user trading balances and market resolution were unaffected. The incident
+      nonetheless exposes a material operational security gap: legacy administrative keys with
+      privileged access were not rotated or retired when no longer needed, and no on-chain monitoring
+      triggered early detection. Post-incident, security experts have called for stricter key
+      lifecycle management and continuous on-chain surveillance across all oracle-adjacent addresses.
+    claimRefs:
+      - CE017
+      - CE018
+      - CE019
+      - CE020
+      - CE021
+      - CE022
+      - CE023
+      - CE024
+      - CE035
+      - CE039
+    tableRefs:
+      - TE004
+
+tables:
+  - id: TE001
+    title: Product Module / Asset Matrix
+    columns:
+      - Module / Product Line
+      - Primary User
+      - Status / Maturity
+      - Differentiation
+      - Diligence Gap
+    rows:
+      - - Global Prediction Market (polymarket.com)
+        - Retail and crypto-native traders globally
+        - Production; 214,735+ markets; $62B lifetime volume
+        - Non-custodial; 10,000+ orders/sec CLOB V2; 214k+ markets
+        - Governance token (POLY) launch timeline
+      - - CLOB V2 Order Engine
+        - Market makers, quant traders, API bots
+        - Production (live Apr 28 2026)
+        - 10k+ orders/sec; <150ms latency; EIP-1271 for multi-sig
+        - Off-chain engine SLA; single-operator dependency
+      - - Polymarket US DCM (QCX LLC)
+        - US retail and institutional traders
+        - Live via FCM waitlist (Dec 2025)
+        - CFTC DCM regulated; only second US DCM
+        - Full retail launch date; state-level legal challenges
+      - - ICE Institutional Data Service
+        - Institutional capital markets (funds, banks)
+        - Live (Feb 2026)
+        - Exclusive normalized signals via ICE global feed
+        - Revenue-share terms; institutional onboarding depth
+      - - Developer APIs and SDKs
+        - Builders, quant traders, integrators
+        - Production (Gamma/CLOB/Data); py-sdk in beta
+        - Open-source; REST/WebSocket/gRPC; multilingual SDKs
+        - py-sdk stability; V1 SDK deprecated abruptly Apr 2026
+    notes: >-
+      Status as of May 30, 2026. "Production" indicates live and publicly accessible.
+      Volume and market count from Chainstack via DeFiLlama estimates; not independently audited.
+    claimRefs:
+      - CE001
+      - CE005
+      - CE017
+      - CE020
+      - CE027
+      - CE030
+
+  - id: TE002
+    title: Workflow / Use-Case Table
+    columns:
+      - User Job
+      - Current Alternative
+      - Polymarket Solution
+      - Measurable Benefit
+      - Limitation
+    rows:
+      - - Price a future political or economic event
+        - Media polling; subjective estimates
+        - Trade binary tokens at crowd-priced probability
+        - Real-time probability; $62B volume validates signal
+        - Resolution disputes delay payouts 2-6 days; whale gaming risk
+      - - Build automated trading strategy on event outcomes
+        - Custom APIs against centralized books
+        - CLOB V2 REST/WebSocket API + Python/TypeScript/Go SDK
+        - Sub-150ms execution; open-source; builder attribution codes
+        - py-sdk in beta; V1 SDK deprecated without migration window
+      - - Access prediction market signals for institutional quant use
+        - Monitor news; form qualitative views
+        - ICE Polymarket Signals & Sentiment feed via ICE Consolidated Feed
+        - Normalized; mapped to ICE security IDs; historical backtesting
+        - Exclusive ICE channel only; no direct non-ICE institutional feed
+      - - Trade on regulated US prediction markets
+        - Offshore unregulated venues; Kalshi
+        - Polymarket US (QCX LLC DCM) via FCM broker onboarding
+        - CFTC consumer protections; KYC/AML; Part-16 reporting
+        - Limited FCM brokers at launch; waitlist-only iOS access
+    notes: >-
+      Benefits are sourced from official documentation and independent developer and analyst
+      sources. Limitations reflect confirmed gaps or user-reported issues as of May 2026.
+    claimRefs:
+      - CE010
+      - CE016
+      - CE017
+      - CE020
+      - CE027
+      - CE030
+
+  - id: TE003
+    title: Technology / Operating Architecture Table
+    columns:
+      - Layer / Component
+      - Role
+      - Dependency
+      - Risk
+    rows:
+      - - Polygon PoS (Layer-2)
+        - Settlement ledger for all on-chain trades and payouts
+        - Ethereum L1 (checkpoint security); Polygon validators
+        - Network congestion or validator failure would halt settlement
+      - - CTF Exchange V2 (0xE1111…)
+        - Operator-driven order settlement and fee collection
+        - pUSD collateral; ERC-1155 CTF contracts; EIP-1271
+        - Proxy upgradeability risk; admin key exposure
+      - - pUSD Collateral Token (proxy 0xC011…)
+        - 1:1 USDC-backed collateral for all open positions
+        - Circle USDC reserves; Collateral Onramp contract
+        - Circle redemption risk; reserve transparency limited to attestation
+      - - UMA Optimistic Oracle (MOOV2)
+        - Decentralized market resolution; outcome finality
+        - UMA token-holder governance (DVM); $750 bond mechanism
+        - Whale concentration in DVM; bond inadequate for large markets
+      - - Off-Chain CLOB V2 Matching Engine
+        - Order matching throughput (10,000+ orders/sec)
+        - Polymarket-operated infrastructure; clob.polymarket.com
+        - Single operator; off-chain outage would halt order matching
+    notes: >-
+      Contract addresses from official Polymarket documentation (docs.polymarket.com/resources/contracts)
+      and GitHub ctf-exchange-v2 repository. Risk assessments from ChainSecurity audit and SettleRisk analysis.
+    claimRefs:
+      - CE003
+      - CE004
+      - CE010
+      - CE011
+      - CE015
+      - CE037
+
+  - id: TE004
+    title: Trust / Quality / Compliance Table
+    columns:
+      - Control / Certification
+      - Status
+      - Scope
+      - Gap
+    rows:
+      - - ChainSecurity Smart Contract Audit (V1)
+        - Complete (historical)
+        - CTF Exchange V1 governance and exchange contracts
+        - V1 audit; V2 audited by Quantstamp/Cantina Mar 2026 but no public PDF confirmed
+      - - Quantstamp + Cantina CTF Exchange V2 Audit
+        - Complete (Mar 2026)
+        - CTF Exchange V2; new order structs; proxy upgradeability
+        - Public audit PDF availability not confirmed; scope of Neg Risk adapter unclear
+      - - CFTC Designated Contract Market (DCM) — QCX LLC
+        - Active (Nov 2025 amended order)
+        - US intermediated market access via FCMs; Part-16 reporting
+        - State-level legal challenges persist; Android full rollout pending
+      - - KYC / AML Compliance
+        - Active for Polymarket US DCM users only
+        - All Polymarket US accounts via FCM intermediaries
+        - Non-US global platform retains no-KYC wallet-based access
+    notes: >-
+      Status as of May 30, 2026. V2 audit details from blockhead.co and blockonomi reporting;
+      ChainSecurity audit page confirms V1 assessment. CFTC status from official press release and
+      polymarketexchange.com regulatory page.
+    claimRefs:
+      - CE017
+      - CE021
+      - CE022
+      - CE039
+
+  - id: TE005
+    title: Roadmap / Release / Development-Stage Table
+    columns:
+      - Date / Stage
+      - Feature / Milestone
+      - Status
+      - Implication
+      - Source
+    rows:
+      - - Apr 28, 2026
+        - CLOB V2 + CTF Exchange V2 live on production
+        - Complete
+        - 10x throughput; pUSD migration; EIP-1271 institutional support
+        - Official changelog (docs.polymarket.com/changelog)
+      - - Feb 2026
+        - ICE Polymarket Signals & Sentiment tool launch
+        - Complete
+        - Exclusive institutional data distribution channel; ICE global feed
+        - ICE IR press release
+      - - Dec 2025
+        - Polymarket US (QCX LLC) waitlist iOS launch
+        - Rolling (waitlist, FCM-gated)
+        - US retail and institutional access under CFTC DCM
+        - Polymarket PR; CFTC amended order
+      - - May 2026 (target)
+        - Python py-sdk v1.0 stable release (currently beta)
+        - In progress
+        - Stable Python developer API; replaces deprecated py-clob-client
+        - GitHub Polymarket/py-sdk README
+      - - TBD 2026
+        - POLY governance token airdrop
+        - Pending full US consumer rollout
+        - Economic incentive for early traders; governance decentralization
+        - Blockhead; CMO public statement Oct 2025
+    notes: >-
+      Dates for completed milestones are confirmed. Future dates (May 2026 target for py-sdk stable;
+      TBD for POLY) are based on public statements and may slip. POLY airdrop is explicitly contingent
+      on full US relaunch per Blockhead (Apr 7, 2026).
+    claimRefs:
+      - CE005
+      - CE009
+      - CE020
+      - CE028
+      - CE033
+
+figures:
+  - id: FE001
+    title: Polymarket Platform Architecture Stack
+    type: stack
+    layout: wide
+    summary: Four-layer technical stack from user interfaces through off-chain matching to on-chain settlement and oracle resolution.
+    data:
+      layers:
+        - label: "User Interface Layer"
+          modules:
+            - "Web App (polymarket.com)"
+            - "iOS App (4.7★ App Store, 30k+ reviews)"
+            - "Android App (3.7★ Play Store, 7k+ reviews)"
+            - "REST / WebSocket API Client"
+        - label: "Off-Chain Middleware Layer"
+          modules:
+            - "CLOB V2 Matching Engine (10,000+ orders/sec; <150ms latency)"
+            - "Gamma API (market discovery, no auth required)"
+            - "Data API (user analytics, no auth required)"
+            - "WebSocket Real-Time Event Streams"
+        - label: "On-Chain Settlement Layer (Polygon PoS Chain ID 137)"
+          modules:
+            - "CTF Exchange V2 (0xE111180000d2663C0091e4f400237545B87B996B)"
+            - "Conditional Tokens ERC-1155 (0x4D97DCd97eC945f40cF65F87097ACe5EA0476045)"
+            - "pUSD Collateral Token 1:1 USDC (proxy 0xC011a7E12a19f7B1f670d46F03B03f3342E82DFB)"
+            - "Neg Risk CTF Exchange (0xe2222d279d744050d28e00520010520000310F59)"
+        - label: "Oracle & Resolution Layer"
+          modules:
+            - "UMA Optimistic Oracle MOOV2 (whitelisted proposers; $750 bond)"
+            - "UMA CTF Adapter (OpenZeppelin audited; bridges oracle → CTF)"
+            - "DVM Token Governance Voting (Schelling-point; 48–96hr resolution)"
+            - "Proposer / Disputer Network (2-hour challenge window)"
+    approximationNotes: "Layer groupings are logical; items within each layer are representative, not exhaustive."
+    claimRefs:
+      - CE001
+      - CE003
+      - CE004
+      - CE010
+      - CE011
+      - CE015
+      - CE034
+
+  - id: FE002
+    title: Polymarket End-to-End User Trading Workflow
+    type: flow
+    layout: standard
+    summary: Six-step user journey from wallet connection through market resolution and token redemption.
+    data:
+      nodes:
+        - id: "connect"
+          label: "Connect Wallet / Complete KYC (US: FCM onboarding)"
+        - id: "deposit"
+          label: "Deposit USDC → pUSD via Collateral Onramp"
+        - id: "browse"
+          label: "Browse & Select Market (Web / iOS / Android)"
+        - id: "trade"
+          label: "Place Limit or Market Order (CLOB V2, <150ms)"
+        - id: "resolve"
+          label: "Event Occurs → UMA Oracle Proposes & Confirms Outcome"
+        - id: "redeem"
+          label: "Redeem Winning Tokens for $1.00 pUSD Each"
+      edges:
+        - from: "connect"
+          to: "deposit"
+          label: "Wallet approved"
+        - from: "deposit"
+          to: "browse"
+          label: "pUSD funded"
+        - from: "browse"
+          to: "trade"
+          label: "Market selected"
+        - from: "trade"
+          to: "resolve"
+          label: "Position held"
+        - from: "resolve"
+          to: "redeem"
+          label: "Outcome confirmed (2hr–6 day)"
+    approximationNotes: null
+    claimRefs:
+      - CE001
+      - CE002
+      - CE012
+      - CE016
+      - CE018
+      - CE019
+
+  - id: FE003
+    title: Critical Dependency Map — Polymarket Infrastructure
+    type: dag
+    layout: wide
+    summary: Directed dependency graph of Polymarket's key external suppliers, regulators, and infrastructure partners.
+    data:
+      nodes:
+        - id: "polymarket"
+          label: "Polymarket Platform"
+        - id: "polygon"
+          label: "Polygon PoS Network"
+        - id: "ethereum"
+          label: "Ethereum L1 (Checkpoint Security)"
+        - id: "circle"
+          label: "Circle (USDC Reserve)"
+        - id: "uma"
+          label: "UMA Protocol (Oracle)"
+        - id: "ice"
+          label: "ICE (Institutional Data)"
+        - id: "cftc"
+          label: "CFTC (US Regulator)"
+      edges:
+        - from: "polymarket"
+          to: "polygon"
+          label: "Settlement"
+        - from: "polymarket"
+          to: "uma"
+          label: "Resolution Oracle"
+        - from: "polymarket"
+          to: "circle"
+          label: "pUSD Collateral"
+        - from: "polymarket"
+          to: "ice"
+          label: "Institutional Signals"
+        - from: "polymarket"
+          to: "cftc"
+          label: "US DCM License"
+        - from: "polygon"
+          to: "ethereum"
+          label: "L1 Checkpoint"
+    approximationNotes: "Dependency edges represent structural reliance, not financial flows. ICE relationship is data-distribution, not operational."
+    claimRefs:
+      - CE010
+      - CE013
+      - CE020
+      - CE037
+
+  - id: FE004
+    title: Product Maturity / Capability Map
+    type: matrix
+    layout: wide
+    summary: Maturity, competitive moat, and key risk assessment across six core Polymarket capabilities.
+    data:
+      columns:
+        - Maturity Level
+        - Competitive Moat
+        - Key Risk / Gap
+      rows:
+        - label: CLOB V2 Order Engine
+          values:
+            - High (Production Apr 2026)
+            - 10k+ orders/sec; <150ms; EIP-1271 institutional access
+            - Off-chain engine single-operator dependency
+        - label: CTF Smart Contracts
+          values:
+            - High (Triple-audited V2)
+            - Open-source; proxy upgradeability; ERC-1155 standard
+            - Admin key management (May 2026 incident)
+        - label: UMA Oracle Resolution
+          values:
+            - Medium-High (98.5% clean resolution)
+            - Decentralized; permissionless dispute; on-chain finality
+            - Whale DVM vote concentration; $750 bond inadequate for large markets
+        - label: Mobile Applications
+          values:
+            - Medium (iOS 4.7★ 30k reviews; Android 3.7★ 7k reviews)
+            - Brand recognition; CFTC-regulated US iOS rollout
+            - Android quality gap; slow withdrawal UX; waitlist friction
+        - label: Developer API / SDK
+          values:
+            - Medium (py-sdk beta; CLOB/Gamma/Data APIs production)
+            - Open-source; multilingual; builder attribution codes
+            - py-sdk not yet stable v1.0; V1 SDK deprecated without extended window
+        - label: US DCM Regulatory Compliance
+          values:
+            - Medium (waitlist FCM-gated; full rollout TBD)
+            - Only second US CFTC DCM; institutional credibility
+            - State-level legal challenges; full Android / retail launch timing unknown
+    approximationNotes: "Maturity levels are qualitative assessments based on publicly documented evidence as of May 30, 2026."
+    claimRefs:
+      - CE005
+      - CE014
+      - CE017
+      - CE021
+      - CE022
+      - CE024
+      - CE025
+
+callouts:
+  - calloutType: strength
+    title: CLOB V2 Delivers Institutional-Grade Throughput
+    body: >-
+      The April 2026 CLOB V2 launch achieves 10,000+ orders/second at sub-150ms latency — a 10x
+      throughput improvement over V1 — and adds EIP-1271 support enabling smart-contract wallets
+      and multi-sig institutional accounts for the first time. Combined with builder attribution
+      codes and reduced gas costs of $0.02-$0.08 per trade, the V2 architecture materially closes
+      the gap with centralized venue performance while preserving non-custodial, on-chain settlement.
+    claimRefs:
+      - CE005
+      - CE006
+      - CE007
+      - CE008
+
+  - calloutType: risk
+    title: May 2026 Key Compromise Reveals Legacy Operational Security Gap
+    body: >-
+      The May 22 2026 drain of approximately $600K from a six-year-old internal operational wallet
+      was not a smart contract exploit, but it exposes a systemic key-management failure: privileged
+      backend wallets near the resolution infrastructure lacked rotation policies, and no on-chain
+      monitoring triggered early detection. The incident has no direct user impact, but it signals
+      that operational security practices lag the platform's smart-contract security posture, and
+      any future compromise of oracle-adjacent addresses with larger balances could pose a
+      material risk.
+    claimRefs:
+      - CE023
+      - CE024
+      - CE040
+
+  - calloutType: insight
+    title: ICE Partnership Creates a Flywheel Between Prediction Markets and Capital Markets
+    body: >-
+      By designating ICE as the exclusive institutional data distributor, Polymarket has embedded
+      itself within the workflows of investment banks, hedge funds, and asset managers who subscribe
+      to the ICE Consolidated Feed. As institutional participants integrate Polymarket signals into
+      quant strategies and risk management, their own informed trading could improve market
+      liquidity and signal quality, reinforcing the data product's value to ICE clients — a
+      feedback loop that neither a pure crypto-native operator nor a pure financial-data provider
+      could replicate alone.
+    claimRefs:
+      - CE020
+      - CE038
+
+localEvidence:
+  searchQueries:
+    - query: "Polymarket platform architecture Polygon USDC blockchain prediction market 2026"
+      engine: web_search
+      hits: null
+      retainedSourceRefs: [SE001, SE003, SE025]
+    - query: "Polymarket UMA oracle settlement resolution mechanism 2026"
+      engine: web_search
+      hits: null
+      retainedSourceRefs: [SE004, SE020]
+    - query: "Polymarket smart contract technical architecture CLOB order book 2026"
+      engine: web_search
+      hits: null
+      retainedSourceRefs: [SE005, SE006, SE010, SE021, SE022, SE023, SE024]
+    - query: "Polymarket mobile app iOS Android 2026 user interface features"
+      engine: web_search
+      hits: null
+      retainedSourceRefs: [SE027]
+    - query: "Polymarket compliance KYC AML CFTC regulated DCM US launch 2026"
+      engine: web_search
+      hits: null
+      retainedSourceRefs: [SE014, SE015, SE017]
+    - query: "Polymarket GitHub developer API open source 2026"
+      engine: web_search
+      hits: null
+      retainedSourceRefs: [SE007, SE008, SE009, SE011, SE012]
+    - query: "Polymarket security audit smart contract vulnerabilities risks 2026"
+      engine: web_search
+      hits: null
+      retainedSourceRefs: [SE016, SE018, SE019]
+    - query: "Polymarket roadmap features upcoming 2026 institutional data API"
+      engine: web_search
+      hits: null
+      retainedSourceRefs: [SE013]
+    - query: "Polymarket ctf-exchange conditional token framework smart contracts Polygon 2026"
+      engine: web_search
+      hits: null
+      retainedSourceRefs: [SE002, SE026]
+    - query: "Polymarket CLOB V2 pUSD migration April 2026"
+      engine: web_search
+      hits: null
+      retainedSourceRefs: [SE022, SE023, SE024]
+    - query: "Polymarket prediction market customer trading volume 2026"
+      engine: web_search
+      hits: null
+      retainedSourceRefs: [SE025, SE028]
+
+  researchQuestions:
+    - id: QE001
+      question: >-
+        How does the Conditional Token Framework (CTF) tokenize and resolve binary event outcomes
+        as ERC-1155 tokens on Polygon?
+      type: mechanism
+      targets: ["contentRequirements/2"]
+      status: answered
+
+    - id: QE002
+      question: >-
+        How does UMA's Optimistic Oracle process market proposals, challenge periods, disputes,
+        and DVM escalation for Polymarket resolution?
+      type: mechanism
+      targets: ["contentRequirements/2", "plannedFigures/critical-dependency-map"]
+      status: answered
+
+    - id: QE003
+      question: >-
+        How does Polymarket's hybrid CLOB architecture split off-chain order matching from
+        on-chain settlement, and what are the failure modes at each layer?
+      type: mechanism
+      targets: ["contentRequirements/2", "plannedTables/technology-operating-architecture-table"]
+      status: answered
+
+    - id: QE004
+      question: >-
+        Are CTF Exchange V2 contracts independently audited, and what firms conducted the audits
+        for V1 and V2 respectively?
+      type: verification
+      targets: ["contentRequirements/5", "plannedTables/trust-quality-compliance-table"]
+      status: answered
+
+    - id: QE005
+      question: >-
+        Does Polymarket operate a public bug bounty program, and what is its scope and
+        maximum payout structure?
+      type: verification
+      targets: ["contentRequirements/5"]
+      status: answered
+
+    - id: QE006
+      question: >-
+        What API layers and endpoints does Polymarket expose for developer access, and which
+        require authentication?
+      type: enumeration
+      targets: ["contentRequirements/3", "plannedTables/roadmap-release-development-stage-table"]
+      status: answered
+
+    - id: QE007
+      question: >-
+        What smart contract addresses does Polymarket deploy on Polygon mainnet for the CTF
+        exchange, conditional tokens, and collateral?
+      type: enumeration
+      targets: ["contentRequirements/1", "contentRequirements/2", "plannedTables/technology-operating-architecture-table"]
+      status: answered
+
+    - id: QE008
+      question: >-
+        What throughput, latency, and gas cost improvements does CLOB V2 deliver compared
+        to CLOB V1?
+      type: quantification
+      targets: ["contentRequirements/2", "contentRequirements/4"]
+      status: answered
+
+    - id: QE009
+      question: >-
+        What are the App Store and Play Store ratings for Polymarket's iOS and Android apps
+        as of May 2026, and what do user reviews highlight?
+      type: quantification
+      targets: ["contentRequirements/0", "contentRequirements/3"]
+      status: answered
+
+    - id: QE010
+      question: >-
+        What security vulnerabilities, incidents, or exploits has Polymarket experienced
+        in 2026, and what was the financial and operational impact?
+      type: adverse
+      targets: ["contentRequirements/5", "plannedTables/trust-quality-compliance-table"]
+      status: answered
+
+    - id: QE011
+      question: >-
+        What operational key management weaknesses exist in Polymarket's infrastructure
+        adjacent to oracle and settlement contracts?
+      type: adverse
+      targets: ["contentRequirements/5"]
+      status: answered
+
+    - id: QE012
+      question: >-
+        When did CLOB V2 go live on production, what APIs were deprecated, and what was the
+        migration timeline for existing integrations?
+      type: freshness
+      targets: ["contentRequirements/3", "plannedTables/roadmap-release-development-stage-table"]
+      status: answered
+
+    - id: QE013
+      question: >-
+        When did ICE announce and launch the exclusive Polymarket institutional data
+        distribution service?
+      type: freshness
+      targets: ["contentRequirements/3"]
+      status: answered
+
+    - id: QE014
+      question: >-
+        How do CLOB V1 and CLOB V2 compare on throughput, order matching latency, and
+        per-trade gas fees?
+      type: comparison
+      targets: ["contentRequirements/2", "contentRequirements/4"]
+      status: answered
+
+    - id: QE015
+      question: >-
+        How do the global Polymarket platform and the Polymarket US DCM product differ on
+        access model, KYC requirements, and market availability?
+      type: comparison
+      targets: ["contentRequirements/0", "contentRequirements/5"]
+      status: answered
+
+    - id: QE016
+      question: >-
+        How is the pUSD collateral token created, redeemed, and maintained at 1:1 USDC
+        parity, and what counterparty risks does this introduce?
+      type: mechanism
+      targets: ["contentRequirements/2", "plannedTables/technology-operating-architecture-table"]
+      status: answered
+
+    - id: QE017
+      question: >-
+        Is Polygon PoS a single point of failure for Polymarket settlement, and what SLAs
+        or fallback mechanisms exist for sequencer downtime?
+      type: verification
+      targets: ["contentRequirements/2", "contentRequirements/5"]
+      status: partial
+
+    - id: QE018
+      question: >-
+        How many total traders, markets, and trading volume has Polymarket processed as
+        of Q1–Q2 2026?
+      type: quantification
+      targets: ["contentRequirements/0"]
+      status: answered
+
+    - id: QE019
+      question: >-
+        What governance and oversight obligations apply to Polymarket US as a CFTC
+        Designated Contract Market?
+      type: enumeration
+      targets: ["contentRequirements/5", "plannedTables/trust-quality-compliance-table"]
+      status: answered
+
+    - id: QE020
+      question: >-
+        What risks does whale UMA token concentration create for DVM governance and
+        market resolution integrity on Polymarket?
+      type: adverse
+      targets: ["contentRequirements/5"]
+      status: answered
+
+    - id: QE021
+      question: >-
+        How does the Neg Risk CTF Exchange support multi-outcome correlated markets
+        differently from the standard CTF binary markets?
+      type: mechanism
+      targets: ["contentRequirements/1", "contentRequirements/2"]
+      status: partial
+
+    - id: QE022
+      question: >-
+        What specific KYC and AML requirements apply to US versus non-US Polymarket users
+        under the current regulatory structure?
+      type: verification
+      targets: ["contentRequirements/5", "plannedTables/trust-quality-compliance-table"]
+      status: answered
+
+    - id: QE023
+      question: >-
+        When did pUSD fully replace USDC.e as the platform collateral, and what risks
+        did the migration carry for open positions?
+      type: freshness
+      targets: ["contentRequirements/2", "contentRequirements/3"]
+      status: answered
+
+    - id: QE024
+      question: >-
+        How do Polymarket's maker/taker fees and settlement speed compare to centralized
+        prediction market competitors such as Kalshi?
+      type: comparison
+      targets: ["contentRequirements/4"]
+      status: partial
+
+    - id: QE025
+      question: >-
+        What product launches, upgrades, or roadmap features has Polymarket announced
+        or delivered in 2026?
+      type: enumeration
+      targets: ["contentRequirements/3", "contentRequirements/4", "plannedTables/roadmap-release-development-stage-table"]
+      status: answered
+
+    - id: QE026
+      question: >-
+        How does the builder code attribution system work on CLOB V2, and what on-chain
+        data does it expose for developer analytics?
+      type: mechanism
+      targets: ["contentRequirements/2", "contentRequirements/3"]
+      status: partial
+
+  sources:
+    - id: SE001
+      publisher: Polymarket
+      title: "Popular Predictions & Real-Time Odds"
+      url: "https://polymarket.com/predictions"
+      date: "2026-05-30"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["prediction markets", "platform overview", "markets", "trading volume"]
+      keyQuote: "Iran ceasefire continues through May 24 — 100%"
+
+    - id: SE002
+      publisher: Polymarket
+      title: "Polymarket Developer Documentation — Overview"
+      url: "https://docs.polymarket.com/"
+      date: "2026-05-30"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics: ["developer API", "SDK", "CLOB", "prediction markets", "documentation"]
+      keyQuote: "Build on the world's largest prediction market. APIs, SDKs, and tools for prediction market developers."
+
+    - id: SE003
+      publisher: Polymarket
+      title: "Contracts — Polymarket Documentation"
+      url: "https://docs.polymarket.com/resources/contracts"
+      date: "2026-05-30"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["smart contracts", "Polygon", "CTF Exchange V2", "conditional tokens", "contract addresses"]
+      keyQuote: "All Polymarket contracts are deployed on Polygon mainnet (Chain ID: 137). This is the single source of truth for all contract addresses used across the platform."
+
+    - id: SE004
+      publisher: Polymarket
+      title: "Resolution — Polymarket Documentation"
+      url: "https://docs.polymarket.com/concepts/resolution"
+      date: "2026-05-30"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["UMA oracle", "market resolution", "dispute", "DVM", "settlement"]
+      keyQuote: "Polymarket uses the UMA Optimistic Oracle for decentralized, permissionless resolution. Anyone can propose an outcome, and anyone can dispute it if they believe it's incorrect."
+
+    - id: SE005
+      publisher: Polymarket
+      title: "Polymarket Changelog"
+      url: "https://docs.polymarket.com/changelog"
+      date: "2026-05-18"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["CLOB V2", "API changelog", "builder codes", "migration", "April 2026"]
+      keyQuote: "Apr 28, 2026: CLOB V2 is live on production. Polymarket's CLOB V2 upgrade is live on https://clob.polymarket.com."
+
+    - id: SE006
+      publisher: Polymarket
+      title: "GitHub — Polymarket/ctf-exchange-v2"
+      url: "https://github.com/Polymarket/ctf-exchange-v2"
+      date: "2026-04-28"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["CTF Exchange V2", "smart contracts", "Polygon", "open source", "EIP-1271"]
+      keyQuote: "The CTF Exchange V2 is the core smart contract system for trading Conditional Token Framework (CTF) assets on Polymarket."
+
+    - id: SE007
+      publisher: Polymarket
+      title: "GitHub — Polymarket/py-sdk: Unified Python SDK for Polymarket DeFi"
+      url: "https://github.com/Polymarket/py-sdk"
+      date: "2026-05-24"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: high
+      independence: company
+      topics: ["Python SDK", "developer API", "open source", "trading", "beta"]
+      keyQuote: "Official Python SDK for Polymarket. The SDK gives Python developers one coherent, workflow-oriented interface for building on Polymarket."
+
+    - id: SE008
+      publisher: Polymarket
+      title: "GitHub — Polymarket/py-clob-client (archived)"
+      url: "https://github.com/Polymarket/py-clob-client"
+      date: "2026-04-28"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: high
+      independence: company
+      topics: ["Python", "CLOB client", "archived", "deprecated", "V1"]
+      keyQuote: "This repository has been archived and is no longer maintained. Please migrate to our new unified SDK: https://github.com/Polymarket/py-sdk"
+
+    - id: SE009
+      publisher: Polymarket (via PyPI)
+      title: "polymarket-apis — PyPI Package"
+      url: "https://pypi.org/project/polymarket-apis/"
+      date: "2026-05-24"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics: ["Python", "API package", "Gamma", "CLOB", "WebSocket", "GraphQL", "PyPI"]
+      keyQuote: "Unified Polymarket v2 APIs with Pydantic data validation - Clob, Gamma, Data, Web3, Websockets, GraphQL clients."
+
+    - id: SE010
+      publisher: Polymarket
+      title: "Polymarket Exchange Upgrade: April 28, 2026"
+      url: "https://help.polymarket.com/en/articles/14762452-polymarket-exchange-upgrade-april-28-2026"
+      date: "2026-04-07"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["CLOB V2", "CTF Exchange V2", "pUSD", "migration", "April 2026 upgrade"]
+      keyQuote: "On April 28, 2026 at ~11:00 UTC, Polymarket is rolling out a coordinated upgrade of the exchange stack: new smart contracts, a rewritten order book, and a new collateral token."
+
+    - id: SE011
+      publisher: Polymarket
+      title: "Does Polymarket have an API? — Help Center"
+      url: "https://help.polymarket.com/en/articles/13364254-does-polymarket-have-an-api"
+      date: "2026-01-11"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["API", "developer", "open source", "Discord", "documentation"]
+      keyQuote: "Yes! Developers can find all the information they need for interacting with Polymarket."
+
+    - id: SE012
+      publisher: Polymarket US
+      title: "REST API Overview — Polymarket US Documentation"
+      url: "https://docs.polymarket.us/institutional/introduction"
+      date: "2026-05-30"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics: ["institutional API", "gRPC", "REST", "streaming", "Polymarket US", "DCM"]
+      keyQuote: "The Polymarket US REST API provides programmatic access to trading, account management, market data, and funding operations."
+
+    - id: SE013
+      publisher: Intercontinental Exchange (ICE)
+      title: "ICE Launches Polymarket Signals and Sentiment Tool"
+      url: "https://ir.theice.com/press/news-details/2026/ICE-Launches-Polymarket-Signals-and-Sentiment-Tool-Turning-Crowd-Sourced-Dynamic-Views-into-Market-Opportunities/default.aspx"
+      date: "2026-02-01"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: high
+      independence: partner
+      topics: ["ICE", "institutional data", "signals", "sentiment", "prediction markets", "capital markets"]
+      keyQuote: "ICE will become the exclusive provider of this data for institutional capital markets."
+
+    - id: SE014
+      publisher: Polymarket
+      title: "Polymarket Receives CFTC Approval of Amended Order of Designation"
+      url: "https://www.prnewswire.com/news-releases/polymarket-receives-cftc-approval-of-amended-order-of-designation-enabling-intermediated-us-market-access-302625833.html"
+      date: "2025-11-25"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["CFTC", "DCM", "US launch", "QCX LLC", "regulatory", "intermediated access"]
+      keyQuote: "Polymarket will be able to onboard brokerages and customers directly and facilitate trading on U.S. venues."
+
+    - id: SE015
+      publisher: Polymarket US
+      title: "Regulatory Information — Polymarket US CFTC DCM Compliance"
+      url: "https://polymarketexchange.com/regulatory.html"
+      date: "2026-05-30"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["CFTC", "DCM", "rulebook", "compliance", "risk disclosure", "KYC"]
+      keyQuote: "As a DCM, we are subject to comprehensive regulatory requirements designed to ensure market integrity, participant protection, and fair trading practices."
+
+    - id: SE016
+      publisher: CoinEdition
+      title: "Polymarket's UMA CTF Adapter Contract on Polygon Exploited Over $520K"
+      url: "https://coinedition.com/polymarkets-uma-ctf-adapter-contract-on-polygon-exploited-over-520k/"
+      date: "2026-05-22"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["security", "exploit", "private key", "UMA CTF adapter", "hack", "2026"]
+      keyQuote: "The incident was not the result of a vulnerability or bug in the live UMA CTF Adapter smart contract code. Instead, it stemmed from the compromise of an old private key belonging to an internal Polymarket operations wallet."
+
+    - id: SE017
+      publisher: CoinTelegraph
+      title: "Polymarket-Linked UMA Adapter Exploited For at Least $520K"
+      url: "https://cointelegraph.com/news/polymarket-uma-adapter-appears-exploited-520k-zachxbt"
+      date: "2026-05-22"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics: ["security incident", "key compromise", "ZachXBT", "UMA", "Polygon", "2026"]
+      keyQuote: "Josh Stevens, Polymarket's vice president of engineering, said the contracts were safe and that the exploit was limited to a six-year-old private key used for internal top-up operations."
+
+    - id: SE018
+      publisher: DeFi Prime
+      title: "Polymarket's $600K Drain Was a Key Compromise, Not a Contract Exploit"
+      url: "https://defiprime.com/polymarket-key-compromise"
+      date: "2026-05-22"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["security", "key management", "refiller wallet", "operational security", "UMA CTF adapter"]
+      keyQuote: "A wallet that should have been retired years ago still had a live key, and the key leaked."
+
+    - id: SE019
+      publisher: ChainSecurity
+      title: "Polymarket Exchange Smart Contracts — Security Audit"
+      url: "https://www.chainsecurity.com/security-audit/polymarket-exchange-smart-contracts"
+      date: null
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics: ["smart contract audit", "security", "functional correctness", "signature handling"]
+      keyQuote: "In summary, we find that the current codebase provides a high level of security."
+
+    - id: SE020
+      publisher: SettleRisk
+      title: "Inside UMA Optimistic Oracle: A Quantitative Guide to Prediction Market Resolution Risk"
+      url: "https://settlerisk.com/blog/uma-optimistic-oracle-resolution-risk-guide"
+      date: "2026-02-28"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics: ["UMA oracle", "DVM", "resolution risk", "whale concentration", "bond size", "dispute window"]
+      keyQuote: "When a $7M market resolved incorrectly in March 2025 due to whale manipulation, traders who understood the oracle mechanics saw it coming."
+
+    - id: SE021
+      publisher: Laika Labs
+      title: "Polymarket V2 Migration Guide 2026: Deadlines & Requirements"
+      url: "https://laikalabs.ai/prediction-markets/polymarket-v2-migration"
+      date: "2026-04-20"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: independent
+      topics: ["CLOB V2", "migration", "API update", "V1 deprecation", "performance benchmarks"]
+      keyQuote: >-
+        The new Central Limit Order Book v2 replaces V1's slower matching engine with
+        high-performance infrastructure processing 10,000+ orders per second versus V1's 800-1,200
+        orders per second.
+
+    - id: SE022
+      publisher: Blockhead
+      title: "Polymarket Overhauls Exchange Stack With New Contracts, Order Book, Collateral Token"
+      url: "https://www.blockhead.co/2026/04/07/polymarket-overhauls-exchange-stack-with-new-contracts-order-book-collateral-token/"
+      date: "2026-04-07"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["CTF Exchange V2", "CLOB V2", "pUSD", "April 2026 upgrade", "POLY token", "institutional"]
+      keyQuote: "The platform, which has consistently processed over $900 million in weekly trading volume with roughly $416 million in total value locked, is migrating from bridged USDC.e to a proprietary stablecoin called Polymarket USD."
+
+    - id: SE023
+      publisher: Blockonomi
+      title: "Polymarket Launches Major Infrastructure Overhaul With Enhanced Order Book and Native USD Token"
+      url: "https://blockonomi.com/polymarket-launches-major-infrastructure-overhaul-with-enhanced-order-book-and-native-usd-token/"
+      date: "2026-04-07"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["CLOB V2", "pUSD", "infrastructure upgrade", "order book", "April 2026"]
+
+    - id: SE024
+      publisher: CoinUnited
+      title: "Polymarket's Native Stablecoin and Order Book Overhaul Signal Prediction Market Maturation"
+      url: "https://coinunited.io/en/pulse/2026-04-07/polymarkets-native-stablecoin-and-order-book-overhaul-signal-prediction-market-maturation"
+      date: "2026-04-07"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["pUSD", "USDC.e migration", "order book", "stablecoin", "April 2026"]
+      keyQuote: "Polymarket USD token launches as native collateral with 1:1 USDC backing."
+
+    - id: SE025
+      publisher: Chainstack
+      title: "Polymarket API for Developers: Data, CLOB, and Polygon RPC"
+      url: "https://chainstack.com/polymarket-api-for-developers/"
+      date: "2026-04-15"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: independent
+      topics: ["API", "CLOB", "Gamma API", "WebSocket", "developer", "Polygon", "trading bots"]
+      keyQuote: >-
+        Polymarket has over 2.4 million traders across 214,735 markets, with approximately
+        $62 billion in total trading volume.
+
+    - id: SE026
+      publisher: PolygonScan
+      title: "Polymarket: Conditional Tokens Contract — PolygonScan"
+      url: "https://polygonscan.com/address/0x4d97dcd97ec945f40cf65f87097ace5ea0476045"
+      date: "2026-05-30"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics: ["Polygon", "smart contract", "conditional tokens", "ERC-1155", "on-chain verification"]
+
+    - id: SE027
+      publisher: SportsGambler
+      title: "Polymarket App Review: iOS and Android Features"
+      url: "https://www.sportsgambler.com/prediction-markets/polymarket/app/"
+      date: "2026-05-01"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: neutral
+      sourceType: review
+      reputationTier: medium
+      independence: independent
+      topics: ["mobile app", "iOS", "Android", "user experience", "app store rating"]
+      keyQuote: >-
+        The iOS version of the Polymarket app has a 4.7 star rating from over 30,000 customer
+        reviews. Android app: 3.7 star rating from 7,100+ reviews.
+
+    - id: SE028
+      publisher: Polymarket
+      title: "Polymarket — The World's Largest Prediction Market"
+      url: "https://polymarket.com/"
+      date: "2026-05-30"
+      accessDate: "2026-05-30"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: ["prediction markets", "platform", "homepage", "trading"]
+
+  claims:
+    - id: CE001
+      statement: >-
+        Polymarket is a non-custodial prediction market platform on Polygon PoS where traders buy and
+        sell binary or multi-outcome ERC-1155 conditional tokens priced between $0.00 and $1.00,
+        with the price reflecting crowd-implied probability.
+      type: observed
+      topic: platform overview
+      sourceRefs: [SE002, SE003]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE001]
+
+    - id: CE002
+      statement: >-
+        In April 2026 Polymarket migrated its collateral from bridged USDC.e to pUSD (Polymarket USD),
+        a proprietary stablecoin backed 1:1 by Circle's USDC and issued directly by Polymarket.
+      type: third-party-reported
+      topic: pUSD collateral
+      sourceRefs: [SE010, SE022, SE024]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE016, QE023]
+
+    - id: CE003
+      statement: >-
+        CTF Exchange V2, Polymarket's core settlement contract, is deployed on Polygon mainnet at
+        address 0xE111180000d2663C0091e4f400237545B87B996B.
+      type: observed
+      topic: smart contract addresses
+      sourceRefs: [SE003, SE006]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE007]
+
+    - id: CE004
+      statement: >-
+        The Conditional Tokens (CTF) contract — implementing ERC-1155 outcome token minting,
+        splitting, and redemption — is deployed at 0x4D97DCd97eC945f40cF65F87097ACe5EA0476045 on
+        Polygon mainnet.
+      type: observed
+      topic: smart contract addresses
+      sourceRefs: [SE003, SE026]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE007]
+
+    - id: CE005
+      statement: >-
+        CLOB V2 went live on production at clob.polymarket.com on April 28, 2026, replacing V1 with
+        no backward compatibility; legacy V1 SDKs and V1-signed orders are no longer supported.
+      type: observed
+      topic: CLOB V2 launch
+      sourceRefs: [SE005, SE010]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE008, QE012, QE014, QE025]
+
+    - id: CE006
+      statement: >-
+        CLOB V2 processes over 10,000 orders per second versus 800-1,200 orders per second on V1,
+        and reduces order matching latency from 800-2,000 ms to 80-150 ms.
+      type: third-party-reported
+      topic: CLOB V2 performance
+      sourceRefs: [SE021, SE022]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE008, QE014]
+
+    - id: CE007
+      statement: >-
+        CTF Exchange V2 reduces per-trade gas costs from $0.15-$0.45 on V1 to approximately
+        $0.02-$0.08 through optimized order struct design and contract simplification.
+      type: third-party-reported
+      topic: gas fees
+      sourceRefs: [SE021, SE023]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE008]
+
+    - id: CE008
+      statement: >-
+        CTF Exchange V2 introduces EIP-1271 support, enabling smart contract wallets and multi-sig
+        setups for institutional traders who cannot use standard EOA signing.
+      type: observed
+      topic: institutional access
+      sourceRefs: [SE006, SE022]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE008]
+
+    - id: CE009
+      statement: >-
+        CTF Exchange V2 introduces builder codes — on-chain attribution fields that allow API
+        integrators to tag orders with a registered code, enabling analytics tracking via the
+        /v1/builders/leaderboard endpoint.
+      type: observed
+      topic: builder codes
+      sourceRefs: [SE005, SE006]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE025, QE026]
+
+    - id: CE010
+      statement: >-
+        Polymarket uses a hybrid architecture: order matching occurs off-chain in the CLOB V2
+        engine for performance, while all settlement, fee collection, and asset custody are enforced
+        on-chain by audited smart contracts on Polygon.
+      type: observed
+      topic: hybrid architecture
+      sourceRefs: [SE002, SE025]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE003]
+
+    - id: CE011
+      statement: >-
+        UMA's Optimistic Oracle (MOOV2) requires whitelisted proposers to post a $750 USDC bond when
+        submitting a market outcome; only approved addresses can propose to prevent spam and
+        incorrect early resolutions.
+      type: observed
+      topic: UMA oracle mechanics
+      sourceRefs: [SE004, SE020]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE002]
+
+    - id: CE012
+      statement: >-
+        A 2-hour challenge period follows each market outcome proposal; if no dispute is filed during
+        this window, the market resolves automatically and winning tokens become redeemable for $1.00.
+      type: observed
+      topic: UMA resolution timeline
+      sourceRefs: [SE004, SE020]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE002]
+
+    - id: CE013
+      statement: >-
+        When a Polymarket outcome proposal is disputed twice, the question escalates to UMA's Data
+        Verification Mechanism (DVM), where UMA token holders vote on the correct outcome using a
+        Schelling-point mechanism; DVM votes typically complete in 48-96 hours.
+      type: observed
+      topic: UMA DVM escalation
+      sourceRefs: [SE004, SE020]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE002]
+
+    - id: CE014
+      statement: >-
+        According to SettleRisk's February 2026 analysis, over 98.5% of Polymarket markets resolve
+        cleanly in a single proposal cycle without requiring DVM escalation.
+      type: third-party-reported
+      topic: resolution success rate
+      sourceRefs: [SE020]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE020]
+
+    - id: CE015
+      statement: >-
+        The pUSD Collateral Onramp contract is deployed at 0x93070a847efEf7F70739046A929D47a521F5B8ee
+        on Polygon, handling conversion of USDC or USDC.e to pUSD for use as position collateral.
+      type: observed
+      topic: pUSD contract addresses
+      sourceRefs: [SE003, SE006]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE007, QE016]
+
+    - id: CE016
+      statement: >-
+        Polymarket's iOS app has a 4.7-star rating from over 30,000 App Store reviews as of May 2026;
+        the Android app has a 3.7-star rating from over 7,100 Play Store reviews, with Android users
+        noting slower withdrawals and some still on a waiting list.
+      type: third-party-reported
+      topic: mobile app ratings
+      sourceRefs: [SE027]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE009]
+
+    - id: CE017
+      statement: >-
+        The CFTC issued Polymarket (via QCX LLC) an Amended Order of Designation in November 2025
+        permitting intermediated US market access via FCMs, making Polymarket US the second CFTC
+        Designated Contract Market for prediction markets alongside Kalshi.
+      type: third-party-reported
+      topic: CFTC DCM regulatory status
+      sourceRefs: [SE014, SE015]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE015, QE019, QE022]
+
+    - id: CE018
+      statement: >-
+        All US users on Polymarket US (QCX LLC DCM) must complete full KYC and AML verification
+        through FCM intermediaries before trading; direct wallet access is not available for US users.
+      type: observed
+      topic: US KYC/AML requirements
+      sourceRefs: [SE014, SE015]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE015, QE022]
+
+    - id: CE019
+      statement: >-
+        Non-US users on the global Polymarket platform can trade without mandatory KYC by connecting
+        a non-custodial Web3 wallet directly, subject to geographic restrictions.
+      type: observed
+      topic: non-US access
+      sourceRefs: [SE002, SE015]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE015]
+
+    - id: CE020
+      statement: >-
+        In February 2026, ICE (Intercontinental Exchange) launched the Polymarket Signals and
+        Sentiment tool and became the exclusive institutional data distributor for Polymarket's
+        prediction market data to capital markets participants.
+      type: third-party-reported
+      topic: ICE institutional partnership
+      sourceRefs: [SE013, SE022]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE013, QE025]
+
+    - id: CE021
+      statement: >-
+        ChainSecurity's audit of Polymarket's V1 exchange smart contracts concluded that the
+        codebase provides "a high level of security," with adequate functional correctness,
+        proper signature handling, and adequate code complexity.
+      type: third-party-reported
+      topic: security audit
+      sourceRefs: [SE019]
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs: [QE004]
+
+    - id: CE022
+      statement: >-
+        CTF Exchange V2 contracts were audited by Quantstamp and Cantina in March 2026 before the
+        April 28 live deployment, with no critical vulnerabilities reported.
+      type: third-party-reported
+      topic: V2 security audit
+      sourceRefs: [SE022, SE023]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE004]
+
+    - id: CE023
+      statement: >-
+        On May 22, 2026, an attacker drained approximately $520,000 to $660,000 in POL tokens and
+        USDC.e from Polymarket operational wallets on Polygon, flagged by on-chain investigator
+        ZachXBT and later confirmed by Polymarket's engineering team.
+      type: third-party-reported
+      topic: May 2026 security incident
+      sourceRefs: [SE016, SE017, SE018]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE010, QE011]
+
+    - id: CE024
+      statement: >-
+        Polymarket confirmed the May 2026 drain was caused by compromise of a six-year-old private
+        key for a backend refiller wallet with administrative privileges; no smart contract logic
+        was exploited and user trading balances and market resolution were unaffected.
+      type: company-claimed
+      topic: May 2026 incident root cause
+      sourceRefs: [SE017, SE018]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE010, QE011]
+
+    - id: CE025
+      statement: >-
+        Polymarket's official Python SDK (polymarket-client / py-sdk) is in beta as of May 2026,
+        providing a unified interface for public data, authenticated trading, builder attribution,
+        and wallet workflows.
+      type: observed
+      topic: Python SDK
+      sourceRefs: [SE007, SE009]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: []
+
+    - id: CE026
+      statement: >-
+        Polymarket maintains 18+ open-source GitHub repositories including Python, TypeScript, Go,
+        and Rust SDKs, CLIs, and data tooling, all free to use under open-source licenses.
+      type: observed
+      topic: open source developer ecosystem
+      sourceRefs: [SE007, SE008, SE011]
+      confidence: medium
+      freshness: current
+
+    - id: CE027
+      statement: >-
+        Polymarket exposes three primary REST API surfaces: the Gamma API (market discovery, no
+        auth required), the CLOB API (order placement and order-book access, auth required), and
+        the Data API (user activity and analytics, no auth required).
+      type: observed
+      topic: API layers
+      sourceRefs: [SE002, SE025]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE006]
+
+    - id: CE028
+      statement: >-
+        The unified polymarket-apis Python package on PyPI received its latest update on May 24,
+        2026, demonstrating active maintenance; it packages Clob, Gamma, Data, Web3, WebSocket,
+        and GraphQL clients in a single Pydantic-validated interface.
+      type: observed
+      topic: Python API package maintenance
+      sourceRefs: [SE009]
+      confidence: medium
+      freshness: current
+
+    - id: CE029
+      statement: >-
+        Polymarket US (QCX LLC) provides a streaming-first institutional REST API at
+        docs.polymarket.us using gRPC Market Data Stream and gRPC Order Stream for real-time
+        market data and order updates.
+      type: observed
+      topic: institutional streaming API
+      sourceRefs: [SE012]
+      confidence: medium
+      freshness: current
+
+    - id: CE030
+      statement: >-
+        Chainstack reports Polymarket has over 2.4 million traders across 214,735 markets and
+        approximately $62 billion in lifetime total trading volume as of early 2026.
+      type: third-party-reported
+      topic: platform scale
+      sourceRefs: [SE025]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE018]
+
+    - id: CE031
+      statement: >-
+        Polymarket markets span politics, economics, sports, crypto, entertainment, weather, and
+        current events, supporting both binary outcomes and multi-outcome event structures.
+      type: observed
+      topic: market categories
+      sourceRefs: [SE001, SE028]
+      confidence: medium
+      freshness: current
+
+    - id: CE032
+      statement: >-
+        Every Polymarket market is backed by ERC-1155 conditional tokens; the CTF contract supports
+        splitting collateral into outcome shares, merging shares back into collateral, and redeeming
+        winning shares for $1.00 pUSD each after resolution.
+      type: observed
+      topic: CTF token mechanics
+      sourceRefs: [SE003, SE004]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE001]
+
+    - id: CE033
+      statement: >-
+        Polymarket's POLY governance token airdrop was confirmed by Polymarket's CMO in October
+        2025 but remains contingent on the full US consumer rollout; no launch date has been
+        announced as of May 2026.
+      type: company-claimed
+      topic: POLY governance token
+      sourceRefs: [SE022]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE025]
+
+    - id: CE034
+      statement: >-
+        The Neg Risk CTF Exchange contract (0xe2222d279d744050d28e00520010520000310F59) handles
+        multi-outcome markets with correlated legs, using a negative-risk structure that allows
+        mutually exclusive outcomes within a single event.
+      type: observed
+      topic: Neg Risk exchange
+      sourceRefs: [SE003, SE006]
+      confidence: medium
+      freshness: current
+
+    - id: CE035
+      statement: >-
+        Polymarket operates an active bug bounty program hosted via Cantina, providing financial
+        incentives for responsible disclosure of smart contract and infrastructure vulnerabilities.
+      type: observed
+      topic: bug bounty
+      sourceRefs: [SE017, SE019]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE005]
+
+    - id: CE036
+      statement: >-
+        The legacy py-clob-client Python library was archived in April 2026 and is no longer
+        maintained; all developers are directed to migrate to the new unified py-sdk.
+      type: observed
+      topic: Python SDK migration
+      sourceRefs: [SE008]
+      confidence: medium
+      freshness: current
+
+    - id: CE037
+      statement: >-
+        The pUSD migration removed Polymarket's dependence on bridged USDC.e (a Polygon-to-Ethereum
+        bridge-wrapped stablecoin), eliminating cross-chain bridge counterparty risk from the
+        collateral layer.
+      type: third-party-reported
+      topic: pUSD bridge risk elimination
+      sourceRefs: [SE022, SE024]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE016, QE023]
+
+    - id: CE038
+      statement: >-
+        ICE's Polymarket Signals service maps prediction market signals to specific securities
+        and companies using ICE's entity identification and reference databases, enabling
+        integration with ICE pricing, fundamental data, and corporate actions.
+      type: third-party-reported
+      topic: ICE signal mapping
+      sourceRefs: [SE013]
+      confidence: medium
+      freshness: current
+
+    - id: CE039
+      statement: >-
+        Polymarket US's regulatory page at polymarketexchange.com publishes the full DCM rulebook,
+        risk disclosure statement, and exchange member application materials consistent with
+        Commodity Exchange Act requirements.
+      type: observed
+      topic: CFTC DCM regulatory documentation
+      sourceRefs: [SE015]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE019]
+
+    - id: CE040
+      statement: >-
+        The UMA CTF Adapter contract is independently audited (OpenZeppelin); the May 2026 incident
+        affected only a legacy backend externally owned address (EOA) used for refilling operations,
+        not any logic inside the adapter contract itself.
+      type: third-party-reported
+      topic: UMA adapter security
+      sourceRefs: [SE017, SE018]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE020]
+
+  evidenceGaps:
+    - type: private-evidence-only
+      severity: material
+      topic: Polygon PoS reliability SLA
+      missingEvidence: >-
+        Public SLA documentation or uptime metrics for Polygon PoS sequencer and validator set,
+        including any fallback or recovery procedures Polymarket has in place for sequencer downtime.
+      whyItMatters: >-
+        If Polygon PoS becomes unavailable — due to validator failure, governance attack, or sequencer
+        downtime — Polymarket's on-chain settlement would halt entirely; understanding this risk
+        requires Polygon's published reliability data.
+      diligencePath: >-
+        Request Polygon's published SLA, past incident reports, and any bilateral agreement between
+        Polymarket and Polygon Labs covering uptime guarantees or emergency response procedures.
+      relatedQuestionRefs: [QE017]
+
+    - type: private-evidence-only
+      severity: minor
+      topic: Neg Risk CTF Exchange internals
+      missingEvidence: >-
+        Detailed technical documentation on how the Neg Risk CTF Exchange (0xe2222...) handles
+        correlated multi-outcome markets and how negative-risk token redemption works mathematically.
+      whyItMatters: >-
+        Multi-outcome markets represent a growing share of Polymarket volume; without documented
+        mechanics, auditors and integrators cannot independently verify payout correctness for
+        complex event structures.
+      diligencePath: >-
+        Review Neg Risk CTF Exchange source code on GitHub and request Polymarket to publish
+        dedicated documentation covering multi-outcome token splits, collateralization math,
+        and audit coverage for this contract.
+      relatedQuestionRefs: [QE021]
+
+    - type: missing-source
+      severity: minor
+      topic: competitive fee comparison
+      missingEvidence: >-
+        Independent comparison of Polymarket's 2% fee on net winnings versus Kalshi's fee structure
+        and other regulated prediction market venues, including realized effective fee rates.
+      whyItMatters: >-
+        Polymarket's competitive position on fees and liquidity directly affects trader preference
+        and market depth; without a head-to-head comparison, fee competitiveness is unverified.
+      diligencePath: >-
+        Pull current fee schedules from Kalshi, Augur, and Manifold; compute effective fee rates
+        on representative market sizes and compare against Polymarket's published 2% net-winnings fee.
+      relatedQuestionRefs: [QE024]
+
+    - type: stale
+      severity: minor
+      topic: builder code developer documentation
+      missingEvidence: >-
+        Comprehensive developer documentation explaining how builder codes are registered, what
+        on-chain data they expose, and how API-level analytics are derived from the builderCode field.
+      whyItMatters: >-
+        Builder codes are a new V2 feature enabling institutional API attribution; gaps in developer
+        documentation slow institutional integrator adoption and reduce transparency of platform usage.
+      diligencePath: >-
+        Review the Polymarket changelog for builder code documentation links; request the Polymarket
+        developer relations team to publish a dedicated builder-code guide in docs.polymarket.com.
+      relatedQuestionRefs: [QE026]
+
+    - type: private-evidence-only
+      severity: material
+      topic: V2 audit public reports
+      missingEvidence: >-
+        Publicly accessible PDF audit reports for CTF Exchange V2 from Quantstamp and Cantina,
+        including scope, finding severity breakdown, and remediation status.
+      whyItMatters: >-
+        Without a published V2 audit report, independent verification that the April 2026 contract
+        upgrade contains no critical or high-severity vulnerabilities is not possible for external
+        diligence purposes.
+      diligencePath: >-
+        Request Polymarket to publish the Quantstamp and Cantina V2 audit reports at
+        github.com/Polymarket/ctf-exchange-v2/tree/main/audits; review for any open findings.
+
+acknowledgedWarnings: []
