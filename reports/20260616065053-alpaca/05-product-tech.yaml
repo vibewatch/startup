@@ -1,0 +1,1724 @@
+schemaVersion: "report-v2"
+artifact: "product-tech"
+slug: "alpaca"
+runDate: "2026-06-16"
+company:
+  name: "Alpaca"
+
+chapter:
+  number: 5
+  title: "Product & Technology"
+  summary: >-
+    Alpaca operates a full-stack, self-clearing brokerage infrastructure whose technical differentiation rests on
+    three pillars: direct clearing memberships (DTCC for equities, OCC for options, FICC for Treasuries) that
+    eliminate third-party clearing brokers; a comprehensive developer ecosystem anchored by official SDKs in Python,
+    C#, JavaScript, and Go, an OpenAPI-spec-driven MCP Server v2, and a free paper trading sandbox; and a tokenization
+    layer (Instant Tokenization Network) that claims 94% market share in tokenized US equities but carries material
+    product risk because tokenized assets do not represent direct equity ownership. Q1 2026 API usage growth
+    accelerated nearly 4× quarter-over-quarter as AI-driven access broadened the developer base beyond coders.
+    Key evidence gaps remain on published SLA commitments, throughput benchmarks, and the full regulatory trajectory
+    of the tokenization business after the SEC's January 2026 staff statement on tokenized securities.
+
+sections:
+  - id: "product-suite"
+    title: "Product Suite: APIs, Asset Classes, and Proprietary Programs"
+    body: >-
+      Alpaca's commercial product surface is organized around two primary integration paths—the Broker API and the
+      Trading API—supported by a Market Data API and a Crypto API, and enriched by a portfolio of ancillary programs
+      that increase per-account revenue for fintech partners.
+
+      The Broker API is the B2B backbone: it allows regulated and non-regulated fintechs to launch full brokerage
+      products including account opening (with Alpaca-managed or partner-managed KYC), funding via Plaid, trading
+      across equities, ETFs, options, fixed income, and crypto, and downstream reporting—all without obtaining a
+      separate broker-dealer license. The Trading API targets algorithmic traders, hedge funds, and prop firms who
+      want direct commission-free market access. Both APIs expose REST, WebSocket, and SSE endpoints. Alpaca's
+      homepage as of June 2026 also lists OmniSub (an API-first sub-accounting ledger for omnibus structures) and
+      Shariah-compliant investing as additional product lines, signaling continued product breadth.
+
+      In fixed income, Alpaca's Broker API provides access to 229+ tradable US T-bills and 500+ investment-grade
+      and high-yield US corporate bonds, with FICC membership enabling in-house clearing. Callable bonds are
+      currently supported; fractional bonds, putable, Reg S, and 144a bonds are on the roadmap. The High-Yield
+      Cash program earns Trading API users up to 3.30% APY on uninvested USD cash, with up to $2.5 million FDIC
+      pass-through coverage per account through multiple program banks, and funds remain immediately available as
+      buying power. The Fully Paid Securities Lending (FPSL) program enables partner platforms to offer clients
+      passive income on securities they fully own; cash collateral equal to at least 100% of loaned security value
+      is held at a third-party bank.
+
+      Alpaca's most strategically visible product is the Instant Tokenization Network (ITN), launched at TOKEN2049
+      Singapore in October 2025. The ITN enables institutions to perform in-kind minting and redemption of tokenized
+      US stocks 24/7 via a single API call, with Solana as the initial settlement chain. As of November 2025,
+      Alpaca claims 94% market share in tokenized US equities with over $480M in tokenized AUC. However, the
+      official ITN disclaimer is legally significant: tokenized assets do not represent direct equity ownership;
+      holders have no voting rights, dividend entitlements, or legal claims to underlying shares. Neither Alpaca
+      Securities LLC nor Alpaca Crypto LLC is the issuer or directly involved in the tokenization—it is performed
+      by third-party partners including Backed Finance (xStocks), Ondo Finance, and Dinari.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE004
+      - CE005
+      - CE006
+      - CE007
+      - CE008
+      - CE009
+      - CE012
+      - CE013
+      - CE014
+      - CE015
+      - CE016
+      - CE017
+      - CE038
+      - CE041
+    tableRefs:
+      - TE001
+    figureRefs:
+      - FE001
+
+  - id: "architecture"
+    title: "Technical Architecture: Self-Clearing, Order Routing, and Integration Model"
+    body: >-
+      Alpaca's most defensible technical asset is its fully self-clearing architecture. Having obtained DTCC
+      membership for US equities in 2023–2024, and OCC and FICC memberships in August 2025, Alpaca now manages
+      the complete trade lifecycle—from execution to clearing to settlement—across equities, ETFs, options, and
+      Treasuries without relying on any third-party clearing broker. This eliminates a historically significant cost
+      layer and gives Alpaca and its partners real-time post-trade visibility, faster processing, and greater
+      workflow flexibility. Alpaca also became a Nasdaq Exchange Member in 2025, adding direct exchange
+      connectivity for order routing.
+
+      For 24/5 overnight trading, Alpaca routes orders via the Blue Ocean Alternative Trading System (BOATS), an
+      ATS independent of traditional US stock exchanges. The overnight session runs Sunday 8:00 PM to Friday
+      8:00 AM ET (overnight period), covering all NMS securities but not OTC equities. Only limit orders are
+      accepted during the overnight session, and Day Trading Buying Power does not apply; maximum margin is 2x.
+      This is a meaningful liquidity caveat that partners must communicate to end customers.
+
+      Fractional share trading is available for 2,000+ US equities in both live and paper environments. Orders
+      accept either a qty (fractional quantity) or notional (dollar amount, min $1) parameter in the POST /v2/orders
+      endpoint; fractional orders are executed on a principal or riskless-principal basis and can only be sold
+      with market orders during normal market hours (short sales in fractional orders are not supported). Fractional
+      trading extends into pre-market, post-market, and the overnight sessions.
+
+      For fixed income, Alpaca aggregates quotes from a network of liquidity providers and routes orders to the
+      most competitive bid/ask price. Orders placed outside US bond market hours (9:30 AM–4:00 PM ET) are queued
+      for the next session. The Broker API onboarding model supports two KYC workflows: Alpaca-managed (using
+      Trulioo and Onfido for non-regulated entities) and partner-managed (for investment advisors and
+      broker-dealers with their own AML programs). Partner bank account linking is handled through a Plaid
+      integration. Account status updates and trade events flow through the Events API via streaming.
+    claimRefs:
+      - CE010
+      - CE011
+      - CE018
+      - CE019
+      - CE020
+      - CE030
+      - CE031
+      - CE037
+      - CE039
+      - CE040
+    tableRefs:
+      - TE002
+      - TE003
+    figureRefs:
+      - FE002
+
+  - id: "developer-experience"
+    title: "Developer Experience, SDK Ecosystem, and AI-Native Tooling"
+    body: >-
+      Alpaca's developer-first positioning is substantiated by a multi-language SDK ecosystem, comprehensive
+      documentation, and increasingly AI-native tooling. The official Python SDK (alpaca-py) supports Python
+      3.8+, uses Pydantic for data validation and OOP request models, and covers Trading API, Broker API, and
+      Market Data API. It is available on PyPI as the primary installable package and is actively maintained by
+      alpacahq on GitHub. The C#/.NET SDK (Alpaca.Markets 7.2.0 on NuGet) supports .NET 6+, .NET Standard 2.0,
+      and .NET Framework 4.6.2; the Go SDK (alpaca-trade-api-go) and the JavaScript/Node SDK are also officially
+      maintained. Alpaca's documentation site lists OpenAPI specifications for Broker API, Trading API, and Market
+      Data API, enabling custom client generation. Community contributors have created additional wrappers for
+      C++, Java, TypeScript, R, Rust, Scala, Ruby, and Elixir.
+
+      The Market Data API has two plans: the Basic (free) plan provides real-time IEX data, 200 API calls per
+      minute, and WebSocket streams limited to 30 symbols; the Algo Trader Plus plan ($99/month) provides full
+      SIP consolidated tape from all US exchanges, 10,000 API calls per minute, and unlimited WebSocket symbol
+      streams. Market data for the overnight session (BOATS feed) is also included in the Algo Trader Plus plan.
+      The paper trading sandbox mirrors live trading end-to-end using real-time IEX data; it is free, available
+      globally, and offers the same API surface (paper-api.alpaca.markets). Documented limitations include the
+      lack of market impact simulation, price slippage from latency, order queue position, and regulatory fees.
+
+      In Q1 2026, Alpaca's API usage growth accelerated nearly 4× quarter-over-quarter—rising from single-digit
+      monthly growth in Q4 2025 to approximately 30% per month in Q1 2026—driven by AI-driven and agent-based
+      market participants. To capture this shift, Alpaca released a new CLI and MCP Server v2 in April 2026. The
+      MCP Server v2 is a complete rewrite using FastMCP and OpenAPI specifications, expanding coverage from
+      43 endpoints in v1 to 61 in v2. It enables natural-language trading via AI assistants like Claude, Cursor,
+      and VS Code, and is open source on GitHub. ALPACA_TOOLSETS environment variable filtering lets administrators
+      restrict agent access to specific capability subsets, reducing risk from large-language-model errors.
+    claimRefs:
+      - CE003
+      - CE021
+      - CE022
+      - CE023
+      - CE024
+      - CE025
+      - CE026
+      - CE027
+      - CE028
+      - CE029
+    tableRefs:
+      - TE005
+    figureRefs:
+      - FE004
+
+  - id: "trust-compliance"
+    title: "Trust Controls, Compliance Memberships, and Third-Party Dependencies"
+    body: >-
+      Alpaca's trust architecture layers regulatory memberships, customer protection programs, and partner-facing
+      controls. Alpaca Securities LLC (member FINRA/SIPC) is the regulated broker-dealer for equities, ETFs,
+      options, and fixed income; Alpaca Crypto LLC (FinCEN-registered MSB, NMLS #2160858) handles digital asset
+      services and is not a SIPC or FINRA member—crypto assets are not FDIC or SIPC insured. As of February 2026,
+      Alpaca Clearing upgraded its excess SIPC coverage to $75 million in securities and $75 million in cash per
+      customer, with a total aggregate cap of $250 million across all accounts, underwritten by Lloyd's of London
+      (increased from a prior $30M securities / $1M cash / $150M aggregate structure).
+
+      The FDIC Bank Sweep program underlying High-Yield Cash provides pass-through FDIC coverage of $250,000 per
+      customer per program bank; with multiple program banks, Alpaca advertises up to $2.5M per account. Funds
+      in the sweep are not SIPC-insured. FPSL loans are not SIPC-covered; instead, 100% cash collateral is held
+      at a third-party bank and released to customers in the event of Alpaca's bankruptcy. The distinction between
+      SIPC, FDIC, and cash-collateral protection modes is significant for partners building customer-facing
+      products and must be communicated clearly in disclosures.
+
+      Alpaca's status page (status.alpaca.markets) publicly monitors the Live Trading API (Account, Orders,
+      Positions, Assets, Trade Updates, Fractional Orders), Paper Trading API, Dashboard and Account services,
+      and 13 discrete Broker API sandbox endpoints. In June 2026 the company experienced several operational
+      incidents: a June 14 funding services disruption from upstream provider maintenance (resolved in under 2
+      hours), June 11 intermittent order rejections from an execution venue connection issue (resolved in
+      approximately 12 minutes), and a June 1 journal processing delay of approximately 99 minutes. Third-party
+      monitors reported an aggregate availability below 99.9% over a 30-day window in June 2026, though Alpaca's
+      own status page shows near-100% uptime over 60 days for most components. No formal published SLA
+      commitments (uptime guarantee, credits, or MTTR targets) have been identified in public documentation.
+    claimRefs:
+      - CE004
+      - CE032
+      - CE009
+      - CE007
+      - CE033
+      - CE036
+      - CE030
+      - CE031
+    tableRefs:
+      - TE004
+    figureRefs:
+      - FE003
+
+  - id: "risks"
+    title: "Product and Technical Risks"
+    body: >-
+      Alpaca's product and technology surface carries several material risks that investment committees should
+      evaluate independently.
+
+      Tokenization ownership structure: The ITN's commercial prominence belies a significant product-law constraint.
+      Alpaca's own legal disclosures confirm that tokenized assets provide economic exposure, not direct legal
+      ownership, of underlying shares. Token holders have no voting rights, dividend entitlements, or residual
+      claims in a liquidation. This structure—third-party tokenization where the issuing platform (xStocks,
+      Ondo, Dinari) and not the end investor holds the beneficial interest—was explicitly identified by the SEC's
+      January 2026 staff statement as a higher-risk model compared to issuer-sponsored tokenization. Alpaca's
+      ~94% concentration as the clearing broker for tokenized US equities means that any regulatory or business
+      disruption to Alpaca would simultaneously impair most platforms issuing tokenized US stocks globally.
+
+      24/5 liquidity caveats: Overnight trading via BOATS carries documented risks of partial fills, wider bid-ask
+      spreads, higher volatility from news-driven moves, and price discontinuities between sessions. Only limit
+      orders are permitted overnight; standard market orders are rejected. These constraints limit 24/5's utility
+      for high-frequency or market-order-dependent strategies.
+
+      Crypto regulatory exposure: Alpaca Crypto LLC's FinCEN MSB registration does not provide the same customer
+      protections as a FINRA-registered broker-dealer. Crypto assets are excluded from SIPC and FDIC coverage.
+      Evolving crypto regulation in the US creates ongoing compliance overhead and potential product restrictions.
+
+      Enterprise integration complexity and documentation gaps: The Broker API's flexibility (dual KYC models,
+      configurable revenue splits, multi-asset support, dual clearing-layer distinctions between SIPC, FDIC, and
+      cash collateral) creates significant implementation complexity for new partners. Documentation quality is
+      high for core endpoints but thinner for edge cases in options clearing, FPSL collateral mechanics, and
+      OmniSub sub-accounting. MCP Server v2 changed all tool names and parameters from v1, creating a migration
+      burden for existing AI agent integrations.
+
+      Platform concentration on US market structure: All of Alpaca's clearing memberships and the Blue Ocean ATS
+      dependency are US-specific. While the WealthKernel acquisition brings Xetra access, the core technology
+      stack is not natively designed for non-US clearing and settlement systems. This limits the near-term
+      addressable partner market to US-registered securities, creating a structural dependency on US exchange
+      and regulatory continuity.
+    claimRefs:
+      - CE016
+      - CE034
+      - CE035
+      - CE011
+      - CE004
+      - CE010
+      - CE027
+
+tables:
+  - id: "TE001"
+    title: "Alpaca Product Module and Asset Matrix"
+    columns:
+      - "Module / Product"
+      - "Integration path"
+      - "Status / maturity"
+      - "Key differentiation"
+      - "Diligence gap"
+    rows:
+      - ["Broker API", "B2B fintechs and institutions", "Mature (multi-year production)", "Full-stack brokerage-as-a-service; dual KYC model; OpenAPI spec", "SLA, uptime commitment, and contractual defaults not publicly disclosed"]
+      - ["Trading API", "Algorithmic traders, hedge funds, prop firms", "Mature", "Commission-free; REST/WebSocket/SSE; paper trading sandbox", "Throughput and latency benchmarks not published"]
+      - ["Market Data API", "All developers", "Mature (Basic free; Plus $99/mo)", "Free plan on IEX; Algo Trader Plus full SIP + overnight BOATS feed", "Rate limit per Broker API partner not documented"]
+      - ["Crypto API (Alpaca Crypto LLC)", "B2B and retail", "Scaling", "FinCEN MSB; not SIPC/FDIC; crypto assets excluded from investor protection", "State-by-state licensing map not publicly listed"]
+      - ["Multi-Leg Options", "Trading API and Broker API", "Generally available (2025)", "Zero commission; spreads, straddles, condors via API; OCC-cleared", "API-level Greeks/risk data coverage not confirmed in docs"]
+      - ["Fixed Income (T-Bills + Corporate Bonds)", "Broker API", "Generally available; expanding (2026)", "229+ T-bills, 500+ corporate bonds; FICC-cleared; price- or yield-based markup", "Fractional bonds, putable/Reg S/144a pending; no ADV disclosed"]
+      - ["Fully Paid Securities Lending (FPSL)", "Broker API", "Generally available (2025)", "Customizable revenue splits; 100% cash collateral at third-party bank", "Lending revenue per account not disclosed"]
+      - ["High-Yield Cash", "Trading API and Broker API", "Generally available (late 2025)", "Up to 3.30% APY; up to $2.5M FDIC via program banks; liquid buying power", "APY is variable and subject to change; program bank list not fully public"]
+      - ["24/5 US Equity Trading", "Trading API (auto-enabled); Broker API", "Generally available (2026)", "BOATS ATS overnight; same endpoints; fractional supported", "Limit orders only overnight; lower liquidity; not available via Basic data plan without BOATS feed"]
+      - ["Instant Tokenization Network (ITN)", "Alpaca Crypto LLC / AlpacaDB, Inc.", "Beta / early production (since Oct 2025)", "In-kind mint/redeem 24/7; single API call; 94% claimed market share", "Tokenized assets are NOT direct ownership; governance and regulatory regime still evolving"]
+    notes: >-
+      Status reflects Alpaca's public product documentation as of June 2026. Maturity ratings are based on
+      official blog announcements and documentation depth, not independent benchmarks. Diligence gaps represent
+      items absent from public sources requiring direct disclosure from Alpaca.
+    enumerationScope:
+      coverage: exhaustive
+      basis: >-
+        All major Alpaca product modules publicly documented or announced via Broker API, Trading API,
+        and associated programs as of June 2026, covering US-registered broker-dealer (Alpaca Securities LLC)
+        and crypto/tokenization (Alpaca Crypto LLC) product lines.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE006
+      - CE008
+      - CE009
+      - CE010
+      - CE011
+      - CE012
+      - CE013
+      - CE014
+      - CE015
+      - CE016
+      - CE017
+      - CE038
+      - CE041
+
+  - id: "TE002"
+    title: "Partner Workflow and Use-Case Table"
+    columns:
+      - "User job"
+      - "Workflow before Alpaca"
+      - "Alpaca solution"
+      - "Measurable benefit"
+      - "Limitation"
+    rows:
+      - ["Launch a neobroker with stocks and ETFs", "Obtain broker-dealer license or use fully bundled white-label (e.g. DriveWealth)", "Broker API with Alpaca-managed KYC + DTCC clearing", "Faster time-to-market; no direct clearing license required", "Revenue-sharing economics with dominant partners (e.g. Binance) can materially cut PFOF yield"]
+      - ["Offer US Treasury access to global retail users", "Require a FICC-connected prime broker; high minimum notional", "Fixed Income via Broker API with FICC clearing", "Direct T-bill and corporate bond access; real-time pricing from liquidity aggregation", "Bond orders outside 9:30–4:00 PM ET are queued; fractional bonds not yet available"]
+      - ["Run a 24/7 automated trading strategy on US equities", "Restricted to exchange hours (9:30 AM–4:00 PM) or expensive ATS access", "Trading API with 24/5 BOATS overnight session", "Near round-the-clock access; same API surface with minor parameter changes", "Limit orders only overnight; lower liquidity and wider spreads; BOATS not available on free plan"]
+      - ["Issue tokenized US stocks for global DeFi users", "Build custodial infrastructure from scratch or use unregulated offshore structures", "Instant Tokenization Network with in-kind mint/redeem via Alpaca Crypto LLC", "API-based 24/7 minting; connects to Solana; $480M+ AUC with established partners", "Tokenized assets do not confer direct ownership; regulatory treatment as third-party tokenization subject to SEC scrutiny"]
+      - ["Add passive yield to idle customer cash", "Traditional brokerage cash earns money-market rates; no FDIC without separate bank account", "High-Yield Cash API with FDIC sweep to program banks", "Up to 3.30% APY; up to $2.5M FDIC; liquid buying power", "Available to non-PDT users only; APY variable; bank list can change"]
+    notes: >-
+      Workflow table is based on publicly documented product capabilities and partner integration scenarios.
+      Revenue and unit economics data are based on disclosed terms (e.g. Binance partnership); other partner
+      economics are not publicly available.
+    claimRefs:
+      - CE001
+      - CE006
+      - CE008
+      - CE009
+      - CE010
+      - CE012
+      - CE014
+      - CE016
+      - CE037
+
+  - id: "TE003"
+    title: "Technology and Operating Architecture Table"
+    columns:
+      - "Layer / component"
+      - "Role"
+      - "Key dependency"
+      - "Risk"
+    rows:
+      - ["DTCC clearing membership", "Central counterparty for US equities and ETF settlement", "Regulatory standing as FINRA broker-dealer; margin and capital requirements", "Loss of clearing membership would halt equities operations immediately"]
+      - ["OCC clearing membership (since Aug 2025)", "Central counterparty for listed equity and index options", "Continued FINRA registration and OCC margin compliance", "Options clearing is operationally newer; margin call management at scale untested publicly"]
+      - ["FICC clearing membership (since Aug 2025)", "Central clearing for US Treasuries and repo agreements", "Capital reserves and FICC rules compliance", "Fixed income book is early-stage; stress scenarios under high Treasury volume not publicly modeled"]
+      - ["Blue Ocean ATS (BOATS)", "Third-party ATS for overnight 24/5 US equity trading", "BOATS operational continuity; NMS securities eligibility rules", "Single third-party dependency for entire overnight session; BOATS outage = no overnight trading"]
+      - ["Alpaca Crypto LLC (FinCEN MSB)", "Crypto API services and ITN infrastructure", "Ongoing FinCEN compliance; state-by-state licensing; ITN third-party tokenizers", "Crypto regulatory changes can restrict products; crypto is not SIPC/FDIC insured"]
+      - ["KYC providers (Trulioo, Onfido)", "Identity verification for Alpaca-managed KYC in Broker API onboarding", "Third-party SLAs; OFAC/AML lists currency", "KYC provider outages delay account opening; vendor concentration risk"]
+      - ["Plaid integration", "Bank account authentication and ACH funding for Broker API partners", "Plaid API availability and bank partnership coverage", "Plaid disruption delays funding flows; coverage varies by bank"]
+    notes: >-
+      Architecture table is based on public documentation and disclosures. Margin and capital requirement details,
+      clearing throughput capacity, and internal system redundancy are not publicly disclosed and represent
+      material diligence gaps.
+    claimRefs:
+      - CE018
+      - CE019
+      - CE020
+      - CE030
+      - CE031
+      - CE039
+      - CE040
+
+  - id: "TE004"
+    title: "Trust, Quality, and Compliance Controls Table"
+    columns:
+      - "Control / certification"
+      - "Status"
+      - "Scope"
+      - "Gap / caveat"
+    rows:
+      - ["FINRA broker-dealer registration (Alpaca Securities LLC)", "Active; CRD# 288202", "US equities, ETFs, options, fixed income", "Sep 2024 SEC order for off-channel communications (prior chapter); FINRA SD-2436 resolved"]
+      - ["SIPC membership (standard $500K per customer)", "Active member", "Securities and cash in brokerage accounts", "FPSL loans and HYC sweep funds are NOT SIPC-covered; must be disclosed to end users"]
+      - ["Excess SIPC via Lloyd's of London", "Active as of Feb 2026; $75M securities + $75M cash per customer; $250M aggregate", "Alpaca Clearing / Alpaca Securities LLC accounts", "Aggregate cap of $250M across all customer accounts; does not cover market losses"]
+      - ["FDIC Bank Sweep (High-Yield Cash)", "Active; up to $2.5M per account through multiple program banks", "Uninvested USD cash in the HYC sweep program only", "FDIC coverage depends on number and identity of program banks; SIPC does not apply in sweep"]
+      - ["FPSL cash collateral protection", "100% collateral at third-party bank; released on Alpaca bankruptcy", "Securities on loan in FPSL program", "Not SIPC-insured; collateral release depends on third-party bank and contractual terms"]
+      - ["Alpaca Crypto LLC FinCEN MSB (NMLS #2160858)", "Active", "US crypto services; ITN infrastructure", "Not SIPC or FINRA member; crypto assets not FDIC/SIPC insured"]
+      - ["Status page monitoring", "Public; near-100% self-reported 60-day uptime on most components", "Live Trading, Paper Trading, Broker API (sandbox), Dashboard", "No published SLA commitments or uptime credit mechanism found; third-party monitors reported <99.9% in June 2026"]
+    notes: >-
+      Table reflects disclosures available from official Alpaca sources and independent news coverage as of
+      June 2026. SLA commitments, uptime credits, and third-party audit certifications (SOC 2, PCI) are not
+      publicly documented and represent open diligence items.
+    claimRefs:
+      - CE004
+      - CE007
+      - CE009
+      - CE032
+      - CE033
+      - CE036
+
+  - id: "TE005"
+    title: "Roadmap, Release History, and Development Maturity Table"
+    columns:
+      - "Date / stage"
+      - "Feature / milestone"
+      - "Status"
+      - "Implication"
+      - "Source"
+    rows:
+      - ["2023–2024", "DTCC self-clearing transition", "Completed", "Eliminated reliance on third-party correspondent clearing for equities", "Alpaca blog (prior chapters)"]
+      - ["2025-Q1", "US listed options launched for Broker API and Trading API", "Generally available", "New revenue stream for partners; options exercise/assignment cleared via OCC from Aug 2025", "Alpaca homepage"]
+      - ["2025-08-12", "OCC and FICC clearing memberships approved", "Completed", "Full in-house clearing of equities, options, and Treasuries with no third-party broker dependency", "Alpaca blog (SE001), PostTrade360 (SE016)"]
+      - ["2025-10-01", "Instant Tokenization Network (ITN) launched at TOKEN2049 Singapore", "Early production; Solana-only", "Positions Alpaca as tokenization infrastructure backbone; $480M+ AUC claimed by Nov 2025", "Business Wire (SE003)"]
+      - ["2025-12-09", "94% tokenized US stock market share announced", "Company-claimed; not independently audited", "Claimed data as of Nov 15, 2025; top holdings: TSLA, SPY, QQQ, NVDA, IVV", "Alpaca blog (SE020)"]
+      - ["2025-Q4", "Fully Paid Securities Lending (FPSL) launched for Broker API", "Generally available", "New revenue stream; 100% cash collateral protection model", "Alpaca blog (SE002)"]
+      - ["2025-12-16", "High-Yield Cash program launched for Trading API users (up to 3.30% APY)", "Generally available; non-PDT only", "Passive yield on idle cash; FDIC sweep up to $2.5M", "Alpaca blog (SE011)"]
+      - ["2026-02", "US corporate bonds (500+) added to Broker API fixed income", "Generally available", "Adds investment-grade and high-yield corporate bonds; fractional bonds and 144a pending", "Alpaca blog (SE008)"]
+      - ["2026-02", "24/5 trading (BOATS overnight session) launched for Trading API", "Generally available; Broker API rollout in progress", "Near-24/7 US equity access; limit orders only overnight; BOATS feed in Algo Trader Plus", "Alpaca blog (SE009)"]
+      - ["2026-04-23", "MCP Server v2 launched; CLI released; Q1 2026 API growth disclosed", "MCP Server v2 generally available; 61 endpoints", "4× QoQ API usage acceleration in Q1 2026; AI agent market access broadening", "Business Wire (SE004), Alpaca blog (SE024)"]
+      - ["Roadmap (2026+)", "Treasury notes/bonds, foreign corporate bonds, fractional bonds, additional ITN chains", "Announced; timeline not specified", "Fixed income roadmap and ITN multi-chain support are on record but unscheduled", "Alpaca blog (SE008)"]
+    notes: >-
+      Timeline is based on official Alpaca announcements, press releases, and documentation. Company-claimed
+      metrics (market share, AUC) are not independently audited. Items marked 'Roadmap' have been publicly
+      described but have no committed delivery date.
+    claimRefs:
+      - CE005
+      - CE006
+      - CE008
+      - CE010
+      - CE012
+      - CE013
+      - CE014
+      - CE015
+      - CE017
+      - CE018
+      - CE027
+      - CE028
+      - CE029
+
+figures:
+  - id: "FE001"
+    title: "Alpaca Product Architecture Stack"
+    type: stack
+    layout: wide
+    summary: >-
+      Alpaca's platform can be read as five layers from developer surfaces through clearing and regulatory rails,
+      with the self-clearing stack as the most defensible differentiator.
+    data:
+      layers:
+        - label: "Developer Surfaces"
+          description: "docs.alpaca.markets, OpenAPI specs, official SDKs (Python/C#/Go/JS), MCP Server v2, CLI, paper trading sandbox"
+          detail: "Distribution layer that puts Alpaca's trading infrastructure into daily developer workflows; key developer-moat vector"
+        - label: "API Gateway"
+          description: "Broker API, Trading API, Market Data API (Basic / Algo Trader Plus), Crypto API"
+          detail: "REST + WebSocket + SSE endpoints; versioned; idempotency and request-ID primitives; OpenAPI spec-driven"
+        - label: "Product Modules"
+          description: "Equities/ETFs, Options, Fixed Income, Crypto, Fractional Shares, 24/5 Trading, FPSL, High-Yield Cash, ITN"
+          detail: "Revenue-generating product surface for partners; maturity and regulatory treatment varies by module"
+        - label: "Clearing and Settlement"
+          description: "DTCC (equities), OCC (options), FICC (Treasuries), Blue Ocean ATS (overnight), Alpaca Crypto LLC (crypto/ITN)"
+          detail: "Self-clearing memberships eliminate third-party brokers for equities, options, and Treasuries; BOATS is a third-party ATS dependency"
+        - label: "Regulatory and Trust Layer"
+          description: "FINRA broker-dealer (Alpaca Securities LLC), FinCEN MSB (Alpaca Crypto LLC), SIPC membership, FDIC sweep program, KYC compliance"
+          detail: "Underlying trust infrastructure; SIPC/FDIC/collateral protection differs by product; crypto excluded from standard investor protections"
+    approximationNotes: >-
+      Stack is constructed from public documentation and disclosures. Internal system redundancy, cloud provider
+      identity, and undisclosed reliability infrastructure are not represented.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE010
+      - CE018
+      - CE019
+      - CE021
+      - CE022
+      - CE032
+
+  - id: "FE002"
+    title: "Broker API Partner Integration and Trade Lifecycle Flow"
+    type: flow
+    layout: wide
+    summary: >-
+      A fintech partner's end-customer journey from onboarding through cleared settlement, showing Alpaca's
+      role at each stage of the brokerage workflow.
+    data:
+      nodes:
+        - id: "n1"
+          label: "Partner integrates Broker API"
+        - id: "n2"
+          label: "Customer KYC and account opening (Alpaca-managed or partner-managed)"
+        - id: "n3"
+          label: "Bank funding via Plaid ACH"
+        - id: "n4"
+          label: "Order submitted via API (REST or WebSocket)"
+        - id: "n5"
+          label: "Pre-trade compliance and risk checks"
+        - id: "n6"
+          label: "Order routing (PFOF market makers / exchange / BOATS overnight)"
+        - id: "n7"
+          label: "Trade execution"
+        - id: "n8"
+          label: "Clearing and settlement (DTCC / OCC / FICC)"
+        - id: "n9"
+          label: "Post-trade: Events API notification to partner"
+      edges:
+        - from: "n1"
+          to: "n2"
+        - from: "n2"
+          to: "n3"
+        - from: "n3"
+          to: "n4"
+        - from: "n4"
+          to: "n5"
+        - from: "n5"
+          to: "n6"
+        - from: "n6"
+          to: "n7"
+        - from: "n7"
+          to: "n8"
+        - from: "n8"
+          to: "n9"
+    approximationNotes: null
+    claimRefs:
+      - CE018
+      - CE019
+      - CE030
+      - CE031
+      - CE037
+      - CE039
+
+  - id: "FE003"
+    title: "Critical Infrastructure Dependency Map"
+    type: dag
+    layout: wide
+    summary: >-
+      Alpaca's core clearing and regulatory stack creates three categories of dependency: in-house clearing
+      memberships, third-party execution venues, and external KYC/funding rails.
+    data:
+      nodes:
+        - id: "n1"
+          label: "Alpaca (AlpacaDB, Inc. + Alpaca Securities LLC)"
+        - id: "n2"
+          label: "DTCC — US equity and ETF clearing"
+        - id: "n3"
+          label: "OCC — listed options clearing"
+        - id: "n4"
+          label: "FICC — Treasury and repo clearing"
+        - id: "n5"
+          label: "Blue Ocean ATS (BOATS) — overnight execution venue"
+        - id: "n6"
+          label: "Alpaca Crypto LLC / ITN third-party tokenizers"
+        - id: "n7"
+          label: "SIPC / FDIC program banks — customer protection"
+        - id: "n8"
+          label: "KYC providers (Trulioo, Onfido)"
+        - id: "n9"
+          label: "Plaid — bank funding and authentication"
+        - id: "n10"
+          label: "Nasdaq Exchange (direct member)"
+      edges:
+        - from: "n1"
+          to: "n2"
+          label: "equities clearing member"
+        - from: "n1"
+          to: "n3"
+          label: "options clearing member"
+        - from: "n1"
+          to: "n4"
+          label: "treasury clearing member"
+        - from: "n1"
+          to: "n5"
+          label: "overnight order routing"
+        - from: "n1"
+          to: "n6"
+          label: "crypto and tokenization infrastructure"
+        - from: "n1"
+          to: "n7"
+          label: "SIPC membership + FDIC sweep"
+        - from: "n1"
+          to: "n8"
+          label: "Broker API KYC-as-a-service"
+        - from: "n1"
+          to: "n9"
+          label: "Broker API bank funding"
+        - from: "n1"
+          to: "n10"
+          label: "direct exchange member"
+    approximationNotes: >-
+      Edge labels describe the relationship type. DTCC, OCC, and FICC memberships are in-house; BOATS and
+      third-party tokenizers represent vendor dependencies outside Alpaca's direct control.
+    claimRefs:
+      - CE018
+      - CE019
+      - CE020
+      - CE031
+      - CE032
+      - CE039
+
+  - id: "FE004"
+    title: "Product Maturity and Capability Map"
+    type: matrix
+    layout: wide
+    summary: >-
+      Maturity varies substantially across Alpaca's product modules; core API infrastructure is mature, while
+      tokenization and newer modules like FPSL remain early in their reliability and documentation depth.
+    data:
+      columns:
+        - "Documentation depth"
+        - "API maturity"
+        - "Clearing coverage"
+        - "Developer adoption signal"
+      rows:
+        - label: "Broker API (core)"
+          values: ["High", "High", "Full (DTCC)", "High"]
+        - label: "Trading API (core)"
+          values: ["High", "High", "Full (DTCC)", "High"]
+        - label: "Market Data API"
+          values: ["High", "High", "N/A", "High"]
+        - label: "Crypto API"
+          values: ["Medium", "Medium", "None (FinCEN MSB)", "Medium"]
+        - label: "Multi-Leg Options"
+          values: ["Medium", "Medium", "Full (OCC)", "Low"]
+        - label: "Fixed Income"
+          values: ["Medium", "Medium", "Full (FICC)", "Low"]
+        - label: "FPSL"
+          values: ["Low", "Low", "Partial", "Low"]
+        - label: "High-Yield Cash"
+          values: ["Medium", "Medium", "N/A", "Low"]
+        - label: "24/5 Trading"
+          values: ["High", "High", "BOATS ATS (third-party)", "Medium"]
+        - label: "Tokenization / ITN"
+          values: ["Low", "Low", "None (third-party)", "Low"]
+    approximationNotes: >-
+      Maturity ratings are ordinal summaries based on documentation depth (docs.alpaca.markets), official
+      blog announcements, and developer registry signals (GitHub, PyPI, NuGet). They are not benchmark
+      results and do not reflect undisclosed internal engineering metrics.
+    claimRefs:
+      - CE003
+      - CE005
+      - CE006
+      - CE010
+      - CE012
+      - CE016
+      - CE021
+      - CE022
+      - CE027
+
+callouts:
+  - calloutType: "strength"
+    title: "Self-clearing stack is a genuine and defensible technical moat"
+    body: >-
+      Alpaca's simultaneous DTCC, OCC, and FICC memberships—completed as of August 2025—give it full in-house
+      control over the trade lifecycle across equities, options, and Treasuries. Few brokerage infrastructure
+      providers of Alpaca's size hold all three memberships simultaneously. This eliminates third-party clearing
+      broker fees and enables real-time post-trade visibility, which are direct competitive advantages over
+      correspondent-clearing peers and provide structural cost leverage as partner volume scales.
+    claimRefs:
+      - CE018
+      - CE019
+      - CE020
+
+  - calloutType: "risk"
+    title: "Tokenization concentration creates single-point-of-failure risk for the on-chain equity market"
+    body: >-
+      Alpaca's ~94% market share as the clearing broker for tokenized US equities means the entire nascent
+      tokenized-stock sector depends on a single regulated intermediary. The SEC's January 2026 staff statement
+      explicitly flagged the third-party tokenization model—where end investors do not hold direct ownership—as
+      carrying higher regulatory risk than issuer-sponsored structures. Any regulatory action, compliance
+      disruption, or relationship change at Alpaca would simultaneously affect most of the tokenized-equity
+      platforms globally. This sector concentration is a reputational and systemic risk that investors should
+      weigh independently of ITN's revenue potential.
+    claimRefs:
+      - CE016
+      - CE034
+      - CE035
+
+localEvidence:
+  searchQueries:
+    - query: "Alpaca Markets Broker API Trading API developer documentation 2026"
+      engine: "web_search"
+      hits: 10
+      retainedSourceRefs:
+        - SE006
+        - SE007
+        - SE010
+        - SE015
+    - query: "Alpaca Markets Instant Tokenization Network xStocks Dinari 2026"
+      engine: "web_search"
+      hits: 9
+      retainedSourceRefs:
+        - SE003
+    - query: "Alpaca Markets self-clearing DTCC OCC FICC architecture 2026"
+      engine: "web_search"
+      hits: 9
+      retainedSourceRefs:
+        - SE001
+        - SE016
+    - query: "Alpaca Markets GitHub alpacahq SDK open source repos 2026"
+      engine: "web_search"
+      hits: 9
+      retainedSourceRefs:
+        - SE022
+        - SE023
+        - SE025
+    - query: "Alpaca Markets status page uptime SLA reliability incidents 2026"
+      engine: "web_search"
+      hits: 10
+      retainedSourceRefs:
+        - SE005
+    - query: "Alpaca Markets crypto API options trading fractional shares 24/5 2026"
+      engine: "web_search"
+      hits: 10
+      retainedSourceRefs:
+        - SE009
+        - SE014
+        - SE021
+    - query: "Alpaca Markets fixed income high yield cash fully paid securities lending API 2026"
+      engine: "web_search"
+      hits: 9
+      retainedSourceRefs:
+        - SE002
+        - SE008
+        - SE011
+        - SE017
+    - query: "Alpaca Markets tokenization regulatory risk direct ownership disclosure 2026"
+      engine: "web_search"
+      hits: 10
+      retainedSourceRefs:
+        - SE013
+        - SE027
+    - query: "Alpaca Markets Broker API onboarding KYC partner integration documentation 2026"
+      engine: "web_search"
+      hits: 9
+      retainedSourceRefs:
+        - SE019
+    - query: "Alpaca Markets market data API plans pricing Unlimited Basic 2026"
+      engine: "web_search"
+      hits: 8
+      retainedSourceRefs:
+        - SE010
+        - SE021
+    - query: "Alpaca Markets paper trading sandbox developer environment 2026"
+      engine: "web_search"
+      hits: 9
+      retainedSourceRefs:
+        - SE019
+    - query: "Alpaca API AI trading agents growth 2026 announcement"
+      engine: "web_search"
+      hits: 9
+      retainedSourceRefs:
+        - SE004
+        - SE024
+    - query: "Alpaca Markets CLI MCP server AI agents 2026 launch announcement"
+      engine: "web_search"
+      hits: 9
+      retainedSourceRefs:
+        - SE025
+        - SE026
+    - query: "Alpaca Markets 94 percent tokenized US stocks market share launched 2025 2026"
+      engine: "web_search"
+      hits: 8
+      retainedSourceRefs:
+        - SE012
+        - SE018
+        - SE020
+
+  researchQuestions:
+    - id: "QE001"
+      question: "What product modules does Alpaca expose through its Broker API and Trading API as of June 2026?"
+      type: "enumeration"
+      targets: ["contentRequirements/0", "contentRequirements/1", "plannedTables/product-module-asset-matrix"]
+      status: "answered"
+
+    - id: "QE002"
+      question: "What official SDKs and programming languages does Alpaca maintain across GitHub and package registries?"
+      type: "enumeration"
+      targets: ["contentRequirements/3", "plannedTables/product-module-asset-matrix", "plannedFigures/product-architecture-map"]
+      status: "answered"
+
+    - id: "QE003"
+      question: "What clearing memberships does Alpaca hold and which asset classes does each cover?"
+      type: "enumeration"
+      targets: ["contentRequirements/2", "plannedTables/technology-operating-architecture-table"]
+      status: "answered"
+
+    - id: "QE004"
+      question: "Who are the confirmed launch and operating partners in Alpaca's Instant Tokenization Network as of June 2026?"
+      type: "enumeration"
+      targets: ["contentRequirements/1", "plannedTables/product-module-asset-matrix"]
+      status: "answered"
+
+    - id: "QE005"
+      question: "What throughput benchmarks, order rate limits, and latency SLAs does Alpaca publish for its Trading API?"
+      type: "quantification"
+      targets: ["contentRequirements/3", "plannedTables/technology-operating-architecture-table"]
+      status: "unresolved"
+
+    - id: "QE006"
+      question: "How many distinct trading and data endpoints does Alpaca's MCP Server v2 cover compared to v1?"
+      type: "quantification"
+      targets: ["contentRequirements/3", "plannedTables/roadmap-release-development-stage-table"]
+      status: "answered"
+
+    - id: "QE007"
+      question: "What are the specific rate limits in API calls per minute under the Basic and Algo Trader Plus market data plans?"
+      type: "quantification"
+      targets: ["contentRequirements/0", "plannedTables/product-module-asset-matrix"]
+      status: "answered"
+
+    - id: "QE008"
+      question: "What is Alpaca's claimed tokenized AUC and market share percentage as of the most recent report date in 2026?"
+      type: "quantification"
+      targets: ["contentRequirements/4", "plannedTables/product-module-asset-matrix"]
+      status: "answered"
+
+    - id: "QE009"
+      question: "Does Alpaca's official documentation confirm that 24/5 trading is automatically enabled for Trading API users?"
+      type: "verification"
+      targets: ["contentRequirements/3", "plannedTables/roadmap-release-development-stage-table"]
+      status: "answered"
+
+    - id: "QE010"
+      question: "Has Alpaca officially confirmed in legal disclosures that tokenized assets do not represent direct equity ownership?"
+      type: "verification"
+      targets: ["contentRequirements/5", "plannedTables/trust-quality-compliance-table"]
+      status: "answered"
+
+    - id: "QE011"
+      question: "Is the 3.30% APY offered by Alpaca's High-Yield Cash program confirmed in current official documentation?"
+      type: "verification"
+      targets: ["contentRequirements/0", "plannedTables/product-module-asset-matrix"]
+      status: "answered"
+
+    - id: "QE012"
+      question: "Does the Broker API support both Alpaca-managed and partner-managed KYC onboarding models?"
+      type: "verification"
+      targets: ["contentRequirements/2", "plannedTables/workflow-use-case-table"]
+      status: "answered"
+
+    - id: "QE013"
+      question: "What regulatory risks does the SEC's 2026 staff statement on tokenized securities create for Alpaca's ITN business?"
+      type: "adverse"
+      targets: ["contentRequirements/5", "plannedTables/trust-quality-compliance-table"]
+      status: "partial"
+
+    - id: "QE014"
+      question: "What service disruptions and operational incidents has Alpaca's platform experienced in 2026?"
+      type: "adverse"
+      targets: ["contentRequirements/3", "plannedTables/trust-quality-compliance-table"]
+      status: "partial"
+
+    - id: "QE015"
+      question: "What new product or API features did Alpaca launch or announce in 2026?"
+      type: "freshness"
+      targets: ["contentRequirements/1", "plannedTables/roadmap-release-development-stage-table"]
+      status: "answered"
+
+    - id: "QE016"
+      question: "What was Alpaca's API usage growth rate in Q1 2026 and what drove the acceleration?"
+      type: "freshness"
+      targets: ["contentRequirements/4", "plannedTables/roadmap-release-development-stage-table"]
+      status: "answered"
+
+    - id: "QE017"
+      question: "How does Alpaca's self-clearing architecture differ from reliance on third-party correspondent clearing brokers?"
+      type: "comparison"
+      targets: ["contentRequirements/2", "contentRequirements/4", "plannedTables/technology-operating-architecture-table"]
+      status: "answered"
+
+    - id: "QE018"
+      question: "How does the Basic market data plan compare to Algo Trader Plus for developers building production trading systems?"
+      type: "comparison"
+      targets: ["contentRequirements/0", "plannedTables/product-module-asset-matrix"]
+      status: "answered"
+
+    - id: "QE019"
+      question: "How does Alpaca's Instant Tokenization Network perform in-kind minting and redemption mechanically?"
+      type: "mechanism"
+      targets: ["contentRequirements/2", "plannedFigures/customer-workflow-operating-flow"]
+      status: "answered"
+
+    - id: "QE020"
+      question: "What is the end-to-end workflow for a fintech partner to onboard and go live using the Broker API?"
+      type: "mechanism"
+      targets: ["contentRequirements/2", "plannedFigures/customer-workflow-operating-flow"]
+      status: "answered"
+
+    - id: "QE021"
+      question: "How does Alpaca route orders during the 24/5 overnight session and what ATS powers it?"
+      type: "mechanism"
+      targets: ["contentRequirements/2", "plannedTables/technology-operating-architecture-table"]
+      status: "answered"
+
+    - id: "QE022"
+      question: "How does fractional share trading work technically in Alpaca's order processing at the API level?"
+      type: "mechanism"
+      targets: ["contentRequirements/2", "plannedTables/workflow-use-case-table"]
+      status: "answered"
+
+    - id: "QE023"
+      question: "How does Alpaca's FPSL program protect customers if Alpaca files for bankruptcy?"
+      type: "mechanism"
+      targets: ["contentRequirements/5", "plannedTables/trust-quality-compliance-table"]
+      status: "answered"
+
+    - id: "QE024"
+      question: "What health-monitored components are listed on Alpaca's public status page?"
+      type: "enumeration"
+      targets: ["contentRequirements/3", "plannedTables/trust-quality-compliance-table"]
+      status: "answered"
+
+    - id: "QE025"
+      question: "What additional fixed income product types are listed on Alpaca's publicly stated roadmap?"
+      type: "enumeration"
+      targets: ["contentRequirements/3", "plannedTables/roadmap-release-development-stage-table"]
+      status: "answered"
+
+    - id: "QE026"
+      question: "What community SDK wrappers and third-party language libraries does Alpaca officially link from its developer documentation?"
+      type: "enumeration"
+      targets: ["contentRequirements/3", "plannedFigures/product-architecture-map"]
+      status: "answered"
+
+  sources:
+    - id: "SE001"
+      publisher: "Alpaca Markets"
+      title: "Alpaca Secures OCC and FICC Memberships to Power Multi-Asset Self-Clearing for Partners"
+      url: "https://alpaca.markets/blog/alpaca-secures-occ-and-ficc-memberships-to-power-multi-asset-self-clearing-for-partners/"
+      date: "2025-08-12"
+      accessDate: "2026-06-16"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["clearing", "architecture", "occ", "ficc", "dtcc", "product"]
+      keyQuote: >-
+        "Being approved as a clearing member of OCC and FICC is a pivotal moment for Alpaca. We've built and can
+        operate a fully in-house, multi-asset clearing infrastructure from the ground up."
+
+    - id: "SE002"
+      publisher: "Alpaca Markets"
+      title: "Alpaca Launches Fully Paid Securities Lending for Broker API"
+      url: "https://alpaca.markets/blog/alpaca-launches-fully-paid-securities-lending-for-broker-api/"
+      accessDate: "2026-06-16"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["fpsl", "broker-api", "product", "revenue"]
+      keyQuote: >-
+        "Securities on loan are not covered by SIPC. Instead, cash collateral is used to safeguard your loaned
+        securities. We maintain cash collateral equivalent to at least 100% of the value of your loaned securities
+        at a third-party bank."
+
+    - id: "SE003"
+      publisher: "AlpacaDB, Inc. via Business Wire"
+      title: "US Stock Market Ready for Instant Tokenization with Alpaca's Newly Launched Network"
+      url: "https://www.businesswire.com/news/home/20251001526080/en/US-Stock-Market-Ready-for-Instant-Tokenization-with-Alpacas-Newly-Launched-Network"
+      date: "2025-10-01"
+      accessDate: "2026-06-16"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["tokenization", "itn", "crypto", "product"]
+      keyQuote: >-
+        "Tokenized assets do not represent direct equity ownership in any underlying company or issuer. Instead,
+        tokenized assets generally provide economic exposure to the equity securities of an underlying issuer.
+        As such, holders of tokenized assets have no voting rights, dividend entitlements, or legal claims to
+        the underlying company shares."
+
+    - id: "SE004"
+      publisher: "AlpacaDB, Inc. via Business Wire"
+      title: "Alpaca Reports Sharp Growth in API Trading as AI Reshapes Market Access"
+      url: "https://secure.businesswire.com/news/home/20260423964388/en/Alpaca-Reports-Sharp-Growth-in-API-Trading-as-AI-Reshapes-Market-Access"
+      date: "2026-04-23"
+      accessDate: "2026-06-16"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["api-growth", "ai", "developer-tools", "product"]
+      keyQuote: >-
+        "In Q1 2026, API usage growth accelerated nearly 4x quarter-over-quarter, with monthly growth rates
+        rising from single digits in Q4 2025 to roughly 30% in Q1 2026."
+
+    - id: "SE005"
+      publisher: "Alpaca Markets"
+      title: "Alpaca Status"
+      url: "https://status.alpaca.markets/"
+      accessDate: "2026-06-16"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["reliability", "status", "uptime", "developer-tools"]
+
+    - id: "SE006"
+      publisher: "GitHub (alpacahq)"
+      title: "GitHub - alpacahq/alpaca-py: The Official Python SDK for Alpaca API"
+      url: "https://github.com/alpacahq/alpaca-py"
+      accessDate: "2026-06-16"
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: high
+      independence: company
+      topics: ["sdk", "python", "developer-tools", "open-source"]
+      keyQuote: >-
+        "Alpaca-py provides an interface for interacting with the API products Alpaca offers. These API products
+        are provided as various REST, WebSocket and SSE endpoints."
+
+    - id: "SE007"
+      publisher: "PyPI"
+      title: "alpaca-py · PyPI"
+      url: "https://pypi.org/project/alpaca-py/"
+      accessDate: "2026-06-16"
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: high
+      independence: company
+      topics: ["sdk", "python", "developer-tools", "open-source"]
+
+    - id: "SE008"
+      publisher: "Alpaca Markets"
+      title: "Alpaca Expands Fixed Income Offering to Include Corporate Bonds"
+      url: "https://alpaca.markets/blog/alpaca-expands-fixed-income-offering-to-include-corporate-bonds/"
+      date: "2026-02-01"
+      accessDate: "2026-06-16"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["fixed-income", "broker-api", "product", "ficc"]
+      keyQuote: >-
+        "Partners can provide access to a diversified range of asset classes, including US equities, options,
+        fixed income, and crypto, all with Alpaca's Broker API."
+
+    - id: "SE009"
+      publisher: "Alpaca Markets"
+      title: "Alpaca Launches 24/5 Trading for Stocks for Trading API"
+      url: "https://alpaca.markets/blog/introducing-stocks-24_5-overnight-with-alpaca-trading-api/"
+      date: "2026-02-01"
+      accessDate: "2026-06-16"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["24-5-trading", "trading-api", "product", "boats"]
+      keyQuote: >-
+        "Alpaca now offers 24/5 trading for US equities to Trading API users, allowing traders to access the
+        US equities market from 8:00 PM ET Sunday to 8:00 PM ET Friday."
+
+    - id: "SE010"
+      publisher: "Alpaca Markets"
+      title: "Alpaca US — Documentation Portal"
+      url: "https://docs.alpaca.markets/us/"
+      accessDate: "2026-06-16"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["developer-tools", "documentation", "api"]
+
+    - id: "SE011"
+      publisher: "Alpaca Markets"
+      title: "Alpaca Launches High-Yield Cash Program for Trading API Users, Enabling Growth on Deposits"
+      url: "https://alpaca.markets/blog/alpaca-launches-high-yield-cash-program-for-trading-api-users-enabling-growth-on-deposits/"
+      date: "2025-12-16"
+      accessDate: "2026-06-16"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["high-yield-cash", "trading-api", "fdic", "product"]
+      keyQuote: >-
+        "Starting today, Alpaca's Trading API users can earn up to 3.30% annual percentage yield (APY) on their
+        uninvested USD balances with our new High-Yield Cash program."
+
+    - id: "SE012"
+      publisher: "Financial Content / Business Wire"
+      title: "Alpaca Holds 94% Market Share in Tokenized US Stocks and ETFs"
+      url: "https://markets.financialcontent.com/stocks/article/bizwire-2025-12-9-alpaca-holds-94-market-share-in-tokenized-us-stocks-and-etfs"
+      date: "2025-12-09"
+      accessDate: "2026-06-16"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: company
+      topics: ["tokenization", "market-share", "itn", "product"]
+      keyQuote: >-
+        "Alpaca, a global leader in brokerage infrastructure APIs, recently announced it holds 94% market share
+        in tokenized US stocks and ETFs, with $480M in tokenized assets under custody (AUC)."
+
+    - id: "SE013"
+      publisher: "The Coin Republic"
+      title: "SEC Warning Puts Tokenized Securities and Alpaca Under the Microscope"
+      url: "https://www.thecoinrepublic.com/2026/01/29/sec-warning-puts-tokenized-securities-and-alpaca-under-the-microscope/"
+      date: "2026-01-29"
+      accessDate: "2026-06-16"
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: low
+      independence: independent
+      topics: ["tokenization", "regulatory", "sec", "risks"]
+      keyQuote: >-
+        "Behind many tokenized stock platforms sits Alpaca, a regulated broker that executes trades and holds the
+        underlying shares. Because few brokers are willing to sell shares to tokenization firms, Alpaca has
+        become the main route for execution."
+
+    - id: "SE014"
+      publisher: "Alpaca Markets"
+      title: "Fractional Trading — Alpaca API Docs"
+      url: "https://docs.alpaca.markets/us/docs/fractional-trading"
+      accessDate: "2026-06-16"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["fractional-trading", "trading-api", "architecture"]
+
+    - id: "SE015"
+      publisher: "Alpaca Markets"
+      title: "SDKs and Tools — Alpaca API Docs"
+      url: "https://docs.alpaca.markets/us/docs/sdks-and-tools"
+      accessDate: "2026-06-16"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["sdk", "developer-tools", "open-source"]
+
+    - id: "SE016"
+      publisher: "PostTrade 360°"
+      title: "Alpaca gains OCC and FICC clearing memberships"
+      url: "https://posttrade360.com/news/infrastructure/alpaca-gains-occ-and-ficc-clearing-memberships/"
+      date: "2025-08-12"
+      accessDate: "2026-06-16"
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["clearing", "occ", "ficc", "architecture"]
+
+    - id: "SE017"
+      publisher: "Crowdfund Insider"
+      title: "Alpaca Markets Bolsters Offerings With Fixed Income Expansion And Enhanced Investor Protections"
+      url: "https://www.crowdfundinsider.com/2026/02/260793-alpaca-markets-bolsters-offerings-with-fixed-income-expansion-and-enhanced-investor-protections/"
+      date: "2026-02-01"
+      accessDate: "2026-06-16"
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["fixed-income", "sipc", "broker-api", "product"]
+      keyQuote: >-
+        "The new policy offers up to $75 million in securities and $75 million in cash per customer, with a
+        total aggregate cap of $250 million across all accounts."
+
+    - id: "SE018"
+      publisher: "Alpaca Markets"
+      title: "Alpaca — Developer-first API for Stock, Options, Crypto Trading"
+      url: "https://alpaca.markets/"
+      accessDate: "2026-06-16"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["product", "api", "developer-tools"]
+
+    - id: "SE019"
+      publisher: "Alpaca Markets"
+      title: "Paper Trading — Alpaca API Docs"
+      url: "https://docs.alpaca.markets/us/docs/paper-trading"
+      accessDate: "2026-06-16"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["paper-trading", "developer-tools", "sandbox"]
+
+    - id: "SE020"
+      publisher: "Alpaca Markets"
+      title: "Alpaca Holds 94% Market Share of Tokenized US Stocks and ETFs, Setting Global Standard for On-Chain Markets"
+      url: "https://alpaca.markets/blog/alpaca-holds-94-market-share-of-tokenized-us-stocks-and-etfs-setting-global-standard-for-on-chain-markets/"
+      date: "2025-12-09"
+      accessDate: "2026-06-16"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["tokenization", "market-share", "itn"]
+      keyQuote: >-
+        "Alpaca's Instant Tokenization Network is owned and developed by AlpacaDB, Inc. and Alpaca Crypto LLC.
+        Tokenized assets do not represent direct equity ownership in any underlying company or issuer."
+
+    - id: "SE021"
+      publisher: "Alpaca Markets"
+      title: "24/5 Trading — Alpaca API Docs"
+      url: "https://docs.alpaca.markets/us/docs/245-trading-for-trading-api"
+      accessDate: "2026-06-16"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["24-5-trading", "boats", "overnight-trading", "architecture"]
+      keyQuote: >-
+        "Overnight Trade executions and market data are facilitated by the Blue Ocean Alternative Trading System
+        (BOATS). As an Alternative Trading System (ATS), BOATS operates an independent overnight trading session
+        outside of traditional stock exchanges."
+
+    - id: "SE022"
+      publisher: "NuGet Gallery"
+      title: "NuGet Gallery | Alpaca.Markets 7.2.0"
+      url: "https://www.nuget.org/packages/Alpaca.Markets/"
+      accessDate: "2026-06-16"
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: high
+      independence: company
+      topics: ["sdk", "dotnet", "developer-tools", "open-source"]
+
+    - id: "SE023"
+      publisher: "Go Package Registry (pkg.go.dev)"
+      title: "alpaca-trade-api-go module — github.com/alpacahq/alpaca-trade-api-go/v3"
+      url: "https://pkg.go.dev/github.com/alpacahq/alpaca-trade-api-go/v3"
+      accessDate: "2026-06-16"
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: high
+      independence: company
+      topics: ["sdk", "go", "developer-tools", "open-source"]
+
+    - id: "SE024"
+      publisher: "Alpaca Markets"
+      title: "Alpaca Reports Sharp Growth in API Trading as AI Reshapes Market Access"
+      url: "https://alpaca.markets/blog/alpaca-reports-sharp-growth-in-api-trading-as-ai-reshapes-market-access/"
+      date: "2026-04-23"
+      accessDate: "2026-06-16"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["api-growth", "ai", "developer-tools", "product"]
+
+    - id: "SE025"
+      publisher: "GitHub (alpacahq)"
+      title: "GitHub - alpacahq/alpaca-mcp-server: Alpaca's official MCP Server"
+      url: "https://github.com/alpacahq/alpaca-mcp-server"
+      accessDate: "2026-06-16"
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: high
+      independence: company
+      topics: ["mcp-server", "ai", "developer-tools", "open-source"]
+      keyQuote: >-
+        "V2 is a complete rewrite built with FastMCP and OpenAPI. None of the V1 tools exist in V2 — tool names,
+        parameters, and schemas have changed."
+
+    - id: "SE026"
+      publisher: "Crowdfund Insider"
+      title: "Alpaca AI MCP Server Now Enables Improved Connectivity Between AI Tools And Trading Infrastructure"
+      url: "https://www.crowdfundinsider.com/2026/04/273501-alpaca-ai-mcp-server-now-enables-improved-connectivity-between-ai-tools-and-trading-infrastructure/"
+      date: "2026-04-15"
+      accessDate: "2026-06-16"
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["mcp-server", "ai", "developer-tools"]
+      keyQuote: >-
+        "The new iteration now handles 61 distinct actions, compared to just 43 previously."
+
+    - id: "SE027"
+      publisher: "The Crypto Times"
+      title: "Crypto's $1B Tokenized Stocks Faces Centralized Custody Bottleneck"
+      url: "https://www.cryptotimes.io/2026/01/29/cryptos-1b-tokenized-stocks-faces-centralized-custody-bottleneck/"
+      date: "2026-01-29"
+      accessDate: "2026-06-16"
+      accessStatus: js-only
+      stance: adverse
+      sourceType: news
+      reputationTier: low
+      independence: independent
+      topics: ["tokenization", "risks", "concentration", "regulatory"]
+
+  claims:
+    - id: "CE001"
+      statement: "Alpaca's Broker API enables fintechs and institutions to launch full brokerage products—including account opening, trading, market data, reporting, and KYC—under a single integration without a separate broker-dealer license."
+      type: company-claimed
+      topic: "product"
+      sourceRefs: [SE018, SE010]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE001]
+
+    - id: "CE002"
+      statement: "Alpaca's Trading API provides commission-free algorithmic trading for stocks, ETFs, options, and crypto via REST, WebSocket, and SSE endpoints."
+      type: company-claimed
+      topic: "product"
+      sourceRefs: [SE018, SE009]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE001]
+
+    - id: "CE003"
+      statement: "The Market Data API has two plans: Basic (free, 200 API calls/min, IEX real-time data, 30-symbol WebSocket limit) and Algo Trader Plus ($99/month, 10,000 API calls/min, full SIP data from all US exchanges, unlimited WebSocket symbols)."
+      type: observed
+      topic: "market-data"
+      sourceRefs: [SE010, SE021]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE007, QE018]
+
+    - id: "CE004"
+      statement: "Alpaca Crypto LLC, a FinCEN-registered MSB (NMLS #2160858) and AlpacaDB subsidiary, provides crypto services; crypto assets are not FDIC- or SIPC-insured and Alpaca Crypto LLC is not a FINRA or SIPC member."
+      type: observed
+      topic: "crypto"
+      sourceRefs: [SE018, SE003]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE001]
+
+    - id: "CE005"
+      statement: "Alpaca launched multi-leg options trading (spreads, straddles, condors) in 2025 for both Trading API and Broker API users with zero commissions and real-time/historical options data."
+      type: company-claimed
+      topic: "options"
+      sourceRefs: [SE018]
+      confidence: medium
+      freshness: current
+
+    - id: "CE006"
+      statement: "Alpaca launched its Fully Paid Securities Lending (FPSL) program for the Broker API in 2025, allowing partner platforms to offer clients passive income on securities they fully own."
+      type: observed
+      topic: "fpsl"
+      sourceRefs: [SE002, SE012]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE001]
+
+    - id: "CE007"
+      statement: "FPSL customer protection uses 100% cash collateral held at a third-party bank rather than SIPC; in the event of Alpaca's bankruptcy, the third-party bank releases collateral to customers for the value of loaned securities."
+      type: observed
+      topic: "fpsl"
+      sourceRefs: [SE002, SE017]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE023]
+
+    - id: "CE008"
+      statement: "Alpaca's High-Yield Cash program offers up to 3.30% APY on uninvested USD balances and is available only to Trading API users classified as non-pattern day traders."
+      type: observed
+      topic: "high-yield-cash"
+      sourceRefs: [SE011, SE018]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE011]
+
+    - id: "CE009"
+      statement: "The High-Yield Cash program provides up to $2.5 million in FDIC pass-through coverage per account through multiple program banks; funds in the sweep are not covered by SIPC."
+      type: observed
+      topic: "high-yield-cash"
+      sourceRefs: [SE011, SE017]
+      confidence: high
+      freshness: current
+
+    - id: "CE010"
+      statement: "Alpaca launched 24/5 trading for US equities for Trading API users with the overnight session running Sunday 8:00 PM ET to Friday 8:00 PM ET; overnight trades execute via the Blue Ocean Alternative Trading System (BOATS)."
+      type: observed
+      topic: "24-5-trading"
+      sourceRefs: [SE009, SE021]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE015, QE021]
+
+    - id: "CE011"
+      statement: "During the 24/5 overnight session, only limit orders are supported; maximum margin buying power is 2x; Day Trading Buying Power does not apply; OTC securities are not available."
+      type: observed
+      topic: "24-5-trading"
+      sourceRefs: [SE021, SE009]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE009]
+
+    - id: "CE012"
+      statement: "Alpaca's fixed income offering through the Broker API includes 229+ tradable US T-bills and 500+ investment-grade and high-yield US corporate bonds, with FICC membership enabling in-house clearing."
+      type: observed
+      topic: "fixed-income"
+      sourceRefs: [SE008, SE017]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE001]
+
+    - id: "CE013"
+      statement: "Alpaca's publicly stated fixed income roadmap includes Treasury notes, Treasury bonds, foreign corporate bonds, fractional bonds, putable bonds, Reg S bonds, and 144a bonds; no committed delivery dates are given."
+      type: company-claimed
+      topic: "fixed-income"
+      sourceRefs: [SE008]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE025]
+
+    - id: "CE014"
+      statement: "Alpaca's Instant Tokenization Network (ITN) launched at TOKEN2049 Singapore on October 1, 2025 with Solana as the initial settlement chain, enabling in-kind minting and redemption of tokenized US stocks 24/7 via a single API call."
+      type: observed
+      topic: "tokenization"
+      sourceRefs: [SE003, SE020]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE015, QE019]
+
+    - id: "CE015"
+      statement: "ITN launch partners include Backed Finance (xStocks), Ondo Finance, Dinari, DRW, Keyrock, and Virtu Financial; Kraken subsequently adopted Alpaca for xStocks equity tokenization operations."
+      type: observed
+      topic: "tokenization"
+      sourceRefs: [SE003, SE020]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE004]
+
+    - id: "CE016"
+      statement: "Alpaca's official legal disclosures explicitly state that tokenized assets do not represent direct equity ownership; holders have no voting rights, dividend entitlements, or legal claims to underlying shares or residual assets in a liquidation."
+      type: observed
+      topic: "tokenization"
+      sourceRefs: [SE003, SE020]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE010]
+
+    - id: "CE017"
+      statement: "Alpaca claims 94% market share in tokenized US stocks and ETFs and 97% in large- and mega-cap US stocks, with over $480M in tokenized AUC as of November 15, 2025; these are company-stated figures using both public and private data."
+      type: company-claimed
+      topic: "tokenization"
+      sourceRefs: [SE020, SE012]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE008]
+
+    - id: "CE018"
+      statement: "Alpaca was approved as a clearing member of OCC and FICC on August 12, 2025, adding to its existing DTCC equities clearing membership and enabling full in-house clearing of equities, options, and Treasuries without third-party clearing brokers."
+      type: observed
+      topic: "clearing"
+      sourceRefs: [SE001, SE016]
+      confidence: high
+      freshness: historical
+      answersQuestionRefs: [QE003, QE017]
+
+    - id: "CE019"
+      statement: "As an OCC member, Alpaca clears listed equity and index options as central counterparty; as a FICC member, it clears US Treasuries and repo agreements in-house, replacing reliance on prime or correspondent clearing relationships."
+      type: observed
+      topic: "clearing"
+      sourceRefs: [SE001, SE004]
+      confidence: high
+      freshness: historical
+      answersQuestionRefs: [QE003]
+
+    - id: "CE020"
+      statement: "Alpaca became a Nasdaq Exchange Member in 2025, enabling direct exchange-level connectivity for order routing."
+      type: company-claimed
+      topic: "clearing"
+      sourceRefs: [SE018]
+      confidence: medium
+      freshness: historical
+
+    - id: "CE021"
+      statement: "Alpaca's official Python SDK, alpaca-py, supports Python 3.8+ and uses Pydantic for data validation and an OOP request-model design; it covers Trading API, Broker API, and Market Data API, and is available on PyPI."
+      type: observed
+      topic: "sdk"
+      sourceRefs: [SE006, SE007, SE015]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE002]
+
+    - id: "CE022"
+      statement: "Alpaca officially maintains SDKs in Python (alpaca-py on PyPI), C#/.NET (Alpaca.Markets 7.2.0 on NuGet, supporting .NET 6+, .NET Standard 2.0, and .NET Framework 4.6.2), JavaScript/Node.js (on npm), and Go (alpaca-trade-api-go)."
+      type: observed
+      topic: "sdk"
+      sourceRefs: [SE015, SE022, SE023, SE006]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE002]
+
+    - id: "CE023"
+      statement: "Alpaca's GitHub organization (alpacahq) hosts official open-source SDKs and tools including the MCP Server; community contributors have built additional wrappers for C++, Java, TypeScript, R, Rust, Scala, Ruby, and Elixir."
+      type: observed
+      topic: "sdk"
+      sourceRefs: [SE006, SE025]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE026]
+
+    - id: "CE024"
+      statement: "Alpaca provides OpenAPI specifications for Broker API, Trading API, and Market Data API, enabling developers to generate custom client libraries using standard OpenAPI tooling."
+      type: observed
+      topic: "developer-tools"
+      sourceRefs: [SE015, SE018]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE002]
+
+    - id: "CE025"
+      statement: "Alpaca's paper trading environment provides free, real-time simulation with IEX data, identical API endpoints to live trading (paper-api.alpaca.markets), and is available to all users globally including Paper Only accounts."
+      type: observed
+      topic: "developer-tools"
+      sourceRefs: [SE019, SE006]
+      confidence: medium
+      freshness: current
+
+    - id: "CE026"
+      statement: "Alpaca's paper trading environment does not simulate market impact of orders, information leakage, price slippage from latency, order queue position, price improvement, regulatory fees, or dividends."
+      type: observed
+      topic: "developer-tools"
+      sourceRefs: [SE019]
+      confidence: medium
+      freshness: current
+
+    - id: "CE027"
+      statement: "Alpaca's MCP Server v2 (April 2026) is a complete rewrite using FastMCP and OpenAPI, covering 61 trading and data endpoints (up from 43 in v1), and enables AI assistants (Claude, Cursor, VS Code) to execute market operations via natural language; ALPACA_TOOLSETS filters restrict agent access."
+      type: observed
+      topic: "developer-tools"
+      sourceRefs: [SE025, SE026]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE006, QE015]
+
+    - id: "CE028"
+      statement: "In Q1 2026, Alpaca's API usage growth accelerated nearly 4× quarter-over-quarter, with monthly growth rising from single digits in Q4 2025 to approximately 30% in Q1 2026, driven by AI-driven and agent-based market participation."
+      type: company-claimed
+      topic: "api-growth"
+      sourceRefs: [SE004, SE024]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE016]
+
+    - id: "CE029"
+      statement: "To support AI-driven access, Alpaca introduced a new CLI and an enhanced MCP Server in Q1/Q2 2026, designed to give AI agents and builders more direct access to trading infrastructure with reduced friction."
+      type: company-claimed
+      topic: "developer-tools"
+      sourceRefs: [SE004, SE024]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE015]
+
+    - id: "CE030"
+      statement: "The Broker API supports two KYC models: Alpaca-managed (using Trulioo and Onfido for non-regulated entities) and partner-managed (for regulated entities including investment advisors and broker-dealers with their own AML programs)."
+      type: observed
+      topic: "onboarding"
+      sourceRefs: [SE010]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE012, QE020]
+
+    - id: "CE031"
+      statement: "Alpaca integrates with Plaid for bank account authentication and ACH funding as part of the Broker API partner onboarding workflow."
+      type: observed
+      topic: "onboarding"
+      sourceRefs: [SE010]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE020]
+
+    - id: "CE032"
+      statement: "Alpaca Clearing's excess SIPC coverage as of February 2026 provides up to $75 million in securities and $75 million in cash per customer, with a $250 million aggregate cap across all accounts, underwritten by Lloyd's of London."
+      type: observed
+      topic: "trust-compliance"
+      sourceRefs: [SE017, SE011]
+      confidence: high
+      freshness: current
+
+    - id: "CE033"
+      statement: "Alpaca's status page (status.alpaca.markets) publicly monitors the Live Trading API (Account, Orders, Positions, Assets, Trade Updates, Fractional Orders), Paper Trading API, Dashboard services, and 13 discrete Broker API sandbox endpoints."
+      type: observed
+      topic: "reliability"
+      sourceRefs: [SE005]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE024]
+
+    - id: "CE034"
+      statement: "The SEC's January 2026 joint staff statement on tokenized securities clarified that blockchain use does not change securities law obligations, ownership rights, or disclosure duties, and identified third-party tokenization products as carrying additional regulatory risk compared to issuer-sponsored models."
+      type: third-party-reported
+      topic: "regulatory"
+      sourceRefs: [SE013, SE027]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE013]
+
+    - id: "CE035"
+      statement: "Alpaca's ~94% clearing concentration for tokenized US equities has been identified by analysts as creating a single-point-of-failure risk for the entire nascent tokenized-stock sector."
+      type: third-party-reported
+      topic: "risks"
+      sourceRefs: [SE013, SE020]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE013]
+
+    - id: "CE036"
+      statement: "Alpaca experienced several operational incidents in June 2026 including: a June 14 funding services disruption from upstream provider maintenance (resolved in under 2 hours), June 11 intermittent order rejections from an execution venue connection issue (~12 minutes), and a June 1 journal processing delay of ~99 minutes."
+      type: observed
+      topic: "reliability"
+      sourceRefs: [SE005]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE014]
+
+    - id: "CE037"
+      statement: "Alpaca supports fractional share trading for 2,000+ US equities at a minimum notional of $1; orders accept either a qty or notional parameter; fractional sell orders cannot be short-sold; available during regular, pre-market, post-market, and overnight sessions."
+      type: observed
+      topic: "fractional-trading"
+      sourceRefs: [SE014, SE018]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE022]
+
+    - id: "CE038"
+      statement: "As of April 2026, Alpaca powers over 10 million brokerage accounts across hundreds of fintechs and institutions in 40+ countries."
+      type: company-claimed
+      topic: "product"
+      sourceRefs: [SE004, SE024]
+      confidence: high
+      freshness: current
+
+    - id: "CE039"
+      statement: "The 24/5 overnight session (8:00 PM–4:00 AM ET) is exclusively powered by the Blue Ocean Alternative Trading System (BOATS), which operates independently of traditional US stock exchanges; NMS securities are eligible but OTC securities are excluded."
+      type: observed
+      topic: "24-5-trading"
+      sourceRefs: [SE021, SE009]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE021]
+
+    - id: "CE040"
+      statement: "Alpaca's fixed income trading system aggregates quotes from a network of liquidity providers and routes orders to the most competitive bid/ask; bond orders placed outside US market hours (9:30 AM–4:00 PM ET) are queued for next-session execution."
+      type: observed
+      topic: "fixed-income"
+      sourceRefs: [SE008, SE010]
+      confidence: high
+      freshness: current
+
+    - id: "CE041"
+      statement: "Alpaca's homepage as of June 2026 also lists OmniSub (an API-first sub-accounting ledger for omnibus structures), Stock Lending (passive income on lendable shares), and Shariah-compliant investing as additional product lines beyond the core API suite."
+      type: observed
+      topic: "product"
+      sourceRefs: [SE018]
+      confidence: medium
+      freshness: current
+
+  evidenceGaps:
+    - type: missing-source
+      severity: material
+      topic: "api-throughput-sla"
+      missingEvidence: >-
+        Published SLA commitments (uptime guarantee, credit mechanism, MTTR targets), throughput benchmarks
+        (orders per second, API call latency percentiles), and capacity limits for Alpaca's Trading API and
+        Broker API under production load.
+      whyItMatters: >-
+        Without public SLA terms, enterprise fintech partners cannot underwrite reliability risk, and
+        investors cannot assess whether Alpaca's infrastructure is sufficient for high-volume institutional use.
+        Third-party monitors have reported below-99.9% availability in specific windows, which may not match
+        Alpaca's own claims.
+      diligencePath: >-
+        Request Alpaca's enterprise SLA documentation, infrastructure architecture deck, and any existing
+        partner-level uptime guarantees or credits from the commercial team; review incident postmortems.
+      relatedQuestionRefs: [QE005, QE014]
+
+    - type: private-evidence-only
+      severity: material
+      topic: "tokenization-regulatory"
+      missingEvidence: >-
+        Formal SEC guidance or enforcement actions specifically targeting Alpaca's ITN or its third-party
+        tokenization partners after the January 2026 staff statement, and Alpaca's formal legal analysis of
+        whether the ITN structure constitutes a security-based swap subject to CFTC/SEC dual jurisdiction.
+      whyItMatters: >-
+        The SEC's statement identified third-party tokenization—Alpaca's current model—as carrying heightened
+        regulatory risk. If ITN products are reclassified as security-based swaps, Alpaca and its partners
+        would face materially different registration and reporting obligations that could impair the tokenization
+        business.
+      diligencePath: >-
+        Request Alpaca's legal counsel opinion on ITN regulatory treatment, review public CFTC/SEC
+        correspondence, and monitor subsequent SEC rulemaking on tokenized securities.
+      relatedQuestionRefs: [QE013]
+
+    - type: missing-source
+      severity: minor
+      topic: "platform-uptime-history"
+      missingEvidence: >-
+        Full historical outage log with root-cause analyses, aggregate uptime statistics by API component
+        (beyond the 60-day self-reported window on status.alpaca.markets), and a verified third-party uptime
+        audit for any 12-month period.
+      whyItMatters: >-
+        A 30-day aggregate availability below 99.9% observed in June 2026 by third-party monitors versus
+        Alpaca's own near-100% reporting suggests potential measurement differences that are material for
+        partners building production systems on Alpaca's infrastructure.
+      diligencePath: >-
+        Collect third-party monitoring data (StatusGator, ServiceAlert, IncidentHub) over 12 months; compare
+        to self-reported status page metrics; request Alpaca's engineering transparency report if available.
+      relatedQuestionRefs: [QE014]
+
+    - type: enumeration-incomplete
+      severity: minor
+      topic: "product-module-asset-matrix"
+      missingEvidence: >-
+        Public documentation covering OmniSub sub-accounting ledger API reference, Shariah-compliant investing
+        technical specification, and confirmed availability of 24/5 trading for the Broker API (vs. Trading API
+        only at initial launch).
+      whyItMatters: >-
+        OmniSub and Shariah-compliant investing are listed on the Alpaca homepage but lack developer
+        documentation equivalent to the core APIs, making it difficult to assess their enterprise readiness.
+      diligencePath: >-
+        Review docs.alpaca.markets for OmniSub and Shariah product pages; contact Alpaca partnerships team
+        for technical documentation and availability timelines.
+      relatedQuestionRefs: [QE001]
+      relatedTableRefs: [TE001]
