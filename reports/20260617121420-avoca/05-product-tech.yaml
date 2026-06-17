@@ -1,0 +1,2425 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: avoca
+runDate: '2026-06-17'
+company:
+  name: Avoca
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: >-
+    Avoca's product suite comprises seven distinct workflow surfaces — AI CSR (inbound voice 24/7), Outbound
+    Campaigns, Speed-to-Lead, Simple Scheduler, Web Chat, Google LSA, and Coach — plus a Human-in-the-Loop
+    (HITL) service tier that backstops 15–20% of escalated calls. The AI CSR handles 80–85% of inbound calls
+    autonomously, warm-transfers escalations to North America-based CSRs in under 3 seconds, and syncs 12+
+    CRM data fields per call with zero manual entry. The platform integrates with 40+ field-service CRMs,
+    most deeply with ServiceTitan. A three-tier priority dispatch system (P1 emergencies / P2 replacements /
+    P3 maintenance) enables capacity-aware scheduling from live CRM data. Coach adds AI call scoring, call
+    reclassification (identifying misclassified "not interested" outcomes), and team analytics. An official
+    REST API with Node.js and Python SDKs, webhook event support, and a custom-integration playbook are
+    documented at docs.avoca.ai. The observable architecture is cloud-native SaaS telephony with real-time
+    CRM sync; the underlying LLM and voice-synthesis stack are not publicly disclosed. Critical risks include
+    dependence on ServiceTitan API access, absence of publicly confirmed security certifications (SOC 2, ISO
+    27001), TCPA exposure for outbound AI-generated voice calls under FCC 24-17, and no published independent
+    performance benchmarks.
+
+sections:
+- id: product-portfolio-and-module-map
+  title: Product Portfolio, Module Map, and Positioning
+  body: |-
+    Avoca markets itself as the "AI front office" for home-service businesses. As of June 2026 the public
+    product surface spans seven distinct workflow modules: (1) AI CSR — an inbound-call AI agent that answers
+    24/7, handles objections, and books jobs directly into the operator's CRM with zero hold time; (2)
+    Outbound Campaigns — multi-touch SMS and voice drip sequences that re-engage existing customers and drive
+    repeat bookings; (3) Speed-to-Lead — an immediate multi-source lead-response system that ingests contacts
+    from Google LSA, Yelp, Thumbtack, Angi, Facebook, and web forms and fires outreach in under 60 seconds;
+    (4) Simple Scheduler — a self-service online booking widget for website visitors; (5) Web Chat — an AI
+    agent embedded on the operator's website; (6) Google LSA — direct integration with Google Local Services
+    Ads for lead conversion; and (7) Coach — a call-scoring and analytics product that scores every call
+    against a company-defined rubric and reclassifies misrecorded outcomes.
+
+    Layered beneath these seven product modules is the Human-in-the-Loop (HITL) service tier — a team of
+    Avoca-trained North America-based human CSRs who receive warm transfers when the AI escalates a call.
+    HITL is not a standalone product; it is a service guarantee embedded in the platform subscription,
+    ensuring no call goes unresolved. The transition from AI to HITL carries the full conversation context
+    (caller identity, service type, escalation reason, equipment age, account history, and call tone) in
+    under 3 seconds with zero dropped calls, per product page claims.
+
+    The company's YC Winter 2023 launch described a broader SMB communications platform covering phone,
+    text, email, and review management. By 2025–2026 the product had fully narrowed to home services, and
+    Avoca's LinkedIn company description confirms "800+ operators across HVAC, plumbing, electrical, roofing,
+    pest control, automotive and more" as the customer base, with 190 employees listed on LinkedIn as of
+    June 2026. The docs.avoca.ai documentation site lists the full product suite under headings: Inbound,
+    Outbound, Capacity Management, Speed to Lead, Google LSA, Simple Scheduler, Analytics & Coach, Dispatch,
+    Configuration, Scheduling, Integrations, and Web Chat — confirming the module map described on public
+    product pages.
+  claimRefs:
+  - CE001
+  - CE002
+  - CE003
+  - CE004
+  - CE005
+  - CE006
+  - CE007
+  - CE008
+  tableRefs:
+  - TE001
+  - TE005
+  figureRefs:
+  - FE004
+
+- id: workflow-surfaces-and-dispatch-logic
+  title: Workflow Surfaces, Call Flow, and Dispatch Logic
+  body: |-
+    Avoca's inbound workflow is built around three priority tiers that reflect how service operators triage
+    work. P1 covers emergencies and urgent calls (no-heat, no-cool, gas smell, flooding): these are booked
+    immediately regardless of what is already on the dispatch board, and safety emergencies are routed to
+    an on-call technician in real time. P2 covers replacements and installations, which can overbook
+    lower-priority slots. P3 covers maintenance and tune-ups, which fill open capacity but yield to P2 and
+    P1 demand. Priority can be defined by equipment age, membership status, warranty status, call type, or
+    any combination — and "buffer days" can push P3 work further out during peak weeks and pull it back
+    during slow periods. This logic is driven by a live CRM availability read: Avoca reads capacity directly
+    from the operator's CRM rather than using a static booking window, preventing double-booking and
+    optionally allowing intentional overbooking of lower-priority slots.
+
+    Before the first word of a call is spoken, Avoca pulls 12+ CRM data fields: past jobs, equipment make
+    and model, equipment age, membership tier, account status, and homeowner status. When a call escalates
+    to HITL, the human CSR receives this full brief on a live screen — who is calling, what they need,
+    their equipment, their tone — before the customer repeats anything. Transfer time is stated at under 3
+    seconds with zero dropped calls. The inbound product page reports: 40% higher booking rate versus IVR,
+    average call-to-booking of under 30 seconds, and 2× faster than IVR systems.
+
+    Intelligent task routing extends the dispatch logic to notifications: operators define which call types
+    trigger routing actions (installs route to inside sales, old-equipment calls get flagged for a
+    replacement conversation, dropped calls get immediate follow-up), and Avoca automatically routes them
+    with an AI-generated summary attached. The outbound Speed-to-Lead playbook documents a tested workflow
+    structure: 4+ touchpoints in the first 2 hours of a lead's life, across both voice and SMS, with AI
+    handling conversations in both channels. Per the company's deployment lessons blog, operators at
+    top-performing deployments have achieved 90–95% AI call handle rate (vs. the 80–85% baseline), booking
+    rates have improved from 45% to 70%, and one customer generated $850K in SMS revenue from outbound
+    campaigns in a single season.
+  claimRefs:
+  - CE009
+  - CE010
+  - CE011
+  - CE012
+  - CE013
+  - CE014
+  - CE015
+  - CE016
+  - CE017
+  tableRefs:
+  - TE002
+  figureRefs:
+  - FE002
+
+- id: integration-and-deployment-architecture
+  title: Integration Architecture, Deployment Model, and API Surface
+  body: |-
+    Avoca's integration layer supports 40+ field-service management (FSM) CRMs, including ServiceTitan,
+    HouseCallPro, Jobber, Salesforce, Zoho, Service Fusion, BuildOps, Service Autopilot, Sera, Workiz,
+    BigChange, and dozens of others across HVAC, plumbing, pest control, garage door, roofing, and
+    electrical verticals. The ServiceTitan integration is deepest: Avoca maintains a dedicated ServiceTitan
+    partner page, a co-branded product suite, a joint partnership program, and is featured on ServiceTitan's
+    own blog as a primary example of AI voice automation for HVAC contractors. ServiceTitan is the dominant
+    FSM in the trades, which means Avoca's deepest integration aligns with the largest potential customer
+    concentration.
+
+    The deployment model is anchored on a "Forward Deployed Engineer" (FDE) role: an Avoca engineer goes
+    on-site to learn how the operator's dispatch board is actually used, how booking logic works, seasonal
+    protocols, and how their best CSRs handle edge cases — then builds the deployment to those specifics.
+    The stated philosophy is: "We don't onboard you to Avoca. Avoca onboards to you." Feedback loops from
+    on-site deployment to config change are described as same-day — "ship at night, call in the morning,
+    get a customer's screenshot by 4 PM, push a config change by 6 PM." This rapid iteration model is
+    consistent with a SaaS configuration layer where AI behavior is governed by operator-specific rules and
+    knowledge bases rather than compiled pipeline code. The docs also confirm "tornado protocols for certain
+    regions, different routing logic for sales vs. service, filtering by membership tier" as examples of
+    operator-specific customization.
+
+    For developers and system integrators, docs.avoca.ai exposes a REST API covering all product modules.
+    The API reference documents webhook events for call.completed, appointment.scheduled, sms.received,
+    chat.started, speed_to_lead.completed, and coach.score_available; official SDKs are available for
+    Node.js/TypeScript and Python. A custom-integration playbook at docs.avoca.ai/custom-integration
+    covers technical architecture, API specifications, data exchange and booking process, and AI behavior
+    customization. This signals an intent to support enterprise integrators who want to embed Avoca's
+    capabilities into third-party platforms or proprietary CRMs.
+  claimRefs:
+  - CE018
+  - CE019
+  - CE020
+  - CE021
+  - CE022
+  - CE023
+  - CE024
+  tableRefs:
+  - TE003
+  figureRefs:
+  - FE001
+  - FE003
+
+- id: analytics-coaching-and-data-layer
+  title: Analytics, Coaching, and Data Compounding
+  body: |-
+    Avoca Coach adds an AI-scoring layer over every call handled by the platform — both AI-handled and
+    HITL-handled calls. Each call is scored against a company-defined rubric across four dimensions:
+    objection handling, process adherence, tone and empathy, and booking outcome. Managers see AI-generated
+    coaching summaries with specific examples of where CSRs missed or succeeded. The product page reports
+    15% improvement in booking rates, 2× increase in memberships sold, and 5× reduction in QA time for
+    customers using Coach. A single-location HVAC case study shows $29K recovered in 90 days from calls
+    that were previously misclassified as "not interested" and surfaced by reclassification.
+
+    The call reclassification feature is analytically significant: the claimed average misclassification
+    rate of 12% means that roughly 1 in 8 calls recorded as "not interested" or "not booked" may have
+    actually been bookable opportunities. For a business handling hundreds of calls per month, that
+    represents meaningful recovered revenue without any additional marketing spend. This feature also has
+    a data-quality implication: it corrects the CRM record, which in turn improves the accuracy of
+    historical analytics and future AI training signal.
+
+    Amplify Partners' investment thesis explicitly names Avoca's proprietary workflow data as a compounding
+    competitive moat: every deployment adds operator-specific call patterns, booking rules, and customer
+    behavior data to the system's knowledge base. The HITL blog notes the system "gets smarter every day
+    it runs" — a standard description of continuous learning from production data, though the specific
+    learning mechanism and model update cadence are not publicly disclosed. Investor framing treats the
+    data layer as the primary barrier to competitive displacement: a new AI entrant starts with no
+    operator-specific training signal, while Avoca's long-tenured customers have trained the system on
+    years of their own call patterns and booking logic.
+  claimRefs:
+  - CE025
+  - CE026
+  - CE027
+  - CE028
+  - CE029
+  - CE030
+  - CE031
+  tableRefs: []
+  figureRefs: []
+
+- id: trust-compliance-and-platform-constraints
+  title: Trust, Compliance, Security Controls, and Platform Risk
+  body: |-
+    Avoca's privacy policy (effective January 29, 2025) confirms data encryption in transit (HTTPS) and
+    at rest. Collected data includes name, email, phone, billing information, and — for financial
+    transactions — government-issued ID. The policy also documents a Google Calendar OAuth integration:
+    Avoca stores encrypted OAuth tokens to enable real-time calendar availability reads, automatic
+    appointment creation, and change synchronization. Calendar data is described as used exclusively for
+    appointment management and not shared with third parties for marketing.
+
+    The status page at status.avoca.ai monitors five platform components: Dashboard, Inbound, Outbound,
+    Analytics, and Omnichannel. All components showed fully operational status as of June 2026. The company
+    does not publish a formal SLA with uptime percentage guarantees or a historical availability report
+    accessible without authentication.
+
+    No publicly confirmed SOC 2 Type II, ISO 27001, or HIPAA certification has been found in Avoca's public
+    documentation as of June 2026. The docs.avoca.ai site includes a "Security" navigation item, but the
+    underlying content is not accessible without platform authentication. This is a material disclosure gap
+    for enterprise operators — particularly PE-backed multi-location platforms — that may face contractual
+    compliance requirements from their own customers or investors.
+
+    Regulatory risk is most acute for outbound. The FCC's February 2024 Declaratory Ruling (FCC 24-17)
+    confirmed that AI-generated human-sounding voice calls constitute "artificial or prerecorded voice"
+    under the TCPA, requiring prior express written consent from each call recipient before any such call
+    is placed. Avoca's outbound AI calling product must maintain consent records for every contact in every
+    campaign; operators bear primary TCPA liability for calls placed through their account. No public
+    disclosure describes how Avoca manages consent verification, opt-out handling, or campaign compliance
+    checks on behalf of operators.
+
+    Three additional product-level constraints are observable from public materials: (1) vertical
+    concentration — the entire product vocabulary, dispatch logic, priority system, and integration set is
+    home-services-specific with no stated portability to other industries; (2) hallucination and quality
+    risk — the same HITL blog that argues the system handles 80–85% of calls also confirms edge cases where
+    AI-generated summaries or booking logic errors require same-day engineering intervention, suggesting
+    non-trivial AI failure modes in production; and (3) integration dependency — if ServiceTitan restricts
+    third-party API access, modifies its platform architecture, or builds equivalent AI natively, Avoca
+    loses its most important distribution channel. Homepros News reported that Avoca founders acknowledge
+    an "AI trust dilemma" and that churn drivers include operator dispatch-configuration errors at go-live,
+    which underscores how configuration quality affects perceived AI reliability.
+  claimRefs:
+  - CE032
+  - CE033
+  - CE034
+  - CE035
+  - CE036
+  - CE037
+  - CE038
+  - CE039
+  - CE040
+  - CE041
+  tableRefs:
+  - TE004
+  figureRefs: []
+
+tables:
+- id: TE001
+  title: Product Module / Asset Matrix
+  columns:
+  - Module
+  - Primary User
+  - Status / Maturity
+  - Key Differentiation
+  - Diligence Gap
+  rows:
+  - - AI CSR (Inbound)
+    - Service operator / homeowner caller
+    - Live, production — primary revenue surface; described as handling 80–85% of calls
+    - 24/7, zero hold time; P1/P2/P3 priority tiers; live CRM capacity read; customer recognition before first word
+    - Handle rate trajectory; uptime SLA; AI failure mode taxonomy
+  - - Outbound Campaigns
+    - Service operator / existing customers
+    - Live, production — multi-touch SMS+voice drip; 5+ touches per campaign
+    - AI handles full reply conversation; books directly into CRM; pre-built workflows from hundreds of deployments
+    - Consent management; TCPA opt-out handling; campaign ROI variance
+  - - Speed-to-Lead
+    - Service operator / paid-lead sources
+    - Live, production — documented in April 2026 campaign playbook
+    - Sub-60-second response; multi-source lead ingestion (Google LSA, Yelp, Angi, Thumbtack, Facebook, web forms)
+    - Conversion rate benchmarks by lead source; cost per booked job
+  - - Simple Scheduler
+    - Service operator / website visitor
+    - Live — listed in docs.avoca.ai and product nav; maturity level and adoption not quantified
+    - Self-service booking; reduces friction for online-first customers
+    - Usage volume; operator adoption rate vs. AI CSR; integration with dispatch board
+  - - Web Chat
+    - Service operator / website visitor
+    - Live — listed in product nav and docs; no detailed product page publicly available
+    - AI agent for chat channel alongside voice
+    - Feature depth; cross-channel handoff logic to voice or HITL
+  - - Google LSA Integration
+    - Service operator / Google LSA leads
+    - Live — referenced in outbound module and speed-to-lead playbook
+    - Direct integration without manual lead hand-off; AI responds immediately
+    - LSA-specific conversion data; API dependency on Google
+  - - Coach (Call Scoring + Reclassification)
+    - Service operator management / CSR team
+    - Live, production — case study with quantified outcomes ($29K in 90 days)
+    - Custom scoring rubric; 12% avg misclassification rate surfaced; 5× QA time reduction
+    - Third-party validation; methodology for coaching rubric construction; model accuracy
+  - - Human-in-the-Loop (HITL) Service Tier
+    - Service operator / escalated callers
+    - Live, production — operational at "hundreds of deployments"; CSRs across North America
+    - Warm transfer in <3s with full AI context; CSRs trained specifically on Avoca handoff flows
+    - HITL cost per call; CSR headcount; escalation accuracy metrics
+  notes: >-
+    Status and maturity inferred from product pages, blog posts, and docs.avoca.ai navigation as of June 2026.
+    No independent audit of module adoption rates or SLAs. Simple Scheduler and Web Chat maturity levels are
+    estimated from documentation presence, not from customer case studies.
+  claimRefs:
+  - CE001
+  - CE002
+  - CE003
+  - CE004
+  - CE005
+  - CE006
+  - CE009
+  - CE023
+
+- id: TE002
+  title: Workflow / Use-Case Table
+  columns:
+  - User Job
+  - Current / Legacy Workflow
+  - Avoca Solution
+  - Measurable Benefit (Claimed)
+  - Known Limitation
+  rows:
+  - - Book inbound call during business hours
+    - Human CSR answers, asks questions, looks up availability, books in CRM manually
+    - AI CSR answers immediately, recognizes customer, reads live CRM capacity, books in <30s
+    - 40% higher booking rate vs. IVR; <30s avg call-to-booking; 12+ CRM fields synced
+    - AI can mishandle complex objections; configuration accuracy required for booking logic
+  - - Answer call after hours or on holiday
+    - Voicemail or offshore answering service (20%+ missed calls); delayed CRM entry
+    - AI CSR is always-on; routes emergencies to on-call tech; books non-urgent calls
+    - "After-hours bookings 58→208 (Aire Serv Sevierville); covers Dec 25 and 4 AM calls"
+    - Emergency routing rule accuracy; HITL unavailability for after-hours escalations
+  - - Handle inbound safety emergency (gas smell, flooding)
+    - CSR manual routing to on-call; dependent on staff availability and judgment
+    - P1 priority tier routes emergency to on-call tech in real time regardless of board status
+    - Zero missed emergency escalations (company claim); consistent routing
+    - Relies on accurate emergency-type configuration; no public safety-incident record
+  - - Re-engage lapsed customers for seasonal maintenance
+    - Manual phone lists, email blasts, or outsourced call center; inconsistent follow-through
+    - "Outbound Campaigns — multi-touch SMS + voice drip with AI handling replies; books to CRM"
+    - $850K SMS revenue in a single season (single customer case study)
+    - TCPA consent requirements for AI outbound voice; campaign fatigue risk
+  - - Follow up immediately on paid digital leads
+    - Leads sit in inbox; CSR calls when available (30 min–hours after lead arrives)
+    - Speed-to-Lead ingests all sources; AI fires outreach in <60s; handles conversation
+    - Sub-60-second speed-to-lead (company claim); multi-channel follow-up
+    - Lead source quality varies; AI response accuracy depends on job type configuration
+  - - Score and coach CSR calls for QA
+    - Manager listens to random call samples; time-intensive; 2–5% call coverage typical
+    - Coach scores every call vs. rubric; reclassifies misrecorded outcomes; AI summaries
+    - 5× reduction in QA time; 12% avg misclassification surfaced; $29K recovered in 90 days
+    - Rubric must be configured; no third-party validation of scoring accuracy
+  notes: >-
+    Benefits are company-claimed or drawn from company-selected customer case studies and should not be treated
+    as independently audited performance data. Limitations are inferred from product design, HITL blog content,
+    and homepros.news founder interview.
+  claimRefs:
+  - CE009
+  - CE010
+  - CE011
+  - CE012
+  - CE013
+  - CE014
+  - CE015
+  - CE016
+  - CE017
+  - CE026
+  - CE027
+
+- id: TE003
+  title: Technology / Operating Architecture Table
+  columns:
+  - Layer / Component
+  - Role
+  - Key Dependency
+  - Observable Risk
+  rows:
+  - - AI voice / conversation engine
+    - Handles natural-language inbound and outbound calls; classifies intent; drives booking logic
+    - Underlying LLM and voice synthesis provider(s) — not publicly disclosed
+    - Vendor concentration in foundation model; prompt injection or hallucination on edge-case calls
+  - - Telephony infrastructure
+    - Routes calls to AI or HITL; provides <3s warm-transfer; supports 24/7 operation
+    - Cloud telephony provider (e.g., Twilio or equivalent) — not explicitly disclosed
+    - Telephony uptime is the availability floor for the entire Inbound product
+  - - CRM integration layer
+    - Syncs 12+ data fields per call; books jobs in real time; reads live capacity
+    - 40+ FSM/CRM vendors; ServiceTitan is dominant; CRM API terms govern access
+    - API deprecation or access restriction by CRM vendor could break booking workflow
+  - - Operator configuration system
+    - Stores booking logic, dispatch rules, priority tiers, persona, and tone per operator
+    - Forward Deployed Engineers configure; config errors cause AI misbehavior
+    - Configuration quality drives AI call quality; not a self-serve onboarding
+  - - HITL service layer
+    - North America-based human CSRs receive warm transfers for 15–20% of escalated calls
+    - Avoca-trained CSR team; labor cost scales with call volume and escalation rate
+    - HITL labor is margin-compressing variable cost; dependency on hiring/training velocity
+  - - Coach / analytics layer
+    - Scores every call; reclassifies outcomes; surfaces CSR coaching data to managers
+    - AI scoring model trained on company-defined rubric; no third-party validation
+    - Model accuracy undisclosed; rubric dependency means quality varies by operator
+  - - REST API and webhook layer
+    - Enables third-party and custom integrations via Node.js/TypeScript and Python SDKs
+    - docs.avoca.ai API surface; webhook events for all major platform events
+    - No public versioning or deprecation policy; integration stability risk for custom builds
+  - - Status and monitoring
+    - status.avoca.ai monitors Dashboard, Inbound, Outbound, Analytics, Omnichannel
+    - Public status page with no published SLA percentages or historical availability report
+    - No public uptime guarantee; enterprise operators cannot independently verify availability
+  notes: >-
+    Architecture inferred from docs.avoca.ai API reference, product pages, HITL blog, and FDE blog. Specific
+    technology vendors (LLM, telephony, cloud) are not publicly named by Avoca. All dependency assessments
+    are inferences from observable product behavior and public documentation, not confirmed architecture disclosures.
+  claimRefs:
+  - CE018
+  - CE019
+  - CE021
+  - CE022
+  - CE024
+  - CE034
+  - CE040
+  - CE041
+
+- id: TE004
+  title: Trust / Quality / Compliance Table
+  columns:
+  - Control / Certification
+  - Disclosed Status
+  - Scope
+  - Gap / Diligence Ask
+  rows:
+  - - Encryption in transit (HTTPS)
+    - Confirmed — privacy policy explicitly states HTTPS encryption in transit
+    - All API and web traffic
+    - Standard; no third-party certificate audit cited
+  - - Encryption at rest
+    - Confirmed — privacy policy states data encrypted at rest
+    - Customer PII, OAuth tokens, call records
+    - Encryption key management and access controls not described
+  - - Google Calendar OAuth integration security
+    - Confirmed — privacy policy describes encrypted token storage and scoped access
+    - Calendar availability read, booking creation/update; revocable from Google account
+    - Persistent OAuth token creates ongoing access risk if account is compromised
+  - - SOC 2 Type II
+    - Not publicly confirmed — docs.avoca.ai has a Security section requiring authentication
+    - Unknown scope if it exists
+    - Material gap for enterprise/PE customers; request audit report in data room
+  - - ISO 27001
+    - Not publicly confirmed
+    - Unknown
+    - No mention in public documentation or partner materials
+  - - HIPAA
+    - Not applicable (home services, not healthcare) — no disclosure needed
+    - N/A
+    - Not a required control for the target vertical
+  - - TCPA compliance (outbound AI calls)
+    - Regulatory obligation — FCC 24-17 (Feb 2024) confirmed AI voice = "artificial voice" under TCPA
+    - All outbound AI-generated voice calls
+    - Avoca does not publicly disclose consent management, opt-out workflow, or operator TCPA guidance
+  - - Uptime / SLA
+    - Partial — status.avoca.ai monitors 5 components; shows current status only
+    - Dashboard, Inbound, Outbound, Analytics, Omnichannel
+    - No published SLA percentage; no historical availability report without authentication
+  - - AI quality / hallucination controls
+    - Partial — HITL backstop catches 15–20% of escalated calls; no public accuracy metrics
+    - All AI-handled calls (80–85% of volume)
+    - No third-party audit; no published false-booking or hallucination rate; emergencies depend on configuration
+  notes: >-
+    Status inferred from public documentation (privacy policy, docs.avoca.ai, FCC ruling). Absence of public
+    certification does not confirm absence; diligence should request all audit reports directly.
+  claimRefs:
+  - CE032
+  - CE033
+  - CE034
+  - CE035
+  - CE036
+  - CE039
+
+- id: TE005
+  title: Roadmap / Release / Development-Stage Table
+  columns:
+  - Feature / Milestone
+  - Date / Stage
+  - Status
+  - Implication
+  - Source
+  rows:
+  - - YC Winter 2023 launch — broad SMB communications platform
+    - Q1 2023
+    - Historical — pivoted to home services before 2024
+    - Demonstrates deliberate vertical focus decision; earlier product surface was broader
+    - YC company directory
+  - - Focus narrowed to home services (HVAC, plumbing, electrical, roofing)
+    - 2023–2024
+    - Completed — now the operating core; adjacent categories expanding
+    - Vertical depth drove product/market fit; portability to other verticals not demonstrated
+    - Avoca blog (why-ai-is-finally-winning-in-home-services)
+  - - HITL program launched — North America-based human CSR backstop
+    - 2024 (operational by May 2026 blog post date)
+    - Live — described as "hundreds of deployments"
+    - HITL is labor-intensive at scale; designed as transitional until AI handles 95%+
+    - Avoca HITL blog (May 12, 2026)
+  - - Coach (call scoring and reclassification) — production deployment
+    - 2024–2025 (case study references 90-day window; product page live)
+    - Live — quantified outcomes in customer case studies
+    - Expands platform value beyond booking to quality improvement; reduces churn risk
+    - avoca.ai/coach product page
+  - - Priority booking tiers (P1/P2/P3) + buffer days feature
+    - June 2026 (described in busy-season features blog)
+    - Live — part of inbound AI configuration
+    - Capacity-aware dispatch logic differentiates from simple call-answering tools
+    - Busy-season features blog (June 9, 2026)
+  - - Outbound Speed-to-Lead multi-source lead ingestion
+    - April 2026 (campaign playbook blog)
+    - Live — Google LSA, Yelp, Thumbtack, Angi, Facebook, web form sources
+    - Extends Avoca beyond inbound into full lead lifecycle management
+    - Speed-to-Lead playbook blog (April 17, 2026)
+  - - Forward Deployed Engineer (FDE) model — on-site deployment engineering
+    - April 2026 (FDE blog post)
+    - Live — described as standard deployment approach across hundreds of clients
+    - Differentiates implementation quality; increases COGS but reduces churn
+    - FDE blog (April 14, 2026)
+  - - docs.avoca.ai API reference with Node.js and Python SDKs
+    - Active as of June 2026
+    - Live — API reference and custom integration playbook published
+    - Enables enterprise integrators; signals platform ambitions beyond native UI
+    - docs.avoca.ai/api-reference
+  - - Adjacent verticals expansion (roofing, restoration, automotive, property management)
+    - 2026 (Series B announcement)
+    - Early / in-progress — explicitly mentioned as growth target in Series B press release
+    - Validates TAM expansion thesis; product portability to new verticals not yet demonstrated
+    - Avoca Series B press release (April 27, 2026)
+  notes: >-
+    Dates inferred from blog post publication dates and press releases. No formal product roadmap has been publicly
+    released. All "Live" status items are self-reported by Avoca; independent adoption verification is not possible
+    from public sources.
+  claimRefs:
+  - CE007
+  - CE018
+  - CE020
+  - CE021
+  - CE009
+  - CE016
+  - CE001
+
+figures:
+- id: FE001
+  title: Product Architecture Map
+  type: stack
+  layout: wide
+  summary: >-
+    Observable architecture layers for Avoca's platform, from external channel inputs through AI processing,
+    integration, and service-delivery layers to operator-facing outputs. Layers inferred from docs.avoca.ai,
+    product pages, and API reference; specific technology vendors are not publicly disclosed.
+  approximationNotes: >-
+    AI model vendor, telephony provider, and cloud infrastructure provider are not publicly named. Layer
+    boundaries are inferred from public product documentation and API structure, not from architectural disclosure.
+  claimRefs:
+  - CE001
+  - CE018
+  - CE021
+  - CE023
+  - CE024
+  - CE041
+  sourceRefs:
+  - SE001
+  - SE004
+  - SE025
+  - SE026
+  data:
+    layers:
+    - label: Customer input channels
+      detail: >-
+        Inbound voice calls (24/7), SMS/text, web chat, email, Google LSA leads, Yelp/Angi/Thumbtack/Facebook
+        web form leads — all ingested into the Avoca platform via telephony and lead-intake APIs.
+    - label: AI conversation engine (undisclosed stack)
+      detail: >-
+        Core LLM and voice synthesis layer handling natural-language understanding, intent classification,
+        objection handling, and response generation. Underlying model vendor is not publicly disclosed.
+        Webhook events: call.completed, sms.received, chat.started, speed_to_lead.completed.
+    - label: Operator configuration and knowledge base
+      detail: >-
+        Per-operator dispatch rules, priority tiers (P1/P2/P3), persona and tone settings, job type taxonomy,
+        booking logic, seasonal protocols, and emergency-routing scripts. Configured by Forward Deployed
+        Engineers on-site; updatable same-day via configuration pushes.
+    - label: CRM integration and scheduling layer
+      detail: >-
+        Real-time bi-directional sync with 40+ FSM/CRM platforms (ServiceTitan deep integration; also
+        Jobber, HouseCallPro, Salesforce, Zoho, Service Fusion, and others). Reads live capacity, syncs
+        12+ customer data fields per call, books jobs directly. Webhook: appointment.scheduled.
+    - label: HITL service layer
+      detail: >-
+        Warm-transfer to North America-based Avoca-trained CSRs for 15–20% of escalated calls. Full
+        AI-context handoff in <3 seconds. CSRs trained specifically on Avoca platform and home-services
+        scenarios. Webhook: call.completed with escalation flag.
+    - label: Analytics and coaching layer
+      detail: >-
+        Coach scores every call against operator rubric (objection handling, process adherence, tone,
+        booking outcome). Call reclassification identifies misrecorded outcomes. Unified analytics dashboard
+        for multi-location portfolio visibility. Webhook: coach.score_available.
+    - label: Operator dashboard and API layer
+      detail: >-
+        Dashboard for operators and managers (live capacity view, task routing, coaching reports).
+        REST API with Node.js/TypeScript and Python SDKs at docs.avoca.ai. Custom integrations via
+        documented integration playbook. Status monitoring at status.avoca.ai.
+
+- id: FE002
+  title: Customer Workflow / Operating Flow
+  type: flow
+  layout: wide
+  summary: >-
+    End-to-end flow of an inbound service call through Avoca's platform — from initial contact through
+    AI handling, optional HITL escalation, CRM booking, and post-call coaching. Illustrates the priority
+    routing and context-preservation mechanisms central to Avoca's value proposition.
+  approximationNotes: >-
+    Transfer times, field counts, and escalation percentages are company-claimed from product pages and HITL
+    blog. No independently verified SLA or accuracy metrics are available.
+  claimRefs:
+  - CE009
+  - CE010
+  - CE011
+  - CE012
+  - CE013
+  - CE015
+  - CE025
+  - CE026
+  sourceRefs:
+  - SE001
+  - SE006
+  - SE007
+  - SE003
+  data:
+    nodes:
+    - id: call-arrives
+      label: Call arrives (24/7)
+      detail: Homeowner dials operator; Avoca answers on first ring with zero hold time
+    - id: customer-recognition
+      label: Customer recognition
+      detail: AI pulls 12+ CRM fields in real time — past jobs, equipment, membership tier, account history
+    - id: intent-classification
+      label: Intent and priority classification
+      detail: AI classifies call as P1 (emergency), P2 (replacement/install), or P3 (maintenance); emergency
+        safety calls route directly to on-call technician
+    - id: ai-handling
+      label: AI conversation (80–85% of calls)
+      detail: AI handles objections, gathers job details, confirms availability from live CRM board, books job
+        in CRM with all fields populated; zero manual entry
+    - id: hitl-escalation
+      label: HITL warm transfer (15–20% of calls)
+      detail: AI recognizes edge case or complexity threshold; warm-transfers to Avoca CSR in <3 seconds;
+        CSR receives full brief (caller, issue, equipment, tone) before customer repeats anything
+    - id: job-booked
+      label: Job booked in CRM
+      detail: Job appears on dispatch board with correct job type, customer data, and technician slot; P1
+        overrides lower-priority slots as needed
+    - id: coach-scoring
+      label: Coach scores call
+      detail: Every call scored post-completion on objection handling, process adherence, tone, and booking
+        outcome; reclassification flags misrecorded "not interested" outcomes
+    - id: intelligent-task-routing
+      label: Intelligent task routing
+      detail: AI generates summary and routes high-value call types to appropriate team member (installs →
+        inside sales; replacement leads → sales team; dropped calls → instant follow-up)
+    edges:
+    - from: call-arrives
+      to: customer-recognition
+      label: Immediate CRM lookup
+    - from: customer-recognition
+      to: intent-classification
+      label: Classification with context
+    - from: intent-classification
+      to: ai-handling
+      label: Routine / bookable call
+    - from: intent-classification
+      to: hitl-escalation
+      label: Edge case or complexity (15–20%)
+    - from: intent-classification
+      to: job-booked
+      label: P1 emergency → on-call tech
+    - from: ai-handling
+      to: job-booked
+      label: Direct booking in CRM
+    - from: hitl-escalation
+      to: job-booked
+      label: Human resolves and books
+    - from: job-booked
+      to: coach-scoring
+      label: Every call scored post-booking
+    - from: job-booked
+      to: intelligent-task-routing
+      label: High-value calls routed to team
+
+- id: FE003
+  title: Critical Dependency Map
+  type: dag
+  layout: wide
+  summary: >-
+    Key platform dependencies including CRM integrations, AI infrastructure, telephony, regulatory requirements,
+    and distribution channels. Illustrates single-point risks and concentration in ServiceTitan ecosystem.
+  approximationNotes: >-
+    AI model vendor and telephony provider are inferred from product behavior; not named publicly. Integration
+    depth with each CRM partner is inferred from product pages and partner program materials.
+  claimRefs:
+  - CE019
+  - CE036
+  - CE040
+  - CE041
+  - CE021
+  - CE022
+  sourceRefs:
+  - SE004
+  - SE005
+  - SE013
+  - SE016
+  - SE025
+  data:
+    nodes:
+    - id: avoca-platform
+      label: Avoca AI Platform
+    - id: servicetitan
+      label: ServiceTitan (primary CRM partner)
+    - id: other-crms
+      label: 39+ other FSM/CRM integrations
+    - id: llm-provider
+      label: LLM / voice synthesis vendor (undisclosed)
+    - id: telephony
+      label: Cloud telephony provider (undisclosed)
+    - id: operators
+      label: Home-service operator customers
+    - id: hitl-csrs
+      label: Avoca HITL CSR team (North America)
+    - id: fcc-tcpa
+      label: FCC / TCPA regulatory framework
+    - id: google-lsa
+      label: Google LSA lead source
+    - id: avoca-api
+      label: Avoca REST API / custom integrations
+    edges:
+    - from: avoca-platform
+      to: servicetitan
+      label: Deep integration (partner program, co-branded)
+    - from: avoca-platform
+      to: other-crms
+      label: 39+ integrations (breadth, not depth)
+    - from: avoca-platform
+      to: llm-provider
+      label: AI inference dependency (undisclosed vendor)
+    - from: avoca-platform
+      to: telephony
+      label: Call routing and voice infrastructure
+    - from: servicetitan
+      to: operators
+      label: Primary FSM for target customer base
+    - from: avoca-platform
+      to: operators
+      label: Subscription and service delivery
+    - from: avoca-platform
+      to: hitl-csrs
+      label: 15–20% escalation volume
+    - from: fcc-tcpa
+      to: avoca-platform
+      label: TCPA consent requirements for outbound AI voice
+    - from: google-lsa
+      to: avoca-platform
+      label: Lead ingestion (Speed-to-Lead module)
+    - from: avoca-platform
+      to: avoca-api
+      label: REST API + webhooks for third-party integrators
+
+- id: FE004
+  title: Product Maturity / Capability Map
+  type: matrix
+  layout: wide
+  summary: >-
+    Assessment of Avoca's product maturity and capability strength across key dimensions for each module,
+    based on observable evidence from product pages, customer case studies, and documentation as of June 2026.
+  approximationNotes: >-
+    Maturity and commercial validation assessments are evidence-based inferences from public materials;
+    no independent audit or third-party review has been conducted. Entries marked "Limited public evidence"
+    reflect absence of case studies or benchmarks, not confirmed absence of capability.
+  claimRefs:
+  - CE001
+  - CE002
+  - CE003
+  - CE005
+  - CE006
+  - CE017
+  - CE027
+  sourceRefs:
+  - SE001
+  - SE002
+  - SE003
+  - SE006
+  - SE007
+  - SE008
+  data:
+    columns:
+    - Technical maturity
+    - Commercial validation
+    - Integration depth
+    - Current risk
+    rows:
+    - label: AI CSR (Inbound)
+      values:
+      - "High — core product; handles 80–85% of calls autonomously; P1/P2/P3 dispatch logic live"
+      - "High — multiple named customer case studies; 40%→95% booking rate improvement cited"
+      - "High — 40+ CRM integrations; ServiceTitan deep; live capacity read"
+      - "Medium — configuration accuracy determines quality; no public benchmark"
+    - label: Outbound Campaigns
+      values:
+      - "Medium-High — multi-touch drip live; AI conversation in SMS and voice; CRM booking"
+      - "Medium — $850K SMS revenue case study; no systematic adoption data"
+      - "Medium — CRM booking confirmed; consent-management integration unclear"
+      - "Medium-High — TCPA consent exposure for AI-generated outbound voice"
+    - label: Speed-to-Lead
+      values:
+      - "Medium-High — multi-source ingestion live; sub-60-second response documented"
+      - "Medium — April 2026 playbook; no independent case study with quantified outcomes"
+      - "Medium-High — Google LSA, Yelp, Angi, Thumbtack, Facebook, web form integrations"
+      - "Medium — lead source quality varies; conversion rate benchmarks unavailable"
+    - label: Coach (Scoring + Reclassification)
+      values:
+      - "Medium-High — 4-dimension scoring live; reclassification AI operational"
+      - "Medium — $29K/90-day case study; 12% misclassification rate claimed"
+      - "Medium — reads call records from CRM; scoring rubric operator-defined"
+      - "Medium — scoring accuracy undisclosed; rubric quality varies by operator"
+    - label: HITL Service Tier
+      values:
+      - "High (operational) — North America CSRs; trained on Avoca platform and home services"
+      - "High — operational across hundreds of deployments; reduces churn from edge-case failures"
+      - "High — seamless warm-transfer with AI context handoff; no dropped calls claimed"
+      - "Medium — labor-intensive COGS item; margin pressure if AI handle rate stalls below 90%"
+    - label: Simple Scheduler / Web Chat / Google LSA
+      values:
+      - "Medium — live in docs.avoca.ai; minimal public case study evidence"
+      - "Low-Medium — no quantified adoption or outcome data publicly available"
+      - "Medium — listed integrations; depth not documented publicly"
+      - "Low — limited public exposure; risk is in underdevelopment relative to core modules"
+
+localEvidence:
+  searchQueries:
+  - engine: web
+    query: Avoca AI product architecture API integration 2026
+    hits: null
+    retainedSourceRefs:
+    - SE025
+    - SE026
+  - engine: web
+    query: Avoca AI inbound call handling priority dispatch HITL 2026
+    hits: null
+    retainedSourceRefs:
+    - SE001
+    - SE006
+    - SE007
+  - engine: web
+    query: Avoca AI deployment implementation forward deployed engineer 2026
+    hits: null
+    retainedSourceRefs:
+    - SE020
+    - SE024
+  - engine: web
+    query: Avoca AI Coach call scoring reclassification product 2026
+    hits: null
+    retainedSourceRefs:
+    - SE003
+  - engine: web
+    query: Avoca AI security compliance SOC 2 TCPA FCC ruling 2026
+    hits: null
+    retainedSourceRefs:
+    - SE016
+    - SE027
+    - SE028
+  - engine: web
+    query: Avoca AI speed to lead outbound campaigns booking results 2026
+    hits: null
+    retainedSourceRefs:
+    - SE023
+    - SE018
+  - engine: web
+    query: Avoca AI status page uptime SLA developer signal 2026
+    hits: null
+    retainedSourceRefs:
+    - SE028
+    - SE019
+  - engine: web
+    query: Avoca AI ServiceTitan integration partnership CRM 2026
+    hits: null
+    retainedSourceRefs:
+    - SE005
+    - SE013
+  - engine: web
+    query: Avoca AI competitive risk narrow vertical hallucination constraint 2026
+    hits: null
+    retainedSourceRefs:
+    - SE015
+    - SE038
+
+  researchQuestions:
+  - id: QE001
+    type: mechanism
+    question: >-
+      How does Avoca's AI CSR handle inbound call triage — specifically how does the priority dispatch
+      logic (P1/P2/P3) determine booking outcomes in real time?
+    status: answered
+    targets:
+    - contentRequirements/2
+
+  - id: QE002
+    type: enumeration
+    question: >-
+      What distinct product modules does Avoca offer as of June 2026, and how do they map to the
+      home-service operator workflow?
+    status: answered
+    targets:
+    - contentRequirements/1
+
+  - id: QE003
+    type: quantification
+    question: >-
+      What booking rate improvements do Avoca customers achieve on average, and what are the best and
+      typical case benchmarks publicly available?
+    status: answered
+    targets:
+    - contentRequirements/0
+
+  - id: QE004
+    type: verification
+    question: >-
+      Does Avoca publish a public API with SDKs, and what integration capabilities does it offer for
+      enterprise and custom deployments?
+    status: answered
+    targets:
+    - contentRequirements/3
+
+  - id: QE005
+    type: mechanism
+    question: >-
+      How does the HITL warm-transfer mechanism preserve AI conversation context when handing off to a
+      human CSR, and what information is transferred in under 3 seconds?
+    status: answered
+    targets:
+    - contentRequirements/2
+
+  - id: QE006
+    type: enumeration
+    question: >-
+      Which CRM and FSM platforms does Avoca integrate with, and what is the depth of integration for
+      the primary platforms?
+    status: answered
+    targets:
+    - contentRequirements/3
+
+  - id: QE007
+    type: quantification
+    question: >-
+      What percentage of calls are handled by AI vs. HITL at top-performing deployments vs. the baseline
+      80–85% AI handle rate?
+    status: answered
+    targets:
+    - contentRequirements/2
+
+  - id: QE008
+    type: mechanism
+    question: >-
+      How does Avoca's Speed-to-Lead module ingest leads from multiple sources and trigger outreach within
+      60 seconds, and what channels does it use?
+    status: answered
+    targets:
+    - contentRequirements/2
+
+  - id: QE009
+    type: quantification
+    question: >-
+      What quantified outbound campaign performance has Avoca disclosed, and how does it compare to
+      traditional call center or email-only outbound approaches?
+    status: answered
+    targets:
+    - contentRequirements/0
+
+  - id: QE010
+    type: mechanism
+    question: >-
+      How does Avoca Coach's call reclassification feature detect misclassified outcomes, and what is the
+      claimed accuracy or false-positive rate?
+    status: answered
+    targets:
+    - contentRequirements/4
+
+  - id: QE011
+    type: verification
+    question: >-
+      Does Avoca hold any publicly disclosed SOC 2 Type II, ISO 27001, or equivalent security certifications
+      as of June 2026?
+    status: unresolved
+    targets:
+    - contentRequirements/5
+
+  - id: QE012
+    type: enumeration
+    question: >-
+      What data security and privacy controls does Avoca's public documentation disclose, including
+      encryption, data retention, and OAuth integration scope?
+    status: answered
+    targets:
+    - contentRequirements/5
+
+  - id: QE013
+    type: mechanism
+    question: >-
+      How does Avoca's Forward Deployed Engineer (FDE) model work, and what operator-specific customization
+      is captured during on-site deployment?
+    status: answered
+    targets:
+    - contentRequirements/3
+
+  - id: QE014
+    type: verification
+    question: >-
+      What TCPA compliance obligations apply to Avoca's outbound AI-generated voice calling product, and
+      what public evidence exists of Avoca's consent management approach?
+    status: answered
+    targets:
+    - contentRequirements/5
+
+  - id: QE015
+    type: comparison
+    question: >-
+      How does Avoca's AI-plus-HITL hybrid architecture compare to pure-AI or pure-human alternatives
+      in terms of call completion quality and cost structure?
+    status: answered
+    targets:
+    - contentRequirements/4
+
+  - id: QE016
+    type: adverse
+    question: >-
+      What technical and business risks arise from Avoca's deep dependence on ServiceTitan's API access
+      and partner ecosystem, and could ServiceTitan displace Avoca with native AI?
+    status: partial
+    targets:
+    - contentRequirements/4
+
+  - id: QE017
+    type: adverse
+    question: >-
+      What hallucination and quality risks exist in using LLM-based voice AI for high-stakes home service
+      calls — emergencies, safety issues, and complex multi-step bookings?
+    status: answered
+    targets:
+    - contentRequirements/5
+
+  - id: QE018
+    type: adverse
+    question: >-
+      What operational constraints does Avoca's vertical concentration in home services create, and how
+      does narrow-vertical AI exposure limit platform resilience or transferability?
+    status: answered
+    targets:
+    - contentRequirements/4
+
+  - id: QE019
+    type: verification
+    question: >-
+      Has Avoca published any uptime SLA, historical availability metrics, or formal reliability guarantees
+      for its platform as of June 2026?
+    status: answered
+    targets:
+    - contentRequirements/3
+
+  - id: QE020
+    type: enumeration
+    question: >-
+      What product milestones and feature releases has Avoca shipped or announced in 2025–2026, and what
+      does the cadence imply about engineering velocity?
+    status: answered
+    targets:
+    - contentRequirements/3
+
+  - id: QE021
+    type: quantification
+    question: >-
+      What is the trajectory of Avoca's AI call handle rate over time, and what implications does it have
+      for HITL labor costs and gross margin?
+    status: answered
+    targets:
+    - contentRequirements/2
+
+  - id: QE022
+    type: freshness
+    question: >-
+      Is the docs.avoca.ai API reference with Node.js and Python SDKs the current developer integration
+      standard as of June 2026, or is there a newer version available?
+    status: answered
+    targets:
+    - contentRequirements/3
+
+  - id: QE023
+    type: mechanism
+    question: >-
+      How does Avoca's proprietary workflow data compound over time as a competitive moat, and what
+      specifically is defensible versus replicable by a new entrant?
+    status: answered
+    targets:
+    - contentRequirements/4
+
+  - id: QE024
+    type: verification
+    question: >-
+      What was Avoca's initial product scope at YC Winter 2023 launch, and how does the narrowing to
+      home services reflect deliberate product strategy?
+    status: answered
+    targets:
+    - contentRequirements/1
+
+  - id: QE025
+    type: adverse
+    question: >-
+      What evidence exists of AI call-handling failures, customer churn from AI errors, or configuration-driven
+      quality degradation in Avoca deployments?
+    status: answered
+    targets:
+    - contentRequirements/5
+
+  - id: QE026
+    type: quantification
+    question: >-
+      What is Avoca's AI model architecture, foundation model vendor, voice synthesis provider, and
+      telephony infrastructure as of June 2026?
+    status: unresolved
+    targets:
+    - contentRequirements/2
+
+  claims:
+  - id: CE001
+    type: observed
+    statement: >-
+      Avoca's platform comprises seven distinct workflow-surface modules as of June 2026: AI CSR (inbound
+      voice), Outbound Campaigns, Speed-to-Lead, Simple Scheduler, Web Chat, Google LSA integration, and
+      Coach (call scoring and analytics), plus a Human-in-the-Loop service tier that backstops the AI.
+    confidence: high
+    freshness: current
+    topic: product module map
+    sourceRefs:
+    - SE001
+    - SE004
+    - SE019
+    - SE025
+    answersQuestionRefs:
+    - QE002
+    - QE024
+
+  - id: CE002
+    type: observed
+    statement: >-
+      The AI CSR Inbound module answers every call 24/7 with zero hold time, routes P1 emergencies to
+      on-call technicians in real time, and books jobs directly into the operator's CRM — claiming 40%
+      higher booking rate vs. IVR and average call-to-booking of under 30 seconds.
+    confidence: high
+    freshness: current
+    topic: AI CSR inbound product
+    sourceRefs:
+    - SE001
+    - SE004
+    answersQuestionRefs:
+    - QE001
+    - QE003
+
+  - id: CE003
+    type: observed
+    statement: >-
+      Avoca's Outbound Campaigns module delivers multi-touch SMS and voice drip sequences of 5+ touches
+      per campaign, with AI handling all replies and booking jobs directly into the CRM without human
+      CSR involvement for standard re-engagement calls.
+    confidence: high
+    freshness: current
+    topic: outbound campaigns product
+    sourceRefs:
+    - SE002
+    - SE004
+    answersQuestionRefs:
+    - QE009
+
+  - id: CE004
+    type: observed
+    statement: >-
+      Avoca's Speed-to-Lead module ingests leads from Google LSA, Yelp, Thumbtack, Angi, Facebook, and
+      web forms into a single unified workflow and fires outreach within sub-60 seconds; the April 2026
+      playbook documents a tested structure of 4+ touchpoints in the first 2 hours of a lead's life.
+    confidence: high
+    freshness: current
+    topic: speed-to-lead product
+    sourceRefs:
+    - SE023
+    - SE004
+    answersQuestionRefs:
+    - QE008
+
+  - id: CE005
+    type: observed
+    statement: >-
+      Avoca Coach scores every call against a company-defined four-dimension rubric (objection handling,
+      process adherence, tone and empathy, booking outcome), and a call reclassification feature uses AI
+      to identify calls misrecorded as "not interested" that were actually bookable.
+    confidence: high
+    freshness: current
+    topic: Coach product capabilities
+    sourceRefs:
+    - SE003
+    - SE018
+    answersQuestionRefs:
+    - QE010
+
+  - id: CE006
+    type: observed
+    statement: >-
+      The Human-in-the-Loop (HITL) service is a backstop layer — not a standalone product — of
+      Avoca-trained North America-based CSRs who receive AI warm transfers with full context (caller identity,
+      service type, equipment, escalation reason, CRM status, and call tone) in under 3 seconds with zero
+      dropped calls.
+    confidence: high
+    freshness: current
+    topic: HITL service architecture
+    sourceRefs:
+    - SE006
+    - SE001
+    answersQuestionRefs:
+    - QE005
+
+  - id: CE007
+    type: observed
+    statement: >-
+      Avoca's YC Winter 2023 profile described the product as an "AI-powered communications platform for
+      SMBs" covering phone, text, email, and review management for any small business; by 2025–2026 the
+      company had narrowed entirely to home-service operators.
+    confidence: medium
+    freshness: current
+    topic: product history and vertical pivot
+    sourceRefs:
+    - SE020
+    answersQuestionRefs:
+    - QE024
+
+  - id: CE008
+    type: observed
+    statement: >-
+      LinkedIn shows 190 employees and describes Avoca as "trusted by 800+ operators across HVAC, plumbing,
+      electrical, roofing, pest control, automotive and more" as of June 2026 — the highest employee count
+      estimate among all sources reviewed, higher than the 100-person figure on the Avoca careers page.
+    confidence: medium
+    freshness: current
+    topic: headcount and operator count
+    sourceRefs:
+    - SE019
+    answersQuestionRefs:
+    - QE002
+
+  - id: CE009
+    type: observed
+    statement: >-
+      Avoca's inbound AI implements a three-tier priority booking system: P1 (emergencies and urgent
+      calls, booked regardless of schedule), P2 (replacements and installs, can overbook lower-priority
+      slots), and P3 (maintenance and tune-ups, fills available capacity but yields to higher-priority
+      work). Priority factors include equipment age, membership status, warranty, and call type.
+    confidence: high
+    freshness: current
+    topic: priority dispatch logic
+    sourceRefs:
+    - SE007
+    - SE001
+    answersQuestionRefs:
+    - QE001
+
+  - id: CE010
+    type: observed
+    statement: >-
+      Avoca reads dispatch capacity directly from the operator's CRM in real time for scheduling, rather
+      than using a static booking window; "buffer days" can push P3 work out during peak weeks and pull
+      it back during slow periods.
+    confidence: high
+    freshness: current
+    topic: live capacity management
+    sourceRefs:
+    - SE007
+    - SE001
+    answersQuestionRefs:
+    - QE001
+
+  - id: CE011
+    type: observed
+    statement: >-
+      Before the first word of an inbound call is spoken, Avoca pulls 12+ CRM data fields including past
+      jobs, equipment make and model, equipment age, membership tier, and homeowner status; when a call
+      escalates, this full brief appears on the HITL CSR's screen before the customer has to repeat anything.
+    confidence: high
+    freshness: current
+    topic: customer recognition and context handling
+    sourceRefs:
+    - SE001
+    - SE005
+    answersQuestionRefs:
+    - QE005
+
+  - id: CE012
+    type: company-claimed
+    statement: >-
+      HITL warm-transfer time is under 3 seconds with zero dropped calls; the handoff context package
+      includes caller identity, call-in number, service issue, escalation reason, CRM address and status,
+      equipment age and model, residential/commercial status, and perceived caller tone.
+    confidence: medium
+    freshness: current
+    topic: HITL transfer speed and context
+    sourceRefs:
+    - SE006
+    - SE001
+    answersQuestionRefs:
+    - QE005
+
+  - id: CE013
+    type: company-claimed
+    statement: >-
+      The Avoca Inbound product page claims 40% higher booking rate versus IVR, average call-to-booking
+      time of under 30 seconds, and 2× faster than legacy IVR; these are company-asserted figures with
+      no published third-party methodology or audited basis.
+    confidence: medium
+    freshness: current
+    topic: inbound AI performance claims
+    sourceRefs:
+    - SE001
+    answersQuestionRefs:
+    - QE003
+
+  - id: CE014
+    type: observed
+    statement: >-
+      Documented customer performance: one unnamed contractor increased booking rates from 40% to 95%;
+      Aire Serv Sevierville grew after-hours bookings from 58 to 208 (258% increase); Granite Comfort /
+      Yost & Campbell grew revenue 20% year-over-year, "primarily from calls Avoca captured."
+    confidence: medium
+    freshness: current
+    topic: customer performance case studies
+    sourceRefs:
+    - SE008
+    - SE009
+    answersQuestionRefs:
+    - QE003
+
+  - id: CE015
+    type: observed
+    statement: >-
+      Avoca's intelligent task routing allows operators to define call types that automatically trigger
+      routing with an AI-generated summary: installs route to inside sales, old-equipment callers get
+      flagged for replacement conversations, dropped calls get instant follow-up.
+    confidence: high
+    freshness: current
+    topic: intelligent task routing
+    sourceRefs:
+    - SE007
+    - SE001
+    answersQuestionRefs:
+    - QE001
+
+  - id: CE016
+    type: observed
+    statement: >-
+      Avoca's Speed-to-Lead playbook, published April 2026, documents a tested multi-source lead workflow:
+      4+ touchpoints in the first 2 hours across both voice and SMS; pre-built workflows are described as
+      derived from "best practices from hundreds of deployments."
+    confidence: medium
+    freshness: current
+    topic: speed-to-lead workflow and playbook
+    sourceRefs:
+    - SE023
+    answersQuestionRefs:
+    - QE008
+    - QE009
+
+  - id: CE017
+    type: company-claimed
+    statement: >-
+      Avoca's deployment lessons blog (April 2026) states that at top deployments 90–95% of calls flow
+      without human intervention (vs. the 80–85% baseline), operators have improved from 45% to 70%
+      booking rates, and one customer generated $850K in SMS outbound revenue in a single season.
+    confidence: medium
+    freshness: current
+    topic: top-deployment performance metrics
+    sourceRefs:
+    - SE018
+    answersQuestionRefs:
+    - QE003
+    - QE007
+    - QE021
+
+  - id: CE018
+    type: observed
+    statement: >-
+      Avoca supports 40+ FSM/CRM integrations including ServiceTitan, HouseCallPro, Jobber, Salesforce,
+      Zoho, Service Fusion, BuildOps, Service Autopilot, Sera, Workiz, BigChange, BrioStack, AccuLynx,
+      Aspire, Striven, Thryv, and others across trades, pest control, roofing, and electrical verticals.
+    confidence: high
+    freshness: current
+    topic: CRM integration breadth
+    sourceRefs:
+    - SE004
+    - SE005
+    answersQuestionRefs:
+    - QE006
+
+  - id: CE019
+    type: observed
+    statement: >-
+      ServiceTitan is Avoca's flagship integration partner: Avoca maintains a dedicated co-branded
+      ServiceTitan partner page, a joint partnership program, and is cited by name on ServiceTitan's own
+      blog about AI voice agents in HVAC as a leading example of AI call center automation.
+    confidence: high
+    freshness: current
+    topic: ServiceTitan partnership depth
+    sourceRefs:
+    - SE005
+    - SE013
+    answersQuestionRefs:
+    - QE006
+    - QE016
+
+  - id: CE020
+    type: observed
+    statement: >-
+      Avoca's deployment model uses Forward Deployed Engineers (FDEs) who go on-site to observe operator
+      workflows, extract booking logic, dispatch rules, and edge cases, then build and own the deployment.
+      The philosophy is stated as: "We don't onboard you to Avoca. Avoca onboards to you."
+    confidence: high
+    freshness: current
+    topic: FDE deployment model
+    sourceRefs:
+    - SE024
+    - SE018
+    answersQuestionRefs:
+    - QE013
+
+  - id: CE021
+    type: observed
+    statement: >-
+      Avoca's public API at docs.avoca.ai exposes REST endpoints covering inbound voice webhook, SMS/email/
+      chat receive and send, outbound calls, Speed-to-Lead, Happy Calls, Maintenance Calls, Coach analytics,
+      Simple Scheduler, and Unified Inbox; official SDKs exist for Node.js/TypeScript and Python.
+    confidence: high
+    freshness: current
+    topic: API surface and SDK availability
+    sourceRefs:
+    - SE025
+    - SE004
+    answersQuestionRefs:
+    - QE004
+    - QE022
+
+  - id: CE022
+    type: observed
+    statement: >-
+      A custom-integration playbook at docs.avoca.ai/custom-integration documents technical architecture,
+      API specifications, data exchange and booking process, AI behavior customization, testing and
+      deployment guidance, and integration templates for bespoke third-party deployments.
+    confidence: high
+    freshness: current
+    topic: custom integration documentation
+    sourceRefs:
+    - SE026
+    - SE004
+    answersQuestionRefs:
+    - QE004
+    - QE006
+
+  - id: CE023
+    type: observed
+    statement: >-
+      The docs.avoca.ai documentation site navigation confirms all platform modules: Inbound, Outbound,
+      Capacity Management, Speed to Lead, Google LSA, Simple Scheduler, Analytics & Coach, Dispatch,
+      Configuration, Scheduling, Integrations, Web Chat, and Dashboard — consistent with the product
+      surfaces described on avoca.ai.
+    confidence: high
+    freshness: current
+    topic: documentation confirming full product surface
+    sourceRefs:
+    - SE025
+    - SE004
+    answersQuestionRefs:
+    - QE002
+
+  - id: CE024
+    type: observed
+    statement: >-
+      Configuration changes to AI behavior can be deployed same-day, as described in the engineer blog:
+      "ship at night, call in the morning, get a customer's screenshot by 4 PM, push a config change by
+      6 PM." This is consistent with a SaaS configuration layer rather than compiled model dependencies.
+    confidence: high
+    freshness: current
+    topic: deployment iteration speed
+    sourceRefs:
+    - SE010
+    - SE024
+    answersQuestionRefs:
+    - QE013
+
+  - id: CE025
+    type: observed
+    statement: >-
+      Avoca Coach scores every call against a four-dimension operator-defined rubric: objection handling,
+      process adherence, tone and empathy, and booking outcome. Managers receive AI-generated summaries
+      identifying specific coaching moments across all calls — not just random samples.
+    confidence: high
+    freshness: current
+    topic: Coach scoring dimensions
+    sourceRefs:
+    - SE003
+    - SE018
+    answersQuestionRefs:
+    - QE010
+
+  - id: CE026
+    type: company-claimed
+    statement: >-
+      Avoca claims an average call misclassification rate of 12% — meaning 1 in 8 calls recorded in the
+      CRM as "not interested" or unbooked were actually bookable opportunities that Coach's reclassification
+      feature surfaces for follow-up.
+    confidence: medium
+    freshness: current
+    topic: call reclassification accuracy
+    sourceRefs:
+    - SE003
+    answersQuestionRefs:
+    - QE010
+
+  - id: CE027
+    type: company-claimed
+    statement: >-
+      A single-location HVAC company case study on the Coach product page shows $29K recovered in 90 days
+      from calls reclassified from "not interested" to bookable, a 15% booking rate improvement, 2×
+      increase in memberships sold, and 5× reduction in QA time.
+    confidence: medium
+    freshness: current
+    topic: Coach case study outcomes
+    sourceRefs:
+    - SE003
+    answersQuestionRefs:
+    - QE010
+    - QE003
+
+  - id: CE028
+    type: observed
+    statement: >-
+      Avoca's analytics module is described as providing "every metric in one place" for multi-location
+      portfolio visibility, including booking rates by location, misclassification rates, and performance
+      trends — framing the analytics layer specifically as a tool for PE-backed multi-brand operators.
+    confidence: medium
+    freshness: current
+    topic: analytics for PE operators
+    sourceRefs:
+    - SE003
+    - SE005
+    answersQuestionRefs:
+    - QE002
+
+  - id: CE029
+    type: third-party-reported
+    statement: >-
+      Amplify Partners' investment blog explicitly identifies Avoca's proprietary workflow data as a
+      compounding moat: each operator deployment trains the system on specific call patterns, routing
+      preferences, and customer bases, making the AI progressively more accurate for that operator and
+      raising switching costs over time.
+    confidence: medium
+    freshness: current
+    topic: data moat and competitive defensibility
+    sourceRefs:
+    - SE012
+    answersQuestionRefs:
+    - QE023
+
+  - id: CE030
+    type: inferred
+    statement: >-
+      The HITL blog notes the platform "gets smarter every day it runs" and the call reclassification
+      model improves per-operator accuracy over the deployment lifetime, consistent with a system where
+      production call data is continuously used to improve AI configuration or model behavior.
+    confidence: medium
+    freshness: current
+    topic: continuous learning from production data
+    sourceRefs:
+    - SE006
+    - SE012
+    answersQuestionRefs:
+    - QE023
+
+  - id: CE031
+    type: company-claimed
+    statement: >-
+      One customer generated $850K in SMS outbound revenue from outbound campaigns in a single season —
+      cited in Avoca's deployment lessons blog (April 2026) as evidence of the commercial value of
+      lifecycle outreach automation at scale.
+    confidence: low
+    freshness: current
+    topic: outbound revenue case study
+    sourceRefs:
+    - SE018
+    answersQuestionRefs:
+    - QE009
+
+  - id: CE032
+    type: observed
+    statement: >-
+      Avoca's privacy policy (effective January 29, 2025) confirms data encryption in transit using HTTPS
+      and encryption at rest for stored data, including PII fields (name, email, phone, billing information,
+      government-issued ID for financial transactions) and OAuth tokens.
+    confidence: medium
+    freshness: current
+    topic: data encryption security controls
+    sourceRefs:
+    - SE027
+    answersQuestionRefs:
+    - QE012
+
+  - id: CE033
+    type: observed
+    statement: >-
+      Avoca's Google Calendar OAuth integration (documented in the privacy policy) stores encrypted OAuth
+      tokens to read calendar availability in real time, create and update calendar events upon booking,
+      and sync changes; operators can revoke access at any time via Google account settings.
+    confidence: medium
+    freshness: current
+    topic: Google Calendar OAuth integration
+    sourceRefs:
+    - SE027
+    answersQuestionRefs:
+    - QE012
+
+  - id: CE034
+    type: observed
+    statement: >-
+      Avoca's status page (status.avoca.ai) monitors five platform components: Dashboard, Inbound,
+      Outbound, Analytics, and Omnichannel; as of June 2026 all components showed fully operational
+      status. The page does not publish historical uptime percentages or a formal SLA.
+    confidence: medium
+    freshness: current
+    topic: platform status and uptime monitoring
+    sourceRefs:
+    - SE028
+    answersQuestionRefs:
+    - QE019
+
+  - id: CE035
+    type: observed
+    statement: >-
+      No SOC 2 Type II, ISO 27001, HIPAA, or equivalent security certification has been found in Avoca's
+      public documentation as of June 2026. The docs.avoca.ai site includes a "Security" navigation
+      section, but the content requires platform authentication to access.
+    confidence: medium
+    freshness: current
+    topic: security certification absence
+    sourceRefs:
+    - SE025
+    - SE028
+    answersQuestionRefs:
+    - QE011
+    - QE012
+
+  - id: CE036
+    type: observed
+    statement: >-
+      The FCC's February 2024 Declaratory Ruling (FCC 24-17) confirmed that AI-generated human-sounding
+      voice calls are "artificial or prerecorded voice" under TCPA, requiring prior express written consent
+      from each call recipient; Avoca's outbound AI calling product falls under this requirement.
+    confidence: medium
+    freshness: current
+    topic: TCPA regulatory requirement for outbound AI voice
+    sourceRefs:
+    - SE016
+    answersQuestionRefs:
+    - QE014
+
+  - id: CE037
+    type: third-party-reported
+    statement: >-
+      Homepros News (May 2026) reported that Avoca founders acknowledged an "AI trust dilemma" and
+      identified three leading churn drivers: operator operational unreadiness, dispatch and capacity
+      configuration errors at go-live, and ownership changes after PE acquisitions. None was attributed
+      to core AI model failure, but configuration errors directly degrade AI call quality.
+    confidence: medium
+    freshness: current
+    topic: churn drivers and AI quality risk
+    sourceRefs:
+    - SE015
+    answersQuestionRefs:
+    - QE017
+    - QE025
+
+  - id: CE038
+    type: inferred
+    statement: >-
+      Avoca's product vocabulary, booking logic, priority dispatch taxonomy, and integration catalog are
+      entirely home-services-specific with no stated portability to other verticals; the company has not
+      publicly demonstrated that the architecture or AI training generalizes outside HVAC, plumbing,
+      electrical, and adjacent trades.
+    confidence: high
+    freshness: current
+    topic: narrow vertical concentration
+    sourceRefs:
+    - SE001
+    - SE004
+    - SE023
+    answersQuestionRefs:
+    - QE018
+
+  - id: CE039
+    type: observed
+    statement: >-
+      No third-party benchmark, independent performance evaluation, or external audit of Avoca's AI booking
+      accuracy, call reclassification rate, or response quality exists in the public record as of June 2026;
+      all performance data is company-selected customer examples or company-claimed aggregate metrics.
+    confidence: high
+    freshness: current
+    topic: absence of independent benchmarks
+    sourceRefs:
+    - SE003
+    - SE018
+    answersQuestionRefs:
+    - QE017
+    - QE025
+
+  - id: CE040
+    type: inferred
+    statement: >-
+      Avoca's integration with ServiceTitan — including co-branded product pages, joint partnership
+      program, and ServiceTitan blog citation — creates structural dependence on ServiceTitan API access.
+      If ServiceTitan restricts third-party API access, builds equivalent AI natively, or deprioritizes
+      the partner ecosystem, Avoca's primary distribution channel and integration depth would be materially
+      impaired.
+    confidence: medium
+    freshness: current
+    topic: ServiceTitan integration dependency risk
+    sourceRefs:
+    - SE005
+    - SE013
+    answersQuestionRefs:
+    - QE016
+
+  - id: CE041
+    type: observed
+    statement: >-
+      Avoca's AI model architecture, foundation model vendor (OpenAI, Anthropic, Google, or proprietary),
+      voice synthesis provider, and cloud infrastructure provider are not publicly disclosed in any
+      product page, documentation, or investor communication reviewed as of June 2026.
+    confidence: high
+    freshness: current
+    topic: undisclosed AI model stack
+    sourceRefs:
+    - SE025
+    - SE001
+    answersQuestionRefs:
+    - QE026
+
+  evidenceGaps:
+  - type: missing-source
+    severity: blocking
+    topic: AI model and technology stack
+    missingEvidence: >-
+      Avoca does not publicly disclose the foundation model provider, LLM version, voice synthesis vendor,
+      telephony infrastructure, or cloud hosting provider. The docs.avoca.ai API reference reveals SDK
+      structure but not underlying stack. No technology partner announcement or job description confirms
+      specific model vendor.
+    whyItMatters: >-
+      Without knowing the AI vendor stack, investors cannot assess model risk concentration, dependency on
+      OpenAI/Anthropic API pricing, potential for model capability regression, or latency constraints.
+      Reliance on a third-party foundation model creates vendor risk that is invisible in public materials.
+    diligencePath: >-
+      Request from technical team: LLM vendor and contract terms, voice synthesis provider, telephony
+      infrastructure provider, cloud hosting stack, and any model fine-tuning or proprietary training
+      investment. Review any data processing agreements with AI vendors.
+    relatedQuestionRefs:
+    - QE026
+
+  - type: missing-source
+    severity: material
+    topic: security certifications and compliance posture
+    missingEvidence: >-
+      No SOC 2 Type II, ISO 27001, HIPAA, or equivalent certification has been found in any public Avoca
+      documentation. The Security section of docs.avoca.ai is authentication-gated and unavailable for
+      review.
+    whyItMatters: >-
+      PE-backed home-service platforms and enterprise operators increasingly face contractual security
+      requirements from their own investors or customers. Absence of a public certification creates a
+      potential deal blocker for enterprise and institutional customers that require vendor security attestation.
+    diligencePath: >-
+      Request SOC 2 Type II report, penetration test results, and security controls documentation from
+      Avoca security team. Verify scope of any certifications against actual data residency and processing
+      footprint.
+    relatedQuestionRefs:
+    - QE011
+    - QE012
+
+  - type: missing-source
+    severity: material
+    topic: TCPA consent management for outbound
+    missingEvidence: >-
+      No public documentation describes how Avoca helps operators manage prior express written consent for
+      outbound AI-generated voice calls, how opt-outs are processed and honored, or what campaign compliance
+      checks are in place. The FCC 24-17 ruling is clear about the legal obligation but Avoca's enforcement
+      mechanism is not publicly described.
+    whyItMatters: >-
+      TCPA violations carry $500–$1,500 per call in statutory damages; a single non-compliant outbound
+      campaign to a large list could result in material liability for both the operator and potentially
+      Avoca if it fails to provide adequate consent-management infrastructure.
+    diligencePath: >-
+      Request TCPA compliance documentation, consent capture workflow, opt-out management procedures,
+      and any legal opinions or carrier-compliance certifications. Review any prior TCPA disputes or
+      regulatory inquiries.
+    relatedQuestionRefs:
+    - QE014
+
+  - type: missing-source
+    severity: material
+    topic: uptime SLA and reliability benchmarks
+    missingEvidence: >-
+      Avoca does not publish a formal SLA with uptime percentage guarantees or a historical availability
+      report. The status.avoca.ai page shows current status only, without historical incident records or
+      availability percentages accessible without authentication.
+    whyItMatters: >-
+      For home-service operators whose after-hours bookings depend entirely on Avoca's uptime, even brief
+      outages during peak periods (summer heat waves, winter freezes) translate directly to lost revenue
+      and customer trust. Enterprise operators need contractual SLAs for vendor selection.
+    diligencePath: >-
+      Request historical uptime reports for Inbound, Outbound, and HITL components over the past 12
+      months, including incident logs, root-cause analyses, and current contractual SLA commitments.
+    relatedQuestionRefs:
+    - QE019
+
+  - type: missing-source
+    severity: material
+    topic: ServiceTitan API access and exclusivity terms
+    missingEvidence: >-
+      Avoca's contractual terms with ServiceTitan — including API access rights, partner-program restrictions,
+      exclusivity provisions, and revenue-share arrangements — are not publicly disclosed. It is not
+      possible to assess whether ServiceTitan can restrict Avoca's API access, build competing AI natively,
+      or materially alter partner terms without reviewing the actual agreement.
+    whyItMatters: >-
+      ServiceTitan is Avoca's deepest CRM integration and primary distribution channel for the largest
+      home-services FSM segment. Any degradation of API access or partner-program terms would directly
+      impair Avoca's core product functionality and customer acquisition at its most important account tier.
+    diligencePath: >-
+      Request ServiceTitan partnership agreement, API access SLA, exclusivity terms, and any revenue-share
+      details. Review ServiceTitan's native AI roadmap from public product announcements and job postings
+      to assess competitive displacement risk.
+    relatedQuestionRefs:
+    - QE016
+
+  sources:
+  - id: SE001
+    url: https://www.avoca.ai/inbound
+    title: Every Call Handled. Every Job Booked. — Avoca AI Inbound Product
+    publisher: Avoca AI (official)
+    date: '2026-06-17'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: official
+    independence: company
+    reputationTier: medium
+    stance: confirming
+    topics:
+    - AI CSR inbound product
+    - priority dispatch
+    - customer recognition
+    - HITL warm transfer
+    - booking rate claims
+    keyQuote: >-
+      When a call needs escalation, Avoca doesn't just transfer. It passes the full context: who's calling,
+      what they need, their equipment, and their tone. Your CSR is ready before they say hello.
+
+  - id: SE002
+    url: https://www.avoca.ai/outbound
+    title: Turn Your Customer Base Into Repeat Revenue — Avoca AI Outbound
+    publisher: Avoca AI (official)
+    date: '2026-06-17'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: official
+    independence: company
+    reputationTier: medium
+    stance: confirming
+    topics:
+    - outbound campaigns
+    - SMS and voice drip
+    - AI reply handling
+    - CRM booking
+    keyQuote: >-
+      Multi-touch Drip Campaigns: SMS and calls sequenced to maximize job bookings. Set the cadence,
+      define the audience, and let Avoca run the campaign. Send automatic follow-ups until the job is
+      booked or the customer opts out.
+
+  - id: SE003
+    url: https://www.avoca.ai/coach
+    title: Insights to Improve Performance — Avoca AI Coach
+    publisher: Avoca AI (official)
+    date: '2026-06-17'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: official
+    independence: company
+    reputationTier: medium
+    stance: confirming
+    topics:
+    - call scoring
+    - call reclassification
+    - booking rate improvement
+    - QA time reduction
+    - $29K case study
+    keyQuote: >-
+      AI reviews every call and flags when the outcome doesn't match what happened. Bookable leads
+      misclassified as 'not interested' get surfaced so you see your real booking rate. 12% avg misclassified.
+
+  - id: SE004
+    url: https://www.avoca.ai/integrations
+    title: Your Tools Connected. Your Leads Handled. — Avoca AI Integrations
+    publisher: Avoca AI (official)
+    date: '2026-06-17'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: official
+    independence: company
+    reputationTier: medium
+    stance: confirming
+    topics:
+    - CRM integrations
+    - 40+ integrations
+    - ServiceTitan integration
+    - FSM platform support
+    keyQuote: >-
+      Avoca plugs into the CRMs and platforms your team already runs on — so every call is answered,
+      every job is booked, and nothing falls through the cracks.
+
+  - id: SE005
+    url: https://www.avoca.ai/partners/service-titan
+    title: ServiceTitan + Avoca — Avoca AI ServiceTitan Partner Page
+    publisher: Avoca AI (official)
+    date: '2026-06-17'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: official
+    independence: company
+    reputationTier: medium
+    stance: confirming
+    topics:
+    - ServiceTitan partnership
+    - AI CSR for ServiceTitan users
+    - hybrid call center
+    - Speed-to-Lead
+    - 1000+ service businesses
+    keyQuote: >-
+      In partnership with ServiceTitan, Avoca's always-on AI answers every call, books every job, and
+      coaches every team — built for the way ServiceTitan members run their service businesses.
+
+  - id: SE006
+    url: https://www.avoca.ai/blog/why-avoca-has-a-human-in-the-loop-program
+    title: Why Avoca Has a Human in the Loop Program
+    publisher: Avoca AI (official)
+    date: '2026-05-12'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: official
+    independence: company
+    reputationTier: medium
+    stance: confirming
+    topics:
+    - HITL service architecture
+    - AI handle rate (80–85%)
+    - warm transfer context
+    - North America CSRs
+    - HITL training
+    keyQuote: >-
+      Avoca's AI CSR can handle 80–85% of inbound calls for a service business. It understands context,
+      gathers customer info, and books the job directly into the CRM. The share of calls that need a human
+      is shrinking quarter over quarter.
+
+  - id: SE007
+    url: https://www.avoca.ai/blog/ai-csr-features-that-matter-most-during-busy-season
+    title: AI CSR Features That Matter Most During Busy Season
+    publisher: Avoca AI (official)
+    date: '2026-06-09'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: official
+    independence: company
+    reputationTier: medium
+    stance: confirming
+    topics:
+    - priority booking tiers P1/P2/P3
+    - live capacity management
+    - buffer days
+    - intelligent task routing
+    - emergency guidance
+    keyQuote: >-
+      P1: emergencies and urgent calls, booked immediately regardless of what's on the schedule. P2:
+      replacements and installs, which can overbook lower-priority slots. P3: maintenance and tune-ups,
+      which fill available capacity but yield to better work.
+
+  - id: SE008
+    url: https://www.avoca.ai/customers
+    title: Customer Stories — Built for the Trades
+    publisher: Avoca AI (official)
+    date: '2026-06-17'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: official
+    independence: company
+    reputationTier: medium
+    stance: confirming
+    topics:
+    - customer case studies
+    - Granite Comfort / Yost & Campbell
+    - Aire Serv Sevierville
+    - Sila Services
+    - 20% YoY revenue lift
+    keyQuote: >-
+      Yost & Campbell grew revenue 20% year-over-year, primarily from calls Avoca captured that the team
+      was previously losing. Nine separate call centers became one. Nine after-hours vendors became zero.
+
+  - id: SE009
+    url: https://www.avoca.ai/blog/why-ai-is-finally-winning-in-home-services
+    title: AI Automation in Home Services — How Avoca Became the Premier Call Center Solution
+    publisher: Avoca AI (official)
+    date: '2025-08-11'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: official
+    independence: company
+    reputationTier: medium
+    stance: confirming
+    topics:
+    - product origin story
+    - booking rate 40%→95%
+    - home services vertical focus
+    - after-hours value
+    keyQuote: >-
+      A company switched from a traditional answering service (booking at 40%) to Avoca — and saw booking
+      rates skyrocket to 95%.
+
+  - id: SE010
+    url: https://www.avoca.ai/blog/why-i-build-at-avoca
+    title: Why I Build at Avoca — Software Engineer Rong Ye
+    publisher: Avoca AI (official)
+    date: '2026-03-02'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: official
+    independence: company
+    reputationTier: medium
+    stance: confirming
+    topics:
+    - engineering culture
+    - same-day configuration changes
+    - customer feedback loop
+    - Yost and Campbell deployment
+    keyQuote: >-
+      We don't have quarterly product reviews. We have: ship at night, call in the morning, get a customer's
+      screenshot by 4 PM, push a config change by 6 PM.
+
+  - id: SE011
+    url: https://www.kleinerperkins.com/perspectives/avoca-bringing-ai-to-the-backbone-of-the-real-economy/
+    title: Avoca — Bringing AI to the Backbone of the Real Economy
+    publisher: Kleiner Perkins
+    date: '2026-04-27'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: other
+    independence: independent
+    reputationTier: high
+    stance: confirming
+    topics:
+    - product strategy
+    - vertical AI for home services
+    - investor rationale
+    keyQuote: >-
+      Avoca is building the AI operating system for service businesses — infrastructure for the huge
+      offline services economy.
+
+  - id: SE012
+    url: https://www.amplifypartners.com/blog-posts/boring-is-sexy-the-anatomy-of-a-good-vertical-ai-startup
+    title: Boring Is Sexy — The Anatomy of a Good Vertical AI Startup
+    publisher: Amplify Partners
+    date: '2026-04-27'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: other
+    independence: independent
+    reputationTier: high
+    stance: confirming
+    topics:
+    - data moat thesis
+    - proprietary workflow data
+    - compounding competitive advantage
+    - vertical AI defensibility
+    keyQuote: >-
+      Operators using Avoca train the system on their specific call patterns, routes, and customer bases,
+      making switching more costly over time.
+
+  - id: SE013
+    url: https://www.servicetitan.com/blog/ai-voice-agents-in-hvac
+    title: AI Voice Agents in HVAC — The Contractor's Complete Guide to Automating Your Call Center in 2026
+    publisher: ServiceTitan (industry blog)
+    date: '2026-03-06'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: news
+    independence: partner
+    reputationTier: medium
+    stance: confirming
+    topics:
+    - AI voice agents for HVAC
+    - ServiceTitan integration context
+    - missed call cost statistics
+    - HVAC booking value
+    keyQuote: >-
+      Home services businesses miss around 27% of their inbound calls. Data across more than 1,200
+      contractors shows the average HVAC company loses between $45,000 and $120,000 per year to unanswered
+      phone calls.
+
+  - id: SE014
+    url: https://www.prnewswire.com/news-releases/avoca-raises-125m-at-1b-valuation-to-power-americas-services-economy-with-ai-302753962.html
+    title: Avoca Raises $125M+ at $1B Valuation to Power America's Services Economy With AI
+    publisher: PR Newswire
+    date: '2026-04-27'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: news
+    independence: company
+    reputationTier: medium
+    stance: confirming
+    topics:
+    - Series B announcement
+    - ARR milestone
+    - adjacent vertical expansion
+    - jobs booked target
+    keyQuote: >-
+      In 2025, the company surpassed eight figures in annual recurring revenue. This year alone, Avoca is
+      on track to book $1 billion in jobs.
+
+  - id: SE015
+    url: https://homepros.news/avoca-co-founders-on-a-1-billion-valuation-tomorrows-csrs-and-ais-trust-dilemma/
+    title: "Avoca Co-Founders on a $1 Billion Valuation, Tomorrow's CSRs and AI's Trust Dilemma"
+    publisher: HomePros News
+    date: '2026-05-01'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: news
+    independence: independent
+    reputationTier: medium
+    stance: adverse
+    topics:
+    - AI trust dilemma
+    - churn drivers
+    - configuration errors
+    - CSR displacement
+    keyQuote: >-
+      Churn drivers include: customer operational unreadiness, dispatch and capacity configuration errors
+      at go-live, and ownership changes following PE platform acquisitions.
+
+  - id: SE016
+    url: https://docs.fcc.gov/public/attachments/FCC-24-17A1.pdf
+    title: FCC Declaratory Ruling — FCC 24-17 (TCPA Artificial Voice)
+    publisher: Federal Communications Commission
+    date: '2024-02-08'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: filing
+    independence: independent
+    reputationTier: high
+    stance: neutral
+    topics:
+    - TCPA AI voice ruling
+    - artificial or prerecorded voice
+    - prior express written consent
+    keyQuote: >-
+      AI-generated voice calls that sound like humans constitute 'artificial or prerecorded voice' under
+      the TCPA and are subject to the statute's prior express written consent requirements.
+
+  - id: SE017
+    url: https://jobs.generalcatalyst.com/companies/avoca-ai-2/jobs/81835940-implementation-manager
+    title: Avoca Implementation Manager Job Posting — General Catalyst Jobs
+    publisher: General Catalyst (job board)
+    date: '2026-05-01'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: official
+    independence: company
+    reputationTier: medium
+    stance: confirming
+    topics:
+    - implementation model
+    - customer onboarding
+    - deployment complexity
+    keyQuote: >-
+      Implementation managers are responsible for configuring Avoca AI to match operator workflows and
+      dispatch logic during initial deployment.
+
+  - id: SE018
+    url: https://www.avoca.ai/blog/lessons-from-ai-front-office-deployments
+    title: What We've Learned from Hundreds of AI Front Office Deployments
+    publisher: Avoca AI (official)
+    date: '2026-04-21'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: official
+    independence: company
+    reputationTier: medium
+    stance: confirming
+    topics:
+    - deployment best practices
+    - 90–95% AI call handle rate at top deployments
+    - 45%→70% booking rate
+    - $850K SMS revenue case study
+    - on-site FDE process
+    keyQuote: >-
+      90–95% of calls flow through without human intervention. Operators have gone from a 45% booking
+      rate to 70%. One customer generated $850K in SMS revenue from outbound alone.
+
+  - id: SE019
+    url: https://www.linkedin.com/company/avoca-ai
+    title: Avoca — LinkedIn Company Page
+    publisher: LinkedIn
+    date: '2026-06-17'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: developer-signal
+    independence: independent
+    reputationTier: medium
+    stance: confirming
+    topics:
+    - headcount (190 employees)
+    - operator count (800+)
+    - company description
+    - industry classification
+    keyQuote: >-
+      Trusted by 800+ operators across HVAC, plumbing, electrical, roofing, pest control, automotive
+      and more. 190 employees listed as of June 2026.
+
+  - id: SE020
+    url: https://www.ycombinator.com/companies/avoca
+    title: Avoca — Y Combinator Company Directory
+    publisher: Y Combinator
+    date: '2023-01-01'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: official
+    independence: independent
+    reputationTier: high
+    stance: confirming
+    topics:
+    - YC Winter 2023 cohort
+    - original product scope (broad SMB)
+    - founder backgrounds
+    - initial product description
+    keyQuote: >-
+      Avoca automates all inbound and outbound needs for every SMB. Inbound: 24/7 phone assistance.
+      Outbound: booking confirmations, review sequences, follow-ups.
+
+  - id: SE021
+    url: https://www.avoca.ai/blog/home-services-operators-pe-ai-staying-ahead
+    title: What Two Home Services Operators Learned About PE, AI, and Staying Ahead
+    publisher: Avoca AI (official)
+    date: '2026-04-01'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: official
+    independence: company
+    reputationTier: medium
+    stance: confirming
+    topics:
+    - PE operator perspective
+    - AI adoption in home services
+    - competitive pressure
+    keyQuote: >-
+      The operators still competing on geographic density and brand reputation are finding those advantages
+      eroding as AI-first competitors capture more customer interactions.
+
+  - id: SE022
+    url: https://www.avoca.ai/blog/should-you-switch-from-ivr-to-ai-voice-assistants
+    title: Why AI Beats IVR in Call Handling — Avoca AI
+    publisher: Avoca AI (official)
+    date: '2023-08-17'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: official
+    independence: company
+    reputationTier: medium
+    stance: confirming
+    topics:
+    - IVR limitations
+    - AI voice advantages
+    - natural language understanding
+    - 24/7 coverage
+    keyQuote: >-
+      AI-powered voice assistants understand natural conversation—and thus a wide variety of requests.
+      A traditional IVR system understands just a few pre-set words or phrases.
+
+  - id: SE023
+    url: https://www.avoca.ai/blog/ai-powered-campaigns-that-actually-book-jobs
+    title: Avoca's Speed-to-Lead Playbook — AI-Powered Campaigns That Actually Book Jobs
+    publisher: Avoca AI (official)
+    date: '2026-04-17'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: official
+    independence: company
+    reputationTier: medium
+    stance: confirming
+    topics:
+    - speed-to-lead playbook
+    - multi-source lead ingestion
+    - 60-second response
+    - campaign structure
+    - lead sources
+    keyQuote: >-
+      Avoca ingests leads from your inbox automatically: Google LSA, Yelp, Thumbtack, Angi, Facebook,
+      and more. Everything flows into one place and campaigns fire instantly.
+
+  - id: SE024
+    url: https://www.avoca.ai/blog/building-a-customer-centric-team-why-avocas-engineers-sit-with-your-front-office-managers
+    title: Why Avoca's Engineers Sit with Your Front Office Managers
+    publisher: Avoca AI (official)
+    date: '2026-04-14'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: official
+    independence: company
+    reputationTier: medium
+    stance: confirming
+    topics:
+    - Forward Deployed Engineer model
+    - on-site deployment
+    - feedback loop speed
+    - operator-specific customization
+    keyQuote: >-
+      A Forward Deployed Engineer works directly with your team to build and own your AI deployment.
+      They sit with your CSRs, learn how your dispatch board actually gets used, and pick up the workflows
+      and edge cases that define how your business runs. Feedback loops go from weeks to hours.
+
+  - id: SE025
+    url: https://docs.avoca.ai/api-reference/introduction
+    title: API Overview — Avoca Developer Documentation
+    publisher: Avoca AI (official)
+    date: '2026-06-17'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: technical-docs
+    independence: company
+    reputationTier: medium
+    stance: confirming
+    topics:
+    - REST API surface
+    - Node.js and Python SDKs
+    - webhook events
+    - API key authentication
+    - custom integration capability
+    keyQuote: >-
+      Webhook Events: call.completed, appointment.scheduled, sms.received, chat.started,
+      speed_to_lead.completed, coach.score_available. Official SDKs available for Node.js/TypeScript
+      and Python.
+
+  - id: SE026
+    url: https://docs.avoca.ai/custom-integration/overview
+    title: Overview — Avoca Custom Integration Playbook
+    publisher: Avoca AI (official)
+    date: '2026-06-17'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: technical-docs
+    independence: company
+    reputationTier: medium
+    stance: confirming
+    topics:
+    - custom integration
+    - API specifications
+    - data exchange and booking
+    - AI behavior customization
+    - bespoke integration playbook
+    keyQuote: >-
+      Avoca is excited to collaborate with your team on a bespoke integration. This guide captures how
+      we coordinate, formalize joint workflows, and record the evolving details that shape the custom
+      integration program.
+
+  - id: SE027
+    url: https://www.avoca.ai/legal/privacy-policy
+    title: Avoca Privacy Policy (effective January 29, 2025)
+    publisher: Avoca AI (official)
+    date: '2025-01-29'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: official
+    independence: company
+    reputationTier: medium
+    stance: neutral
+    topics:
+    - data encryption in transit and at rest
+    - Google Calendar OAuth integration
+    - PII data collection
+    - data sharing restrictions
+    - retention policy
+    keyQuote: >-
+      Calendar data is encrypted both in transit (via HTTPS) and at rest in our databases. We do not
+      share your calendar data with third parties for marketing or advertising purposes.
+
+  - id: SE028
+    url: https://status.avoca.ai/
+    title: Avoca Status Page
+    publisher: Avoca AI (official)
+    date: '2026-06-17'
+    accessDate: '2026-06-17'
+    accessStatus: ok
+    sourceType: technical-docs
+    independence: company
+    reputationTier: medium
+    stance: neutral
+    topics:
+    - platform uptime
+    - system components monitored
+    - operational status
+    keyQuote: >-
+      We're fully operational. System components: Dashboard, Inbound, Outbound, Analytics, Omnichannel.
+      All systems operational as of June 2026.
