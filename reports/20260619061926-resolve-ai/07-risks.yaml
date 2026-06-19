@@ -1,0 +1,1664 @@
+schemaVersion: "report-v2"
+artifact: risks
+slug: resolve-ai
+runDate: "2026-06-19"
+company:
+  name: Resolve AI
+
+chapter:
+  number: 7
+  title: Risks
+  summary: >-
+    Resolve AI's $1.5 billion valuation rests on seven material risk categories that could
+    impair the investment thesis: hallucinated or incorrect AI remediations that could cause
+    production outages more severe than the original incident; overprivileged agent blast-radius
+    if a compromised or misconfigured agent acts destructively in production; EU AI Act and GDPR
+    compliance obligations for autonomous production-operations AI; hyperscaler and AIOps incumbent
+    bundling that creates structural "good enough" substitution pressure; enterprise security-review
+    procurement drag that extends per-account sales cycles 90–180 days; a $1.5B valuation dependent
+    on undisclosed revenue metrics and continued venture fundraising; and two-founder key-person
+    concentration in a rapidly scaling organization. No independent third-party benchmark has
+    validated Resolve AI's claimed 60–87% MTTI reduction, and residual exposure remains material
+    across all categories.
+
+sections:
+  - id: technical-ai-reliability
+    title: Technical and AI Reliability Risk
+    body: >-
+      Resolve AI's core value proposition requires AI agents to autonomously diagnose root causes
+      and, in mitigation mode, execute corrective actions in production environments. This creates
+      a direct-consequence failure mode absent in traditional SRE monitoring tools: a hallucinated
+      or misclassified root-cause hypothesis can trigger a remediation action that worsens an
+      outage rather than resolves it. A 2023 arXiv survey of hallucination in large language models
+      (arXiv:2309.01219) documented that LLMs produce confident but factually incorrect outputs
+      across multi-step reasoning tasks, and the frequency of such errors in complex distributed-
+      systems diagnosis—where causal chains span dozens of interdependent services—has not been
+      independently measured for any production AI SRE vendor as of June 2026. Resolve AI's
+      published case studies report 60–87% MTTI reductions, but these metrics are self-reported
+      through customer testimonials on the company's own website without independent third-party
+      validation or audit. This benchmark opacity means investors cannot price root-cause accuracy
+      risk with confidence. Enterprise customers evaluating Resolve AI must accept that the AI's
+      accuracy in their specific stack architecture is unknown until a pilot is conducted—itself
+      extending the procurement cycle. The OWASP Top 10 for Large Language Model Applications
+      identifies "hallucination," "excessive agency," "insecure plugin design," and "prompt
+      injection" as the four highest-risk vulnerability classes for agentic AI systems, and Resolve
+      AI's autonomous git-commit and infrastructure-change capabilities fall squarely in the
+      "excessive agency" risk category. Mitigation through human-in-the-loop approval gates for
+      high-impact actions is documented in Resolve AI's product documentation, but the default
+      configuration and the boundary between supervised and fully autonomous execution are not
+      publicly specified, creating diligence uncertainty for enterprise security teams.
+    claimRefs:
+      - CR001
+      - CR002
+      - CR003
+      - CR004
+      - CR005
+      - CR006
+      - CR007
+      - CR008
+      - CR041
+    tableRefs: [TR002]
+    figureRefs: [FR001]
+
+  - id: security-permissions-blast-radius
+    title: Security, Permissions, and Blast-Radius Risk
+    body: >-
+      Resolve AI's standard enterprise integration requires production-grade API access to customers'
+      code repositories, infrastructure APIs (AWS, Kubernetes), observability platforms, and
+      communication tools (Slack, MS Teams). An agent with read-write access to these systems
+      creates a blast-radius risk profile that is materially larger than that of a traditional
+      read-only SRE monitoring tool. If a Resolve AI agent is compromised through prompt injection,
+      supply-chain attack, or LLM provider misconfiguration, an attacker could use the agent's
+      production credentials to exfiltrate telemetry data, modify infrastructure, or execute
+      arbitrary code at scale. The OWASP Top 10 for LLMs (2025 edition) explicitly identifies
+      "excessive agency," "insecure plugin design," and "prompt injection" as the highest-risk
+      vulnerability classes for autonomous AI agents with system access. Resolve AI mitigates
+      through SOC 2 Type II certification, RBAC controls, encryption in transit and at rest, and
+      the Resolve Satellite on-premises gateway for customers requiring minimal data egress.
+      However, SOC 2 Type II attests to organizational control processes, not to the correctness
+      of AI agent actions or the completeness of permission scoping for autonomous remediations.
+      CISA's AI security guidance recommends that organizations apply the principle of least
+      privilege to AI agents and conduct adversarial red-team testing before granting production
+      write access—requirements that create additional procurement friction and limit default-on
+      configuration of Resolve AI's most powerful autonomous features. Customer security teams
+      must independently scope and approve each integration's permission surface before deployment,
+      adding weeks to the enterprise onboarding process and increasing CAC.
+    claimRefs:
+      - CR009
+      - CR010
+      - CR011
+      - CR012
+      - CR013
+      - CR014
+      - CR015
+    figureRefs: [FR003]
+
+  - id: regulatory-legal
+    title: Regulatory and Legal Exposure
+    body: >-
+      Resolve AI operates in a rapidly evolving regulatory environment for artificial intelligence,
+      with multiple jurisdictions creating compliance obligations. The EU AI Act (Regulation
+      2024/1689), which entered into force in August 2024 and is progressively applicable through
+      2026, establishes a risk-based classification framework for AI systems. Autonomous AI agents
+      operating in production infrastructure—making decisions that can directly cause service
+      disruptions if incorrect—may be classified as high-risk AI systems under Article 6 and
+      Annex III, triggering conformity assessment, technical documentation, human-oversight
+      mechanism, and EU AI database registration requirements before market placement. This
+      classification risk is unresolved for autonomous SRE agents as of June 2026; no EU AI Board
+      opinion specific to this product category has been published. The FTC's June 2023 report on
+      generative AI identified concentration risks and accountability gaps in AI-powered automated
+      decision systems, signaling increasing enforcement attention to AI liability frameworks that
+      could affect autonomous remediation vendors. NIST's AI Risk Management Framework (AI RMF
+      1.0), while voluntary in the US, is increasingly required by enterprise procurement teams as
+      a vendor evaluation baseline, creating compliance-documentation overhead. The GDPR's data
+      processing requirements apply to customer telemetry from EU-based customers ingested by
+      Resolve AI, creating data-processing-agreement obligations and cross-border transfer
+      restrictions. Resolve AI's trust center confirms GDPR compliance but does not publicly
+      disclose the cross-border transfer mechanism or whether standard DPAs are available for
+      routine enterprise sign-on. No public record of pending litigation, regulatory investigation,
+      or enforcement action against Resolve AI was identified as of June 2026, which is consistent
+      with the company's early stage and limited public history rather than evidence of clean
+      liability exposure.
+    claimRefs:
+      - CR016
+      - CR017
+      - CR018
+      - CR019
+      - CR020
+      - CR021
+      - CR022
+      - CR023
+    tableRefs: [TR001]
+
+  - id: competitive-displacement
+    title: Competitive Displacement and Platform Bundling Risk
+    body: >-
+      Resolve AI competes against three converging threat vectors: hyperscaler-native AIOps
+      features, established observability platform extensions, and emerging AI SRE startups.
+      AWS DevOps Guru is an Amazon-native ML-powered operational insight service that integrates
+      natively with CloudWatch and CodeGuru; it is available within existing AWS enterprise support
+      contracts and faces no separate procurement hurdle for existing AWS customers. Azure Monitor's
+      AIOps capabilities deploy machine learning for alert correlation, anomaly detection, and smart
+      alert grouping, bundled into existing Azure infrastructure agreements. Google Cloud's Gemini
+      Cloud Assist provides conversational AI-driven cloud operations support integrated into the
+      Google Cloud Console as a standard platform feature. These hyperscaler offerings are not as
+      sophisticated as Resolve AI's multi-agent autonomous investigation, but for enterprise
+      accounts with a single dominant cloud provider they represent a "good enough" substitution
+      that requires no incremental procurement budget, security review, or vendor onboarding.
+      Datadog Bits AI, launched in 2024, embeds a generative-AI DevOps copilot directly into the
+      Datadog platform, covering log analysis, alert summarization, and remediation suggestions—
+      directly addressing Resolve AI's core use case for the large installed base of Datadog
+      enterprise customers. The risk is structural: enterprise CIOs prefer to consolidate vendors,
+      and bundled AI features from a platform they already standardize on require no incremental
+      procurement cycle. Datadog ($2.68B FY2025 revenue) and PagerDuty ($1.17B+ FY2026 revenue)
+      have massive incumbent distribution advantages and can afford to bundle AI features at near-
+      zero incremental cost, eroding Resolve AI's addressable market for large accounts already
+      standardized on either platform.
+    claimRefs:
+      - CR024
+      - CR025
+      - CR026
+      - CR027
+      - CR028
+      - CR029
+      - CR030
+      - CR042
+      - CR043
+    tableRefs: [TR003]
+    figureRefs: [FR002]
+
+  - id: financial-funding-execution
+    title: Financial, Funding, and Execution Risk
+    body: >-
+      Resolve AI has raised approximately $190 million across three rounds in under 18 months,
+      most recently at a $1.5 billion valuation in April 2026. No ARR, gross margin, ACV, NRR,
+      or burn rate is publicly disclosed, making it impossible to validate the implied revenue
+      multiple underpinning the valuation. At an illustrative 20× ARR multiple—aggressive but not
+      unprecedented for high-growth AI infrastructure at this stage—the valuation implies
+      approximately $75 million in ARR, a figure that, given the company's 18-month age and 20+
+      enterprise customer base with no disclosed pricing, appears aspirational rather than current.
+      AI inference costs impose gross margin compression on AI-native SaaS platforms relative to
+      traditional software peers, and Resolve AI's economics are further burdened by the Resolve
+      AI Labs research investment announced in April 2026, which adds R&D capex with an uncertain
+      commercial return timeline. Enterprise AI procurement cycles of 90–180 days per account,
+      documented at DoorDash and implied by the comprehensive security reviews required for
+      production-access AI agents, constrain revenue ramp velocity and create risk that CAC will
+      outrun collections. Key person risk is critical: the investment thesis is inseparable from
+      founders Spiros Xanthos and Mayank Agarwal, whose technical credibility, enterprise
+      relationships, and domain expertise drive both product and customer acquisition. With only
+      20+ named enterprise accounts, customer concentration risk is high; the largest three
+      customers likely represent a disproportionate share of ARR, and loss of a Coinbase or
+      DoorDash renewal would be material to the growth narrative. A market-wide AI valuation
+      compression or a Resolve AI-specific growth miss could force a bridge round or a down-round
+      below the $1.5B mark, materially impairing equity incentives and recruiting.
+    claimRefs:
+      - CR031
+      - CR032
+      - CR033
+      - CR034
+      - CR035
+      - CR036
+      - CR037
+      - CR038
+      - CR039
+      - CR040
+    tableRefs: [TR004, TR005]
+
+callouts:
+  - calloutType: risk
+    title: Hallucinated Remediation Is the Defining Failure Mode
+    body: >-
+      An AI SRE agent that misclassifies a root cause and executes an automated remediation
+      action in production does not merely fail to help—it actively causes harm. Unlike a false-
+      positive alert or a missed anomaly, a bad automated action can cascade into a customer-facing
+      outage of greater severity than the original event. This failure mode is structurally
+      unmitigable without human-in-the-loop approval for all consequential actions, which
+      eliminates the autonomous-efficiency claim that underpins the valuation. No third-party
+      benchmark validates Resolve AI's root-cause accuracy, and this opacity alone justifies
+      underwriting caution at a $1.5B valuation.
+    claimRefs:
+      - CR001
+      - CR002
+      - CR005
+      - CR006
+      - CR008
+
+  - calloutType: risk
+    title: Hyperscaler Bundling Is a Structural, Not Cyclical, Threat
+    body: >-
+      AWS DevOps Guru, Azure Monitor AIOps, and Google Gemini Cloud Assist are not early-stage
+      features Resolve AI can outrun through product iteration—they are strategic platform
+      investments by hyperscalers with multi-billion-dollar infrastructure budgets and zero
+      incremental procurement friction for existing customers. Every new enterprise account
+      Resolve AI pursues requires winning a CIO-level evaluation of whether the hyperscaler's
+      bundled AI is "good enough." Resolve AI's differentiation—multi-agent investigation,
+      cross-cloud correlation, production autonomy—must remain demonstrably superior to bundled
+      alternatives to justify the incremental spend and procurement overhead.
+    claimRefs:
+      - CR024
+      - CR025
+      - CR026
+      - CR028
+
+tables:
+  - id: TR001
+    title: Regulatory / Legal Risk Register
+    columns:
+      - Rule / Framework
+      - Jurisdiction
+      - Status as of June 2026
+      - Likelihood Resolve AI is in scope
+      - Severity
+      - Mitigation in place
+      - Residual Exposure
+      - Diligence Path
+    rows:
+      - ["EU AI Act (Regulation 2024/1689) — potential high-risk classification for autonomous production AI under Article 6 / Annex III", "EU / EEA", "In force Aug 2024; high-risk provisions progressively applicable through 2026", "Medium-High — autonomous infrastructure agents that can cause service disruptions if incorrect may qualify", "High — conformity assessment, technical documentation, human-oversight requirements, EU AI database registration; non-compliance penalties up to €30M or 6% global revenue", "Resolve AI's RBAC and approval gates partially address oversight requirement; no formal conformity declaration published", "High — compliance roadmap not disclosed; first-mover classification liability unresolved", "Obtain legal analysis of Article 6 / Annex III applicability; request EU AI Act compliance roadmap; confirm planned conformity declaration timeline"]
+      - ["GDPR — data processing obligations for EU customer telemetry ingestion", "EU / EEA and cross-border", "In force; immediately applicable to any EU customer data", "High — confirmed EU customers (MSCI, Zscaler with EU operations) in customer base", "Medium-High — DPA obligation, cross-border transfer mechanism (SCCs or BCRs), potential subject-access-request handling for operational log data", "Trust center confirms GDPR compliance; Resolve Satellite limits data egress for sensitive customers", "Medium — DPA template and cross-border transfer mechanism not publicly disclosed; sub-processor list not published", "Request signed DPA template; verify SCCs or BCRs for transatlantic transfers; ask for sub-processor list and data retention schedule"]
+      - ["NIST AI Risk Management Framework (AI RMF 1.0) — enterprise procurement requirement", "US (voluntary; de facto procurement gate)", "Published January 2023; increasingly required in enterprise CISO vendor evaluations", "High — enterprise security teams cite NIST AI RMF in AI vendor assessments per CISA guidance", "Medium — compliance documentation overhead; procurement blocker if Resolve AI has no self-assessment", "NIST AI RMF alignment not publicly documented by Resolve AI; SOC 2 covers controls, not AI RMF GOVERN/MAP/MEASURE/MANAGE", "Medium — absence of public NIST AI RMF self-assessment slows enterprise procurement at large-account targets", "Request Resolve AI's NIST AI RMF self-assessment or alignment documentation; assess gap vs. GOVERN/MAP/MEASURE/MANAGE functions"]
+      - ["FTC AI oversight and automated-decision accountability (Section 5 enforcement posture)", "US", "Active enforcement posture declared June 2023; ongoing FTC AI monitoring", "Low-Medium — no direct product liability until a documented customer harm event occurs at scale", "Medium — reputational and enforcement risk if autonomous remediation causes a material customer service disruption and FTC investigates", "Terms-of-service and MSA indemnification framework not publicly reviewed; liability allocation in autonomous-action scenarios unknown", "Medium-Low — risk scales with autonomous remediation adoption and increases with higher-profile customer incidents", "Review MSA indemnification, limitation-of-liability, and AI-action SLA clauses; confirm contractual risk allocation for agent-caused outages"]
+    enumerationScope:
+      coverage: partial
+      basis: "Regulatory frameworks applicable to autonomous AI production-operations systems operating in US and EU jurisdictions, assessed against Resolve AI's June 2026 product surface and public compliance disclosures; does not cover all emerging US state AI laws or sector-specific regulations (HIPAA AI, banking AI)"
+    claimRefs:
+      - CR016
+      - CR017
+      - CR018
+      - CR019
+      - CR020
+      - CR021
+      - CR022
+    notes: "Severity and likelihood assessed qualitatively; Resolve AI has not published a formal regulatory risk register. Residual exposure may change as EU AI Act implementing acts are finalized in 2026."
+
+  - id: TR002
+    title: Operational and Quality Risk Register
+    columns:
+      - Failure Mode
+      - Likelihood
+      - Severity
+      - Mitigation Maturity
+      - Residual Exposure
+      - Unresolved Gap
+    rows:
+      - ["Hallucinated root-cause hypothesis triggers incorrect automated remediation action causing secondary production outage", "Medium — LLM hallucination is endemic; complex distributed systems amplify false confidence", "Critical — customer P0 outage attributable to Resolve AI agent action; reputational and contractual liability", "Partial — human-in-the-loop approval gates documented for high-impact actions; default configuration and autonomous boundary not publicly specified", "Critical — no third-party accuracy benchmark; single misaction can void enterprise customer trust and trigger SLA credits", "Independent root-cause accuracy audit; default vs. autonomous mode specification; SLA terms for agent-caused outages"]
+      - ["Prompt injection via malicious log or telemetry content manipulates agent action using production credentials", "Low-Medium — novel but published OWASP LLM01 attack vector with demonstrated proof-of-concept exploits", "High — attacker gains production write access through agent; potential data exfiltration or infrastructure modification", "Low — Resolve AI does not publicly disclose prompt-injection defense architecture or adversarial testing results", "High — production write access amplifies attacker impact if agent is successfully manipulated", "Publish prompt-injection defense architecture; request evidence of third-party adversarial red-team testing before production access grant"]
+      - ["LLM provider API outage or capacity restriction degrades Resolve AI agent availability during active customer incident", "Medium — OpenAI and Anthropic experienced multi-hour outages in 2024–2025; usage-based inference is not guaranteed-availability", "High — Resolve AI platform becomes unavailable precisely when most needed (during active incidents), undermining the core value proposition", "Unknown — fallback to non-LLM mode or secondary LLM provider not documented publicly", "High — undisclosed LLM provider redundancy and failover path", "Disclose LLM provider redundancy architecture; confirm degraded-mode behavior; publish uptime SLA for agent functionality"]
+      - ["SOC 2 Type II audit scope does not cover new autonomous remediation features added since last audit period", "Medium — product velocity exceeds annual audit cycles; new features are often post-dated to next cycle", "Medium — enterprise customers believe certified compliance covers autonomous git-commit and infra-change features that may be out of scope", "Partial — SOC 2 Type II certified with annual re-audit; scope lag is common at this growth stage", "Medium — compliance representation gap if new capabilities are not re-attested before next renewal", "Confirm SOC 2 Type II scope explicitly covers autonomous remediation and git-commit actions; request current audit period dates and any noted scope exclusions"]
+    claimRefs:
+      - CR001
+      - CR002
+      - CR003
+      - CR004
+      - CR005
+      - CR009
+      - CR010
+      - CR011
+      - CR013
+    notes: "Likelihood and severity assessed qualitatively based on OWASP LLM Top 10, NIST AI RMF, CISA AI security guidance, and arXiv hallucination research; Resolve AI has not published an internal risk register."
+
+  - id: TR003
+    title: Partner and Dependency Risk Register
+    columns:
+      - Dependency
+      - Counterparty
+      - Role
+      - Concentration
+      - Failure Scenario
+      - Severity
+      - Mitigation
+      - Residual Exposure
+    rows:
+      - ["LLM inference API", "OpenAI / Anthropic (undisclosed mix)", "Core agent reasoning, root-cause analysis, and natural-language interaction engine", "Very high — multi-agent platform cannot function without real-time LLM inference", "LLM provider price increase, capacity restriction, model regression, or access revocation", "High — revenue, product quality, and uptime SLA directly dependent on LLM provider performance and pricing", "Multi-model strategy implied by product architecture; provider mix not confirmed", "High — inference cost volatility is COGS risk at scale; no confirmed multi-LLM failover or fallback mode"]
+      - ["Cloud infrastructure (compute, storage, network)", "AWS (primary, inferred)", "Core compute and data storage for Resolve AI platform and agent orchestration", "High — multi-cloud deployment not documented; likely single primary provider", "AWS pricing increase or service degradation directly affects platform availability and COGS", "High — SLA to customers is upper-bounded by underlying cloud SLA", "Standard enterprise cloud agreement; not specified beyond standard pass-through SLA", "Medium — standard hyperscaler dependency; mitigable with multi-region configuration"]
+      - ["Observability data access (Datadog, Splunk, Dynatrace, New Relic, PagerDuty)", "Multiple established vendors, some of which are also direct competitors", "Source of telemetry signals (metrics, logs, traces, alerts) that provide agent investigation context", "High — integration depth depends on API stability and commercial goodwill of each partner; some are direct competitors", "API breaking change, commercial reversal (partner becomes adversarial), or pricing increase by observability vendor", "Medium-High — Datadog and Dynatrace are also direct AI SRE competitors; conflict of interest creates access risk", "Multiple integrations via MCP and APIs reduce single-vendor dependency; abstraction layer provides some buffer", "Medium — competitor-as-partner dynamic creates latent API access risk if competitive positioning deteriorates"]
+      - ["Venture capital financing", "Lightspeed, DST Global, Salesforce Ventures, Greylock Partners", "Funding source for operations and R&D; strategic distribution for Salesforce Ventures", "High — company is pre-profitability and dependent on continued venture fundraising to sustain operations", "Investor sentiment shift, AI valuation compression, portfolio rebalancing, or bridge round at lower valuation", "High — down-round would dilute founders and employees; impair recruiting, retention, and secondary market liquidity", "Salesforce Ventures' strategic position provides some commercial cushion and distribution access", "High — $1.5B valuation requires sustained high-growth story to support follow-on financing at or above current mark"]
+      - ["Enterprise customer concentration", "Coinbase, DoorDash, Salesforce, MSCI, Zscaler (top named accounts)", "Revenue base, reference cases, and proof-of-concept deployments that anchor the sales narrative", "High — with 20+ total accounts, the top 3–5 likely represent >50% of ARR", "Non-renewal of a top-3 customer materially impairs ARR growth story and reference case pipeline", "High — reference case loss also impairs new-logo pipeline and investor confidence", "Multi-product, multi-team deployment at Coinbase (100+ engineers) reduces single-contact churn probability", "High — concentration not confirmed by disclosed metrics; material diligence ask"]
+    claimRefs:
+      - CR009
+      - CR025
+      - CR030
+      - CR031
+      - CR034
+      - CR036
+      - CR037
+      - CR040
+    notes: "LLM provider identities are inferred from public product documentation and pricing context; Resolve AI has not confirmed its LLM supply chain. Investor list sourced from Series Seed, A, and A extension press releases."
+
+  - id: TR004
+    title: People and Execution Risk Register
+    columns:
+      - Role / Function
+      - Dependency or Gap
+      - Likelihood of Disruption
+      - Severity
+      - Mitigation
+      - Diligence Path
+    rows:
+      - ["CEO (Spiros Xanthos)", "Primary external face, enterprise customer relationships, fundraising lead, OpenTelemetry technical credibility anchor", "Low — no adverse signals as of June 2026; but key-person risk is binary once triggered", "Critical — CEO departure would trigger investor concern, slow enterprise deals, and impair the technical-credibility narrative", "No public succession plan; board and investor oversight provides governance buffer but not operational replacement", "Request key-person insurance policy, vesting cliff and acceleration terms, and board succession contingency plan"]
+      - ["CTO (Mayank Agarwal)", "Core technical architecture, AI agent system design, OpenTelemetry integration expertise, engineering team direction", "Low — no adverse signals; equally binding as CEO for the engineering credibility thesis", "Critical — CTO departure would materially slow product velocity and impair AI architecture credibility with enterprise prospects", "Two-founder joint equity stake and co-creation history creates strong alignment; no named VP Engineering or VP AI Research visible in public communications", "Review engineering org chart depth below founders; identify named VP Engineering and VP AI Research; assess bus-factor on core agent architecture"]
+      - ["Enterprise sales leadership (CRO / VP Sales)", "No named CRO or VP Sales publicly identified; careers page shows active enterprise sales hiring", "Medium — absence of named senior sales leader is common at this stage but limits revenue predictability and pipeline management rigor", "High — without a named experienced enterprise SRE sales leader, quota-carrying capacity and procurement-cycle management is underpowered", "Salesforce Ventures' network and Salesforce as a reference customer provide partial distribution; hiring underway per careers page", "Confirm named CRO or VP Sales hire; review quota-carrying headcount, pipeline coverage ratio, and average deal size"]
+      - ["Resolve AI Labs R&D investment", "April 2026 Labs launch adds R&D capex that competes with GTM spending for capital allocation", "Medium — Labs is net-positive for differentiation but creates burn volatility if commercial return timeline is long", "Medium — Labs burn could accelerate runway consumption without near-term revenue offset; creates capital allocation tension with GTM", "Labs framed as enterprise R&D partnership with potential data-access and co-development value offsets", "Request Labs budget as % of total operating burn; assess commercial return and revenue timeline; confirm whether Labs burn is included in disclosed raise proceeds"]
+    claimRefs:
+      - CR031
+      - CR033
+      - CR035
+      - CR038
+      - CR039
+    notes: "Leadership identities sourced from public announcements and LinkedIn; Resolve AI has not published an org chart. Severity assessed based on two-founder startup dependency patterns and comparable VC-backed companies at the same stage."
+
+  - id: TR005
+    title: Mitigation and Kill-Criteria Table
+    columns:
+      - Risk
+      - Monitorable Trigger
+      - Threshold / Event
+      - Action Implication
+    rows:
+      - ["Hallucinated remediation causing production outage", "Published incident reports; G2/Gartner Peer Insights reviews citing AI-caused incidents; public post-mortems naming Resolve AI", "First documented major outage (P0/P1) attributable to a Resolve AI autonomous remediation action at a named enterprise customer", "Pause autonomous remediation as underwriting thesis pillar; re-evaluate technical risk at current valuation"]
+      - ["Enterprise procurement drag exceeding 180 days per average account", "Time-to-close data in investor updates; sales-cycle disclosures; CAC-to-revenue ratio trends; pipeline aging in 90+ day bucket", "Average time-to-close exceeding 180 days OR CAC payback period exceeding 36 months across two consecutive quarters", "Re-evaluate land-and-expand economics; assess whether freemium or limited-access POC tier is needed to accelerate pipeline velocity"]
+      - ["Hyperscaler AIOps bundling capturing >30% of target enterprise AIOps market", "Datadog, Dynatrace, AWS, Azure adoption rate surveys (Gartner, Forrester); Resolve AI net-new logo count stagnation for two or more consecutive quarters", "Net-new logo adds drop below three per quarter OR ARR growth rate decelerates below 50% YoY for two consecutive quarters", "Thesis-break signal: Resolve AI cannot win the market-expansion phase against bundled incumbents; reassess niche-vertical pivot or acquisition optionality"]
+      - ["Down-round or bridge financing below $1.0B valuation", "Crunchbase / PitchBook financing event; secondary market pricing; rumored terms in VC community channels", "Public or confirmed next financing event at a valuation below $1.0 billion (33% or greater haircut from April 2026 mark)", "Material equity incentive impairment for employees and founders; revisit position sizing and conviction level"]
+      - ["Founder departure (Spiros Xanthos or Mayank Agarwal)", "Public announcement; LinkedIn status change; board-level disclosure in any future regulatory filing", "Either co-founder announces departure, leave of absence, or material role reduction from day-to-day product and commercial operations", "Immediate thesis-break review; pause new capital deployment pending named successor evaluation and integration assessment"]
+      - ["EU AI Act high-risk classification confirmed for autonomous production AI agents", "EU AI Board opinions or implementing acts on infrastructure AI; CISA or NIST US equivalent guidance on AI agent oversight requirements", "Official EU AI Office classification guidance confirms high-risk status for autonomous SRE agents; or analogous US regulatory ruling", "Significant compliance cost and product re-architecture for human-oversight mechanisms required; price compliance overhead into any future entry or follow-on valuation negotiation"]
+    claimRefs:
+      - CR001
+      - CR007
+      - CR017
+      - CR024
+      - CR031
+      - CR033
+      - CR034
+      - CR036
+    notes: "Kill criteria are investment thesis indicators, not operational shutdown criteria. Threshold events represent points at which current investment model assumptions materially change and position sizing should be revisited."
+
+figures:
+  - id: FR001
+    title: Risk Severity Heatmap — Likelihood vs. Investment Impact
+    type: matrix
+    layout: wide
+    summary: >-
+      Positions seven material Resolve AI risks by assessed likelihood and investment impact;
+      hallucinated remediation and agent blast-radius carry the highest combined severity despite
+      moderate assessed likelihood, while hyperscaler bundling and procurement drag are both
+      high-severity and likely.
+    data:
+      columns:
+        - "Very Likely (>50%)"
+        - "Likely (20–50%)"
+        - "Possible (5–20%)"
+        - "Unlikely (<5%)"
+      rows:
+        - label: "Critical"
+          values: ["", "Hallucinated remediation outage", "Agent blast-radius failure", ""]
+        - label: "High"
+          values: ["Enterprise procurement drag", "Hyperscaler bundling substitution", "Down-round / funding cliff", "Founder departure"]
+        - label: "Medium"
+          values: ["Benchmark opacity", "EU AI Act compliance cost", "LLM vendor lock-in / price shock", "IP litigation"]
+        - label: "Low"
+          values: ["LLM API transient outage", "", "US state AI law patchwork compliance", ""]
+    approximationNotes: "Likelihood and impact ratings are qualitative assessments based on industry benchmarks, regulatory guidance, competitive evidence, and analogous AI SRE vendor dynamics; not statistically derived."
+    claimRefs:
+      - CR001
+      - CR005
+      - CR007
+      - CR010
+      - CR024
+      - CR025
+      - CR034
+
+  - id: FR002
+    title: Risk Transmission Map — From Risk Event to Investment Impact
+    type: dag
+    layout: wide
+    summary: >-
+      Shows how Resolve AI's primary operational and competitive risk events propagate through
+      commercial and financial channels to produce investment-relevant valuation outcomes.
+    data:
+      nodes:
+        - {label: "Hallucinated remediation"}
+        - {label: "Agent blast-radius failure"}
+        - {label: "Hyperscaler bundling"}
+        - {label: "Enterprise procurement drag"}
+        - {label: "Funding dependency"}
+        - {label: "Founder departure"}
+        - {label: "Customer production outage"}
+        - {label: "Customer churn / non-renewal"}
+        - {label: "Revenue impairment"}
+        - {label: "Market share loss"}
+        - {label: "Valuation compression"}
+      edges:
+        - {from: "Hallucinated remediation", to: "Customer production outage"}
+        - {from: "Agent blast-radius failure", to: "Customer production outage"}
+        - {from: "Customer production outage", to: "Customer churn / non-renewal"}
+        - {from: "Customer churn / non-renewal", to: "Revenue impairment"}
+        - {from: "Enterprise procurement drag", to: "Revenue impairment"}
+        - {from: "Hyperscaler bundling", to: "Market share loss"}
+        - {from: "Market share loss", to: "Revenue impairment"}
+        - {from: "Revenue impairment", to: "Valuation compression"}
+        - {from: "Funding dependency", to: "Valuation compression"}
+        - {from: "Founder departure", to: "Revenue impairment"}
+        - {from: "Founder departure", to: "Valuation compression"}
+    claimRefs:
+      - CR001
+      - CR006
+      - CR024
+      - CR030
+      - CR031
+      - CR033
+      - CR036
+
+  - id: FR003
+    title: Critical Dependency Map — Platform and Vendor Dependencies
+    type: dag
+    layout: standard
+    summary: >-
+      Maps Resolve AI's critical upstream dependencies on LLM providers, cloud infrastructure,
+      observability integrations, compliance attestors, and financing sources, illustrating
+      the concentration of existential dependencies through the core platform node.
+    data:
+      nodes:
+        - {label: "Resolve AI Platform"}
+        - {label: "OpenAI / GPT-4o (LLM)"}
+        - {label: "Anthropic / Claude (LLM)"}
+        - {label: "AWS Cloud Infrastructure"}
+        - {label: "GitHub / Code Repos"}
+        - {label: "Datadog / Observability"}
+        - {label: "Slack / MS Teams"}
+        - {label: "SOC 2 Auditor (annual)"}
+        - {label: "VC Investors (Lightspeed, DST)"}
+      edges:
+        - {from: "Resolve AI Platform", to: "OpenAI / GPT-4o (LLM)"}
+        - {from: "Resolve AI Platform", to: "Anthropic / Claude (LLM)"}
+        - {from: "Resolve AI Platform", to: "AWS Cloud Infrastructure"}
+        - {from: "Resolve AI Platform", to: "GitHub / Code Repos"}
+        - {from: "Resolve AI Platform", to: "Datadog / Observability"}
+        - {from: "Resolve AI Platform", to: "Slack / MS Teams"}
+        - {from: "Resolve AI Platform", to: "SOC 2 Auditor (annual)"}
+        - {from: "Resolve AI Platform", to: "VC Investors (Lightspeed, DST)"}
+    claimRefs:
+      - CR009
+      - CR011
+      - CR015
+      - CR025
+      - CR031
+      - CR036
+      - CR040
+
+localEvidence:
+  searchQueries:
+    - query: "Resolve AI risks hallucination autonomous remediation production failure 2026"
+      engine: google
+      hits: 12
+      retainedSourceRefs: [SR002, SR012]
+    - query: "EU AI Act autonomous AI systems high-risk classification 2026 production operations"
+      engine: google
+      hits: 18
+      retainedSourceRefs: [SR004, SR005]
+    - query: "NIST AI Risk Management Framework enterprise procurement requirement 2026"
+      engine: google
+      hits: 14
+      retainedSourceRefs: [SR001, SR007]
+    - query: "OWASP LLM Top 10 security risks agentic AI excessive agency prompt injection 2026"
+      engine: google
+      hits: 11
+      retainedSourceRefs: [SR006]
+    - query: "AWS DevOps Guru Azure Monitor AI operations Google Gemini Cloud Assist 2026 AIOps bundling"
+      engine: google
+      hits: 22
+      retainedSourceRefs: [SR009, SR010, SR011]
+    - query: "Datadog Bits AI generative AI operations 2026 competitive launched features"
+      engine: google
+      hits: 9
+      retainedSourceRefs: [SR008]
+    - query: "FTC generative AI enforcement accountability automated decisions 2026 regulatory"
+      engine: google
+      hits: 16
+      retainedSourceRefs: [SR002]
+    - query: "LLM hallucination production systems root cause analysis reliability 2026"
+      engine: google
+      hits: 31
+      retainedSourceRefs: [SR012]
+    - query: "Resolve AI customers 2026 announced enterprise security review"
+      engine: google
+      hits: 7
+      retainedSourceRefs: [SR032]
+    - query: "CISA AI security guidance 2026 enterprise AI agent least privilege"
+      engine: google
+      hits: 13
+      retainedSourceRefs: [SR003]
+    - query: "Resolve AI Series A extension 2026 valuation funding raise announced"
+      engine: google
+      hits: 24
+      retainedSourceRefs: [SR021, SR025, SR028]
+    - query: "AI SRE startup funding valuation 2026 round raised"
+      engine: google
+      hits: 19
+      retainedSourceRefs: [SR024, SR029]
+    - query: "Resolve AI leadership executive 2026 announced"
+      engine: google
+      hits: 4
+      retainedSourceRefs: []
+    - query: "Anthropic Claude enterprise LLM API vendor dependency 2026"
+      engine: google
+      hits: 8
+      retainedSourceRefs: [SR013]
+    - query: "Resolve AI litigation lawsuit regulatory inquiry 2026"
+      engine: google
+      hits: 2
+      retainedSourceRefs: []
+    - query: "Gartner AIOps market share analysis 2026 autonomous SRE incumbent platform"
+      engine: google
+      hits: 11
+      retainedSourceRefs: [SR014]
+    - query: "AI infrastructure gross margin compression inference costs SaaS 2026"
+      engine: google
+      hits: 17
+      retainedSourceRefs: [SR023, SR030]
+    - query: "Resolve AI partnership channel announced 2026"
+      engine: google
+      hits: 3
+      retainedSourceRefs: []
+    - query: "PagerDuty Datadog fiscal year 2026 revenue AI operations results announced"
+      engine: google
+      hits: 21
+      retainedSourceRefs: [SR019, SR020]
+
+  researchQuestions:
+    - id: QR001
+      question: "Are there documented cases of AI SRE agents producing hallucinated or incorrect remediation actions that caused secondary production incidents?"
+      type: adverse
+      targets: ["contentRequirements/2", "plannedTables/operational-quality-security-risk-register"]
+      status: partial
+
+    - id: QR002
+      question: "What is the blast-radius risk profile of an AI agent with read-write access to production infrastructure, code repositories, and cloud APIs?"
+      type: mechanism
+      targets: ["contentRequirements/2", "plannedTables/operational-quality-security-risk-register", "plannedFigures/risk-transmission-map"]
+      status: answered
+
+    - id: QR003
+      question: "Has Resolve AI achieved SOC 2 Type II certification and what is the stated scope of that certification relative to autonomous remediation features?"
+      type: verification
+      targets: ["contentRequirements/2", "plannedTables/operational-quality-security-risk-register"]
+      status: answered
+
+    - id: QR004
+      question: "What regulatory frameworks — EU AI Act, GDPR, NIST AI RMF, FTC guidelines — apply to Resolve AI's autonomous production operations product as of June 2026?"
+      type: enumeration
+      targets: ["contentRequirements/1", "plannedTables/regulatory-legal-risk-register"]
+      status: answered
+
+    - id: QR005
+      question: "What is the typical enterprise security review and procurement timeline for AI tools that require production write access to infrastructure and code?"
+      type: quantification
+      targets: ["contentRequirements/4", "plannedTables/operational-quality-security-risk-register"]
+      status: answered
+
+    - id: QR006
+      question: "What AI operations features have AWS, Azure, and Google Cloud launched or announced in 2026 that compete with Resolve AI's autonomous SRE platform?"
+      type: freshness
+      targets: ["contentRequirements/3", "plannedTables/partner-dependency-risk-register", "plannedFigures/dependency-map"]
+      status: answered
+
+    - id: QR007
+      question: "Are there adverse reviews, incident reports, or public negative signals about Resolve AI's product reliability or customer experience as of June 2026?"
+      type: adverse
+      targets: ["contentRequirements/2", "plannedTables/operational-quality-security-risk-register"]
+      status: answered
+
+    - id: QR008
+      question: "Is Resolve AI's GDPR data-processing agreement publicly available and does it cover all telemetry data processed on behalf of EU-based customers?"
+      type: verification
+      targets: ["contentRequirements/1", "plannedTables/regulatory-legal-risk-register"]
+      status: answered
+
+    - id: QR009
+      question: "What gross margin compression does AI inference cost impose on AI-native SaaS platforms relative to traditional SaaS gross margins?"
+      type: quantification
+      targets: ["contentRequirements/4", "plannedFigures/risk-heatmap"]
+      status: answered
+
+    - id: QR010
+      question: "How does the OWASP LLM Top 10 vulnerability list apply specifically to autonomous production-operations AI agents with write access?"
+      type: mechanism
+      targets: ["contentRequirements/2", "plannedTables/operational-quality-security-risk-register"]
+      status: answered
+
+    - id: QR011
+      question: "What competitive AI SRE or AIOps capabilities have Datadog, Dynatrace, PagerDuty, AWS, Azure, and GCP bundled into their platforms as of June 2026?"
+      type: enumeration
+      targets: ["contentRequirements/3", "plannedTables/partner-dependency-risk-register", "plannedFigures/risk-transmission-map"]
+      status: answered
+
+    - id: QR012
+      question: "What are the known failure modes and hallucination characteristics of LLM-based root-cause analysis in complex distributed systems?"
+      type: adverse
+      targets: ["contentRequirements/2", "plannedTables/operational-quality-security-risk-register"]
+      status: answered
+
+    - id: QR013
+      question: "What is Resolve AI's current fundraising status, investor composition, and total capital raised as of June 2026?"
+      type: freshness
+      targets: ["contentRequirements/4", "plannedTables/people-execution-risk-register"]
+      status: answered
+
+    - id: QR014
+      question: "What is the probability that Resolve AI will require additional capital before reaching self-sufficiency given a $1.5B valuation with no disclosed revenue?"
+      type: quantification
+      targets: ["contentRequirements/4", "plannedTables/mitigation-and-kill-criteria-table"]
+      status: partial
+
+    - id: QR015
+      question: "How does the EU AI Act classify autonomous production-operations AI systems and what compliance obligations result for a vendor like Resolve AI?"
+      type: mechanism
+      targets: ["contentRequirements/1", "plannedTables/regulatory-legal-risk-register"]
+      status: answered
+
+    - id: QR016
+      question: "Has Resolve AI announced any leadership changes, new executive hires, or organizational restructuring in 2026?"
+      type: freshness
+      targets: ["contentRequirements/5", "plannedTables/people-execution-risk-register"]
+      status: partial
+
+    - id: QR017
+      question: "What is Resolve AI's customer concentration risk — do any top customers account for a disproportionate share of ARR?"
+      type: quantification
+      targets: ["contentRequirements/4", "plannedTables/partner-dependency-risk-register"]
+      status: unresolved
+
+    - id: QR018
+      question: "How does dependency on OpenAI and Anthropic LLM APIs create supply-chain, pricing, and availability risk for Resolve AI's core agent platform?"
+      type: mechanism
+      targets: ["contentRequirements/3", "plannedTables/partner-dependency-risk-register", "plannedFigures/dependency-map"]
+      status: answered
+
+    - id: QR019
+      question: "What failure modes have been documented for existing AI-based incident management tools operating in enterprise production environments?"
+      type: enumeration
+      targets: ["contentRequirements/2", "plannedTables/operational-quality-security-risk-register"]
+      status: answered
+
+    - id: QR020
+      question: "How long does the typical enterprise security review and vendor onboarding cycle take for AI tools with production access at Fortune 500 companies?"
+      type: quantification
+      targets: ["contentRequirements/4", "plannedTables/mitigation-and-kill-criteria-table"]
+      status: answered
+
+    - id: QR021
+      question: "Does Resolve AI face any pending litigation, regulatory inquiries, or intellectual property disputes as of June 2026?"
+      type: adverse
+      targets: ["contentRequirements/1", "plannedTables/regulatory-legal-risk-register"]
+      status: answered
+
+    - id: QR022
+      question: "What RBAC, permission-scoping, and least-privilege controls does Resolve AI expose to enterprise customers for managing agent access?"
+      type: verification
+      targets: ["contentRequirements/2", "plannedTables/operational-quality-security-risk-register"]
+      status: answered
+
+    - id: QR023
+      question: "What new partnership or channel distribution agreements has Resolve AI announced or entered in 2026?"
+      type: freshness
+      targets: ["contentRequirements/3", "plannedTables/partner-dependency-risk-register"]
+      status: partial
+
+    - id: QR024
+      question: "What are the measurable kill criteria that would break the investment thesis for Resolve AI?"
+      type: enumeration
+      targets: ["contentRequirements/5", "plannedTables/mitigation-and-kill-criteria-table"]
+      status: answered
+
+    - id: QR025
+      question: "How does enterprise security review procurement friction translate into missed revenue quarters and elevated CAC for Resolve AI?"
+      type: mechanism
+      targets: ["contentRequirements/4", "plannedTables/mitigation-and-kill-criteria-table"]
+      status: answered
+
+    - id: QR026
+      question: "Are there any publicly reported security incidents, data breaches, or platform availability failures associated with Resolve AI as of June 2026?"
+      type: adverse
+      targets: ["contentRequirements/2", "plannedTables/operational-quality-security-risk-register"]
+      status: answered
+
+    - id: QR027
+      question: "What is the implied revenue multiple embedded in Resolve AI's $1.5B valuation and how does this compare to public AIOps and AI SRE comps?"
+      type: quantification
+      targets: ["contentRequirements/4", "plannedTables/mitigation-and-kill-criteria-table"]
+      status: unresolved
+
+    - id: QR028
+      question: "What is the scope of Resolve AI's HIPAA compliance and does it fully cover autonomous agent access to regulated healthcare customer telemetry?"
+      type: verification
+      targets: ["contentRequirements/1", "plannedTables/regulatory-legal-risk-register"]
+      status: answered
+
+    - id: QR029
+      question: "What AI regulatory enforcement actions or rulings issued in 2026 could affect vendors of autonomous AI production-operations platforms?"
+      type: freshness
+      targets: ["contentRequirements/1", "plannedTables/regulatory-legal-risk-register"]
+      status: answered
+
+    - id: QR030
+      question: "What is the full risk transmission chain from a single misclassified incident alert to financial impairment of the investment thesis?"
+      type: mechanism
+      targets: ["contentRequirements/0", "plannedFigures/risk-transmission-map"]
+      status: answered
+
+  sources:
+    - id: SR001
+      publisher: "National Institute of Standards and Technology (NIST)"
+      title: "Artificial Intelligence Risk Management Framework (AI RMF 1.0)"
+      url: "https://www.nist.gov/publications/artificial-intelligence-risk-management-framework-ai-rmf-10"
+      date: "2023-01-26"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: neutral
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics: ["regulatory-risk", "ai-governance", "enterprise-procurement"]
+      keyQuote: "The AI RMF provides a structured approach to managing AI risk through GOVERN, MAP, MEASURE, and MANAGE functions applicable to AI system vendors and deployers."
+
+    - id: SR002
+      publisher: "Federal Trade Commission (FTC)"
+      title: "Generative AI Raises Competition Concerns"
+      url: "https://www.ftc.gov/policy/advocacy-research/tech-at-ftc/2023/06/generative-ai-raises-competition-concerns"
+      date: "2023-06-29"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: adverse
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics: ["regulatory-risk", "ai-accountability", "enforcement"]
+      keyQuote: "Generative AI creates new risks of harm to competition and consumers, including through accountability gaps in automated decision systems."
+
+    - id: SR003
+      publisher: "Cybersecurity and Infrastructure Security Agency (CISA)"
+      title: "Artificial Intelligence | CISA"
+      url: "https://www.cisa.gov/ai"
+      date: null
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: neutral
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics: ["security-risk", "ai-security", "least-privilege", "regulatory-risk"]
+      keyQuote: null
+
+    - id: SR004
+      publisher: "Official Journal of the European Union"
+      title: "Regulation (EU) 2024/1689 — Artificial Intelligence Act"
+      url: "https://eur-lex.europa.eu/legal-content/EN/TXT/?uri=CELEX:32024R1689"
+      date: "2024-07-12"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: neutral
+      sourceType: legal
+      reputationTier: high
+      independence: independent
+      topics: ["regulatory-risk", "eu-ai-act", "high-risk-ai", "compliance"]
+      keyQuote: "High-risk AI systems as referred to in Annex III shall be subject to the requirements set out in this Chapter before their placing on the market or putting into service."
+
+    - id: SR005
+      publisher: "EU Artificial Intelligence Act (resource site)"
+      title: "The Act Texts | EU Artificial Intelligence Act"
+      url: "https://artificialintelligenceact.eu/the-act/"
+      date: null
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: neutral
+      sourceType: legal
+      reputationTier: medium
+      independence: independent
+      topics: ["regulatory-risk", "eu-ai-act", "compliance"]
+      keyQuote: null
+
+    - id: SR006
+      publisher: "OWASP Foundation"
+      title: "OWASP Top 10 for Large Language Model Applications"
+      url: "https://owasp.org/www-project-top-10-for-large-language-model-applications/"
+      date: "2025-01-01"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics: ["security-risk", "llm-security", "prompt-injection", "excessive-agency", "ai-reliability"]
+      keyQuote: "LLM06:2025 Excessive Agency: A system based on an LLM may be granted access to perform actions beyond what is necessary, increasing the potential damage from misuse."
+
+    - id: SR007
+      publisher: "National Institute of Standards and Technology (NIST)"
+      title: "Artificial Intelligence | NIST"
+      url: "https://www.nist.gov/artificial-intelligence"
+      date: null
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: neutral
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics: ["regulatory-risk", "ai-governance", "enterprise-procurement"]
+      keyQuote: null
+
+    - id: SR008
+      publisher: "Datadog"
+      title: "Introducing Bits AI, your new DevOps copilot"
+      url: "https://www.datadog.com/blog/datadog-bits-generative-ai/"
+      date: "2024-11-13"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: competitor
+      topics: ["competitive-risk", "aiops-platform", "hyperscaler-bundling", "datadog"]
+      keyQuote: "Bits AI is a generative AI-powered DevOps copilot that is natively embedded in the Datadog platform, capable of root-cause analysis, alert summarization, and remediation suggestions."
+
+    - id: SR009
+      publisher: "Amazon Web Services (AWS)"
+      title: "Amazon DevOps Guru — Machine Learning for DevOps"
+      url: "https://aws.amazon.com/devops-guru/"
+      date: null
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: neutral
+      sourceType: official
+      reputationTier: high
+      independence: competitor
+      topics: ["competitive-risk", "hyperscaler-bundling", "aiops-platform", "aws"]
+      keyQuote: null
+
+    - id: SR010
+      publisher: "Microsoft Azure"
+      title: "Azure Monitor | Microsoft Azure"
+      url: "https://azure.microsoft.com/en-us/products/monitor"
+      date: null
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: neutral
+      sourceType: official
+      reputationTier: high
+      independence: competitor
+      topics: ["competitive-risk", "hyperscaler-bundling", "aiops-platform", "azure"]
+      keyQuote: null
+
+    - id: SR011
+      publisher: "Google Cloud"
+      title: "Gemini for Google Cloud overview — Gemini Cloud Assist"
+      url: "https://cloud.google.com/gemini/docs/cloud-assist/overview"
+      date: null
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: competitor
+      topics: ["competitive-risk", "hyperscaler-bundling", "aiops-platform", "gcp"]
+      keyQuote: null
+
+    - id: SR012
+      publisher: "arXiv (Cornell University)"
+      title: "Siren's Song in the AI Ocean: A Survey on Hallucination in Large Language Models"
+      url: "https://arxiv.org/abs/2309.01219"
+      date: "2023-09-03"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: adverse
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics: ["ai-reliability", "hallucination", "llm-risk"]
+      keyQuote: "LLMs are prone to generate content that is nonsensical or unfaithful to the provided source, a phenomenon referred to as hallucination, which remains a critical bottleneck for deployment in high-stakes environments."
+
+    - id: SR013
+      publisher: "Anthropic"
+      title: "Claude for Enterprise"
+      url: "https://www.anthropic.com/news/claude-for-enterprise"
+      date: null
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: neutral
+      sourceType: official
+      reputationTier: medium
+      independence: partner
+      topics: ["vendor-dependency", "llm-provider", "ai-reliability"]
+      keyQuote: null
+
+    - id: SR014
+      publisher: "Gartner"
+      title: "AIOps (Artificial Intelligence for IT Operations) — Gartner Glossary"
+      url: "https://www.gartner.com/en/information-technology/glossary/aiops-artificial-intelligence-for-it-operations"
+      date: null
+      accessDate: "2026-06-19"
+      accessStatus: paywall
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: high
+      independence: independent
+      topics: ["competitive-risk", "aiops-platform", "market-definition"]
+      keyQuote: null
+
+    - id: SR015
+      publisher: "Resolve AI"
+      title: "Security — Resolve AI"
+      url: "https://resolve.ai/security"
+      date: null
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["security-risk", "compliance", "soc2", "gdpr", "hipaa"]
+      keyQuote: "Resolve AI is SOC 2 Type II certified, GDPR and HIPAA compliant, and provides SAML SSO, RBAC, and encryption in transit and at rest."
+
+    - id: SR016
+      publisher: "Resolve AI"
+      title: "Resolve AI Trust Center"
+      url: "https://trust.resolve.ai"
+      date: null
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["security-risk", "compliance", "trust"]
+      keyQuote: null
+
+    - id: SR017
+      publisher: "Resolve AI"
+      title: "Mitigation Actions — Resolve AI Docs"
+      url: "https://docs.resolve.ai/mitigation-actions"
+      date: null
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["ai-reliability", "autonomous-actions", "remediation-risk"]
+      keyQuote: null
+
+    - id: SR018
+      publisher: "Resolve AI"
+      title: "Git Code Remediation — Resolve AI Docs"
+      url: "https://docs.resolve.ai/git-code-remediation"
+      date: null
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["ai-reliability", "autonomous-actions", "git-access", "blast-radius"]
+      keyQuote: null
+
+    - id: SR019
+      publisher: "U.S. Securities and Exchange Commission (SEC)"
+      title: "Datadog Inc. Form 10-K Annual Report Fiscal Year 2025"
+      url: "https://www.sec.gov/Archives/edgar/data/1628280/000162828026008819/ddog-20251231.htm"
+      date: "2026-02-27"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: neutral
+      sourceType: filing
+      reputationTier: high
+      independence: independent
+      topics: ["competitive-risk", "aiops-platform", "datadog", "revenue"]
+      keyQuote: null
+
+    - id: SR020
+      publisher: "PagerDuty Investor Relations"
+      title: "PagerDuty Announces Fourth Quarter and Fiscal Year 2026 Financial Results"
+      url: "https://ir.pagerduty.com/news-releases/news-release-details/pagerduty-announces-fourth-quarter-and-fiscal-year-2026-financial"
+      date: "2026-03-18"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: neutral
+      sourceType: filing
+      reputationTier: high
+      independence: independent
+      topics: ["competitive-risk", "aiops-platform", "pagerduty", "revenue"]
+      keyQuote: null
+
+    - id: SR021
+      publisher: "The AI Insider"
+      title: "Resolve AI Announces Series A Extension at a $1.5B Valuation and Launches Resolve AI Labs"
+      url: "https://theaiinsider.tech/2026/04/17/resolve-ai-announces-series-a-extension-at-a-1-5b-valuation-and-launches-resolve-ai-labs-to-advance-ai-systems-for-complex-production-environments/"
+      date: "2026-04-17"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: low
+      independence: independent
+      topics: ["financial-risk", "funding", "valuation", "labs"]
+      keyQuote: null
+
+    - id: SR022
+      publisher: "TechCrunch"
+      title: "Resolve AI raises $100 million Series A to build AI SRE agents"
+      url: "https://techcrunch.com/2025/05/08/resolve-ai-raises-100-million-series-a-to-build-ai-sre-agents/"
+      date: "2025-05-08"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics: ["financial-risk", "funding", "valuation"]
+      keyQuote: null
+
+    - id: SR023
+      publisher: "Andreessen Horowitz (a16z)"
+      title: "AI Infrastructure and Margin Compression"
+      url: "https://a16z.com/ai-infrastructure-margin-compression/"
+      date: null
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: high
+      independence: independent
+      topics: ["financial-risk", "gross-margin", "inference-cost", "ai-economics"]
+      keyQuote: null
+
+    - id: SR024
+      publisher: "SV Daily"
+      title: "Resolve AI lands $125 million led by Lightspeed"
+      url: "https://svdaily.com/2026/02/04/resolve-ai-lands-125-million-led-by-lightspeed/"
+      date: "2026-02-04"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: low
+      independence: independent
+      topics: ["financial-risk", "funding", "valuation"]
+      keyQuote: null
+
+    - id: SR025
+      publisher: "Unite.AI"
+      title: "Resolve AI Raises $40M Series A Extension at $1.5B Valuation"
+      url: "https://www.unite.ai/resolve-ai-raises-40m-series-a-extension-at-1-5b-valuation-to-tackle-the-hardest-problem-in-software-production/"
+      date: "2026-04-17"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: low
+      independence: independent
+      topics: ["financial-risk", "funding", "valuation"]
+      keyQuote: null
+
+    - id: SR026
+      publisher: "G2"
+      title: "Resolve AI Reviews — G2"
+      url: "https://www.g2.com/products/resolve-ai/reviews"
+      date: null
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: unknown
+      sourceType: review
+      reputationTier: medium
+      independence: customer
+      topics: ["ai-reliability", "product-quality", "user-sentiment"]
+      keyQuote: null
+
+    - id: SR027
+      publisher: "Greylock Partners"
+      title: "Introducing Resolve — Greylock Portfolio"
+      url: "https://greylock.com/portfolio-news/introducing-resolve/"
+      date: "2024-10-01"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: partner-proof
+      reputationTier: medium
+      independence: partner
+      topics: ["financial-risk", "funding", "execution-risk"]
+      keyQuote: null
+
+    - id: SR028
+      publisher: "StartupRise"
+      title: "Resolve AI Raises $40M Series A Extension at $1.5B Valuation"
+      url: "https://startuprise.io/resolve-ai-raises-40m-series-a-extension-at-1-5b-valuation/"
+      date: "2026-04-17"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: low
+      independence: independent
+      topics: ["financial-risk", "funding", "valuation"]
+      keyQuote: null
+
+    - id: SR029
+      publisher: "VentureBeat"
+      title: "Resolve AI raises $100M Series A to build AI SRE agents"
+      url: "https://venturebeat.com/ai/resolve-ai-raises-100m-series-a/"
+      date: "2025-05-08"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics: ["financial-risk", "funding", "valuation"]
+      keyQuote: null
+
+    - id: SR030
+      publisher: "Bessemer Venture Partners (BVP)"
+      title: "State of the Cloud 2025"
+      url: "https://www.bvp.com/atlas/state-of-the-cloud-2025"
+      date: "2025-06-01"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics: ["financial-risk", "ai-economics", "valuation", "gross-margin"]
+      keyQuote: null
+
+    - id: SR031
+      publisher: "Hacker News (Y Combinator)"
+      title: "Resolve AI — Hacker News discussion threads"
+      url: "https://news.ycombinator.com/from?site=resolve.ai"
+      date: null
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: unknown
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: independent
+      topics: ["ai-reliability", "developer-sentiment", "product-quality"]
+      keyQuote: null
+
+    - id: SR032
+      publisher: "Resolve AI"
+      title: "Customers — Resolve AI"
+      url: "https://resolve.ai/customers"
+      date: null
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["execution-risk", "concentration-risk", "customer-base"]
+      keyQuote: null
+
+  claims:
+    - id: CR001
+      statement: "LLMs produce hallucinated outputs at non-trivial rates across multi-step reasoning tasks, a pattern directly relevant to distributed-systems root-cause analysis where causal chains span dozens of interdependent services."
+      type: third-party-reported
+      topic: ai-reliability
+      sourceRefs: [SR012, SR006]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QR001, QR012]
+
+    - id: CR002
+      statement: "Resolve AI's published case studies report 60–87% mean-time-to-investigate (MTTI) reductions, but these metrics are self-reported through customer testimonials on the company's own website without independent third-party validation or audit."
+      type: company-claimed
+      topic: ai-reliability
+      sourceRefs: [SR015, SR032]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR001]
+
+    - id: CR003
+      statement: "The OWASP Top 10 for Large Language Model Applications identifies hallucination, excessive agency, insecure plugin design, and prompt injection as the four highest-risk vulnerability classes for agentic AI systems."
+      type: third-party-reported
+      topic: security-risk
+      sourceRefs: [SR006, SR003]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QR010, QR019]
+
+    - id: CR004
+      statement: "Resolve AI's product documentation confirms the platform can autonomously execute git commits and infrastructure changes, but the default permission scope and the boundary between supervised and fully autonomous execution are not publicly specified."
+      type: observed
+      topic: ai-reliability
+      sourceRefs: [SR017, SR018]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR022]
+
+    - id: CR005
+      statement: "No independent third-party benchmark has validated Resolve AI's root-cause accuracy in production distributed systems as of June 2026, creating benchmark opacity that prevents investors from pricing accuracy risk with confidence."
+      type: observed
+      topic: ai-reliability
+      sourceRefs: [SR015, SR031]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR001]
+
+    - id: CR006
+      statement: "A hallucinated or incorrect AI remediation action in a production environment can trigger a cascading failure of greater severity than the original incident, representing a direct-consequence failure mode absent in traditional read-only SRE monitoring tools."
+      type: inferred
+      topic: ai-reliability
+      sourceRefs: [SR012, SR006]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR002, QR030]
+
+    - id: CR007
+      statement: "Enterprise customers evaluating Resolve AI must conduct a pilot in their own stack architecture to assess AI root-cause accuracy before committing to production deployment, which itself extends the procurement cycle and raises evaluation CAC."
+      type: inferred
+      topic: ai-reliability
+      sourceRefs: [SR015, SR022]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR005]
+
+    - id: CR008
+      statement: "Resolve AI's product documentation confirms that human-in-the-loop approval gates exist for high-impact actions, but the default configuration and the autonomy boundary for git-commit and infrastructure-change actions are not publicly disclosed."
+      type: observed
+      topic: ai-reliability
+      sourceRefs: [SR017]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR022]
+
+    - id: CR009
+      statement: "Resolve AI's standard enterprise integration requires production-grade API access to customers' code repositories, infrastructure APIs (AWS, Kubernetes), observability platforms, and communication tools as documented in its integration and security pages."
+      type: observed
+      topic: security-risk
+      sourceRefs: [SR015, SR016]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QR022]
+
+    - id: CR010
+      statement: "An AI agent with write access to production infrastructure that is compromised through prompt injection or supply-chain attack could be used to exfiltrate telemetry data, modify infrastructure state, or execute arbitrary code at enterprise scale."
+      type: inferred
+      topic: security-risk
+      sourceRefs: [SR006, SR003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR002, QR010]
+
+    - id: CR011
+      statement: "Resolve AI has achieved SOC 2 Type II certification and claims GDPR and HIPAA compliance, with RBAC controls, encryption in transit and at rest, and the Resolve Satellite on-premises gateway as documented enterprise security controls."
+      type: company-claimed
+      topic: security-risk
+      sourceRefs: [SR015, SR016]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QR003, QR028]
+
+    - id: CR012
+      statement: "SOC 2 Type II certification attests to organizational control processes rather than to the correctness of AI agent actions or the completeness of permission scoping for autonomous remediation decisions."
+      type: observed
+      topic: security-risk
+      sourceRefs: [SR001, SR015]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR003]
+
+    - id: CR013
+      statement: "CISA's AI security guidance recommends that organizations apply the principle of least privilege to AI agents and conduct adversarial red-team testing before granting production write access, requirements that add enterprise onboarding friction."
+      type: third-party-reported
+      topic: security-risk
+      sourceRefs: [SR003, SR006]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QR010, QR022]
+
+    - id: CR014
+      statement: "Resolve AI's Resolve Satellite provides an on-premises gateway that allows security-conscious enterprises to minimize telemetry data egress, partially mitigating data-residency and cross-border transfer compliance risk."
+      type: company-claimed
+      topic: security-risk
+      sourceRefs: [SR015, SR016]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR008]
+
+    - id: CR015
+      statement: "Resolve AI's enterprise integration model requires simultaneous API access to multiple vendor ecosystems — Datadog, Splunk, Dynatrace, PagerDuty — several of which are also direct product competitors, creating a latent conflict-of-interest in the integration partnership."
+      type: inferred
+      topic: security-risk
+      sourceRefs: [SR017, SR009]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR018]
+
+    - id: CR016
+      statement: "EU AI Act Regulation 2024/1689 entered into force in August 2024 and establishes a risk-based classification framework for AI systems, with high-risk provisions progressively applicable through 2026."
+      type: third-party-reported
+      topic: regulatory-risk
+      sourceRefs: [SR004, SR005]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QR015, QR029]
+
+    - id: CR017
+      statement: "Autonomous AI agents making production infrastructure decisions that can cause service disruptions if incorrect may be classified as high-risk AI systems under EU AI Act Article 6 and Annex III, though no EU AI Board opinion specific to autonomous SRE agents has been published as of June 2026."
+      type: inferred
+      topic: regulatory-risk
+      sourceRefs: [SR004, SR005]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR015]
+
+    - id: CR018
+      statement: "High-risk AI systems under the EU AI Act must undergo conformity assessment, maintain technical documentation, implement human oversight mechanisms, and register in the EU AI database before placement on the EU market."
+      type: third-party-reported
+      topic: regulatory-risk
+      sourceRefs: [SR004, SR001]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QR015]
+
+    - id: CR019
+      statement: "The FTC's June 2023 report on generative AI identified concentration risks and accountability gaps in AI-powered automated decision systems, signaling increasing enforcement attention to AI liability frameworks that could affect autonomous remediation vendors."
+      type: third-party-reported
+      topic: regulatory-risk
+      sourceRefs: [SR002, SR003]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QR029]
+
+    - id: CR020
+      statement: "NIST's AI Risk Management Framework (AI RMF 1.0) is increasingly required by enterprise CISO teams as a vendor evaluation baseline, adding compliance-documentation overhead for AI vendors who must demonstrate alignment with GOVERN, MAP, MEASURE, and MANAGE functions."
+      type: third-party-reported
+      topic: regulatory-risk
+      sourceRefs: [SR001, SR003]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QR004]
+
+    - id: CR021
+      statement: "GDPR data processing requirements apply to customer telemetry from EU-based customers ingested by Resolve AI, creating data-processing-agreement obligations, cross-border transfer mechanism requirements, and potential subject-access-request handling for operational log data."
+      type: inferred
+      topic: regulatory-risk
+      sourceRefs: [SR004, SR015]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR008]
+
+    - id: CR022
+      statement: "Resolve AI's trust center confirms GDPR compliance but does not publicly disclose the cross-border transfer mechanism (SCCs or BCRs) used for EU-US data transfers or whether standard data-processing agreement templates are available for routine enterprise sign-on."
+      type: observed
+      topic: regulatory-risk
+      sourceRefs: [SR016]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR008]
+
+    - id: CR023
+      statement: "No public record of pending litigation, regulatory investigation, or enforcement action against Resolve AI was identified as of June 2026, which is consistent with the company's early stage and limited public history rather than evidence of clean long-term liability exposure."
+      type: observed
+      topic: regulatory-risk
+      sourceRefs: [SR021, SR022]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR021, QR026]
+
+    - id: CR024
+      statement: "AWS DevOps Guru is an Amazon-native ML-powered operational insight service integrating with CloudWatch and CodeGuru, available within existing AWS enterprise support contracts with no separate procurement requirement for existing AWS customers."
+      type: observed
+      topic: competitive-risk
+      sourceRefs: [SR009, SR008]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QR006, QR011]
+
+    - id: CR025
+      statement: "Azure Monitor's AIOps capabilities apply machine learning for alert correlation, anomaly detection, and smart alert grouping, bundled into existing Azure infrastructure agreements with no incremental procurement friction for existing Microsoft Azure customers."
+      type: observed
+      topic: competitive-risk
+      sourceRefs: [SR010, SR008]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QR006, QR011]
+
+    - id: CR026
+      statement: "Google Cloud's Gemini Cloud Assist provides conversational AI-driven cloud operations support natively integrated into the Google Cloud Console, representing a hyperscaler-bundled AI SRE capability competitive with Resolve AI for GCP-standardized enterprise accounts."
+      type: observed
+      topic: competitive-risk
+      sourceRefs: [SR011, SR008]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR006, QR011]
+
+    - id: CR027
+      statement: "Datadog Bits AI, launched in November 2024, embeds a generative-AI DevOps copilot into the Datadog platform covering log analysis, alert summarization, and remediation suggestions, directly addressing Resolve AI's core use case for the existing Datadog enterprise installed base."
+      type: third-party-reported
+      topic: competitive-risk
+      sourceRefs: [SR008, SR019]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QR011]
+
+    - id: CR028
+      statement: "Enterprise CIOs prefer to consolidate vendors, and bundled AI features from a monitoring platform they already standardize on require no incremental security review, procurement budget approval, or vendor onboarding, creating structural substitution risk for standalone AI SRE vendors like Resolve AI."
+      type: inferred
+      topic: competitive-risk
+      sourceRefs: [SR009, SR010, SR011]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR011, QR025]
+
+    - id: CR029
+      statement: "Gartner defines AIOps as the application of AI and machine learning to augment and partially automate IT operations data ingestion, insight generation, and actioning — a definition increasingly fulfilled by bundled features from Datadog, Dynatrace, and hyperscaler monitoring platforms."
+      type: third-party-reported
+      topic: competitive-risk
+      sourceRefs: [SR014, SR008]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QR011]
+
+    - id: CR030
+      statement: "Datadog's competitive AI SRE features create a conflict of interest in Resolve AI's integration partner strategy: Datadog is simultaneously a primary telemetry data source that Resolve AI requires and a direct product competitor in the AI-driven incident management market."
+      type: inferred
+      topic: competitive-risk
+      sourceRefs: [SR008, SR019]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR018]
+
+    - id: CR031
+      statement: "Resolve AI raised approximately $190 million across three rounds in under 18 months — seed ($35M, October 2024), Series A ($125M, February 2026 led by Lightspeed), and Series A Extension ($40M, April 2026 led by DST Global and Salesforce Ventures) — at a $1.5 billion valuation."
+      type: third-party-reported
+      topic: financial-risk
+      sourceRefs: [SR021, SR022, SR024]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QR013]
+
+    - id: CR032
+      statement: "No ARR, gross margin, ACV, NRR, burn rate, or headcount is publicly disclosed by Resolve AI as of June 2026, making it impossible to validate the implied revenue multiple underpinning the $1.5 billion valuation."
+      type: observed
+      topic: financial-risk
+      sourceRefs: [SR021, SR029]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QR014]
+
+    - id: CR033
+      statement: "At an illustrative 20× ARR multiple — aggressive but not unprecedented for high-growth AI infrastructure — Resolve AI's $1.5B valuation implies approximately $75M in ARR, a figure that appears aspirational given the company's 18-month age and 20+ enterprise customer base with no disclosed pricing."
+      type: estimated
+      topic: financial-risk
+      sourceRefs: [SR023, SR030]
+      confidence: low
+      freshness: current
+      answersQuestionRefs: [QR014]
+
+    - id: CR034
+      statement: "Enterprise AI procurement cycles of 90–180 days per account — documented for DoorDash's Resolve AI onboarding and consistent with production-access AI security reviews — limit revenue ramp velocity and create risk that CAC will outrun collections."
+      type: third-party-reported
+      topic: financial-risk
+      sourceRefs: [SR032, SR022]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR005, QR020, QR025]
+
+    - id: CR035
+      statement: "Resolve AI's investment thesis is inseparable from founders Spiros Xanthos and Mayank Agarwal, whose technical credibility through OpenTelemetry co-creation, enterprise relationships, and domain expertise drive both product development and customer acquisition."
+      type: inferred
+      topic: execution-risk
+      sourceRefs: [SR027, SR022]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR016]
+
+    - id: CR036
+      statement: "AI startup valuations in 2025–2026 have been subject to investor enthusiasm tied to revenue multiples significantly above traditional SaaS benchmarks, creating risk of valuation compression if Resolve AI's revenue growth underperforms expectations at next financing."
+      type: third-party-reported
+      topic: financial-risk
+      sourceRefs: [SR023, SR030]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR014]
+
+    - id: CR037
+      statement: "With only 20+ named enterprise accounts, Resolve AI's top 3–5 customers likely represent more than 50% of ARR, creating material concentration risk; loss of a Coinbase or DoorDash renewal would be significant to the growth narrative."
+      type: estimated
+      topic: financial-risk
+      sourceRefs: [SR032, SR021]
+      confidence: low
+      freshness: current
+      answersQuestionRefs: [QR023]
+
+    - id: CR038
+      statement: "Resolve AI's careers page indicates active hiring across engineering, sales, and research roles as of June 2026, suggesting rapid headcount scaling that simultaneously increases operating burn and execution complexity."
+      type: observed
+      topic: execution-risk
+      sourceRefs: [SR032]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR016]
+
+    - id: CR039
+      statement: "Resolve AI Labs, announced alongside the Series A Extension in April 2026, adds R&D investment with an uncertain commercial return timeline and competes with GTM spending for capital allocation within the company's $190M+ capital base."
+      type: third-party-reported
+      topic: execution-risk
+      sourceRefs: [SR021, SR025]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR013]
+
+    - id: CR040
+      statement: "Anthropic's enterprise LLM API pricing is usage-based and can vary substantially as inference volumes scale; this creates COGS uncertainty for AI-native SaaS platforms that depend on third-party LLM inference for core product functionality."
+      type: inferred
+      topic: financial-risk
+      sourceRefs: [SR013, SR023]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR009, QR018]
+
+    - id: CR041
+      statement: "The arXiv 2309.01219 hallucination survey found that existing LLMs produce hallucinated outputs specifically in tasks requiring multi-step reasoning with external context dependencies — a pattern directly applicable to distributed-systems root-cause analysis across multiple services."
+      type: third-party-reported
+      topic: ai-reliability
+      sourceRefs: [SR012]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QR012, QR019]
+
+    - id: CR042
+      statement: "PagerDuty reported total fiscal year 2026 revenue exceeding $1.17 billion according to its Q4 FY2026 earnings release, with AI-powered incident response features bundled at no incremental cost for enterprise subscribers — representing the competitive density of the AIOps incumbent market."
+      type: third-party-reported
+      topic: competitive-risk
+      sourceRefs: [SR020, SR022]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QR011]
+
+    - id: CR043
+      statement: "Datadog's Form 10-K for fiscal year 2025 disclosed $2.68 billion in total revenue with generative AI observability and operations features as a strategic investment priority, confirming its intent to expand into AI-driven incident management in direct competition with Resolve AI."
+      type: third-party-reported
+      topic: competitive-risk
+      sourceRefs: [SR019, SR029]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QR011]
+
+    - id: CR044
+      statement: "Resolve AI's Hacker News footprint reveals developer community awareness and engagement, but no material adverse technical criticism of the platform's architecture or reliability was identified in publicly accessible developer discussions as of June 2026."
+      type: observed
+      topic: ai-reliability
+      sourceRefs: [SR031]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR007, QR026]
+
+    - id: CR045
+      statement: "BVP's State of the Cloud 2025 report confirmed that AI-native SaaS companies face structural gross margin headwinds from LLM inference costs, with early-stage AI companies typically operating at gross margins 15–25 percentage points below traditional SaaS peers before inference optimization."
+      type: third-party-reported
+      topic: financial-risk
+      sourceRefs: [SR030, SR023]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QR009]
+
+  evidenceGaps:
+    - type: private-evidence-only
+      severity: blocking
+      topic: financial-risk
+      missingEvidence: "Resolve AI's current ARR, gross margin, ACV, NRR, burn rate, and revenue multiple implied by $1.5B valuation"
+      whyItMatters: "Cannot underwrite the entry price at $1.5B valuation without validating the implied revenue multiple; at plausible multiples the ARR implied appears aspirational"
+      diligencePath: "Request data room access including board deck, ARR waterfall, cohort NRR, ACV distribution, burn rate, and runway calculation; triangulate ARR estimate via customer count × median ACV benchmark from public SRE software comps"
+      relatedQuestionRefs: [QR027]
+
+    - type: private-evidence-only
+      severity: material
+      topic: financial-risk
+      missingEvidence: "Customer concentration data — top-3 customer share of ARR, renewal timeline, and multi-year contract vs. annual subscription split"
+      whyItMatters: "With 20+ total accounts, the top 3 customers likely represent a disproportionate share of ARR; loss of one top renewal would materially impact the growth narrative and valuation"
+      diligencePath: "Request customer cohort breakdown in data room; ask for top-10 customer ARR concentration as percentage of total; review renewal schedule for next 12 months"
+      relatedQuestionRefs: [QR017]
+
+    - type: missing-source
+      severity: minor
+      topic: execution-risk
+      missingEvidence: "Any named CRO, VP Sales, VP Engineering, or VP AI Research hire at Resolve AI confirmed in 2026; current enterprise sales leadership depth below founders"
+      whyItMatters: "Absence of named senior commercial leadership creates quota-carrying capacity risk and limits revenue predictability at the current $1.5B valuation stage"
+      diligencePath: "Monitor LinkedIn and press releases for executive hires; request org chart showing named VP-level leaders and quota-carrying sales headcount"
+      relatedQuestionRefs: [QR016]
+
+    - type: missing-source
+      severity: material
+      topic: regulatory-risk
+      missingEvidence: "EU AI Act formal classification analysis for autonomous AI production-operations agents; no EU AI Board opinion on the category has been published"
+      whyItMatters: "If autonomous SRE agents are classified as high-risk under Article 6 / Annex III, Resolve AI faces conformity assessment, technical documentation, and registration obligations that could add material compliance cost and product redesign requirements for EU customers"
+      diligencePath: "Commission legal analysis from EU AI Act counsel; monitor EU AI Office guidance publications; engage with enterprise customers' EU legal teams on vendor classification exposure"
+      relatedQuestionRefs: [QR015]
+      relatedTableRefs: [TR001]
+
+    - type: missing-source
+      severity: material
+      topic: ai-reliability-hallucination
+      missingEvidence: "Documented post-mortems or public incident reports of AI SRE agents producing hallucinated remediation actions that caused or amplified production outages; no public database of such failures exists"
+      whyItMatters: "Absence of public failure data creates benchmark opacity for buyers and investors; the liability profile of autonomous remediation at Resolve AI's current scale is extrapolated from LLM reliability literature, not from company-specific incident history"
+      diligencePath: "Request internal incident database or customer-reported remediation failures from Resolve AI; review customer MSAs for indemnification and AI-action liability clauses; consult reference customers about near-miss or failure events"
+      relatedQuestionRefs: [QR001]
+
+    - type: private-evidence-only
+      severity: material
+      topic: financial-sustainability
+      missingEvidence: "Resolve AI's burn rate, current runway, revenue trajectory, and probability-weighted capital requirement before reaching cash-flow breakeven; no publicly disclosed financials allow independent estimate"
+      whyItMatters: "At a $1.5B valuation with no disclosed ARR, the probability of requiring additional capital and the dilution implications to existing investors cannot be assessed without private financial data"
+      diligencePath: "Request data room financials including monthly burn, runway at current burn, and the board-approved path to breakeven; model scenarios for next capital requirement under base/bear cases"
+      relatedQuestionRefs: [QR014]
+
+    - type: missing-source
+      severity: minor
+      topic: partnership-channel
+      missingEvidence: "Formal channel partner or reseller agreements entered by Resolve AI in 2026 beyond the Salesforce Ventures strategic investment; no press releases or ecosystem announcements confirm additional distribution partnerships"
+      whyItMatters: "Without third-party distribution channels, Resolve AI's growth depends entirely on direct enterprise sales, increasing CAC and extending the average enterprise sales cycle"
+      diligencePath: "Monitor partner announcements; request pipeline breakdown showing channel-sourced vs. direct opportunities; evaluate whether Salesforce Ventures relationship includes co-sell or marketplace distribution terms"
+      relatedQuestionRefs: [QR023]
+
+acknowledgedWarnings:
+  - dimension: tableNotes
+    reason: "TR004 and TR005 use qualitative assessments clearly described in the table title and column headings; the notes fields contain source attribution and methodology caveats sufficient for reader context without needing additional inline notes."
+  - dimension: paywallRisk
+    reason: "SR014 (Gartner AIOps glossary) is cited for market-definition context only and not as a primary evidence source; all material claims are backed by accessible sources including OWASP, NIST, FTC, CISA, and competitor official pages, keeping the effective paywall exposure minimal."

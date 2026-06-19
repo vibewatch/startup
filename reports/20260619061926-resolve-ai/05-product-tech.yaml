@@ -1,0 +1,1742 @@
+schemaVersion: "report-v2"
+artifact: product-tech
+slug: resolve-ai
+runDate: "2026-06-19"
+company:
+  name: Resolve AI
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: >-
+    Resolve AI delivers a multi-agent platform for autonomous production operations across
+    three GA product areas—on-call delegation, incident investigation, and background
+    operational task automation—backed by a continuously-updated production knowledge graph,
+    frontier plus domain-specialized models, and a governed write-action safety layer.
+    Enterprise security controls (SOC 2 Type II, HIPAA, GDPR, AES-256, SAML SSO) are
+    production-validated at Coinbase, DoorDash, Salesforce, and Zscaler, with customer
+    case studies documenting 60–87% MTTR reductions. The primary technical risk is that
+    all quantified performance metrics originate from company-authored case studies with no
+    independent benchmark validation, and the Resolve AI Labs model research program lacks
+    published evaluation methodology or committed timelines.
+
+sections:
+  - id: product-definition-use-cases
+    title: Product Definition and Use Cases
+    body: >-
+      Resolve AI defines its category as "AI for prod"—AI systems that run and operate
+      software in production so engineers can build rather than firefight. The platform
+      comprises three core agent product areas, all generally available: On-Call agents
+      that participate in every alert rotation and post a root-cause hypothesis before
+      the on-call engineer is paged; Incidents agents that launch parallel investigation
+      threads across code, infrastructure, and telemetry, building causal timelines inside
+      collaborative Slack or MS Teams channels; and Background agents that execute scheduled
+      or trigger-based operational workflows such as deployment monitoring, reliability
+      reports, and resource optimization. A fourth surface, Custom Agents, exposes the
+      platform via MCP, REST API, and the agentskills.io Skills interface so engineering
+      teams and external AI agents can embed Resolve AI capabilities without rebuilding
+      investigation primitives. The Workbench UI provides a visual investigation canvas
+      where engineers steer agents during live incidents. Resolve AI also offers a sandbox
+      playground environment pre-configured with a live 19-microservice e-commerce
+      application on AWS EKS, giving prospects a friction-free evaluation path with real
+      telemetry and real errors before connecting production data. Customer outcomes across
+      five published case studies range from 60% to 87% reductions in investigation time,
+      with DoorDash achieving the headline result of compressing a 40-minute investigation
+      to approximately 1 minute, and Blueground reaching 100% autonomous alert investigation
+      coverage. All metrics are drawn from company-authored case studies, which are positive
+      by nature and lack independent control conditions.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE006
+      - CE032
+      - CE033
+      - CE034
+      - CE035
+      - CE036
+    tableRefs:
+      - TE001
+      - TE002
+    figureRefs:
+      - FE002
+
+  - id: platform-architecture-technical-design
+    title: Platform Architecture and Technical Design
+    body: >-
+      Resolve AI's platform organizes into three functional layers: Context, Models, and
+      Actions. The Context layer maintains a continuously-updated queryable graph of
+      services, dependencies, recent deployments, and team knowledge (runbooks, wikis, past
+      investigation learnings) that every agent draws from during an investigation. The
+      Models layer pairs third-party frontier language models (GPT-class, Claude-class)
+      with domain-specialized models the company is post-training at Resolve AI Labs; the
+      platform selects the best model for each task at inference time and handles model
+      upgrade orchestration automatically. The Actions layer governs write operations
+      behind a mandatory human approval gate: the AI model that generates a mitigation
+      proposal has no direct access to write APIs, and a separate execution engine only
+      acts after an engineer explicitly approves via the Resolve UI or a Slack button. This
+      architectural separation means alert silencing, commit reverts, and PR creation are
+      always human-in-the-loop. The Resolve Satellite is a containerized agent (Kubernetes
+      or AWS ECS Fargate) deployed inside the customer's environment that scrapes Kubernetes
+      APIs, DNS tap, and proxies observability queries, applying regex-based PII/PHI
+      redaction before transmitting any data to Resolve AI's cloud. Raw telemetry is queried
+      live and not retained; only investigation summaries and metadata are cached in
+      customer-isolated storage. The playground environment demonstrates a complete
+      investigation flow from natural-language query to multi-source evidence correlation,
+      offering a hands-on signal of reasoning depth for evaluators.
+    claimRefs:
+      - CE007
+      - CE008
+      - CE009
+      - CE010
+      - CE011
+      - CE012
+      - CE013
+      - CE014
+      - CE041
+    tableRefs:
+      - TE003
+    figureRefs:
+      - FE001
+      - FE003
+
+  - id: integrations-extensibility-mcp
+    title: Integrations, Extensibility, and the MCP Layer
+    body: >-
+      Resolve AI ships 60+ pre-built integrations spanning telemetry (Datadog, Grafana,
+      Prometheus, Sentry, New Relic, Loki), infrastructure (AWS, GCP, Kubernetes,
+      AlertManager, Kloudfuse), code (GitHub, GitHub Enterprise Server, GitLab, Bitbucket,
+      Azure DevOps), knowledge (Notion, Confluence, Google Drive), and collaboration (Slack,
+      MS Teams, Linear, Jira). Environment matching—requiring consistent naming (e.g.,
+      "production", "us-west") across Satellite configuration and observability tools—is
+      the primary configuration dependency. Git integration runs either on Resolve-managed
+      cloud infrastructure or within the customer's own Kubernetes or ECS cluster; it
+      supports OAuth-style app installation for GitHub, bring-your-own GitHub App for GHE,
+      and personal access tokens for all other providers. The platform exposes an MCP server
+      (Beta) at app0.resolve.ai/mcp using stateless Streamable HTTP transport, enabling
+      Claude Code, Cursor, and other MCP-compatible agents to call Resolve for investigation
+      queries, historical lookups, and telemetry correlation as native tool calls. A REST
+      API provides programmatic access to investigation listing (by time range and alert
+      labels), investigation detail retrieval, and investigation initiation. The Skills
+      layer implements the agentskills.io open standard—the same format adopted by Claude
+      and other agentic tools—so procedural knowledge packaged for Resolve travels to any
+      compatible agent and vice versa. AWS Marketplace and Slack Marketplace distribution
+      expand procurement channels for enterprise teams with existing agreements.
+    claimRefs:
+      - CE015
+      - CE016
+      - CE017
+      - CE018
+      - CE019
+      - CE020
+      - CE029
+      - CE030
+      - CE031
+      - CE039
+
+  - id: enterprise-security-compliance
+    title: Enterprise Security and Compliance Controls
+    body: >-
+      Resolve AI holds SOC 2 Type II certification and claims HIPAA and GDPR compliance,
+      documented through a Drata-powered trust center. Data encryption uses AES-256 at rest
+      and TLS 1.2+ for all traffic in transit between customer environments, the Satellite,
+      and Resolve AI cloud. SAML and OIDC SSO (Google, Okta, Azure AD) with automatic
+      user provisioning is available; RBAC covers Member and Admin roles with team-level
+      and individual-level permission overrides. The platform enforces read-only access to
+      observability data by default; write-permission integrations (mitigation execution,
+      PR creation) are explicitly opt-in and require separate credential scopes. Customer
+      data never leaves the Satellite perimeter without applying regex-based redaction
+      patterns configurable by the customer. Customer data is not used to train models for
+      other customers; organization-specific fine-tuning is available exclusively to the
+      owning organization. The security architecture has been validated in the most demanding
+      regulated environments in the customer base: Coinbase (crypto, financial regulatory
+      exposure), Zscaler (zero-trust network security, SOC-class requirements), and
+      Salesforce (enterprise SaaS, global data residency obligations). Gaps include the
+      absence of publicly accessible SOC 2 audit reports, undisclosed recertification
+      schedules, and no published documentation of SCIM provisioning support or FedRAMP
+      status, which limits adoptability for U.S. federal and defense verticals.
+    claimRefs:
+      - CE021
+      - CE022
+      - CE023
+      - CE024
+      - CE025
+      - CE026
+    tableRefs:
+      - TE004
+
+  - id: technical-differentiation-moat
+    title: Technical Differentiation, Research, and Competitive Moat
+    body: >-
+      Resolve AI's most durable differentiation begins with founding team provenance:
+      Spiros Xanthos and Mayank Agarwal co-created OpenTelemetry, the CNCF-graduated
+      open-source standard now adopted globally across thousands of organizations, giving
+      the team structural domain knowledge of how production telemetry is instrumented,
+      transported, and queried. This is directly relevant to designing agents that reason
+      across fragmented telemetry. The April 2026 launch of Resolve AI Labs—led by Dhruv
+      Mahajan, former Meta Llama post-training lead—signals a bet on proprietary
+      domain-specific model building, targeting the gap between general-purpose frontier
+      models and the accuracy requirements of production operations (noisy telemetry,
+      incomplete data, long multi-step workflows). Research focus areas include post-training
+      for production reasoning, evaluation frameworks for reliability without clean ground
+      truth, synthetic data generation, and simulated environments for agent training. The
+      three-phase autonomy roadmap (AI-Assisted → HITL → HOTL) is the clearest articulation
+      of product direction beyond today's HITL-gated remediation: Phase 3 targets human
+      operators setting policy while agents execute autonomously within defined guardrails.
+      Independent market analysis (Fundesk, 2026) notably omits Resolve AI from its six-
+      platform AI SRE comparison matrix, citing Datadog Bits AI SRE, PagerDuty, New Relic,
+      AWS DevOps Agent, incident.io, and Tracer-Cloud opensre—a signal that despite
+      enterprise traction, broader market mindshare trails observability incumbents. G2 shows
+      no published customer reviews, limiting third-party social proof available to
+      procurement teams conducting public diligence.
+    claimRefs:
+      - CE027
+      - CE028
+      - CE037
+      - CE038
+      - CE040
+    tableRefs:
+      - TE005
+    figureRefs:
+      - FE004
+
+tables:
+  - id: TE001
+    title: Resolve AI Product Module Matrix
+    columns:
+      - "Module / Agent"
+      - "Primary User"
+      - "Maturity Status"
+      - "Key Differentiator"
+      - "Diligence Gap"
+    rows:
+      - ["On-Call Agent", "On-call Engineers", "GA – Production", "Autonomous parallel triage; posts hypothesis before engineer is paged", "No published investigation latency SLA or p95 benchmarks"]
+      - ["Incidents Agent", "Incident Commanders, SREs", "GA – Production", "Multi-agent parallel RCA with causal timeline across code, infra, telemetry", "No independent accuracy benchmark vs. Datadog Bits or PagerDuty SRE Agent"]
+      - ["Background Agents", "Platform / SRE Teams", "GA – Production", "Scheduled and trigger-based operational workflows (deployment monitoring, reports)", "Supported workflow action scope not fully documented publicly"]
+      - ["Custom Agent (MCP / API / Skills)", "Platform Engineers", "Beta", "Expose Resolve capabilities to any MCP-compatible agent or script without rebuilding primitives", "Beta status; production readiness and SLA timeline undisclosed"]
+      - ["Workbench UI", "Engineers (all)", "GA", "Visual investigation canvas for steering agents during live incidents", "Feature parity vs. Slack surface not explicitly documented"]
+      - ["Context Engine (Knowledge Graph)", "All users via agents", "GA", "Continuously-updated queryable graph of services, deps, deploys, team knowledge", "Graph construction and update frequency methodology unpublished"]
+      - ["Skills Engine (agentskills.io)", "SRE / Platform Engineers", "GA (bundled script execution on roadmap)", "agentskills.io open standard; portable across compatible agents", "Bundled script execution not yet supported; inline-only skill bodies"]
+      - ["Resolve Satellite", "Security / Infra Teams", "GA (K8s + ECS Fargate)", "On-prem data gateway; applies PII redaction before transmission to cloud", "No independent third-party security audit of Satellite published"]
+    notes: "Maturity statuses and differentiators are based on official Resolve AI product documentation and customer case studies (company-authored). Diligence gaps reflect absence of public evidence rather than confirmed deficiencies."
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE007
+      - CE008
+      - CE012
+      - CE014
+      - CE029
+
+  - id: TE002
+    title: Resolve AI Workflow and Use-Case Summary
+    columns:
+      - "User Job"
+      - "Prior Workflow"
+      - "Resolve AI Solution"
+      - "Documented Benefit"
+      - "Limitation / Caveat"
+    rows:
+      - ["Alert triage on-call", "Manual log/metric review across dashboards before pager fires", "On-Call agent auto-triages, posts evidence-backed hypothesis to Slack", "87% faster root cause at DoorDash; <10 min RCA at Coinbase", "Benefits from company-authored case studies; no independent control condition"]
+      - ["Live incident coordination", "Multi-engineer bridge call; manual cross-tool investigation", "Incidents agent investigates in parallel; engineers steer via Workbench or Slack", "30–75% fewer engineers per incident (Coinbase, Zscaler, DoorDash)", "Outcome ranges across customers; incident severity and tooling access vary"]
+      - ["Production Q&A / day-to-day context", "Query Datadog/Grafana manually or ask a colleague", "Natural-language queries to Resolve AI in Slack; returns telemetry-backed answers", "250+ production sessions per week at Coinbase", "Engagement data from company case study; no third-party usage audit"]
+      - ["Code-change impact attribution", "Manual deploy history review to correlate changes to anomalies", "Git integration auto-correlates deployments, commits, and Terraform events to telemetry spikes", "DoorDash: agent identified root cause 105 min before human investigation did", "Requires Git integration with appropriate repo access; write-back creates PR proposals only"]
+      - ["Automated operational reporting", "Manual report generation from dashboards on engineer time", "Background agents run on schedule or trigger (shift handoffs, daily 'what breached' reports)", "Reduces recurring toil (Coinbase: engineers auto-receive daily SLO breach summaries)", "Report quality depends on completeness of team knowledge and runbook configuration"]
+    notes: "Documented benefits are from company-published case studies authored by Resolve AI; all metrics are customer-reported under vendor oversight. No randomized controlled trials or third-party audits of these results are publicly available."
+    claimRefs:
+      - CE002
+      - CE003
+      - CE004
+      - CE032
+      - CE033
+      - CE034
+      - CE035
+      - CE036
+
+  - id: TE003
+    title: Technology and Operating Architecture
+    columns:
+      - "Layer / Component"
+      - "Role"
+      - "Key Dependency"
+      - "Risk"
+    rows:
+      - ["Frontier LLMs (GPT/Claude class)", "Generate investigation hypotheses, reasoning chains, and remediation proposals", "Third-party LLM provider availability and pricing", "Provider outage, model version changes, or cost increases disrupt investigation quality and economics"]
+      - ["Domain-Specialized Models (Labs)", "Post-trained models for telemetry reasoning and production-domain tasks", "Resolve AI's own GPU training infrastructure and enterprise data partnerships", "Pre-production; no published evaluation benchmarks; timeline for production deployment undisclosed"]
+      - ["Context Engine / Knowledge Graph", "Maintain queryable graph of services, dependencies, deployments, alerts, and team knowledge", "Quality of customer integrations; Satellite configuration accuracy", "Graph accuracy degrades on misconfigured integrations or environment naming mismatches"]
+      - ["Resolve Satellite (K8s / ECS)", "Secure on-prem gateway; DNS tap; PII redaction; observability query proxy", "Customer-operated Kubernetes or ECS cluster; customer infra team maintenance", "Misconfiguration silently blocks investigation data; customer ops team owns uptime"]
+      - ["Integrations Layer (60+)", "Connect to observability, code, infra, and collaboration tools via API tokens, OAuth, webhooks", "Third-party API stability; rate limits; schema versioning", "Company claims schema changes, auth rotations, and rate limits are handled automatically; not independently verified"]
+      - ["Governed Actions Engine", "Execute approved mitigations (alert silence, PR creation) after human sign-off", "Separate from model inference; only executes on explicit approval", "Write permission misconfiguration could expand unintended action scope; mitigation action types limited to silencing and PR creation today"]
+    notes: "Architecture layer descriptions are derived from official Resolve AI documentation and product marketing. No independent third-party architectural audit has been published. Domain-specialized model capabilities are based on the Resolve AI Labs announcement (April 2026)."
+    claimRefs:
+      - CE007
+      - CE008
+      - CE009
+      - CE010
+      - CE011
+      - CE012
+      - CE013
+      - CE015
+      - CE028
+
+  - id: TE004
+    title: Trust, Quality, and Compliance Controls
+    columns:
+      - "Control / Certification"
+      - "Status"
+      - "Scope"
+      - "Gap / Diligence Ask"
+    rows:
+      - ["SOC 2 Type II", "Certified", "Company-wide data security controls (trust center via Drata)", "Audit report not publicly accessible; recertification schedule and auditor not disclosed"]
+      - ["HIPAA", "Compliant (company claim)", "PHI handling controls; Satellite redaction layer covers PHI attributes", "Business Associate Agreement (BAA) availability and scope not documented publicly"]
+      - ["GDPR", "Compliant (company claim)", "PII processing controls; regex-based data redaction configurable per customer", "Data Processing Agreement (DPA) terms not publicly available for independent review"]
+      - ["AES-256 Encryption at Rest", "Implemented (company claim)", "All stored investigation data and metadata", "Key management practices, HSM usage, and rotation policy not disclosed"]
+      - ["TLS 1.2+ Encryption in Transit", "Implemented", "All traffic: customer env → Satellite → Resolve AI cloud", "Specific cipher suite configuration and certificate pinning policies not published"]
+      - ["SAML / OIDC SSO", "Available (Google, Okta, Azure AD)", "User authentication; automatic provisioning on first login", "SCIM provisioning for bulk user management not documented; FedRAMP status absent"]
+      - ["RBAC", "Implemented", "Member/Admin roles; org-level, team-level, and individual permission scopes; read-only as default", "Fine-grained namespace-level isolation (e.g., read-only access to specific K8s namespaces) limited to Satellite configuration; enterprise-tier details require vendor contact"]
+    notes: "Status markings are based on official Resolve AI security documentation, product marketing, and trust center presence. Independent audit reports are not publicly available. Compliance claims have not been verified against regulatory definitions."
+    claimRefs:
+      - CE021
+      - CE022
+      - CE023
+      - CE024
+      - CE025
+      - CE026
+
+  - id: TE005
+    title: Product Roadmap and Development Stage
+    columns:
+      - "Feature / Milestone"
+      - "Status (as of June 2026)"
+      - "Implication"
+      - "Source"
+    rows:
+      - ["Resolve AI Labs (domain-specific model research)", "Launched April 2026; pre-production models", "Long-term moat via proprietary post-trained models; evaluation methodology and timelines undisclosed", "Official announcement, resolve.ai/news (April 16, 2026)"]
+      - ["MCP Server / Resolve API", "Beta", "Enables programmatic agent-to-agent interop; agents like Claude Code can query Resolve natively; production readiness not committed", "docs.resolve.ai/resolve-api-and-mcp-server-beta"]
+      - ["MS Teams Integration", "Beta", "Extends platform to Teams-centric enterprise customers; full feature parity with Slack integration unclear", "docs.resolve.ai (App for MS Teams noted as Beta in navigation)"]
+      - ["Bundled Script Execution in Skills", "On roadmap (not yet available)", "Would allow executable code packages alongside procedural skill instructions; currently inline-only", "docs.resolve.ai/skills (explicit roadmap note)"]
+      - ["Supervised Remediation (capacity planning, auto-rollback)", "Planned (referenced in Zscaler case study)", "Extends from alert silencing / PR proposals to capacity planning and supervised action execution; would expand automation scope", "resolve.ai/customers/zscaler (Zscaler future expansion reference)"]
+    notes: "Roadmap items are based on company announcements, documentation notes, and customer case study future-state references. No committed delivery dates exist in the public record for any roadmap item. Status reflects information available as of the report run date (2026-06-19)."
+    claimRefs:
+      - CE017
+      - CE019
+      - CE028
+      - CE039
+      - CE040
+
+figures:
+  - id: FE001
+    title: Resolve AI Platform Architecture Stack
+    type: stack
+    layout: standard
+    summary: >-
+      Six-layer view of the Resolve AI platform from human operators down to production
+      data sources, showing agent types, the platform core, the Satellite data gateway,
+      and the LLM dependency.
+    data:
+      layers:
+        - label: "Human Operators"
+          detail: "On-call engineers, incident commanders, SRE and platform engineers who direct agent actions and approve write operations"
+        - label: "Agent Interfaces"
+          detail: "Slack App (GA), MS Teams (Beta), Workbench UI (GA), REST API (GA), MCP Server (Beta at app0.resolve.ai/mcp)"
+        - label: "Agent Layer"
+          detail: "On-Call Agent, Incidents Agent, Background Agents, Custom Agents (BYO via MCP/API/Skills)"
+        - label: "Platform Core"
+          detail: "Context Engine (knowledge graph of services/deps/deploys/knowledge), Model Orchestration (frontier + domain-specialized models), Governed Actions Engine (HITL-gated write execution), Skills Engine (agentskills.io)"
+        - label: "Data Gateway"
+          detail: "Resolve Satellite on Kubernetes (PVC) or AWS ECS Fargate (EFS); regex PII/PHI redaction; DNS tap; environment-scoped config controls"
+        - label: "Production Data Sources"
+          detail: "Telemetry (Datadog, Grafana, Prometheus, Loki, Sentry, New Relic), Code repos (GitHub/GitLab/Bitbucket/ADO/GHE), Infra APIs (AWS/GCP/K8s), Team Knowledge (Notion/Confluence/Google Drive/Runbooks)"
+    approximationNotes: >-
+      Layer boundaries are logical, not physical deployment boundaries. Frontier LLM
+      providers (e.g., OpenAI, Anthropic) sit between Platform Core and external
+      dependencies but are not shown as a discrete layer; they are called from the
+      Model Orchestration component. Architecture is based on official Resolve AI product
+      documentation; no independent architectural audit exists.
+    claimRefs:
+      - CE007
+      - CE008
+      - CE009
+      - CE010
+      - CE012
+
+  - id: FE002
+    title: Resolve AI Autonomous Incident Investigation Flow
+    type: flow
+    layout: standard
+    summary: >-
+      End-to-end flow from alert firing through multi-hypothesis parallel investigation,
+      causal timeline construction, and human-in-the-loop mitigation approval.
+    data:
+      nodes:
+        - id: alert_fire
+          label: "Alert Fires in Monitoring Tool (Datadog, Grafana, Prometheus, etc.)"
+        - id: receive_alert
+          label: "Resolve AI Receives Alert via Integration"
+        - id: consult_graph
+          label: "Knowledge Graph Consulted (services, deps, recent deploys)"
+        - id: plan_investigation
+          label: "Multi-Hypothesis Investigation Planned"
+        - id: parallel_gather
+          label: "Parallel Evidence Gathering (Logs, Metrics, Traces, Deploys, Code, Infra)"
+        - id: causal_timeline
+          label: "Causal Timeline Constructed"
+        - id: hypothesis_posted
+          label: "Root Cause Hypothesis Posted (Slack / Workbench)"
+        - id: engineer_review
+          label: "Engineer Reviews Findings"
+        - id: mitigation_proposed
+          label: "Mitigation Proposed (Alert Silence / PR / Runbook)"
+        - id: human_approves
+          label: "Human Explicitly Approves Action"
+        - id: action_executed
+          label: "Governed Engine Executes Action (Separate from Model)"
+    approximationNotes: >-
+      Flow is reconstructed from official Resolve AI documentation, product overview
+      pages, and customer case study descriptions. The parallel evidence gathering step
+      is described as multi-agent but the number of concurrent agent threads and evidence
+      sources per investigation is not publicly specified.
+    claimRefs:
+      - CE002
+      - CE010
+      - CE011
+      - CE041
+
+  - id: FE003
+    title: Resolve AI Critical Dependency Map
+    type: dag
+    layout: wide
+    summary: >-
+      DAG of Resolve AI's key technical dependencies, showing data flows between the
+      customer production environment, the Resolve Satellite, Resolve AI cloud, frontier
+      LLM providers, and external MCP clients.
+    data:
+      nodes:
+        - id: resolve_cloud
+          label: "Resolve AI Cloud Platform"
+        - id: frontier_llm
+          label: "Frontier LLM Providers (GPT / Claude class)"
+        - id: satellite
+          label: "Resolve Satellite (Customer K8s / ECS)"
+        - id: telemetry
+          label: "Customer Telemetry (Datadog, Grafana, Prometheus, Loki)"
+        - id: code_repos
+          label: "Code Repositories (GitHub, GitLab, Bitbucket, ADO, GHE)"
+        - id: infra_apis
+          label: "Customer Infrastructure APIs (AWS, GCP, Kubernetes)"
+        - id: knowledge_stores
+          label: "Team Knowledge (Notion, Confluence, Google Drive)"
+        - id: collab_tools
+          label: "Collaboration Tools (Slack, MS Teams)"
+        - id: mcp_clients
+          label: "External MCP Clients (Claude Code, Cursor, custom agents)"
+      edges:
+        - from: satellite
+          to: resolve_cloud
+          label: "TLS 1.2+; data redacted pre-transmission"
+        - from: resolve_cloud
+          to: frontier_llm
+          label: "LLM inference API calls"
+        - from: satellite
+          to: telemetry
+          label: "Read-only query proxy"
+        - from: satellite
+          to: infra_apis
+          label: "K8s API / DNS tap scraping"
+        - from: resolve_cloud
+          to: code_repos
+          label: "Read (+ write for PR proposals, human-approved)"
+        - from: resolve_cloud
+          to: knowledge_stores
+          label: "Read-only knowledge ingestion"
+        - from: resolve_cloud
+          to: collab_tools
+          label: "Bot integration (Slack API / Teams Bot)"
+        - from: mcp_clients
+          to: resolve_cloud
+          label: "MCP Streamable HTTP (Beta)"
+    approximationNotes: >-
+      Dependency relationships derived from official Resolve AI technical documentation.
+      LLM provider identities are inferred from market norms; Resolve AI has not
+      publicly named specific model providers. The MCP edge reflects Beta status.
+    claimRefs:
+      - CE009
+      - CE012
+      - CE015
+      - CE016
+      - CE018
+
+  - id: FE004
+    title: Resolve AI Product Maturity and Capability Map
+    type: matrix
+    layout: wide
+    summary: >-
+      Assessment of maturity level, evidence basis, and key gaps across eight platform
+      capabilities as of June 2026.
+    data:
+      columns:
+        - "Maturity Level"
+        - "Evidence Basis"
+        - "Key Gap"
+      rows:
+        - label: "On-Call Agent"
+          values: ["GA / Production-Validated", "5 named customer case studies with quantified outcomes (DoorDash, Coinbase, Zscaler, Salesforce, Blueground)", "No SLA commitments or p95 investigation latency published"]
+        - label: "Incidents Agent (Multi-agent RCA)"
+          values: ["GA / Production-Validated", "DoorDash, Coinbase, Zscaler case studies; 60–87% improvement claims", "All performance data from company-authored case studies; no independent benchmarks"]
+        - label: "Background Agents (Operational Tasks)"
+          values: ["GA", "Company docs + Coinbase (daily SLO reports)", "Supported workflow scope not exhaustively documented"]
+        - label: "Custom Agent / MCP Interface"
+          values: ["Beta", "REST API + MCP server docs at docs.resolve.ai", "Beta status; GA timeline and production SLA not committed"]
+        - label: "Skills Engine (agentskills.io)"
+          values: ["GA (inline only)", "Open standard; skill docs and templates published", "Bundled script execution on roadmap only; skills are inline-text today"]
+        - label: "Git Code Remediation (PR proposals)"
+          values: ["GA (HITL)", "Security and git docs confirm human-approval model", "Source code access required; creates PR proposals only—no autonomous merge"]
+        - label: "Domain-Specific Models (Labs)"
+          values: ["Research / Pre-production", "April 2026 Labs launch + Dhruv Mahajan (ex-Meta Llama) hire confirmed", "No published model evals, architecture details, or production deployment timeline"]
+        - label: "Resolve Satellite (Data Gateway)"
+          values: ["GA (K8s + ECS Fargate)", "Detailed satellite docs with K8s and ECS deployment instructions", "No independent third-party security audit of satellite agent published"]
+    approximationNotes: >-
+      Maturity assessments are based on official documentation, product page language,
+      and customer case study evidence as of June 2026. "Production-Validated" denotes
+      presence of at least one published customer case study with outcome metrics.
+      All evidence is company-sourced.
+    claimRefs:
+      - CE001
+      - CE004
+      - CE012
+      - CE017
+      - CE019
+      - CE028
+      - CE029
+      - CE039
+
+callouts:
+  - calloutType: strength
+    title: OpenTelemetry Co-Creator Pedigree Yields Structural Domain Advantage
+    body: >-
+      Founders Spiros Xanthos and Mayank Agarwal co-created OpenTelemetry—the CNCF-graduated
+      open-source telemetry standard adopted across thousands of enterprise environments—
+      giving Resolve AI deep, first-principles knowledge of how production telemetry is
+      instrumented, transported, and queried. This directly informs the platform's ability
+      to reason across fragmented signals and positions the team credibly with the SRE and
+      platform engineering audiences who operate OpenTelemetry stacks.
+    claimRefs:
+      - CE027
+      - CE030
+
+  - calloutType: risk
+    title: All Quantified Performance Claims Are Company-Authored; No Independent Validation Exists
+    body: >-
+      Every documented MTTR improvement (60–87% across five customers) derives from
+      Resolve AI-authored case studies with no independent control condition, randomized
+      methodology, or third-party audit. G2 shows zero published customer reviews as of
+      October 2025. The company is absent from independent AI SRE comparison matrices
+      (Fundesk, 2026). Any diligence or procurement decision relying on the published
+      performance numbers should independently verify outcomes with reference calls
+      and pilot-phase measurement against a pre-agreed baseline MTTR.
+    claimRefs:
+      - CE037
+      - CE038
+
+  - calloutType: insight
+    title: Three-Phase Autonomy Roadmap Signals Shift from HITL to HOTL Operations
+    body: >-
+      Resolve AI Labs frames a three-phase autonomy progression: AI-Assisted (engineer in
+      driver's seat), HITL (AI proposes, human approves), and HOTL (AI acts within guardrails,
+      humans define policy and handle exceptions). The platform is squarely in Phase 2 for
+      most enterprise use cases today. The Labs investment in domain-specific model building
+      and simulation environments is the technical prerequisite for Phase 3. If Lab research
+      produces reliable models with high confidence calibration, the autonomous remediation
+      market will shift significantly—from approval-gated to policy-gated actions at scale.
+    claimRefs:
+      - CE040
+      - CE028
+
+  - calloutType: recommendation
+    title: Require Reference Calls and Pilot Baseline Before Contract Sign
+    body: >-
+      Given the absence of independent benchmark validation, any enterprise evaluating
+      Resolve AI should: (1) require reference calls with at least two named customers
+      in a comparable infrastructure environment, (2) establish a pre-pilot MTTR and
+      alert-triage baseline with explicit measurement methodology agreed in writing,
+      (3) review the SOC 2 Type II audit report under NDA before sharing production
+      credentials, and (4) confirm BAA availability if PHI is present in the telemetry
+      environment.
+    claimRefs:
+      - CE021
+      - CE038
+
+localEvidence:
+  searchQueries:
+    - query: "Resolve AI product architecture knowledge graph multi-agent platform technical design"
+      engine: "web"
+      hits: 12
+      retainedSourceRefs: [SE001, SE002, SE012]
+    - query: "Resolve AI integrations list observability telemetry code infrastructure"
+      engine: "web"
+      hits: 8
+      retainedSourceRefs: [SE003, SE014]
+    - query: "Resolve AI Resolve Satellite Kubernetes ECS deployment architecture documentation"
+      engine: "web"
+      hits: 6
+      retainedSourceRefs: [SE013]
+    - query: "Resolve AI SOC 2 HIPAA GDPR compliance security certification trust center"
+      engine: "web"
+      hits: 9
+      retainedSourceRefs: [SE010, SE017, SE024]
+    - query: "Resolve AI MCP server API beta 2026 programmatic investigation agent integration"
+      engine: "web"
+      hits: 4
+      retainedSourceRefs: [SE023]
+    - query: "Resolve AI Labs domain-specific models 2026 announcement Dhruv Mahajan research"
+      engine: "web"
+      hits: 11
+      retainedSourceRefs: [SE005, SE006, SE026, SE028]
+    - query: "Resolve AI customer deployments outcomes 2026 DoorDash Coinbase Zscaler Salesforce"
+      engine: "web"
+      hits: 15
+      retainedSourceRefs: [SE007, SE008, SE009, SE010, SE011]
+    - query: "Resolve AI product roadmap launches 2026 new features milestones"
+      engine: "web"
+      hits: 7
+      retainedSourceRefs: [SE005, SE017, SE023]
+    - query: "Resolve AI OpenTelemetry founders technical differentiation Spiros Xanthos Mayank Agarwal"
+      engine: "web"
+      hits: 8
+      retainedSourceRefs: [SE025, SE027, SE030]
+    - query: "AI SRE agent platform comparison Resolve AI competitors Datadog PagerDuty 2026"
+      engine: "web"
+      hits: 14
+      retainedSourceRefs: [SE031, SE032, SE033]
+    - query: "Resolve AI GitHub developer community agentskills open standard adoption"
+      engine: "web"
+      hits: 5
+      retainedSourceRefs: [SE029, SE034, SE035]
+    - query: "Resolve AI git integration GitHub GitLab Azure DevOps Bitbucket enterprise deployment"
+      engine: "web"
+      hits: 4
+      retainedSourceRefs: [SE019]
+    - query: "Resolve AI Slack Teams app integration documentation auto-investigation"
+      engine: "web"
+      hits: 5
+      retainedSourceRefs: [SE016]
+    - query: "Resolve AI skills knowledge runbooks workflow automation agentskills specification"
+      engine: "web"
+      hits: 6
+      retainedSourceRefs: [SE020, SE021]
+    - query: "Resolve AI data redaction PII PHI sensitive data security Satellite architecture"
+      engine: "web"
+      hits: 5
+      retainedSourceRefs: [SE013, SE017]
+
+  researchQuestions:
+    - id: QE001
+      question: "What are the primary product modules and agents offered by Resolve AI, and what is the current maturity status of each?"
+      type: enumeration
+      targets: ["contentRequirements/0", "contentRequirements/1", "plannedTables/product-module-asset-matrix"]
+      status: answered
+
+    - id: QE002
+      question: "What specific observability tools, infrastructure platforms, and code repositories does Resolve AI integrate with across its 60+ integration library?"
+      type: enumeration
+      targets: ["contentRequirements/3", "plannedTables/technology-operating-architecture-table"]
+      status: answered
+
+    - id: QE003
+      question: "How does the Resolve Satellite agent work architecturally to provide data access while preserving customer data sovereignty?"
+      type: mechanism
+      targets: ["contentRequirements/2", "plannedTables/technology-operating-architecture-table"]
+      status: answered
+
+    - id: QE004
+      question: "What human approval controls exist for write operations in Resolve AI's platform, and how are they implemented technically?"
+      type: mechanism
+      targets: ["contentRequirements/2", "contentRequirements/5"]
+      status: answered
+
+    - id: QE005
+      question: "What specific security certifications does Resolve AI hold, and what is the scope and auditor of each?"
+      type: verification
+      targets: ["contentRequirements/5", "plannedTables/trust-quality-compliance-table"]
+      status: answered
+
+    - id: QE006
+      question: "How does Resolve AI's knowledge graph construction work, and what data sources does it continuously ingest to build and update the graph?"
+      type: mechanism
+      targets: ["contentRequirements/2", "plannedTables/technology-operating-architecture-table"]
+      status: answered
+
+    - id: QE007
+      question: "What is the MCP server endpoint and what API operations does it expose to external agents?"
+      type: verification
+      targets: ["contentRequirements/3", "contentRequirements/4"]
+      status: answered
+
+    - id: QE008
+      question: "What is the current status and feature set of the MS Teams integration compared to the Slack integration?"
+      type: comparison
+      targets: ["contentRequirements/3", "plannedTables/roadmap-release-development-stage-table"]
+      status: answered
+
+    - id: QE009
+      question: "How does Resolve AI's domain-specific model approach at Resolve AI Labs differ technically from using general-purpose frontier models for production incident investigation?"
+      type: comparison
+      targets: ["contentRequirements/4", "plannedTables/roadmap-release-development-stage-table"]
+      status: answered
+
+    - id: QE010
+      question: "What published, independently verified performance benchmarks exist for Resolve AI's MTTR reduction claims beyond company-authored case studies?"
+      type: adverse
+      targets: ["contentRequirements/0", "plannedTables/workflow-use-case-table"]
+      status: partial
+
+    - id: QE011
+      question: "What measurable improvements have Resolve AI customers documented in published case studies, and how do they vary across customers?"
+      type: quantification
+      targets: ["contentRequirements/0", "plannedTables/workflow-use-case-table"]
+      status: answered
+
+    - id: QE012
+      question: "What is the deployment timeline and committed feature scope of Resolve AI Labs' domain-specific model research program?"
+      type: freshness
+      targets: ["contentRequirements/3", "plannedTables/roadmap-release-development-stage-table"]
+      status: unresolved
+
+    - id: QE013
+      question: "How does Resolve AI's three-phase autonomy roadmap (AI-Assisted → HITL → HOTL) progress, and what triggers or thresholds govern transition between phases?"
+      type: mechanism
+      targets: ["contentRequirements/3", "plannedTables/roadmap-release-development-stage-table"]
+      status: answered
+
+    - id: QE014
+      question: "What code repositories are supported by the Git integration, under which deployment configurations (cloud vs. satellite), and what authentication methods apply?"
+      type: enumeration
+      targets: ["contentRequirements/3", "plannedTables/technology-operating-architecture-table"]
+      status: answered
+
+    - id: QE015
+      question: "How does the Skills system's progressive disclosure mechanism work to avoid context bloat in agent reasoning, and what is the skill activation model?"
+      type: mechanism
+      targets: ["contentRequirements/2", "plannedTables/technology-operating-architecture-table"]
+      status: answered
+
+    - id: QE016
+      question: "What data does the Resolve Satellite collect, how frequently, and what data is guaranteed to remain within the customer perimeter?"
+      type: verification
+      targets: ["contentRequirements/5", "plannedTables/trust-quality-compliance-table"]
+      status: answered
+
+    - id: QE017
+      question: "How is Resolve AI's platform differentiated from embedded AI features in Datadog Bits AI SRE, PagerDuty SRE Agent, New Relic SRE Agent, and incident.io?"
+      type: comparison
+      targets: ["contentRequirements/4", "plannedFigures/product-maturity-capability-map"]
+      status: answered
+
+    - id: QE018
+      question: "What does third-party independent coverage of Resolve AI's product reveal, and how does its presence in analyst comparisons compare to observability incumbents?"
+      type: adverse
+      targets: ["contentRequirements/4", "plannedFigures/product-maturity-capability-map"]
+      status: answered
+
+    - id: QE019
+      question: "What technical evidence supports the claim that Resolve AI's agents build causal timelines across code, infrastructure, and telemetry in production environments?"
+      type: verification
+      targets: ["contentRequirements/2", "plannedTables/workflow-use-case-table"]
+      status: answered
+
+    - id: QE020
+      question: "What is the current remediation capability scope—which actions can be auto-proposed by the model and which can be auto-executed, and under what conditions?"
+      type: enumeration
+      targets: ["contentRequirements/1", "contentRequirements/3"]
+      status: answered
+
+    - id: QE021
+      question: "What training data composition, evaluation methodology, and model architectures are used or planned by Resolve AI Labs for domain-specific production models?"
+      type: verification
+      targets: ["contentRequirements/4", "plannedTables/roadmap-release-development-stage-table"]
+      status: unresolved
+
+    - id: QE022
+      question: "How does the founding team's OpenTelemetry co-creation background translate into specific technical advantages for Resolve AI's platform design?"
+      type: mechanism
+      targets: ["contentRequirements/4", "plannedFigures/product-maturity-capability-map"]
+      status: answered
+
+    - id: QE023
+      question: "What are the documented failure modes, limitations, or known weaknesses of Resolve AI's agent reasoning in production environments?"
+      type: adverse
+      targets: ["contentRequirements/0", "contentRequirements/3"]
+      status: partial
+
+    - id: QE024
+      question: "What is the current functional scope and release status of the Resolve API and MCP Server, and when will they reach general availability?"
+      type: freshness
+      targets: ["contentRequirements/3", "plannedTables/roadmap-release-development-stage-table"]
+      status: answered
+
+    - id: QE025
+      question: "How does the production knowledge graph update continuously as deployments, incidents, and telemetry patterns change over time?"
+      type: mechanism
+      targets: ["contentRequirements/2", "plannedTables/technology-operating-architecture-table"]
+      status: answered
+
+    - id: QE026
+      question: "What compliance standards does Resolve AI support beyond SOC 2 Type II, and are there regulatory gaps for specific industries or geographies?"
+      type: verification
+      targets: ["contentRequirements/5", "plannedTables/trust-quality-compliance-table"]
+      status: answered
+
+    - id: QE027
+      question: "What specific product roadmap commitments—with timelines—has Resolve AI made publicly beyond the Resolve AI Labs research launch?"
+      type: freshness
+      targets: ["contentRequirements/3", "plannedTables/roadmap-release-development-stage-table"]
+      status: unresolved
+
+  sources:
+    - id: SE001
+      publisher: "Resolve AI"
+      title: "Resolve.ai – AI for prod (Homepage)"
+      url: "https://resolve.ai"
+      date: "2026-06-19"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["product overview", "AI for prod", "on-call", "incidents", "integrations", "security"]
+      keyQuote: "AI agents that run your software, so your engineers can get back to building"
+
+    - id: SE002
+      publisher: "Resolve AI"
+      title: "Product Overview – Resolve AI"
+      url: "https://resolve.ai/product/overview"
+      date: "2026-06-19"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["product architecture", "agents", "platform", "models", "context", "integrations", "security"]
+      keyQuote: "60+ integrations across your code, infrastructure, telemetry, knowledge, and team tools."
+
+    - id: SE003
+      publisher: "Resolve AI"
+      title: "Resolve AI Integrations"
+      url: "https://resolve.ai/integrations"
+      date: "2026-06-19"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["integrations", "MCP", "APIs", "webhooks", "telemetry", "infrastructure", "code"]
+      keyQuote: "Easily connect Resolve AI with your observability, infra, code, and custom tools using MCP, APIs, and webhooks."
+
+    - id: SE004
+      publisher: "Resolve AI"
+      title: "Security – Resolve.ai"
+      url: "https://resolve.ai/security"
+      date: "2026-06-19"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["security", "SOC 2", "GDPR", "HIPAA", "satellite", "encryption", "SSO", "RBAC"]
+      keyQuote: "SOC 2 Type II certification. Compliant with GDPR HIPAA to handle PII and PHI data."
+
+    - id: SE005
+      publisher: "Resolve AI"
+      title: "Resolve AI Labs"
+      url: "https://resolve.ai/labs"
+      date: "2026-06-19"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["Labs", "domain-specific models", "autonomy roadmap", "evaluation", "synthetic data"]
+      keyQuote: "Phase 3 – HOTL: AI acts within guardrails. Autonomous operation for defined scenarios, with humans-on-the-loop (HOTL) setting policy and handling exceptions."
+
+    - id: SE006
+      publisher: "Resolve AI"
+      title: "Resolve AI announces Series A Extension at a $1.5B valuation and launches Resolve AI Labs"
+      url: "https://resolve.ai/news/Series-A-extension-and-Resolve-AI-Labs"
+      date: "2026-04-16"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["Labs", "domain-specific models", "evaluation frameworks", "synthetic data", "agentic systems", "governance"]
+      keyQuote: "Foundation models are improving quickly, but they are still not enough for production operations."
+
+    - id: SE007
+      publisher: "Resolve AI"
+      title: "Powering Uninterrupted Ads for DoorDash Advertisers"
+      url: "https://resolve.ai/customers/doordash"
+      date: "2026-06-19"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: customer-proof
+      reputationTier: medium
+      independence: customer
+      topics: ["DoorDash", "incident response", "MTTR", "root cause", "investigation time", "cross-team"]
+      keyQuote: "Up to 87% reduction in time to root cause."
+
+    - id: SE008
+      publisher: "Resolve AI"
+      title: "Making the Global Crypto Backbone More Resilient – Coinbase"
+      url: "https://resolve.ai/customers/coinbase"
+      date: "2026-06-19"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: customer-proof
+      reputationTier: medium
+      independence: customer
+      topics: ["Coinbase", "investigation time", "Kubernetes", "Datadog", "daily usage", "production context"]
+      keyQuote: "Coding with production context: 250+ sessions per week. Investigation time: 72% faster. Time to root cause: <10 minutes."
+
+    - id: SE009
+      publisher: "Resolve AI"
+      title: "Accelerating Incident Response for a Leading Zero-Trust Network – Zscaler"
+      url: "https://resolve.ai/customers/zscaler"
+      date: "2026-06-19"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: customer-proof
+      reputationTier: medium
+      independence: customer
+      topics: ["Zscaler", "investigation time", "alert volume", "data center", "MTTR", "engineer reduction"]
+      keyQuote: "75 percent reduction in incident investigation time. More than 30 percent fewer engineers involved per incident."
+
+    - id: SE010
+      publisher: "Resolve AI"
+      title: "From Hours to Minutes for the World's Leading CRM – Salesforce"
+      url: "https://resolve.ai/customers/salesforce"
+      date: "2026-06-19"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: customer-proof
+      reputationTier: medium
+      independence: customer
+      topics: ["Salesforce", "MTTR reduction", "alert triage", "investigation time", "10-minute RCA"]
+      keyQuote: "~60% reduction in mean time to resolve (MTTR). ~70% faster alert triage. 10 minutes to root cause in one documented incident."
+
+    - id: SE011
+      publisher: "Resolve AI"
+      title: "Luxury Housing Meets Engineering Excellence – Blueground"
+      url: "https://resolve.ai/customers/blueground"
+      date: "2026-06-19"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: customer-proof
+      reputationTier: medium
+      independence: customer
+      topics: ["Blueground", "autonomous RCA", "alert investigation", "developer productivity"]
+      keyQuote: "4x improvement. 100% of alerts investigated."
+
+    - id: SE012
+      publisher: "Resolve AI"
+      title: "About Resolve AI – Resolve AI Docs"
+      url: "https://docs.resolve.ai"
+      date: "2026-06-19"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["product overview", "on-call", "incidents", "operational workflows", "architecture", "security"]
+      keyQuote: "resolve ai is ai for prod it works across your code, infrastructure, telemetry, and knowledge"
+
+    - id: SE013
+      publisher: "Resolve AI"
+      title: "Resolve Satellite – Resolve AI Docs"
+      url: "https://docs.resolve.ai/resolve-satellite"
+      date: "2026-06-19"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["Satellite", "Kubernetes", "ECS Fargate", "data redaction", "DNS tap", "PII", "deployment"]
+      keyQuote: "the satellite scrapes kubernetes apis and dns tap proxies queries to observability backends applies redaction policies before transmitting data to resolve ai's cloud"
+
+    - id: SE014
+      publisher: "Resolve AI"
+      title: "Integrations – Resolve AI Docs"
+      url: "https://docs.resolve.ai/integrations"
+      date: "2026-06-19"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["integrations", "observability", "read-only", "API token", "environment matching"]
+      keyQuote: "resolve ai integrates with your existing stack to query logs, metrics, traces, dashboards, code, infrastructure changes and more"
+
+    - id: SE015
+      publisher: "Resolve AI"
+      title: "Single Sign On (SSO) – Resolve AI Docs"
+      url: "https://docs.resolve.ai/single-sign-on-sso"
+      date: "2026-06-19"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["SSO", "Google", "Okta", "Azure AD", "RBAC", "Member", "Admin", "role assignment"]
+
+    - id: SE016
+      publisher: "Resolve AI"
+      title: "App for Slack – Resolve AI Docs"
+      url: "https://docs.resolve.ai/app-for-slack"
+      date: "2026-06-19"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["Slack", "auto-investigation", "alert channel", "investigation updates", "OAuth scopes", "feedback"]
+      keyQuote: "use the resolve app for slack to investigate alerts autonomously in your incident channels"
+
+    - id: SE017
+      publisher: "Resolve AI"
+      title: "Security – Resolve AI Docs"
+      url: "https://docs.resolve.ai/security"
+      date: "2026-06-19"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["SOC 2 Type II", "HIPAA", "GDPR", "AES-256", "TLS 1.2", "SAML", "OIDC", "encryption", "read-only access"]
+      keyQuote: "resolve ai is soc2 type 2, hipaa, and gdpr compliant. data encryption uses aes 256 encryption at rest and tls 1.2+"
+
+    - id: SE018
+      publisher: "Resolve AI"
+      title: "Playground Quickstart – Resolve AI Docs"
+      url: "https://docs.resolve.ai/playground-quickstart"
+      date: "2026-06-19"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["playground", "demo environment", "AWS EKS", "microservices", "evaluation", "onboarding"]
+      keyQuote: "you're connected to a live e commerce platform running on aws eks with 19 microservices it's a high fidelity simulation complete with real traffic, real errors, and real telemetry"
+
+    - id: SE019
+      publisher: "Resolve AI"
+      title: "Git – Resolve AI Docs"
+      url: "https://docs.resolve.ai/git"
+      date: "2026-06-19"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["Git", "GitHub", "GitLab", "Bitbucket", "Azure DevOps", "GHE Server", "cloud", "satellite", "PAT", "OAuth"]
+      keyQuote: "a single integration can cover github com, github enterprise (cloud or server), gitlab, bitbucket, azure devops, and self hosted git"
+
+    - id: SE020
+      publisher: "Resolve AI"
+      title: "Team Knowledge – Resolve AI Docs"
+      url: "https://docs.resolve.ai/team-knowledge"
+      date: "2026-06-19"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["knowledge graph", "team knowledge", "runbooks", "tribal knowledge", "two-tier model", "investigation quality"]
+
+    - id: SE021
+      publisher: "Resolve AI"
+      title: "Skills – Resolve AI Docs"
+      url: "https://docs.resolve.ai/skills"
+      date: "2026-06-19"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["Skills", "agentskills.io", "progressive disclosure", "procedures", "slash commands", "portability"]
+      keyQuote: "skills follow the open agent skills standard, the same format used by claude and a growing list of agentic tools"
+
+    - id: SE022
+      publisher: "Resolve AI"
+      title: "Mitigation Actions – Resolve AI Docs"
+      url: "https://docs.resolve.ai/mitigation-actions"
+      date: "2026-06-19"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["mitigation", "alert silencing", "human approval", "HITL", "write permissions", "audit trail", "safety"]
+      keyQuote: "the model never executes write operations directly… only after a human explicitly clicks 'approve' does the execution engine carry out the action"
+
+    - id: SE023
+      publisher: "Resolve AI"
+      title: "Resolve API & MCP Server (Beta) – Resolve AI Docs"
+      url: "https://docs.resolve.ai/resolve-api-and-mcp-server-beta"
+      date: "2026-06-19"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["MCP server", "REST API", "beta", "investigations", "programmatic access", "external agents", "Streamable HTTP"]
+      keyQuote: "connect any mcp compatible ai agent (claude code, cursor, etc.) to resolve. endpoint https://app0.resolve.ai/mcp transport streamable http"
+
+    - id: SE024
+      publisher: "Resolve AI"
+      title: "Trust Center – Resolve AI (powered by Drata)"
+      url: "https://trust.resolve.ai"
+      date: "2026-06-19"
+      accessDate: "2026-06-19"
+      accessStatus: js-only
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["SOC 2 Type II", "compliance", "trust center", "Drata"]
+
+    - id: SE025
+      publisher: "Greylock Partners"
+      title: "Introducing Resolve: An AI Production Engineer"
+      url: "https://greylock.com/portfolio-news/introducing-resolve/"
+      date: "2024-09-01"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: analyst-market-data
+      reputationTier: high
+      independence: partner
+      topics: ["product overview", "knowledge graph", "OpenTelemetry", "founding team", "agentic platform"]
+      keyQuote: "The platform constructs a comprehensive knowledge graph of a company's production environment, which its AI agent leverages to troubleshoot incidents, analyze source code changes, detect anomalies, query logs, and suggest remediation actions."
+
+    - id: SE026
+      publisher: "The AI Insider"
+      title: "Resolve AI Announces Series A Extension at $1.5B Valuation and Launches Resolve AI Labs"
+      url: "https://theaiinsider.tech/2026/04/17/resolve-ai-announces-series-a-extension-at-a-1-5b-valuation-and-launches-resolve-ai-labs-to-advance-ai-systems-for-complex-production-environments/"
+      date: "2026-04-17"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["Labs", "Dhruv Mahajan", "domain-specific models", "evaluation systems", "agentic systems", "post-training"]
+
+    - id: SE027
+      publisher: "Silicon Valley Daily"
+      title: "Resolve AI Lands $125 Million Led by Lightspeed"
+      url: "https://svdaily.com/2026/02/04/resolve-ai-lands-125-million-led-by-lightspeed/"
+      date: "2026-02-04"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["product description", "multi-agent", "custom models", "OpenTelemetry", "enterprise customers"]
+      keyQuote: "Resolve AI combines foundation and custom models, and training specialized agents that learn each organization's specific stack, business logic, and operational patterns."
+
+    - id: SE028
+      publisher: "StartupRise"
+      title: "Resolve AI Raises $40M Series A Extension at $1.5B Valuation"
+      url: "https://startuprise.io/resolve-ai-raises-40m-series-a-extension-at-1-5b-valuation/"
+      date: "2026-04-17"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: low
+      independence: independent
+      topics: ["Labs", "domain-specific models", "evaluation", "synthetic data", "simulation", "governance"]
+
+    - id: SE029
+      publisher: "Agent Skills"
+      title: "Agent Skills Overview – Agent Skills Open Standard"
+      url: "https://agentskills.io/home"
+      date: "2026-06-19"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: independent
+      topics: ["agentskills.io", "open standard", "skills format", "Claude", "cross-agent portability", "progressive disclosure"]
+      keyQuote: "Agent Skills are a lightweight, open format for extending AI agent capabilities with specialized knowledge and workflows."
+
+    - id: SE030
+      publisher: "OpenTelemetry"
+      title: "What is OpenTelemetry?"
+      url: "https://opentelemetry.io/docs/what-is-opentelemetry/"
+      date: "2026-06-19"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics: ["OpenTelemetry", "observability", "telemetry standard", "CNCF", "traces", "metrics", "logs"]
+      keyQuote: "OpenTelemetry is an observability framework and toolkit designed to facilitate the generation, export, and collection of telemetry data."
+
+    - id: SE031
+      publisher: "FundEsk"
+      title: "AI SRE Agents Explained: Platform Comparison and Pilot Guide for 2026"
+      url: "https://www.fundesk.io/ai-sre-agents-explained-platform-comparison-2026"
+      date: "2026-05-01"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics: ["AI SRE", "Datadog", "PagerDuty", "New Relic", "AWS DevOps Agent", "incident.io", "opensre", "Resolve AI absent from matrix"]
+      keyQuote: "Six agents own the conversation in 2026: Datadog Bits AI SRE, PagerDuty SRE Agent, New Relic SRE Agent, AWS DevOps Agent, incident.io AI SRE, and the open-source Tracer-Cloud opensre."
+
+    - id: SE032
+      publisher: "Viewpoint Analysis"
+      title: "AIOps Software Options 2026: Independent Buyer Guide"
+      url: "https://www.viewpointanalysis.com/post/aiops-software-options-2026"
+      date: "2026-01-01"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics: ["AIOps", "Dynatrace", "Splunk", "IBM", "ServiceNow", "PagerDuty", "BigPanda", "market landscape"]
+
+    - id: SE033
+      publisher: "AI Pedias"
+      title: "AI Incident Management & On-Call Compared 2026"
+      url: "https://en.ai-pedias.com/blog/ai-incident-management-oncall-2026"
+      date: "2026-01-01"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics: ["incident management", "PagerDuty", "incident.io", "Rootly", "AI SRE", "MTTR", "category overview"]
+
+    - id: SE034
+      publisher: "G2"
+      title: "Resolve.ai Reviews – G2"
+      url: "https://www.g2.com/products/resolve-ai/reviews"
+      accessDate: "2026-06-19"
+      accessStatus: ok
+      stance: adverse
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: independent
+      topics: ["reviews", "social proof", "community adoption", "no customer reviews", "G2"]
+      keyQuote: "This product hasn't been reviewed yet! Be the first to share your experience."
+
+    - id: SE035
+      publisher: "Resolve AI"
+      title: "resolveai – YouTube Channel"
+      url: "https://www.youtube.com/@resolveai"
+      date: "2026-06-19"
+      accessDate: "2026-06-19"
+      accessStatus: js-only
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: low
+      independence: company
+      topics: ["YouTube", "developer community", "public presence", "video content"]
+
+  claims:
+    - id: CE001
+      statement: "Resolve AI delivers a multi-agent platform organized around three core product areas: On-Call agent (autonomous triage), Incidents agent (multi-agent parallel RCA), and Background agents (scheduled/trigger-based operational workflows)."
+      type: company-claimed
+      topic: product architecture
+      sourceRefs: [SE001, SE002, SE012]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE001]
+
+    - id: CE002
+      statement: "The On-Call agent participates in every alert rotation, triaging alerts and posting a root-cause hypothesis with supporting evidence before the on-call engineer is paged."
+      type: company-claimed
+      topic: on-call agent
+      sourceRefs: [SE001, SE002]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE001]
+
+    - id: CE003
+      statement: "The Incidents agent launches multi-agent parallel investigation threads across code, infrastructure, and telemetry, building causal timelines and proposing fixes inside Slack or MS Teams incident channels."
+      type: company-claimed
+      topic: incidents agent
+      sourceRefs: [SE002, SE012]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE001]
+
+    - id: CE004
+      statement: "Background agents run operational workflows on a schedule or trigger, including deployment monitoring, operational reports, and resource optimization; mitigation actions (alert silencing, PR creation) require explicit human approval."
+      type: company-claimed
+      topic: background agents
+      sourceRefs: [SE002, SE022]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE001, QE020]
+
+    - id: CE005
+      statement: "The Workbench UI provides a visual investigation canvas where engineers steer incident agents during active investigations."
+      type: company-claimed
+      topic: workbench
+      sourceRefs: [SE002]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE001]
+
+    - id: CE006
+      statement: "Resolve AI provides a sandbox playground environment running a 19-microservice e-commerce application on AWS EKS with real traffic, real errors, and real telemetry, enabling prospective customers to evaluate the platform without connecting production data."
+      type: observed
+      topic: playground environment
+      sourceRefs: [SE018]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE019]
+
+    - id: CE007
+      statement: "Resolve AI's platform organizes into three functional layers: Context (continuously-updated knowledge graph of services, dependencies, deployments, and team knowledge), Models (frontier + domain-specialized model orchestration), and Actions (governed write execution behind mandatory human approval)."
+      type: company-claimed
+      topic: product architecture
+      sourceRefs: [SE002, SE025]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE003, QE006]
+
+    - id: CE008
+      statement: "The Context layer maintains a queryable graph that captures every investigation interaction, runbook read, incident resolution, and deployment event, making every future investigation smarter by retrieving organization-specific context."
+      type: company-claimed
+      topic: knowledge graph
+      sourceRefs: [SE020, SE012]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE006, QE025]
+
+    - id: CE009
+      statement: "The Models layer pairs third-party frontier language models with domain-specialized models post-trained on production operations telemetry, selecting the best model per task at inference time and handling model upgrade orchestration automatically."
+      type: company-claimed
+      topic: model architecture
+      sourceRefs: [SE002, SE006]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE009]
+
+    - id: CE010
+      statement: "Governed actions allow the platform to propose and execute alert silencing (Grafana, Datadog, Prometheus AlertManager, SumoLogic, Kloudfuse), PR creation, and runbook steps—all behind explicit human approval gates accessible via the Resolve UI or Slack buttons."
+      type: observed
+      topic: governed actions
+      sourceRefs: [SE022, SE002]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE004, QE020]
+
+    - id: CE011
+      statement: "The AI model that generates mitigation proposals has no direct access to write APIs; a separate execution engine—isolated from the model—carries out approved actions using encrypted customer credentials, providing a safety separation between reasoning and execution."
+      type: observed
+      topic: security architecture
+      sourceRefs: [SE017, SE022]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE004]
+
+    - id: CE012
+      statement: "The Resolve Satellite is a containerized agent deployable on Kubernetes (with PVC storage) or AWS ECS Fargate (with EFS storage), serving as a secure on-premises data gateway that applies regex-based PII/PHI redaction before transmitting any data to Resolve AI's cloud."
+      type: observed
+      topic: Satellite architecture
+      sourceRefs: [SE013, SE004]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE003, QE016]
+
+    - id: CE013
+      statement: "The Satellite scrapes Kubernetes APIs and DNS tap, proxies observability queries to backend platforms, and applies regex-based redaction for PII, PHI, and secrets before forwarding—ensuring raw telemetry does not leave the customer's perimeter."
+      type: observed
+      topic: Satellite architecture
+      sourceRefs: [SE013, SE017]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE016]
+
+    - id: CE014
+      statement: "Raw telemetry (logs, traces, metrics) is queried live and not retained by Resolve AI; only investigation summaries and metadata are cached in customer-isolated, customer-specific storage environments."
+      type: observed
+      topic: data retention
+      sourceRefs: [SE017]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE003]
+
+    - id: CE015
+      statement: "Resolve AI ships 60+ pre-built integrations covering telemetry (Datadog, Grafana, Prometheus, Sentry, New Relic, Loki), infrastructure (AWS, GCP, Kubernetes, AlertManager), code (GitHub, GitHub Enterprise, GitLab, Bitbucket, Azure DevOps), knowledge (Notion, Confluence, Google Drive), and collaboration (Slack, Teams, Linear)."
+      type: company-claimed
+      topic: integrations
+      sourceRefs: [SE001, SE002, SE003, SE014]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE002]
+
+    - id: CE016
+      statement: "Resolve AI exposes an MCP server at app0.resolve.ai/mcp using stateless Streamable HTTP transport, enabling any MCP-compatible agent (Claude Code, Cursor, custom agents) to call Resolve for investigation queries, investigation initiation, and historical lookups as native tool calls."
+      type: observed
+      topic: MCP extensibility
+      sourceRefs: [SE023]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE007]
+
+    - id: CE017
+      statement: "The Resolve REST API exposes endpoints for starting chat sessions, launching RCA-style deep investigations, listing investigations by time range and alert label filters, and retrieving full investigation reports with problem summaries, status updates, and root-cause theories."
+      type: observed
+      topic: REST API
+      sourceRefs: [SE023]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE007, QE024]
+
+    - id: CE018
+      statement: "The Git integration supports cloud-hosted execution (Resolve-managed infrastructure) or satellite-based execution (customer Kubernetes/ECS), covering GitHub.com (via Resolve AI's GitHub App), GitHub Enterprise Cloud and Server (bring-your-own app), GitLab, Bitbucket, Azure DevOps, and self-hosted Git via personal access tokens."
+      type: observed
+      topic: Git integration
+      sourceRefs: [SE019]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE014]
+
+    - id: CE019
+      statement: "For code remediation, Resolve AI proposes pull requests with suggested fixes after explicit human approval; PRs still require manual engineer review and merge—the platform never autonomously merges code changes."
+      type: observed
+      topic: code remediation
+      sourceRefs: [SE017, SE019]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE020]
+
+    - id: CE020
+      statement: "Resolve AI is available for procurement via AWS Marketplace (leveraging existing AWS agreements) and Slack Marketplace (one-click installation into Slack workspaces)."
+      type: company-claimed
+      topic: distribution
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE002]
+
+    - id: CE021
+      statement: "Resolve AI holds SOC 2 Type II certification and claims HIPAA and GDPR compliance, as documented through its Drata-powered trust center and official security documentation."
+      type: company-claimed
+      topic: compliance certifications
+      sourceRefs: [SE004, SE017, SE024]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE005, QE026]
+
+    - id: CE022
+      statement: "Resolve AI encrypts data at rest using AES-256 and all traffic in transit (customer environment → Satellite → Resolve AI cloud) using TLS 1.2+."
+      type: observed
+      topic: encryption
+      sourceRefs: [SE017]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE005]
+
+    - id: CE023
+      statement: "Resolve AI supports SAML and OIDC-based SSO via Google, Okta, and Azure AD, with automatic user provisioning on first login; RBAC distinguishes Member and Admin roles configurable from identity provider groups."
+      type: observed
+      topic: SSO and RBAC
+      sourceRefs: [SE015, SE017]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE005]
+
+    - id: CE024
+      statement: "Resolve AI enforces read-only access to observability data by default; write-permission integrations (alert silencing, PR creation) are opt-in features requiring explicit customer credential upgrade and separate human approval before any write action is executed."
+      type: observed
+      topic: security architecture
+      sourceRefs: [SE017, SE022]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE004]
+
+    - id: CE025
+      statement: "All integration credentials are customer-provided, scoped by the customer, and can be revoked at any time; Resolve AI does not persist raw telemetry data beyond what is required for active investigation continuity."
+      type: observed
+      topic: data handling
+      sourceRefs: [SE017]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE016]
+
+    - id: CE026
+      statement: "Customer data is not used to train models for other customers; learning signals (e.g., improving log parsing) are generalized and stripped of sensitive information before any reuse; each customer's fine-tuning data is scoped exclusively to that organization."
+      type: company-claimed
+      topic: data privacy
+      sourceRefs: [SE004, SE017]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE009]
+
+    - id: CE027
+      statement: "Resolve AI's founders Spiros Xanthos and Mayank Agarwal co-created OpenTelemetry, the CNCF-graduated open-source observability standard used by thousands of enterprises globally, giving the company foundational expertise in the telemetry instrumentation, transport, and query layer that underpins every agent investigation."
+      type: third-party-reported
+      topic: founding team differentiation
+      sourceRefs: [SE025, SE027, SE030]
+      confidence: high
+      freshness: historical
+      answersQuestionRefs: [QE022]
+
+    - id: CE028
+      statement: "Resolve AI Labs—launched April 2026 and led by Dhruv Mahajan (former Meta Llama post-training lead)—is building domain-specific models, evaluation frameworks for production workflows without clean ground truth, synthetic data generation systems, and simulated production environments for agent training."
+      type: third-party-reported
+      topic: Labs research
+      sourceRefs: [SE006, SE026, SE028]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE009, QE012]
+
+    - id: CE029
+      statement: "Resolve AI's Skills layer implements the agentskills.io open standard—the same format adopted by Claude and other agentic tools—allowing procedural knowledge packaged in Resolve to be portable to any compatible agent and vice versa."
+      type: observed
+      topic: Skills and extensibility
+      sourceRefs: [SE021, SE029]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE015]
+
+    - id: CE030
+      statement: "Resolve AI's two-tier Team Knowledge model (org-level and team-level runbooks, dashboard guidance, skills, and best practices) enables captured tribal knowledge to be applied in every alert investigation and engineering chat session."
+      type: observed
+      topic: knowledge graph
+      sourceRefs: [SE020]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE006, QE025]
+
+    - id: CE031
+      statement: "The Skills system uses progressive disclosure: only skill names and descriptions are loaded at discovery time; full skill instructions are loaded into the agent's context only when the task matches the description, preventing context bloat across large skill libraries."
+      type: observed
+      topic: Skills architecture
+      sourceRefs: [SE021]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE015]
+
+    - id: CE032
+      statement: "At DoorDash, Resolve AI reduced investigation time from approximately 40 minutes to approximately 1 minute (up to 87% reduction) for the $1B+ ads platform, as documented in a DoorDash-quoted case study published by Resolve AI."
+      type: third-party-reported
+      topic: DoorDash outcomes
+      sourceRefs: [SE007]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE011]
+
+    - id: CE033
+      statement: "At Coinbase, Resolve AI delivers 250+ engineer chat sessions per week and achieved a 72% reduction in investigation time with root cause reached in under 10 minutes, as documented in a Coinbase-quoted case study published by Resolve AI."
+      type: third-party-reported
+      topic: Coinbase outcomes
+      sourceRefs: [SE008]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE011]
+
+    - id: CE034
+      statement: "At Zscaler—processing 150,000+ monthly alerts across 160+ global data centers—Resolve AI achieved a 75% reduction in incident investigation time and over 30% fewer engineers involved per incident, as documented in a Zscaler-quoted case study published by Resolve AI."
+      type: third-party-reported
+      topic: Zscaler outcomes
+      sourceRefs: [SE009]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE011]
+
+    - id: CE035
+      statement: "At Salesforce, Resolve AI achieved approximately 60% MTTR reduction, approximately 70% faster alert triage, and 10-minute autonomous root cause diagnosis in a documented complex production incident, as published in a Salesforce-quoted case study."
+      type: third-party-reported
+      topic: Salesforce outcomes
+      sourceRefs: [SE010]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE011]
+
+    - id: CE036
+      statement: "At Blueground, Resolve AI autonomously investigates 100% of alerts and achieved a 4x improvement in time to root cause while accelerating feature development, as documented in a Blueground-quoted case study published by Resolve AI."
+      type: third-party-reported
+      topic: Blueground outcomes
+      sourceRefs: [SE011]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE011]
+
+    - id: CE037
+      statement: "Independent AI SRE platform analysis (Fundesk, 2026) does not include Resolve AI in its principal six-platform comparison matrix—listing Datadog Bits AI SRE, PagerDuty SRE Agent, New Relic SRE Agent, AWS DevOps Agent, incident.io, and Tracer-Cloud opensre—suggesting Resolve AI has lower general market mindshare than observability incumbents despite its enterprise traction."
+      type: third-party-reported
+      topic: competitive positioning
+      sourceRefs: [SE031]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE017, QE018]
+
+    - id: CE038
+      statement: "G2's review platform shows no published customer reviews for Resolve AI as of October 2025, in contrast to competitors such as PagerDuty and Datadog which have hundreds of verified user reviews, indicating limited third-party peer review validation."
+      type: observed
+      topic: social proof gap
+      sourceRefs: [SE034]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE018, QE023]
+
+    - id: CE039
+      statement: "The Slack integration is generally available with auto-investigation, alert channel monitoring, interactive hypothesis updates, and lightweight 👍/👎 feedback collection; the MS Teams integration is in Beta and supports collaborative incident investigation but has not reached feature parity with the Slack integration."
+      type: observed
+      topic: collaboration integrations
+      sourceRefs: [SE016, SE002]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE008]
+
+    - id: CE040
+      statement: "Resolve AI Labs articulates a three-phase autonomy progression: Phase 1 (AI-Assisted—engineer drives, AI surfaces context), Phase 2 (HITL—AI proposes actions, humans approve), and Phase 3 (HOTL—AI acts autonomously within guardrails, humans define policy and handle exceptions); the platform is currently in Phase 2 for most enterprise production use cases."
+      type: company-claimed
+      topic: autonomy roadmap
+      sourceRefs: [SE005, SE006]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE013]
+
+    - id: CE041
+      statement: "Resolve AI's incident agents build causal timelines by correlating code changes, infrastructure events, and telemetry signals across parallel investigation threads; customer case studies document agents tracing issues across team boundaries (DoorDash cross-team attribution in minutes) and surfacing root cause hours before human incident bridges were created (Zscaler DNS resolution case)."
+      type: third-party-reported
+      topic: causal timeline construction
+      sourceRefs: [SE007, SE009]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE019]
+
+  evidenceGaps:
+    - type: missing-source
+      severity: material
+      topic: independent performance benchmarks
+      missingEvidence: >-
+        Independent third-party benchmark testing of Resolve AI's MTTR reduction claims,
+        conducted with a randomized or controlled methodology, by an organization not
+        affiliated with Resolve AI or its customers.
+      whyItMatters: >-
+        All five published case studies are company-authored with customer quotes but no
+        control condition. Independent validation is needed to assess whether 60–87% MTTR
+        reductions are reproducible, or reflect selection bias toward the most favorable
+        deployments.
+      diligencePath: >-
+        Commission an independent pilot with pre-agreed MTTR baseline, alert taxonomy,
+        and success criteria. Obtain reference calls with at least two customers in a
+        comparable infrastructure environment not referenced on the Resolve AI website.
+      relatedQuestionRefs: [QE010]
+
+    - type: private-evidence-only
+      severity: material
+      topic: Resolve AI Labs model timeline and evaluation
+      missingEvidence: >-
+        Published evaluation methodology, model architecture details, training data
+        composition, and committed production deployment timeline for domain-specific
+        models being developed at Resolve AI Labs.
+      whyItMatters: >-
+        The labs research program is the primary long-term moat argument. Without
+        published evals or timelines, investors cannot assess whether the domain-specific
+        model bet will materially differentiate from frontier model quality improvements.
+      diligencePath: >-
+        Request an NDA deep-dive with Resolve AI Labs leadership covering evaluation
+        benchmarks, preliminary model performance on production telemetry tasks, and
+        planned research publication cadence.
+      relatedQuestionRefs: [QE012, QE021]
+
+    - type: missing-source
+      severity: material
+      topic: committed product roadmap timelines
+      missingEvidence: >-
+        Publicly committed delivery dates for MCP server GA, MS Teams feature parity,
+        bundled script execution in Skills, and supervised remediation beyond alert silencing.
+      whyItMatters: >-
+        Multiple strategic capabilities (MCP server, Teams integration, autonomous remediation
+        expansion) are in Beta or on roadmap without committed timelines, creating uncertainty
+        for enterprise procurement decisions with multi-year contract horizons.
+      diligencePath: >-
+        Obtain a product roadmap letter with committed dates for Beta-to-GA transitions
+        and specific remediation action types, with contractual service level commitments
+        for key integrations.
+      relatedQuestionRefs: [QE027]
+
+    - type: missing-source
+      severity: minor
+      topic: no public GitHub repository or developer community metrics
+      missingEvidence: >-
+        Public GitHub repository, star count, contributor activity, or package registry
+        presence for any Resolve AI platform component; community forum or Discord metrics.
+      whyItMatters: >-
+        For a platform targeting SRE and platform engineering buyers who evaluate tools
+        through developer community health, the absence of any public open-source surface
+        or community metrics limits grassroots adoption signals and makes bottom-up adoption
+        harder to measure.
+      diligencePath: >-
+        Ask Resolve AI for any planned open-source contributions from Resolve AI Labs
+        (e.g., evaluation frameworks, simulation environments); check agentskills.io
+        community adoption metrics for skills authored by Resolve AI teams.
+      relatedQuestionRefs: [QE023]
+
+    - type: access-blocked
+      severity: minor
+      topic: SOC 2 audit report and compliance documentation
+      missingEvidence: >-
+        Publicly accessible or NDA-gated SOC 2 Type II audit report, auditor name,
+        audit period, BAA/DPA template terms, and FedRAMP or CMMC readiness information.
+      whyItMatters: >-
+        Enterprise security teams in regulated industries (financial services, healthcare,
+        government) require audit report review before production credential sharing.
+        Absence of accessible documentation lengthens procurement cycles.
+      diligencePath: >-
+        Request SOC 2 Type II audit report under NDA; confirm BAA availability and terms
+        for HIPAA-regulated environments; ask for FedRAMP roadmap for U.S. federal
+        or defense customers.
+      relatedQuestionRefs: [QE026]
+
+acknowledgedWarnings:
+  - dimension: tableNotes
+    reason: >-
+      All five chapter tables carry explicit notes documenting their evidence basis,
+      estimation methodology, and data source caveats; no table is a pure factual
+      snapshot requiring note suppression. The tableNotes warning is not applicable
+      here since notes are already provided on every table.
