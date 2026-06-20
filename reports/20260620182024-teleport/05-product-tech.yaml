@@ -1,0 +1,2385 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: teleport
+runDate: '2026-06-20'
+company:
+  name: Teleport
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: Teleport's Infrastructure Identity Platform delivers certificate-based, secretless access across SSH, Kubernetes, databases, Windows/RDP, internal web apps, MCP servers, and cloud APIs through a unified proxy-and-CA architecture. The platform has matured from an SSH bastion to a broad identity fabric spanning machine/workload identity, AI agentic access (Beams), and Identity Security analytics. Core technology differentiation rests on ephemeral certificates, hardware-rooted identity, and a single Go binary; the 2024 community-license change and root-agent installation requirement represent meaningful product risks flagged by competitors and users.
+
+sections:
+  - id: product-definition
+    title: Product Definition and Module Map
+    body: >-
+      Teleport is a certificate authority (CA) and identity-aware access proxy that implements SSH, RDP, HTTPS, Kubernetes API,
+      and a variety of SQL and NoSQL database protocols. The product is distributed as a single Go binary that combines
+      authentication, authorization, auditing, and tunneling in one deployable unit. Teleport operates internal Certificate
+      Authorities for both hosts and users; every identity — human, machine, or AI — receives a short-lived certificate
+      rather than a long-lived credential, eliminating secrets sprawl at the architecture level.
+
+      The product suite now spans five branded product pillars: Zero Trust Access (SSH, Kubernetes, databases, RDP, web apps),
+      Machine & Workload Identity (non-human service credentials), Identity Governance, Identity Security (access analytics
+      and threat detection), and the Agentic Identity Framework (AI agent identity + Beams runtime). The feature matrix
+      distinguishes Enterprise Cloud, Enterprise Self-Hosted, and Community Edition, with Beams trusted runtimes exclusive
+      to Enterprise Cloud. Each major release has shipped every four months historically; version 18 (current) arrived
+      July 2025 with version 19.0 planned. The June 2024 community-license change restricted compiled binaries for companies
+      with over 100 employees or $10 M+ AR, a shift with lasting ecosystem implications.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE006
+      - CE007
+      - CE008
+      - CE009
+    tableRefs:
+      - TE001
+    figureRefs:
+      - FE001
+
+  - id: architecture
+    title: Architecture and Operating Model
+    body: >-
+      Teleport's control plane consists of two canonical services: the Auth Service (the cluster CA, config store, and audit-log
+      collector) and the Proxy Service (the public-internet entry point and reverse-tunnel hub). These two services are stateless
+      relative to each other, communicate over gRPC, and can be scaled horizontally for high availability. On Teleport Cloud,
+      both services are fully managed by Teleport Inc.; on Enterprise Self-Hosted, customers operate them on their own
+      infrastructure.
+
+      Resource enrollment follows three paths: Teleport Agents (deployed as daemons on target machines and reverse-tunnelled
+      back to the Proxy), agentless mode for certain protocols, and Machine & Workload Identity tokens (tbot-based
+      short-lived certificates for workloads). The authentication flow is consistent across protocols: a user (or machine)
+      runs tsh login, receives a client certificate, and that certificate is accepted by SSH, Kubernetes, database, RDP,
+      and MCP proxies without re-authentication. Session recording is configurable at node or proxy level, synchronously or
+      asynchronously, and captures full PTY output for SSH and Kubernetes, screen content for desktop sessions, and
+      query streams for database sessions.
+
+      StrongDM's competitive analysis notes that Teleport agents run as root on target servers, creating an additional
+      attack surface; the company also criticizes limited legacy-protocol support and intermittent cloud reliability.
+      PeerSpot users independently flag RBAC complexity, initial-setup burden, and clipboard-access security in RDP sessions
+      as real friction points.
+    claimRefs:
+      - CE010
+      - CE011
+      - CE012
+      - CE013
+      - CE014
+      - CE015
+      - CE016
+      - CE017
+      - CE018
+      - CE019
+    tableRefs:
+      - TE003
+    figureRefs:
+      - FE002
+
+  - id: agentic-and-machine-identity
+    title: Agentic Identity and Machine & Workload Identity
+    body: >-
+      Teleport Machine & Workload Identity (MWI) provides non-human service accounts using the same certificate-based model
+      as human access. Services authenticate via tbot, receive short-lived X.509 or SSH certificates, and those certificates
+      authorize access to databases, Kubernetes clusters, internal APIs, and MCP servers — all logged to the same audit trail.
+      This creates a single identity fabric for humans and machines rather than a parallel secret-management system.
+
+      The Agentic Identity Framework, announced January 2026, extends that model to AI agents. It defines four layers:
+      identity (cryptographic agent certificates), access (RBAC/ABAC enforcement through the Teleport proxy), security
+      (behavioral monitoring and locks), and scheduling (orchestration patterns for Kubernetes and Temporal). The June 2026
+      public beta of Beams added two concrete capabilities: LLM Proxy (sits between an agent and its inference endpoint,
+      logs every request/response, enforces per-Beam allowlists) and Delegated Identity (allows a human or orchestrator
+      to assign least-privilege permissions to an agent session). Each Beam runs in a Firecracker microVM with ephemeral
+      storage, injected identity, virtual networking, and a session-bound lifecycle of approximately 24 hours. Beams is
+      currently Enterprise Cloud only and in public beta — not generally available.
+    claimRefs:
+      - CE020
+      - CE021
+      - CE022
+      - CE023
+      - CE024
+      - CE025
+      - CE026
+      - CE027
+      - CE028
+    tableRefs:
+      - TE002
+    figureRefs:
+      - FE003
+
+  - id: trust-compliance-roadmap
+    title: Trust, Compliance, and Roadmap
+    body: >-
+      Teleport Enterprise includes FIPS 140-validated cryptographic modules. Versions 17.7.3+ and 18.0.0+ use BoringCrypto
+      CMVP certificate #4735 (FIPS 140-3); earlier versions used certificate #4407 (FIPS 140-2). This makes Teleport a
+      viable accelerator for FedRAMP-Moderate authorization because it covers AC-02 through AU-12 and other NIST SP 800-53
+      controls natively. Teleport also documents SOC 2 coverage across four of nine control categories (CC6, CC6 physical,
+      CC7, CC8). An independent security audit by Cure53 in 2019 found no critical vulnerabilities; the single high-severity
+      directory-traversal issue in the roles API was patched in the same release.
+
+      The release cadence is one major version per year (switching from four-month cadence); version 18 is the current
+      supported release (EOL August 2027) and version 17 the stable supported release (EOL August 2026). Upcoming roadmap
+      items include Linux Desktop Access (remote sessions to Linux hosts), directory-sharing enhancements for Windows RDP,
+      and AI-summarized session recordings in Identity Security. The community-license change starting with version 16
+      (June 2024) is the most significant ongoing trust risk: compiled binaries, container images, and AMIs are no longer
+      Apache-licensed for companies above 100 employees or $10 M AR. The source code remains AGPLv3, but most enterprises
+      consume compiled artifacts, making the commercial restriction the effective license.
+    claimRefs:
+      - CE029
+      - CE030
+      - CE031
+      - CE032
+      - CE033
+      - CE034
+      - CE035
+      - CE036
+      - CE037
+    tableRefs:
+      - TE004
+      - TE005
+    figureRefs:
+      - FE004
+
+tables:
+  - id: TE001
+    title: Product module / asset matrix
+    columns:
+      - Module / product
+      - Primary user
+      - Status / maturity
+      - Differentiation
+      - Diligence gap
+    rows:
+      - - Zero Trust Access — SSH
+        - Engineer / admin
+        - GA, production at major enterprises
+        - Certificate-only auth, no SSH keys; audit logging per session
+        - Legacy-protocol support gap vs StrongDM
+      - - Zero Trust Access — Kubernetes
+        - Platform / DevOps engineer
+        - GA
+        - kubectl cert injection; per-pod RBAC; session recording of kubectl exec
+        - Agent runs as root on nodes — additional attack surface
+      - - Zero Trust Access — Databases
+        - DBA / developer
+        - GA; PostgreSQL, MySQL, MongoDB, CockroachDB and more
+        - Protocol-level access control without client-side config changes
+        - Full DB protocol coverage list not publicly enumerated per version
+      - - Zero Trust Access — Windows / RDP
+        - IT admin / engineer
+        - GA; agentless RDP through Teleport Web UI
+        - No separate RDP client needed; screen-level session recording
+        - Clipboard access flagged as security gap by PeerSpot users
+      - - Zero Trust Access — Web Apps
+        - Engineer / internal user
+        - GA
+        - HTTPS proxy with identity-based access and audit events
+        - SSO depth per identity provider not detailed publicly
+      - - Zero Trust Access — MCP Servers
+        - AI developer / platform team
+        - GA (Community and Enterprise)
+        - First-class MCP enrollment; per-tool audit events
+        - Operational maturity and production scale unverified
+      - - Machine & Workload Identity
+        - Service / CI-CD / workload
+        - GA
+        - tbot issues short-lived certificates; no standing service secrets
+        - SPIFFE/SVID interop depth not fully documented externally
+      - - Identity Governance
+        - Security / compliance team
+        - GA (Enterprise)
+        - Access lists, nested groups, JIT access requests, ChatOps integrations
+        - Nested Access Lists introduced in v17 — maturity new
+      - - Identity Security
+        - CISO / security analyst
+        - GA (Enterprise)
+        - Crown Jewels monitoring, SQL-editor access queries, anomaly alerting
+        - AI alerting model accuracy and false-positive rate not disclosed
+      - - Beams — Agentic Runtime
+        - AI developer / platform team
+        - Public beta (Enterprise Cloud only), June 2026
+        - Firecracker VM isolation, LLM Proxy, Delegated Identity
+        - Beta only; GA timeline undisclosed; Cloud-only restricts self-hosted deployments
+    notes: Maturity ratings based on official Teleport feature matrix and release notes. Community Edition gaps noted where applicable.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE006
+      - CE007
+      - CE008
+      - CE020
+      - CE025
+      - CE026
+
+  - id: TE002
+    title: Workflow / use-case table
+    columns:
+      - User job
+      - Current workflow without Teleport
+      - Teleport solution
+      - Measurable benefit stated
+      - Limitation / gap
+    rows:
+      - - Engineer SSH access to cloud host
+        - Distribute SSH keypairs; rotate manually; no central audit
+        - tsh login → short-lived cert → ssh user@host; auto audit log
+        - Eliminates standing SSH keys; 80% drop in time spent on access (company-claimed)
+        - Agent must run as root on target; legacy OS support limited
+      - - Kubernetes cluster access
+        - kubectl with long-lived kubeconfig tokens; separate RBAC per cluster
+        - Teleport injects cert into kubeconfig; RBAC centralized; per-query audit
+        - Single SSO for all k8s clusters; per-exec session recording
+        - Agent footprint adds ops complexity
+      - - Database access (Postgres/MySQL)
+        - Direct DB credentials; shared passwords; no query audit
+        - Teleport DB proxy; short-lived cert; query-level audit log
+        - No DB credentials on developer laptop
+        - Not all DB engines supported in all versions
+      - - Windows desktop (RDP)
+        - Separate RDP clients; VPN + RDP credentials stored on laptops
+        - Browser-based RDP through Teleport Web UI; no RDP client needed
+        - Screen-capture session recording; no VPN required
+        - Clipboard security concern noted in user reviews
+      - - AI agent access to infrastructure
+        - Agents impersonate users with static API keys and unchecked permissions
+        - tbot issues agent its own certificate; RBAC enforced at proxy; queries logged
+        - 100% auditable agentic workflow (company-claimed)
+        - Beams still in public beta; self-hosted Beams not supported
+      - - FedRAMP / compliance audit
+        - Manual log collection across VPN, bastion, and cloud IAM
+        - Teleport covers AC-02, AC-03, AC-07, AU-02, AU-12 and more natively
+        - Accelerates FedRAMP-Moderate ATO; FIPS 140-3 validated module
+        - FedRAMP ATO timing depends on full customer stack
+    notes: Benefit statements are company-claimed unless otherwise noted; independent quantification not available.
+    claimRefs:
+      - CE010
+      - CE012
+      - CE013
+      - CE014
+      - CE015
+      - CE029
+      - CE030
+
+  - id: TE003
+    title: Technology / operating architecture table
+    columns:
+      - Layer / component
+      - Role
+      - Dependency
+      - Risk
+    rows:
+      - - Auth Service
+        - Internal CA; config store; audit-log collector
+        - Requires persistent backend (etcd, DynamoDB, Postgres, or Teleport Cloud storage)
+        - Single point of failure if HA not configured; key rotation policy must be exercised
+      - - Proxy Service
+        - Public-internet entry; reverse-tunnel hub; Web UI server
+        - Auth Service via gRPC; TLS routing for all protocols on port 443
+        - StrongDM claims cloud reliability issues and up-to-6-hour downtime on updates
+      - - Teleport Agent
+        - Runs on target node; reverse-tunnels traffic back to Proxy
+        - Target OS (Linux/Windows); root-level access required for most modes
+        - Agent as root expands attack surface on every enrolled host
+      - - tbot (MWI agent)
+        - Issues and renews short-lived certificates for workloads
+        - Teleport Auth Service; SPIFFE-compatible certificate format
+        - tbot credential exposure if process isolation is weak
+      - - Certificate Authorities
+        - Sign host and user certs; enable zero-trust cluster membership
+        - Hardware Security Module optional; BoringCrypto for FIPS
+        - CA compromise would invalidate entire cluster; rotation automation needed
+      - - Session Recording Store
+        - Captures PTY/screen/query streams; tamper-resistant audit
+        - S3-compatible object store or Teleport Cloud storage
+        - Users can attempt to conceal PTY commands via encoding (documented risk)
+      - - Identity Security Analytics
+        - SQL-editor queries on access graph; Crown Jewels monitoring; AI anomaly detection
+        - Ingests logs from Okta, AWS, GitHub; Teleport audit stream
+        - AI alerting accuracy not independently validated
+      - - Beams Runtime (beta)
+        - Firecracker microVM per agent session; LLM Proxy; Delegated Identity
+        - OpenAI / Anthropic inference endpoints; Teleport identity layer
+        - Beta; Enterprise Cloud only; GA timeline undisclosed
+    notes: Architecture based on official Teleport docs and feature matrix; StrongDM claims are competitor-sourced and may be biased.
+    claimRefs:
+      - CE010
+      - CE011
+      - CE014
+      - CE015
+      - CE016
+      - CE017
+      - CE018
+      - CE019
+      - CE022
+      - CE024
+      - CE025
+      - CE026
+
+  - id: TE004
+    title: Trust / quality / compliance table
+    columns:
+      - Control / certification
+      - Status
+      - Scope
+      - Gap / caveat
+    rows:
+      - - FIPS 140-3 (BoringCrypto #4735)
+        - Active
+        - Teleport Enterprise v18+ compiled binaries
+        - Only Enterprise builds; Community Edition not FIPS
+      - - FIPS 140-2 (BoringCrypto #4407)
+        - Active for older releases (pre-17.7.3)
+        - Teleport Enterprise v16–17 series
+        - Being superseded by FIPS 140-3 module
+      - - FedRAMP coverage (AC, AU controls)
+        - Supported via FIPS builds + RBAC + audit logging
+        - Infrastructure access controls; not a full ATO
+        - Customer must obtain their own ATO; Teleport is an enabler
+      - - SOC 2 (CC6, CC7, CC8)
+        - Documented mapping available
+        - Enterprise Edition; four of nine control categories
+        - SOC 2 compliance features not available in Community Edition
+      - - Third-party security audit (Cure53)
+        - Completed 2019; no critical vulnerabilities found
+        - Full source-code audit; one high-severity issue patched same release
+        - Audit is 2019; no more-recent public third-party audit disclosed
+      - - Apple code signing
+        - Active (Developer ID QH8AA5B8UP, Gravitational Inc.)
+        - macOS packages and binaries
+        - Certificate expires 2026-07-27; renewal status unconfirmed publicly
+      - - Community Edition commercial license (v16+)
+        - Active since June 2024
+        - Companies with 100+ employees or $10 M+ AR must purchase Enterprise
+        - License change disrupts open-source ecosystem; AGPLv3 source remains available
+      - - Session recording security (PTY obfuscation risk)
+        - Documented limitation in official docs
+        - SSH and Kubernetes sessions
+        - Users can encode commands to conceal activity; BPF Enhanced Recording mitigates
+    notes: Compliance status reflects publicly documented official claims and linked CMVP certificates; no independent third-party verification post-2019.
+    claimRefs:
+      - CE029
+      - CE030
+      - CE031
+      - CE032
+      - CE033
+      - CE034
+      - CE035
+      - CE036
+      - CE037
+
+  - id: TE005
+    title: Roadmap / release / development-stage table
+    columns:
+      - Date / version
+      - Feature / milestone
+      - Status
+      - Implication
+      - Source
+    rows:
+      - - July 2025 (v18.0.0)
+        - Teleport 18 current release; AWS IAM Identity Center preview
+        - Released; EOL August 2027
+        - Core GA release; sets foundation for 2026 product roadmap
+        - Official docs
+      - - November 2024 (v17.0.0)
+        - Teleport 17 stable; Identity Security Crown Jewels; Nested Access Lists
+        - Released; EOL August 2026
+        - Crown Jewels and Nested Access Lists are new; maturity still emerging
+        - Official blog
+      - - June 2024 (v16.0.0)
+        - Teleport 16; community license commercial restriction; IdP hardening
+        - Released
+        - Community Edition now restricted for enterprises; ecosystem impact ongoing
+        - Official blog + community license announcement
+      - - January 2026
+        - Agentic Identity Framework announced; four-layer AI security roadmap
+        - Announced
+        - Defines architecture for AI agents; commercial implementation in progress
+        - Press release
+      - - June 2026
+        - Beams public beta — LLM Proxy and Delegated Identity in Firecracker VM
+        - Public beta (Enterprise Cloud only)
+        - GA timeline undisclosed; self-hosted customers excluded from beta
+        - Press release
+      - - Week of July 6, 2026 (v18.10.0)
+        - Patch cycle continues; 18.10.0 planned cloud rollout
+        - Planned
+        - Confirms four-month patch cadence within major version
+        - Official upcoming-releases docs
+      - - Future (v19.0.0)
+        - Linux Desktop Access; multi-directory Windows RDP; AI-summarized session recordings
+        - On roadmap; date not disclosed
+        - Linux desktop extends RDP coverage; AI summaries reduce investigation time
+        - Official upcoming-releases docs
+    notes: Dates based on official release announcements and docs; Beams GA timeline is not publicly disclosed.
+    claimRefs:
+      - CE034
+      - CE035
+      - CE036
+      - CE037
+      - CE008
+      - CE026
+
+figures:
+  - id: FE001
+    title: Teleport Infrastructure Identity Platform — Product Architecture Stack
+    type: stack
+    layout: standard
+    summary: Five product pillars layered over the unified Auth and Proxy control plane.
+    data:
+      layers:
+        - label: Agentic Identity Framework (Beams, LLM Proxy, Delegated Identity)
+          modules:
+            - Beams Firecracker VM runtime (public beta, Enterprise Cloud only)
+            - LLM Proxy — enforcement between agent and inference endpoint
+            - Delegated Identity — least-privilege agent session permissions
+            - MCP Server Proxy — first-class MCP enrollment + audit
+        - label: Identity Security & Governance
+          modules:
+            - Identity Security (Crown Jewels monitoring, SQL editor, anomaly alerts)
+            - Identity Governance (access lists, nested groups, JIT requests, ChatOps)
+        - label: Machine & Workload Identity
+          modules:
+            - tbot — issues short-lived X.509 / SSH certificates for workloads
+            - SPIFFE-compatible attestation — no standing service secrets
+        - label: Zero Trust Access
+          modules:
+            - SSH — certificate-only, no SSH keys, full PTY audit
+            - Kubernetes — per-cluster RBAC + kubectl exec session recording
+            - Databases — PostgreSQL, MySQL, MongoDB, CockroachDB protocol proxy
+            - Windows/RDP — browser-native RDP, screen-level session recording
+            - Web Apps — HTTPS proxy with identity-based access
+        - label: Auth and Proxy Control Plane
+          modules:
+            - Auth Service (CA, config store, gRPC API, audit log collector)
+            - Proxy Service (TLS routing, reverse tunnels, Web UI, port 443)
+            - BoringCrypto FIPS 140-3 module (Enterprise, CMVP #4735)
+            - Backend store (etcd / DynamoDB / Postgres / Teleport Cloud storage)
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE006
+      - CE010
+      - CE020
+
+  - id: FE002
+    title: Teleport Authentication Flow
+    type: flow
+    layout: standard
+    summary: How a user or machine authenticates and obtains access to a protected resource.
+    data:
+      nodes:
+        - id: user
+          label: User / Machine
+          type: actor
+        - id: sso
+          label: SSO / Identity Provider (Okta, GitHub, Google, AD)
+          type: external
+        - id: proxy
+          label: Teleport Proxy Service (port 443)
+          type: service
+        - id: auth
+          label: Teleport Auth Service (CA)
+          type: service
+        - id: agent
+          label: Teleport Agent on target resource
+          type: service
+        - id: resource
+          label: SSH / K8s / DB / RDP / MCP resource
+          type: target
+        - id: audit
+          label: Audit Log + Session Recording Store
+          type: store
+      edges:
+        - from: user
+          to: proxy
+          label: tsh login (1)
+        - from: proxy
+          to: sso
+          label: SSO redirect (2)
+        - from: sso
+          to: proxy
+          label: SAML/OIDC assertion (3)
+        - from: proxy
+          to: auth
+          label: Issue short-lived cert (4)
+        - from: auth
+          to: proxy
+          label: Signed user certificate (5)
+        - from: proxy
+          to: user
+          label: Client cert returned (6)
+        - from: user
+          to: proxy
+          label: ssh / kubectl / psql with cert (7)
+        - from: proxy
+          to: agent
+          label: Forwarded + authorized (8)
+        - from: agent
+          to: resource
+          label: Proxied connection (9)
+        - from: agent
+          to: audit
+          label: Session events + recording (10)
+    claimRefs:
+      - CE010
+      - CE011
+      - CE012
+      - CE013
+
+  - id: FE003
+    title: Agentic Identity Framework — Critical Dependency Map
+    type: dag
+    layout: wide
+    summary: Dependencies between the Agentic Identity Framework components and external services.
+    data:
+      nodes:
+        - id: framework
+          label: Agentic Identity Framework
+        - id: mwi
+          label: Machine & Workload Identity (tbot)
+        - id: beams
+          label: Beams Runtime (Firecracker VM)
+        - id: llm_proxy
+          label: LLM Proxy
+        - id: delegated_id
+          label: Delegated Identity
+        - id: mcp
+          label: MCP Server Proxy
+        - id: auth_svc
+          label: Teleport Auth Service
+        - id: proxy_svc
+          label: Teleport Proxy Service
+        - id: openai
+          label: OpenAI / Anthropic inference
+        - id: k8s
+          label: Kubernetes cluster
+        - id: db
+          label: Database resource
+        - id: audit_log
+          label: Audit Log + Session Recording
+      edges:
+        - from: framework
+          to: mwi
+          label: built on
+        - from: framework
+          to: beams
+          label: includes
+        - from: beams
+          to: llm_proxy
+          label: embeds
+        - from: beams
+          to: delegated_id
+          label: embeds
+        - from: beams
+          to: mcp
+          label: routes through
+        - from: mwi
+          to: auth_svc
+          label: requests certs from
+        - from: llm_proxy
+          to: openai
+          label: enforces access to
+        - from: mcp
+          to: proxy_svc
+          label: proxied via
+        - from: proxy_svc
+          to: k8s
+          label: authorizes access to
+        - from: proxy_svc
+          to: db
+          label: authorizes access to
+        - from: proxy_svc
+          to: audit_log
+          label: streams events to
+    claimRefs:
+      - CE020
+      - CE021
+      - CE022
+      - CE023
+      - CE024
+      - CE025
+      - CE026
+      - CE027
+
+  - id: FE004
+    title: Product Capability Maturity Map
+    type: matrix
+    layout: standard
+    summary: Maturity and competitive differentiation across Teleport's key capability areas.
+    approximationNotes: Maturity ratings derived from official docs and feature matrix; competitive differentiation is author assessment based on architecture analysis and competitor comparisons.
+    data:
+      columns:
+        - Maturity
+        - Competitive differentiation
+        - Evidence quality
+      rows:
+        - label: SSH / server access
+          values:
+            - GA (production)
+            - High — certificate-only, no keys, full PTY audit
+            - High (primary docs + IBM/Carta/Exness case studies)
+        - label: Kubernetes access
+          values:
+            - GA (production)
+            - High — per-exec RBAC + kubectl session recording
+            - High (docs + GoTo/ExtraHop/Exness deployments)
+        - label: Database access
+          values:
+            - GA
+            - Medium — protocol-level proxying without client changes
+            - Medium (docs; full engine coverage unverified)
+        - label: Windows / RDP access
+          values:
+            - GA
+            - Medium — browser-native; clipboard access gap flagged
+            - Medium (docs + PeerSpot user reviews)
+        - label: Web app / internal app access
+          values:
+            - GA
+            - Medium — HTTPS proxy with identity
+            - Medium (official docs only)
+        - label: MCP server access
+          values:
+            - GA (Community + Enterprise)
+            - High — first-class MCP enrollment + per-tool audit events
+            - Medium (docs; production scale unverified)
+        - label: Machine & Workload Identity
+          values:
+            - GA
+            - High — SPIFFE-compatible ephemeral certs; no standing secrets
+            - Medium (docs + blog posts)
+        - label: Identity Security analytics
+          values:
+            - GA (Enterprise)
+            - Medium — SQL editor + Crown Jewels monitoring (new in v17)
+            - Low (company blog; no independent validation)
+        - label: Beams agentic runtime
+          values:
+            - Public beta (Enterprise Cloud only)
+            - High — Firecracker VM isolation + LLM Proxy + Delegated Identity
+            - Low (press release + docs; GA timeline undisclosed)
+        - label: FedRAMP / FIPS compliance
+          values:
+            - Active (Enterprise)
+            - High — FIPS 140-3 CMVP certificate #4735
+            - High (CMVP record + official FedRAMP docs)
+    claimRefs:
+      - CE001
+      - CE003
+      - CE005
+      - CE006
+      - CE020
+      - CE025
+      - CE029
+      - CE030
+
+callouts:
+  - calloutType: risk
+    title: Root-Agent Installation and Reliability Risks
+    body: Teleport agents run as root on every enrolled server, creating an additional attack surface. A competitor
+      audit and independent PeerSpot users both flag this. StrongDM also claims Teleport Cloud updates can cause
+      access outages of up to six hours. Teleport does not publish an uptime SLA or incident history publicly,
+      making independent reliability assessment difficult.
+    claimRefs:
+      - CE016
+      - CE018
+      - CE019
+
+  - calloutType: risk
+    title: Community License Change Restricts Open-Source Ecosystem
+    body: Starting with Teleport 16 (June 2024), compiled Community Edition binaries require a commercial license
+      for companies with 100+ employees or $10 M+ revenue. While source code remains AGPLv3, most operators
+      consume compiled artifacts, meaning the practical open-source path is materially restricted for enterprises.
+      This may drive some potential customers to evaluate fully open-source alternatives like Boundary.
+    claimRefs:
+      - CE035
+      - CE036
+
+  - calloutType: strength
+    title: Single Binary, Protocol-Agnostic Identity Fabric
+    body: Teleport's architecture consolidates SSH, Kubernetes, database, RDP, web-app, MCP, and AI-agent access
+      under one certificate-based identity model without requiring separate secret stores or credential rotation
+      workflows. This reduces attack surface and operational complexity simultaneously, which is the core
+      value proposition validated by IBM Instana, Carta, ExtraHop, and Exness deployments.
+    claimRefs:
+      - CE001
+      - CE010
+      - CE012
+      - CE013
+
+localEvidence:
+  searchQueries:
+    - query: "Teleport product architecture SSH Kubernetes database RDP MCP 2026"
+      engine: web
+      hits: 12
+      retainedSourceRefs:
+        - SE001
+        - SE011
+        - SE017
+        - SE018
+    - query: "Teleport authentication flow certificate authority proxy agent 2026"
+      engine: web
+      hits: 8
+      retainedSourceRefs:
+        - SE017
+        - SE018
+        - SE019
+    - query: "Teleport feature matrix enterprise community edition 2026"
+      engine: web
+      hits: 6
+      retainedSourceRefs:
+        - SE019
+        - SE012
+    - query: "Teleport Machine Workload Identity tbot SPIFFE 2026"
+      engine: web
+      hits: 7
+      retainedSourceRefs:
+        - SE020
+        - SE034
+    - query: "Teleport Beams Agentic Identity Framework LLM Proxy launched 2026"
+      engine: web
+      hits: 9
+      retainedSourceRefs:
+        - SE030
+        - SE031
+        - SE033
+        - SE035
+    - query: "Teleport community edition license change commercial restrictions 2024 2026"
+      engine: web
+      hits: 5
+      retainedSourceRefs:
+        - SE008
+        - SE009
+    - query: "Teleport FIPS 140 FedRAMP compliance certification 2026"
+      engine: web
+      hits: 6
+      retainedSourceRefs:
+        - SE025
+        - SE054
+    - query: "Teleport security audit Cure53 vulnerabilities 2026"
+      engine: web
+      hits: 4
+      retainedSourceRefs:
+        - SE029
+    - query: "Teleport GitHub stars contributors open source repository 2026"
+      engine: web
+      hits: 5
+      retainedSourceRefs:
+        - SE036
+    - query: "Teleport vs StrongDM competitor comparison 2026"
+      engine: web
+      hits: 6
+      retainedSourceRefs:
+        - SE043
+    - query: "Teleport user reviews PeerSpot complaints limitations 2026"
+      engine: web
+      hits: 7
+      retainedSourceRefs:
+        - SE052
+    - query: "Teleport release schedule version 18 19 roadmap 2026"
+      engine: web
+      hits: 5
+      retainedSourceRefs:
+        - SE027
+        - SE010
+    - query: "Teleport session recording SSH Kubernetes desktop database 2026"
+      engine: web
+      hits: 6
+      retainedSourceRefs:
+        - SE024
+    - query: "Teleport identity security analytics crown jewels threat detection 2026"
+      engine: web
+      hits: 5
+      retainedSourceRefs:
+        - SE023
+        - SE028
+    - query: "NIST zero trust architecture SP 800-207 compliance 2026"
+      engine: web
+      hits: 4
+      retainedSourceRefs:
+        - SE041
+    - query: "Teleport SOC 2 compliance controls CC6 CC7 CC8 2026"
+      engine: web
+      hits: 4
+      retainedSourceRefs:
+        - SE026
+    - query: "HashiCorp Boundary open source infrastructure access 2026"
+      engine: web
+      hits: 5
+      retainedSourceRefs:
+        - SE051
+    - query: "Teleport Beams Firecracker VM ephemeral agent runtime identity 2026"
+      engine: web
+      hits: 6
+      retainedSourceRefs:
+        - SE035
+        - SE031
+    - query: "Teleport MCP Model Context Protocol server access enrollment 2026"
+      engine: web
+      hits: 5
+      retainedSourceRefs:
+        - SE022
+    - query: "Teleport pricing enterprise usage-based MAU MWI TPR 2026"
+      engine: web
+      hits: 4
+      retainedSourceRefs:
+        - SE012
+    - query: "Teleport Windows RDP clipboard security vulnerability 2026"
+      engine: web
+      hits: 4
+      retainedSourceRefs:
+        - SE052
+    - query: "Teleport agentic AI infrastructure survey 2026 preparedness"
+      engine: web
+      hits: 5
+      retainedSourceRefs:
+        - SE032
+    - query: "Teleport version 16 17 18 release features breaking changes 2026"
+      engine: web
+      hits: 6
+      retainedSourceRefs:
+        - SE009
+        - SE010
+    - query: "Teleport go binary architecture single binary deployment 2026"
+      engine: web
+      hits: 4
+      retainedSourceRefs:
+        - SE036
+    - query: "Teleport cloud reliability outage competitor criticism 2026"
+      engine: web
+      hits: 4
+      retainedSourceRefs:
+        - SE043
+        - SE052
+    - query: "Teleport identity governance access lists scim access requests 2026"
+      engine: web
+      hits: 4
+      retainedSourceRefs:
+        - SE059
+    - query: "Teleport proxy authentication agent enrollment tsh client 2026"
+      engine: web
+      hits: 5
+      retainedSourceRefs:
+        - SE060
+        - SE061
+        - SE062
+        - SE063
+
+  researchQuestions:
+    - id: QE001
+      question: What infrastructure protocols does Teleport support natively in its access proxy?
+      type: enumeration
+      targets:
+        - contentRequirements/0
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE002
+      question: What are the five branded product pillars in the Teleport Infrastructure Identity Platform?
+      type: enumeration
+      targets:
+        - contentRequirements/1
+        - plannedFigures/product-architecture-map
+      status: answered
+
+    - id: QE003
+      question: How does Teleport's certificate-authority authentication flow work for a human user?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedFigures/customer-workflow-operating-flow
+      status: answered
+
+    - id: QE004
+      question: What are the deployment options for Teleport (Cloud vs. self-hosted vs. hybrid)?
+      type: enumeration
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE005
+      question: What components make up the Teleport control plane and what does each do?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE006
+      question: How does Machine & Workload Identity differ from human access in Teleport?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE007
+      question: What is the Beams agentic runtime and what is its current maturity status?
+      type: verification
+      targets:
+        - contentRequirements/0
+        - plannedFigures/critical-dependency-map
+      status: answered
+
+    - id: QE008
+      question: What FIPS 140 certification does Teleport Enterprise hold and for which versions?
+      type: verification
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE009
+      question: How does Teleport session recording work across SSH, Kubernetes, desktop, and database sessions?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE010
+      question: What is the Teleport community license change and what restrictions does it impose on enterprises?
+      type: adverse
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE011
+      question: What security vulnerabilities has Cure53 found in Teleport and how were they addressed?
+      type: adverse
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE012
+      question: What are the known limitations and criticisms of Teleport from competitors and user reviews?
+      type: adverse
+      targets:
+        - contentRequirements/3
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE013
+      question: What compliance frameworks does Teleport support and document (FedRAMP, SOC 2, PCI)?
+      type: enumeration
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE014
+      question: What is Teleport's current release cadence and what versions are currently supported?
+      type: freshness
+      targets:
+        - contentRequirements/3
+        - plannedTables/roadmap-release-development-stage-table
+      status: answered
+
+    - id: QE015
+      question: What is on the Teleport product roadmap for the next 12 months?
+      type: freshness
+      targets:
+        - contentRequirements/3
+        - plannedTables/roadmap-release-development-stage-table
+      status: partial
+
+    - id: QE016
+      question: What is the GitHub star count and contributor activity on the Teleport open-source repository?
+      type: quantification
+      targets:
+        - contentRequirements/4
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE017
+      question: How does Teleport compare architecturally to StrongDM and HashiCorp Boundary?
+      type: comparison
+      targets:
+        - contentRequirements/4
+        - plannedFigures/product-maturity-capability-map
+      status: answered
+
+    - id: QE018
+      question: What identity providers does Teleport integrate with for SSO?
+      type: enumeration
+      targets:
+        - contentRequirements/2
+        - plannedTables/workflow-use-case-table
+      status: answered
+
+    - id: QE019
+      question: What is the MCP server access product and how is it differentiated?
+      type: mechanism
+      targets:
+        - contentRequirements/0
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE020
+      question: What is the Teleport pricing model and what metrics drive usage-based billing?
+      type: quantification
+      targets:
+        - contentRequirements/3
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE021
+      question: How does the LLM Proxy in Beams enforce controls over AI agent behavior?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedFigures/critical-dependency-map
+      status: answered
+
+    - id: QE022
+      question: What is the Teleport Identity Security product and what analytics does it provide?
+      type: mechanism
+      targets:
+        - contentRequirements/0
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE023
+      question: Does Teleport have an independent third-party security audit more recent than 2019?
+      type: adverse
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: unresolved
+
+    - id: QE024
+      question: What are the session recording PTY obfuscation risks and what mitigations exist?
+      type: mechanism
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE025
+      question: What is the infrastructure identity survey 2026 finding on AI adoption and identity preparedness?
+      type: quantification
+      targets:
+        - contentRequirements/0
+        - plannedTables/workflow-use-case-table
+      status: answered
+
+    - id: QE026
+      question: What is the Teleport Agentic Identity Framework architecture and its four layers?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedFigures/critical-dependency-map
+      status: answered
+
+    - id: QE027
+      question: How reliable is the Teleport Cloud control plane — is there any documented outage history?
+      type: adverse
+      targets:
+        - contentRequirements/3
+        - plannedTables/technology-operating-architecture-table
+      status: partial
+
+  sources:
+    - id: SE001
+      publisher: Teleport
+      title: "Teleport: Unified Identity Securing Classic & AI Infrastructure"
+      url: https://goteleport.com/
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - product-overview
+        - infrastructure-identity
+        - agentic-ai
+      keyQuote: "Teleport unifies identities — humans, machines, and AI — with strong identity implementation to speed up engineering, improve resiliency against identity-based attacks, and control AI in production infrastructure."
+
+    - id: SE008
+      publisher: Teleport
+      title: "Teleport Community Edition will adopt a commercial license starting with version 16"
+      url: https://goteleport.com/blog/teleport-community-license/
+      date: '2024-06-01'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - community-license
+        - open-source
+        - commercial-restriction
+      keyQuote: "Starting with the June release of Teleport 16, we are switching Teleport Community Edition to a commercial license with new restrictions"
+
+    - id: SE009
+      publisher: Teleport
+      title: "Introducing Teleport 16 - Enhanced Security and Usability with New Features"
+      url: https://goteleport.com/blog/teleport-16/
+      date: '2024-06-01'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - product-release
+        - community-license
+        - idp-compromise
+
+    - id: SE010
+      publisher: Teleport
+      title: "Introducing Teleport 17 - Enhanced Security and Usability with New Features"
+      url: https://goteleport.com/blog/teleport-17/
+      date: '2024-11-16'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - product-release
+        - aws-iam-integration
+        - identity-security-crown-jewels
+
+    - id: SE011
+      publisher: Teleport
+      title: "Teleport Explained: Concepts & Architecture Guide"
+      url: https://goteleport.com/how-it-works/
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - architecture
+        - certificate-authority
+        - authentication-flow
+      keyQuote: "Teleport is a certificate authority and identity-aware access proxy that implements protocols such as SSH, RDP, HTTPS, Kubernetes API, and a variety of SQL and NoSQL database protocols."
+
+    - id: SE012
+      publisher: Teleport
+      title: Teleport Pricing
+      url: https://goteleport.com/pricing/
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - pricing
+        - deployment-options
+        - community-vs-enterprise
+
+    - id: SE017
+      publisher: Teleport
+      title: Teleport Reference Architecture
+      url: https://goteleport.com/docs/reference/architecture/
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - architecture
+        - auth-service
+        - proxy-service
+        - grpc
+
+    - id: SE018
+      publisher: Teleport
+      title: Teleport Core Concepts
+      url: https://goteleport.com/docs/core-concepts/
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - architecture
+        - cluster
+        - auth-service
+        - proxy-service
+
+    - id: SE019
+      publisher: Teleport
+      title: Teleport Feature Matrix
+      url: https://goteleport.com/docs/feature-matrix/
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - feature-matrix
+        - enterprise-vs-community
+        - beams
+        - mcp
+        - agentic-identity
+      keyQuote: "The Teleport Agentic Identity Framework combines Teleport identity, access, governance, and monitoring capabilities to secure AI agents and the infrastructure they access."
+
+    - id: SE020
+      publisher: Teleport
+      title: Machine & Workload Identity Documentation
+      url: https://goteleport.com/docs/machine-workload-identity/
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - machine-workload-identity
+        - tbot
+        - non-human-identity
+
+    - id: SE022
+      publisher: Teleport
+      title: MCP Server Access Documentation
+      url: https://goteleport.com/docs/enroll-resources/mcp-access/
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - mcp-access
+        - model-context-protocol
+        - ai-agents
+
+    - id: SE023
+      publisher: Teleport
+      title: Teleport Identity Security Documentation
+      url: https://goteleport.com/docs/identity-security/
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - identity-security
+        - access-analytics
+        - threat-detection
+        - crown-jewels
+
+    - id: SE024
+      publisher: Teleport
+      title: Session Recording Architecture
+      url: https://goteleport.com/docs/reference/architecture/session-recording/
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - session-recording
+        - security-risk
+        - pty-obfuscation
+
+    - id: SE025
+      publisher: Teleport
+      title: FedRAMP Compliance with Teleport
+      url: https://goteleport.com/docs/zero-trust-access/compliance-frameworks/fedramp/
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - fedramp
+        - fips-140
+        - compliance
+      keyQuote: "Teleport releases from 17.7.3+ and 18.0.0+ use BoringCrypto tag fips-20220613 (CMVP certificate #4735, FIPS 140-3)"
+
+    - id: SE026
+      publisher: Teleport
+      title: SOC 2 Compliance with Teleport
+      url: https://goteleport.com/docs/zero-trust-access/compliance-frameworks/soc2/
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - soc2
+        - compliance
+        - access-controls
+
+    - id: SE027
+      publisher: Teleport
+      title: Teleport Upcoming Releases
+      url: https://goteleport.com/docs/upcoming-releases/
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - roadmap
+        - version-18
+        - version-19
+        - linux-desktop-access
+
+    - id: SE028
+      publisher: Teleport
+      title: Identity Security Blog Post
+      url: https://goteleport.com/blog/identity-security/
+      date: '2026-01-01'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - identity-security
+        - threat-detection
+        - ciso-survey
+
+    - id: SE029
+      publisher: Teleport
+      title: Teleport Security Audit by Cure53
+      url: https://goteleport.com/blog/teleport-security-audit/
+      date: '2019-06-01'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - security-audit
+        - vulnerabilities
+        - cure53
+      keyQuote: "No critical vulnerabilities have been discovered. One high vulnerability was found: The roles API of the auth server allow directory traversal."
+
+    - id: SE030
+      publisher: Teleport
+      title: "Teleport Introduces Agentic Identity Framework"
+      url: https://goteleport.com/about/newsroom/press-releases/teleport-introduces-agentic-identity-framework/
+      date: '2026-01-27'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - agentic-identity
+        - product-launch
+        - ai-agents
+
+    - id: SE031
+      publisher: Teleport
+      title: "Beams LLM Proxy and Delegated Identity Public Beta"
+      url: https://goteleport.com/about/newsroom/press-releases/beams-llm-proxy-delegated-identity/
+      date: '2026-06-16'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - beams
+        - llm-proxy
+        - delegated-identity
+        - agentic-identity
+      keyQuote: "Two foundational identity concepts — controlling the scope of agent roles and constraining what they can access — now have a production implementation in Beams"
+
+    - id: SE032
+      publisher: Teleport
+      title: "2026 Infrastructure Identity Survey: State of AI Adoption"
+      url: https://goteleport.com/resources/surveys/infrastructure-identity-survey-2026/
+      date: '2026-02-01'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - ai-adoption
+        - survey
+        - identity-management
+      keyQuote: "92% have near-term AI initiatives in infrastructure... but only 13% feel extremely prepared"
+
+    - id: SE033
+      publisher: Teleport
+      title: Agentic Identity Framework Documentation
+      url: https://goteleport.com/docs/agentic-identity-framework/
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - agentic-identity-framework
+        - architecture
+        - ai-agents
+
+    - id: SE034
+      publisher: Teleport
+      title: AI Agents with Machine & Workload Identity
+      url: https://goteleport.com/docs/machine-workload-identity/use-cases/ai-agents-mwi/
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - ai-agents
+        - machine-workload-identity
+        - rbac
+
+    - id: SE035
+      publisher: Beams (Teleport)
+      title: Beams — Trusted Runtimes for Infrastructure Agents
+      url: https://www.beams.run/
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - beams
+        - firecracker-vm
+        - agentic-runtime
+        - delegated-identity
+      keyQuote: "Beams runs each agent in an isolated Firecracker VM with built-in identity. Connected to your infrastructure and inference services — no secrets, no IAM wrestling."
+
+    - id: SE036
+      publisher: GitHub (gravitational/teleport)
+      title: Teleport Open Source Repository
+      url: https://github.com/gravitational/teleport
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: high
+      independence: independent
+      topics:
+        - open-source
+        - github-stars
+        - go-binary
+        - protocol-support
+      keyQuote: "Teleport is a single Go binary that integrates with multiple protocols and cloud services"
+
+    - id: SE041
+      publisher: NIST
+      title: Zero Trust Architecture (SP 800-207)
+      url: https://www.nist.gov/publications/zero-trust-architecture
+      date: '2020-08-11'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: neutral
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics:
+        - zero-trust
+        - nist
+        - compliance-framework
+
+    - id: SE042
+      publisher: CISA
+      title: Zero Trust Maturity Model
+      url: https://www.cisa.gov/zero-trust-maturity-model
+      date: '2023-04-01'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: neutral
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics:
+        - zero-trust
+        - cisa
+        - maturity-model
+
+    - id: SE043
+      publisher: StrongDM
+      title: StrongDM vs Teleport Comparison
+      url: https://discover.strongdm.com/comparison/strongdm-vs-teleport
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: adverse
+      sourceType: analyst-market-data
+      reputationTier: low
+      independence: competitor
+      topics:
+        - competitor-comparison
+        - product-limitations
+        - reliability-criticism
+      keyQuote: "The Teleport agents run as root in every server you want to audit, creating a new attack vector and a new surface to protect... Teleport cloud is unreliable and availability numbers are inaccurate."
+
+    - id: SE051
+      publisher: HashiCorp
+      title: What is Boundary?
+      url: https://developer.hashicorp.com/boundary/docs/what-is-boundary
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: competitor
+      topics:
+        - competitor
+        - infrastructure-access
+        - open-source-alternative
+
+    - id: SE052
+      publisher: PeerSpot
+      title: Teleport Reviews
+      url: https://www.peerspot.com/products/teleport-reviews
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: neutral
+      sourceType: review
+      reputationTier: medium
+      independence: independent
+      topics:
+        - user-reviews
+        - product-limitations
+        - rbac-complexity
+        - clipboard-security
+      keyQuote: "I rate it a seven because, as I mentioned, there is a security threat regarding clipboard access."
+
+    - id: SE054
+      publisher: Teleport
+      title: FedRAMP Compliance Use Case
+      url: https://goteleport.com/use-cases/fedramp-compliance/
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - fedramp
+        - access-controls
+        - compliance
+
+    - id: SE053
+      publisher: Teleport
+      title: Teleport Named to Citizens Securities 2026 Cyber 66
+      url: https://goteleport.com/about/newsroom/press-releases/teleport-named-2026-cyber-66-hottest-privately-held-cybersecurity-companies/
+      date: '2026-04-07'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - recognition
+        - agentic-ai
+        - identity-security
+      keyQuote: "73% of cybersecurity leaders are already seeing enterprise customers ask how their platforms can help secure AI agents"
+
+    - id: SE037
+      publisher: Bessemer Venture Partners
+      title: "Investing in Teleport and the Unified Access Plane"
+      url: https://www.bvp.com/news/investing-in-teleport-and-the-unified-access-plane
+      date: '2022-03-05'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: analyst-market-data
+      reputationTier: high
+      independence: partner
+      topics:
+        - infrastructure-access
+        - product-category
+        - series-c-investment
+      keyQuote: "Teleport will be the defining solution to this emerging massive problem, granting infrastructure access seamlessly without compromising security."
+
+    - id: SE039
+      publisher: Kleiner Perkins
+      title: "Gravitational: Pulling Us Toward an Open and Multi-Cloud Future"
+      url: https://www.kleinerperkins.com/perspectives/gravitational-pulling-us-toward-an-open-and-multi-cloud-future/
+      date: '2020-01-01'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: analyst-market-data
+      reputationTier: high
+      independence: partner
+      topics:
+        - series-a-investment
+        - open-source
+        - multi-cloud
+
+    - id: SE055
+      publisher: Teleport
+      title: Teleport Database Access Documentation
+      url: https://goteleport.com/docs/enroll-resources/database-access/
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - database-access
+        - postgresql
+        - mysql
+        - mongodb
+        - cockroachdb
+        - protocol-proxy
+
+    - id: SE056
+      publisher: Teleport
+      title: Teleport Security Page — Code Signing and Certificates
+      url: https://goteleport.com/security/
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - security
+        - code-signing
+        - apple-certificate
+        - rpm-debian-keys
+
+    - id: SE057
+      publisher: Teleport
+      title: Teleport Blog
+      url: https://goteleport.com/blog/
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - product-updates
+        - engineering
+        - ai-infrastructure
+
+    - id: SE058
+      publisher: Teleport
+      title: "Elasticsearch Database Access — Self-Hosted Enrollment"
+      url: https://goteleport.com/docs/enroll-resources/database-access/enrollment/self-hosted/elastic/
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - database-access
+        - elasticsearch
+        - self-hosted
+        - enrollment
+
+    - id: SE059
+      publisher: Teleport
+      title: Teleport Identity Governance
+      url: https://goteleport.com/docs/identity-governance/
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - identity-governance
+        - access-lists
+        - access-requests
+        - scim
+
+    - id: SE060
+      publisher: Teleport
+      title: Teleport Proxy Service
+      url: https://goteleport.com/docs/reference/architecture/proxy/
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - proxy-service
+        - reverse-tunnel
+        - web-ui
+        - tls-routing
+
+    - id: SE061
+      publisher: Teleport
+      title: Teleport Authentication
+      url: https://goteleport.com/docs/reference/architecture/authentication/
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - authentication
+        - certificate-authority
+        - sso
+        - mfa
+
+    - id: SE062
+      publisher: Teleport
+      title: Deploying Teleport Agents
+      url: https://goteleport.com/docs/installation/agents/
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - agent-enrollment
+        - join-methods
+        - deployment
+        - cloud
+
+    - id: SE063
+      publisher: Teleport
+      title: Teleport tsh Client Documentation
+      url: https://goteleport.com/docs/connect-your-client/tsh/
+      date: '2026-06-20'
+      accessDate: '2026-06-20'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - tsh
+        - client
+        - access-workflow
+        - cli
+
+  claims:
+    - id: CE001
+      statement: Teleport is a certificate authority and identity-aware access proxy that implements SSH, RDP, HTTPS, Kubernetes API, and SQL/NoSQL database protocols, distributed as a single Go binary.
+      type: observed
+      topic: product-overview
+      sourceRefs:
+        - SE011
+        - SE036
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+
+    - id: CE002
+      statement: "Teleport's product suite includes five pillars: Zero Trust Access, Machine & Workload Identity, Identity Governance, Identity Security, and the Agentic Identity Framework."
+      type: observed
+      topic: product-overview
+      sourceRefs:
+        - SE019
+        - SE001
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE002
+
+    - id: CE003
+      statement: The Zero Trust Access product covers SSH, Kubernetes, databases, Windows/RDP, internal web apps, and MCP servers.
+      type: observed
+      topic: product-modules
+      sourceRefs:
+        - SE019
+        - SE011
+        - SE036
+        - SE055
+        - SE058
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+
+    - id: CE004
+      statement: MCP server access is available in Community Edition, Enterprise Self-Hosted, and Enterprise Cloud, with per-tool audit events for MCP requests.
+      type: observed
+      topic: product-modules
+      sourceRefs:
+        - SE019
+        - SE022
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE019
+
+    - id: CE005
+      statement: The Teleport feature matrix distinguishes Enterprise Cloud, Enterprise Self-Hosted, and Community Edition, with Beams trusted runtimes exclusive to Enterprise Cloud.
+      type: observed
+      topic: product-editions
+      sourceRefs:
+        - SE019
+        - SE012
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE007
+
+    - id: CE006
+      statement: Identity Security provides SQL-editor access queries, Crown Jewels monitoring for critical assets, anomaly alerting, and integration with Okta, AWS, and GitHub audit logs.
+      type: observed
+      topic: identity-security
+      sourceRefs:
+        - SE023
+        - SE010
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE022
+
+    - id: CE007
+      statement: "Teleport pricing is usage-based across four billing metrics: Monthly Active Users, Machine/Workload Identity users, and Teleport Protected Resources, with no publicly listed list prices."
+      type: observed
+      topic: pricing
+      sourceRefs:
+        - SE012
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE020
+
+    - id: CE008
+      statement: Teleport's Agentic Identity Framework was announced January 27, 2026, defining a four-layer architecture (identity, access, security, scheduling) for securing AI agents in production.
+      type: observed
+      topic: agentic-identity
+      sourceRefs:
+        - SE030
+        - SE033
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE026
+
+    - id: CE009
+      statement: Teleport's 2026 Infrastructure Identity Survey of 200+ infrastructure leaders found 92% have near-term AI initiatives in infrastructure and only 13% feel extremely prepared.
+      type: third-party-reported
+      topic: market-context
+      sourceRefs:
+        - SE032
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE025
+
+    - id: CE010
+      statement: The Teleport control plane consists of the Auth Service (CA, config store, audit log) and Proxy Service (public entry point, reverse-tunnel hub, Web UI), both communicating via gRPC.
+      type: observed
+      topic: architecture
+      sourceRefs:
+        - SE017
+        - SE018
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE005
+
+    - id: CE011
+      statement: The Auth Service is the only Teleport component that must be connected to a persistent backend (etcd, DynamoDB, Postgres, or Teleport Cloud storage); all other services are stateless.
+      type: observed
+      topic: architecture
+      sourceRefs:
+        - SE018
+        - SE017
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE005
+
+    - id: CE012
+      statement: "Teleport authentication flow: user runs tsh login, receives a client certificate from the Auth Service, and that certificate is automatically accepted by SSH, kubectl, psql, and other CLI tools."
+      type: observed
+      topic: authentication-flow
+      sourceRefs:
+        - SE011
+        - SE017
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE003
+
+    - id: CE013
+      statement: Teleport integrates with enterprise SSO providers including Okta, GitHub, Google Workspace, and Active Directory for identity provider authentication.
+      type: observed
+      topic: sso-integration
+      sourceRefs:
+        - SE011
+        - SE025
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE018
+
+    - id: CE014
+      statement: Teleport's Proxy Service implements an SSH server; Teleport Agents establish reverse tunnels to the Proxy to receive traffic from the public internet without exposing private resources.
+      type: observed
+      topic: architecture
+      sourceRefs:
+        - SE017
+        - SE018
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE004
+
+    - id: CE015
+      statement: Teleport can be deployed as Cloud (fully managed), on-premises, on-premises FIPS, multi-region high availability, hybrid, or edge; deployment type does not affect billing metrics except for multi-region HA.
+      type: observed
+      topic: deployment-options
+      sourceRefs:
+        - SE012
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE004
+
+    - id: CE016
+      statement: StrongDM claims Teleport agents run as root on every enrolled server, creating a new attack vector; agentless mode is available but offers limited features without RBAC or granular auditing.
+      type: third-party-reported
+      topic: product-limitations
+      sourceRefs:
+        - SE043
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE012
+
+    - id: CE017
+      statement: Session recording in Teleport supports four configurations (node-sync, node, proxy-sync, proxy) and captures PTY output for SSH and Kubernetes, screen content for desktop, and query streams for databases.
+      type: observed
+      topic: session-recording
+      sourceRefs:
+        - SE024
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE009
+
+    - id: CE018
+      statement: Teleport's official session recording documentation discloses that users can conceal terminal commands by encoding them (e.g., base64) or running scripts from disk, with BPF Enhanced Session Recording as a mitigation.
+      type: observed
+      topic: session-recording-risk
+      sourceRefs:
+        - SE024
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs:
+        - QE024
+
+    - id: CE019
+      statement: StrongDM claims Teleport Cloud is unreliable and that updates can cause access downtime of up to six hours; Teleport does not publish a public uptime SLA or incident history.
+      type: third-party-reported
+      topic: reliability-risk
+      sourceRefs:
+        - SE043
+      confidence: low
+      freshness: current
+      answersQuestionRefs:
+        - QE027
+
+    - id: CE020
+      statement: Machine & Workload Identity uses tbot to issue short-lived X.509 or SSH certificates to non-human workloads, eliminating standing service secrets.
+      type: observed
+      topic: machine-workload-identity
+      sourceRefs:
+        - SE020
+        - SE034
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE006
+
+    - id: CE021
+      statement: AI agents secured with Machine & Workload Identity receive their own cryptographic identity and operate under RBAC/ABAC enforcement at both network and protocol level, with all actions logged.
+      type: observed
+      topic: ai-agent-access
+      sourceRefs:
+        - SE034
+        - SE033
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE006
+
+    - id: CE022
+      statement: "The Agentic Identity Framework is organized into four layers: identity (cryptographic agent certificates), access (RBAC/ABAC via Teleport proxy), security (behavioral monitoring), and scheduling (Kubernetes/Temporal orchestration patterns)."
+      type: observed
+      topic: agentic-identity-framework
+      sourceRefs:
+        - SE033
+        - SE030
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE026
+
+    - id: CE023
+      statement: Beams is described as a trusted ephemeral runtime for AI agents; each Beam runs in a Firecracker microVM with ephemeral storage, injected identity, and a session-bound lifecycle of approximately 24 hours.
+      type: observed
+      topic: beams-runtime
+      sourceRefs:
+        - SE035
+        - SE019
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE007
+
+    - id: CE024
+      statement: The LLM Proxy sits between an AI agent and its inference endpoint, logging every request and response to the Teleport audit trail and enforcing per-Beam allowlists for which inference endpoints agents can reach.
+      type: observed
+      topic: llm-proxy
+      sourceRefs:
+        - SE031
+        - SE035
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE021
+
+    - id: CE025
+      statement: Delegated Identity allows a human operator or orchestrator to define and assign least-privilege permissions to an agent session, and was launched as part of the Beams public beta in June 2026.
+      type: observed
+      topic: delegated-identity
+      sourceRefs:
+        - SE031
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE021
+
+    - id: CE026
+      statement: Beams trusted runtimes are currently in public beta and are available only to Enterprise Cloud customers; Enterprise Self-Hosted and Community Edition deployments do not have access to Beams.
+      type: observed
+      topic: beams-availability
+      sourceRefs:
+        - SE019
+        - SE031
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE007
+
+    - id: CE027
+      statement: Beams includes built-in inference proxy support for OpenAI and Anthropic endpoints, with an option to bring your own inference endpoint.
+      type: observed
+      topic: beams-runtime
+      sourceRefs:
+        - SE035
+        - SE019
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE007
+
+    - id: CE028
+      statement: The 2026 Citizens Securities Cyber 66 report survey found 73% of cybersecurity leaders are seeing enterprise customers ask how their platforms can help secure AI agents, with identity topping the list of security pain points.
+      type: third-party-reported
+      topic: market-context
+      sourceRefs:
+        - SE053
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE025
+
+    - id: CE029
+      statement: Teleport Enterprise versions 17.7.3+ and 18.0.0+ include FIPS 140-3 validated cryptographic modules using BoringCrypto CMVP certificate #4735.
+      type: observed
+      topic: fips-compliance
+      sourceRefs:
+        - SE025
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE008
+
+    - id: CE030
+      statement: Teleport's FedRAMP documentation covers AC-02, AC-03, AC-07, AC-08, AC-10, AC-12, AU-02, AU-03, AU-09, AU-10, and AU-12 NIST SP 800-53 controls, supporting FedRAMP-Moderate authorization.
+      type: observed
+      topic: fedramp-compliance
+      sourceRefs:
+        - SE025
+        - SE054
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE013
+
+    - id: CE031
+      statement: "Teleport documents SOC 2 coverage across four of nine control categories: CC6 (control activities), CC6 (physical/logical access), CC7 (system operations), and CC8 (change management)."
+      type: observed
+      topic: soc2-compliance
+      sourceRefs:
+        - SE026
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE013
+
+    - id: CE032
+      statement: A Cure53 security audit of Teleport in 2019 found no critical vulnerabilities; one high-severity directory-traversal issue in the roles API was patched in the same release (v2.6.0).
+      type: observed
+      topic: security-audit
+      sourceRefs:
+        - SE029
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs:
+        - QE011
+
+    - id: CE033
+      statement: No public third-party security audit of Teleport more recent than 2019 has been disclosed; the Cure53 audit covered source code version 2.x, not current v17/v18.
+      type: inferred
+      topic: security-audit-gap
+      sourceRefs:
+        - SE029
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE023
+
+    - id: CE034
+      statement: Teleport releases one major version per year with 24-month support; version 18 (current) was released July 2025 with EOL August 2027; version 17 (stable) EOL August 2026.
+      type: observed
+      topic: release-cadence
+      sourceRefs:
+        - SE027
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE014
+
+    - id: CE035
+      statement: Starting with Teleport 16 (June 2024), compiled Community Edition binaries, container images, and AMIs are licensed under a commercial license restricting companies with 100+ employees or $10 M+ annual revenue.
+      type: observed
+      topic: community-license
+      sourceRefs:
+        - SE008
+        - SE009
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs:
+        - QE010
+
+    - id: CE036
+      statement: The Teleport open-source repository on GitHub remains AGPLv3; documentation and client library code remain Apache 2.0; only compiled artifacts switched to the commercial license in June 2024.
+      type: observed
+      topic: open-source-license
+      sourceRefs:
+        - SE008
+        - SE036
+      confidence: high
+      freshness: historical
+      answersQuestionRefs:
+        - QE010
+
+    - id: CE037
+      statement: Teleport's product roadmap includes Linux Desktop Access (remote sessions to Linux hosts), multiple-directory sharing for Windows RDP, and AI-summarized session recordings in Identity Security.
+      type: observed
+      topic: product-roadmap
+      sourceRefs:
+        - SE027
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE015
+
+    - id: CE038
+      statement: The Teleport GitHub open-source repository has over 15,000 GitHub stars (stated at time of community-license announcement) and is written in Go; Teleport maintains Apple code-signing and RPM/Debian signing keys published on the security page.
+      type: observed
+      topic: developer-signal
+      sourceRefs:
+        - SE008
+        - SE036
+        - SE056
+        - SE057
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs:
+        - QE016
+
+    - id: CE039
+      statement: PeerSpot user reviews identify Teleport's initial setup and RBAC configuration complexity, SIEM integration limitations, clipboard security risk in RDP, and pricing concerns for large companies as the primary improvement areas.
+      type: third-party-reported
+      topic: product-limitations
+      sourceRefs:
+        - SE052
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE012
+
+    - id: CE040
+      statement: NIST SP 800-207 and CISA Zero Trust Maturity Model provide regulatory frameworks for zero-trust access controls that Teleport's architecture is designed to satisfy.
+      type: third-party-reported
+      topic: compliance-framework
+      sourceRefs:
+        - SE041
+        - SE042
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs:
+        - QE013
+
+    - id: CE041
+      statement: Teleport Identity Governance adds access lists, access requests, approval workflows, and SCIM-driven lifecycle controls on top of the core access plane.
+      type: observed
+      topic: identity-governance
+      sourceRefs:
+        - SE059
+        - SE019
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE017
+
+    - id: CE042
+      statement: The Teleport Proxy Service provides the public-facing web UI, single sign-on entry point, and reverse-tunnel transport that connects users to private resources through the control plane.
+      type: observed
+      topic: proxy-architecture
+      sourceRefs:
+        - SE017
+        - SE060
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE003
+        - QE005
+
+    - id: CE043
+      statement: Teleport authentication issues short-lived certificates to human users, services, and AI agents after they authenticate through local accounts or external identity providers with MFA.
+      type: observed
+      topic: authentication
+      sourceRefs:
+        - SE017
+        - SE061
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE003
+        - QE021
+
+    - id: CE044
+      statement: Teleport agents are deployed onto protected infrastructure and can join clusters through multiple join methods, allowing SSH, Kubernetes, application, and database traffic to traverse the identity-aware proxy.
+      type: observed
+      topic: agent-enrollment
+      sourceRefs:
+        - SE017
+        - SE062
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE004
+        - QE005
+
+    - id: CE045
+      statement: The tsh client is Teleport's command-line workflow surface for user logins, certificate retrieval, and protocol-specific sessions, complementing the browser UI and Teleport Connect desktop app.
+      type: observed
+      topic: client-experience
+      sourceRefs:
+        - SE018
+        - SE063
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE019
+
+  evidenceGaps:
+    - type: missing-source
+      severity: material
+      topic: security-audit
+      missingEvidence: An independent third-party security audit of Teleport v16, v17, or v18 by a recognized security firm (e.g., Cure53, NCC Group, Trail of Bits)
+      whyItMatters: The only public audit is from 2019 (v2.x) and does not cover the current codebase, agentic features, or Beams runtime
+      diligencePath: Request current pentest reports or bug-bounty disclosures from Teleport directly
+      relatedQuestionRefs:
+        - QE023
+
+    - type: missing-source
+      severity: material
+      topic: reliability-risk
+      missingEvidence: Independent uptime data or SLA documentation for Teleport Cloud
+      whyItMatters: StrongDM claims update-related outages of up to 6 hours; Teleport does not publish a public status page or SLA
+      diligencePath: Review Teleport Cloud status page (status.teleport.sh) or request SLA documentation
+      relatedQuestionRefs:
+        - QE027
+
+    - type: enumeration-incomplete
+      severity: minor
+      topic: product-roadmap
+      missingEvidence: Dated roadmap items for v19 and beyond; Beams GA timeline
+      whyItMatters: Beams is beta-only and Enterprise Cloud-only; GA timeline affects self-hosted customers and competitive positioning
+      diligencePath: Review docs/upcoming-releases periodically; request roadmap from Teleport sales
+      relatedQuestionRefs:
+        - QE015
+
+    - type: missing-source
+      severity: minor
+      topic: developer-signal
+      missingEvidence: Current GitHub star count, contributor count, and recent commit frequency for gravitational/teleport
+      whyItMatters: Developer adoption is a leading indicator of platform longevity and community health
+      diligencePath: Fetch https://github.com/gravitational/teleport directly for current star count and commit graph
+      relatedQuestionRefs:
+        - QE016
