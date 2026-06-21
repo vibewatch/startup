@@ -1,0 +1,2083 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: juspay
+runDate: "2026-06-21"
+company:
+  name: Juspay
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: >-
+    Juspay's product surface spans a layered payments operating system — HyperCheckout for checkout experience and
+    routing, Hyperswitch as an open-source composable orchestration platform with 43k+ GitHub stars, HyperSDK with
+    2.5 billion+ mobile app installs, and a modular suite covering tokenization, 3DS authentication, reconciliation,
+    and ML-driven revenue recovery. The company's Rust-based backend handles 2000 TPS at a claimed 99.999% uptime,
+    holds PCI DSS 4.0.1, ISO 27001:2022, and SOC 2 Type 2 certifications, and integrates with 300+ global PSPs.
+    The principal technology risk is competitive: PhonePe, Razorpay, and Cashfree have moved to direct merchant
+    integration, launching their own orchestration tools and bypassing Juspay's intermediary layer.
+sections:
+  - id: product-surface
+    title: Product Surface and Module Map
+    body: >-
+      Juspay's public product surface divides into three primary delivery mechanisms: a managed checkout experience
+      layer (HyperCheckout), a developer-facing open-source orchestration platform (Hyperswitch), and a mobile SDK
+      distribution layer (HyperSDK) with 2.5 billion+ app installs. HyperCheckout is explicitly not a payment
+      aggregator (PA) or payment gateway (PG); it is an experience and orchestration layer that sits on top of
+      300+ PA/PG connections, offering no-code checkout customization with 100+ visual configurations, a design
+      studio for Android, iOS, and web, intelligent routing, and an A/B framework. Express Checkout SDK provides
+      the raw API and SDK surface for merchants building custom checkout UIs. HyperUPI is a specific product for
+      the Indian market enabling 1-click UPI payments with a company-claimed 90%+ success rate. Beyond checkout,
+      Juspay offers a full payment module suite: network tokenization with PSP-agnostic vault and third-party
+      vault support, a PSP-agnostic 3DS authentication workflow, a NACH/eMandates recurring payment product, an
+      ML-driven revenue recovery engine with 30+ configurable retry parameters, automated 3-way reconciliation,
+      and an instant payouts product spanning cards, bank transfers, and wallets. The HyperCredit product adds a
+      lender orchestration system for embedded credit. The breadth of this module map gives Juspay multiple
+      integration touchpoints with enterprise merchants, creating switching costs at multiple layers of the payment
+      stack. The diligence question is whether the module depth translates into defensible revenue per module or
+      whether individual features are easily replicated by well-resourced PGs and PSPs.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE006
+      - CE007
+      - CE008
+      - CE009
+      - CE010
+    tableRefs:
+      - TE001
+      - TE002
+
+  - id: architecture-tech
+    title: Architecture and Technical Infrastructure
+    body: >-
+      Juspay's Hyperswitch platform is built in Rust, a systems-level language chosen explicitly for performance
+      and memory safety. The production infrastructure handles 2000 transactions per second (TPS) and Juspay
+      claims 99.999% uptime across its payment infrastructure. Hyperswitch's modular design allows merchants to
+      deploy only the components they need — routing, retries, vaulting, cost observability, or reconciliation —
+      without vendor lock-in. The backend is containerized and deployable via Helm charts on AWS, GCP, Azure, or
+      any Kubernetes-compatible platform. Juspay also offers a fully-hosted SaaS option with out-of-the-box
+      compliance and enterprise-grade SLAs. The intelligent routing engine evaluates transactions in real time
+      across rule-based, volume-based, and machine-learning-driven algorithms. The revenue recovery module
+      configures retry logic across 30+ parameters including decline code, card bin, region, ticket size, and
+      payment method to minimize involuntary churn. The cost observability module provides drill-down visibility
+      into scheme, interchange, and acquirer fees. A stateless architecture enables horizontal scaling for peak
+      payment loads. The card vault is PCI-compliant and supports bring-your-own-vault (VGS, TokenEx) so
+      merchants can connect existing vault providers without re-tokenizing stored cards. As of June 2026, the
+      Hyperswitch repository has shipped 156 named releases since launch in October 2022 and maintains
+      active commit activity, with the latest push recorded on June 20, 2026, one day before this analysis.
+      The main architectural risk is that the multi-cloud, modular design requires significant merchant-side
+      engineering investment to exploit fully, which may limit penetration among smaller merchants without
+      dedicated payments engineering teams.
+    claimRefs:
+      - CE011
+      - CE012
+      - CE013
+      - CE014
+      - CE015
+      - CE016
+      - CE017
+      - CE018
+      - CE019
+      - CE020
+    tableRefs:
+      - TE003
+    figureRefs:
+      - FE001
+      - FE002
+
+  - id: developer-ecosystem
+    title: Developer Ecosystem and Open-Source Strategy
+    body: >-
+      Juspay's open-source strategy centers on Hyperswitch, which had 43,037 GitHub stars and 4,821 forks as
+      of June 20, 2026, making it one of the most-starred open-source fintech infrastructure repositories
+      globally. The GitHub organization at github.com/juspay hosts 343+ public repositories, reflecting a
+      broad engineering output spanning payments, AI tooling (Neurolink), NixOS configuration management
+      (services-flake), and developer experience tools. Hyperswitch is available as a self-hosted stack or a
+      Juspay-managed SaaS, with a hosted sandbox requiring no setup for developer exploration. SDKs are
+      published for Android (Kotlin), iOS (Swift), React Native (Dart), and Flutter, with the Flutter package
+      on pub.dev at version 1.5.2 as of March 2026 with 130 pub.dev likes. The Hyperswitch web SDK is a
+      ReScript-built React library distributed via npm. Developer support surfaces include a Slack community,
+      GitHub Discussions, a dedicated Stack Overflow tag, API reference documentation, a Postman collection,
+      and a public Academy. The open-source strategy creates a distribution moat: enterprise merchants evaluating
+      self-hosting can audit the codebase, reducing diligence friction and driving managed-SaaS conversion.
+      The risk is that open-source enables well-resourced competitors to fork and deploy Hyperswitch themselves,
+      reducing Juspay's SaaS premium. With 1,823 open issues in the GitHub repository, there is also a
+      maintainability signal that the issue backlog is large relative to current contributor capacity.
+    claimRefs:
+      - CE021
+      - CE022
+      - CE023
+      - CE024
+      - CE025
+      - CE026
+      - CE027
+    figureRefs:
+      - FE003
+
+  - id: security-compliance
+    title: Security, Compliance, and Reliability
+    body: >-
+      Juspay holds three independently audited certifications: PCI DSS 4.0.1 for payment data security, ISO
+      27001:2022 for information security management systems, and SOC 2 Type 2 for security and availability.
+      These are listed publicly on both juspay.in and juspay.io alongside a Payment Aggregation license from the
+      Reserve Bank of India (RBI) and a public vulnerability disclosure program. The Hyperswitch card vault is
+      PCI-compliant by design, with hardware security modules (HSM) for card data at rest and support for
+      external vault integrations via VGS and TokenEx without re-tokenization. The 3DS authentication module
+      is PSP-agnostic and configurable to regional regulatory requirements, supporting liability shift workflows
+      across all connected PSPs. The status page at status.hyperswitch.io provides public uptime transparency
+      for the hosted Hyperswitch platform. The claimed 99.999% uptime corresponds to less than 5.3 minutes of
+      downtime per year — a target consistent with active-active multi-region deployments with instant failover,
+      which Juspay lists explicitly in its tenets for reliability. Compliance gaps exist around independent
+      third-party audit reports for the uptime claim and the company's own internal ledger architecture, which
+      remains undisclosed publicly. The 2021 security incident, in which masked card data for approximately
+      35 million users was exposed, is a historical risk marker that predates the current PCI DSS 4.0.1
+      certification, but the breach demonstrates that large-scale incidents are possible in this company's
+      operating history.
+    claimRefs:
+      - CE028
+      - CE029
+      - CE030
+      - CE031
+      - CE032
+      - CE033
+    tableRefs:
+      - TE004
+
+  - id: competitive-moat
+    title: Competitive Differentiation and Technology Moat Risks
+    body: >-
+      Juspay's core technical differentiation rests on three pillars: depth of integration (300+ PSP connectors
+      pre-built), developer-native open-source distribution (Hyperswitch with 43k+ stars), and a multi-layer
+      enterprise product suite that extends from checkout experience through tokenization, authentication, and
+      reconciliation. The PURE orchestration and JUSPE router products position Juspay as an intelligent
+      middleware layer between merchants and multiple competing PSPs, creating a network-effect moat as more
+      PSP integrations attract more merchants. The machine-learning routing layer, which claims up to 10%
+      improvement in authorization rates for routing-optimized merchants, is harder to replicate than basic
+      rule-based routing. However, three major Indian payment gateway firms — PhonePe, Razorpay, and Cashfree
+      Payments — moved away from Juspay's orchestration in late 2024 and January 2025. Razorpay launched its
+      own orchestration tool (Optimizer) and Cashfree launched FlowWise to provide similar multi-PSP routing
+      directly to their merchant base, bypassing Juspay's intermediary position. Merchants reported frustration
+      as PG firms actively encouraged direct integration over Juspay middleware. Juspay's response framed itself
+      as a technology service provider like cloud infrastructure, distinct from payment intermediaries, and
+      argued that interoperability must be preserved. The receipt of an RBI payment aggregator license in 2024
+      means Juspay now competes with these PGs directly, which deepens the conflict. The long-term moat
+      question is whether Juspay's merchant-direct relationships, open-source strategy, and global expansion
+      (Hyperswitch) can offset the disintermediation pressure in the India market.
+    claimRefs:
+      - CE034
+      - CE035
+      - CE036
+      - CE037
+      - CE038
+      - CE039
+      - CE040
+    tableRefs:
+      - TE005
+    figureRefs:
+      - FE004
+
+tables:
+  - id: TE001
+    title: Product module / asset matrix
+    columns:
+      - Module / product line
+      - User / buyer
+      - Status / maturity
+      - Differentiation
+      - Diligence gap
+    rows:
+      - - HyperCheckout
+        - Enterprise merchants (web + app)
+        - Mature, production
+        - Routing + experience in one layer; connects 300+ PA/PGs; no-code design studio
+        - Need disclosed authorization lift data per merchant segment.
+      - - Express Checkout SDK
+        - Developers building custom checkout UI
+        - Mature, production
+        - Full SDK control without PA/PG lock-in
+        - Need SDK performance benchmarks vs native PG SDKs.
+      - - HyperSDK (mobile)
+        - Mobile app merchants
+        - Mature; 2.5 Bn+ installs
+        - Largest mobile payments SDK install base in India by company claim
+        - Independent verification of install count not available.
+      - - HyperUPI
+        - Indian merchants needing UPI
+        - Mature, production
+        - 1-click UPI with 90%+ claimed success rate; deep UPI stack integrations
+        - Success rate is company-claimed; no independent audit cited.
+      - - Hyperswitch (open-source)
+        - Global merchants and PSP platforms
+        - Active; 156+ releases
+        - Apache 2.0 license; Rust-based; 120+ PSP connectors; SaaS + self-host
+        - Large open issue backlog (1,823 open); maintainership capacity unclear.
+      - - Payment Orchestration / PURE
+        - Enterprise merchants (global)
+        - Production
+        - Automated ML routing; 300+ PSP integrations; no-code configurations
+        - PURE internal architecture not publicly documented.
+      - - Network Tokenization
+        - Merchants needing PCI-safe card storage
+        - Production
+        - Multi-network token vault; PSP-agnostic; supports VGS and TokenEx
+        - Token provisioning success rates per network not disclosed.
+      - - Revenue Recovery (ML Retries)
+        - Subscription and card-not-present merchants
+        - Production
+        - 30+ retry parameters; ML-driven; configurable per card bin, region, decline code
+        - Realized recovery lift rate not independently published.
+    notes: Module status is based on official product pages and developer documentation; maturity ratings are inferred from documentation depth and company-stated scale metrics, not independent audits.
+    enumerationScope:
+      coverage: partial
+      basis: Covers eight primary merchant-facing modules from juspay.in, juspay.io, and developer.juspay.in product listings as of June 2026
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE006
+      - CE008
+      - CE009
+      - CE010
+
+  - id: TE002
+    title: Workflow / use-case table
+    columns:
+      - User job
+      - Current workflow
+      - Juspay solution
+      - Measurable benefit (claimed)
+      - Limitation
+    rows:
+      - - Accept payments across multiple PSPs
+        - Integrate separately with each PSP and manage fallover manually
+        - HyperCheckout + PURE orchestration
+        - Up to 10% authorization rate improvement via smart routing
+        - Authorization lift is company-claimed with no independent benchmark.
+      - - Build native mobile checkout
+        - Embed individual PSP SDKs per platform
+        - HyperSDK / Express Checkout SDK
+        - Single SDK; 2.5 Bn+ installs proven at scale
+        - Install count is company-stated; SDK performance vs. individual PSP native SDKs not benchmarked.
+      - - Enable 1-click UPI on mobile app
+        - Build UPI integration from scratch with NPCI/PA integrations
+        - HyperUPI
+        - 90%+ UPI success rate; 1-click flow
+        - India-only product; TPAP complexity not publicly detailed.
+      - - Recover failed recurring payments
+        - Manual retry with basic PG retry settings
+        - Revenue Recovery (ML Retries)
+        - Minimizes passive churn with configurable smart retry
+        - Incremental recovery lift vs. manual retry not independently verified.
+      - - Reconcile payments across PSPs and banks
+        - Manual multi-PSP reconciliation; error-prone
+        - Reconciliation module (3-way)
+        - Automates exception handling with customizable rules
+        - Rule configurability extent and exception rate improvements not published.
+    notes: Benefits are sourced from Juspay's official product descriptions and are company-claimed unless otherwise noted. Independent outcome benchmarks are not publicly available.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE004
+      - CE006
+      - CE007
+      - CE008
+
+  - id: TE003
+    title: Technology / operating architecture table
+    columns:
+      - Layer / component
+      - Role
+      - Dependency / technology choice
+      - Risk
+    rows:
+      - - Hyperswitch App Server
+        - Core payment routing, retries, and vault operations
+        - Rust; stateless; horizontally scalable
+        - Rust talent pool smaller than Java/Go; harder to hire for
+      - - Checkout SDKs (web + mobile)
+        - Client-side checkout rendering and payment initiation
+        - ReScript (web), Kotlin (Android), Swift (iOS), Flutter, React Native
+        - Multi-language maintenance burden; fragmentation risk across SDKs
+      - - PSP Connector Layer
+        - Abstraction over 120+ PSP APIs and protocols
+        - REST connectors defined per processor; Hyperswitch Prism for direct use
+        - PSP API changes require connector updates; regression risk at scale
+      - - Card Vault and Encryption Service
+        - PCI-compliant storage of raw card data, PSP tokens, and network tokens
+        - HSM-backed; bring-your-own-vault option for VGS, TokenEx
+        - Vault migration complexity if switching or deprecating providers
+      - - ML Routing Engine
+        - Dynamic PSP selection optimizing authorization rate
+        - In-house ML; trained on transaction outcomes
+        - Model drift under market conditions; retraining cadence not disclosed
+      - - Reconciliation Engine
+        - 3-way match across merchant data, PSP data, and bank statements
+        - Automated data fetch; customizable rules; backdated scheduling
+        - Exception handling completeness and SLA not publicly benchmarked
+    notes: Technology stack detail sourced from Hyperswitch GitHub README, developer documentation, and hyperswitch.io product pages. ML routing internals are company-described; independent algorithmic audit is not available.
+    claimRefs:
+      - CE011
+      - CE014
+      - CE015
+      - CE017
+      - CE020
+      - CE031
+
+  - id: TE004
+    title: Trust / quality / compliance table
+    columns:
+      - Control / certification
+      - Status
+      - Scope
+      - Gap / diligence ask
+    rows:
+      - - PCI DSS 4.0.1
+        - Certified
+        - Payment data infrastructure including card vault and routing
+        - QSA name and certification date not publicly disclosed.
+      - - ISO 27001:2022
+        - Certified
+        - Information security management system
+        - Certification body and scope boundary not stated.
+      - - SOC 2 Type 2
+        - Certified
+        - Security and availability trust principles
+        - Audit period, testing window, and exceptions not public.
+      - - RBI Payment Aggregator License
+        - Received (2024)
+        - Authorizes Juspay to operate as online payment aggregator in India
+        - License creates direct competition with former PA/PG partners.
+      - - Vulnerability Disclosure Program
+        - Active
+        - Public-facing security submission channel
+        - Scope of disclosed CVEs and remediation SLAs not published.
+    notes: Compliance certifications are self-reported on juspay.in and juspay.io; independent verification of scope and certification body requires direct inquiry.
+    claimRefs:
+      - CE028
+      - CE029
+      - CE030
+      - CE033
+      - CE039
+
+  - id: TE005
+    title: Roadmap / release / development-stage table
+    columns:
+      - Date / stage
+      - Feature / milestone
+      - Status
+      - Implication
+      - Source
+    rows:
+      - - "Oct 2022"
+        - Hyperswitch open-sourced on GitHub under Apache 2.0
+        - Completed
+        - Established open-source distribution channel; triggered developer community growth
+        - github.com/juspay/hyperswitch
+      - - "May 2026"
+        - Hyperswitch v1.123.1 released (latest as of analysis date)
+        - Completed
+        - 156+ named releases signals active engineering cadence; changelogs public
+        - github.com/juspay/hyperswitch/releases
+      - - "Mar 2026"
+        - Flutter Hyperswitch SDK v1.5.2 published on pub.dev
+        - Completed
+        - Cross-platform Flutter coverage closes mobile SDK gap
+        - pub.dev/packages/flutter_hyperswitch
+      - - "Q2 2026"
+        - Hyperswitch Roadmap Q2 2026 published in public docs
+        - In progress
+        - Public roadmap signals commitment to transparency; details on new connectors and routing features
+        - docs.hyperswitch.io
+      - - "2025-2026"
+        - "Global expansion: Dubai, Singapore, São Paulo, San Francisco offices added"
+        - Completed
+        - 9 offices worldwide supports international enterprise sales for global Hyperswitch rollout
+        - juspay.in/about
+    notes: Roadmap items sourced from public GitHub releases, developer documentation, and the Juspay About page. Internal product roadmap commitments and timelines beyond publicly stated items are not available.
+    claimRefs:
+      - CE005
+      - CE016
+      - CE024
+      - CE025
+
+figures:
+  - id: FE001
+    title: Juspay product architecture stack
+    type: stack
+    layout: wide
+    summary: >-
+      Juspay's product architecture layers from client-facing checkout SDKs through orchestration and connector
+      middleware to underlying PSP rails, with PCI-compliant data and ML services at the core.
+    data:
+      layers:
+        - label: Client layer
+          description: HyperCheckout (web), HyperSDK (Android/iOS), HyperUPI, Express Checkout SDK
+          detail: Merchant-facing checkout experiences and mobile payment surfaces
+        - label: Orchestration and routing layer
+          description: PURE Orchestration Engine, JUSPE Router, Intelligent Routing (ML + rules + volume)
+          detail: Payment routing, retry, and orchestration logic operating across PSPs
+        - label: Integration and connector layer
+          description: 300+ PSP connectors, network tokenization bridge, 3DS decision manager
+          detail: Abstraction over heterogeneous PSP APIs and authentication protocols
+        - label: Data and compliance layer
+          description: Reconciliation engine, Revenue Recovery ML, Offers engine, PCI card vault
+          detail: Operational data services that run on top of payment transaction flows
+        - label: Infrastructure layer
+          description: Rust app server, Kubernetes/Helm multi-cloud (AWS, GCP, Azure), HSM encryption service
+          detail: Systems-level infrastructure providing 2000 TPS throughput and 99.999% claimed uptime
+    approximationNotes: Architecture layers are constructed from public documentation; internal service topology and inter-service communication patterns are not publicly disclosed.
+    claimRefs:
+      - CE001
+      - CE005
+      - CE011
+      - CE012
+      - CE013
+      - CE014
+      - CE017
+
+  - id: FE002
+    title: Merchant payment workflow via Juspay
+    type: flow
+    layout: wide
+    summary: >-
+      A merchant payment flows from checkout initiation through Juspay's orchestration layer, across PSP routing
+      to authorization, with token storage, reconciliation, and revenue recovery acting on each transaction.
+    data:
+      nodes:
+        - id: n1
+          label: Merchant checkout initiation (HyperCheckout / SDK)
+        - id: n2
+          label: Juspay PURE / JUSPE routing decision
+        - id: n3
+          label: PSP/PA connector selection (300+ options)
+        - id: n4
+          label: 3DS authentication (PSP-agnostic)
+        - id: n5
+          label: Authorization and payment confirmation
+        - id: n6
+          label: Token vault and reconciliation update
+        - id: n7
+          label: Revenue Recovery retry (on failure path)
+      edges:
+        - from: n1
+          to: n2
+        - from: n2
+          to: n3
+        - from: n3
+          to: n4
+        - from: n4
+          to: n5
+        - from: n5
+          to: n6
+        - from: n5
+          to: n7
+          label: On failure
+        - from: n7
+          to: n2
+          label: Retry loop
+    approximationNotes: Flow is constructed from product documentation; exact sequence of internal service calls within Juspay's backend is not publicly detailed.
+    claimRefs:
+      - CE001
+      - CE006
+      - CE008
+      - CE017
+      - CE032
+
+  - id: FE003
+    title: Critical technology and business dependency map
+    type: dag
+    layout: wide
+    summary: >-
+      Juspay's product quality depends on upstream card networks and PSP APIs, the merchant's own implementation,
+      RBI regulatory posture, and the open-source developer community — with each dependency carrying distinct
+      failure modes.
+    data:
+      nodes:
+        - id: n1
+          label: Juspay (orchestration + SDK layer)
+        - id: n2
+          label: Card networks and PSP APIs (300+ integrations)
+        - id: n3
+          label: Merchant engineering teams
+        - id: n4
+          label: RBI regulatory framework (India)
+        - id: n5
+          label: Open-source community (Hyperswitch contributors)
+        - id: n6
+          label: Cloud providers (AWS, GCP, Azure)
+      edges:
+        - from: n2
+          to: n1
+          label: PSP API changes require connector updates
+        - from: n3
+          to: n1
+          label: Merchant integration quality affects end-user success
+        - from: n4
+          to: n1
+          label: RBI PA license and UPI regulations gate product scope
+        - from: n5
+          to: n1
+          label: Community contributions extend connector coverage
+        - from: n6
+          to: n1
+          label: Infrastructure scaling depends on multi-cloud availability
+        - from: n1
+          to: n3
+          label: Juspay SDKs and docs reduce merchant engineering burden
+    approximationNotes: Dependency weights and criticality are inferred from product documentation and industry context; no internal dependency audit has been published.
+    claimRefs:
+      - CE006
+      - CE014
+      - CE023
+      - CE039
+      - CE040
+
+  - id: FE004
+    title: Product maturity and evidence quality map
+    type: matrix
+    layout: wide
+    summary: >-
+      Public evidence is strongest for Juspay's checkout and mobile SDK surfaces; thinner for internal ML
+      routing architecture and PURE/JUSPE internals.
+    data:
+      columns:
+        - Maturity signal
+        - Documentation depth
+        - Independent evidence
+        - Competitive risk
+      rows:
+        - label: HyperCheckout
+          values:
+            - High
+            - High
+            - Medium
+            - High (PG disintermediation)
+        - label: HyperSDK (mobile)
+          values:
+            - High
+            - Medium
+            - Low (installs unverified)
+            - Medium
+        - label: Hyperswitch (open-source)
+          values:
+            - High
+            - High
+            - High (GitHub public)
+            - Medium (fork risk)
+        - label: PURE / JUSPE Router
+          values:
+            - Assumed mature
+            - Low
+            - Low
+            - High (internal PG competition)
+        - label: ML Routing
+          values:
+            - Claimed mature
+            - Low
+            - Low
+            - High (Razorpay Optimizer, Cashfree FlowWise)
+        - label: Security / Compliance
+          values:
+            - Certified
+            - Medium
+            - Low (no public audit reports)
+            - Low
+    approximationNotes: Maturity ratings are inferred from documentation availability, GitHub activity, and company statements. Independent evidence ratings reflect availability of third-party corroboration, not performance quality.
+    claimRefs:
+      - CE001
+      - CE005
+      - CE013
+      - CE021
+      - CE028
+      - CE034
+
+callouts:
+  - calloutType: strength
+    title: Open-source Hyperswitch creates developer distribution moat
+    body: >-
+      With 43,037 GitHub stars, 4,821 forks, and Apache 2.0 licensing, Hyperswitch is among the highest-starred
+      fintech infrastructure repositories globally. This developer presence lowers merchant evaluation friction,
+      drives managed SaaS conversion, and builds ecosystem credibility that proprietary alternatives cannot easily
+      replicate. The Rust-based architecture signals engineering quality and long-term performance advantage.
+    claimRefs:
+      - CE021
+      - CE022
+      - CE040
+
+  - calloutType: risk
+    title: PG disintermediation threatens India orchestration revenue
+    body: >-
+      PhonePe, Razorpay, and Cashfree — three of India's largest payment gateways — moved away from Juspay
+      orchestration in 2024-2025 and launched competing internal tools (Razorpay Optimizer, Cashfree FlowWise).
+      Juspay's RBI PA license deepens the competitive conflict. If major Indian PGs continue direct-merchant
+      integration policies, Juspay's domestic orchestration TAM contracts even as global Hyperswitch expansion
+      is early-stage.
+    claimRefs:
+      - CE034
+      - CE035
+      - CE036
+      - CE037
+
+  - calloutType: insight
+    title: PURE and JUSPE internals remain a significant diligence gap
+    body: >-
+      Despite being named in investor materials and press coverage, the internal architecture of the PURE
+      orchestration engine and JUSPE router has no publicly available technical documentation. Investor due
+      diligence should require white-paper disclosure of routing algorithm design, ML model provenance,
+      fallback logic, and SLA-backed performance guarantees for these modules.
+    claimRefs:
+      - CE006
+      - CE017
+
+localEvidence:
+  searchQueries:
+    - query: "Juspay HyperCheckout product features architecture documentation"
+      engine: google
+      hits: 22
+      retainedSourceRefs:
+        - SE003
+        - SE009
+        - SE024
+    - query: "Juspay Hyperswitch open source payments platform GitHub"
+      engine: google
+      hits: 45
+      retainedSourceRefs:
+        - SE005
+        - SE017
+        - SE011
+    - query: "Juspay payment routing Rust backend technical stack"
+      engine: google
+      hits: 18
+      retainedSourceRefs:
+        - SE005
+        - SE017
+        - SE022
+    - query: "Juspay PURE orchestration JUSPE router payments"
+      engine: google
+      hits: 9
+      retainedSourceRefs:
+        - SE001
+        - SE004
+    - query: "Juspay mobile SDK Express Checkout HyperSDK integration"
+      engine: google
+      hits: 14
+      retainedSourceRefs:
+        - SE002
+        - SE009
+    - query: "Juspay PCI DSS ISO 27001 SOC2 compliance certification"
+      engine: google
+      hits: 11
+      retainedSourceRefs:
+        - SE001
+        - SE014
+    - query: "Juspay uptime SLA reliability payments infrastructure"
+      engine: google
+      hits: 7
+      retainedSourceRefs:
+        - SE006
+        - SE023
+    - query: "Juspay developer docs API documentation REST"
+      engine: google
+      hits: 30
+      retainedSourceRefs:
+        - SE008
+        - SE009
+        - SE022
+    - query: "Juspay cybersecurity data protection vulnerability disclosure"
+      engine: google
+      hits: 12
+      retainedSourceRefs:
+        - SE014
+        - SE018
+    - query: "Juspay PhonePe Razorpay Cashfree partnership disruption 2026"
+      engine: google
+      hits: 31
+      retainedSourceRefs:
+        - SE018
+        - SE019
+        - SE020
+    - query: "Juspay network tokenization 3DS authentication payments"
+      engine: google
+      hits: 16
+      retainedSourceRefs:
+        - SE012
+        - SE013
+    - query: "Juspay payment orchestration comparison competitive positioning"
+      engine: google
+      hits: 20
+      retainedSourceRefs:
+        - SE007
+        - SE028
+    - query: "Juspay Hyperswitch payment connector coverage directory 2026"
+      engine: google
+      hits: 25
+      retainedSourceRefs:
+        - SE005
+        - SE006
+        - SE017
+    - query: "Juspay product roadmap releases 2026 features"
+      engine: google
+      hits: 13
+      retainedSourceRefs:
+        - SE022
+        - SE015
+    - query: "Juspay enterprise customers merchants India 2026"
+      engine: google
+      hits: 38
+      retainedSourceRefs:
+        - SE001
+        - SE002
+        - SE014
+
+  researchQuestions:
+    - id: QE001
+      question: What are Juspay's distinct product lines and how does each serve merchant checkout workflows?
+      type: enumeration
+      targets:
+        - contentRequirements/0
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE002
+      question: What are Juspay's verified transaction scale metrics including daily volume and annualized TPV?
+      type: quantification
+      targets:
+        - contentRequirements/0
+        - plannedTables/workflow-use-case-table
+      status: answered
+
+    - id: QE003
+      question: What PSPs and payment processors are integrated into Juspay's orchestration platform?
+      type: enumeration
+      targets:
+        - contentRequirements/1
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE004
+      question: How many GitHub stars, forks, and contributors does the Hyperswitch repository have as of 2026?
+      type: quantification
+      targets:
+        - contentRequirements/1
+        - plannedFigures/critical-dependency-map
+      status: answered
+
+    - id: QE005
+      question: Is the Rust-based architecture claim for Hyperswitch verifiable from public sources?
+      type: verification
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE006
+      question: Does Juspay's 99.999% uptime claim align with independently observed public status data?
+      type: verification
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE007
+      question: >-
+        What evidence exists for PhonePe, Razorpay, and Cashfree moving away from Juspay's orchestration platform
+        and what does this signal about competitive moat durability?
+      type: adverse
+      targets:
+        - contentRequirements/4
+        - plannedTables/roadmap-release-development-stage-table
+      status: answered
+
+    - id: QE008
+      question: What are Juspay's most recent 2026 product releases and engineering updates for Hyperswitch?
+      type: freshness
+      targets:
+        - contentRequirements/3
+        - plannedTables/roadmap-release-development-stage-table
+      status: answered
+
+    - id: QE009
+      question: What TPS throughput does Hyperswitch support and what is the production infrastructure configuration?
+      type: quantification
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE010
+      question: Are Juspay's PCI DSS 4.0.1, ISO 27001:2022, and SOC 2 Type 2 certifications publicly documented?
+      type: verification
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE011
+      question: >-
+        What historical security incidents has Juspay experienced and how has the company's security posture
+        evolved since the 2021 data exposure?
+      type: adverse
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: partial
+
+    - id: QE012
+      question: >-
+        How do competing orchestration tools from Razorpay (Optimizer) and Cashfree (FlowWise) compare in
+        capability to Juspay's PURE orchestration?
+      type: adverse
+      targets:
+        - contentRequirements/4
+        - plannedFigures/product-maturity-capability-map
+      status: answered
+
+    - id: QE013
+      question: What mobile platforms and programming languages does Juspay's SDK surface cover?
+      type: enumeration
+      targets:
+        - contentRequirements/1
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE014
+      question: What developer community resources — Slack, GitHub Discussions, Stack Overflow — exist for Hyperswitch?
+      type: enumeration
+      targets:
+        - contentRequirements/3
+        - plannedFigures/critical-dependency-map
+      status: answered
+
+    - id: QE015
+      question: How does Juspay's open-source strategy compare to closed-source competitors in terms of distribution moat?
+      type: comparison
+      targets:
+        - contentRequirements/4
+        - plannedFigures/product-maturity-capability-map
+      status: answered
+
+    - id: QE016
+      question: What is the total app install count for Juspay's mobile SDKs and how does this compare to PSP SDK benchmarks?
+      type: quantification
+      targets:
+        - contentRequirements/0
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE017
+      question: What is the number of public repositories in Juspay's GitHub organization as of 2026?
+      type: quantification
+      targets:
+        - contentRequirements/1
+        - plannedFigures/critical-dependency-map
+      status: answered
+
+    - id: QE018
+      question: Does Juspay's card vault support bring-your-own-vault integrations and is this publicly documented?
+      type: verification
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE019
+      question: What is Juspay's public vulnerability disclosure program scope and published CVE history?
+      type: verification
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE020
+      question: What is the current status of Hyperswitch Q2 2026 roadmap items as disclosed publicly?
+      type: freshness
+      targets:
+        - contentRequirements/3
+        - plannedTables/roadmap-release-development-stage-table
+      status: partial
+
+    - id: QE021
+      question: >-
+        What is the risk that merchant-side PG disintermediation reduces Juspay's total addressable market in
+        the India domestic orchestration segment by 2026?
+      type: adverse
+      targets:
+        - contentRequirements/4
+        - plannedFigures/product-maturity-capability-map
+      status: answered
+
+    - id: QE022
+      question: >-
+        How does Juspay's deployment model (SaaS vs self-hosted Hyperswitch) compare in terms of feature parity
+        and merchant adoption pattern?
+      type: comparison
+      targets:
+        - contentRequirements/3
+        - plannedTables/technology-operating-architecture-table
+      status: partial
+
+    - id: QE023
+      question: What deployment cloud targets does Hyperswitch support and what Kubernetes tooling is provided?
+      type: enumeration
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE024
+      question: >-
+        What is the total number of Hyperswitch releases shipped and what is the most recent release version
+        and date?
+      type: quantification
+      targets:
+        - contentRequirements/3
+        - plannedTables/roadmap-release-development-stage-table
+      status: answered
+
+    - id: QE025
+      question: >-
+        What is the internal technical architecture of PURE orchestration and the JUSPE router, including
+        algorithmic design, ML model type, and fallback logic?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: unresolved
+
+    - id: QE026
+      question: >-
+        What is the mechanism by which Juspay's ML routing achieves claimed 10% authorization rate improvement
+        and what training data is used?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedFigures/product-architecture-map
+      status: unresolved
+
+  sources:
+    - id: SE001
+      publisher: Juspay Technologies
+      title: "Juspay | Global Payments Operating System"
+      url: https://juspay.in/
+      date: "2026-06-21"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - product-overview
+        - payments-infrastructure
+        - compliance
+      keyQuote: "300Mn+ Transactions processed every day; 99.999% Uptime best in the class; 2.5 Bn+ App Installs with Juspay SDKs; $1 Tn+ Annualized Total Payment Volume"
+
+    - id: SE002
+      publisher: Juspay Technologies
+      title: "Juspay | Global Payments Operating System (juspay.io)"
+      url: https://juspay.io/
+      date: "2026-06-21"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - product-overview
+        - global-expansion
+        - hyperswitch
+
+    - id: SE003
+      publisher: Juspay Technologies
+      title: "HyperCheckout — Payment Routing and Checkout Experience"
+      url: https://juspay.in/hypercheckout
+      date: "2026-06-21"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - hypercheckout
+        - payment-orchestration
+        - checkout-experience
+      keyQuote: "HyperCheckout combines the power of native checkout experiences, robust payment orchestration & advanced analytics. HyperCheckout is not a PA/PG, it is an Experience and Orchestration/Routing layer that connects with 300+ PA/PGs."
+
+    - id: SE004
+      publisher: Juspay Technologies
+      title: "Juspay | Payment Orchestration"
+      url: https://juspay.in/payment-orchestration
+      date: "2026-06-21"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - payment-orchestration
+        - routing
+        - psp-integrations
+
+    - id: SE005
+      publisher: Juspay (GitHub)
+      title: "juspay/hyperswitch: Open source, composable payments platform"
+      url: https://github.com/juspay/hyperswitch
+      date: "2026-06-21"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: high
+      independence: company
+      topics:
+        - hyperswitch
+        - open-source
+        - rust
+        - github
+      keyQuote: "Hyperswitch is a commercial open-source payments stack purpose-built for scale, flexibility, and developer experience. Built in Rust for performance and reliability, Hyperswitch connects to Stripe, Adyen, Braintree, Worldpay, Checkout.com, Cybersource, and 120+ processors."
+
+    - id: SE006
+      publisher: Juspay Technologies
+      title: "Composable, Open Source Payments Platform | Hyperswitch"
+      url: https://hyperswitch.io
+      date: "2026-06-21"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - hyperswitch
+        - open-source
+        - reliability
+        - saas
+      keyQuote: "UPTIME: 99.999% | SCALE: 2000 TPS | GLOBAL COVERAGE: 300+ PSP / Acquirer Integrations"
+
+    - id: SE007
+      publisher: Juspay Technologies
+      title: "Blogs | Juspay Hyperswitch — The Open Payments Library"
+      url: https://hyperswitch.io/blog
+      date: "2026-06-21"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - hyperswitch
+        - payments-engineering
+        - routing
+        - open-source
+
+    - id: SE008
+      publisher: Juspay Technologies
+      title: "Juspay Developer Docs | Products (docs.juspay.io)"
+      url: https://docs.juspay.io
+      date: "2026-06-21"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - developer-docs
+        - api-documentation
+        - sdk-integration
+
+    - id: SE009
+      publisher: Juspay Technologies
+      title: "Juspay Developer Docs India | Products (developer.juspay.in)"
+      url: https://developer.juspay.in/
+      date: "2026-06-21"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - developer-docs
+        - checkout-products
+        - india-products
+        - nach-upi
+      keyQuote: "HyperCheckout: Effortlessly Collect Payments on your App or Website with our Pre-Built, Customizable Payment Page UI; NACH Mandates: Collect recurring payments with 99% success rate"
+
+    - id: SE010
+      publisher: GitHub API
+      title: "GitHub REST API — repository metadata for juspay/hyperswitch"
+      url: https://api.github.com/repos/juspay/hyperswitch
+      date: "2026-06-21"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: high
+      independence: independent
+      topics:
+        - hyperswitch
+        - github
+        - developer-community
+      keyQuote: "stargazers_count: 43037; forks_count: 4821; open_issues_count: 1823; pushed_at: 2026-06-20"
+
+    - id: SE011
+      publisher: GitHub
+      title: "Juspay Technologies · GitHub organization page"
+      url: https://github.com/juspay
+      date: "2026-06-21"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: high
+      independence: company
+      topics:
+        - github
+        - developer-ecosystem
+        - open-source
+      keyQuote: "343 repositories listed on the Juspay GitHub org; hyperswitch pinned at 43k stars; 1.2k followers"
+
+    - id: SE012
+      publisher: Juspay Technologies
+      title: "Juspay | Tokenisation"
+      url: https://juspay.in/tokenisation
+      date: "2026-06-21"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - tokenization
+        - network-tokens
+        - pci-compliance
+
+    - id: SE013
+      publisher: Juspay Technologies
+      title: "Juspay | Integrations Directory"
+      url: https://juspay.in/integrations
+      date: "2026-06-21"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - psp-integrations
+        - payment-methods
+        - connector-directory
+
+    - id: SE014
+      publisher: Juspay Technologies
+      title: "Juspay | About Us"
+      url: https://juspay.in/about
+      date: "2026-06-21"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - company-overview
+        - compliance
+        - scale-metrics
+      keyQuote: "300Mn+ Transactions processed every day; 99.999% Uptime; PCI DSS 4.0.1; ISO 27001:2022; SOC 2 Type 2; Vulnerability Disclosure"
+
+    - id: SE015
+      publisher: Juspay Technologies
+      title: "Juspay Newsroom"
+      url: https://juspay.in/newsroom
+      date: "2026-06-21"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - press-releases
+        - product-announcements
+
+    - id: SE016
+      publisher: Juspay Technologies
+      title: "Juspay | Payouts"
+      url: https://juspay.in/payouts
+      date: "2026-06-21"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - payouts
+        - product-module
+
+    - id: SE017
+      publisher: Juspay (GitHub)
+      title: "hyperswitch/README.md at main — juspay/hyperswitch"
+      url: https://github.com/juspay/hyperswitch/blob/main/README.md
+      date: "2026-06-21"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics:
+        - hyperswitch
+        - architecture
+        - deployment
+        - sdk-ecosystem
+      keyQuote: "Hyperswitch offers a modular, open-source payments infrastructure designed for flexibility and control. Built in Rust for performance and reliability. Supports cloud deployment on AWS, GCP, or Azure using Helm Charts."
+
+    - id: SE018
+      publisher: MoneyControl
+      title: "Merchants left fuming after payment gateway firms try to work around Juspay"
+      url: https://www.moneycontrol.com/technology/merchants-left-fuming-after-payment-gateway-firms-try-to-work-around-juspay-article-12922378.html
+      date: "2025-01-20"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics:
+        - competitive-risk
+        - disintermediation
+        - merchant-experience
+      keyQuote: "It is a competitive world and our POP has not been as good as Juspay's. It is not just POP, but several other features which Juspay has managed to do better. It is an open system and anyone can provide the services."
+
+    - id: SE019
+      publisher: Business Standard
+      title: "Fintechs shift to direct merchant integration, move away from Juspay"
+      url: https://www.business-standard.com/finance/news/fintechs-shift-to-direct-merchant-integration-move-away-from-juspay-125012001137_1.html
+      date: "2025-01-21"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics:
+        - competitive-risk
+        - disintermediation
+        - razorpay
+        - cashfree
+        - phonepe
+      keyQuote: "After fintech major PhonePe ended its partnership with the payment orchestration platform Juspay Technologies, other companies, including Razorpay and Cashfree Payments, are considering moving away from the platform for orchestration services."
+
+    - id: SE020
+      publisher: Outlook Business
+      title: "After PhonePe, Razorpay & Cashfree Exit Juspay Partnership, Opt for Direct Merchant Integration"
+      url: https://www.outlookbusiness.com/news/after-phonepe-razorpay-cashfree-exit-juspay-partnership-opt-for-direct-merchant-integration
+      date: "2025-01-20"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - competitive-risk
+        - disintermediation
+        - business-model-risk
+
+    - id: SE021
+      publisher: Juspay Technologies
+      title: "Pricing | Juspay Hyperswitch"
+      url: https://hyperswitch.io/pricing
+      date: "2026-06-21"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: neutral
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - pricing
+        - saas-model
+
+    - id: SE022
+      publisher: Juspay Technologies
+      title: "Exploration Guide | Hyperswitch documentation"
+      url: https://docs.hyperswitch.io/
+      date: "2026-06-21"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - developer-docs
+        - hyperswitch-features
+        - routing
+        - deployment
+      keyQuote: "Hyperswitch gives you full control over your payments infrastructure without the complexity of building from scratch. Deploy using Docker or Helm charts in local or a cloud environment."
+
+    - id: SE023
+      publisher: Juspay Technologies
+      title: "Hyperswitch — Status Page"
+      url: https://status.hyperswitch.io/
+      date: "2026-06-21"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics:
+        - reliability
+        - uptime
+        - status
+
+    - id: SE024
+      publisher: Juspay Technologies
+      title: "Juspay Products (juspay.in/products)"
+      url: https://juspay.in/products
+      date: "2026-06-21"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - product-overview
+        - payment-suite
+
+    - id: SE025
+      publisher: Juspay Technologies
+      title: "Juspay Blog"
+      url: https://juspay.in/blog
+      date: "2026-06-21"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - payments-engineering
+        - product-features
+
+    - id: SE026
+      publisher: Stack Overflow
+      title: "Newest 'juspay' Questions — Stack Overflow"
+      url: https://stackoverflow.com/questions/tagged/juspay
+      date: "2026-06-21"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: high
+      independence: independent
+      topics:
+        - developer-community
+        - sdk-integration
+        - developer-support
+
+    - id: SE027
+      publisher: pub.dev (Dart)
+      title: "flutter_hyperswitch 1.5.2 — Flutter package"
+      url: https://pub.dev/packages/flutter_hyperswitch
+      date: "2026-03-21"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics:
+        - sdk-mobile
+        - flutter
+        - developer-signal
+      keyQuote: "flutter_hyperswitch: Simplifying payment integration for Flutter apps with seamless API interactions and customizable UI. 130 likes; Publisher: hyperswitch.io"
+
+    - id: SE028
+      publisher: TechCrunch
+      title: "Juspay | TechCrunch"
+      url: https://techcrunch.com/tag/juspay
+      date: "2025-10-09"
+      accessDate: "2026-06-21"
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics:
+        - press-coverage
+        - partnerships
+        - india-fintech
+
+  claims:
+    - id: CE001
+      statement: >-
+        HyperCheckout is explicitly positioned as an experience and orchestration/routing layer, not a PA or PG;
+        it connects with 300+ payment aggregators and gateways globally.
+      type: company-claimed
+      topic: hypercheckout
+      sourceRefs:
+        - SE003
+        - SE024
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+        - QE003
+
+    - id: CE002
+      statement: >-
+        Express Checkout SDK allows merchants to build fully custom checkout UIs while Juspay handles underlying
+        payment infrastructure.
+      type: company-claimed
+      topic: express-checkout-sdk
+      sourceRefs:
+        - SE009
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+
+    - id: CE003
+      statement: >-
+        Juspay's mobile SDKs have accumulated 2.5 billion+ app installs across Android and iOS platforms,
+        according to the company's own About page.
+      type: company-claimed
+      topic: hypersdk-scale
+      sourceRefs:
+        - SE001
+        - SE014
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE016
+
+    - id: CE004
+      statement: >-
+        HyperUPI is an India-specific product that enables 1-click in-app UPI payments with a company-claimed
+        90%+ transaction success rate.
+      type: company-claimed
+      topic: hyperupi
+      sourceRefs:
+        - SE009
+        - SE024
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+
+    - id: CE005
+      statement: >-
+        Hyperswitch is Juspay's open-source, composable payments platform licensed under Apache 2.0,
+        supporting SaaS-hosted and self-hosted deployment options.
+      type: observed
+      topic: hyperswitch-open-source
+      sourceRefs:
+        - SE005
+        - SE006
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE003
+
+    - id: CE006
+      statement: >-
+        Juspay's payment orchestration layer integrates with 300+ PSPs and local payment methods globally via
+        no-code connector configurations.
+      type: company-claimed
+      topic: psp-integrations
+      sourceRefs:
+        - SE001
+        - SE002
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE003
+
+    - id: CE007
+      statement: >-
+        Juspay's Reconciliation module automates 3-way matching across merchant payment data, PSP data, and bank
+        statements, with customizable reconciliation rules.
+      type: company-claimed
+      topic: reconciliation
+      sourceRefs:
+        - SE001
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+
+    - id: CE008
+      statement: >-
+        The Revenue Recovery module uses ML-based retry logic configurable across 30+ parameters including
+        decline code, card BIN, region, ticket size, and payment method.
+      type: company-claimed
+      topic: revenue-recovery
+      sourceRefs:
+        - SE006
+        - SE022
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+
+    - id: CE009
+      statement: >-
+        Juspay's NACH Mandates product (LotusPay) supports recurring payment collection at a claimed 99%
+        success rate via eMandates.
+      type: company-claimed
+      topic: nach-mandates
+      sourceRefs:
+        - SE009
+      confidence: medium
+      freshness: current
+
+    - id: CE010
+      statement: >-
+        Juspay's network tokenization product supports tokens across any PSP and includes a plug-and-play
+        token vault with third-party vault integration support for VGS and TokenEx.
+      type: company-claimed
+      topic: tokenization
+      sourceRefs:
+        - SE012
+        - SE013
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE018
+
+    - id: CE011
+      statement: >-
+        The Hyperswitch backend is written in Rust, chosen for performance and memory safety, as confirmed in
+        the public README and GitHub repository language statistics.
+      type: observed
+      topic: architecture-rust
+      sourceRefs:
+        - SE005
+        - SE017
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE005
+
+    - id: CE012
+      statement: >-
+        Hyperswitch's production infrastructure is rated at 2000 transactions per second (TPS) by the company
+        on the hyperswitch.io product page.
+      type: company-claimed
+      topic: tps-throughput
+      sourceRefs:
+        - SE006
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE009
+
+    - id: CE013
+      statement: >-
+        Juspay claims 99.999% uptime for its payment infrastructure, consistent across both the juspay.in
+        and hyperswitch.io properties.
+      type: company-claimed
+      topic: uptime-reliability
+      sourceRefs:
+        - SE001
+        - SE006
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE006
+
+    - id: CE014
+      statement: >-
+        Hyperswitch supports cloud deployment on AWS, GCP, or Azure using Helm charts for Kubernetes and
+        also supports local Docker deployment for development environments.
+      type: observed
+      topic: deployment
+      sourceRefs:
+        - SE017
+        - SE022
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE023
+
+    - id: CE015
+      statement: >-
+        Hyperswitch's modular architecture allows merchants to integrate only the components they need —
+        routing, retries, vaulting, cost observability, or reconciliation — without unnecessary overhead
+        or vendor lock-in.
+      type: observed
+      topic: modular-architecture
+      sourceRefs:
+        - SE005
+        - SE017
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE009
+
+    - id: CE016
+      statement: >-
+        Hyperswitch had 156 named releases as of May 2026 with the latest tagged release being v1.123.1,
+        reflecting active engineering cadence since the project was created in October 2022.
+      type: observed
+      topic: release-cadence
+      sourceRefs:
+        - SE005
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE024
+
+    - id: CE017
+      statement: >-
+        Juspay's intelligent routing engine supports rule-based, volume-based, and ML-driven routing
+        algorithms to optimize authorization rates and minimize payment processing costs.
+      type: company-claimed
+      topic: routing-engine
+      sourceRefs:
+        - SE006
+        - SE017
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE009
+
+    - id: CE018
+      statement: >-
+        Juspay processes 300 million+ transactions per day across its payment infrastructure, as stated
+        consistently on both juspay.in and juspay.in/about.
+      type: company-claimed
+      topic: transaction-scale
+      sourceRefs:
+        - SE001
+        - SE014
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE002
+
+    - id: CE019
+      statement: >-
+        Juspay's annualized total payment volume exceeds $1 trillion, according to the company's own
+        public-facing About page.
+      type: company-claimed
+      topic: payment-volume
+      sourceRefs:
+        - SE001
+        - SE014
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE002
+
+    - id: CE020
+      statement: >-
+        Hyperswitch connects to 120+ payment processors and PSPs including Stripe, Adyen, Braintree,
+        Worldpay, Checkout.com, and Cybersource, with each connector having dedicated integration guides.
+      type: observed
+      topic: connector-coverage
+      sourceRefs:
+        - SE005
+        - SE017
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE003
+
+    - id: CE021
+      statement: >-
+        The juspay/hyperswitch GitHub repository recorded 43,037 stars as of June 20, 2026, confirmed by
+        the GitHub REST API response.
+      type: observed
+      topic: github-stars
+      sourceRefs:
+        - SE005
+        - SE010
+        - SE011
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE004
+
+    - id: CE022
+      statement: >-
+        The juspay/hyperswitch GitHub repository had 4,821 forks as of June 20, 2026, per GitHub API data.
+      type: observed
+      topic: github-forks
+      sourceRefs:
+        - SE010
+        - SE011
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE004
+
+    - id: CE023
+      statement: >-
+        The Juspay Technologies GitHub organization (github.com/juspay) hosts 343+ public repositories
+        spanning payments, AI tooling, NixOS configuration, and developer tools.
+      type: observed
+      topic: github-organization
+      sourceRefs:
+        - SE011
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE017
+
+    - id: CE024
+      statement: >-
+        Hyperswitch SDKs are officially supported for Android (Kotlin), iOS (Swift), React Native, and
+        Flutter, with the web SDK built in ReScript as a React library distributed via npm.
+      type: observed
+      topic: sdk-ecosystem
+      sourceRefs:
+        - SE017
+        - SE027
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE013
+
+    - id: CE025
+      statement: >-
+        The Flutter Hyperswitch package on pub.dev was at version 1.5.2 as of approximately March 2026,
+        published by the hyperswitch.io team with 130 pub.dev likes.
+      type: observed
+      topic: flutter-sdk
+      sourceRefs:
+        - SE027
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE013
+
+    - id: CE026
+      statement: >-
+        A Juspay tag exists on Stack Overflow for developer support questions, indicating developer adoption
+        and the company's presence in the developer Q&A community.
+      type: observed
+      topic: developer-community
+      sourceRefs:
+        - SE026
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE014
+
+    - id: CE027
+      statement: >-
+        Hyperswitch developer support resources include a Slack community, GitHub Discussions, an Academy,
+        a Postman collection, and API reference documentation.
+      type: observed
+      topic: developer-support
+      sourceRefs:
+        - SE008
+        - SE022
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE014
+
+    - id: CE028
+      statement: >-
+        Juspay holds PCI DSS 4.0.1 certification for its payment data infrastructure, as stated on
+        juspay.in and juspay.in/about under the Compliances section.
+      type: company-claimed
+      topic: pci-compliance
+      sourceRefs:
+        - SE001
+        - SE014
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE010
+
+    - id: CE029
+      statement: >-
+        Juspay holds ISO 27001:2022 certification for information security management, as listed in the
+        Compliances section of both juspay.in and juspay.in/about.
+      type: company-claimed
+      topic: iso-27001
+      sourceRefs:
+        - SE001
+        - SE014
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE010
+
+    - id: CE030
+      statement: >-
+        Juspay holds SOC 2 Type 2 certification covering security and availability trust principles, as
+        listed under Compliances on the Juspay website.
+      type: company-claimed
+      topic: soc2
+      sourceRefs:
+        - SE001
+        - SE014
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE010
+
+    - id: CE031
+      statement: >-
+        Hyperswitch includes a PCI-compliant card vault service with HSM-backed encryption and support
+        for bring-your-own-vault integrations with VGS and TokenEx.
+      type: observed
+      topic: card-vault
+      sourceRefs:
+        - SE017
+        - SE022
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE018
+
+    - id: CE032
+      statement: >-
+        Juspay's 3DS authentication module is PSP-agnostic and supports configurable workflows adaptable
+        to regional regulations, including liability shift flows across all connected PSPs.
+      type: company-claimed
+      topic: 3ds-authentication
+      sourceRefs:
+        - SE001
+      confidence: medium
+      freshness: current
+
+    - id: CE033
+      statement: >-
+        Juspay maintains a publicly listed vulnerability disclosure program on its About/Compliance page,
+        providing a submission channel for security researchers.
+      type: observed
+      topic: vulnerability-disclosure
+      sourceRefs:
+        - SE014
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE019
+
+    - id: CE034
+      statement: >-
+        PhonePe ended its partnership with Juspay's payment orchestration platform in late 2024, according
+        to reporting by Business Standard and Outlook Business.
+      type: third-party-reported
+      topic: pg-disintermediation
+      sourceRefs:
+        - SE019
+        - SE020
+      confidence: high
+      freshness: recent
+      answersQuestionRefs:
+        - QE007
+        - QE021
+
+    - id: CE035
+      statement: >-
+        Razorpay paused all integrations through third-party routing platforms and announced a move to
+        direct merchant integration in January 2025.
+      type: third-party-reported
+      topic: pg-disintermediation
+      sourceRefs:
+        - SE018
+        - SE019
+      confidence: high
+      freshness: recent
+      answersQuestionRefs:
+        - QE007
+        - QE021
+
+    - id: CE036
+      statement: >-
+        Cashfree Payments announced a planned transition away from third-party orchestration integrations,
+        including Juspay, to offer direct merchant integration in January 2025.
+      type: third-party-reported
+      topic: pg-disintermediation
+      sourceRefs:
+        - SE018
+        - SE019
+      confidence: high
+      freshness: recent
+      answersQuestionRefs:
+        - QE007
+        - QE021
+
+    - id: CE037
+      statement: >-
+        Razorpay launched its own orchestration tool called Optimizer, and Cashfree launched FlowWise, to
+        provide multi-PSP routing directly to their merchant base as Juspay alternatives.
+      type: third-party-reported
+      topic: competitive-orchestration
+      sourceRefs:
+        - SE018
+        - SE020
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs:
+        - QE012
+        - QE021
+
+    - id: CE038
+      statement: >-
+        A senior executive of a large payment gateway firm, quoted in MoneyControl, acknowledged that
+        Juspay's orchestration capabilities exceed their own internal POP tools.
+      type: third-party-reported
+      topic: competitive-validation
+      sourceRefs:
+        - SE018
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs:
+        - QE012
+
+    - id: CE039
+      statement: >-
+        Juspay received an RBI online payment aggregator license in 2024, which places it in direct
+        competition with the payment aggregators it formerly served as an orchestration middleware.
+      type: third-party-reported
+      topic: rbi-pa-license
+      sourceRefs:
+        - SE019
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs:
+        - QE007
+
+    - id: CE040
+      statement: >-
+        Juspay's open-source Hyperswitch strategy creates a developer distribution moat that enables
+        merchants to audit the codebase, reduces sales friction, and drives managed-SaaS conversion.
+      type: inferred
+      topic: open-source-moat
+      sourceRefs:
+        - SE005
+        - SE006
+        - SE007
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE015
+
+  evidenceGaps:
+    - type: private-evidence-only
+      severity: material
+      topic: pure-orchestration-architecture
+      missingEvidence: >-
+        Technical white paper or engineering blog post documenting the internal architecture of PURE
+        orchestration and the JUSPE router, including routing algorithm type, ML model provenance,
+        inference latency, training data sources, and fallback logic.
+      whyItMatters: >-
+        PURE and JUSPE are described as core proprietary differentiators but lack any public technical
+        documentation. Without understanding the algorithmic design, it is impossible to assess whether
+        the claimed 10% authorization rate improvement is durable or easily replicated.
+      diligencePath: >-
+        Request a technical architecture white paper from Juspay's engineering team during due diligence;
+        review internal benchmarking data comparing PURE routing outcomes against rule-based and vanilla
+        ML routing baselines.
+      relatedQuestionRefs:
+        - QE025
+        - QE026
+
+    - type: missing-source
+      severity: material
+      topic: uptime-independent-audit
+      missingEvidence: >-
+        Independent third-party audit or SRE-level report confirming the 99.999% uptime claim with
+        methodology, measurement period, and incident exclusions.
+      whyItMatters: >-
+        Uptime claims from the company's own marketing pages cannot be treated as verified SLAs. 99.999%
+        (less than 5.3 minutes annual downtime) requires active-active multi-region infrastructure and
+        rigorous incident tracking that is not publicly verified.
+      diligencePath: >-
+        Request historical uptime data and incident post-mortems from Juspay's SRE team; cross-reference
+        with status.hyperswitch.io incident history and any customer contract SLA language.
+      relatedQuestionRefs:
+        - QE006
+
+    - type: private-evidence-only
+      severity: minor
+      topic: ml-routing-mechanism
+      missingEvidence: >-
+        Public description of the ML routing model type, feature engineering, retraining cadence, and
+        A/B test outcomes for authorization rate improvement claims.
+      whyItMatters: >-
+        The claimed 10% authorization rate improvement from ML routing is a key sales argument but
+        has no independently verifiable benchmark or published methodology.
+      diligencePath: >-
+        Request ML routing model cards, A/B test result summaries, and customer-specific authorization
+        lift data segmented by merchant type and geography during due diligence.
+      relatedQuestionRefs:
+        - QE026
+
+    - type: stale
+      severity: minor
+      topic: roadmap-2026
+      missingEvidence: >-
+        Specific 2026 product roadmap commitments beyond the Q2 2026 roadmap page on docs.hyperswitch.io,
+        including planned connector additions, mobile SDK features, and monetization changes.
+      whyItMatters: >-
+        Understanding the near-term product roadmap is essential for assessing competitive positioning
+        as PG disintermediation accelerates and global Hyperswitch expansion continues.
+      diligencePath: >-
+        Review the public Q2 2026 roadmap on docs.hyperswitch.io; request internal roadmap documentation
+        from Juspay for H2 2026 and 2027 product priorities.
+      relatedQuestionRefs:
+        - QE020
+
+    - type: missing-source
+      severity: minor
+      topic: security-incident-history
+      missingEvidence: >-
+        Independent reporting on the 2021 Juspay data exposure (approximately 35 million user records)
+        and a formal post-incident review or public security advisory from the company.
+      whyItMatters: >-
+        The 2021 security incident is a historical data point for security culture and incident response
+        maturity. Without a public post-mortem or remediation disclosure, the current security posture
+        improvement since PCI DSS 4.0.1 certification cannot be fully assessed.
+      diligencePath: >-
+        Request a formal post-incident review document from Juspay's security team; compare current
+        security controls against the publicly known attack vectors from the 2021 incident.
+      relatedQuestionRefs:
+        - QE011
+
+    - type: missing-source
+      severity: minor
+      topic: saas-vs-self-hosted-comparison
+      missingEvidence: >-
+        Public documentation or third-party analysis comparing Juspay's SaaS-hosted Hyperswitch with
+        self-hosted deployments in terms of feature parity, pricing differential, merchant adoption
+        patterns, and migration pathways.
+      whyItMatters: >-
+        Understanding how merchants choose between SaaS and self-hosted is essential for modeling
+        Juspay's revenue mix and competitive positioning against natively self-hosted orchestration
+        alternatives. Without this data, the SaaS conversion thesis for open-source distribution
+        cannot be validated.
+      diligencePath: >-
+        Request internal data on SaaS-vs-self-hosted split from Juspay; seek case studies from
+        merchants on each deployment path; compare pricing pages and feature matrices.
+      relatedQuestionRefs:
+        - QE022
+
+acknowledgedWarnings:
+  - dimension: tableNotes
+    reason: >-
+      TE002 (workflow table) contains company-claimed benefits; notes explicitly label these as company-stated with
+      no independent benchmark available, satisfying the intent of the tableNotes requirement.
