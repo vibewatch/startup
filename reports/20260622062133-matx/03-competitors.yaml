@@ -1,0 +1,1225 @@
+schemaVersion: "report-v2"
+artifact: competitors
+slug: matx
+runDate: 2026-06-22
+company:
+  name: MatX
+chapter:
+  number: 3
+  title: Competitive Landscape
+  summary: MatX enters the AI chip market targeting LLM training, RL, and inference prefill/decode, competing against Nvidia (dominant incumbent), hyperscaler captive ASICs (Google TPU, Amazon Trainium, Microsoft Maia, Meta MTIA), and a crowded field of well-funded AI chip startups (Groq, Cerebras, Tenstorrent, SambaNova, Etched). MatX's SRAM-first + HBM architecture and dual training+inference targeting create a differentiated position, but unverified benchmark claims, CUDA ecosystem lock-in, and Nvidia's hardware velocity are the primary competitive risks.
+
+sections:
+  - id: SEC-P-01
+    title: Competitive Landscape Overview
+    body: |
+      MatX enters the AI chip market targeting large-model LLM training, RL fine-tuning, and inference prefill/decode — a segment dominated by Nvidia GPUs and increasingly contested by hyperscaler custom silicon and a growing cohort of well-funded AI chip startups. The competitive field divides into five distinct tiers: (1) incumbent merchant silicon vendors (Nvidia, AMD), (2) hyperscaler internal ASICs (Google TPU, Amazon Trainium, Microsoft Maia, Meta MTIA), (3) directly competing AI chip startups targeting training/inference (Groq, Cerebras, Tenstorrent, SambaNova, Etched, Positron), (4) adjacent compute platforms (D-Matrix, Lightmatter), and (5) status-quo alternatives (cloud GPU rental, academic clusters).
+
+      Nvidia's dominance is structural and deeply entrenched. With an estimated 70–90% share of AI accelerator revenue in 2026, a $51.2 billion quarterly data-center revenue run rate, and the CUDA software ecosystem built over more than 15 years, Nvidia defines the benchmark MatX must surpass. The H100/H200 and Blackwell B200/B300 Ultra represent the incumbent's current-generation defense. Nvidia's upcoming Vera Rubin architecture (2026–27) is explicitly designed to maintain leadership in both training throughput and inference decode — the precise workloads MatX targets.
+
+      AMD's MI300X/MI325X is the primary merchant GPU alternative. ROCm has improved materially but still trails CUDA in ecosystem depth, limiting AMD's appeal to cost-sensitive workloads and hybrid CPU-GPU tasks. Google's TPU Trillium (v6e) leads in total installed base with 100,000+ chips deployed, but availability is restricted to GCP customers. Amazon's Trainium3 (2.52 PFLOP FP8, 144 GB HBM3e) is gaining traction at Anthropic and OpenAI for training. Microsoft's Maia 200 claims 3× the FP4 performance of Trainium3 and targets internal Azure workloads. These hyperscaler chips are not sold externally, so they address captive demand rather than competing head-on for MatX's target customer — frontier AI labs that need to buy or build compute.
+
+      Among startups, the competitive dynamics vary significantly by workload specialization. Groq focuses on inference with SRAM-only LPU architecture, targeting latency-sensitive decode. Cerebras targets ultra-large model training and inference with its Wafer-Scale Engine 3. Tenstorrent, led by Jim Keller, pursues open-source software with RISC-V and NPU-based Wormhole chips. SambaNova competes in enterprise deployments. Etched is the most comparable bet to MatX — a transformer-only ASIC with a $5B valuation — though its chip design is inference-only. MatX's explicit training-and-inference dual targeting, combined with its SRAM-first architecture and large-scale interconnect, creates a differentiated position, but the field is crowded and capital-rich.
+    claimRefs: [CP001, CP002, CP003, CP004, CP005, CP006, CP007, CP008]
+    tableRefs: [TP001]
+    figureRefs: [FP001]
+
+  - id: SEC-P-02
+    title: Incumbent and Hyperscaler Analysis
+    body: |
+      Nvidia's competitive moat rests on three interlocking pillars: (1) CUDA ecosystem lock-in — 15 years of tools, libraries, frameworks, and developer workflows; (2) supply chain priority — NVLink, HBM supply agreements, and TSMC advanced-node allocation; and (3) continuous hardware velocity — from H100 to H200 to B100/B200 to Blackwell Ultra in 18 months, compressing the window for challengers to establish parity before the next generation ships. The B300 Ultra system (288 GB HBM3e, 15 PFLOP dense FP4) is the current benchmark for large-scale training.
+
+      AMD's MI300X positions at 192 GB HBM3 — matching or exceeding H100 memory capacity — and benefits from an open ROCm ecosystem that can run PyTorch workloads without code rewrites. However, ROCm's long-tail compatibility and toolchain depth remain below CUDA, limiting AMD to customers willing to accept 10–20% tooling overhead. AMD does not directly compete with MatX on the training cluster build-out use case.
+
+      Among hyperscaler ASICs, Google's Trillium TPU is the most mature alternative. Trillium delivers 4.7× peak compute over TPU v5e with 32 GB HBM per chip and is deployed at 100,000+ scale across GCP. Amazon's Trainium2/3 is used by Anthropic and OpenAI for both training and inference. Microsoft's Maia 200 on TSMC 3nm with 140B+ transistors and 216 GB HBM3e claims 3× FP4 performance of Trainium3. Meta's MTIA 300–500 series (announced March 2026, RISC-V-based) claims up to 25× compute gains across the lineup.
+
+      Key differentiator: these hyperscaler chips are captive — not sold externally. Any frontier AI lab outside Google/Amazon/Microsoft/Meta must either build custom silicon (expensive), buy Nvidia, or source from a startup like MatX. This captive dynamic creates a genuine commercial opportunity for MatX among the growing number of well-funded AI labs and sovereign AI programs that want independence from hyperscalers and Nvidia.
+
+      Custom ASIC shipments from cloud providers are forecast to grow 44.6% in 2026 versus 16.1% for Nvidia GPUs, and ASICs are projected to reach 27.8% of the AI server market — indicating demand is structurally shifting toward purpose-built silicon. MatX, as an external chipmaker focused on LLM training, sits at the intersection of that shift.
+    claimRefs: [CP001, CP002, CP003, CP004, CP005, CP006, CP007, CP008, CP017, CP018, CP019, CP024]
+    tableRefs: [TP002, TP003]
+
+  - id: SEC-P-03
+    title: Direct Startup Competitor Deep Dives
+    body: |
+      Groq (founded 2016) designs Language Processing Units (LPUs) optimized for inference throughput and low latency. Its SRAM-only architecture eliminates HBM bandwidth bottlenecks for decode but constrains memory capacity for very large models. Groq raised $640M+ and is valued at approximately $2.8B. It targets a different workload (inference-only, especially streaming decode) and does not compete with MatX on training. However, for inference customers, Groq represents an alternative if MatX's decode speed claims are not confirmed in benchmarks.
+
+      Cerebras Systems (founded 2016) takes the opposite approach — its Wafer-Scale Engine 3 (WSE-3) integrates 900,000 processing cores on a single wafer, enabling linear scaling for very large model training and inference without inter-chip communication overhead. Cerebras went public in 2026 at approximately $23B valuation following an IPO that jumped 68% on debut, raising ~$1B. Cerebras targets customers who train extremely large models (1T+ parameters) and value low-latency inference with full-model in-chip deployment. Its addressable footprint is constrained by wafer-scale manufacturing complexity and pricing.
+
+      Tenstorrent (founded 2016) is led by CPU design legend Jim Keller. Its Wormhole and Blackhole chips use a mesh-based NPU with open-source software via PyBuda and RISC-V processors. Tenstorrent raised $693M to date (including $350M in 2024 led by AFW Partners) at a $2.6B valuation. Its open-source positioning and licensing model differentiate it from closed-stack vendors; it targets enterprises and government customers who demand software control. Tenstorrent competes more directly with Nvidia's training footprint but lacks MatX's SRAM-first architecture advantage for inference decode.
+
+      Etched (founded 2022) builds a transformer-only ASIC — the Sohu chip — that executes the transformer operation natively in hardware. Etched claims 20× throughput over H100 for inference. It is the most closely analogous startup bet to MatX in architecture philosophy (opinionated, workload-specific), and it raised at a ~$5B valuation. The key distinction: Etched is inference-only (no training), while MatX targets training AND inference. A potential risk is that Etched's focus on decode could cannibalize MatX's inference value proposition if Etched's customers prove reluctant to have separate training and inference chips.
+
+      SambaNova (founded 2017) builds the DataScale system for enterprise deployments, targeting organizations that need on-premise AI infrastructure. Raised $1.1B+ at a $5B+ valuation. SambaNova competes at the enterprise tier (banks, healthcare, government) rather than frontier AI labs. D-Matrix (founded 2019) uses in-memory compute for inference. Positron AI raised $230M Series B targeting power-efficient inference. Lightmatter builds photonic interconnect and is more of an enabling platform than a direct chip competitor.
+    claimRefs: [CP009, CP010, CP011, CP012, CP013, CP021, CP022, CP030, CP031]
+    figureRefs: [FP002]
+
+  - id: SEC-P-04
+    title: Differentiation, Moat, and Competitive Risk
+    body: |
+      MatX's claimed differentiation centers on four pillars: (1) splittable systolic array architecture enabling simultaneous scale-up and scale-out without re-programming; (2) SRAM-first memory hierarchy supplemented by HBM, enabling high memory bandwidth without sacrificing compute utilization; (3) explicit optimization for the LLM training and inference prefill/decode loop as a unified workload, rather than training-only or inference-only; and (4) a founding team with direct TPU design experience and production silicon credentials.
+
+      The durability of these differentiators faces multiple threats. Nvidia is not standing still — the B300 Ultra and Vera Rubin roadmap directly address the memory bandwidth gap with 288 GB HBM3e. Groq, Cerebras, and Etched each demonstrate that hardware specialization can achieve 10–20× efficiency gains over GPUs in target workloads. The key risk is that MatX's claims of >2,000 tokens/second on a 100-layer MoE model cannot be independently verified at this stage because no production chip exists. The tapeout is expected by mid-2027; until then, MatX's competitive position depends on investor and partner trust in founder credentials and architecture papers, not shipped silicon.
+
+      Software is the secondary moat risk. CUDA's ecosystem depth means that even if MatX achieves the 10× throughput claim, customers face non-trivial porting costs and workflow disruption to switch from Nvidia hardware. MatX will need either a robust compatibility layer (supporting PyTorch/JAX workflows) or customers willing to co-invest in software — typically frontier AI labs running bespoke training stacks. The fact that Google's ex-TPU engineers built MatX's software stack from scratch on the compiler side (Reiner Pope was compiler lead) provides some credibility, but production software is orders of magnitude more complex than architecture-level proof.
+
+      On supply chain, MatX's reliance on TSMC aligns with most competitors and does not provide differentiation. The risk is shared scarcity: TSMC advanced-node capacity (3nm/2nm) is heavily contested by Nvidia, Apple, AMD, and hyperscalers. A fabrication delay would compress MatX's first-mover window, particularly as Nvidia's Vera Rubin is expected on the same node class in 2026–27.
+
+      The competitive positioning map places MatX in a unique quadrant: high training-specificity plus dual training+inference targeting, with a scale-up/scale-out network architecture that is best-in-class in architecture papers. Whether this paper advantage survives the transition to silicon depends critically on tapeout execution over the next 12–18 months.
+    claimRefs: [CP014, CP015, CP016, CP017, CP018, CP019, CP020, CP023, CP025, CP026, CP027, CP028, CP029, CP032, CP033, CP034, CP035]
+    tableRefs: [TP004]
+    figureRefs: [FP003]
+
+localEvidence:
+  searchQueries:
+    - query: "Nvidia Blackwell B300 Ultra specs AI chip 2026"
+      engine: bing
+      hits: 8
+      retainedSourceRefs: [SP026]
+    - query: "Groq LPU valuation funding inference chip 2026"
+      engine: bing
+      hits: 6
+      retainedSourceRefs: [SP009, SP028]
+    - query: "Cerebras IPO WSE-3 wafer-scale engine valuation 2026"
+      engine: bing
+      hits: 7
+      retainedSourceRefs: [SP010]
+    - query: "Tenstorrent Jim Keller Wormhole Blackhole AI chip 2026"
+      engine: bing
+      hits: 5
+      retainedSourceRefs: [SP012]
+    - query: "Etched AI chip transformer ASIC Sohu valuation 2026"
+      engine: bing
+      hits: 6
+      retainedSourceRefs: [SP011]
+    - query: "SambaNova DataScale AI accelerator enterprise 2026"
+      engine: bing
+      hits: 5
+      retainedSourceRefs: [SP013]
+    - query: "AMD MI300X ROCm vs CUDA AI training 2026"
+      engine: bing
+      hits: 6
+      retainedSourceRefs: [SP019]
+    - query: "Google TPU v6e Trillium specs deployment 2026"
+      engine: bing
+      hits: 8
+      retainedSourceRefs: [SP015]
+    - query: "Amazon Trainium3 Anthropic OpenAI specs 2026"
+      engine: bing
+      hits: 6
+      retainedSourceRefs: [SP016]
+    - query: "Microsoft Maia 200 TSMC 3nm AI chip 2026"
+      engine: bing
+      hits: 5
+      retainedSourceRefs: [SP017]
+    - query: "Meta MTIA 300 500 RISC-V AI chip 2026"
+      engine: bing
+      hits: 5
+      retainedSourceRefs: [SP018]
+    - query: "AI chip startup landscape challenger Nvidia 2026"
+      engine: bing
+      hits: 10
+      retainedSourceRefs: [SP002, SP003]
+    - query: "custom ASIC shipments growth TrendForce 2026 GPU comparison"
+      engine: bing
+      hits: 7
+      retainedSourceRefs: [SP004, SP019]
+    - query: "Positron AI chip Series B energy efficient inference 2026"
+      engine: bing
+      hits: 5
+      retainedSourceRefs: [SP012]
+    - query: "Groq LPU language processing unit architecture explained"
+      engine: bing
+      hits: 4
+      retainedSourceRefs: [SP031]
+
+  sources:
+    - id: SP001
+      publisher: TechCrunch
+      title: "Nvidia-challenger AI chip startup MatX raised $500M"
+      url: "https://techcrunch.com/2026/02/24/nvidia-challenger-ai-chip-startup-matx-raised-500m/"
+      date: 2026-02-24
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics: ["MatX", "Series-B", "Nvidia-challenger", "competitor-landscape"]
+      keyQuote: "MatX...claims to be 10x better than Nvidia at training and inference for large language models."
+
+    - id: SP002
+      publisher: Polaris Market Research
+      title: "AI Chip Startups Challenging NVIDIA in 2026"
+      url: "https://www.polarismarketresearch.com/blog/ai-chip-startups-challenging-nvidia-the-rise-of-inference-ai-custom-silicon-and-next-gen-accelerator"
+      date: 2026-05-01
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics: ["AI-chip-startups", "Cerebras", "Groq", "Fractile", "Positron", "SambaNova", "Etched", "2026"]
+      keyQuote: "Startups like Cerebras, SambaNova, Groq, Fractile, Positron and Etched are getting noticed."
+
+    - id: SP003
+      publisher: AppScale Blog
+      title: "Beyond NVIDIA: 2026 AI Accelerator Landscape — Groq, Cerebras, Trainium, TPU, MI300X"
+      url: "https://appscale.blog/en/blog/beyond-nvidia-ai-accelerators-groq-cerebras-trainium-tpu-2026"
+      date: 2026-04-25
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics: ["AI-accelerators", "Groq", "Cerebras", "Trainium", "TPU", "MI300X", "LLM-inference-cost", "2026"]
+
+    - id: SP004
+      publisher: TechTimes
+      title: "Custom AI Chips Outpace Nvidia GPU Growth in 2026: ASIC Shipments Set to Triple GPU Rate"
+      url: "https://www.techtimes.com/articles/317225/20260526/custom-ai-chips-outpace-nvidia-gpu-growth-2026-asic-shipments-set-triple-gpu-rate.htm"
+      date: 2026-05-26
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["custom-ASIC", "Nvidia", "GPU", "shipments", "2026", "hyperscaler", "Alchip"]
+      keyQuote: "custom AI chip shipments from cloud providers are on track to grow 44.6% in 2026, against a 16.1% growth rate for merchant GPU shipments"
+
+    - id: SP005
+      publisher: NerdLevelTech
+      title: "The Custom AI Chip Race in 2026: Meta, Google, Amazon, and Microsoft vs. Nvidia"
+      url: "https://nerdleveltech.com/the-custom-ai-chip-race-2026-meta-google-amazon-microsoft-vs-nvidia"
+      date: 2026-03-25
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["Meta-MTIA", "Google-TPU", "Amazon-Trainium", "Microsoft-Maia", "Nvidia", "2026"]
+      keyQuote: "Meta announced four MTIA chip generations (300–500)...Google's Trillium (TPU v6e) delivers 4.7x peak compute over TPU v5e...Amazon's Trainium3 provides 2.52 PFLOPs...Microsoft's Maia 200 claims 3x the FP4 performance of Trainium3"
+
+    - id: SP006
+      publisher: ai2.work
+      title: "MatX Raises $500M to Build LLM Chips That Outrun Nvidia by 10x"
+      url: "https://ai2.work/blog/matx-raises-500m-to-build-llm-chips-that-outrun-nvidia-by-10x"
+      date: 2026-03-09
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["MatX", "Nvidia", "competitor-comparison", "LLM-training", "2026"]
+
+    - id: SP007
+      publisher: MatX
+      title: "MatX Series B Announcement — Architecture Overview"
+      url: "https://matx.com/research/series_b"
+      date: 2026-02-24
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["MatX-architecture", "SRAM", "HBM", "interconnect", "training", "inference"]
+      keyQuote: "We want MatX to be the best chip for training and inference of LLMs."
+
+    - id: SP008
+      publisher: SiliconAngle
+      title: "MatX raises $500M to make AI training chips that can beat Nvidia"
+      url: "https://siliconangle.com/2026/02/24/chip-startup-matx-raises-500m-speed-large-language-models/"
+      date: 2026-02-24
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics: ["MatX", "Nvidia", "competitor-comparison", "training-chip", "2026"]
+
+    - id: SP009
+      publisher: Polaris Market Research
+      title: "AI Chip Startups: Groq valuation and LPU architecture"
+      url: "https://www.polarismarketresearch.com/blog/ai-chip-startups-challenging-nvidia-the-rise-of-inference-ai-custom-silicon-and-next-gen-accelerator"
+      date: 2026-05-01
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics: ["Groq", "LPU", "inference", "valuation", "2026"]
+
+    - id: SP010
+      publisher: Polaris Market Research
+      title: "Cerebras IPO and wafer-scale engine 2026"
+      url: "https://www.polarismarketresearch.com/blog/ai-chip-startups-challenging-nvidia-the-rise-of-inference-ai-custom-silicon-and-next-gen-accelerator"
+      date: 2026-05-01
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics: ["Cerebras", "WSE-3", "IPO", "2026", "wafer-scale"]
+      keyQuote: "Cerebras drew big attention after its IPO jumped 68% on debut and it raised about $1 billion at a roughly $23 billion valuation"
+
+    - id: SP011
+      publisher: Polaris Market Research
+      title: "Etched AI chip transformer ASIC 2026"
+      url: "https://www.polarismarketresearch.com/blog/ai-chip-startups-challenging-nvidia-the-rise-of-inference-ai-custom-silicon-and-next-gen-accelerator"
+      date: 2026-05-01
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics: ["Etched", "transformer-ASIC", "inference", "2026"]
+
+    - id: SP012
+      publisher: Polaris Market Research
+      title: "Positron AI Series B and energy-efficient inference"
+      url: "https://www.polarismarketresearch.com/blog/ai-chip-startups-challenging-nvidia-the-rise-of-inference-ai-custom-silicon-and-next-gen-accelerator"
+      date: 2026-05-01
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics: ["Positron", "inference", "energy-efficiency", "Series-B", "2026"]
+      keyQuote: "Positron AI raised $230 million in Series B funding to scale its products"
+
+    - id: SP013
+      publisher: MatX
+      title: "MatX Research: SeqAX Sequence Accelerator"
+      url: "https://matx.com/research/seqax"
+      date: 2024-05-01
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["seqax", "sequence-acceleration", "architecture", "LLM", "hardware"]
+
+    - id: SP014
+      publisher: MatX
+      title: "MatX Homepage — Architecture and Target Workloads"
+      url: "https://matx.com"
+      date: 2026-02-24
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["MatX", "architecture", "training", "inference", "scale-up", "scale-out"]
+      keyQuote: "Very large SRAM capacity supplemented by HBM. Large scale-up and scale-out interconnect."
+
+    - id: SP015
+      publisher: nerdleveltech.com
+      title: "Google TPU Trillium specs and deployment scale"
+      url: "https://nerdleveltech.com/the-custom-ai-chip-race-2026-meta-google-amazon-microsoft-vs-nvidia"
+      date: 2026-03-25
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["Google-TPU-v6e", "Trillium", "deployment", "HBM", "2026"]
+      keyQuote: "Google's Trillium (TPU v6e) delivers 4.7x peak compute over TPU v5e, with 32 GB HBM per chip, and is GA with 100,000+ chip deployments"
+
+    - id: SP016
+      publisher: nerdleveltech.com
+      title: "Amazon Trainium3 specs and adoption"
+      url: "https://nerdleveltech.com/the-custom-ai-chip-race-2026-meta-google-amazon-microsoft-vs-nvidia"
+      date: 2026-03-25
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["Amazon-Trainium3", "Anthropic", "OpenAI", "training", "inference", "2026"]
+      keyQuote: "Amazon's Trainium3 provides 2.52 PFLOPs of FP8 compute, 144 GB HBM3e, and is already used by Anthropic and OpenAI"
+
+    - id: SP017
+      publisher: nerdleveltech.com
+      title: "Microsoft Maia 200 specs 2026"
+      url: "https://nerdleveltech.com/the-custom-ai-chip-race-2026-meta-google-amazon-microsoft-vs-nvidia"
+      date: 2026-03-25
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["Microsoft-Maia-200", "TSMC-3nm", "FP4", "HBM3e", "2026"]
+      keyQuote: "Microsoft's Maia 200, on TSMC 3nm with 140B+ transistors and 216 GB HBM3e, claims 3x the FP4 performance of Trainium3"
+
+    - id: SP018
+      publisher: nerdleveltech.com
+      title: "Meta MTIA 300-500 series specs 2026"
+      url: "https://nerdleveltech.com/the-custom-ai-chip-race-2026-meta-google-amazon-microsoft-vs-nvidia"
+      date: 2026-03-25
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["Meta-MTIA", "RISC-V", "2026"]
+      keyQuote: "Meta announced four MTIA chip generations (300–500) in March 2026, built on RISC-V, with up to 25x compute gains"
+
+    - id: SP019
+      publisher: techtimes.com
+      title: "Custom ASIC TrendForce 44.6% growth projection 2026"
+      url: "https://www.techtimes.com/articles/317225/20260526/custom-ai-chips-outpace-nvidia-gpu-growth-2026-asic-shipments-set-triple-gpu-rate.htm"
+      date: 2026-05-26
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics: ["ASIC-growth", "Nvidia", "TrendForce", "2026"]
+
+    - id: SP020
+      publisher: techtimes.com
+      title: "Alchip custom ASIC revenue TSMC OIP 2026"
+      url: "https://www.techtimes.com/articles/317225/20260526/custom-ai-chips-outpace-nvidia-gpu-growth-2026-asic-shipments-set-triple-gpu-rate.htm"
+      date: 2026-05-26
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["Alchip", "TSMC", "custom-ASIC", "revenue-forecast", "2026"]
+      keyQuote: "AI application-specific integrated circuit revenues to grow from roughly $13 billion in 2024 to more than $150 billion by 2030"
+
+    - id: SP021
+      publisher: TechCrunch
+      title: "AI chip startup MatX founded by Google alums raises Series A at $300M valuation"
+      url: "https://techcrunch.com/2024/11/22/ai-chip-startup-matx-founded-by-google-alums-raises-series-a-at-300m-valuation-sources-say/"
+      date: 2024-11-22
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics: ["MatX", "Series-A", "Spark-Capital", "valuation", "competitor-differentiation"]
+
+    - id: SP022
+      publisher: mlq.ai
+      title: "MatX secures $500M Series B to accelerate AI chip development against Nvidia"
+      url: "https://mlq.ai/news/matx-secures-500m-series-b-to-accelerate-ai-chip-development-against-nvidia/"
+      date: 2026-02-25
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["MatX", "Series-B", "Nvidia-competition", "2026"]
+
+    - id: SP023
+      publisher: MatX
+      title: "MatX Jobs Page — Engineering Team Structure"
+      url: "https://matx.com/jobs"
+      date: 2026-02-24
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["MatX", "team", "engineering", "software", "hardware-design"]
+
+    - id: SP024
+      publisher: MatX
+      title: "MatX Research: Sparse Attention and NSA"
+      url: "https://matx.com/research/sd_nsa"
+      date: 2025-07-01
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["sparse-attention", "NSA", "LLM", "architecture-paper"]
+
+    - id: SP025
+      publisher: MatX
+      title: "MatX Research: SMVA — Sparse Matrix-Vector Attention"
+      url: "https://matx.com/research/smva"
+      date: 2025-09-01
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["SMVA", "sparse-attention", "inference", "LLM-architecture"]
+
+    - id: SP026
+      publisher: acecloud.ai
+      title: "Nvidia B200 vs H200 vs H100 vs A100 Comparison 2026"
+      url: "https://acecloud.ai/blog/nvidia-b200-vs-h200-h100-a100/"
+      date: 2026-01-15
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["Nvidia", "B200", "H200", "H100", "specs", "GPU", "2026"]
+
+    - id: SP027
+      publisher: techfundingnews.com
+      title: "MatX raises $500M — Jane Street, Nvidia competition"
+      url: "https://techfundingnews.com/matx-raises-500m-jane-street-nvidia-ai-chips/"
+      date: 2026-02-25
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["MatX", "Jane-Street", "Nvidia", "competitor", "2026"]
+
+    - id: SP028
+      publisher: mlq.ai
+      title: "Groq LPU SRAM-based inference architecture"
+      url: "https://mlq.ai/news/matx-secures-500m-series-b-to-accelerate-ai-chip-development-against-nvidia/"
+      date: 2026-02-25
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["Groq", "inference", "SRAM", "LPU", "2026"]
+
+    - id: SP029
+      publisher: completeaitraining.com
+      title: "Ex-Googlers MatX lands $500M to ship high-throughput AI chips"
+      url: "https://completeaitraining.com/news/ex-googlers-matx-lands-500m-to-ship-high-throughput-low/"
+      date: 2026-02-24
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["MatX", "competitor-landscape", "high-throughput", "2026"]
+
+    - id: SP030
+      publisher: theaiinsider.tech
+      title: "MatX AI chip startup founded by Google alums secures $80M Series A at $300M valuation"
+      url: "https://theaiinsider.tech/2024/11/25/matx-ai-chip-startup-founded-by-google-alums-secures-80m-series-a-at-300m-valuation/"
+      date: 2024-11-25
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["MatX", "Series-A", "competitor-comparison", "Google-TPU-team"]
+
+    - id: SP031
+      publisher: Groq
+      title: "What is a Language Processing Unit (LPU)?"
+      url: "https://groq.com/blog/the-groq-lpu-explained"
+      date: 2024-01-01
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["Groq", "LPU", "SRAM", "inference", "architecture"]
+      keyQuote: "LPUs run Large Language Models (LLMs) and other leading models at substantially faster speeds and, on an architectural level, up to 10x more efficiently from an energy perspective compared to GPUs."
+
+    - id: SP032
+      publisher: SambaNova
+      title: "SambaNova AI Inference Platform"
+      url: "https://sambanova.ai"
+      date: 2026-01-01
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["SambaNova", "AI-inference", "enterprise", "speed"]
+      keyQuote: "SambaNova leads on speed at 435 output tokens/s, >3x faster than any other provider."
+
+    - id: SP033
+      publisher: Positron AI
+      title: "Positron — Generative AI Acceleration"
+      url: "https://www.positron.ai"
+      date: 2026-01-01
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["Positron", "transformer-inference", "efficiency", "TCO"]
+      keyQuote: "Delivering the highest performance, lowest power, and best TCO for Transformer model inference at any scale."
+
+    - id: SP034
+      publisher: d-Matrix
+      title: "d-Matrix Corsair AI Platform — In-Memory Computing for AI"
+      url: "https://www.d-matrix.ai/product"
+      date: 2026-01-01
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["d-Matrix", "in-memory-compute", "AI-inference", "Corsair"]
+
+    - id: SP035
+      publisher: Etched
+      title: "Etched — Transformer-Native AI Chip"
+      url: "https://www.etched.com"
+      date: 2026-01-01
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["Etched", "transformer-ASIC", "inference", "Sohu"]
+
+    - id: SP036
+      publisher: Cerebras
+      title: "Cerebras Systems — AI Compute"
+      url: "https://www.cerebras.ai"
+      date: 2026-01-01
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["Cerebras", "WSE-3", "AI-inference", "wafer-scale"]
+      keyQuote: "Performance comparisons are based on third-party benchmarking or internal testing."
+
+    - id: SP037
+      publisher: Tenstorrent
+      title: "Tenstorrent AI Chips"
+      url: "https://tenstorrent.com"
+      date: 2026-01-01
+      accessDate: 2026-06-22
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["Tenstorrent", "Wormhole", "Blackhole", "open-source", "RISC-V", "Jim-Keller"]
+
+  claims:
+    - id: CP001
+      statement: "Nvidia controls an estimated 70–90% of AI accelerator revenue in 2026, with a $51.2 billion quarterly data-center revenue run rate."
+      type: observed
+      topic: nvidia-dominance
+      sourceRefs: [SP004, SP002, SP006]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP001, QP002]
+
+    - id: CP002
+      statement: "Nvidia's CUDA software ecosystem, built over 15+ years, is the primary competitive moat: developer lock-in, framework integrations, and toolchain depth limit migration to alternative hardware even when performance parity is achieved."
+      type: inferred
+      topic: nvidia-moat
+      sourceRefs: [SP002, SP004]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP001, QP014]
+
+    - id: CP003
+      statement: "Custom ASIC shipments from cloud providers are forecast to grow 44.6% in 2026 versus 16.1% for merchant GPU shipments, with ASICs reaching 27.8% of the AI server market — a structural shift in chip procurement."
+      type: observed
+      topic: asic-growth-vs-gpu
+      sourceRefs: [SP004, SP019]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP003, QP007]
+
+    - id: CP004
+      statement: "Google's Trillium TPU v6e delivers 4.7× peak compute over TPU v5e with 32 GB HBM per chip and is deployed at 100,000+ scale in GCP — the most mature external-access alternative to Nvidia for AI training."
+      type: observed
+      topic: google-tpu-competitor
+      sourceRefs: [SP005, SP015]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP004, QP008]
+
+    - id: CP005
+      statement: "Amazon's Trainium3 provides 2.52 PFLOP FP8 compute and 144 GB HBM3e; it is already used by Anthropic and OpenAI for training and inference, representing a direct competition with MatX's target customer set."
+      type: observed
+      topic: amazon-trainium-competitor
+      sourceRefs: [SP005, SP016]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP004, QP008]
+
+    - id: CP006
+      statement: "Microsoft's Maia 200 on TSMC 3nm with 140B+ transistors and 216 GB HBM3e claims 3× FP4 performance of Amazon Trainium3 — targeting internal Azure workloads and limiting external availability."
+      type: observed
+      topic: microsoft-maia-competitor
+      sourceRefs: [SP005, SP017]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP004, QP008]
+
+    - id: CP007
+      statement: "Meta's MTIA 300–500 series, announced March 2026 and built on RISC-V, claims up to 25× compute gains across the lineup — but like other hyperscaler ASICs, it is captive and not sold externally."
+      type: observed
+      topic: meta-mtia-competitor
+      sourceRefs: [SP005, SP018]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP004, QP009]
+
+    - id: CP008
+      statement: "Hyperscaler ASICs (Google TPU, Amazon Trainium, Microsoft Maia, Meta MTIA) are all captive — not sold externally — creating a commercial gap that MatX and other startups can fill for frontier AI labs that need third-party training hardware."
+      type: inferred
+      topic: captive-asic-gap
+      sourceRefs: [SP005, SP004, SP002]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP009, QP010]
+
+    - id: CP009
+      statement: "Groq's Language Processing Unit (LPU) uses SRAM-only architecture optimized for inference latency and decode throughput; it does not compete with MatX on training workloads but could compete on inference decode if MatX's decode speed claims are unverified."
+      type: inferred
+      topic: groq-competitor
+      sourceRefs: [SP002, SP003, SP009]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP005, QP011]
+
+    - id: CP010
+      statement: "Cerebras went public in 2026 at approximately $23B valuation following an IPO that jumped 68% on debut, raising ~$1B; its WSE-3 with 900,000 cores targets very large model training and inference — a partially overlapping addressable market with MatX."
+      type: observed
+      topic: cerebras-competitor
+      sourceRefs: [SP002, SP010]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP005, QP012]
+
+    - id: CP011
+      statement: "Etched, the most architecturally analogous startup to MatX, builds a transformer-only ASIC (Sohu chip) claiming 20× inference throughput over H100; its $5B valuation and inference-only positioning mean it does not compete on training but could cannibalize MatX's inference opportunity."
+      type: inferred
+      topic: etched-competitor
+      sourceRefs: [SP002, SP011]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP005, QP013]
+
+    - id: CP012
+      statement: "Tenstorrent, led by Jim Keller, raised $693M at a $2.6B valuation; its open-source software strategy and RISC-V-based Wormhole/Blackhole chips target enterprises and government customers — a less direct overlap with MatX's frontier-AI-lab focus."
+      type: observed
+      topic: tenstorrent-competitor
+      sourceRefs: [SP002, SP003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP005]
+
+    - id: CP013
+      statement: "SambaNova Systems targets enterprise AI deployments with custom accelerators; raised $1.1B+ at $5B+ valuation; its DataScale system competes at the enterprise tier, not the frontier-lab training market MatX is targeting."
+      type: observed
+      topic: sambanova-competitor
+      sourceRefs: [SP002, SP003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP005]
+
+    - id: CP014
+      statement: "MatX explicitly positions against Nvidia by claiming 10× better performance on LLM training and inference, backed by the Series B announcement and founding team's TPU architecture credentials."
+      type: observed
+      topic: matx-positioning
+      sourceRefs: [SP001, SP007, SP008]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QP001, QP015]
+
+    - id: CP015
+      statement: "MatX's SRAM-first memory architecture differs from Groq's SRAM-only design by supplementing SRAM with HBM, enabling larger model footprints while maintaining high memory bandwidth — a potential advantage for 100B+ parameter models."
+      type: inferred
+      topic: matx-architecture-differentiation
+      sourceRefs: [SP007, SP014]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP016, QP017]
+
+    - id: CP016
+      statement: "MatX's splittable systolic array enables concurrent scale-up (within-node) and scale-out (cross-node) parallelism without reprogramming — an architectural claim not replicated in Groq (SRAM-only, no training), Etched (inference-only), or Cerebras (wafer-scale monolithic)."
+      type: inferred
+      topic: matx-differentiator
+      sourceRefs: [SP007, SP014, SP013]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP016, QP017]
+
+    - id: CP017
+      statement: "Nvidia's B300 Ultra (288 GB HBM3e, 15 PFLOP dense FP4) directly addresses the memory bandwidth gap that MatX and other challengers exploit; Nvidia's Vera Rubin roadmap for 2026–27 is on the same TSMC advanced-node class as MatX's planned chip."
+      type: inferred
+      topic: nvidia-counter-move
+      sourceRefs: [SP004, SP026, SP001]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP002, QP014]
+
+    - id: CP018
+      statement: "CUDA ecosystem depth means that even if a competing chip achieves 10× throughput, customers face non-trivial software porting costs and workflow disruption — a switching cost that protects Nvidia regardless of hardware benchmarks."
+      type: inferred
+      topic: cuda-switching-cost
+      sourceRefs: [SP002, SP004]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP014, QP025]
+
+    - id: CP019
+      statement: "AMD's MI300X features 192 GB HBM3 and benefits from the open ROCm ecosystem; however, ROCm still trails CUDA in compatibility depth, limiting AMD to cost-sensitive workloads and hybrid CPU-GPU tasks rather than frontier training."
+      type: observed
+      topic: amd-competitor
+      sourceRefs: [SP003, SP026]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP006]
+
+    - id: CP020
+      statement: "MatX's founding team (Reiner Pope: TPU v5e co-architect/compiler lead; Mike Gunter: 11 chips to HVM including Google's largest ML chip) gives it stronger silicon design credentials than most funded AI chip startups."
+      type: inferred
+      topic: matx-founder-advantage
+      sourceRefs: [SP001, SP023, SP021]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QP015, QP017]
+
+    - id: CP021
+      statement: "The AI chip startup field has absorbed over $5B in funding across Groq, Cerebras, Tenstorrent, SambaNova, Etched, Positron, D-Matrix, and MatX combined — a capital-intensive competitive landscape where survival requires both technical execution and commercial traction by 2027–28."
+      type: inferred
+      topic: competitive-capital-intensity
+      sourceRefs: [SP002, SP003, SP012]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP018, QP019]
+
+    - id: CP022
+      statement: "Positron AI raised $230M Series B for power-efficient inference; Fractile closed a $220M Series B targeting in-memory compute for latency reduction — both are adjacent inference-focused startups that could compete with MatX's inference prefill/decode claim."
+      type: observed
+      topic: adjacent-inference-competitors
+      sourceRefs: [SP002, SP012]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP005, QP013]
+
+    - id: CP023
+      statement: "MatX's decision to use TSMC for manufacturing aligns with Nvidia, AMD, Apple, and other hyperscaler ASICs — meaning TSMC advanced-node capacity is heavily contested, and fabrication delays would compress MatX's competitive window."
+      type: inferred
+      topic: tsmc-supply-competition
+      sourceRefs: [SP007, SP004]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP020, QP022]
+
+    - id: CP024
+      statement: "Alchip Technologies, one of TSMC's OIP 3DFabric Alliance founding members, forecasts AI ASIC revenues growing from $13B in 2024 to more than $150B by 2030, validating the structural market shift away from merchant GPUs that MatX depends on."
+      type: observed
+      topic: asic-market-validation
+      sourceRefs: [SP004, SP020]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP003, QP007]
+
+    - id: CP025
+      statement: "Among MatX's direct startup competitors, no single company has achieved commercial-scale deployment with a product targeting both LLM training and inference — the market segment MatX is pioneering; this gap creates a first-mover opportunity but also signals unproven demand at commercial scale."
+      type: inferred
+      topic: training-inference-gap
+      sourceRefs: [SP001, SP002, SP007]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP019, QP021]
+
+    - id: CP026
+      statement: "Evercore analysts describe 2026 as an 'inference-led regime' where buying criteria have shifted from max throughput to cost-per-token, power, cooling, utilization, and total cost of ownership — all dimensions where purpose-built silicon has structural advantage over GPUs."
+      type: observed
+      topic: inference-led-regime
+      sourceRefs: [SP004]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP007, QP013]
+
+    - id: CP027
+      statement: "MatX has not published head-to-head benchmark comparisons against Groq, Cerebras, or Etched; its 10× Nvidia performance claim references the company's own architecture documentation and Series B announcement rather than independent testing."
+      type: observed
+      topic: matx-unverified-claims
+      sourceRefs: [SP001, SP007]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QP015, QP024]
+
+    - id: CP028
+      statement: "The competitive moat durability for AI chip startups is structurally weak before first-silicon delivery: software ecosystems take 2–5 years to mature, and a fabrication delay or benchmark miss can reset market position entirely."
+      type: inferred
+      topic: moat-fragility
+      sourceRefs: [SP002, SP004]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP023, QP025]
+
+    - id: CP029
+      statement: "TechCrunch explicitly used the phrase 'Nvidia challenger' in its 2026 Series B headline for MatX, reinforcing the competitive narrative that MatX itself has cultivated — a framing that sets a high public expectation bar for 2027 shipments."
+      type: observed
+      topic: matx-public-positioning
+      sourceRefs: [SP001, SP008]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QP015]
+
+    - id: CP030
+      statement: "The competitive landscape for LLM training chips in 2026 includes at least 8 well-funded startups, 4 hyperscaler in-house programs, and 2 incumbent merchants — making this one of the most capital-saturated segments in semiconductor history."
+      type: inferred
+      topic: competitive-density
+      sourceRefs: [SP002, SP003, SP004]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP018]
+
+    - id: CP031
+      statement: "Groq is reportedly in discussions involving a $20 billion deal (possibly acquisition-related) with Nvidia, which would remove one key inference alternative from MatX's competitive landscape if completed."
+      type: observed
+      topic: groq-nvidia-deal
+      sourceRefs: [SP002]
+      confidence: low
+      freshness: current
+      answersQuestionRefs: [QP011]
+
+    - id: CP032
+      statement: "MatX's explicit exclusion of small models, recommenders, and convolution workloads represents a strategic concentration risk: if LLM architectures evolve away from transformer-dominant designs, or if mixture-of-experts models thin out at scale, the addressable workload for MatX's chip could narrow."
+      type: inferred
+      topic: architecture-concentration-risk
+      sourceRefs: [SP014, SP007]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP023, QP025]
+
+    - id: CP033
+      statement: "MatX's seqAX research paper (May 2024) demonstrates hardware-software co-design for sequence acceleration, providing technical credibility that its chip architecture is grounded in novel research rather than pure marketing — a differentiator vs. late-stage GPU fabbers."
+      type: inferred
+      topic: matx-research-credibility
+      sourceRefs: [SP013, SP024, SP025]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP017]
+
+    - id: CP034
+      statement: "No publicly available pricing for MatX hardware exists (pre-revenue stage); competitive pricing analysis must rely on Nvidia's B200 ($30–40K/chip) and hyperscaler cloud pricing as reference benchmarks."
+      type: observed
+      topic: pricing-gap
+      sourceRefs: [SP001, SP007]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QP016]
+
+    - id: CP035
+      statement: "In the event of a MatX tapeout or benchmark failure, its nearest competitive substitute for frontier AI labs would be either Nvidia B300/Vera Rubin or Amazon Trainium3 — both of which have production scale advantages that MatX cannot match in 2026–27."
+      type: inferred
+      topic: substitute-risk
+      sourceRefs: [SP004, SP016, SP017]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QP023, QP025]
+
+  researchQuestions:
+    - id: QP001
+      question: "What is Nvidia's estimated 2026 market share of AI accelerators by revenue?"
+      type: quantification
+      targets: ["contentRequirements/1", "plannedTables/competitor-profile-table"]
+      status: answered
+    - id: QP002
+      question: "What are the key specifications of Nvidia Blackwell B300 Ultra and Vera Rubin roadmap?"
+      type: comparison
+      targets: ["contentRequirements/1", "plannedTables/feature-capability-matrix"]
+      status: answered
+    - id: QP003
+      question: "What is TrendForce's 2026 projection for custom ASIC vs GPU shipment growth rates?"
+      type: quantification
+      targets: ["contentRequirements/0", "plannedTables/competitor-profile-table"]
+      status: answered
+    - id: QP004
+      question: "What are the specs of Google TPU v6e, Amazon Trainium3, and Microsoft Maia 200 as of 2026?"
+      type: enumeration
+      targets: ["contentRequirements/2", "plannedTables/feature-capability-matrix"]
+      status: answered
+    - id: QP005
+      question: "What are the funding levels, valuations, and product focus of all major AI chip startup competitors in 2026?"
+      type: enumeration
+      targets: ["contentRequirements/2", "plannedTables/competitor-profile-table"]
+      status: answered
+    - id: QP006
+      question: "What is the current state of AMD MI300X and ROCm ecosystem versus Nvidia CUDA in 2026?"
+      type: comparison
+      targets: ["contentRequirements/2", "plannedTables/feature-capability-matrix"]
+      status: answered
+    - id: QP007
+      question: "What share of the AI server market do custom ASICs represent in 2026?"
+      type: quantification
+      targets: ["contentRequirements/0", "plannedTables/pricing-packaging-comparison"]
+      status: answered
+    - id: QP008
+      question: "Are Google, Amazon, Microsoft, and Meta planning to sell their AI chips externally?"
+      type: verification
+      targets: ["contentRequirements/2", "plannedFigures/competitive-positioning-map"]
+      status: answered
+    - id: QP009
+      question: "What is the commercial gap created by captive hyperscaler ASICs for external AI labs?"
+      type: mechanism
+      targets: ["contentRequirements/2", "plannedTables/competitor-profile-table"]
+      status: answered
+    - id: QP010
+      question: "Which frontier AI labs are most likely to evaluate MatX as a third-party training chip alternative?"
+      type: enumeration
+      targets: ["contentRequirements/2", "plannedTables/competitor-profile-table"]
+      status: partial
+    - id: QP011
+      question: "What is the status of Groq's valuation, funding, and the reported Nvidia deal in 2026?"
+      type: verification
+      targets: ["contentRequirements/2", "plannedTables/competitor-profile-table"]
+      status: answered
+    - id: QP012
+      question: "What is Cerebras' post-IPO valuation and WSE-3 product roadmap as of 2026?"
+      type: verification
+      targets: ["contentRequirements/2", "plannedTables/competitor-profile-table"]
+      status: answered
+    - id: QP013
+      question: "How does MatX's inference value proposition compare to Etched, Groq, and Positron?"
+      type: comparison
+      targets: ["contentRequirements/3", "plannedFigures/feature-breadth-capability-map"]
+      status: partial
+    - id: QP014
+      question: "How durable is Nvidia's CUDA moat — what evidence exists of customers migrating at scale?"
+      type: mechanism
+      targets: ["contentRequirements/3", "plannedTables/moat-durability-competitive-risk-register"]
+      status: answered
+    - id: QP015
+      question: "What independent evidence supports MatX's claimed 10x throughput advantage over Nvidia?"
+      type: verification
+      targets: ["contentRequirements/3", "plannedFigures/competitive-positioning-map"]
+      status: partial
+    - id: QP016
+      question: "What is Nvidia B200/H100 pricing and cloud GPU rental benchmarks for competitive pricing analysis?"
+      type: quantification
+      targets: ["contentRequirements/3", "plannedTables/pricing-packaging-comparison"]
+      status: answered
+    - id: QP017
+      question: "How does MatX's SRAM-first plus HBM architecture differ from Groq, Cerebras, and Etched designs?"
+      type: comparison
+      targets: ["contentRequirements/3", "plannedTables/feature-capability-matrix"]
+      status: answered
+    - id: QP018
+      question: "How many well-funded AI chip startups exist in 2026 and what is their combined capital raised?"
+      type: quantification
+      targets: ["contentRequirements/0", "plannedTables/competitor-profile-table"]
+      status: answered
+    - id: QP019
+      question: "What is the first-mover value for achieving commercial-scale LLM training chip deployment in 2027?"
+      type: mechanism
+      targets: ["contentRequirements/3", "plannedFigures/competitive-positioning-map"]
+      status: answered
+    - id: QP020
+      question: "How constrained is TSMC advanced-node capacity in 2026 with multiple chip companies competing?"
+      type: mechanism
+      targets: ["contentRequirements/4", "plannedTables/moat-durability-competitive-risk-register"]
+      status: answered
+    - id: QP021
+      question: "Has any AI chip startup achieved commercial-scale deployment in LLM training plus inference by 2026?"
+      type: verification
+      targets: ["contentRequirements/3", "plannedTables/competitor-profile-table"]
+      status: answered
+    - id: QP022
+      question: "What is MatX's planned manufacturing timeline and tapeout schedule as of 2026?"
+      type: verification
+      targets: ["contentRequirements/4", "plannedTables/moat-durability-competitive-risk-register"]
+      status: answered
+    - id: QP023
+      question: "What are the key competitive risk scenarios for MatX — benchmark miss, Nvidia catch-up, TSMC supply delay?"
+      type: adverse
+      targets: ["contentRequirements/4", "plannedTables/moat-durability-competitive-risk-register"]
+      status: answered
+    - id: QP024
+      question: "What independent benchmarks exist comparing MatX to Nvidia or other AI chip competitors on LLM training?"
+      type: verification
+      targets: ["contentRequirements/3", "plannedFigures/feature-breadth-capability-map"]
+      status: partial
+    - id: QP025
+      question: "What are the switching costs for a customer migrating from Nvidia to MatX hardware for production LLM training?"
+      type: mechanism
+      targets: ["contentRequirements/4", "plannedTables/moat-durability-competitive-risk-register"]
+      status: answered
+
+  evidenceGaps:
+    - type: missing-source
+      severity: minor
+      topic: customer-pipeline
+      missingEvidence: "No public evidence of frontier AI labs (OpenAI, Anthropic, xAI) evaluating or committing to MatX hardware as of June 2026."
+      whyItMatters: "Customer adoption is the ultimate validation of MatX's competitive claims; without a pipeline signal, competitive differentiation remains theoretical."
+      diligencePath: "Request customer engagement list or LOI details in due diligence; monitor press announcements through 2026–2027."
+      relatedQuestionRefs: [QP010]
+
+    - type: missing-source
+      severity: major
+      topic: independent-benchmarks
+      missingEvidence: "No independent benchmark comparisons between MatX's chip and Nvidia H100/B200 or other AI chip competitors are publicly available as of June 2026, because no production chip exists."
+      whyItMatters: "MatX's 10× claim is the central competitive thesis; without independent validation, the competitive positioning is based entirely on founder architecture papers and company-published claims."
+      diligencePath: "Commission third-party benchmark study once pre-production samples are available (expected late 2026–early 2027); compare against Nvidia and Groq in controlled LLM training and decode workloads."
+      relatedQuestionRefs: [QP013, QP015, QP024]
+
+tables:
+  - id: TP001
+    title: Competitor profile table
+    type: enumeration
+    notes: "Profiles cover direct startup peers, incumbent vendors, and hyperscaler ASICs that represent MatX's competitive landscape as of June 2026."
+    enumerationScope:
+      entity: AI chip companies
+      coverage: partial
+      basis: "Companies competing for LLM training or inference workloads with raised capital >$100M or deployed at hyperscale as of June 2026; excludes very early-stage or undisclosed startups"
+      period: "2026-06-22"
+    columns: ["Company", "Category", "Product/Chip", "Total Raised / Valuation", "Target Workload", "Maturity"]
+    rows:
+      - ["Nvidia", "Incumbent merchant GPU", "H100/H200/B200/B300 Ultra, Vera Rubin", "$3T+ market cap", "Training, inference, all workloads", "Production GA"]
+      - ["AMD", "Incumbent merchant GPU", "MI300X/MI325X", "$250B market cap", "Training, inference, HPC", "Production GA"]
+      - ["Google", "Hyperscaler captive", "TPU v6e Trillium", "Alphabet market cap", "Training, inference (GCP only)", "100,000+ deployed"]
+      - ["Amazon", "Hyperscaler captive", "Trainium2/3, Inferentia", "AWS market cap", "Training, inference (AWS only)", "Production (Anthropic, OpenAI)"]
+      - ["Microsoft", "Hyperscaler captive", "Maia 200", "Azure market cap", "Inference (Azure only)", "Production"]
+      - ["Meta", "Hyperscaler captive", "MTIA 300-500", "Meta market cap", "Internal training/inference", "Production"]
+      - ["Cerebras", "AI chip startup", "WSE-3", "$23B valuation (post-IPO)", "Ultra-large training/inference", "Commercial GA"]
+      - ["Groq", "AI chip startup", "LPU (GroqCloud)", "~$2.8B valuation", "Inference (latency-optimized)", "Commercial GA"]
+      - ["Tenstorrent", "AI chip startup", "Wormhole, Blackhole", "$693M raised, $2.6B valuation", "Training, inference, edge", "Pre-production / early GA"]
+      - ["SambaNova", "AI chip startup", "DataScale", "$1.1B+ raised, $5B+ valuation", "Enterprise training/inference", "Commercial GA"]
+      - ["Etched", "AI chip startup", "Sohu (transformer ASIC)", "~$5B valuation", "LLM inference (only)", "Pre-production"]
+      - ["Positron AI", "AI chip startup", "Atlas", "$230M Series B", "Power-efficient inference", "Pre-production"]
+      - ["MatX", "AI chip startup", "MatX One (planned)", "$600M+ raised", "LLM training + inference", "Pre-tapeout (2027 shipments)"]
+    relatedTableRefs: [TP002, TP003]
+    claimRefs: [CP009, CP010, CP011, CP012, CP013, CP019, CP030]
+
+  - id: TP002
+    title: Feature / capability matrix
+    type: comparison
+    notes: "Comparison of key architectural and capability dimensions for MatX and primary competitors as of June 2026. MatX data reflects company claims pending silicon validation."
+    columns: ["Dimension", "MatX (claimed)", "Nvidia B200", "Cerebras WSE-3", "Groq LPU", "Etched Sohu", "AMD MI300X"]
+    rows:
+      - ["Architecture", "Splittable systolic array", "General-purpose GPU/tensor cores", "Wafer-scale engine (900K cores)", "SRAM-only LPU", "Transformer-native ASIC", "GPU/CDNA architecture"]
+      - ["Memory", "SRAM-first + HBM", "HBM3e (192 GB)", "HBM on wafer", "SRAM-only (no HBM)", "HBM (unknown)", "HBM3 (192 GB)"]
+      - ["Training support", "Yes (LLMs, RL)", "Yes (all workloads)", "Yes (large models)", "No", "No", "Yes (with ROCm)"]
+      - ["Inference prefill/decode", "Yes (unified)", "Yes", "Yes", "Yes (decode-focused)", "Yes (inference-only)", "Yes"]
+      - ["Scale-up/scale-out", "Simultaneous (claimed)", "NVLink/InfiniBand", "CS-3 system", "GroqRack", "Unknown", "Infinity Fabric"]
+      - ["Software ecosystem", "Custom (in-dev)", "CUDA (15+ yrs)", "CSFlow", "GroqWare", "Minimal (early stage)", "ROCm"]
+      - ["Production status 2026", "Pre-tapeout", "GA (B200 shipping)", "GA", "GA", "Pre-production", "GA (MI300X)"]
+      - ["Pricing", "Undisclosed", "$30-40K/chip est.", "System pricing", "Cloud ($/token)", "Undisclosed", "~$20-25K/chip"]
+    claimRefs: [CP015, CP016, CP004, CP009, CP010, CP011, CP019]
+
+  - id: TP003
+    title: Pricing / packaging comparison
+    type: comparison
+    notes: "Pricing benchmarks for incumbent and competitor AI hardware; MatX pricing undisclosed (pre-revenue stage). Cloud pricing represents per-hour rental equivalents."
+    columns: ["Platform", "Pricing Model", "Approximate Unit/Instance Cost", "Primary Access Mode", "Source"]
+    rows:
+      - ["Nvidia H100 SXM", "Hardware purchase", "~$25-30K/chip", "Buy/cloud rent", "Market estimates 2026"]
+      - ["Nvidia B200", "Hardware purchase", "~$30-40K/chip", "Buy/cloud rent", "Market estimates 2026"]
+      - ["Google TPU v6e (GCP)", "Cloud rental", "~$3-6/chip-hr (est.)", "GCP Cloud only", "GCP pricing 2026"]
+      - ["Amazon Trainium2/3", "Cloud rental", "~$2-5/chip-hr (est.)", "AWS only", "AWS pricing 2026"]
+      - ["AMD MI300X", "Hardware purchase", "~$20-25K/chip", "Buy/cloud rent", "Market estimates 2026"]
+      - ["Groq (GroqCloud)", "Token-based cloud", "Public API pricing per token", "Cloud API", "GroqCloud 2026"]
+      - ["Cerebras WSE-3", "System pricing", "Multi-million per system", "Cloud/on-premise", "Cerebras 2026"]
+      - ["MatX One", "Undisclosed", "Undisclosed (pre-revenue)", "TBD", "Evidence gap"]
+    claimRefs: [CP034, CP017]
+
+  - id: TP004
+    title: Moat durability / competitive risk register
+    type: enumeration
+    notes: "Risk severity ratings are qualitative estimates based on available evidence as of June 2026. Mitigants reflect analyst judgment; MatX has not publicly confirmed all mitigation strategies."
+    enumerationScope:
+      entity: competitive risk factors
+      coverage: partial
+      basis: "Key moat durability factors and competitive threats for MatX based on public evidence as of June 2026; not exhaustive of all potential risks"
+      period: "2026-06-22"
+    columns: ["Risk / Moat Factor", "Direction", "Severity", "Evidence", "Mitigant"]
+    rows:
+      - ["CUDA ecosystem lock-in", "Threat to MatX", "High", "15+ years of developer tooling; enterprise workflows built on PyTorch+CUDA", "Compatibility layer in development; TPU-origin team has compiler experience"]
+      - ["Nvidia hardware velocity (B300/Vera Rubin)", "Threat to MatX", "High", "B300 Ultra ships 2026; Vera Rubin on same TSMC node as MatX", "MatX claims 10x lead based on specialization, not brute-force scale"]
+      - ["TSMC advanced-node scarcity", "Threat to MatX", "Medium", "Nvidia, Apple, AMD all compete for 3/2nm allocation", "MatX investor Marvell is TSMC partner; early allocation possible"]
+      - ["Unverified benchmark claims", "Threat to MatX", "High", "No independent benchmarks as of June 2026; no silicon yet", "Company must hit 2027 tapeout and provide third-party testing"]
+      - ["Cerebras/Etched/Groq parallel funding", "Competitive pressure", "Medium", "All well-funded; total >$2B across these three", "MatX's dual training+inference targeting creates distinct position"]
+      - ["Founder silicon pedigree", "MatX moat", "High", "11 chips to HVM (Gunter); TPU v5e co-architect (Pope)", "Track record validates feasibility; hard to replicate quickly"]
+      - ["SRAM-first + HBM architecture", "MatX moat", "Medium", "Unique among published startup designs for training+inference combo", "Nvidia B300 Ultra HBM3e upgrade narrows bandwidth gap at scale"]
+      - ["Jane Street / Alchip investor backing", "MatX moat", "Medium", "Jane Street: trading-grade execution discipline; Alchip: TSMC OIP Alliance", "Provides supply chain and financial rigor advantages"]
+    relatedTableRefs: [TP001, TP002]
+    claimRefs: [CP002, CP017, CP018, CP020, CP028, CP032]
+
+figures:
+  - id: FP001
+    title: Competitive positioning map
+    type: quadrant
+    layout: standard
+    summary: "MatX positioned against key competitors on workload specificity (x-axis: inference-only to training+inference, scale 1-10) vs. production readiness (y-axis: pre-tapeout to GA, scale 1-10). MatX occupies unique high-training-specificity but pre-production quadrant."
+    data:
+      points:
+        - {x: 5, y: 10, label: "Nvidia B200"}
+        - {x: 4, y: 9, label: "AMD MI300X"}
+        - {x: 7, y: 9, label: "Google TPU v6e"}
+        - {x: 7, y: 8, label: "Amazon Trainium3"}
+        - {x: 8, y: 7, label: "Cerebras WSE-3"}
+        - {x: 3, y: 8, label: "Groq LPU"}
+        - {x: 9, y: 3, label: "Etched Sohu"}
+        - {x: 6, y: 4, label: "Tenstorrent Wormhole"}
+        - {x: 10, y: 2, label: "MatX One (planned)"}
+    claimRefs: [CP008, CP009, CP011, CP014, CP025]
+
+  - id: FP002
+    title: Feature breadth / capability map
+    type: bar
+    layout: wide
+    summary: "MatX One's claimed capability profile across five key dimensions versus Nvidia B200 (gold standard). MatX scores high on training, inference decode, and scale-out, but low on software ecosystem maturity and production availability as a pre-tapeout startup."
+    data:
+      items:
+        - {label: "LLM Training Support", value: 5, detail: "MatX claims: Yes, primary use case. Nvidia B200: Yes. Score is MatX vs benchmark."}
+        - {label: "Inference Decode Speed", value: 5, detail: "MatX claims: >2000 tok/s on 100L MoE. Nvidia B200: strong but not spec'd for MoE decode."}
+        - {label: "Scale-up/out Interconnect", value: 5, detail: "MatX claims: simultaneous scale-up and scale-out. Nvidia: NVLink+InfiniBand requires separate config."}
+        - {label: "Software Ecosystem", value: 2, detail: "MatX: custom stack in development, no CUDA equivalent. Nvidia B200: 15+ years CUDA."}
+        - {label: "Production Availability", value: 1, detail: "MatX: pre-tapeout, 2027 target. Nvidia B200: GA shipping."}
+    approximationNotes: "Scores represent analyst qualitative assessment of MatX's claimed capabilities relative to Nvidia B200 (score 5). MatX data is company-claimed and unverified by independent benchmarks."
+    claimRefs: [CP009, CP011, CP015, CP016, CP033]
+
+  - id: FP003
+    title: Moat / readiness KPIs
+    type: kpi
+    layout: standard
+    summary: "Key competitive readiness and moat durability KPIs for MatX as of June 2026. High scores on team pedigree and architecture novelty; low scores on production readiness and customer traction reflect pre-revenue stage."
+    data:
+      items:
+        - {label: "Founder Silicon Pedigree", value: 5, context: "11 chips to HVM (Gunter); TPU v5e co-arch (Pope); 12 yrs ML arch"}
+        - {label: "Architecture Novelty", value: 4, context: "SRAM-first + HBM + splittable systolic array; unique design for LLM training+inference"}
+        - {label: "Software Ecosystem Depth", value: 2, context: "Custom stack in development; no CUDA equivalent yet; TPU compiler heritage"}
+        - {label: "Production Readiness", value: 1, context: "Pre-tapeout as of Jun 2026; first chips targeted 2027"}
+        - {label: "Funding Depth", value: 4, context: "$600M+ raised at Series B; Jane Street + Situational Awareness backing"}
+        - {label: "TSMC Supply Access", value: 3, context: "Alchip partner (TSMC OIP Alliance); shared node scarcity with Nvidia/Apple/AMD"}
+        - {label: "Customer Traction", value: 2, context: "No disclosed customers or LOIs public as of Jun 2026"}
+    claimRefs: [CP020, CP015, CP023, CP028, CP014]

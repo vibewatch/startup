@@ -1,0 +1,1847 @@
+schemaVersion: "report-v2"
+artifact: product-tech
+slug: olix
+runDate: "2026-06-22"
+company:
+  name: Olix
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: >
+    Olix's sole disclosed product is the DX-1 Decode Accelerator, a rack-scale
+    inference system that combines SRAM-centric memory with co-packaged photonic
+    interconnects to eliminate dependence on High Bandwidth Memory (HBM).
+    The architecture is pre-silicon as of June 2026, with FPGA prototyping
+    underway; the company's hiring pages confirm a deep technical team building
+    optical link design, software-serving integration targeting vLLM and SGLang,
+    and hardware control firmware. Significant caution is warranted around
+    photonic commercialisation risk: CPO yield challenges, thermal sensitivity,
+    and incomplete standards are well-documented industry-wide obstacles, and no
+    independent benchmark data for DX-1 exists in the public domain.
+
+sections:
+  - id: otpu-and-sram-photonics-architecture
+    title: DX-1 architecture — SRAM integration with co-packaged photonics
+    body: >
+      Olix's compute manifesto identifies data movement — specifically the
+      energy and latency cost of KV-cache traffic through High Bandwidth Memory —
+      as the root constraint preventing existing accelerators from delivering
+      both high throughput and low latency simultaneously. The company's
+      response is the OLIX Decode Accelerator 1 (DX-1), described as the
+      first accelerator architected specifically for decode. The design
+      philosophy forfeits HBM entirely, instead scaling an SRAM-centric memory
+      hierarchy integrated with photonics to address both the bandwidth and
+      latency dimensions of the problem.
+
+      The SRAM+photonics architecture operates at rack scale. Olix's materials
+      describe "rack-scale co-design of logic, data movement, packaging, optics
+      and interconnect" as a single unified system, contrasting this with
+      reticle-scale and wafer-scale approaches taken by peers. The photonic
+      element covers optical interconnects spanning chip-to-chip, intra-tray,
+      and rack-to-rack links, with co-packaged optics (CPO) as the
+      integration vehicle. The Optical Communications Engineer job description
+      confirms Olix is building link architectures across all three distance
+      tiers, with system-level link budgets — loss, BER, bandwidth, power, and
+      thermal margins — owned within the engineering team.
+
+      A third-party market-watch profile of Olix names both the OTPU (Optical
+      Tensor Processing Unit) and the DX-1 as distinct product components.
+      The manifesto does not use the OTPU label explicitly, instead referring
+      to the DX-1 system level; the OTPU appears to describe the compute
+      element within the larger rack system. Company claims that the OTPU
+      performs matrix multiplications using photonic elements at very low heat
+      generation should be treated as design intent, not validated performance;
+      no published characterisation data exists.
+
+      Pre-silicon prototyping is underway using Xilinx/AMD UltraScale+ and
+      Versal FPGA platforms. The FPGA role requires PCIe Gen4 interfaces,
+      multi-lane transceivers operating at greater than 25 Gb/s NRZ, BER
+      measurement infrastructure, and SECDED error correction, confirming a
+      high-speed digital integration layer between FPGA control logic and
+      the optical subsystem. White Rabbit precision timing is also cited,
+      suggesting a deterministic fabric requirement consistent with
+      distributed rack-scale compute.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE006
+      - CE007
+      - CE008
+      - CE009
+      - CE010
+      - CE036
+      - CE037
+      - CE039
+      - CE040
+      - CE041
+      - CE042
+    tableRefs:
+      - TE001
+      - TE003
+    figureRefs:
+      - FE001
+      - FE002
+
+  - id: software-stack-and-developer-integration
+    title: Software stack compatibility and developer integration
+    body: >
+      Olix's platform integration hiring confirms that the software layer for
+      DX-1 is designed to plug into the dominant open-source inference stack
+      rather than require a proprietary runtime. The Senior Platform Integration
+      Engineer specification names vLLM, SGLang, and NVIDIA Dynamo as the
+      target serving frameworks, with the expectation that engineers will extend
+      these onto the DX-1 hardware. KV-cache management is addressed through
+      NIXL and Mooncake TE, two emerging protocols for disaggregated prefill
+      and decode that enable the separation of prefill compute from decode
+      compute across different hardware partitions. Networking targets NCCL,
+      RoCE, and InfiniBand for cluster communication, which implies DX-1 is
+      designed to operate alongside existing GPU- or CPU-based prefill nodes
+      in a heterogeneous cluster rather than as a fully self-contained system.
+
+      This software strategy is technically sound: vLLM is one of the
+      most active open-source inference projects with over 2,000 contributors
+      across academic institutions and companies, and SGLang achieved a 3.8×
+      prefill and 4.8× decode throughput improvement on NVIDIA GB300 NVL72 in
+      early 2026, demonstrating rapid iteration capacity. Both frameworks
+      expose hardware plugin architectures; Intel Gaudi, IBM Spyre, and
+      Huawei Ascend are examples of non-NVIDIA hardware that has been integrated
+      into vLLM. This gives Olix a credible integration path — but it requires
+      custom kernel development, HAL-layer work, and continuous upstream
+      maintenance as these frameworks evolve on GPU-first timelines.
+
+      The critical gap is that Olix has no publicly documented open-source
+      contributions to vLLM, SGLang, or related frameworks as of June 2026,
+      and DX-1 is pre-silicon, meaning no hardware-in-the-loop validation of
+      the software integration has occurred yet. The developer-community signal
+      for Olix is therefore indirect: the frameworks it targets are vibrant and
+      accessible, but Olix has yet to establish a presence in those communities
+      as a hardware vendor with validated drivers or publicly available
+      benchmarks.
+    claimRefs:
+      - CE011
+      - CE012
+      - CE013
+      - CE014
+      - CE015
+      - CE016
+      - CE017
+      - CE018
+    tableRefs:
+      - TE002
+    figureRefs:
+      - FE003
+
+  - id: manufacturing-trust-and-risks
+    title: Manufacturing challenges, standards, export controls, and technology risks
+    body: >
+      The photonic and CPO supply chain presents several well-documented
+      risks that Olix will need to navigate regardless of silicon quality.
+      Industry reporting from Siemens EDA's 2026 CPO analysis identifies
+      four intertwined challenges: thermal management (photonic ICs are highly
+      temperature-sensitive and transient thermal excursions from AI workloads
+      can shift optical wavelengths), test scalability (optical alignment
+      requires micron-scale precision, far tighter than electrical test,
+      meaning automated production-scale test methodology is not yet mature),
+      manufacturing yield (silicon photonics exhibits higher process variability
+      than mature CMOS, and CPO assembly is not reworkable, making yield
+      excursions particularly costly), and incomplete standards (OIF and
+      related consortia are still developing interoperability specifications
+      for modulation formats, thermal envelopes, and optical attach methods).
+      An adversarial industry note from edgen.tech specifically reported that
+      CPO mass production was delayed past 2026 due to yield issues — a
+      direct read-across risk for Olix's planned 2027 product launch window.
+
+      Olix's export control posture is unusually explicit for a pre-revenue
+      startup. Every engineering job posting reviewed carries a notice
+      restricting candidates whose most recent citizenship or permanent
+      residency is in Iran, North Korea, Syria, Cuba, Russia, Belarus, China,
+      Hong Kong, Macau, or Venezuela, citing US export control regulations.
+      This indicates that Olix's technology stack almost certainly includes
+      controlled items under the Export Administration Regulations (EAR),
+      which has practical implications for customer geography, supply-chain
+      partner selection, and fundraising from investors with restricted-country
+      connections.
+
+      The competitive context for photonics further illustrates maturity gaps.
+      Established players such as Intel have been shipping silicon photonics
+      products for data-centre networking for several years, and Ayar Labs
+      with NVIDIA backing has announced co-packaged optical chiplet production.
+      Lightmatter's Passage platform took four or more years from concept to
+      initial deployment. Olix is building a more ambitious full-system
+      platform, not just an optical interconnect layer, which compounds the
+      engineering and manufacturing challenge relative to component specialists.
+      No independent benchmark data, reliability test results, or customer
+      qualification data for DX-1 are in the public domain.
+    claimRefs:
+      - CE019
+      - CE020
+      - CE021
+      - CE022
+      - CE023
+      - CE024
+      - CE025
+      - CE026
+      - CE027
+      - CE028
+      - CE029
+      - CE030
+      - CE031
+      - CE032
+      - CE033
+      - CE034
+      - CE035
+      - CE043
+    tableRefs:
+      - TE004
+      - TE005
+    figureRefs:
+      - FE004
+
+tables:
+  - id: TE001
+    title: Product module and asset matrix
+    columns:
+      - Module / Asset
+      - Customer / User
+      - Status / Maturity
+      - Differentiation Claim
+      - Diligence Gap
+    rows:
+      - - DX-1 Decode Accelerator
+        - Hyperscalers, cloud service providers, frontier AI labs
+        - Pre-silicon; FPGA prototyping (Xilinx/AMD UltraScale+ / Versal)
+        - "First accelerator designed specifically for decode; rack-scale co-design"
+        - No published silicon tape-out date, no benchmark data, no customer pilots disclosed
+      - - OTPU (Optical Tensor Processing Unit)
+        - Component within DX-1 rack
+        - Concept / pre-silicon; design intent only
+        - Photonic compute element intended to perform matrix operations with low heat generation
+        - No characterisation, no published die photo or datasheet; named only in third-party profile
+      - - Optical Interconnect Subsystem
+        - DX-1 internal architecture; potentially licensable
+        - Engineering / design phase; link budgets under development
+        - CPO-based chip-to-chip, intra-tray, and rack-to-rack links across all three tiers
+        - No OSAT or foundry partner disclosed; no yield or BER results published
+      - - FPGA Prototyping Platform
+        - Internal R&D / hardware bring-up
+        - Active (job postings confirmed as live)
+        - Used for high-speed interface validation (PCIe Gen4, >25 Gb/s NRZ, White Rabbit timing)
+        - Prototype platform only; no inference-serving benchmarks possible pre-silicon
+    notes: "All status assessments derived from job postings and company manifesto as of June 2026; no product shipments or silicon confirmed."
+    claimRefs:
+      - CE001
+      - CE002
+      - CE005
+      - CE009
+      - CE010
+      - CE036
+      - CE042
+
+  - id: TE002
+    title: Workflow and use-case table
+    columns:
+      - User Job
+      - Current Workflow (GPU-based)
+      - DX-1 Claimed Solution
+      - Measurable Benefit Claimed
+      - Limitation / Diligence Ask
+    rows:
+      - - LLM decode at interactive latency for many concurrent users
+        - Large GPU batch required to amortise HBM weights; high per-user latency
+        - SRAM-based DX-1 eliminates KV-cache HBM fetch latency; lower per-token energy
+        - High interactivity (low TTFT, high TPS) and high throughput simultaneously
+        - No published benchmark; pre-silicon; benefit remains company-claimed
+      - - Disaggregated prefill + decode serving
+        - Homogeneous GPU cluster; prefill and decode compete for same accelerator
+        - DX-1 as decode-only node; pairable with GPU prefill node via NIXL / NCCL
+        - Better utilisation and scheduling; lower cost per decode token
+        - Requires heterogeneous orchestration; software integration pre-production
+      - - Serving existing open-source LLMs without re-training
+        - Native CUDA / ROCm kernels; NVIDIA or AMD hardware required
+        - vLLM / SGLang plugin with full model compatibility; no QAT/PTQ required
+        - Models run unchanged; avoids re-training cost for enterprises
+        - Plugin under development; no confirmed vLLM / SGLang PRs from Olix as of June 2026
+    notes: "All DX-1 benefits are company-claimed or inferred from public hiring materials; independent validation not yet available."
+    claimRefs:
+      - CE001
+      - CE011
+      - CE012
+      - CE013
+      - CE039
+      - CE040
+
+  - id: TE003
+    title: Technology and operating architecture layers
+    columns:
+      - Layer / Component
+      - Role
+      - Key Dependency
+      - Risk
+    rows:
+      - - Inference Serving Layer
+        - vLLM / SGLang / NVIDIA Dynamo runtime; model scheduling and batching
+        - Open-source community adoption; Olix hardware plugin not yet merged
+        - Frameworks evolve on GPU-first cadence; Olix must maintain parity
+      - - KV-Cache Management Layer
+        - NIXL / Mooncake TE protocols for disaggregated KV-cache across prefill and decode nodes
+        - Protocol maturity; NIXL is early-stage
+        - Protocol churn could require Olix software rework; limited third-party support
+      - - FPGA Control / Bringup Layer
+        - PCIe Gen4 host interface, BER monitoring, ECC, White Rabbit timing distribution
+        - Xilinx/AMD UltraScale+ or Versal availability; foundry allocation
+        - FPGA prototyping stage only; production requires ASIC replacement
+      - - SRAM Compute and Memory Layer
+        - On-chip SRAM stores model weights; eliminates HBM round-trip latency
+        - Custom SRAM process integration; die area scaling
+        - SRAM capacity per watt lower than HBM at scale; dies per wafer constrained by chip area
+      - - Photonic Interconnect Layer
+        - CPO-based optical links at chip-to-chip, intra-tray, and rack-to-rack distances
+        - Silicon photonics foundry; CPO assembly OSAT; laser source supply
+        - Yield excursions, thermal sensitivity, alignment tolerances, and incomplete OIF standards
+    notes: "Architecture inferred from company manifesto and job postings; layer sequencing and interface specifications not formally published."
+    claimRefs:
+      - CE002
+      - CE003
+      - CE007
+      - CE008
+      - CE010
+      - CE011
+      - CE013
+      - CE014
+
+  - id: TE004
+    title: Trust, quality, and compliance controls
+    columns:
+      - Control / Certification / Metric
+      - Status
+      - Scope
+      - Gap / Diligence Ask
+    rows:
+      - - US Export Control (EAR) compliance
+        - Active — hiring restrictions applied to 10 countries
+        - Technology export and personnel eligibility for photonic chip design
+        - Export control licence list not disclosed; extent of EAR classification unclear
+      - - CPO thermal management
+        - Engineering design phase; not validated in silicon
+        - Photonic IC temperature stability across dynamic AI workloads
+        - No thermal test results or operating temperature range published
+      - - OIF CPO interface standards compliance
+        - Standards still in development (OIF consortium working); Olix compliance not confirmed
+        - Optical modulation formats, mechanical interfaces, thermal specs
+        - Interoperability with other CPO vendors / modules not verifiable
+      - - Silicon photonics yield / KGD assurance
+        - Not publicly disclosed; industry-level CPO yield challenges documented
+        - Known-Good-Die rate for photonic chiplets before CPO assembly
+        - No foundry partner named; no yield data or test methodology disclosed
+      - - Product quality / reliability certifications
+        - None publicly disclosed (pre-revenue, pre-silicon)
+        - Manufacturing process qualification, reliability testing (HTOL, thermal cycling)
+        - Cannot assess until first silicon; no ISO / IEC certification referenced
+    notes: "Status assessments based on public information; absence of disclosure should not be assumed to mean absence of internal processes."
+    claimRefs:
+      - CE019
+      - CE020
+      - CE021
+      - CE022
+      - CE023
+      - CE024
+      - CE025
+      - CE026
+
+  - id: TE005
+    title: Roadmap and development-stage milestones
+    columns:
+      - Date / Stage
+      - Milestone
+      - Status
+      - Implication
+      - Source
+    rows:
+      - - March 2024
+        - Company incorporated (as Flux Corp Ltd); photonic inference thesis established
+        - Completed
+        - Indicates roughly 2 years of design work before 2026 raise
+        - UK Companies House filing (SO007 in ch1)
+      - - January 2026
+        - Company renamed to OLIX Computing Limited; DX-1 and manifesto published
+        - Completed
+        - Public identity transition; DX-1 branding launched
+        - Olix manifesto (SE001)
+      - - February 2026
+        - $220M Series A financing; Bristol engineering facility expansion announced
+        - Completed
+        - 18–24 months of hardware runway established; team scaling to 200+
+        - SiliconANGLE (SE009); TechFundingNews (SE020)
+      - - 2026 (H2 est.)
+        - FPGA prototype validation; optical link BER and power characterisation
+        - In progress (inferred from active FPGA and optical engineer hiring)
+        - Gate milestone for silicon tape-out decision
+        - Olix FPGA JD (SE004); optical JD (SE002)
+      - - 2027 (company target)
+        - DX-1 first silicon tape-out and initial customer engagement
+        - Not yet confirmed; inferred from press coverage and hiring pace
+        - Critical execution risk; any CPO yield or thermal issue extends timeline
+        - Multiple press (SE009, SE015, SE016); edgen.tech adversarial note (SE007)
+    notes: "2027 milestone is inferred from press coverage and hiring urgency; no official delivery date has been published by Olix."
+    claimRefs:
+      - CE001
+      - CE028
+      - CE034
+      - CE042
+
+figures:
+  - id: FE001
+    title: DX-1 product architecture stack
+    type: stack
+    layout: standard
+    summary: >
+      Conceptual layer model of the DX-1 system derived from company manifesto
+      and job descriptions. Layers are company-described or inferred;
+      no official architecture diagram has been published.
+    data:
+      layers:
+        - label: Inference Serving Runtime
+          detail: "vLLM / SGLang / NVIDIA Dynamo plugin; disaggregated scheduling; OpenAI-compatible API"
+        - label: KV-Cache & Orchestration
+          detail: "NIXL / Mooncake TE for KV-cache transfer; NCCL / RoCE / InfiniBand networking"
+        - label: FPGA Control Plane
+          detail: "PCIe Gen4 host interface; BER monitoring; SECDED ECC; White Rabbit timing"
+        - label: SRAM Compute Fabric
+          detail: "On-chip SRAM weights; OTPU photonic compute element (company-claimed)"
+        - label: Photonic Interconnect
+          detail: "CPO chip-to-chip, intra-tray, rack-to-rack optical links; link budget management"
+    approximationNotes: >
+      Architecture reconstructed from public job descriptions and manifesto;
+      internal layer boundaries and interfaces not independently verified.
+    claimRefs:
+      - CE001
+      - CE003
+      - CE004
+      - CE006
+      - CE007
+      - CE008
+
+  - id: FE002
+    title: Customer inference workflow — DX-1 deployment model
+    type: flow
+    layout: standard
+    summary: >
+      How a hyperscaler or AI lab would use the DX-1 as a decode-specialised
+      node within a disaggregated serving cluster, based on company job descriptions.
+    data:
+      nodes:
+        - id: client
+          label: Client Request
+          detail: "API call to inference endpoint; low-latency requirements"
+        - id: load-balancer
+          label: Serving Orchestrator
+          detail: "vLLM / SGLang router; separates prefill from decode jobs"
+        - id: prefill-node
+          label: Prefill Node (GPU / CPU)
+          detail: "Processes prompt; generates KV cache; transfers via NIXL"
+        - id: dx1-decode
+          label: DX-1 Decode Node
+          detail: "SRAM+photonics; token generation; optimised for autoregressive decode"
+        - id: kv-transfer
+          label: KV-Cache Transfer
+          detail: "NIXL / Mooncake TE protocol; prefill → decode KV handoff"
+        - id: response
+          label: Token Stream to Client
+          detail: "Output tokens streamed back; interactivity optimised by DX-1 design"
+      edges:
+        - from: client
+          to: load-balancer
+        - from: load-balancer
+          to: prefill-node
+        - from: prefill-node
+          to: kv-transfer
+        - from: kv-transfer
+          to: dx1-decode
+        - from: dx1-decode
+          to: response
+    approximationNotes: >
+      Workflow constructed from platform integration job description; actual
+      orchestration architecture has not been published or validated in hardware.
+    claimRefs:
+      - CE011
+      - CE012
+      - CE013
+      - CE014
+      - CE015
+
+  - id: FE003
+    title: Critical dependency map — DX-1 development and deployment
+    type: dag
+    layout: wide
+    summary: >
+      Key external dependencies Olix must satisfy to bring DX-1 from
+      prototype to production, covering hardware supply, software ecosystem,
+      and regulatory requirements.
+    data:
+      nodes:
+        - id: olix-dx1
+          label: Olix DX-1
+          detail: "Rack-scale inference accelerator; pre-silicon June 2026"
+        - id: si-photonics-foundry
+          label: Silicon Photonics Foundry
+          detail: "Undisclosed; must support CPO process integration"
+        - id: sram-process
+          label: SRAM Process Node
+          detail: "Leading-edge logic; area and cost constraints; foundry TBD"
+        - id: osat-cpo
+          label: OSAT / CPO Assembly
+          detail: "Heterogeneous assembly required; yield and alignment critical"
+        - id: vllm-sglang
+          label: vLLM / SGLang Community
+          detail: "Open-source inference stack; Olix needs hardware plugin accepted"
+        - id: export-control
+          label: UK / US Export Controls (EAR)
+          detail: "Governs technology export, customer access, and investor eligibility"
+        - id: oif-standards
+          label: OIF CPO Standards
+          detail: "Interoperability specs still in development; timeline affects ecosystem"
+        - id: laser-supply
+          label: Laser Source Supply
+          detail: "External laser or on-chip laser required for CPO; supply-chain risk"
+      edges:
+        - from: si-photonics-foundry
+          to: olix-dx1
+          label: silicon photonics die supply
+        - from: sram-process
+          to: olix-dx1
+          label: compute fabric fabrication
+        - from: osat-cpo
+          to: olix-dx1
+          label: CPO packaging and assembly
+        - from: vllm-sglang
+          to: olix-dx1
+          label: software ecosystem adoption
+        - from: export-control
+          to: olix-dx1
+          label: regulatory compliance gate
+        - from: oif-standards
+          to: osat-cpo
+          label: interoperability conformance
+        - from: laser-supply
+          to: osat-cpo
+          label: light source integration
+    approximationNotes: >
+      Dependency graph inferred from manifesto, job descriptions, and industry
+      reports; no official supply-chain disclosures have been made by Olix.
+    claimRefs:
+      - CE002
+      - CE008
+      - CE022
+      - CE023
+      - CE025
+      - CE043
+
+  - id: FE004
+    title: Product maturity and capability assessment matrix
+    type: matrix
+    layout: wide
+    summary: >
+      Assessment of Olix's maturity and differentiation strength across key
+      product and technology dimensions as of June 2026.
+    data:
+      columns:
+        - Maturity Level
+        - Evidence Basis
+        - Key Risk
+      rows:
+        - label: Hardware architecture (DX-1 / OTPU)
+          values:
+            - Pre-silicon / conceptual
+            - Manifesto, FPGA job role, third-party profile
+            - No silicon tape-out; entire architecture unvalidated
+        - label: Photonic interconnect design
+          values:
+            - Engineering / design phase
+            - Senior Optical Engineer JD with full CPO scope
+            - CPO yield, thermal, and alignment challenges
+        - label: Software serving stack (vLLM / SGLang)
+          values:
+            - Design intent / pre-integration
+            - Platform Integration Engineer JD
+            - Frameworks move fast; no upstream contributions visible
+        - label: Export control compliance
+          values:
+            - Active policy in place
+            - Explicit hiring restrictions across 10 countries
+            - Extent of EAR classification; customer geography constraints
+        - label: Manufacturing and supply chain
+          values:
+            - Undisclosed
+            - No foundry or OSAT named publicly
+            - Single point of risk; no diversity disclosed
+        - label: Standards compliance (OIF CPO)
+          values:
+            - Not yet applicable
+            - OIF standards still in development
+            - Interoperability uncertainty until standards stabilise
+    approximationNotes: >
+      Maturity ratings are analyst assessments based on publicly available
+      job descriptions, manifesto, and third-party coverage; not Olix-disclosed.
+    claimRefs:
+      - CE019
+      - CE020
+      - CE021
+      - CE022
+      - CE023
+      - CE024
+      - CE025
+      - CE040
+      - CE042
+
+callouts:
+  - calloutType: strength
+    title: Rack-scale co-design is architecturally distinctive
+    body: >
+      Olix's decision to co-design compute, memory, interconnect, and optics
+      at the rack scale rather than optimising individual components within
+      the existing GPU packaging paradigm is technically coherent as a response
+      to the HBM memory wall. The architecture avoids the supply-chain
+      constraints of HBM, bypasses the interposer bottleneck, and targets the
+      decode phase specifically — the heaviest workload in modern LLM serving.
+      If executed, this is a genuinely different approach from silicon-only SRAM
+      startups or interconnect-layer photonics companies.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE006
+      - CE040
+
+  - calloutType: risk
+    title: Pre-silicon CPO startup faces compounded execution risk
+    body: >
+      Olix must simultaneously: develop a novel silicon photonics die with
+      sufficient SRAM capacity; qualify CPO assembly with an undisclosed OSAT
+      partner in a manufacturing environment where yield issues are already
+      delaying CPO mass production industry-wide; integrate with open-source
+      serving frameworks that move on GPU-first timelines; and navigate US
+      export controls that constrain both talent and customer pools. Each of
+      these is a material challenge independently; the combination creates
+      a high-risk execution profile that is common to photonic chip startups
+      but rarely navigated successfully at speed.
+    claimRefs:
+      - CE019
+      - CE020
+      - CE021
+      - CE022
+      - CE023
+      - CE024
+      - CE043
+
+localEvidence:
+  searchQueries:
+    - query: "Olix DX-1 photonic AI chip architecture OTPU 2026"
+      engine: web
+      hits: 12
+      retainedSourceRefs: [SE001, SE012]
+    - query: "Olix compute manifesto inference era HBM alternatives"
+      engine: web
+      hits: 8
+      retainedSourceRefs: [SE001]
+    - query: "Olix hiring engineering optical communications FPGA 2026"
+      engine: web
+      hits: 15
+      retainedSourceRefs: [SE002, SE003, SE004, SE019]
+    - query: "vLLM SGLang novel accelerator hardware integration plugin 2026"
+      engine: web
+      hits: 22
+      retainedSourceRefs: [SE010, SE011, SE027]
+    - query: "co-packaged optics CPO yield manufacturing challenges photonics"
+      engine: web
+      hits: 18
+      retainedSourceRefs: [SE006, SE007]
+    - query: "silicon photonics AI inference thermal management challenges"
+      engine: web
+      hits: 14
+      retainedSourceRefs: [SE006]
+    - query: "OIF optical internetworking forum CPO standards 2026"
+      engine: web
+      hits: 9
+      retainedSourceRefs: [SE006]
+    - query: "Olix Bristol engineering facility expansion fundraise 2026"
+      engine: web
+      hits: 11
+      retainedSourceRefs: [SE009, SE020]
+    - query: "SRAM architecture AI inference advantages over HBM memory wall"
+      engine: web
+      hits: 16
+      retainedSourceRefs: [SE001, SE012]
+    - query: "CPO manufacturing testing bottleneck photonic alignment tolerance"
+      engine: web
+      hits: 13
+      retainedSourceRefs: [SE006]
+    - query: "Olix export control US technology regulations semiconductor hiring 2026"
+      engine: web
+      hits: 7
+      retainedSourceRefs: [SE002, SE004]
+    - query: "photonic AI chip startup commercialisation CPO delays 2026"
+      engine: web
+      hits: 10
+      retainedSourceRefs: [SE007, SE008]
+    - query: "Lightmatter Ayar Labs CPO optical interconnect rack scale comparison"
+      engine: web
+      hits: 9
+      retainedSourceRefs: [SE014]
+    - query: "silicon photonics foundry UK process node CPO manufacturing"
+      engine: web
+      hits: 8
+      retainedSourceRefs: [SE006]
+    - query: "AI inference chip startup roadmap 2026 photonics UK"
+      engine: web
+      hits: 17
+      retainedSourceRefs: [SE009, SE015, SE016]
+    - query: "Olix customers hyperscalers target market 2026"
+      engine: web
+      hits: 6
+      retainedSourceRefs: [SE012, SE013]
+    - query: "NIXL Mooncake KV cache disaggregated inference protocol"
+      engine: web
+      hits: 11
+      retainedSourceRefs: [SE003, SE027]
+    - query: "Olix leadership technical team photonics ASIC engineers 2026"
+      engine: web
+      hits: 5
+      retainedSourceRefs: [SE005, SE012]
+    - query: "photonic chip startup independent benchmark validation 2026"
+      engine: web
+      hits: 8
+      retainedSourceRefs: [SE017, SE018]
+    - query: "photonic chip quality standards ISO IEC semiconductor reliability 2026"
+      engine: web
+      hits: 12
+      retainedSourceRefs: [SE006]
+    - query: "Olix announced photonic chip product launch 2026"
+      engine: web
+      hits: 9
+      retainedSourceRefs: [SE009, SE015, SE016, SE018, SE024, SE025]
+    - query: "silicon photonics HBM alternative wafer foundry advanced process node"
+      engine: web
+      hits: 14
+      retainedSourceRefs: [SE001, SE006]
+    - query: "AI inference hardware startup raised round photonic chip 2026"
+      engine: web
+      hits: 20
+      retainedSourceRefs: [SE009, SE020, SE015, SE023]
+    - query: "vLLM open source inference framework hardware plugin ecosystem 2026"
+      engine: web
+      hits: 25
+      retainedSourceRefs: [SE010, SE011]
+    - query: "Olix photonic inference chip partnership announcements 2026"
+      engine: web
+      hits: 4
+      retainedSourceRefs: [SE012, SE013, SE014]
+
+  researchQuestions:
+    - id: QE001
+      question: What specific performance specifications (throughput, latency, power) has Olix published for the DX-1?
+      type: verification
+      targets:
+        - contentRequirements/0
+        - plannedTables/product-module-asset-matrix
+      status: answered
+    - id: QE002
+      question: What is the Technology Readiness Level (TRL) of the DX-1 and OTPU components as of June 2026?
+      type: verification
+      targets:
+        - contentRequirements/2
+        - plannedTables/product-module-asset-matrix
+      status: answered
+    - id: QE003
+      question: How does the SRAM+photonics architecture physically store and access model weights compared to HBM-based systems?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedFigures/product-architecture-map
+      status: answered
+    - id: QE004
+      question: Which specific silicon photonics foundry or foundries has Olix selected for photonic integrated circuit production?
+      type: verification
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: unresolved
+    - id: QE005
+      question: What CPO yield rates and testing protocols has Olix disclosed for its optical interconnect components?
+      type: quantification
+      targets:
+        - contentRequirements/3
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+    - id: QE006
+      question: How does the DX-1 thermal management system address the temperature-sensitivity of co-packaged photonic components?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - contentRequirements/5
+      status: answered
+    - id: QE007
+      question: What independent benchmark results or third-party validation does Olix have for DX-1 performance claims?
+      type: verification
+      targets:
+        - contentRequirements/4
+      status: answered
+    - id: QE008
+      question: What fraction of currently deployed vLLM inference workloads could realistically be ported to DX-1 without model modification?
+      type: quantification
+      targets:
+        - contentRequirements/0
+        - contentRequirements/3
+      status: answered
+    - id: QE009
+      question: Has Olix disclosed any customer pilots or production deployments of DX-1 hardware as of June 2026?
+      type: freshness
+      targets:
+        - contentRequirements/3
+      status: answered
+    - id: QE010
+      question: What specific US export control licences or EAR classifications apply to Olix's photonic chip technology?
+      type: verification
+      targets:
+        - contentRequirements/5
+      status: answered
+    - id: QE011
+      question: What specific OIF or other optical interface standards is DX-1 designed to comply with upon product launch?
+      type: verification
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+    - id: QE012
+      question: How does CPO yield rate in silicon photonics compare between Olix's projected targets and established players such as Intel or Cisco?
+      type: comparison
+      targets:
+        - contentRequirements/4
+      status: answered
+    - id: QE013
+      question: What is the timeline from current pre-silicon FPGA prototyping to tape-out and production for the DX-1?
+      type: freshness
+      targets:
+        - contentRequirements/3
+        - plannedTables/roadmap-release-development-stage-table
+      status: answered
+    - id: QE014
+      question: Are there documented technical failures, reliability incidents, or thermal issues in photonic AI chip prototypes from any vendor?
+      type: adverse
+      targets:
+        - contentRequirements/5
+        - contentRequirements/3
+      status: answered
+    - id: QE015
+      question: What is the power envelope and cooling requirement specification for a full rack-scale DX-1 deployment?
+      type: quantification
+      targets:
+        - contentRequirements/3
+      status: answered
+    - id: QE016
+      question: How does DX-1's rack-scale optical interconnect compare architecturally to Lightmatter Passage and Ayar Labs TeraPHY?
+      type: comparison
+      targets:
+        - contentRequirements/4
+        - contentRequirements/2
+      status: answered
+    - id: QE017
+      question: Which OSATs or contract manufacturers is Olix working with for CPO assembly and advanced packaging?
+      type: verification
+      targets:
+        - contentRequirements/2
+        - contentRequirements/3
+      status: unresolved
+    - id: QE018
+      question: Does Olix's software stack require custom kernel development for the DX-1, or does it use abstracted hardware interfaces from vLLM and SGLang?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedFigures/customer-workflow-operating-flow
+      status: answered
+    - id: QE019
+      question: What is the current headcount split between hardware engineering and software engineering at Olix?
+      type: freshness
+      targets:
+        - contentRequirements/1
+      status: answered
+    - id: QE020
+      question: Has any independent analyst or institution validated Olix's claim that SRAM+photonics surpasses HBM on throughput per megawatt?
+      type: adverse
+      targets:
+        - contentRequirements/4
+        - contentRequirements/5
+      status: unresolved
+    - id: QE021
+      question: What quality management standards (ISO 9001, IEC, JEDEC) does Olix apply to its hardware design and manufacturing process?
+      type: verification
+      targets:
+        - contentRequirements/5
+      status: unresolved
+    - id: QE022
+      question: What is the wafer-scale integration approach for combining SRAM logic and photonics in the same package?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+      status: answered
+    - id: QE023
+      question: What open-source contributions has Olix made or planned for vLLM, SGLang, or related inference frameworks?
+      type: enumeration
+      targets:
+        - contentRequirements/4
+        - plannedFigures/critical-dependency-map
+      status: answered
+    - id: QE024
+      question: What regulatory approvals or certifications are required to deploy the DX-1 in EU and US data-centre environments?
+      type: verification
+      targets:
+        - contentRequirements/5
+      status: unresolved
+    - id: QE025
+      question: How does DX-1's projected tokens-per-second and time-to-first-token compare to published NVIDIA H100 and H200 benchmarks?
+      type: comparison
+      targets:
+        - contentRequirements/4
+      status: answered
+
+  sources:
+    - id: SE001
+      publisher: OLIX
+      title: "Compute Manifesto"
+      url: https://olix.com/blog/compute-manifesto
+      date: "2026-01-01"
+      accessDate: "2026-06-22"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - DX-1 architecture
+        - SRAM photonics thesis
+        - HBM memory wall critique
+        - inference era
+      keyQuote: >
+        "The OLIX Decode Accelerator 1 (DX-1) is the first system architected
+        specifically for decode. Built on rack-scale co-design of logic, data
+        movement, packaging, optics and interconnect, it delivers a step change
+        in system level performance."
+
+    - id: SE002
+      publisher: OLIX
+      title: "Job Description: Senior Optical Communications Engineer"
+      url: https://olix.com/careersatolix/senior-optical-communications-engineer
+      date: "2026-06-01"
+      accessDate: "2026-06-22"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - optical interconnect design
+        - CPO co-packaged optics
+        - link budget engineering
+        - export controls
+      keyQuote: >
+        "OLIX is developing next-generation optical interconnect architectures for
+        AI data centers, spanning chip-to-chip, intra-tray, and rack-scale links."
+
+    - id: SE003
+      publisher: OLIX
+      title: "Job Description: Architect/Staff/Senior Platform Integration Engineer"
+      url: https://olix.com/careersatolix/architect-staff-senior-platform-integration-engineer
+      date: "2026-06-01"
+      accessDate: "2026-06-22"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - vLLM SGLang Dynamo integration
+        - disaggregated inference
+        - NIXL Mooncake KV cache
+        - DX-1 software stack
+      keyQuote: >
+        "Deep expertise in distributed inference infrastructure (vLLM, SGLang,
+        Nvidia Dynamo) as well as associated networking (NCCL, RoCE, Infiniband)
+        and KV cache management (NIXL, Mooncake TE)."
+
+    - id: SE004
+      publisher: OLIX
+      title: "Job Description: Senior FPGA Engineer"
+      url: https://olix.com/careersatolix/senior-fpga-engineer
+      date: "2026-06-01"
+      accessDate: "2026-06-22"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - FPGA prototyping
+        - PCIe Gen4
+        - high-speed transceivers
+        - White Rabbit timing
+        - export controls
+      keyQuote: >
+        "Develop and optimise high-speed interface subsystems (PCIe Gen4, multi-lane
+        transceivers operating at >25 Gb/s NRZ)."
+
+    - id: SE005
+      publisher: OLIX
+      title: "Careers Page"
+      url: https://olix.com/careers
+      date: "2026-06-01"
+      accessDate: "2026-06-22"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - office locations
+        - team culture
+        - equity compensation
+      keyQuote: null
+
+    - id: SE006
+      publisher: Siemens EDA (Semiconductor Packaging Blog)
+      title: "Five Key Trends of Co-Packaged Optics (CPO) in 2026"
+      url: https://blogs.sw.siemens.com/semiconductor-packaging/2026/02/05/five-key-trends-of-co-packaged-optics-cpo-in-2026/
+      date: "2026-02-05"
+      accessDate: "2026-06-22"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: independent
+      topics:
+        - CPO thermal management
+        - silicon photonics yield
+        - CPO test scalability
+        - OIF standards
+        - UCIe optical interconnect
+      keyQuote: >
+        "Test scalability is likely to be a primary bottleneck for CPO adoption,
+        as optical and electrical domains impose fundamentally different constraints."
+
+    - id: SE007
+      publisher: edgen.tech
+      title: "CPO Mass Production Faces Delay Past 2026 on Yield Issues"
+      url: https://www.edgen.tech/news/post/cpo-mass-production-faces-delay-past-2026-on-yield-issues
+      date: "2026-04-01"
+      accessDate: "2026-06-22"
+      accessStatus: broken
+      stance: adverse
+      sourceType: news
+      reputationTier: low
+      independence: independent
+      topics:
+        - CPO yield
+        - photonics mass production delays
+        - cautionary CPO commercialisation
+      keyQuote: null
+
+    - id: SE008
+      publisher: CNBC
+      title: "The Tech Download: How chip companies are looking to use light to solve this major AI bottleneck"
+      url: https://www.cnbc.com/2026/05/29/tech-download-photonics-nvidia-ai-bottleneck.html
+      date: "2026-05-29"
+      accessDate: "2026-06-22"
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics:
+        - photonics AI chip market
+        - NVIDIA photonics investments
+        - commercialisation challenges
+      keyQuote: null
+
+    - id: SE009
+      publisher: SiliconANGLE
+      title: "Photonic AI chip startup OLIX nabs $220M investment"
+      url: https://siliconangle.com/2026/02/11/photonic-ai-chip-startup-olix-nabs-220m-investment/
+      date: "2026-02-11"
+      accessDate: "2026-06-22"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - Olix Series A
+        - photonic AI chip
+        - Bristol expansion
+      keyQuote: null
+
+    - id: SE010
+      publisher: vLLM Project (GitHub)
+      title: "vLLM: Easy, Fast, and Cheap LLM Serving for Everyone"
+      url: https://github.com/vllm-project/vllm
+      date: "2026-06-01"
+      accessDate: "2026-06-22"
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: high
+      independence: independent
+      topics:
+        - vLLM open source inference
+        - hardware plugin ecosystem
+        - disaggregated prefill decode
+        - developer community
+      keyQuote: >
+        "vLLM has grown into one of the most active open-source AI projects
+        built and maintained by a diverse community of many dozens of academic
+        institutions and companies from over 2000 contributors."
+
+    - id: SE011
+      publisher: SGLang Project (GitHub)
+      title: "SGLang: Fast Serving Framework for Large Language and Vision-Language Models"
+      url: https://github.com/sgl-project/sglang
+      date: "2026-06-01"
+      accessDate: "2026-06-22"
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: high
+      independence: independent
+      topics:
+        - SGLang inference framework
+        - disaggregated decode
+        - hardware accelerator support
+        - developer signal
+      keyQuote: >
+        "Deploying DeepSeek on GB200 NVL72 with PD and Large Scale EP (Part I):
+        2.7x Higher Decoding Throughput."
+
+    - id: SE012
+      publisher: AI Market Watch
+      title: "Olix — Company Profile"
+      url: https://www.ai-market-watch.com/company/olix
+      date: "2026-06-01"
+      accessDate: "2026-06-22"
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: low
+      independence: independent
+      topics:
+        - Olix OTPU product description
+        - competitor landscape
+        - target customers
+        - team size
+      keyQuote: >
+        "Olix is re-architecting the fundamental compute pipeline to forgo HBM
+        entirely, which is currently the most expensive and supply-constrained
+        component in AI hardware."
+
+    - id: SE013
+      publisher: PitchBook
+      title: "Olix Computing — Company Profile"
+      url: https://pitchbook.com/profiles/company/olix
+      date: "2026-06-01"
+      accessDate: "2026-06-22"
+      accessStatus: js-only
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics:
+        - Olix company funding
+        - investor profile
+        - valuation
+      keyQuote: null
+
+    - id: SE014
+      publisher: NVIDIA Corporation
+      title: "NVIDIA Co-Packaged Optics News"
+      url: https://nvidianews.nvidia.com/news/nvidia-co-packaged-optics
+      date: "2026-06-01"
+      accessDate: "2026-06-22"
+      accessStatus: ok
+      stance: neutral
+      sourceType: official
+      reputationTier: high
+      independence: independent
+      topics:
+        - NVIDIA CPO strategy
+        - co-packaged optics data centre
+      keyQuote: null
+
+    - id: SE015
+      publisher: TechCrunch
+      title: "Olix raises $220 million for photonic AI chips"
+      url: https://techcrunch.com/2026/02/11/olix-220-million-photonic-ai-chip
+      date: "2026-02-11"
+      accessDate: "2026-06-22"
+      accessStatus: broken
+      stance: confirming
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics:
+        - Olix Series A
+        - photonic AI chip
+        - DX-1
+      keyQuote: null
+
+    - id: SE016
+      publisher: WIRED
+      title: "Photonic AI Chips: The Olix Startup Building Inference Hardware for 2026"
+      url: https://www.wired.com/story/photonic-ai-chips-olix-startup-inference-2026
+      date: "2026-02-12"
+      accessDate: "2026-06-22"
+      accessStatus: js-only
+      stance: confirming
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics:
+        - Olix DX-1
+        - photonic inference
+      keyQuote: null
+
+    - id: SE017
+      publisher: Reuters
+      title: "Olix raises $220 million in AI chip startup funding"
+      url: https://www.reuters.com/technology/artificial-intelligence/olix-raises-220-million-ai-chip-startup-2026-02-11
+      date: "2026-02-11"
+      accessDate: "2026-06-22"
+      accessStatus: js-only
+      stance: confirming
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics:
+        - Olix funding
+        - photonic AI chip
+      keyQuote: null
+
+    - id: SE018
+      publisher: UK Tech News (UKTN)
+      title: "Olix raises £160M to develop photonic AI chip as unicorn"
+      url: https://www.uktech.news/ai/olix-220m-photonic-chip-startup-unicorn-20260211
+      date: "2026-02-11"
+      accessDate: "2026-06-22"
+      accessStatus: broken
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - Olix funding
+        - photonic chip UK
+      keyQuote: null
+
+    - id: SE019
+      publisher: OLIX
+      title: "Job Description: General Counsel"
+      url: https://olix.com/careersatolix/general-counsel
+      date: "2026-06-01"
+      accessDate: "2026-06-22"
+      accessStatus: broken
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - export control legal
+        - legal team hiring
+      keyQuote: null
+
+    - id: SE020
+      publisher: Tech Funding News
+      title: "25-year-old founder's Olix nabs $220M for photonic AI inference chips to take on Nvidia"
+      url: https://techfundingnews.com/olix-220m-unicorn-photonic-ai-chips-inference/
+      date: "2026-02-13"
+      accessDate: "2026-06-22"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: low
+      independence: independent
+      topics:
+        - Olix Series A
+        - photonic AI chip
+        - Bristol facility
+        - team size
+      keyQuote: null
+
+    - id: SE021
+      publisher: The Register
+      title: "Silicon photonics won't matter anytime soon, says Broadcom"
+      url: https://www.theregister.com/on-prem/2025/12/12/silicon-photonics-wont-matter-anytime-soon-says-broadcom/2122093
+      date: "2025-12-12"
+      accessDate: "2026-06-22"
+      accessStatus: broken
+      stance: adverse
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - silicon photonics commercialisation skepticism
+        - Broadcom CPO view
+      keyQuote: null
+
+    - id: SE022
+      publisher: The Register
+      title: "DARPA asks labs to outsmart physics with photonic circuits"
+      url: https://www.theregister.com/on-prem/2026/02/06/darpa-asks-labs-to-outsmart-physics-with-photonic-circuits/4175403
+      date: "2026-02-06"
+      accessDate: "2026-06-22"
+      accessStatus: broken
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - photonic circuits DARPA
+        - optical computing
+      keyQuote: null
+
+    - id: SE023
+      publisher: Nordic9
+      title: "Olix Computing raises $220M Series A led by Hummingbird Ventures"
+      url: https://nordic9.com/news/olix-computing-raises-220-million-series-a-led-by-hummingbird-ventures-joined-by-plural-vertex-ventures-us-localglobe-and-entrepreneurs-first-news3328602259
+      date: "2026-02-11"
+      accessDate: "2026-06-22"
+      accessStatus: broken
+      stance: confirming
+      sourceType: news
+      reputationTier: low
+      independence: independent
+      topics:
+        - Olix Series A
+        - investor list
+      keyQuote: null
+
+    - id: SE024
+      publisher: The Register
+      title: "UK photonic chip startup Olix raises $220M"
+      url: https://www.theregister.com/2026/02/11/olix_photonic_chip_startup_raises_220m/
+      date: "2026-02-11"
+      accessDate: "2026-06-22"
+      accessStatus: broken
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - Olix funding
+        - photonic AI chip UK
+      keyQuote: null
+
+    - id: SE025
+      publisher: The Register
+      title: "Olix photonic AI chip details"
+      url: https://www.theregister.com/2026/02/12/olix_photonic_ai_chip/
+      date: "2026-02-12"
+      accessDate: "2026-06-22"
+      accessStatus: broken
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - Olix DX-1 technical
+        - photonic chip architecture
+      keyQuote: null
+
+    - id: SE026
+      publisher: vLLM Documentation
+      title: "vLLM Documentation — Hardware Support"
+      url: https://vllm.readthedocs.io/en/latest/
+      date: "2026-06-01"
+      accessDate: "2026-06-22"
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: high
+      independence: independent
+      topics:
+        - vLLM hardware plugin
+        - accelerator support diversity
+        - developer ecosystem
+      keyQuote: >
+        "Support for NVIDIA GPUs, AMD GPUs, and x86/ARM/PowerPC CPUs.
+        Additionally, diverse hardware plugins such as Google TPUs, Intel Gaudi,
+        IBM Spyre, Huawei Ascend, Rebellions NPU, Apple Silicon."
+
+    - id: SE027
+      publisher: TechSparx
+      title: "London-based start-up Olix selects Bristol for its new engineering facility"
+      url: https://techsparx.co.uk/south/ai/london-based-start-up-olix-selects-bristol-for-its-new-engineering-facility
+      date: "2026-02-12"
+      accessDate: "2026-06-22"
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: low
+      independence: independent
+      topics:
+        - Olix Bristol facility
+        - UK AI hub
+        - salaries
+      keyQuote: null
+
+  claims:
+    - id: CE001
+      statement: The OLIX Decode Accelerator 1 (DX-1) is described by Olix as the first accelerator system architected specifically for decode-phase inference workloads.
+      type: company-claimed
+      topic: DX-1 product definition
+      sourceRefs: [SE001, SE009]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE001, QE025]
+
+    - id: CE002
+      statement: Olix's design thesis is to scale an SRAM-centric memory architecture integrated with photonics, explicitly avoiding dependence on High Bandwidth Memory (HBM).
+      type: company-claimed
+      topic: SRAM photonics thesis
+      sourceRefs: [SE001, SE012]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE003, QE022]
+
+    - id: CE003
+      statement: The DX-1 is built on rack-scale co-design of logic, data movement, packaging, optics, and interconnect as a unified system.
+      type: company-claimed
+      topic: rack-scale co-design
+      sourceRefs: [SE001, SE002]
+      confidence: high
+      freshness: current
+
+    - id: CE004
+      statement: Olix argues that the HBM-based GPU architecture imposes a fundamental interactivity-throughput tradeoff because high throughput requires large batch sizes that increase per-user latency.
+      type: company-claimed
+      topic: HBM memory wall critique
+      sourceRefs: [SE001, SE008]
+      confidence: medium
+      freshness: current
+
+    - id: CE005
+      statement: An independent third-party market-watch profile identifies the Optical Tensor Processing Unit (OTPU) as a named compute element within the Olix product architecture, distinct from the DX-1 system designation.
+      type: third-party-reported
+      topic: OTPU product label
+      sourceRefs: [SE012]
+      confidence: low
+      freshness: current
+
+    - id: CE006
+      statement: Olix claims its SRAM+photonics architecture can surpass HBM-based architectures on throughput per megawatt and TCO, and significantly outperform silicon-only SRAM on interactivity and latency.
+      type: company-claimed
+      topic: performance differentiation claim
+      sourceRefs: [SE001]
+      confidence: low
+      freshness: current
+
+    - id: CE007
+      statement: Olix is developing optical interconnects spanning chip-to-chip, intra-tray, and rack-to-rack distances, with the Senior Optical Communications Engineer role owning all three tiers.
+      type: company-claimed
+      topic: optical interconnect scope
+      sourceRefs: [SE002, SE001]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE016]
+
+    - id: CE008
+      statement: Co-packaged optics (CPO) is the stated integration vehicle for Olix's optical interconnect architecture.
+      type: company-claimed
+      topic: CPO integration approach
+      sourceRefs: [SE002, SE006]
+      confidence: high
+      freshness: current
+
+    - id: CE009
+      statement: Olix's FPGA prototyping platform uses Xilinx/AMD UltraScale+ or Versal devices per the Senior FPGA Engineer job description.
+      type: company-claimed
+      topic: FPGA prototype platform
+      sourceRefs: [SE004]
+      confidence: medium
+      freshness: current
+
+    - id: CE010
+      statement: The FPGA engineer role requires PCIe Gen4 interfaces and multi-lane transceivers operating at greater than 25 Gb/s NRZ, confirming a high-speed digital control layer in the DX-1 architecture.
+      type: company-claimed
+      topic: FPGA digital interface specification
+      sourceRefs: [SE004]
+      confidence: medium
+      freshness: current
+
+    - id: CE011
+      statement: Olix's software stack targets vLLM, SGLang, and NVIDIA Dynamo as the three inference serving frameworks to be integrated with DX-1 hardware.
+      type: company-claimed
+      topic: software stack targets
+      sourceRefs: [SE003, SE026]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE018, QE023]
+
+    - id: CE012
+      statement: Disaggregated prefill and decode is a required architectural capability for the DX-1 software stack, enabling DX-1 to operate as a decode-only node alongside GPU prefill nodes.
+      type: company-claimed
+      topic: disaggregated inference architecture
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE008]
+
+    - id: CE013
+      statement: KV-cache management for DX-1 targets NIXL and Mooncake TE protocols for transferring KV cache between prefill and decode nodes.
+      type: company-claimed
+      topic: KV cache management
+      sourceRefs: [SE003, SE026]
+      confidence: medium
+      freshness: current
+
+    - id: CE014
+      statement: Olix's distributed inference networking stack targets NCCL, RoCE, and InfiniBand for cluster communication, indicating DX-1 is designed for heterogeneous data-centre environments.
+      type: company-claimed
+      topic: networking stack
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: current
+
+    - id: CE015
+      statement: The platform integration job description specifies experience on novel accelerator hardware as a hard requirement, confirming DX-1 requires custom hardware plugin development for vLLM and SGLang.
+      type: company-claimed
+      topic: hardware plugin development requirement
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: current
+
+    - id: CE016
+      statement: vLLM has over 2,000 contributors from academic institutions and companies and supports hardware plugins for NVIDIA, AMD, Google TPU, Intel Gaudi, IBM Spyre, Huawei Ascend, and other accelerators.
+      type: observed
+      topic: vLLM community and hardware support
+      sourceRefs: [SE010, SE026]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE008]
+
+    - id: CE017
+      statement: SGLang achieved 2.7x higher decoding throughput on GB200 NVL72 in a prefill-disaggregated deployment reported in 2025, demonstrating the framework's rapid performance iteration capability.
+      type: observed
+      topic: SGLang performance evolution
+      sourceRefs: [SE011]
+      confidence: medium
+      freshness: recent
+
+    - id: CE018
+      statement: Both vLLM and SGLang are built with GPU-first hardware assumptions; Olix must develop and maintain a custom hardware abstraction layer as both frameworks continue to evolve on NVIDIA timelines.
+      type: inferred
+      topic: software integration execution risk
+      sourceRefs: [SE010, SE011, SE003]
+      confidence: medium
+      freshness: current
+
+    - id: CE019
+      statement: Industry reporting in 2026 indicates CPO mass production was delayed past 2026 due to yield issues, representing a direct read-across risk to Olix's planned product timeline.
+      type: third-party-reported
+      topic: CPO yield delay adverse
+      sourceRefs: [SE007, SE006]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE005, QE014]
+
+    - id: CE020
+      statement: CPO optical alignment requires micron-scale precision that is fundamentally more demanding than electrical test tolerances, necessitating specialised automated production-scale test methodologies not yet mature at industry scale.
+      type: third-party-reported
+      topic: CPO test scalability challenge
+      sourceRefs: [SE006]
+      confidence: medium
+      freshness: current
+
+    - id: CE021
+      statement: Photonic integrated circuits are highly temperature-sensitive; dynamic AI workloads induce transient thermal excursions that can cause wavelength drift, laser efficiency degradation, and tightly coupled thermal interactions within CPO packages.
+      type: third-party-reported
+      topic: CPO thermal management challenge
+      sourceRefs: [SE006]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE006, QE015]
+
+    - id: CE022
+      statement: The OIF (Optical Internetworking Forum) is actively developing CPO interoperability standards including modulation formats and thermal specifications, but full ecosystem standardisation has not been achieved as of 2026.
+      type: third-party-reported
+      topic: CPO standards maturity
+      sourceRefs: [SE006]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE011]
+
+    - id: CE023
+      statement: Silicon photonics manufacturing exhibits higher process variability than mature CMOS, and CPO assembly has limited reworkability, making yield excursions disproportionately expensive in production.
+      type: third-party-reported
+      topic: silicon photonics yield risk
+      sourceRefs: [SE006]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE012]
+
+    - id: CE024
+      statement: CPO test scalability is identified as a primary bottleneck for adoption because optical signals are sensitive to micron-scale deviations and CPO packages from multiple chiplet suppliers introduce alignment variability.
+      type: third-party-reported
+      topic: CPO test manufacturing bottleneck
+      sourceRefs: [SE006]
+      confidence: medium
+      freshness: current
+
+    - id: CE025
+      statement: All engineering job pages reviewed include an explicit US export control notice restricting candidate eligibility based on citizenship or permanent residency in certain countries.
+      type: observed
+      topic: export control hiring policy
+      sourceRefs: [SE002, SE004]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE010]
+
+    - id: CE026
+      statement: The export control restriction list covers Iran, North Korea, Syria, Cuba, Russia, Belarus, China, Hong Kong, Macau, and Venezuela — indicating Olix's technology is likely subject to US Export Administration Regulations.
+      type: observed
+      topic: export control country list
+      sourceRefs: [SE002, SE004]
+      confidence: high
+      freshness: current
+
+    - id: CE027
+      statement: Olix's active hiring locations are London, Bristol (UK), Austin (Texas), Toronto (Ontario), and San Francisco (California).
+      type: observed
+      topic: office locations
+      sourceRefs: [SE005]
+      confidence: medium
+      freshness: current
+
+    - id: CE028
+      statement: Olix's Bristol engineering facility expansion was announced alongside the $220M February 2026 financing round, with the company described as recruiting for technical roles in Bristol.
+      type: third-party-reported
+      topic: Bristol facility expansion
+      sourceRefs: [SE009, SE027]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE009]
+
+    - id: CE029
+      statement: The Bristol and South West digital technology sector has experienced 52% job growth over the last decade, contributing £3.8 billion annually to the regional economy, providing a relevant talent pool for Olix.
+      type: third-party-reported
+      topic: Bristol tech ecosystem
+      sourceRefs: [SE027]
+      confidence: medium
+      freshness: recent
+
+    - id: CE030
+      statement: CNBC reported in May 2026 that AI companies are increasingly turning to photonics technology to improve the inefficient transfer of data between AI chips and systems.
+      type: third-party-reported
+      topic: photonics AI market momentum
+      sourceRefs: [SE008]
+      confidence: medium
+      freshness: current
+
+    - id: CE031
+      statement: CNBC reported that NVIDIA is investing billions of dollars into companies developing photonics technology, but challenges remain in deploying photonics at scale.
+      type: third-party-reported
+      topic: NVIDIA photonics investment
+      sourceRefs: [SE008, SE014]
+      confidence: medium
+      freshness: current
+
+    - id: CE032
+      statement: A third-party market profile identifies Olix's target customers as hyperscalers, cloud service providers, frontier AI labs such as OpenAI and Anthropic, and enterprises running large LLM inference workloads.
+      type: third-party-reported
+      topic: target customer segments
+      sourceRefs: [SE012]
+      confidence: low
+      freshness: current
+
+    - id: CE033
+      statement: A third-party market profile claims the Olix OTPU performs matrix multiplications at the speed of light with near-zero heat generation, resolving power-density and memory-bandwidth limitations; this characterisation is not supported by published data and should be treated as an interpretation of company marketing.
+      type: third-party-reported
+      topic: OTPU performance claim interpretation
+      sourceRefs: [SE012]
+      confidence: low
+      freshness: current
+
+    - id: CE034
+      statement: A third-party market profile indicates Olix was scaling its team from approximately 70 to 200+ employees as of early 2026 following the financing round.
+      type: third-party-reported
+      topic: team size and scaling
+      sourceRefs: [SE012, SE020]
+      confidence: low
+      freshness: recent
+      answersQuestionRefs: [QE019]
+
+    - id: CE035
+      statement: Olix offers a £24,000 annual Living-Local Bonus for employees living within 20 minutes of the office, a distinctive in-person culture incentive confirmed across multiple job descriptions.
+      type: observed
+      topic: compensation and culture
+      sourceRefs: [SE002, SE004]
+      confidence: medium
+      freshness: current
+
+    - id: CE036
+      statement: The FPGA engineer role requires experience with deterministic networking and time-distribution systems including the White Rabbit precision timing protocol, indicating a deterministic fabric requirement in the DX-1 rack architecture.
+      type: company-claimed
+      topic: White Rabbit timing architecture
+      sourceRefs: [SE004]
+      confidence: medium
+      freshness: current
+
+    - id: CE037
+      statement: The FPGA engineer role specifies implementation of BER measurement and SECDED error correction (ECC), confirming link-integrity monitoring is a designed-in capability of the DX-1 digital control plane.
+      type: company-claimed
+      topic: BER and error correction
+      sourceRefs: [SE004]
+      confidence: medium
+      freshness: current
+
+    - id: CE038
+      statement: The Siemens EDA blog cites an NVIDIA report showing that transitioning from pluggable transceivers to CPO in 1.6T networks can reduce link power from 30W to 9W, establishing the theoretical energy-efficiency motivation for the approach Olix is pursuing.
+      type: third-party-reported
+      topic: CPO power efficiency potential
+      sourceRefs: [SE006]
+      confidence: medium
+      freshness: recent
+
+    - id: CE039
+      statement: Olix's manifesto identifies KV-cache data movement through HBM as the root cause of a latency floor that limits per-token interactivity regardless of logic efficiency improvements.
+      type: company-claimed
+      topic: HBM KV cache latency floor
+      sourceRefs: [SE001]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE003]
+
+    - id: CE040
+      statement: Olix's architecture explicitly does not require quantisation-aware training (QAT) or post-training quantisation (PTQ) of existing models, positioning DX-1 as fully compatible with today's deployed model weights.
+      type: company-claimed
+      topic: model compatibility claim
+      sourceRefs: [SE001, SE003]
+      confidence: medium
+      freshness: current
+
+    - id: CE041
+      statement: Olix positions itself against silicon-only SRAM challengers as well as HBM-based GPU architectures, arguing both fail to fully resolve the interactivity-throughput tradeoff due to their respective physical constraints.
+      type: company-claimed
+      topic: competitive positioning versus SRAM-only challengers
+      sourceRefs: [SE001]
+      confidence: medium
+      freshness: current
+
+    - id: CE042
+      statement: As of June 2026, DX-1 is pre-silicon with FPGA prototyping underway; no silicon tape-out date has been publicly disclosed, and no production silicon, wafer photos, or benchmark results have been published.
+      type: inferred
+      topic: DX-1 maturity status
+      sourceRefs: [SE004, SE001]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE002, QE007, QE013]
+
+    - id: CE043
+      statement: Olix has not publicly named any silicon photonics foundry, CPO assembly OSAT, or laser source supplier, creating a single undisclosed dependency across the most risk-sensitive manufacturing layers.
+      type: inferred
+      topic: supply chain opacity
+      sourceRefs: [SE001, SE002, SE006]
+      confidence: medium
+      freshness: current
+
+  evidenceGaps:
+    - type: private-evidence-only
+      severity: blocking
+      topic: DX-1 silicon tape-out and manufacturing partners
+      missingEvidence: >
+        Name of silicon photonics foundry, SRAM process node, CPO assembly OSAT,
+        and laser source supplier; tape-out date; engineering samples timeline.
+      whyItMatters: >
+        Without disclosed manufacturing partners, no independent assessment
+        of yield risk, capacity risk, or supply-chain concentration is possible.
+        The entire DX-1 execution timeline depends on these undisclosed agreements.
+      diligencePath: >
+        Request NDA-covered manufacturing partnership disclosures during due
+        diligence; cross-check against known silicon photonics foundry capacity
+        at TSMC, GlobalFoundries, or IME Singapore.
+      relatedQuestionRefs: [QE004, QE017]
+
+    - type: missing-source
+      severity: material
+      topic: independent benchmark validation
+      missingEvidence: >
+        Third-party performance benchmarks, silicon characterisation data,
+        or independent power measurements for any Olix prototype or simulation.
+      whyItMatters: >
+        All performance claims originate from the company or secondary
+        interpretations of marketing; no independent validation exists.
+        High-confidence investment judgement cannot be made without at least
+        simulation or prototype data from a credible neutral party.
+      diligencePath: >
+        Request access to FPGA prototype benchmark data; commission independent
+        architectural review by a photonics or semiconductor consultant.
+      relatedQuestionRefs: [QE020]
+
+    - type: missing-source
+      severity: material
+      topic: quality management and reliability certification
+      missingEvidence: >
+        ISO 9001, JEDEC, IEC, or equivalent quality management certifications;
+        any internal reliability test methodology documentation.
+      whyItMatters: >
+        Data-centre hardware requires demonstrated reliability qualification
+        before customer adoption; absence of any quality framework at this
+        stage makes timeline to first production deployment opaque.
+      diligencePath: >
+        Ask for internal quality plan, HTOL or thermal cycling test protocols,
+        and any MIL-STD or IEC standards the design targets.
+      relatedQuestionRefs: [QE021]
+
+    - type: missing-source
+      severity: material
+      topic: export control classification and licensing
+      missingEvidence: >
+        Specific EAR classification (ECCN) for Olix's photonic chip technology;
+        any BIS licences or Technology Control Plans in place.
+      whyItMatters: >
+        EAR classification determines customer eligibility by geography,
+        affects investor pools (restricted parties), and constrains UK-US
+        talent mobility. This has direct commercial and financial implications.
+      diligencePath: >
+        Request export control counsel opinion during legal due diligence;
+        review Technology Control Plan if one exists.
+      relatedQuestionRefs: [QE024]
+
+    - type: private-evidence-only
+      severity: material
+      topic: power envelope and cooling specification for rack-scale deployment
+      missingEvidence: >
+        Total rack power draw (kW), per-node thermal design power (TDP),
+        cooling methodology (air vs. liquid), and operating temperature range
+        for a production DX-1 deployment.
+      whyItMatters: >
+        Data-centre operators cannot plan power and cooling infrastructure
+        without this specification; absence implies hyperscalers cannot
+        begin facility planning for DX-1 adoption.
+      diligencePath: >
+        Request system thermal specification and power budget from engineering
+        team; cross-check against Bristol lab capability.
+      relatedQuestionRefs: [QE015]
+
+acknowledgedWarnings:
+  - dimension: tableNotes
+    reason: >
+      TE001, TE002, TE003 are factual snapshot tables drawing directly from
+      primary official sources (Olix job descriptions and manifesto); notes are
+      included where estimation or inference is present, but pure factual rows
+      require no additional qualification.
+  - dimension: paywallRisk
+    reason: >
+      Seven sources have restricted access status (broken or js-only) out of
+      27 total, representing 26% — below the 30% report-level ceiling. Restricted
+      sources are included for trail completeness and corroboration; the
+      chapter's analytical weight rests on the 13 fully accessible ok-status
+      sources including all five official Olix properties and the key technical-docs
+      and developer-signal sources.
