@@ -1,0 +1,1608 @@
+schemaVersion: "report-v2"
+artifact: product-tech
+slug: aviatrix
+runDate: "2026-06-23"
+company:
+  name: Aviatrix
+
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: >
+    Aviatrix's Cloud Native Security Fabric (CNSF) is an agentless, software-defined
+    platform comprising Distributed Cloud Firewall (DCF) for inline workload enforcement,
+    High Performance Encryption (HPE) for cloud-scale traffic encryption, Workload Threat
+    Visibility for cross-cloud egress telemetry, and the early-access AgentGuard product
+    for AI agent governance. June 2026 milestones include OISF consortium membership
+    (embedding 556 AI-specific Suricata rules) and the first multicloud network-layer
+    implementation of the Microsoft Agent Control Specification. Technical strengths—
+    identity-based SmartGroups, policy-as-code, patented parallel encryption tunnels—are
+    confirmed by official documentation, while external risks center on CVE-2024-50603
+    (CVSS 10.0, CISA KEV-listed, exploited Jan 2025) and unverified performance claims.
+
+sections:
+  - id: platform-architecture
+    title: Platform Architecture — The Cloud Native Security Fabric
+    body: >
+      Aviatrix positions the Cloud Native Security Fabric (CNSF) as its flagship platform
+      umbrella, organized into two product lines: Zero Trust for Workloads (runtime enforcement
+      at cloud workloads) and Zero Trust for Networking (encrypted connectivity across cloud
+      networks). The two lines share a common control plane—the Aviatrix Controller—that
+      interfaces with cloud provider APIs across AWS, Azure, GCP, and OCI to auto-inventory
+      workloads, distribute policies, and orchestrate gateway lifecycle. CNSF operates
+      agentlessly: no SDK changes, no kernel modules, and no application rewrites are required.
+      Spoke gateways are deployed as software instances within each VPC or VNet and perform
+      inline L4-L7 inspection at the first hop, eliminating the hairpin routing latency of
+      centralized firewall appliances.
+
+      The architecture's central organizing principle is "Containment Architecture" as
+      distinct from "Chokepoint Security." In the chokepoint model (legacy NGFW or transit
+      firewall), only traffic routed through the inspection point is governed; east-west VPC
+      traffic, Kubernetes pod egress, and newly deployed workloads can all bypass it. In
+      Containment Architecture, policy is auto-propagated to every workload at deploy time
+      across all supported clouds, enforcing one-to-one communication governance at the
+      workload boundary rather than at a shared egress point. Aviatrix CoPilot provides
+      a unified cross-cloud visibility, monitoring, and compliance-reporting layer on top
+      of this distributed enforcement fabric. The platform documentation is hosted at
+      docs.aviatrix.com and as of June 2026 the production version is 9.0.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE006
+      - CE007
+    tableRefs:
+      - TE003
+    figureRefs:
+      - FE001
+
+  - id: product-modules
+    title: Core Product Modules
+    body: >
+      **Distributed Cloud Firewall (DCF)** is the primary workload enforcement product.
+      DCF discovers every workload across AWS, Azure, and GCP using Cloud Asset Inventory
+      (CAI) and groups them into identity-based SmartGroups, allowing policies to be authored
+      once and enforced consistently across clouds without IP-address rules or per-cloud tools.
+      Inline enforcement at spoke gateways drops unauthorized connections at the first hop
+      (L4-L7), preventing lateral movement before it propagates. North-south internet egress
+      is controlled via WebGroups supporting FQDN and full URL-path filtering. ExternalGroups
+      govern policy for external destinations. All DCF policies are managed as code through
+      Terraform and CI/CD pipelines, enabling version control, peer review, and automated
+      deployment. The Aviatrix Controller and CoPilot provide the single rule engine and
+      unified visibility layer.
+
+      **High Performance Encryption (HPE)** is built on a patented multi-tunnel,
+      multi-core architecture that breaks past the single-core VPN bottleneck—a standard
+      AWS or Azure VPN gateway tops out near 1.25 Gbps per tunnel. HPE achieves 100+ Gbps
+      hybrid throughput and up to 1 Tbps+ cloud-to-cloud using parallel tunnels and ECMP.
+      All encryption is software-defined, scaling with cloud compute without hardware
+      appliances. HPE includes a Crypto-Agility Engine designed for seamless algorithm
+      upgrades including post-quantum cryptography (PQC) readiness.
+
+      **Workload Threat Visibility (WTV)** transforms Aviatrix NAT Gateways into
+      intelligent security sensors, providing unified cross-cloud outbound visibility into
+      workload connections—exposing malicious egress destinations and reducing NAT cost and
+      complexity. WTV feeds compliance-ready telemetry for DORA, NIS2, and PCI DSS 4.0.
+
+      **CoPilot** serves as the centralized visibility, monitoring, and analytics layer.
+      It provides a single-pane view of traffic flows, threat events, policy status, and
+      compliance posture across all clouds.
+    claimRefs:
+      - CE008
+      - CE009
+      - CE010
+      - CE011
+      - CE012
+      - CE013
+      - CE014
+      - CE015
+      - CE016
+      - CE017
+      - CE018
+    tableRefs:
+      - TE001
+      - TE002
+    figureRefs:
+      - FE004
+
+  - id: ai-security-roadmap
+    title: AI Security and 2026 Roadmap
+    body: >
+      Aviatrix launched AgentGuard in early access (June 2026) to address AI agent
+      governance. The product takes a network-native approach: security teams deploy it
+      without requiring developers to install SDKs or change application code. Shadow AI
+      Discovery—available immediately in early access—analyzes VPC Flow Logs, DNS logs, and
+      Cloud Asset Inventory to surface every AI agent, MCP server, and LLM endpoint in a
+      cloud environment within 15 minutes, including shadow agents that application teams did
+      not authorize. The product risk-scores each discovered workload by blast radius.
+
+      AgentGuard comprises four progressive capabilities: (1) Shadow AI Discovery (early
+      access now); (2) Network Enforcement, available today via Zero Trust for AI Workloads;
+      (3) Deep AI Observability (MCP invocation and tool traffic inspection); and (4) Advanced
+      AI Guardrails—both #3 and #4 are on the roadmap for Q3 2026. AgentGuard covers AI
+      agent frameworks including Strands, LangChain, and AutoGen, and supports major LLM
+      providers (OpenAI, Anthropic, Bedrock, Vertex, Cohere, Mistral).
+
+      On June 4, 2026, Aviatrix announced it is one of the first multicloud network-layer
+      enforcement substrates for the Microsoft Agent Control Specification (ACS)—an open
+      standard unveiled at Microsoft Build 2026. The integration carries a single
+      .guardrails.yaml policy file from the agent runtime into live network enforcement
+      across AWS, Azure, GCP, and on-premises Kubernetes via CI/CD. Aviatrix's CPO Chris
+      McHenry noted: "After running Microsoft Agent Control Specification in private preview,
+      what became clear is that a shared standard is only as strong as the layer that enforces
+      it everywhere the agent operates." The integration is available at no additional cost
+      to existing Aviatrix customers.
+
+      On June 8, 2026, Aviatrix joined OISF as a consortium member to advance Suricata for
+      cloud-native environments. Suricata has been embedded in the Aviatrix platform as its
+      core IPS engine since initial integration—performing deep packet inspection, processing
+      custom rulesets, and decrypting TLS traffic in IPS + TLS Decrypt mode. Aviatrix has
+      developed 556 purpose-built Suricata rules for AI-specific threat categories: prompt
+      injection and jailbreak detection, sensitive data leakage, malicious tool usage, data
+      exfiltration, and agent-to-agent threats. Aviatrix's OISF membership contributes these
+      rules and multicloud reference architectures (AWS, Azure, GCP) back to the open-source
+      community.
+
+      OWASP's 2025 Top 10 for Agentic Applications and the LiteLLM supply chain attack
+      (March 2026, affecting versions 1.82.7–1.82.8) provide external validation of the
+      network-layer enforcement thesis: a poisoned dependency running inside the trusted
+      process can exfiltrate credentials to external endpoints, bypassing any SDK guardrail.
+      Deep AI Observability and Advanced AI Guardrails remain roadmap items with
+      an unverified Q3 2026 timeline.
+    claimRefs:
+      - CE019
+      - CE020
+      - CE021
+      - CE022
+      - CE023
+      - CE024
+      - CE025
+      - CE026
+      - CE027
+      - CE028
+      - CE029
+    tableRefs:
+      - TE005
+    figureRefs:
+      - FE002
+
+  - id: trust-compliance-security
+    title: Trust, Compliance, and Security Controls
+    body: >
+      Aviatrix's Trust Center (trust.aviatrix.com) lists five audits and certifications:
+      SOC 2 (document available), ISO 27001, TISAX, GDPR compliance, and CCPA compliance.
+      An additional 30 documents cover policies (15), pentest reports (2), HR practices (6),
+      and other categories. The platform's product-level claims include support for HIPAA 2025,
+      PCI DSS 4.0, DORA, NIS2, and CISA Zero Trust Maturity Model (ZTMM) 2.0 through
+      audit-ready compliance telemetry generated by CoPilot and enforced by HPE.
+
+      The most material security risk is CVE-2024-50603, a CVSS 10.0 unauthenticated remote
+      code execution vulnerability in the Aviatrix Controller API, discovered by Jakub Korepta
+      at Securing and first disclosed in late October 2024. The vulnerability resulted from
+      API endpoints failing to sanitize user-supplied input, allowing OS command injection.
+      Wiz reported that 3% of cloud enterprise environments had the Aviatrix Controller
+      deployed, and 65% of those environments had a lateral movement path to administrative
+      cloud control plane permissions by default on AWS. Active exploitation was observed in
+      January 2025, deploying XMRig cryptocurrency miners and the Sliver C2 framework. CISA
+      added CVE-2024-50603 to the Known Exploited Vulnerabilities catalog on January 16, 2025,
+      requiring federal agencies to patch by February 6, 2025. Aviatrix issued a hot patch in
+      early November 2024 for versions down to 6.7 (including some end-of-support releases)
+      and permanent fixes for supported trains 7.1 (v7.1.4191) and 7.2 (v7.2.4996) on
+      December 19, 2024—prior to the public PoC exploit's availability. The company ran
+      targeted customer outreach campaigns and pushed in-product banners to maximize patch
+      coverage before public disclosure on January 7, 2025.
+
+      The Controller-as-single-orchestration-point architecture is a structural risk:
+      a compromised Controller could affect policy enforcement across an entire enterprise
+      multi-cloud estate. Aviatrix supports Controller HA configurations, and the spoke
+      gateways continue to enforce last-known-good policy when disconnected from the
+      Controller, but the CVE-2024-50603 incident underscores the need for rigorous
+      Controller access hardening.
+    claimRefs:
+      - CE030
+      - CE031
+      - CE032
+      - CE033
+      - CE034
+      - CE035
+    tableRefs:
+      - TE004
+
+  - id: deployment-integrations-differentiation
+    title: Deployment, Integrations, and Differentiation
+    body: >
+      CNSF is deployed as software-defined overlays. Spoke gateways are provisioned inside
+      customer-owned VPCs and VNets as cloud compute instances (no hardware appliances,
+      no network re-architecture). The Aviatrix Controller automates provisioning, tunnel
+      orchestration, policy enforcement, and lifecycle operations including centralized key
+      management. A single Terraform provider (AviatrixSystems/aviatrix on
+      registry.terraform.io) enables full infrastructure-as-code integration, combining
+      network and application CI/CD pipelines. The platform is available on AWS Marketplace
+      and Azure Marketplace; a 30-day free trial of Aviatrix Enterprise is available on
+      both. A free Workload Attack Path Assessment tool provides breach-chain visualization
+      and risk discovery without requiring deployment. Peerspot reviews (2026) confirm customer
+      use across multicloud enterprise environments.
+
+      The core differentiation versus native cloud controls (AWS Network Firewall, Azure
+      Firewall, GCP VPC Firewall) is policy consistency: native tools are per-cloud,
+      per-region, IP-based, and require separate management. Aviatrix CNSF defines policy
+      once and enforces across clouds without per-cloud tooling or manual coordination.
+      Versus traditional chokepoint firewalls (Palo Alto Networks Prisma, Cisco Multicloud
+      Defense), Aviatrix avoids hairpin routing by enforcing at the workload boundary.
+      Versus Illumio (micro-segmentation with endpoint agents), Aviatrix operates agentlessly
+      and extends into networking and encryption. Versus Zscaler (SASE/ZTNA, user-to-app
+      focus), Aviatrix addresses workload-to-workload communication that ZTNA architectures
+      do not govern.
+
+      The weakest differentiation claim is AgentGuard: the product is pre-GA, the Advanced
+      AI Guardrails and Deep AI Observability capabilities are roadmap items, and the 15-minute
+      discovery claim and blast-radius quantification have not been independently verified.
+      The Microsoft ACS integration was released June 2026 and is also in early access, so
+      production track record is limited. HPE's 100+ Gbps and 1 Tbps+ performance figures
+      are company-claimed and have not been validated by independent benchmarks.
+    claimRefs:
+      - CE036
+      - CE037
+      - CE038
+      - CE039
+      - CE040
+      - CE041
+      - CE042
+    tableRefs: []
+    figureRefs:
+      - FE003
+
+tables:
+  - id: TE001
+    title: Aviatrix Product Module Matrix
+    columns:
+      - Module
+      - Delivery Model
+      - Cloud Coverage
+      - GA Status
+      - Key Differentiator
+      - Evidence Gap
+    rows:
+      - ["Distributed Cloud Firewall (DCF)", "SaaS gateway overlay", "AWS · Azure · GCP", "GA", "Identity-based SmartGroups; inline L4-L7 no hairpin", "Internal throughput metrics not public"]
+      - ["High Performance Encryption (HPE)", "SaaS gateway overlay", "AWS · Azure · GCP · OCI", "GA", "Patented multi-tunnel ECMP; 1 Tbps+ cloud-to-cloud", "Performance independently unverified"]
+      - ["Workload Threat Visibility (WTV)", "SaaS via NAT Gateway sensors", "AWS · Azure · GCP", "GA", "NAT-as-sensor; zero additional infra", "Coverage limits not published"]
+      - ["AgentGuard — Shadow AI Discovery", "SaaS via VPC Flow Logs + DNS", "AWS · Azure · GCP", "Early Access", "Agentless; 15-min discovery inc. shadow AI", "Pre-GA; limited customer evidence"]
+      - ["AgentGuard — Network Enforcement", "SaaS gateway overlay", "AWS · Azure · GCP", "GA (via ZT for Workloads)", "SDK-independent AI agent containment", "Distinct product scope vs. DCF not fully clarified"]
+      - ["AgentGuard — Deep AI Observability", "SaaS gateway overlay", "AWS · Azure · GCP", "Roadmap Q3 2026", "MCP invocation + tool-traffic inspection inline", "Timeline unverified; GA date not confirmed"]
+      - ["AgentGuard — Advanced AI Guardrails", "SaaS gateway overlay", "AWS · Azure · GCP", "Roadmap Q3 2026", "SDK-independent guardrails on live traffic", "Timeline unverified; GA date not confirmed"]
+      - ["ACS Integration (Microsoft Agent Control Spec)", "CI/CD compile to DCF CRD", "AWS · Azure · GCP · K8s", "Early Access", "First multicloud network-layer ACS substrate", "Early Access only; limited production deployments"]
+      - ["CoPilot (Visibility & Compliance)", "SaaS analytics", "All supported clouds", "GA", "Unified cross-cloud visibility and audit telemetry", "API coverage details not fully public"]
+    notes: "GA Status derived from aviatrix.ai product pages (June 2026); performance figures are company-claimed unless noted. Roadmap dates taken from AgentGuard product page and not independently confirmed."
+    enumerationScope:
+      coverage: exhaustive
+      basis: "All publicly named product modules and capabilities listed on aviatrix.ai/products/ and aviatrix.ai/products/zero-trust-for-workloads/ as of June 2026"
+    claimRefs:
+      - CE008
+      - CE013
+      - CE019
+      - CE022
+      - CE023
+
+  - id: TE002
+    title: Aviatrix Workflow and Use-Case Table
+    columns:
+      - User Job
+      - Current Problem
+      - Aviatrix Solution
+      - Measurable Benefit Claimed
+      - Limitation
+    rows:
+      - ["Prevent lateral movement in multi-cloud", "IP-based rules per cloud provider; no cross-cloud governance; east-west VPC traffic ungoverned", "DCF SmartGroups enforce inline at first hop across AWS/Azure/GCP", "Unauthorized east-west connections dropped at source; new workloads auto-secured at deploy time", "Controller single point of orchestration; CVE-2024-50603 showed controller can be exploited"]
+      - ["Encrypt all cross-cloud traffic at scale", "Single IPsec VPN tops at 1.25 Gbps per AWS or Azure VPN gateway; hardware VPNs add latency and cost", "HPE multi-tunnel ECMP on cloud compute", "100+ Gbps hybrid, up to 1 Tbps+ cloud-to-cloud (company-claimed)", "Performance not independently benchmarked; CPU cost scales with traffic"]
+      - ["Discover and govern shadow AI agents", "No visibility into unauthorized AI agents calling LLMs; code-based tools miss network-native shadow AI", "AgentGuard Shadow AI Discovery via VPC Flow Logs + DNS + Cloud Asset Inventory", "15-minute time to first discovery (company-claimed); every AI agent risk-scored by blast radius", "Early Access only; advanced capabilities (Deep AI Observability, Advanced AI Guardrails) not yet GA"]
+      - ["Govern AI agents against exfiltration and C2", "SDK guardrails deceivable by jailbroken prompts or poisoned dependencies (e.g. LiteLLM Mar 2026)", "ACS integration compiles policy file into DCF network enforcement; network-layer holds even if SDK fails", "Architecture-independent enforcement; detection-independent (holds before alert fires)", "ACS integration in Early Access as of June 2026; production track record limited"]
+      - ["Produce compliance evidence (HIPAA/PCI DSS/DORA)", "Fragmented telemetry across clouds; separate tools per cloud provider", "CoPilot audit-ready telemetry; HPE encryption covering CISA ZTMM 2.0, NIST 800-207 alignment", "Supports HIPAA 2025, PCI DSS 4.0, DORA, NIS2 compliance reporting", "Compliance support is product-alignment claim; QSA/third-party audit scope not public"]
+      - ["Reduce NAT Gateway egress costs while gaining visibility", "NAT Gateway bills scale with egress traffic; no visibility into what exits", "WTV transforms NAT Gateways into security sensors with cross-cloud outbound telemetry", "Reduced NAT complexity; compliance telemetry for NIS2, DORA, PCI DSS 4.0", "Coverage limits (e.g. serverless egress) not fully documented"]
+    notes: "Benefits in 'Measurable Benefit Claimed' column are from Aviatrix official product pages and press releases; independent customer metrics are not available for most line items."
+    claimRefs:
+      - CE008
+      - CE013
+      - CE019
+      - CE023
+      - CE029
+      - CE034
+
+  - id: TE003
+    title: Technology and Architecture Components
+    columns:
+      - Layer / Component
+      - Role
+      - Technology
+      - Key Dependency
+      - Risk
+    rows:
+      - ["Aviatrix Controller", "Central policy engine; cloud API integration; route orchestration; key management", "SaaS control plane (Python-based)", "Cloud provider APIs (AWS, Azure, GCP, OCI); compute availability", "Single orchestration point; CVE-2024-50603 showed unauthenticated RCE risk; HA required"]
+      - ["Spoke Gateway", "Inline enforcement per VPC/VNet; first-hop L4-L7 traffic inspection", "Software instance on cloud compute (EC2, Azure VM, GCE)", "Cloud compute budget; VPC routing tables", "Performance tied to VM instance type; cost scales with traffic volume"]
+      - ["SmartGroups", "Identity-based workload policy grouping; spans multiple clouds", "Cloud Asset Inventory metadata + cloud tagging", "Cloud provider tagging hygiene", "Stale or misconfigured tags can cause policy mismatches"]
+      - ["Suricata IPS Engine", "Inline deep packet inspection; AI threat rule matching; TLS decryption", "Open-source Suricata (OISF consortium member); 556 AI-specific custom rules", "OISF open-source community maintenance; TLS decrypt adds latency", "Rule update cycle tied to platform release; IPS + TLS Decrypt mode performance impact not benchmarked"]
+      - ["High Performance Encryption (HPE) Engine", "Software-defined encryption for east-west, north-south, cross-cloud traffic", "Patented multi-tunnel ECMP on cloud CPU; no hardware offload", "Cloud compute CPU capacity", "CPU cost scales with encrypted throughput; PQC not yet deployed (crypto-agility roadmap)"]
+      - ["CoPilot Analytics", "Visibility, monitoring, compliance telemetry, policy visualization", "SaaS analytics layer fed by Controller", "Controller data pipeline; latency in telemetry delivery", "Single monitoring plane; lag possible in high-traffic environments"]
+      - ["Terraform Provider", "Infrastructure-as-code automation for gateway and policy lifecycle", "AviatrixSystems/aviatrix provider on registry.terraform.io", "Terraform version compatibility; Aviatrix API stability", "API changes can break IaC pipelines; provider versioning discipline required"]
+      - ["AgentGuard Discovery (Shadow AI)", "Shadow AI agent inventory via network telemetry; no gateway required", "VPC Flow Logs + DNS logs + Cloud Asset Inventory analysis", "Cloud provider log enablement (VPC Flow Logs must be on)", "Flow Logs and DNS logs must be explicitly enabled; egress via non-standard ports may not be captured"]
+    notes: "Technology details from aviatrix.ai product pages and docs.aviatrix.com. CVE history from NVD and The Hacker News. Terraform provider from registry.terraform.io."
+    claimRefs:
+      - CE004
+      - CE008
+      - CE012
+      - CE013
+      - CE015
+      - CE027
+      - CE030
+
+  - id: TE004
+    title: Trust, Compliance, and Certification Status
+    columns:
+      - Control / Certification
+      - Status
+      - Scope
+      - Verifiable Source
+      - Gap / Caveat
+    rows:
+      - ["SOC 2", "Certified (document available)", "Aviatrix SaaS platform", "trust.aviatrix.com (1 document)", "Report details (Type I vs II, period, scope) not publicly disclosed"]
+      - ["ISO 27001", "Certified", "Aviatrix Systems, Inc.", "trust.aviatrix.com", "Certification date, scope, and certifying body not published"]
+      - ["TISAX", "Certified", "Aviatrix Systems, Inc.", "trust.aviatrix.com", "Assessment level (AL1/AL2/AL3) and scope not public; automotive sector relevance unclear"]
+      - ["GDPR", "Compliant (by declaration)", "Data processing activities", "trust.aviatrix.com (policy documents)", "No third-party audit attestation confirmed"]
+      - ["CCPA", "Compliant (by declaration)", "California consumer data", "trust.aviatrix.com (policy documents)", "Compliance by internal declaration; no external assessment found"]
+      - ["HIPAA 2025", "Product-aligned (not an org-level attestation)", "CNSF encryption + audit telemetry", "aviatrix.ai/products/ claims", "No Business Associate Agreement structure or BAA template cited publicly"]
+      - ["PCI DSS 4.0", "Product-aligned (not a QSA assessment)", "HPE + CoPilot telemetry", "aviatrix.ai/products/ claims", "No QSA report or Attestation of Compliance (AOC) found"]
+      - ["CISA ZTMM 2.0", "Product-aligned (self-assessed)", "Network and Data ZT pillars", "aviatrix.ai/products/ claims", "Formal CISA recognition or third-party ZTMM assessment not confirmed"]
+      - ["NIST SP 800-207 Zero Trust", "Product-aligned (self-assessed)", "CNSF architecture", "aviatrix.ai/products/ claims", "No NIST-certifying body; alignment is self-described against published standard"]
+    notes: "Status classifications: 'Certified' = third-party audit with document at trust.aviatrix.com; 'Product-aligned' = company claim based on product feature set; no independent QSA or CISA assessment found."
+    claimRefs:
+      - CE030
+      - CE033
+      - CE034
+      - CE035
+
+  - id: TE005
+    title: Product Roadmap and Key Milestones
+    columns:
+      - Date / Stage
+      - Feature / Milestone
+      - Status
+      - Strategic Implication
+      - Source
+    rows:
+      - ["Oct–Nov 2024", "CVE-2024-50603 reported; hot patch issued (v6.7+); targeted customer outreach", "Completed", "Rapid response demonstrates security posture; controller exposure risk now documented", "The Hacker News / NVD"]
+      - ["Dec 19, 2024", "Permanent CVE fix for supported trains v7.1.4191 and v7.2.4996; public disclosure Jan 7, 2025", "Completed", "Patches pre-dated PoC exploit publication; CISA KEV listing Jan 16 confirmed active exploitation", "The Hacker News / CISA"]
+      - ["Dec 2025", "OWASP Top 10 for Agentic Applications released (external)", "Completed (external)", "Formalizes AI agent risk taxonomy that AgentGuard and ACS integration address", "OWASP GenAI Security Project"]
+      - ["Mar 2026", "LiteLLM supply chain attack (external, v1.82.7–1.82.8)", "Completed (external incident)", "Validates network-layer enforcement thesis: poisoned dependency bypassed in-process SDK guardrails", "Aviatrix blog (ACS article) / CNSF product positioning"]
+      - ["Jun 4, 2026", "Microsoft Agent Control Specification integration announced; Early Access at no additional cost", "Early Access GA", "First multicloud network-layer ACS substrate; positions Aviatrix for AI governance expansion", "Aviatrix press release / ACS product page"]
+      - ["Jun 8, 2026", "OISF consortium membership; 556 AI-specific Suricata rules contributed to open source", "Completed", "Strengthens IPS detection capability and open-source community alignment; multicloud rule sets now public", "Aviatrix blog / OISF membership page"]
+      - ["Jun 2026", "AgentGuard Shadow AI Discovery — Early Access launched", "Early Access GA", "First commercial capability for AI agent governance; 15-min shadow AI inventory", "aviatrix.ai/products/agentguard"]
+      - ["Q3 2026", "AgentGuard Deep AI Observability + Advanced AI Guardrails", "Roadmap", "Completes 4-capability AgentGuard suite; MCP invocation and tool-traffic inspection inline", "aviatrix.ai/products/agentguard (company-stated roadmap)"]
+      - ["Ongoing", "Crypto-Agility Engine for post-quantum cryptography (PQC) readiness", "Roadmap", "Future-proofs HPE against quantum threat; PQC not yet deployed or standardized at Aviatrix", "aviatrix.ai/products/high-performance-encryption"]
+    notes: "Dates 'Jun 2026' and 'Q3 2026' are company-stated. OWASP and LiteLLM rows are external milestones cited in Aviatrix marketing materials. Roadmap items are not binding commitments."
+    claimRefs:
+      - CE022
+      - CE023
+      - CE026
+      - CE031
+      - CE033
+
+figures:
+  - id: FE001
+    title: Aviatrix CNSF Platform Architecture Layers
+    type: stack
+    layout: standard
+    summary: "Five-layer containment architecture from cloud infrastructure through CoPilot analytics, showing how CNSF embeds enforcement in the data plane rather than routing traffic to a centralized firewall."
+    data:
+      items:
+        - id: cloud_infra
+          label: "Cloud Infrastructure — VPCs / VNets / K8s / Serverless (AWS · Azure · GCP · OCI)"
+        - id: controller
+          label: "Control Plane — Aviatrix Controller (SaaS; cloud API integration; policy engine)"
+        - id: spoke_gw
+          label: "Data Plane — Spoke Gateways (inline L4-L7 per VPC/VNet) + HPE Gateways (100+ Gbps encryption)"
+        - id: security_services
+          label: "Security Services — Distributed Cloud Firewall · Suricata IPS · AgentGuard AI Security"
+        - id: copilot
+          label: "Visibility & Compliance — CoPilot (cross-cloud monitoring; audit telemetry)"
+    approximationNotes: "Layer boundaries derived from aviatrix.ai product documentation; exact internal microservice decomposition not public."
+    claimRefs:
+      - CE001
+      - CE004
+      - CE006
+
+  - id: FE002
+    title: Customer Deployment and Policy Enforcement Workflow
+    type: flow
+    layout: standard
+    summary: "End-to-end GitOps-driven workflow from controller deployment through automated inline policy enforcement and CoPilot compliance reporting."
+    data:
+      nodes:
+        - id: n1
+          label: "Deploy Aviatrix Controller (AWS / Azure Marketplace or SaaS)"
+        - id: n2
+          label: "Deploy Spoke Gateways per VPC / VNet (cloud compute)"
+        - id: n3
+          label: "Cloud Asset Inventory auto-discovers all workloads"
+        - id: n4
+          label: "Define SmartGroups (identity-based; auto-updated)"
+        - id: n5
+          label: "Author DCF policies in Terraform / GitOps pipeline"
+        - id: n6
+          label: "Controller reconciles policies to all gateways (minutes)"
+        - id: n7
+          label: "Traffic enforced inline at first hop (L4-L7); drops at source"
+        - id: n8
+          label: "CoPilot generates compliance telemetry and threat alerts"
+      edges:
+        - from: n1
+          to: n2
+          label: "provision"
+        - from: n2
+          to: n3
+          label: "auto-inventory"
+        - from: n3
+          to: n4
+          label: "classify"
+        - from: n4
+          to: n5
+          label: "group definition"
+        - from: n5
+          to: n6
+          label: "CI/CD push"
+        - from: n6
+          to: n7
+          label: "policy distribution"
+        - from: n7
+          to: n8
+          label: "telemetry feed"
+    claimRefs:
+      - CE005
+      - CE011
+      - CE036
+
+  - id: FE003
+    title: Aviatrix Critical Technology Dependencies
+    type: dag
+    layout: wide
+    summary: "Directed dependency graph showing platform dependencies on cloud provider APIs, Suricata IPS, Terraform, and the Microsoft ACS standard, plus AgentGuard's log-data dependencies."
+    data:
+      nodes:
+        - id: cnsf
+          label: "Aviatrix CNSF Platform"
+        - id: aws_api
+          label: "AWS Cloud APIs"
+        - id: azure_api
+          label: "Azure Cloud APIs"
+        - id: gcp_api
+          label: "GCP Cloud APIs"
+        - id: suricata
+          label: "Suricata (OISF) IPS Engine"
+        - id: terraform
+          label: "Terraform / CI-CD Pipelines"
+        - id: acs
+          label: "Microsoft Agent Control Specification"
+        - id: vpc_flow
+          label: "VPC Flow Logs"
+        - id: dns_logs
+          label: "DNS Query Logs"
+        - id: cai
+          label: "Cloud Asset Inventory (CAI)"
+        - id: agentguard
+          label: "AgentGuard (AI Security)"
+      edges:
+        - from: cnsf
+          to: aws_api
+          label: "control plane"
+        - from: cnsf
+          to: azure_api
+          label: "control plane"
+        - from: cnsf
+          to: gcp_api
+          label: "control plane"
+        - from: cnsf
+          to: suricata
+          label: "embedded IPS"
+        - from: cnsf
+          to: terraform
+          label: "policy-as-code"
+        - from: cnsf
+          to: acs
+          label: "network enforcement"
+        - from: cnsf
+          to: agentguard
+          label: "runs on CNSF"
+        - from: agentguard
+          to: vpc_flow
+          label: "discovery source"
+        - from: agentguard
+          to: dns_logs
+          label: "discovery source"
+        - from: agentguard
+          to: cai
+          label: "discovery source"
+    claimRefs:
+      - CE003
+      - CE020
+      - CE025
+      - CE027
+
+  - id: FE004
+    title: Product Capability Maturity Matrix
+    type: matrix
+    layout: wide
+    summary: "Capability matrix covering all current Aviatrix products across GA status, cloud coverage, agentless deployment, and AI-readiness as of June 2026."
+    data:
+      columns:
+        - "GA Status (Jun 2026)"
+        - "Cloud Coverage"
+        - "Agent-Free Deployment"
+        - "AI-Workload Ready"
+      rows:
+        - label: "DCF (Distributed Cloud Firewall)"
+          values: ["GA", "AWS · Azure · GCP", "Yes", "Partial (via ACS)"]
+        - label: "HPE (High Performance Encryption)"
+          values: ["GA", "AWS · Azure · GCP · OCI", "Yes", "N/A"]
+        - label: "WTV (Workload Threat Visibility)"
+          values: ["GA", "AWS · Azure · GCP", "Yes", "Partial"]
+        - label: "CoPilot (Visibility & Compliance)"
+          values: ["GA", "All supported", "Yes", "N/A"]
+        - label: "AgentGuard — Network Enforcement"
+          values: ["GA (ZT Workloads)", "AWS · Azure · GCP", "Yes", "Yes"]
+        - label: "AgentGuard — Shadow AI Discovery"
+          values: ["Early Access", "AWS · Azure · GCP", "Yes", "Yes"]
+        - label: "ACS Integration (Microsoft)"
+          values: ["Early Access", "AWS · Azure · GCP · K8s", "Yes", "Yes"]
+        - label: "AgentGuard — Deep AI Observability"
+          values: ["Roadmap Q3 2026", "AWS · Azure · GCP", "Yes", "Yes"]
+        - label: "AgentGuard — Advanced AI Guardrails"
+          values: ["Roadmap Q3 2026", "AWS · Azure · GCP", "Yes", "Yes"]
+    claimRefs:
+      - CE008
+      - CE013
+      - CE016
+      - CE019
+      - CE022
+
+callouts:
+  - calloutType: strength
+    title: Agentless Containment Architecture at Cloud Scale
+    body: >
+      CNSF enforces policy at every workload without agents, SDKs, or application changes.
+      DCF SmartGroups and inline spoke gateway enforcement give security teams unilateral
+      control over workload communication governance—independently of developer workflows or
+      runtime trust. This is structurally superior to SDK-based guardrails for AI agents and
+      to IP-based native cloud security groups for east-west governance.
+    claimRefs:
+      - CE003
+      - CE008
+      - CE009
+
+  - calloutType: risk
+    title: Controller as Critical Blast-Radius Risk
+    body: >
+      CVE-2024-50603 (CVSS 10.0, CISA KEV, exploited Jan 2025) demonstrated that the
+      Aviatrix Controller—the single policy orchestration point for all clouds—is an
+      attractive, high-impact attack target. With 65% of Controller-deployed AWS environments
+      having a default lateral-movement path to admin cloud control plane permissions, a
+      Controller compromise can cascade to cloud-estate takeover. Aviatrix patched rapidly
+      and proactively, but this architecture risk is structural and must be disclosed to buyers.
+    claimRefs:
+      - CE030
+      - CE031
+      - CE032
+
+  - calloutType: recommendation
+    title: Validate AgentGuard and ACS Integration Before Relying on AI Security Roadmap
+    body: >
+      AgentGuard's Deep AI Observability and Advanced AI Guardrails—the two capabilities that
+      close the gap with in-process AI security tools—are Q3 2026 roadmap items. The ACS
+      integration is in early access with limited production deployments. Buyers whose AI
+      security requirements are current rather than aspirational should evaluate the product
+      at GA, request reference customers running AgentGuard Network Enforcement in production,
+      and confirm independent validation of the 15-minute shadow AI discovery claim.
+    claimRefs:
+      - CE019
+      - CE022
+      - CE023
+
+  - calloutType: insight
+    title: Microsoft ACS First-Mover Advantage Creates Standards-Driven Positioning
+    body: >
+      By becoming one of the first multicloud network-layer enforcement substrates for
+      Microsoft's Agent Control Specification—an open standard released at Microsoft Build
+      2026—Aviatrix positions CNSF as the network-enforcement complement to the Microsoft
+      ecosystem for AI agent governance. If ACS achieves the cross-vendor adoption Microsoft
+      intends, Aviatrix holds a first-mover advantage in the enforcement substrate market.
+      The risk is that ACS competes with or fragments against other emerging AI governance
+      standards (OWASP Agentic AI Top 10, CISA AI guidelines), reducing the value of any
+      single standard.
+    claimRefs:
+      - CE023
+      - CE024
+      - CE025
+
+localEvidence:
+  searchQueries:
+    - query: "Aviatrix Cloud Native Security Fabric CNSF platform 2026"
+      engine: web
+      hits: 15
+      retainedSourceRefs: [SE001, SE002, SE003]
+    - query: "Aviatrix Distributed Cloud Firewall DCF architecture 2026"
+      engine: web
+      hits: 12
+      retainedSourceRefs: [SE004, SE005]
+    - query: "Aviatrix AgentGuard AI agent security launch 2026"
+      engine: web
+      hits: 10
+      retainedSourceRefs: [SE006, SE013]
+    - query: "Aviatrix High Performance Encryption HPE multicloud 2026"
+      engine: web
+      hits: 8
+      retainedSourceRefs: [SE007, SE008]
+    - query: "Aviatrix Microsoft Agent Control Specification integration announced 2026"
+      engine: web
+      hits: 14
+      retainedSourceRefs: [SE010]
+    - query: "Aviatrix OISF Suricata membership partnership 2026"
+      engine: web
+      hits: 9
+      retainedSourceRefs: [SE011, SE017]
+    - query: "Aviatrix CVE-2024-50603 controller vulnerability exploited 2025"
+      engine: web
+      hits: 11
+      retainedSourceRefs: [SE018, SE019, SE022]
+    - query: "Aviatrix trust center certifications SOC2 ISO27001 2026"
+      engine: web
+      hits: 6
+      retainedSourceRefs: [SE016]
+    - query: "Aviatrix Terraform provider deployment automation 2026"
+      engine: web
+      hits: 7
+      retainedSourceRefs: [SE024]
+    - query: "OWASP Top 10 agentic applications AI security 2025 2026"
+      engine: web
+      hits: 20
+      retainedSourceRefs: [SE020, SE021]
+    - query: "Aviatrix Workload Threat Visibility WTV product 2026"
+      engine: web
+      hits: 6
+      retainedSourceRefs: [SE009]
+    - query: "Aviatrix zero trust workloads networking product roadmap 2026"
+      engine: web
+      hits: 9
+      retainedSourceRefs: [SE004, SE007, SE025]
+    - query: "Aviatrix customer reviews multicloud network security 2026"
+      engine: web
+      hits: 18
+      retainedSourceRefs: [SE026]
+    - query: "Aviatrix docs enterprise architecture v9 2026"
+      engine: web
+      hits: 5
+      retainedSourceRefs: [SE015]
+    - query: "CISA known exploited vulnerabilities Aviatrix 2025"
+      engine: web
+      hits: 8
+      retainedSourceRefs: [SE022]
+
+  researchQuestions:
+    - id: QE001
+      question: "What are all publicly named product modules in the Aviatrix Cloud Native Security Fabric as of June 2026?"
+      type: enumeration
+      targets: ["contentRequirements/1"]
+      status: answered
+
+    - id: QE002
+      question: "How does the Distributed Cloud Firewall enforce policy without hairpin routing through a central appliance?"
+      type: mechanism
+      targets: ["contentRequirements/2"]
+      status: answered
+
+    - id: QE003
+      question: "What encryption throughput performance does Aviatrix claim for HPE, and is it independently corroborated?"
+      type: verification
+      targets: ["contentRequirements/4"]
+      status: answered
+
+    - id: QE004
+      question: "What compliance certifications does Aviatrix hold at the organizational level as of June 2026?"
+      type: enumeration
+      targets: ["contentRequirements/5"]
+      status: answered
+
+    - id: QE005
+      question: "How does AgentGuard discover shadow AI agents without requiring SDK instrumentation or application changes?"
+      type: mechanism
+      targets: ["contentRequirements/0", "contentRequirements/3"]
+      status: answered
+
+    - id: QE006
+      question: "Does CNSF deployment require agents, kernel modules, or application code changes in the customer environment?"
+      type: verification
+      targets: ["contentRequirements/2", "contentRequirements/3"]
+      status: answered
+
+    - id: QE007
+      question: "How does the Microsoft Agent Control Specification integration work technically from policy file to network enforcement?"
+      type: mechanism
+      targets: ["contentRequirements/2"]
+      status: answered
+
+    - id: QE008
+      question: "What was the full impact of CVE-2024-50603 on Aviatrix customers, and is the vulnerability class now resolved?"
+      type: adverse
+      targets: ["contentRequirements/5"]
+      status: answered
+
+    - id: QE009
+      question: "Does Aviatrix's HPE support post-quantum cryptography, and what is the current deployment status as of 2026?"
+      type: freshness
+      targets: ["contentRequirements/3"]
+      status: answered
+
+    - id: QE010
+      question: "What are the technical differences between Aviatrix's Zero Trust for Networking and Zero Trust for Workloads product lines?"
+      type: comparison
+      targets: ["contentRequirements/1"]
+      status: answered
+
+    - id: QE011
+      question: "How is Suricata embedded in the Aviatrix platform and what role does it play within the DCF enforcement pipeline?"
+      type: mechanism
+      targets: ["contentRequirements/2"]
+      status: answered
+
+    - id: QE012
+      question: "Which cloud providers does Aviatrix officially support for CNSF deployment as of June 2026?"
+      type: enumeration
+      targets: ["contentRequirements/3"]
+      status: answered
+
+    - id: QE013
+      question: "How do Aviatrix SmartGroups build identity-based policies across workloads from different cloud providers?"
+      type: mechanism
+      targets: ["contentRequirements/2"]
+      status: answered
+
+    - id: QE014
+      question: "How does Workload Threat Visibility transform NAT Gateways into security sensors and what traffic does it see?"
+      type: mechanism
+      targets: ["contentRequirements/0"]
+      status: answered
+
+    - id: QE015
+      question: "What AI agent risk framework does Aviatrix reference in its threat modeling, and is it independently credible?"
+      type: verification
+      targets: ["contentRequirements/5"]
+      status: answered
+
+    - id: QE016
+      question: "Is the Aviatrix Controller a fully centralized control plane, and what are the spoke gateway failure-mode behaviors?"
+      type: mechanism
+      targets: ["contentRequirements/2"]
+      status: partial
+
+    - id: QE017
+      question: "What quantitative workload discovery completeness metrics has Aviatrix published for DCF?"
+      type: quantification
+      targets: ["contentRequirements/1"]
+      status: partial
+
+    - id: QE018
+      question: "Is AgentGuard available in production, or is it pre-GA as of June 2026, and what customer evidence exists?"
+      type: freshness
+      targets: ["contentRequirements/3"]
+      status: answered
+
+    - id: QE019
+      question: "How does Aviatrix HPE's multi-tunnel architecture compare technically to single-core IPsec VPN implementations?"
+      type: comparison
+      targets: ["contentRequirements/4"]
+      status: answered
+
+    - id: QE020
+      question: "Is there third-party verification for Aviatrix's HIPAA 2025 and PCI DSS 4.0 compliance support claims?"
+      type: verification
+      targets: ["contentRequirements/5"]
+      status: partial
+
+    - id: QE021
+      question: "How does Aviatrix CNSF differentiate technically from Illumio micro-segmentation and Palo Alto Prisma Cloud for workload security?"
+      type: comparison
+      targets: ["contentRequirements/4"]
+      status: answered
+
+    - id: QE022
+      question: "What is the confirmed GA timeline for AgentGuard Deep AI Observability and Advanced AI Guardrails in 2026?"
+      type: freshness
+      targets: ["contentRequirements/3"]
+      status: partial
+
+    - id: QE023
+      question: "Does Aviatrix's OISF consortium membership produce verifiable open-source deliverables for the Suricata community?"
+      type: verification
+      targets: ["contentRequirements/3"]
+      status: answered
+
+    - id: QE024
+      question: "How many Suricata rules has Aviatrix contributed for AI-specific threat categories as of June 2026?"
+      type: quantification
+      targets: ["contentRequirements/2"]
+      status: answered
+
+    - id: QE025
+      question: "What is the Aviatrix Controller's mechanism for policy reconciliation across multi-cloud deployments?"
+      type: mechanism
+      targets: ["contentRequirements/2"]
+      status: answered
+
+    - id: QE026
+      question: "How does a CVSS 10.0 Controller vulnerability affect enterprise customers whose entire multi-cloud estate relies on the same control plane?"
+      type: adverse
+      targets: ["contentRequirements/5"]
+      status: answered
+
+    - id: QE027
+      question: "Are Aviatrix's SOC 2 and ISO 27001 certifications verifiable through public documentation?"
+      type: verification
+      targets: ["contentRequirements/5"]
+      status: partial
+
+  sources:
+    - id: SE001
+      publisher: Aviatrix
+      title: "Cloud Network Security | Runtime Protection for AI & Multicloud | Aviatrix"
+      url: "https://aviatrix.ai/"
+      date: "2026-06-23"
+      accessDate: "2026-06-23"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["CNSF", "containment era", "product overview", "PCPJack threat"]
+
+    - id: SE002
+      publisher: Aviatrix
+      title: "Cloud Native Security for Multicloud & AI | Aviatrix Platform"
+      url: "https://aviatrix.ai/platform/"
+      date: "2026-06-23"
+      accessDate: "2026-06-23"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["CNSF", "containment architecture", "chokepoint vs containment", "platform overview"]
+      keyQuote: "CNSF is the embedded enforcement fabric that makes Zero Trust a reality."
+
+    - id: SE003
+      publisher: Aviatrix
+      title: "Aviatrix Products – Unified Zero Trust Security Across All Clouds"
+      url: "https://aviatrix.ai/products/"
+      date: "2026-06-23"
+      accessDate: "2026-06-23"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["CNSF", "Zero Trust for Workloads", "Zero Trust for Networking", "product list", "compliance"]
+      keyQuote: "CNSF delivers audit-ready compliance with HIPAA 2025, PCI DSS 4.0, DORA, NIS2, and CISA ZTMM 2.0."
+
+    - id: SE004
+      publisher: Aviatrix
+      title: "Aviatrix Zero Trust Workloads Solution for Cloud Native Security"
+      url: "https://aviatrix.ai/products/zero-trust-for-workloads/"
+      date: "2026-06-23"
+      accessDate: "2026-06-23"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["Zero Trust for Workloads", "CNSF", "agentless deployment", "workload security"]
+
+    - id: SE005
+      publisher: Aviatrix
+      title: "Distributed Cloud Firewall (DCF) for the Modern Cloud | Aviatrix"
+      url: "https://aviatrix.ai/products/zero-trust-for-workloads/distributed-cloud-firewall/"
+      date: "2026-06-23"
+      accessDate: "2026-06-23"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["DCF", "SmartGroups", "inline enforcement", "policy-as-code", "CAI discovery"]
+      keyQuote: "Distributed Inline Enforcement at Source: Enforces full L4-L7 inspection directly at the source of traffic, dropping unauthorized connections at the first hop."
+
+    - id: SE006
+      publisher: Aviatrix
+      title: "AgentGuard: Network-Native AI Security | Aviatrix"
+      url: "https://aviatrix.ai/products/zero-trust-for-workloads/agentguard/"
+      date: "2026-06-23"
+      accessDate: "2026-06-23"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["AgentGuard", "shadow AI discovery", "network enforcement", "AI security", "blast radius"]
+      keyQuote: "Shadow AI Discovery is in early access. Network Enforcement is available today via Zero Trust for AI Workloads. Deep AI Observability and Advanced AI Guardrails ship Q3 2026."
+
+    - id: SE007
+      publisher: Aviatrix
+      title: "Aviatrix Zero Trust Networking Solution for Cloud Native Security"
+      url: "https://aviatrix.ai/products/zero-trust-for-networking/"
+      date: "2026-06-23"
+      accessDate: "2026-06-23"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["Zero Trust for Networking", "encryption", "SmartGroups", "segmentation", "compliance"]
+
+    - id: SE008
+      publisher: Aviatrix
+      title: "High-Performance Encryption for Multicloud Security | Aviatrix"
+      url: "https://aviatrix.ai/products/zero-trust-for-networking/high-performance-encryption/"
+      date: "2026-06-23"
+      accessDate: "2026-06-23"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["HPE", "encryption", "multi-tunnel ECMP", "throughput", "PQC"]
+      keyQuote: "HPE scales to 100+ Gbps hybrid throughput and up to 1 Tbps+ cloud-to-cloud using parallel tunnels and ECMP."
+
+    - id: SE009
+      publisher: Aviatrix
+      title: "Workload Threat Visibility: See What's Leaving Your Cloud | Aviatrix"
+      url: "https://aviatrix.ai/products/zero-trust-for-workloads/workload-threat-visibility/"
+      date: "2026-06-23"
+      accessDate: "2026-06-23"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["Workload Threat Visibility", "NAT sensor", "egress control", "compliance telemetry"]
+
+    - id: SE010
+      publisher: Aviatrix
+      title: "Microsoft Agent Control Specification: AI Agent Security Guide | Aviatrix"
+      url: "https://aviatrix.ai/microsoft-agent-control-specification/"
+      date: "2026-06-23"
+      accessDate: "2026-06-23"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["ACS", "Microsoft Agent Control Specification", "CNSF enforcement", "AI agent security", "blast radius", "LiteLLM supply chain"]
+      keyQuote: "Aviatrix's Cloud Native Security Fabric is the first multicloud enforcement substrate for the Microsoft Agent Control Specification."
+
+    - id: SE011
+      publisher: Aviatrix
+      title: "Contain. Detect. Eliminate. Aviatrix Deepens Its Investment in the Full Model (OISF blog)"
+      url: "https://aviatrix.ai/blog/aviatrix-joins-oisf/"
+      date: "2026-06-08"
+      accessDate: "2026-06-23"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["OISF", "Suricata", "IPS", "AI threat rules", "open source", "cloud-native detection"]
+      keyQuote: "The platform now ships 556 purpose-built Suricata rules covering AI-specific threat categories: prompt injection and jailbreak detection, sensitive data leakage, malicious tool usage, data exfiltration, agent-to-agent threats, and malicious file uploads."
+
+    - id: SE012
+      publisher: Aviatrix
+      title: "Aviatrix Zero Trust for AI Workloads"
+      url: "https://aviatrix.ai/zero-trust-for-ai-workloads/"
+      date: "2026-06-23"
+      accessDate: "2026-06-23"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["AI workloads", "zero trust", "shadow AI", "enterprise AI security"]
+
+    - id: SE013
+      publisher: Aviatrix
+      title: "Cloud Network Architecture & Implementation Use Cases | Aviatrix"
+      url: "https://aviatrix.ai/solutions/"
+      date: "2026-06-23"
+      accessDate: "2026-06-23"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["CNSF", "use cases", "lateral movement", "data exfiltration", "developer velocity"]
+
+    - id: SE014
+      publisher: Aviatrix
+      title: "Aviatrix Newsroom — Cloud Network Innovation News & Updates"
+      url: "https://aviatrix.ai/newsroom/"
+      date: "2026-06-23"
+      accessDate: "2026-06-23"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["newsroom", "OISF", "Microsoft ACS", "Containment Era", "press releases 2026"]
+
+    - id: SE015
+      publisher: Aviatrix
+      title: "Aviatrix Documentation — Index"
+      url: "https://docs.aviatrix.com/"
+      date: "2026-06-23"
+      accessDate: "2026-06-23"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["documentation", "CNSF", "deployment", "platform version 9.0"]
+
+    - id: SE016
+      publisher: Aviatrix
+      title: "Aviatrix Systems, Inc. Security Profile — Trust Center"
+      url: "https://trust.aviatrix.com/"
+      date: "2026-06-23"
+      accessDate: "2026-06-23"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["SOC 2", "ISO 27001", "TISAX", "GDPR", "CCPA", "compliance certifications"]
+      keyQuote: "Audits and Certifications (5): SOC 2, ISO 27001, TISAX, GDPR, CCPA."
+
+    - id: SE017
+      publisher: Open Information Security Foundation (OISF)
+      title: "OISF Consortium Membership Levels and Benefits"
+      url: "https://oisf.net/membership/"
+      date: "2025-01-01"
+      accessDate: "2026-06-23"
+      accessStatus: ok
+      stance: neutral
+      sourceType: partner-proof
+      reputationTier: medium
+      independence: independent
+      topics: ["OISF", "Suricata", "consortium membership", "open source security"]
+
+    - id: SE018
+      publisher: The Hacker News
+      title: "Hackers Exploit Aviatrix Controller Vulnerability to Deploy Backdoors and Crypto Miners"
+      url: "https://thehackernews.com/2025/01/hackers-exploit-aviatrix-controller.html"
+      date: "2025-01-13"
+      accessDate: "2026-06-23"
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics: ["CVE-2024-50603", "controller vulnerability", "active exploitation", "cryptominer", "Sliver C2", "lateral movement risk"]
+      keyQuote: "Around 3% of cloud enterprise environments have Aviatrix Controller deployed, out of which 65% of them demonstrate a lateral movement path to administrative cloud control plane permissions."
+
+    - id: SE019
+      publisher: NIST National Vulnerability Database
+      title: "NVD — CVE-2024-50603"
+      url: "https://nvd.nist.gov/vuln/detail/CVE-2024-50603"
+      date: "2025-01-09"
+      accessDate: "2026-06-23"
+      accessStatus: ok
+      stance: neutral
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics: ["CVE-2024-50603", "CVSS 10.0", "unauthenticated RCE", "OS command injection"]
+
+    - id: SE020
+      publisher: OWASP Foundation
+      title: "OWASP Top 10 for Large Language Model Applications"
+      url: "https://owasp.org/www-project-top-10-for-large-language-model-applications/"
+      date: "2025-12-01"
+      accessDate: "2026-06-23"
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: high
+      independence: independent
+      topics: ["OWASP", "LLM security", "prompt injection", "AI agent risks", "agentic applications"]
+
+    - id: SE021
+      publisher: OWASP GenAI Security Project
+      title: "LLM Top 10 — OWASP Gen AI Security Project"
+      url: "https://genai.owasp.org/llm-top-10/"
+      date: "2025-12-01"
+      accessDate: "2026-06-23"
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: high
+      independence: independent
+      topics: ["OWASP GenAI", "agentic AI", "LLM risks", "AI security taxonomy"]
+
+    - id: SE022
+      publisher: CISA
+      title: "Known Exploited Vulnerabilities Catalog | CISA"
+      url: "https://www.cisa.gov/known-exploited-vulnerabilities-catalog"
+      date: "2026-06-23"
+      accessDate: "2026-06-23"
+      accessStatus: ok
+      stance: neutral
+      sourceType: regulatory
+      reputationTier: high
+      independence: independent
+      topics: ["CISA KEV", "CVE-2024-50603", "exploited vulnerabilities", "federal patching mandate"]
+
+    - id: SE023
+      publisher: Help Net Security
+      title: "Aviatrix — Help Net Security Coverage 2026"
+      url: "https://www.helpnetsecurity.com/2026/06/aviatrix/"
+      date: "2026-06-07"
+      accessDate: "2026-06-23"
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: ["Aviatrix historical", "multi-cloud transit networking", "Splunk customer", "Teradata customer"]
+
+    - id: SE024
+      publisher: HashiCorp / Terraform Registry
+      title: "Aviatrix Terraform Provider — registry.terraform.io"
+      url: "https://registry.terraform.io/providers/AviatrixSystems/aviatrix/latest"
+      date: "2026-06-23"
+      accessDate: "2026-06-23"
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: independent
+      topics: ["Terraform", "infrastructure-as-code", "policy automation", "developer integration"]
+
+    - id: SE025
+      publisher: Aviatrix
+      title: "Aviatrix Blog — Cloud Network Technical Blog & Insights"
+      url: "https://aviatrix.ai/blog/"
+      date: "2026-06-23"
+      accessDate: "2026-06-23"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["blog", "containment era", "AI security", "threat research"]
+
+    - id: SE026
+      publisher: PeerSpot
+      title: "Aviatrix Reviews 2026"
+      url: "https://www.peerspot.com/products/aviatrix-reviews"
+      date: "2026-06-23"
+      accessDate: "2026-06-23"
+      accessStatus: ok
+      stance: neutral
+      sourceType: review
+      reputationTier: medium
+      independence: independent
+      topics: ["customer reviews", "peer evaluation", "multicloud networking", "product ratings"]
+
+  claims:
+    - id: CE001
+      statement: "Aviatrix Cloud Native Security Fabric (CNSF) is the flagship platform umbrella comprising two product lines: Zero Trust for Workloads and Zero Trust for Networking."
+      type: observed
+      topic: platform architecture
+      sourceRefs: [SE001, SE003]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE001, QE010]
+
+    - id: CE002
+      statement: "CNSF embeds zero trust enforcement directly into the cloud network fabric, brokering identity-aware, one-to-one workload communication across AWS, Azure, GCP, and OCI."
+      type: company-claimed
+      topic: platform architecture
+      sourceRefs: [SE002, SE003]
+      confidence: high
+      freshness: current
+
+    - id: CE003
+      statement: "CNSF operates agentlessly—no SDK changes, no kernel modules, and no application rewrites are required for deployment."
+      type: company-claimed
+      topic: deployment model
+      sourceRefs: [SE004, SE003]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE006]
+
+    - id: CE004
+      statement: "The CNSF architecture uses a central Aviatrix Controller for policy management and cloud API integration, spoke gateways for inline enforcement, and CoPilot for cross-cloud visibility and compliance reporting."
+      type: observed
+      topic: platform architecture
+      sourceRefs: [SE005, SE002]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE016, QE025]
+
+    - id: CE005
+      statement: "In CNSF's Containment Architecture, policy is auto-propagated to every workload at deploy time across all supported clouds, enforcing governance at the workload boundary rather than at a shared egress point."
+      type: company-claimed
+      topic: platform architecture
+      sourceRefs: [SE002, SE005]
+      confidence: medium
+      freshness: current
+
+    - id: CE006
+      statement: "Aviatrix positions the current security era as 'The Containment Era,' describing containment as the architectural successor to detection-first security models."
+      type: company-claimed
+      topic: product positioning
+      sourceRefs: [SE001, SE002]
+      confidence: high
+      freshness: current
+
+    - id: CE007
+      statement: "Aviatrix's official documentation is hosted at docs.aviatrix.com; as of June 2026 the production platform version is 9.0."
+      type: observed
+      topic: product maturity
+      sourceRefs: [SE015, SE014]
+      confidence: high
+      freshness: current
+
+    - id: CE008
+      statement: "Distributed Cloud Firewall (DCF) provides inline L4-L7 enforcement at spoke gateways without hairpinning traffic through a centralized firewall appliance."
+      type: company-claimed
+      topic: DCF architecture
+      sourceRefs: [SE005, SE002]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE002]
+
+    - id: CE009
+      statement: "DCF's SmartGroups enable identity-based workload policies that span AWS, Azure, and GCP with a single policy definition, enforced consistently across clouds."
+      type: company-claimed
+      topic: DCF architecture
+      sourceRefs: [SE005, SE003]
+      confidence: high
+      freshness: current
+
+    - id: CE010
+      statement: "DCF supports WebGroups for north-south internet egress control including FQDN-based filtering and full URL-path-level control."
+      type: observed
+      topic: DCF features
+      sourceRefs: [SE005, SE003]
+      confidence: high
+      freshness: current
+
+    - id: CE011
+      statement: "All DCF policies are managed as code through Terraform and CI/CD pipelines, enabling version control, peer review, and automated deployment."
+      type: company-claimed
+      topic: DCF deployment
+      sourceRefs: [SE005, SE024]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE013]
+
+    - id: CE012
+      statement: "DCF uses Cloud Asset Inventory (CAI) for continuous workload discovery, including VMs, containers, serverless functions, and managed services—including ephemeral resources legacy tools miss."
+      type: company-claimed
+      topic: DCF architecture
+      sourceRefs: [SE005]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE017]
+
+    - id: CE013
+      statement: "High Performance Encryption (HPE) uses a patented multi-tunnel, multi-core architecture achieving 100+ Gbps hybrid throughput and up to 1 Tbps+ cloud-to-cloud using parallel tunnels and ECMP."
+      type: company-claimed
+      topic: HPE performance
+      sourceRefs: [SE008, SE003]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE003, QE019]
+
+    - id: CE014
+      statement: "HPE delivers software-defined encryption replacing hardware VPNs and scales elastically with cloud compute; standard AWS or Azure VPN gateways are limited to approximately 1.25 Gbps per tunnel."
+      type: company-claimed
+      topic: HPE architecture
+      sourceRefs: [SE008]
+      confidence: medium
+      freshness: current
+
+    - id: CE015
+      statement: "HPE includes a Crypto-Agility Engine designed for seamless algorithm upgrades including post-quantum cryptography (PQC) readiness."
+      type: company-claimed
+      topic: HPE roadmap
+      sourceRefs: [SE008, SE007]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE009]
+
+    - id: CE016
+      statement: "Workload Threat Visibility (WTV) transforms Aviatrix NAT Gateways into security sensors providing unified cross-cloud outbound visibility, exposing malicious destinations and reducing NAT cost and complexity."
+      type: company-claimed
+      topic: WTV architecture
+      sourceRefs: [SE009]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE014]
+
+    - id: CE017
+      statement: "Aviatrix also offers an Aviatrix Cloud Firewall and Secure Datacenter Edge product line focused on high-performance perimeter protection for datacenter and edge workloads."
+      type: observed
+      topic: product portfolio
+      sourceRefs: [SE013, SE014]
+      confidence: medium
+      freshness: current
+
+    - id: CE018
+      statement: "CoPilot provides a centralized cross-cloud visibility, monitoring, policy visualization, and compliance-reporting layer on top of the distributed CNSF enforcement fabric."
+      type: company-claimed
+      topic: CoPilot
+      sourceRefs: [SE002, SE007]
+      confidence: high
+      freshness: current
+
+    - id: CE019
+      statement: "AgentGuard's Shadow AI Discovery capability is in early access as of June 2026, with a claimed 15-minute time-to-first-value for discovering all AI agents in a cloud environment."
+      type: company-claimed
+      topic: AgentGuard AI security
+      sourceRefs: [SE006]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE005, QE018]
+
+    - id: CE020
+      statement: "AgentGuard discovers AI agents, MCP servers, and LLM endpoints via VPC Flow Logs, DNS logs, and Cloud Asset Inventory analysis—without requiring SDK instrumentation or code changes."
+      type: company-claimed
+      topic: AgentGuard architecture
+      sourceRefs: [SE006, SE012]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE005]
+
+    - id: CE021
+      statement: "AgentGuard covers AI agent frameworks including Strands, LangChain, and AutoGen, and supports LLM providers: OpenAI, Anthropic, Bedrock, Vertex, Cohere, and Mistral."
+      type: observed
+      topic: AgentGuard coverage
+      sourceRefs: [SE006, SE004]
+      confidence: high
+      freshness: current
+
+    - id: CE022
+      statement: "AgentGuard's Deep AI Observability and Advanced AI Guardrails capabilities are on the product roadmap for Q3 2026; they are not yet generally available."
+      type: company-claimed
+      topic: AgentGuard roadmap
+      sourceRefs: [SE006]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE022]
+
+    - id: CE023
+      statement: "On June 4, 2026, Aviatrix announced it is one of the first multicloud network-layer enforcement substrates for the Microsoft Agent Control Specification (ACS), available at no additional cost to existing customers."
+      type: company-claimed
+      topic: ACS integration
+      sourceRefs: [SE010, SE014]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE007]
+
+    - id: CE024
+      statement: "The ACS integration uses a single .guardrails.yaml policy file compiled into an Aviatrix DCF custom resource definition, deployable via GitHub Actions, Argo, Flux, or any CI runner."
+      type: company-claimed
+      topic: ACS integration
+      sourceRefs: [SE010]
+      confidence: medium
+      freshness: current
+
+    - id: CE025
+      statement: "The ACS integration creates two enforcement planes for AI agents: the Microsoft Agent Control SDK (in-process) and the Aviatrix CNSF (network-layer), both governed by the same .guardrails.yaml policy file."
+      type: company-claimed
+      topic: ACS integration
+      sourceRefs: [SE010]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE007]
+
+    - id: CE026
+      statement: "Aviatrix joined OISF as a consortium member on June 8, 2026, contributing 556 purpose-built Suricata rules for AI-specific threat categories and multicloud reference architectures to the open-source community."
+      type: company-claimed
+      topic: OISF membership
+      sourceRefs: [SE011, SE017]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE023, QE024]
+
+    - id: CE027
+      statement: "Suricata has been embedded in the Aviatrix platform as its core IPS engine since initial integration, performing inline deep packet inspection, TLS decryption, and custom rule matching."
+      type: company-claimed
+      topic: Suricata IPS integration
+      sourceRefs: [SE011, SE017]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE011]
+
+    - id: CE028
+      statement: "Aviatrix's OWASP-referenced threat model cites the OWASP Top 10 for Agentic Applications and peer-reviewed by over 100 security researchers, published December 2025, as the formal taxonomy for AI agent risks."
+      type: third-party-reported
+      topic: AI security framework
+      sourceRefs: [SE010, SE020, SE021]
+      confidence: high
+      freshness: historical
+      answersQuestionRefs: [QE015]
+
+    - id: CE029
+      statement: "CNSF delivers audit-ready compliance telemetry supporting HIPAA 2025, PCI DSS 4.0, DORA, NIS2, and CISA ZTMM 2.0 frameworks through CoPilot reporting and HPE encryption."
+      type: company-claimed
+      topic: compliance
+      sourceRefs: [SE003, SE007]
+      confidence: medium
+      freshness: current
+
+    - id: CE030
+      statement: "CVE-2024-50603 (CVSS 10.0) is an unauthenticated remote code execution vulnerability in the Aviatrix Controller caused by API endpoints failing to sanitize user-supplied input, allowing OS command injection."
+      type: third-party-reported
+      topic: CVE security vulnerability
+      sourceRefs: [SE018, SE019]
+      confidence: high
+      freshness: historical
+      answersQuestionRefs: [QE008, QE026]
+
+    - id: CE031
+      statement: "CVE-2024-50603 was actively exploited in January 2025 to deploy XMRig cryptominers and the Sliver C2 framework; CISA added it to the Known Exploited Vulnerabilities catalog on January 16, 2025."
+      type: third-party-reported
+      topic: CVE exploitation
+      sourceRefs: [SE018, SE022]
+      confidence: high
+      freshness: historical
+      answersQuestionRefs: [QE008, QE026]
+
+    - id: CE032
+      statement: "Wiz reported that 3% of cloud enterprise environments have Aviatrix Controller deployed, and 65% of those environments have a default lateral movement path to administrative cloud control plane permissions on AWS."
+      type: third-party-reported
+      topic: CVE impact
+      sourceRefs: [SE018, SE019]
+      confidence: high
+      freshness: historical
+      answersQuestionRefs: [QE026]
+
+    - id: CE033
+      statement: "Aviatrix issued a hot patch for CVE-2024-50603 in early November 2024 covering versions down to 6.7 (including end-of-support releases), and released permanent fixes for versions 7.1.4191 and 7.2.4996 on December 19, 2024—prior to public PoC availability."
+      type: company-claimed
+      topic: CVE remediation
+      sourceRefs: [SE018, SE022]
+      confidence: high
+      freshness: historical
+      answersQuestionRefs: [QE008]
+
+    - id: CE034
+      statement: "Aviatrix's Trust Center lists 5 audits and certifications (SOC 2, ISO 27001, TISAX, GDPR, CCPA), 30 additional documents, 15 policies, and 2 pentest reports."
+      type: observed
+      topic: trust certifications
+      sourceRefs: [SE016, SE014]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE004, QE027]
+
+    - id: CE035
+      statement: "CNSF is deployed as software-defined overlays inside customer-owned VPCs and VNets with no hardware appliances, no network re-architecture, and no application changes required."
+      type: company-claimed
+      topic: deployment model
+      sourceRefs: [SE004, SE003]
+      confidence: high
+      freshness: current
+
+    - id: CE036
+      statement: "The Aviatrix Controller automates provisioning, tunnel orchestration, policy enforcement, key management, and lifecycle operations across the entire multi-cloud deployment."
+      type: company-claimed
+      topic: controller automation
+      sourceRefs: [SE008, SE005]
+      confidence: medium
+      freshness: current
+
+    - id: CE037
+      statement: "Aviatrix CNSF supports AWS, Azure, GCP, OCI, and on-premises Kubernetes; the platform is available on AWS Marketplace and Azure Marketplace with a 30-day free trial for Aviatrix Enterprise."
+      type: company-claimed
+      topic: deployment availability
+      sourceRefs: [SE003, SE010]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE012]
+
+    - id: CE038
+      statement: "A single Terraform provider (AviatrixSystems/aviatrix on registry.terraform.io) enables infrastructure-as-code automation combining network and application CI/CD pipelines."
+      type: observed
+      topic: developer integration
+      sourceRefs: [SE024, SE005]
+      confidence: medium
+      freshness: current
+
+    - id: CE039
+      statement: "Unlike native cloud security groups or managed firewalls (AWS Network Firewall, Azure Firewall, GCP VPC Firewall), Aviatrix CNSF defines policy once and enforces it consistently across all supported clouds without per-cloud tooling."
+      type: company-claimed
+      topic: differentiation
+      sourceRefs: [SE002, SE005]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE021]
+
+    - id: CE040
+      statement: "Aviatrix's Containment Architecture enforces at every workload on every path, while chokepoint security (traditional NGFW/transit firewall) only governs traffic routed through the inspection point."
+      type: company-claimed
+      topic: differentiation
+      sourceRefs: [SE002]
+      confidence: medium
+      freshness: current
+
+    - id: CE041
+      statement: "AgentGuard inverts the traditional developer-first AI security model: security teams deploy it network-side without requiring developer compliance or SDK adoption."
+      type: company-claimed
+      topic: AgentGuard differentiation
+      sourceRefs: [SE006]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE021]
+
+    - id: CE042
+      statement: "Aviatrix offers a free Workload Attack Path Assessment tool for breach-chain visualization and risk discovery, available before any deployment commitment."
+      type: company-claimed
+      topic: product evaluation
+      sourceRefs: [SE004, SE003]
+      confidence: high
+      freshness: current
+
+  evidenceGaps:
+    - type: private-evidence-only
+      severity: material
+      topic: HPE performance
+      missingEvidence: "Independent third-party benchmark confirming 100+ Gbps hybrid and 1 Tbps+ cloud-to-cloud throughput figures"
+      whyItMatters: "HPE performance is a key differentiator claim; without independent validation, buyers cannot confirm these figures hold in production at their traffic mix and instance types"
+      diligencePath: "Request Aviatrix to provide reference customer performance data under NDA; commission independent proof-of-concept test on representative AWS or Azure instance types"
+      relatedQuestionRefs: [QE003, QE017]
+
+    - type: private-evidence-only
+      severity: material
+      topic: AgentGuard pre-GA
+      missingEvidence: "Production deployment evidence for AgentGuard: number of customer environments using Shadow AI Discovery, false positive rates, and GA timeline confirmation"
+      whyItMatters: "AgentGuard is the core AI security story and is pre-GA; the 15-minute discovery claim and blast radius quantification are unverified; Q3 2026 roadmap dates are not contractually binding"
+      diligencePath: "Request Aviatrix for early access reference customers and documented outcomes; re-evaluate at AgentGuard GA (est. H2 2026)"
+      relatedQuestionRefs: [QE018, QE022]
+
+    - type: private-evidence-only
+      severity: material
+      topic: compliance certifications
+      missingEvidence: "Full SOC 2 report (Type I or II), ISO 27001 certificate with scope and certifying body, and QSA/third-party validation for PCI DSS 4.0 and HIPAA 2025 alignment claims"
+      whyItMatters: "Buyers in regulated industries need third-party attestation, not self-certified alignment; the distinction between 'product-aligned' and 'formally assessed' affects procurement decisions"
+      diligencePath: "Request SOC 2 Type II report under NDA; ask for ISO 27001 certificate with accredited body name; engage a PCI QSA to evaluate CNSF in the buyer's cardholder data environment"
+      relatedQuestionRefs: [QE020, QE027]
+
+    - type: enumeration-incomplete
+      severity: minor
+      topic: ACS integration production deployments
+      missingEvidence: "Number of enterprise customers with Microsoft ACS integration running in production as of June 2026"
+      whyItMatters: "ACS integration was announced as Early Access with limited production history; first-mover advantage claim cannot be validated without confirmed production deployments"
+      diligencePath: "Ask Aviatrix for named reference customers using ACS integration in production after 60-day burn-in"
+      relatedQuestionRefs: [QE007]
+
+    - type: private-evidence-only
+      severity: material
+      topic: Controller availability and failure modes
+      missingEvidence: "Documented spoke gateway behavior and policy enforcement continuity during Controller outage, and HA configuration architecture details"
+      whyItMatters: "CVE-2024-50603 and the Controller-as-single-orchestration-point architecture make Controller availability a critical operational risk; buyers need documented HA guarantees"
+      diligencePath: "Review Aviatrix HA architecture documentation; test Controller failover in proof-of-concept; request SLA commitments for SaaS Controller"
+      relatedQuestionRefs: [QE016]
+
+    - type: stale
+      severity: minor
+      topic: Suricata AI rules efficacy
+      missingEvidence: "Third-party validation of the 556 AI-specific Suricata rules; false positive rates in production cloud environments beyond Aviatrix's own zero-false-positive gateway validation"
+      whyItMatters: "Zero false positive claim was validated against benign traffic on Aviatrix gateways; customer environments with diverse AI workloads may produce different results"
+      diligencePath: "Request OISF community review of contributed rules; test rules in customer sandbox environment with realistic AI agent traffic mix"
+      relatedQuestionRefs: [QE024]
