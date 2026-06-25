@@ -1,0 +1,1591 @@
+schemaVersion: "report-v2"
+artifact: product-tech
+slug: lmarena
+runDate: "2026-06-25"
+company:
+  name: LMArena
+
+chapter:
+  number: 5
+  title: "Product & Technology"
+  summary: >
+    LMArena operates a multi-arena evaluation platform covering ten distinct modalities (text, code,
+    search, agent, vision, image generation, video generation, image editing, document, and web dev),
+    all powered by an open-source Bradley-Terry ranking engine (Arena-Rank) and a novel causal-tracing
+    methodology for agentic evaluation. The platform's technical differentiation rests on scale (250M+
+    conversations, 5M+ monthly users), methodological transparency (Apache 2.0 codebase, peer-reviewed
+    papers), and real-world signal quality. Substantive product gaps include the absence of published
+    SOC 2/ISO 27001 certifications, no public API for third-party leaderboard integration, and residual
+    credibility risk from the Meta Llama 4 gaming incident and the Cohere/Stanford benchmark-bias paper.
+
+sections:
+  - id: product-portfolio
+    title: "Product Portfolio and Arena Modalities"
+    body: >
+      LMArena's core user-facing product is the Arena platform at arena.ai, which presents battles
+      between two anonymized AI models for a given prompt and records the community's preference vote.
+      As of June 2026 the platform supports ten distinct evaluation arenas: Text (general chat),
+      Code (agentic web-development and coding), Search (retrieval-augmented generation), Agent
+      (autonomous multi-step task completion), Vision (multimodal understanding), Text-to-Image
+      (image generation), Text-to-Video (video generation), Image Edit (image-editing models),
+      Document (long-form document analysis), and a separate Direct Chat mode where users interact
+      with a chosen model without the pairwise battle structure. The Agent Arena is the newest and
+      most technically complex arena, launched June 4, 2026, which ranks orchestrator models on
+      causal treatment effects derived from 2M+ tool calls per week. Code Arena, rebuilt from the
+      earlier WebDev Arena (launched December 2024), operates as a live, isolated coding environment
+      where models autonomously create, modify, and execute files through structured tool calls, with
+      outputs persisted in Cloudflare R2 and displayed via CodeMirror 6. Since May 2026 LMArena also
+      includes "Battles in Direct," routing 10% of Direct Chat sessions into anonymous pairwise battles
+      to increase daily vote volume. The commercial product, AI Evaluations (launched September 2025),
+      is a contract evaluation service sold to AI labs and enterprises, offering in-depth evaluations
+      with representative feedback samples and SLA-backed delivery timelines. All public model
+      evaluations are available free of charge on the public leaderboard; the commercial product adds
+      private, confidential, SLA-governed evaluation runs.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE008
+      - CE012
+      - CE029
+      - CE032
+      - CE033
+      - CE039
+      - CE040
+    tableRefs:
+      - TE001
+    figureRefs:
+      - FE001
+
+  - id: technical-architecture
+    title: "Technical Architecture and Evaluation Methodology"
+    body: >
+      All Arena leaderboards use the Bradley-Terry (BT) pairwise comparison model, which infers a
+      latent skill coefficient for each model from win/loss outcomes. LMArena's Arena-Rank Python
+      package, open-sourced under Apache 2.0 and published on GitHub and PyPI, implements the BT
+      fitting with closed-form confidence-interval calculation and a 30x speedup over the historical
+      FastChat implementation. The package also supports reweighting to correct for non-uniform
+      sampling, meaning models with fewer battles are not penalized. Style-control extensions layer
+      additional covariates (token length, markdown header count, markdown bold count, markdown list
+      count) into the BT regression to separate substance from stylistic formatting effects; coefficient
+      estimation shows that length is the dominant style factor. For the Agent Arena, ranking uses
+      causal tracing rather than pairwise votes: the arena treats each component selection as a
+      treatment in a multi-intervention randomized controlled trial, aggregating multiple behavioral
+      signals (confirmed success, praise/complaint, steerability, bash-error recovery, tool
+      hallucination) into a single net-improvement estimate per model. The Arena-Hard pipeline (BenchBuilder,
+      arXiv:2406.11939) automates benchmark construction by extracting hard prompts from the live
+      Arena dataset via a seven-criterion hardness labeler; Arena-Hard-Auto v0.1 achieves 98.6%
+      agreement with human preference rankings at a cost of approximately $20. The Search Arena
+      methodology, published as a dataset and paper accepted at ICLR 2026 (arXiv:2506.05334), extends
+      the BT model to search-augmented LLM systems across 11+ models from Perplexity, Gemini, and
+      OpenAI. Prior to sharing any conversation data, LMArena uses GCP's Sensitive Data Protection API
+      to remove personally identifiable information. Since July 2025, methodology updates are publicly
+      logged in the Leaderboard Changelog.
+    claimRefs:
+      - CE003
+      - CE009
+      - CE013
+      - CE014
+      - CE015
+      - CE016
+      - CE017
+      - CE018
+      - CE034
+      - CE035
+      - CE036
+    tableRefs:
+      - TE003
+    figureRefs:
+      - FE002
+      - FE003
+
+  - id: deployment-infrastructure
+    title: "Deployment, Data Infrastructure, and Developer Ecosystem"
+    body: >
+      The Arena-Rank ranking engine is published as a pip-installable Python package
+      (pip install arena-rank) under the lmarena GitHub organization, which also hosts the
+      list repository. The FastChat repository (lm-sys/FastChat, now primarily in maintenance mode)
+      originally powered Chatbot Arena and remains a reference for the Vicuna model weights. The
+      lmarena-ai HuggingFace organization hosts p2l (prompt-to-leaderboard) model variants used
+      internally for preference modeling, and releases public battle datasets (e.g.,
+      arena-human-preference-140k) to support external research. As of June 2026 the changelog
+      records ongoing model additions at a pace of several new models per week across leaderboards.
+      The Code Arena's persistent sessions are built on Cloudflare R2 storage with CodeMirror 6
+      for source views and live rendering of generated web applications. Agent Mode sessions averaged
+      approximately 16.5 structured tool calls per session, with roughly 75.6% of sessions using at
+      least one tool; the highest-use sessions ran very long chains in a single week, covering coding,
+      file creation, and web synthesis tasks. In one measured 7-day window, Agent Mode wrote 40.3
+      million lines of code across successful write_file calls, approximately 1,000 lines per coding
+      session. Battles in Direct, integrated since May 2026, converts 10% of direct chat sessions into
+      pairwise battles, with position-bias and same-org-indicator corrections applied to the BT fit.
+      No API is publicly documented for third-party consumption of Arena scores or raw vote data, though
+      open datasets are released periodically on HuggingFace.
+    claimRefs:
+      - CE013
+      - CE014
+      - CE015
+      - CE019
+      - CE030
+      - CE031
+      - CE033
+      - CE042
+    tableRefs:
+      - TE002
+    figureRefs:
+      - FE004
+
+  - id: differentiation-ip
+    title: "Differentiation, IP, and Research Advantage"
+    body: >
+      LMArena's core differentiation is the combination of real-world, in-the-wild data at scale with
+      methodological transparency. Unlike static academic benchmarks (MMLU, HumanEval) or automated
+      LLM-as-judge pipelines, Arena captures genuine multi-turn user interactions across diverse
+      languages, topics, and skill levels. Published research validates this approach: the original
+      Chatbot Arena paper (arXiv:2403.04132) showed >80% agreement with expert raters; MT-Bench
+      (NeurIPS 2023) demonstrated that LLM-as-a-judge can achieve human-level inter-rater agreement.
+      The Arena-Hard benchmark (arXiv:2406.11939) achieves 3× higher model separation than MT-Bench
+      at a fraction of the cost. The Search Arena ICLR 2026 paper (arXiv:2506.05334) extends the
+      methodology to retrieval-augmented systems, demonstrating preference correlations with citation
+      count and cited source types. LMSYS (the precursor nonprofit) published the foundational
+      evaluation methodology papers that underpin the current company's differentiation; those papers
+      are widely cited across the AI industry. The HuggingFace organization releases preference
+      datasets (140k+ labeled battle pairs) enabling external researchers to audit rankings
+      independently. The company's 9 published papers and 15+ blog posts covering evaluation
+      methodology constitute a recognized body of IP. However, methodological assets are openly shared,
+      which means rivals can replicate the algorithm while the company retains the data-network
+      advantage (scale of battles) and community trust as the lasting moat.
+    claimRefs:
+      - CE003
+      - CE016
+      - CE035
+      - CE036
+      - CE037
+      - CE039
+      - CE040
+    tableRefs:
+      - TE005
+
+  - id: trust-safety-compliance
+    title: "Trust, Safety, Quality Controls, and Adverse Evidence"
+    body: >
+      LMArena's public leaderboard policy (last updated April 30, 2026) specifies eligibility criteria
+      for model listing, a sampling policy requiring ≥20% of battles to be between publicly available
+      models, a pre-release testing protocol for anonymized models, and a data-sharing policy using
+      GCP's Sensitive Data Protection API to sanitize conversations before release. However, as of
+      June 2026 LMArena has not published SOC 2 Type II or ISO 27001 certifications, no third-party
+      security audit is publicly disclosed, and the help.arena.ai privacy policy page lacks enterprise
+      data processing agreement (DPA) details. The platform has faced two serious credibility challenges.
+      First, in April 2025 Meta submitted an "experimental, chat-optimized" version of Llama 4 Maverick
+      that ranked #2 on the arena but was not the publicly released model; LMArena subsequently updated
+      its policy and rescored the public version, which fell to 32nd place. Second, a paper authored
+      by Cohere, Stanford, MIT, and AI2 in April 2025 alleged that certain large labs (Meta, OpenAI,
+      Google, Amazon) received disproportionately high sampling rates and could selectively suppress
+      low-performing pre-release variants, constituting benchmark gaming; LMArena denied the
+      inaccuracies and pointed to its published sampling transparency. These incidents create ongoing
+      reputational risk and have prompted calls from the research community for tighter pre-release
+      limits, independent audits, and algorithmic transparency. The AI Evaluations commercial product
+      offers SLA commitments but detailed uptime SLA terms and security disclosures are not public.
+    claimRefs:
+      - CE020
+      - CE021
+      - CE022
+      - CE023
+      - CE024
+      - CE025
+      - CE026
+      - CE027
+      - CE028
+      - CE037
+      - CE038
+    tableRefs:
+      - TE004
+
+tables:
+  - id: TE001
+    title: "Product Module and Arena Asset Matrix"
+    columns:
+      - "Arena / Module"
+      - "User / Buyer"
+      - "Status / Maturity"
+      - "Evaluation Method"
+      - "Key Differentiation"
+      - "Diligence Gap"
+    rows:
+      - ["Text Arena (Chatbot Arena)", "General users, researchers, model providers", "Live / Mature (since 2023)", "Bradley-Terry pairwise votes", "250M+ real conversations; style-controlled rankings", "No independent reliability audit of BT estimates"]
+      - ["Code Arena", "Developers, enterprises, model providers", "Live / Growing (rebuilt 2026)", "Pairwise votes on generated web apps; agentic tool-call environment", "Persistent sessions, CodeMirror 6 live preview, Cloudflare R2 snapshots", "Functional correctness vs. preference divergence not quantified"]
+      - ["Agent Arena", "Power users, enterprises, model providers", "Live / Early (launched Jun 2026)", "Causal tracing: multi-signal RCT framework", "Novel methodology; 2M+ weekly tool calls; first causal agent leaderboard", "Signal selection and causal model assumptions not peer-reviewed yet"]
+      - ["Search Arena", "Researchers, model providers, enterprises", "Live / Growing", "Bradley-Terry; citation-style randomization", "ICLR 2026 paper; 24k+ battles; grounding quality analysis", "Only 3 providers supported; geolocation feature limited"]
+      - ["WebDev Arena", "Developers, model providers", "Live / Stable (since Dec 2024)", "Bradley-Terry on web app preference votes", "80k+ votes; topic modeling analysis; CSS/JS/HTML generation", "Predecessor to Code Arena; methodological refresh pending"]
+      - ["Vision Arena", "Multimodal users, model providers", "Live / Stable", "Bradley-Terry pairwise votes on image-understanding tasks", "Covers major multimodal models", "Coverage limited relative to text arena; image fidelity metrics not included"]
+      - ["Text-to-Image Arena", "Creative users, model providers", "Live / Growing", "Pairwise preference votes on generated images", "Covers Flux, Midjourney, DALL-E, etc.", "Aesthetic preference vs. prompt adherence not separated"]
+      - ["Text-to-Video Arena", "Creative users, model providers", "Live / Early", "Pairwise preference votes on generated video clips", "Early-stage; wan2.7-t2v, gemini-omni-flash added in 2026", "Limited vote volume; temporal coherence not separately scored"]
+      - ["Document Arena", "Enterprise users, model providers", "Live / Growing", "Bradley-Terry pairwise votes on document tasks", "Long-context evaluation; added to several leaderboards in 2026", "Specific document-type breakdowns not published"]
+      - ["AI Evaluations (commercial)", "AI labs, enterprises", "GA since Sep 2025", "Private evaluation with SLA delivery; community-grounded feedback", "$30M ARR run-rate in Dec 2025; OpenAI, Google, xAI cited as customers", "SLA terms, security disclosures, DPA not public"]
+      - ["Direct Chat", "All users", "Live / Stable", "No evaluation; free model access", "No-paywall access to frontier models", "Not revenue-generating; cost center for inference"]
+      - ["AI Evaluations (API/pipeline)", "Enterprises, developers", "Roadmap / planned", "Programmatic evaluation submission", "Would unlock self-serve evaluation at scale", "No timeline announced; pre-launch risk"]
+    notes: "Status and vote counts derived from official LMArena blog posts, leaderboard changelog, and press releases through June 2026. Diligence gaps are researcher inference."
+    enumerationScope:
+      coverage: partial
+      basis: "Covers all modality-specific arenas publicly documented on arena.ai and in the changelog as of June 25, 2026; excludes unreleased or private-testing arenas not yet made public."
+    claimRefs:
+      - CE001
+      - CE002
+      - CE008
+      - CE012
+      - CE029
+      - CE032
+      - CE033
+      - CE039
+
+  - id: TE002
+    title: "Key User Workflow and Use-Case Table"
+    columns:
+      - "User Job"
+      - "Legacy Workflow"
+      - "LMArena Solution"
+      - "Measurable Benefit"
+      - "Known Limitation"
+    rows:
+      - ["Compare LLM quality before selecting for production", "Run internal A/B tests; rely on static benchmarks (MMLU, HumanEval)", "Text/Code Arena pairwise battle vote; see real-user preference at scale", "Statistically calibrated ranking with 95% CIs; style-controlled and hard-prompt subsets", "Rankings reflect general user preferences, not enterprise-specific use cases"]
+      - ["Benchmark agentic coding models for real workloads", "Static code-correctness benchmarks; synthetic test suites", "Code Arena: isolated agent environment; live web app generation; persistent sessions", "Agentic, multi-turn behavior captured; shareable runs", "Correctness vs. aesthetic preference not separated; limited programming-language diversity"]
+      - ["Evaluate search-augmented LLMs for retrieval tasks", "SimpleQA static benchmarks; manual annotation", "Search Arena: crowdsourced votes on multi-turn search-RAG outputs", "24k+ paired interactions; citation-count analysis; ICLR 2026 validation", "Only 3 providers currently; academic/domain-specific coverage limited"]
+      - ["Measure autonomous agent performance for business tasks", "Manual human rater sessions; tool-specific benchmarks", "Agent Arena: causal tracing across 2M+ weekly tool calls; 5-signal leaderboard", "RCT-based causal treatment effects; interpretable per-signal breakdowns", "Methodology not yet peer-reviewed; signal set will evolve"]
+      - ["Get confidential model evaluation with SLA for pre-launch", "Proprietary red-teaming or vendor-specific eval teams", "AI Evaluations: private evaluation with SLA, representative feedback, data samples", "Grounded in real-world human preferences; certified delivery timeline", "Pricing, SLA terms, and security details not publicly disclosed"]
+    notes: "Workflows are synthesized from LMArena blog posts, academic papers, and TechCrunch reporting. Benefit claims are company-stated unless marked as researcher inference."
+    claimRefs:
+      - CE002
+      - CE009
+      - CE012
+      - CE029
+
+  - id: TE003
+    title: "Technology and Operating Architecture"
+    columns:
+      - "Layer / Component"
+      - "Role"
+      - "Dependency / Implementation"
+      - "Risk"
+    rows:
+      - ["Arena-Rank (ranking engine)", "Computes BT coefficients, confidence intervals, style-controlled scores for all arenas", "Open-source Python package (Apache 2.0); GitHub lmarena/arena-rank; PyPI arena-rank", "Methodology open = reproducible but also replicable by rivals"]
+      - ["Bradley-Terry pairwise model", "Core statistical model; infers latent skill from win/loss battles", "Custom Python implementation; 30x speedup over FastChat baseline; closed-form CIs", "Model assumptions (IID battles, no temporal drift) may degrade under heavy sampling manipulation"]
+      - ["Style-control extension", "Separates substance from formatting effects in BT regression", "Additive covariate regression; length, markdown headers, bold, list counts", "Only four style covariates; richer semantic style not yet captured"]
+      - ["Causal tracing (Agent Arena)", "Ranks agent components via multi-intervention RCT; measures net treatment effects", "Custom statistical framework combining 5 behavioral signals", "Novel methodology; causal identification assumptions unvalidated by third parties"]
+      - ["BenchBuilder / Arena-Hard pipeline", "Auto-generates hard benchmark subsets from live Arena data using LLM-labeler", "arXiv:2406.11939; GPT-4-based hardness scorer; 7 hardness criteria", "Depends on GPT-4 for labeling; bias from labeler bleeds into benchmark quality"]
+      - ["Data sanitization (GCP Sensitive Data Protection API)", "PII removal before public data release", "Google Cloud Platform API; called pre-release of any shared dataset", "Reliance on single cloud vendor; no independent PII audit published"]
+      - ["Web platform (arena.ai)", "Hosts battles, voting UI, leaderboards, Direct Chat, Agent Mode, Code Arena", "JavaScript front-end; server architecture not disclosed", "Single point of failure for community trust; uptime SLA not public"]
+      - ["Cloudflare R2 + CodeMirror 6 (Code Arena)", "Stores persistent code sessions; renders live web app previews", "Cloudflare R2 for snapshots; CodeMirror 6 for code display; streaming frontend", "Data residency and retention policy not disclosed"]
+      - ["FastChat (legacy)", "Historical platform for serving and training; original Chatbot Arena backend", "GitHub lm-sys/FastChat; primarily maintenance mode as of 2025", "Actively deprioritized; migration risk for external users still on FastChat"]
+      - ["p2l models (HuggingFace)", "Prompt-to-leaderboard preference models; used for internal evaluation research", "lmarena-ai org on HuggingFace; 0.1B-7B parameter range", "Not publicly documented for production use; purpose and deployment not clear"]
+    notes: "Architecture inferred from official blog posts, GitHub repos, PyPI package, and academic papers. Server infrastructure details are not publicly disclosed."
+    claimRefs:
+      - CE003
+      - CE009
+      - CE013
+      - CE014
+      - CE015
+      - CE016
+      - CE017
+      - CE018
+      - CE020
+      - CE032
+      - CE034
+
+  - id: TE004
+    title: "Trust, Quality, and Compliance Controls"
+    columns:
+      - "Control / Certification"
+      - "Status"
+      - "Scope"
+      - "Gap / Risk"
+    rows:
+      - ["Leaderboard policy (public)", "Live; last updated April 30, 2026", "Model eligibility, sampling policy, pre-release testing protocol, data sharing rules", "Policy is self-enforced; no independent auditor or enforcement mechanism"]
+      - ["Data sanitization (GCP Sensitive Data Protection API)", "Active for public data releases", "PII removal from conversation data before HuggingFace/public release", "Single vendor dependency; no published audit of sanitization efficacy"]
+      - ["Open-source ranking methodology (Apache 2.0)", "Live; arena-rank v1 on GitHub/PyPI", "Bradley-Terry engine, reweighting, CIs; powers all current leaderboards", "Algorithm is open but platform data is proprietary; full reproducibility limited"]
+      - ["Academic peer review of methodology", "3 published and 1 ICLR 2026 accepted papers", "Chatbot Arena (arXiv 2403.04132), MT-Bench (NeurIPS 2023), Arena-Hard (arXiv 2406.11939), Search Arena (ICLR 2026)", "Agent Arena causal-tracing methodology not yet peer-reviewed"]
+      - ["Pre-release testing protocol", "Published policy since March 2024; updated April 2026", "Model providers may test anonymized pre-release models; results shared privately", "Preferential access controversy (Cohere/Stanford paper) led to policy update but no independent audit"]
+      - ["Enterprise SLA (AI Evaluations)", "GA since Sep 2025; SLA offered", "Committed delivery timelines for commercial evaluation runs", "SLA uptime terms, penalties, and security audit scope not publicly disclosed"]
+      - ["Privacy policy", "Exists on help.arena.ai", "User data handling for community platform interactions", "No enterprise DPA; GDPR/CCPA compliance details not publicly documented"]
+      - ["SOC 2 Type II / ISO 27001", "Not publicly disclosed", "N/A — would apply to enterprise cloud services", "Absence of published certifications is a diligence gap for enterprise buyers"]
+    notes: "Status reflects publicly available documentation as of June 25, 2026. 'Not publicly disclosed' does not confirm absence; LMArena may hold certifications not published."
+    claimRefs:
+      - CE020
+      - CE021
+      - CE022
+      - CE023
+      - CE024
+      - CE025
+      - CE026
+      - CE027
+      - CE037
+      - CE038
+
+  - id: TE005
+    title: "Roadmap, Releases, and Development Stage"
+    columns:
+      - "Date / Period"
+      - "Feature / Milestone"
+      - "Status"
+      - "Implication"
+      - "Source"
+    rows:
+      - ["May 2023", "Chatbot Arena (Text Arena) public launch", "Completed", "Established crowdsourced evaluation as viable methodology", "lmsys.org/blog/2023-05-03-arena/"]
+      - ["Jun 2023", "MT-Bench multi-turn question set and LLM-as-a-judge paper (NeurIPS 2023)", "Completed", "Academic validation of pairwise evaluation methodology", "arXiv:2306.05685"]
+      - ["Mar 2024", "Chatbot Arena technical paper published (arXiv:2403.04132)", "Completed", "240k+ votes; credibility established for industry citation", "arXiv:2403.04132"]
+      - ["Apr 2024", "Arena-Hard pipeline (BenchBuilder) published", "Completed", "Automated benchmark creation; 98.6% agreement with human rankings", "arXiv:2406.11939"]
+      - ["Dec 2024", "WebDev Arena launched", "Completed; superseded by Code Arena", "First coding-specific real-world evaluation; 80k+ votes collected", "arena.ai/blog/webdev-arena/"]
+      - ["Sep 2025", "AI Evaluations commercial product launched", "GA; $30M ARR by Dec 2025", "Revenue engine; SLA-governed enterprise and lab evaluation service", "arena.ai/blog/ai-evaluations/"]
+      - ["Mar 2026", "Search Arena paper accepted at ICLR 2026 (arXiv:2506.05334)", "Accepted and presented", "Peer-reviewed validation of search-augmented LLM evaluation methodology", "arXiv:2506.05334"]
+      - ["Mar 2026 (est.)", "Battles in Direct experiment began (10% of direct sessions)", "Experiment phase", "Increases vote volume; corrects position bias and same-org bias", "arena.ai/blog/leaderboard-changelog/"]
+      - ["May 2026", "Battles in Direct votes included in leaderboards", "Live", "Tightens confidence intervals; shifts prompt distribution toward harder queries", "arena.ai/blog/leaderboard-changelog/"]
+      - ["May 2026", "Code Arena launched (rebuilt from WebDev Arena)", "Live", "Agentic coding environment; persistent sessions; Cloudflare R2 snapshots", "arena.ai/blog/code-arena/"]
+      - ["Jun 4, 2026", "Agent Arena launched with causal-tracing methodology", "Live / Early", "First RCT-based agent leaderboard; 2M+ weekly tool calls analyzed", "arena.ai/blog/agent-arena-methodology/"]
+      - ["2026 (planned)", "Additional behavioral signals for Agent Arena; more arenas / modalities", "Announced intent; no specific dates", "Platform expansion in agentic evaluation; signal set will evolve", "arena.ai/blog/agent-arena-methodology/"]
+    notes: "Dates derived from blog posts, academic paper timestamps, and leaderboard changelog. Planned items are based on stated intent, not confirmed release dates."
+    claimRefs:
+      - CE008
+      - CE012
+      - CE029
+      - CE033
+      - CE035
+      - CE036
+
+figures:
+  - id: FE001
+    title: "LMArena Product Architecture Stack"
+    type: stack
+    layout: standard
+    summary: "Layered view of LMArena's platform from data collection through ranking engine to evaluation products."
+    data:
+      layers:
+        - label: "Community / Data Layer"
+          detail: "5M+ monthly users, 60M+ conversations/month generating raw pairwise preference signals across all modalities"
+          items:
+            - "Pairwise battle votes (text, code, vision, search, agent, image, video)"
+            - "Agent Mode tool call traces (bash, file ops, web search)"
+            - "Direct Chat sessions (10% converted to battles since May 2026)"
+            - "Pre-release anonymous model testing"
+        - label: "Data Pipeline Layer"
+          detail: "PII scrubbing, deduplication, hard-prompt extraction, and open dataset releases for research reproducibility"
+          items:
+            - "GCP Sensitive Data Protection API (PII scrubbing)"
+            - "De-duplication pipeline (top-0.1% prompts downsampled)"
+            - "HuggingFace dataset releases (arena-human-preference-140k)"
+            - "BenchBuilder / Arena-Hard hard-prompt extraction"
+        - label: "Ranking / ML Engine"
+          detail: "Open-source Arena-Rank (Apache 2.0) implements Bradley-Terry with style control and causal tracing for agents"
+          items:
+            - "Bradley-Terry model (Arena-Rank Python package, Apache 2.0)"
+            - "Style-control extension (length, markdown covariates)"
+            - "Causal tracing (multi-signal RCT for Agent Arena)"
+            - "Reweighting for non-uniform sampling; 30x speedup over legacy FastChat"
+        - label: "Product / Interface Layer"
+          detail: "Ten distinct evaluation arenas plus Direct Chat; Code Arena uses Cloudflare R2 and CodeMirror 6"
+          items:
+            - "Text Arena — general chat battles"
+            - "Code Arena — agentic coding, Cloudflare R2, CodeMirror 6"
+            - "Search Arena — retrieval-augmented LLM evaluation"
+            - "Agent Arena — autonomous task execution, causal tracing"
+            - "Vision / Image / Video / Document arenas"
+        - label: "Commercial / Enterprise Layer"
+          detail: "AI Evaluations: SLA-governed private evaluation service for AI labs and enterprises; $30M ARR run-rate Dec 2025"
+          items:
+            - "AI Evaluations product (SLA-governed, private evaluations)"
+            - "Enterprise feedback reports and auditability samples"
+            - "Paid access for model labs and enterprise customers"
+    approximationNotes: "Layer boundaries inferred from blog posts and GitHub repos; internal service decomposition not publicly disclosed."
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE009
+      - CE013
+
+  - id: FE002
+    title: "User Workflow for LMArena Text and Code Battle"
+    type: flow
+    layout: standard
+    summary: "End-to-end flow from user prompt submission through vote recording to leaderboard update."
+    data:
+      nodes:
+        - id: n1
+          label: "User submits prompt"
+          detail: "Free-text query (any language/topic) via arena.ai UI"
+        - id: n2
+          label: "Platform samples two anonymous models"
+          detail: "Sampling policy: uniform with upsampling for new/top models; ≥20% publicly available pairs"
+        - id: n3
+          label: "Models generate responses (parallel)"
+          detail: "For Code Arena: model autonomously creates files via tool calls; output rendered live"
+        - id: n4
+          label: "User views both outputs and votes"
+          detail: "A wins / B wins / Tie / Both bad; model identities hidden during vote"
+        - id: n5
+          label: "Model identities revealed post-vote"
+          detail: "User sees which model was which after submitting preference"
+        - id: n6
+          label: "Vote recorded in battle database"
+          detail: "Stored with model version, latency, context; GCP API strips PII before any public release"
+        - id: n7
+          label: "Arena-Rank BT model updated"
+          detail: "Coefficients re-estimated; 95% CIs recomputed; style-controlled and hard-prompt subsets updated"
+        - id: n8
+          label: "Leaderboard published"
+          detail: "Public leaderboard updated; changelog entry added for methodology changes"
+        - id: n9
+          label: "Commercial AI Evaluations"
+          detail: "Private evaluation runs for labs/enterprises: SLA-governed delivery; representative data samples provided"
+      edges:
+        - from: n1
+          to: n2
+        - from: n2
+          to: n3
+        - from: n3
+          to: n4
+        - from: n4
+          to: n5
+        - from: n5
+          to: n6
+        - from: n6
+          to: n7
+        - from: n7
+          to: n8
+        - from: n6
+          to: n9
+    approximationNotes: "Flow reconstructed from official blog posts and policy page; internal system architecture not disclosed."
+    claimRefs:
+      - CE002
+      - CE016
+      - CE020
+      - CE021
+
+  - id: FE003
+    title: "Critical Dependency Map"
+    type: dag
+    layout: wide
+    summary: "Key platform, data, regulatory, and partner dependencies for LMArena's product."
+    data:
+      nodes:
+        - id: d1
+          label: "Google Cloud Platform"
+          detail: "GCP Sensitive Data Protection API (PII scrubbing); cloud compute for serving"
+        - id: d2
+          label: "Cloudflare R2"
+          detail: "Persistent storage for Code Arena sessions and generated artifacts"
+        - id: d3
+          label: "Model API Providers"
+          detail: "OpenAI, Anthropic, Google, xAI, Meta, Perplexity, Mistral, etc. — provide API access to serve models in battles"
+        - id: d4
+          label: "HuggingFace"
+          detail: "Hosts open datasets (arena-human-preference-140k); p2l model weights; community discovery"
+        - id: d5
+          label: "GitHub (lmarena org)"
+          detail: "Hosts Arena-Rank source code; lmarena/list Go repo; shap-clj; public transparency"
+        - id: d6
+          label: "PyPI"
+          detail: "Distributes arena-rank Python package to researchers and external consumers"
+        - id: d7
+          label: "Community (5M+ monthly users)"
+          detail: "Primary data source; human preference votes that power all leaderboards"
+        - id: d8
+          label: "LMArena Platform (arena.ai)"
+          detail: "Core product: battle UI, leaderboards, Agent Mode, Code Arena, Direct Chat"
+        - id: d9
+          label: "UC Berkeley / LMSYS"
+          detail: "Founding research institution; academic credibility; original FastChat codebase"
+      edges:
+        - from: d1
+          to: d8
+          label: "PII scrubbing & compute"
+        - from: d2
+          to: d8
+          label: "Session storage"
+        - from: d3
+          to: d8
+          label: "Model API access for battles"
+        - from: d7
+          to: d8
+          label: "Human preference votes"
+        - from: d9
+          to: d8
+          label: "Research credibility & methodology"
+        - from: d8
+          to: d4
+          label: "Dataset releases"
+        - from: d8
+          to: d5
+          label: "Open-source code"
+        - from: d5
+          to: d6
+          label: "Package distribution"
+    approximationNotes: "Dependency relationships inferred from public documentation; relative criticality is researcher assessment."
+    claimRefs:
+      - CE013
+      - CE014
+      - CE019
+      - CE020
+      - CE032
+
+  - id: FE004
+    title: "Product Maturity and Capability Map"
+    type: matrix
+    layout: wide
+    summary: "Maturity of each evaluation arena across four capability dimensions as of June 2026."
+    data:
+      columns:
+        - "Vote Volume / Data Scale"
+        - "Methodology Validation"
+        - "Commercial Adoption"
+        - "Roadmap Depth"
+      rows:
+        - label: "Text Arena"
+          values:
+            - "High (250M+ total conv., 2M+ votes/mo)"
+            - "High (arXiv 2403.04132; NeurIPS 2023; style control published)"
+            - "Medium (AI Evaluations GA Sep 2025; $30M ARR)"
+            - "High (style control, hard prompts, Battles in Direct)"
+        - label: "Code Arena"
+          values:
+            - "Medium (rebuilt 2026; inherits WebDev 80k+ votes)"
+            - "Medium (company blog only; no independent peer review)"
+            - "Medium (AI Evaluations applies; growing dev adoption)"
+            - "High (agentic environment; persistent sessions; 2026 rebuild)"
+        - label: "Agent Arena"
+          values:
+            - "Low-Medium (2M+ tool calls/week; launched Jun 2026)"
+            - "Low (causal tracing novel; not yet peer-reviewed)"
+            - "Low (enterprise interest signaled; not confirmed)"
+            - "High (causal tracing; 5 signals; more planned)"
+        - label: "Search Arena"
+          values:
+            - "Low-Medium (24k+ battles; 11+ models)"
+            - "High (ICLR 2026 accepted paper; arXiv 2506.05334)"
+            - "Low (primarily research; no dedicated commercial product)"
+            - "Medium (3 providers; expanding citation analysis)"
+        - label: "Vision Arena"
+          values:
+            - "Medium (multi-modal battles established)"
+            - "Low (no dedicated peer-reviewed methodology paper)"
+            - "Medium (part of AI Evaluations offering)"
+            - "Medium (regular model additions per changelog)"
+        - label: "Text-to-Image / Video Arenas"
+          values:
+            - "Low-Medium (growing; newer modalities)"
+            - "Low (no published methodology paper)"
+            - "Low (niche; lower commercial demand than text/code)"
+            - "Low-Medium (new models added regularly in 2026)"
+    approximationNotes: "Maturity ratings are researcher judgments based on available public evidence as of June 2026. Vote volume tiers: High = 250M+; Medium = 24k-80k; Low = <24k."
+    claimRefs:
+      - CE002
+      - CE008
+      - CE009
+      - CE035
+      - CE036
+
+callouts:
+  - calloutType: strength
+    title: "Real-World Data at Unprecedented Scale"
+    body: >
+      With 250M+ conversations and 5M+ monthly users across 150+ countries, LMArena has assembled
+      the world's largest continuously refreshed human-preference dataset for LLM evaluation. This
+      scale creates a compounding data-network moat that static or lab-constructed benchmarks cannot
+      replicate, and that has been validated in peer-reviewed work (NeurIPS 2023, ICLR 2026).
+    claimRefs:
+      - CE004
+      - CE005
+      - CE006
+      - CE007
+
+  - calloutType: risk
+    title: "Gaming and Credibility Risk from Lab Partnerships"
+    body: >
+      The Meta Llama 4 Maverick incident (April 2025) and the Cohere/Stanford/MIT/AI2 paper alleging
+      preferential sampling for top labs are credible product risks: if the community perceives the
+      leaderboard as gameable or commercially biased, the platform loses its core value proposition
+      as an independent arbiter. The company's commercial revenue from the same labs it evaluates
+      creates a structural conflict that policy updates alone may not fully resolve.
+    claimRefs:
+      - CE024
+      - CE025
+      - CE026
+      - CE027
+
+  - calloutType: risk
+    title: "Enterprise Trust Gap: Missing Compliance Certifications"
+    body: >
+      LMArena has no publicly disclosed SOC 2 Type II, ISO 27001, or third-party security audit for
+      its AI Evaluations commercial product. For enterprise buyers handling sensitive prompt data in
+      evaluation workloads, the absence of these certifications is a procurement blocker, and the
+      current privacy policy lacks enterprise DPA language.
+    claimRefs:
+      - CE037
+      - CE038
+
+localEvidence:
+  searchQueries:
+    - query: "LMArena arena.ai product features arenas launch 2026"
+      engine: web
+      hits: 10
+      retainedSourceRefs: [SE001, SE005, SE008]
+    - query: "LMArena agent arena methodology causal tracing launch 2026"
+      engine: web
+      hits: 8
+      retainedSourceRefs: [SE006]
+    - query: "LMArena arena-rank open source GitHub Python package 2026"
+      engine: web
+      hits: 6
+      retainedSourceRefs: [SE009, SE020, SE023]
+    - query: "LMArena Bradley-Terry style control technical methodology 2026"
+      engine: web
+      hits: 8
+      retainedSourceRefs: [SE010, SE011, SE012, SE014, SE015, SE016, SE017]
+    - query: "LMArena benchmark gaming Meta Llama 4 controversy 2026"
+      engine: web
+      hits: 10
+      retainedSourceRefs: [SE024, SE025]
+    - query: "LMArena code arena webdev arena coding evaluation 2026"
+      engine: web
+      hits: 7
+      retainedSourceRefs: [SE007, SE013]
+    - query: "LMArena search arena vision arena new modalities 2026"
+      engine: web
+      hits: 6
+      retainedSourceRefs: [SE008, SE017]
+    - query: "arena.ai data privacy compliance trust certifications 2026"
+      engine: web
+      hits: 5
+      retainedSourceRefs: [SE004, SE027]
+
+  researchQuestions:
+    - id: QE001
+      question: "What product modules and arena types does LMArena offer as of mid-2026?"
+      type: enumeration
+      targets: ["contentRequirements/1", "plannedTables/product-module-asset-matrix"]
+      status: answered
+
+    - id: QE002
+      question: "What modality-specific arenas has LMArena launched since the company's inception through June 2026?"
+      type: enumeration
+      targets: ["contentRequirements/1", "plannedTables/product-module-asset-matrix"]
+      status: answered
+
+    - id: QE003
+      question: "How many total conversations and preference votes has LMArena collected as of its latest public disclosure?"
+      type: quantification
+      targets: ["contentRequirements/2", "plannedFigures/product-architecture-map"]
+      status: answered
+
+    - id: QE004
+      question: "What is LMArena's community size in terms of monthly active users, monthly vote volume, and geographic reach?"
+      type: quantification
+      targets: ["contentRequirements/0", "plannedFigures/product-architecture-map"]
+      status: answered
+
+    - id: QE005
+      question: "Does LMArena use an open-source ranking methodology, and is the source code publicly available and auditable?"
+      type: verification
+      targets: ["contentRequirements/4", "plannedTables/technology-operating-architecture-table"]
+      status: answered
+
+    - id: QE006
+      question: "Has LMArena published peer-reviewed academic papers describing and validating its evaluation methodology?"
+      type: verification
+      targets: ["contentRequirements/4", "plannedTables/technology-operating-architecture-table"]
+      status: answered
+
+    - id: QE007
+      question: "How does the Bradley-Terry model produce statistically calibrated rankings from pairwise battle votes?"
+      type: mechanism
+      targets: ["contentRequirements/2", "plannedTables/technology-operating-architecture-table"]
+      status: answered
+
+    - id: QE008
+      question: "How does the Agent Arena causal-tracing methodology differ from standard pairwise voting for ranking agentic models?"
+      type: mechanism
+      targets: ["contentRequirements/2", "plannedFigures/customer-workflow-operating-flow"]
+      status: answered
+
+    - id: QE009
+      question: "How does LMArena's style-control extension separate formatting effects (length, markdown) from substantive model quality in rankings?"
+      type: mechanism
+      targets: ["contentRequirements/2", "plannedTables/technology-operating-architecture-table"]
+      status: answered
+
+    - id: QE010
+      question: "What is the Arena-Hard BenchBuilder pipeline and how does it generate automated benchmarks from live Arena data?"
+      type: mechanism
+      targets: ["contentRequirements/4", "plannedTables/technology-operating-architecture-table"]
+      status: answered
+
+    - id: QE011
+      question: "How does LMArena's real-world crowdsourced evaluation approach differ from static benchmarks such as MMLU or HumanEval?"
+      type: comparison
+      targets: ["contentRequirements/4", "plannedFigures/product-maturity-capability-map"]
+      status: answered
+
+    - id: QE012
+      question: "How does the Agent Arena causal-tracing leaderboard methodology differ from the Text Arena Bradley-Terry approach?"
+      type: comparison
+      targets: ["contentRequirements/2", "plannedFigures/product-maturity-capability-map"]
+      status: answered
+
+    - id: QE013
+      question: "What new arena types or significant platform features has LMArena launched or announced in 2026?"
+      type: freshness
+      targets: ["contentRequirements/3", "plannedTables/roadmap-release-development-stage-table"]
+      status: answered
+
+    - id: QE014
+      question: "What is the current state of the Arena-Rank open-source Python package as of June 2026?"
+      type: freshness
+      targets: ["contentRequirements/2", "plannedTables/technology-operating-architecture-table"]
+      status: answered
+
+    - id: QE015
+      question: "What are the published technical criticisms of LMArena's evaluation methodology regarding bias and representativeness?"
+      type: adverse
+      targets: ["contentRequirements/5", "plannedTables/trust-quality-compliance-table"]
+      status: answered
+
+    - id: QE016
+      question: "Has LMArena's leaderboard been subject to documented gaming or benchmark manipulation by model providers?"
+      type: adverse
+      targets: ["contentRequirements/5", "plannedTables/trust-quality-compliance-table"]
+      status: answered
+
+    - id: QE017
+      question: "What are the external platform, data, and API dependencies in LMArena's technical architecture?"
+      type: enumeration
+      targets: ["contentRequirements/2", "plannedFigures/critical-dependency-map"]
+      status: answered
+
+    - id: QE018
+      question: "Does LMArena have a formal data privacy framework, including PII handling, user consent, and enterprise DPA?"
+      type: verification
+      targets: ["contentRequirements/5", "plannedTables/trust-quality-compliance-table"]
+      status: partial
+
+    - id: QE019
+      question: "How many AI models has LMArena evaluated across all arenas and modalities as of mid-2026?"
+      type: quantification
+      targets: ["contentRequirements/1", "plannedTables/product-module-asset-matrix"]
+      status: answered
+
+    - id: QE020
+      question: "How does LMArena's pre-release model testing protocol work, including anonymization and result disclosure?"
+      type: mechanism
+      targets: ["contentRequirements/5", "plannedTables/trust-quality-compliance-table"]
+      status: answered
+
+    - id: QE021
+      question: "What security or reliability risks are associated with LMArena's commercial AI Evaluations product?"
+      type: adverse
+      targets: ["contentRequirements/5", "plannedTables/trust-quality-compliance-table"]
+      status: partial
+
+    - id: QE022
+      question: "Does LMArena publish SLA terms, security certifications, or uptime commitments for its commercial evaluation service?"
+      type: verification
+      targets: ["contentRequirements/5", "plannedTables/trust-quality-compliance-table"]
+      status: partial
+
+    - id: QE023
+      question: "What additional evaluation arenas or product capabilities has LMArena announced on its public roadmap for 2026?"
+      type: enumeration
+      targets: ["contentRequirements/3", "plannedTables/roadmap-release-development-stage-table"]
+      status: partial
+
+    - id: QE024
+      question: "How does LMArena's AI evaluation approach and product portfolio compare to Scale AI's evaluation and data platform?"
+      type: comparison
+      targets: ["contentRequirements/4", "plannedFigures/product-maturity-capability-map"]
+      status: partial
+
+    - id: QE025
+      question: "What new modality leaderboards (image, video, document, search) has LMArena added to the platform in 2026?"
+      type: freshness
+      targets: ["contentRequirements/1", "plannedTables/roadmap-release-development-stage-table"]
+      status: answered
+
+  sources:
+    - id: SE001
+      publisher: "Arena Intelligence Inc."
+      title: "Arena AI: The Official AI Ranking & LLM Leaderboard"
+      url: "https://arena.ai/"
+      date: "2026-06-25"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["platform overview", "product", "leaderboard"]
+
+    - id: SE002
+      publisher: "Arena Intelligence Inc."
+      title: "About Arena — Crowdsourced AI Model Evaluation Platform"
+      url: "https://arena.ai/about"
+      date: "2026-06-25"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["company overview", "community", "product"]
+
+    - id: SE003
+      publisher: "Arena Intelligence Inc."
+      title: "New Product: AI Evaluations"
+      url: "https://arena.ai/blog/ai-evaluations/"
+      date: "2025-09-01"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["AI evaluations product", "commercial product launch", "enterprise"]
+      keyQuote: "LMArena has already logged 250M+ real conversations, 2M+ monthly votes, and has 3M+ monthly users."
+
+    - id: SE004
+      publisher: "Arena Intelligence Inc."
+      title: "Arena Leaderboard Policy"
+      url: "https://arena.ai/blog/policy/"
+      date: "2026-04-30"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: neutral
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["leaderboard policy", "pre-release testing", "sampling policy", "model eligibility"]
+
+    - id: SE005
+      publisher: "Arena Intelligence Inc."
+      title: "Leaderboard Changelog"
+      url: "https://arena.ai/blog/leaderboard-changelog/"
+      date: "2026-06-23"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: neutral
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["roadmap", "leaderboard updates", "model additions", "2026 releases"]
+
+    - id: SE006
+      publisher: "Arena Intelligence Inc."
+      title: "Agent Arena: Causal Evaluation of Agents in the Real World"
+      url: "https://arena.ai/blog/agent-arena-methodology/"
+      date: "2026-06-04"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["agent arena", "causal tracing", "agentic evaluation", "tool calls", "2026"]
+      keyQuote: "The methodology powering the Agent Arena Leaderboard is different from our previous arenas. Rather than pairwise votes, rankings are calculated using a methodology we call causal tracing."
+
+    - id: SE007
+      publisher: "Arena Intelligence Inc."
+      title: "WebDev Arena: A Live LLM Leaderboard for Web App Development"
+      url: "https://arena.ai/blog/webdev-arena/"
+      date: "2025-03-01"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["WebDev Arena", "coding evaluation", "Bradley-Terry", "web development"]
+
+    - id: SE008
+      publisher: "Arena Intelligence Inc."
+      title: "Introducing the Search Arena: Evaluating Search-Enabled AI"
+      url: "https://arena.ai/blog/search-arena/"
+      date: "2025-04-01"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["search arena", "retrieval-augmented LLMs", "Bradley-Terry", "search evaluation"]
+
+    - id: SE009
+      publisher: "Arena Intelligence Inc."
+      title: "Arena-Rank: Open Sourcing the Leaderboard Methodology"
+      url: "https://arena.ai/blog/arena-rank/"
+      date: "2025-07-01"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: ["Arena-Rank", "open source", "Bradley-Terry", "ranking methodology"]
+      keyQuote: "Arena-Rank, an open-source Python package for ranking that powers the LMArena leaderboard!"
+
+    - id: SE010
+      publisher: "Arena Intelligence Inc."
+      title: "Does Style Matter in AI Evaluations?"
+      url: "https://arena.ai/blog/style-control/"
+      date: "2024-11-01"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["style control", "length bias", "markdown bias", "Bradley-Terry", "methodology"]
+
+    - id: SE011
+      publisher: "Arena Intelligence Inc."
+      title: "Introducing Hard Prompts Category in Chatbot Arena"
+      url: "https://arena.ai/blog/hard-prompts/"
+      date: "2024-05-01"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["hard prompts", "hardness scoring", "benchmark quality", "methodology"]
+
+    - id: SE012
+      publisher: "Arena Intelligence Inc."
+      title: "The Arena-Hard Pipeline"
+      url: "https://arena.ai/blog/arena-hard/"
+      date: "2024-04-01"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["Arena-Hard", "BenchBuilder", "automated benchmark", "separability"]
+
+    - id: SE013
+      publisher: "Arena Intelligence Inc."
+      title: "The Next Stage of AI Coding Evaluation Is Here"
+      url: "https://arena.ai/blog/code-arena/"
+      date: "2026-05-01"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: ["code arena", "agentic coding", "Cloudflare R2", "CodeMirror 6", "2026"]
+      keyQuote: "Record: Every model action (file creation, edit, or execution) is logged and versioned. Snapshots are stored in Cloudflare R2."
+
+    - id: SE014
+      publisher: "arXiv (Chiang et al., UC Berkeley / LMSYS)"
+      title: "Chatbot Arena: An Open Platform for Evaluating LLMs by Human Preference"
+      url: "https://arxiv.org/abs/2403.04132"
+      date: "2024-03-07"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics: ["Chatbot Arena", "Bradley-Terry", "crowdsourced evaluation", "methodology validation"]
+
+    - id: SE015
+      publisher: "arXiv / NeurIPS 2023 (Zheng et al., UC Berkeley / LMSYS)"
+      title: "Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena"
+      url: "https://arxiv.org/abs/2306.05685"
+      date: "2023-06-09"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics: ["MT-Bench", "LLM-as-a-judge", "evaluation methodology", "agreement with human raters"]
+
+    - id: SE016
+      publisher: "arXiv (Li et al., UC Berkeley / LMSYS)"
+      title: "From Crowdsourced Data to High-Quality Benchmarks: Arena-Hard and BenchBuilder Pipeline"
+      url: "https://arxiv.org/abs/2406.11939"
+      date: "2024-06-17"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics: ["Arena-Hard", "BenchBuilder", "automated benchmark", "98.6% agreement"]
+
+    - id: SE017
+      publisher: "arXiv / ICLR 2026 (Miroyan et al., UC Berkeley)"
+      title: "Search Arena: Analyzing Search-Augmented LLMs"
+      url: "https://arxiv.org/abs/2506.05334"
+      date: "2025-06-05"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics: ["search arena", "search-augmented LLMs", "ICLR 2026", "citation bias"]
+
+    - id: SE018
+      publisher: "NeurIPS 2023 Proceedings (Zheng et al.)"
+      title: "Judging LLM-as-a-Judge with MT-Bench and Chatbot Arena (NeurIPS 2023)"
+      url: "https://papers.nips.cc/paper_files/paper/2023/hash/91f18a1287b398d378ef22505bf41832-Abstract-Datasets_and_Benchmarks.html"
+      date: "2023-12-01"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics: ["MT-Bench", "NeurIPS 2023", "peer review", "evaluation methodology"]
+
+    - id: SE019
+      publisher: "GitHub (lm-sys)"
+      title: "FastChat: An Open Platform for Training, Serving, and Evaluating LLMs"
+      url: "https://github.com/lm-sys/FastChat"
+      date: "2026-06-25"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics: ["FastChat", "open source", "Vicuna", "historical platform", "developer signal"]
+
+    - id: SE020
+      publisher: "GitHub (lmarena)"
+      title: "arena-rank: Source Code of Arena Leaderboard Methodology"
+      url: "https://github.com/lmarena/arena-rank"
+      date: "2026-06-12"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics: ["Arena-Rank", "open source", "GitHub", "developer signal", "ranking code"]
+
+    - id: SE021
+      publisher: "GitHub (lmarena org)"
+      title: "Arena GitHub Organization"
+      url: "https://github.com/lmarena"
+      date: "2026-06-25"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics: ["developer signal", "GitHub repos", "open source", "lmarena org"]
+
+    - id: SE022
+      publisher: "HuggingFace / lmarena-ai (via Wayback)"
+      title: "lmarena-ai (Arena) Organization on HuggingFace"
+      url: "https://web.archive.org/web/20260614182911/https://huggingface.co/lmarena-ai"
+      date: "2026-06-14"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics: ["p2l models", "HuggingFace", "datasets", "developer signal", "preference models"]
+
+    - id: SE023
+      publisher: "PyPI"
+      title: "arena-rank PyPI package"
+      url: "https://pypi.org/project/arena-rank/"
+      date: "2026-06-25"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics: ["arena-rank", "PyPI", "Python package", "developer adoption", "open source"]
+
+    - id: SE024
+      publisher: "TechCrunch"
+      title: "Study accuses LM Arena of helping top AI labs game its benchmark"
+      url: "https://techcrunch.com/2025/04/30/study-accuses-lm-arena-of-helping-top-ai-labs-game-its-benchmark/"
+      date: "2025-04-30"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics: ["benchmark gaming", "Cohere study", "sampling bias", "Meta", "OpenAI", "Google", "adverse"]
+      keyQuote: "Only a handful of [companies] were told that this private testing was available, and the amount of private testing that some [companies] received is just so much more than others. This is gamification."
+
+    - id: SE025
+      publisher: "The Verge"
+      title: "Meta got caught gaming AI benchmarks"
+      url: "https://theverge.com/meta/645012/meta-llama-4-maverick-benchmarks-gaming"
+      date: "2025-04-07"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics: ["Meta Llama 4 Maverick", "benchmark gaming", "LMArena credibility", "adverse", "policy update"]
+      keyQuote: "Meta's interpretation of our policy did not match what we expect from model providers."
+
+    - id: SE026
+      publisher: "LMSYS (UC Berkeley SkyLab)"
+      title: "Chatbot Arena: New features and a Elo Rating System (original launch blog)"
+      url: "https://www.lmsys.org/"
+      date: "2023-05-03"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: independent
+      topics: ["LMSYS", "founding research", "Chatbot Arena history", "academic origin"]
+
+    - id: SE027
+      publisher: "U.S. Securities and Exchange Commission"
+      title: "SEC Form D: Recall Capital-LMArena (Arena Intelligence Series A vehicle)"
+      url: "https://www.sec.gov/Archives/edgar/data/2113470/000211347026000001/primary_doc.xml"
+      date: "2026-02-11"
+      accessDate: "2026-06-25"
+      accessStatus: ok
+      stance: neutral
+      sourceType: filing
+      reputationTier: high
+      independence: independent
+      topics: ["Series A funding", "SEC filing", "investment vehicle", "Form D"]
+
+  claims:
+    - id: CE001
+      statement: "LMArena operates a multi-arena AI evaluation platform at arena.ai covering text, code, search, agent, vision, image generation, video generation, image editing, and document modalities."
+      type: observed
+      topic: "product portfolio"
+      sourceRefs: [SE001, SE002, SE005]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE001, QE002]
+
+    - id: CE002
+      statement: "The core platform mechanic is a pairwise battle where two anonymous models respond to the same prompt and users vote on the preferred output."
+      type: observed
+      topic: "product architecture"
+      sourceRefs: [SE001, SE014]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE007]
+
+    - id: CE003
+      statement: "All Arena text, code, search, and vision leaderboards use the Bradley-Terry statistical model to infer latent skill coefficients from pairwise win/loss battle outcomes."
+      type: third-party-reported
+      topic: "ranking methodology"
+      sourceRefs: [SE009, SE014, SE015, SE018]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE007]
+
+    - id: CE004
+      statement: "LMArena had 5 million or more monthly users as of January 2026."
+      type: company-claimed
+      topic: "community scale"
+      sourceRefs: [SE003, SE005]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE004]
+
+    - id: CE005
+      statement: "LMArena has logged more than 250 million real conversations across all arenas since its inception."
+      type: company-claimed
+      topic: "data scale"
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE003]
+
+    - id: CE006
+      statement: "LMArena generates more than 2 million preference votes per month from community users."
+      type: company-claimed
+      topic: "community scale"
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE004]
+
+    - id: CE007
+      statement: "LMArena's community spans users in more than 150 countries."
+      type: company-claimed
+      topic: "geographic reach"
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE004]
+
+    - id: CE008
+      statement: "Agent Arena was launched on June 4, 2026 as LMArena's newest evaluation arena, ranking orchestrator models for autonomous multi-step task completion."
+      type: observed
+      topic: "Agent Arena launch"
+      sourceRefs: [SE005, SE006]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE013, QE025]
+
+    - id: CE009
+      statement: "Agent Arena ranks models using causal tracing, treating each component selection as a treatment in a multi-intervention randomized controlled trial measuring five behavioral signals."
+      type: observed
+      topic: "Agent Arena methodology"
+      sourceRefs: [SE006]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE008, QE012]
+
+    - id: CE010
+      statement: "WebDev Arena, launched December 2024, collected over 80,000 community votes on AI-generated web applications before being superseded by Code Arena in 2026."
+      type: observed
+      topic: "WebDev Arena history"
+      sourceRefs: [SE007]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE002]
+
+    - id: CE011
+      statement: "Search Arena supports 11 models from three providers (Perplexity, Gemini, and OpenAI) and has collected over 24,000 paired multi-turn user interactions."
+      type: observed
+      topic: "Search Arena"
+      sourceRefs: [SE008, SE017]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE025]
+
+    - id: CE012
+      statement: "Code Arena was rebuilt from WebDev Arena with a new isolated agentic coding environment, persistent sessions stored in Cloudflare R2, and live preview rendering via CodeMirror 6."
+      type: observed
+      topic: "Code Arena architecture"
+      sourceRefs: [SE013, SE005]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE013]
+
+    - id: CE013
+      statement: "Arena-Rank is an open-source Python package (Apache 2.0) published on GitHub under the lmarena organization and installable from PyPI as 'arena-rank'."
+      type: observed
+      topic: "Arena-Rank package"
+      sourceRefs: [SE009, SE001, SE020, SE023]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE005, QE014]
+
+    - id: CE014
+      statement: "Arena-Rank implements Bradley-Terry ranking with closed-form confidence-interval calculation and a 30x speedup over the historical FastChat implementation."
+      type: observed
+      topic: "Arena-Rank performance"
+      sourceRefs: [SE009, SE001, SE020]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE005, QE014]
+
+    - id: CE015
+      statement: "FastChat (GitHub: lm-sys/FastChat) was the original open-source platform powering Chatbot Arena but is now primarily in maintenance mode, with ranking code migrated to Arena-Rank."
+      type: observed
+      topic: "FastChat legacy"
+      sourceRefs: [SE019, SE009]
+      confidence: medium
+      freshness: recent
+
+    - id: CE016
+      statement: "LMArena's style-control extension adds length, markdown header count, bold count, and list count as regression covariates in the BT model to isolate substance from formatting effects; response length is the dominant style factor."
+      type: observed
+      topic: "style control methodology"
+      sourceRefs: [SE010, SE015]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE009]
+
+    - id: CE017
+      statement: "The Arena-Hard BenchBuilder pipeline (arXiv:2406.11939) automatically extracts hard prompts from live Arena data using a seven-criterion hardness labeler and generates benchmarks that achieve 98.6% agreement with human preference rankings."
+      type: third-party-reported
+      topic: "Arena-Hard methodology"
+      sourceRefs: [SE016, SE012]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE010]
+
+    - id: CE018
+      statement: "LMArena defines prompt hardness using seven criteria including domain knowledge, problem-solving complexity, and real-world applicability; approximately 20% of Arena prompts have a hardness score of 6 or higher."
+      type: observed
+      topic: "hard prompts"
+      sourceRefs: [SE011]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE010]
+
+    - id: CE019
+      statement: "The lmarena-ai HuggingFace organization hosts multiple p2l (prompt-to-leaderboard) preference models ranging from 135M to 7B parameters and releases public battle datasets."
+      type: observed
+      topic: "developer ecosystem"
+      sourceRefs: [SE022]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE017]
+
+    - id: CE020
+      statement: "LMArena uses GCP's Sensitive Data Protection API to remove personally identifiable information from conversation data before any public release or data sharing."
+      type: company-claimed
+      topic: "data privacy"
+      sourceRefs: [SE004]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE018]
+
+    - id: CE021
+      statement: "LMArena's leaderboard policy was last updated April 30, 2026 and specifies model eligibility criteria, sampling policies, pre-release testing protocols, and data sharing rules."
+      type: observed
+      topic: "leaderboard governance"
+      sourceRefs: [SE004, SE005]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE020]
+
+    - id: CE022
+      statement: "LMArena's sampling policy requires that at least 20% of all battles involve only publicly available models, with remaining capacity available for unreleased or experimental models."
+      type: observed
+      topic: "sampling policy"
+      sourceRefs: [SE004]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE020]
+
+    - id: CE023
+      statement: "LMArena allows model providers to test unreleased models anonymously, shares results privately with the provider, and then removes the model before any public listing."
+      type: observed
+      topic: "pre-release testing"
+      sourceRefs: [SE004, SE025]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE020]
+
+    - id: CE024
+      statement: "In April 2025 Meta submitted an 'experimental, chat-optimized' version of Llama 4 Maverick (not the public release) to LMArena, achieving a #2 ranking; when the public version was scored, it fell to approximately 32nd place."
+      type: third-party-reported
+      topic: "Meta gaming incident"
+      sourceRefs: [SE025, SE024]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE016]
+
+    - id: CE025
+      statement: "Following the Meta Llama 4 incident, LMArena updated its leaderboard policies to require that pre-release model variants be explicitly labeled as customized and not represent the publicly released model."
+      type: third-party-reported
+      topic: "policy update post-gaming"
+      sourceRefs: [SE025, SE024]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE016]
+
+    - id: CE026
+      statement: "A paper by researchers from Cohere, Stanford, MIT, and AI2 (April 2025) alleged that Meta, OpenAI, Google, and Amazon received disproportionately high sampling rates and could suppress low-scoring pre-release variants, constituting benchmark gaming."
+      type: third-party-reported
+      topic: "benchmark bias allegation"
+      sourceRefs: [SE024, SE025]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE015, QE016]
+
+    - id: CE027
+      statement: "LMArena denied the claims in the Cohere/Stanford study as containing 'inaccuracies and questionable analysis,' asserting that all model providers are allowed to submit more models for testing and that the leaderboard remains fair."
+      type: company-claimed
+      topic: "LMArena response to gaming allegations"
+      sourceRefs: [SE024]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE015]
+
+    - id: CE028
+      statement: "Independent researchers have noted that LMArena's user base is skewed toward technical and developer prompts, making it less representative of general-population or enterprise preferences."
+      type: third-party-reported
+      topic: "benchmark bias - user base"
+      sourceRefs: [SE024]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE015]
+
+    - id: CE029
+      statement: "Agent Arena analyzes five behavioral signals: confirmed success, praise vs. complaint, steerability, bash-error recovery, and tool hallucination rate."
+      type: observed
+      topic: "Agent Arena signals"
+      sourceRefs: [SE006]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE008]
+
+    - id: CE030
+      statement: "In a recent 7-day window, Agent Mode recorded 160,480 agent tasks on LMArena's platform, with code writing as the largest category at 17.5%."
+      type: observed
+      topic: "Agent Mode usage"
+      sourceRefs: [SE006]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE019]
+
+    - id: CE031
+      statement: "Agent Mode issued approximately 2 million structured tool calls in one 7-day period, including 936,000 bash calls and 550,000 file-write operations."
+      type: observed
+      topic: "Agent Mode usage scale"
+      sourceRefs: [SE006]
+      confidence: medium
+      freshness: current
+
+    - id: CE032
+      statement: "Code Arena uses Cloudflare R2 for persistent session storage and CodeMirror 6 for source-code display and live preview rendering of generated web applications."
+      type: observed
+      topic: "Code Arena infrastructure"
+      sourceRefs: [SE013]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE017]
+
+    - id: CE033
+      statement: "Battles in Direct, launched May 2026, converts 10% of Direct Chat sessions into anonymous pairwise battles and applies position-bias and same-org-indicator corrections in the BT model."
+      type: observed
+      topic: "Battles in Direct"
+      sourceRefs: [SE005]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE013]
+
+    - id: CE034
+      statement: "Arena-Rank's open-source implementation achieves a 30x speedup over the historical FastChat-based BT implementation and uses reweighting to correct for non-uniform model sampling."
+      type: observed
+      topic: "Arena-Rank performance"
+      sourceRefs: [SE009, SE001, SE020]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE014]
+
+    - id: CE035
+      statement: "Arena-Hard-Auto v0.1 achieves 98.6% agreement with human preference rankings from Chatbot Arena and provides 3x higher model separation than MT-Bench."
+      type: third-party-reported
+      topic: "Arena-Hard quality"
+      sourceRefs: [SE016, SE018]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE011]
+
+    - id: CE036
+      statement: "The Search Arena paper was accepted at ICLR 2026, providing peer-reviewed validation of LMArena's search-augmented LLM evaluation methodology."
+      type: observed
+      topic: "research validation"
+      sourceRefs: [SE017, SE005]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE006]
+
+    - id: CE037
+      statement: "LMArena has not publicly disclosed SOC 2 Type II, ISO 27001, or any independent third-party security audit for its AI Evaluations commercial product or the arena.ai platform."
+      type: inferred
+      topic: "compliance gap"
+      sourceRefs: [SE004]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE022]
+
+    - id: CE038
+      statement: "LMArena's help.arena.ai privacy policy exists but lacks enterprise data processing agreement (DPA) terms, and GDPR/CCPA compliance details are not publicly documented."
+      type: inferred
+      topic: "enterprise compliance gap"
+      sourceRefs: [SE004]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE018, QE021]
+
+    - id: CE039
+      statement: "LMArena has evaluated over 400 public models and over 300 pre-release model variants across all its arenas since the platform launched in 2023."
+      type: company-claimed
+      topic: "platform breadth"
+      sourceRefs: [SE005]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE019]
+
+    - id: CE040
+      statement: "LMArena has released 1.5 million prompts and over 145,000 battle data points publicly for open research as of early 2026."
+      type: company-claimed
+      topic: "open data"
+      sourceRefs: [SE005]
+      confidence: medium
+      freshness: current
+
+    - id: CE041
+      statement: "Agent Arena sessions average approximately 16.5 structured tool calls, with about 75.6% of sessions using at least one tool in a measured 7-day window."
+      type: observed
+      topic: "Agent Arena usage depth"
+      sourceRefs: [SE006]
+      confidence: medium
+      freshness: current
+
+    - id: CE042
+      statement: "Agent Mode wrote 40.3 million lines of code through successful write_file calls in one 7-day window, approximately 1,000 lines per coding session."
+      type: observed
+      topic: "Agent Mode code generation"
+      sourceRefs: [SE006]
+      confidence: medium
+      freshness: current
+
+  evidenceGaps:
+    - type: private-evidence-only
+      severity: material
+      topic: "commercial SLA and security certifications"
+      missingEvidence: "Published SLA uptime terms, SOC 2 Type II or ISO 27001 certification, and enterprise DPA for AI Evaluations product"
+      whyItMatters: "Enterprise buyers require formal security attestation before sharing sensitive prompt data with a third-party evaluation vendor; absence is a procurement blocker"
+      diligencePath: "Request security posture documentation directly from LMArena sales; check Trust Center if one becomes available"
+      relatedQuestionRefs: [QE021, QE022]
+
+    - type: private-evidence-only
+      severity: material
+      topic: "agent arena causal methodology independent validation"
+      missingEvidence: "Peer-reviewed paper validating the causal-tracing assumptions and multi-signal aggregation in Agent Arena"
+      whyItMatters: "Agent Arena is the newest and commercially most promising arena; unvalidated methodology assumptions could undermine leaderboard credibility for enterprise buyers"
+      diligencePath: "Monitor arXiv for upcoming Agent Arena methodology paper from LMArena team; review any technical report linked from the changelog"
+      relatedQuestionRefs: [QE008]
+
+    - type: missing-source
+      severity: minor
+      topic: "enterprise DPA and privacy compliance"
+      missingEvidence: "Published enterprise data processing agreement, GDPR/CCPA compliance documentation, and privacy policy covering commercial AI Evaluations customers"
+      whyItMatters: "Enterprise buyers in regulated industries (law, medicine, finance) cannot use a vendor without formal privacy compliance documentation"
+      diligencePath: "Request DPA draft from LMArena legal team; check help.arena.ai for updated privacy policy"
+      relatedQuestionRefs: [QE018]
+
+    - type: missing-source
+      severity: minor
+      topic: "public roadmap for 2026 arena expansion"
+      missingEvidence: "Detailed public product roadmap for 2026 specifying planned arenas, timeline, and feature milestones beyond the changelog"
+      whyItMatters: "Roadmap visibility helps investors evaluate the platform's product differentiation trajectory and enterprise readiness"
+      diligencePath: "Review leaderboard changelog for announced items; request product roadmap from LMArena directly"
+      relatedQuestionRefs: [QE023]
+
+    - type: missing-source
+      severity: minor
+      topic: "API access for third-party integration"
+      missingEvidence: "Public API documentation allowing external developers to query Arena scores, retrieve battle data, or integrate leaderboard results programmatically"
+      whyItMatters: "An API would unlock ecosystem integrations and developer adoption; absence limits the platform's extensibility advantage"
+      diligencePath: "Check arena.ai/docs if it exists; ask LMArena engineering directly"
+      relatedQuestionRefs: [QE024]
+
+    - type: missing-source
+      severity: minor
+      topic: "infrastructure server architecture"
+      missingEvidence: "LMArena's serving infrastructure: cloud provider, redundancy architecture, uptime SLA, and failure recovery procedures"
+      whyItMatters: "Platform downtime directly impacts the commercial AI Evaluations SLA commitments"
+      diligencePath: "Review status page if available; request infrastructure disclosure from LMArena during due diligence"
+      relatedQuestionRefs: [QE021]
+
+acknowledgedWarnings:
+  - dimension: tableNotes
+    reason: "TE001 Product Module Matrix contains researcher-inference rows (diligence gaps) that are labeled as such; the table is not a pure factual snapshot and notes are included."
