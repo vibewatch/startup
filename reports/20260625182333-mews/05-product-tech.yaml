@@ -1,0 +1,1571 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: mews
+runDate: '2026-06-25'
+company:
+  name: Mews
+chapter:
+  number: 5
+  title: Product and Technology
+  summary: >
+    Mews is a cloud-native hospitality operating system on Microsoft Azure that unifies PMS, RMS, POS,
+    housekeeping, and embedded payments on a single data model. At Unfold 2026 (27 May 2026) Mews
+    launched five new products, completing an AI-native stack and adding Mews RMS (150 million daily
+    pricing calculations; a stated 13.7% lift in total revenue per square meter), a SiteMinder-powered
+    Channel Manager connecting 400+ OTAs, and an Accounts Receivable invoice-to-cash module. The platform
+    exposes five open APIs (Connector, Channel Manager, Booking Engine, POS, Loyalty Partner) documented
+    publicly on GitHub and docs.mews.com, with webhooks, a sandbox, and a 1,000+ integration marketplace
+    with no connection fees. Security posture is strong on paper — PCI DSS, SOC 2, ISO 27001:2022, GDPR,
+    and a 24-hour RTO — but most certification scopes, audit dates, and the architecture beyond
+    "Azure cloud-native" are not independently verifiable from public sources, and 2025 acquisitions
+    (DataChat, Flexkeeping) add integration risk. These opacities are recorded as evidence gaps.
+sections:
+- id: product-definition
+  title: What Mews Delivers in Customer Workflow Terms
+  body: >
+    Mews is a cloud-native hospitality operating system: a single platform that replaces the eight-to-ten
+    disconnected vendors a typical hotel runs (PMS for reservations, RMS for pricing, channel manager for
+    distribution, a separate inbox, kiosk, POS, and receivables tool). In customer-workflow terms, Mews
+    spans the full guest lifecycle — booking through the Mews Booking Engine, pre-arrival personalization
+    and upsells, self-check-in via Mews Kiosk, in-stay operations (housekeeping, messaging, POS for food
+    and beverage), embedded payments at every touchpoint, and post-stay receivables and accounting.
+    Its core promise is that "every team works from the same platform" on one data model, so a rate change,
+    a reservation edit, or a payment posts once and propagates everywhere without manual reconciliation.
+    Mews markets the platform to modern, independent, and group hotels and to "shared spaces" operators,
+    and cites a 476% three-year ROI from IDC research and 15,000 customers across 85 countries. The
+    practical buyer benefit is consolidation: fewer vendors, one contract and bill, and automation of the
+    repetitive reconciliation work that fragments a hotel's day. The limitation is that consolidation
+    concentrates operational dependency on a single vendor and on Mews Payments, which several reviewers
+    describe as convenient but not cheap. This chapter separates what is verifiably delivered today from
+    roadmap and marketing claims.
+  claimRefs:
+  - CE001
+  - CE002
+  - CE003
+  - CE004
+  - CE005
+  - CE006
+  tableRefs:
+  - TE002
+  figureRefs:
+  - FE002
+
+- id: module-map
+  title: Module and Product-Line Map
+  body: >
+    The Mews platform decomposes into a set of modules that span the guest journey and the back office.
+    The reservation and operations core is the Mews PMS, the anchor product that won Best PMS at the
+    HotelTechAwards in 2024, 2025, and 2026. Distribution runs through the Mews Booking Engine (direct
+    bookings) and, since Unfold 2026, a Channel Manager "powered by SiteMinder" that connects 400+ OTAs
+    natively. Revenue optimization is handled by Mews RMS, an AI-native module launched 27 May 2026 that
+    runs 150 million pricing calculations a day. Operations modules include Mews Kiosk for self-check-in,
+    a POS for food and beverage, Housekeeping (expanded via the 2025 Flexkeeping acquisition), guest
+    messaging, and an Accounts Receivable module for B2B invoice-to-cash. Monetization runs through Mews
+    Payments, an embedded payment-facilitator layer, and Mews Spaces for ancillary, non-room revenue. AI
+    and analytics capability was reinforced by the November 2025 DataChat acquisition, which adds a
+    conversational-intelligence and semantic layer aimed at agentic operations. Each module is scored for
+    maturity, target user, differentiation, and the diligence gap that remains in the module matrix
+    (Table TE001) and the maturity map (Figure FE004). The recurring diligence theme is that several
+    flagship modules (RMS, Accounts Receivable, the SiteMinder channel manager) are very new — launched or
+    materially upgraded in 2026 — so their reliability and adoption are not yet independently established.
+  claimRefs:
+  - CE007
+  - CE008
+  - CE009
+  - CE010
+  - CE011
+  - CE012
+  - CE013
+  - CE014
+  tableRefs:
+  - TE001
+  figureRefs:
+  - FE004
+
+- id: architecture-apis
+  title: Architecture, Open APIs, and the Developer Surface
+  body: >
+    Mews is a cloud-native application hosted on Microsoft Azure, built from the start as multi-tenant SaaS
+    rather than retrofitted from on-premise software. The defining architectural choice is its open API
+    surface: Mews exposes five public APIs — the general-purpose Connector API, the Channel Manager API,
+    the Booking Engine API, the POS API, and the Loyalty Partner API — each documented on docs.mews.com,
+    whose source lives in the public GitHub monorepo MewsSystems/open-api-docs and is published via GitBook.
+    Authentication uses a ClientToken plus AccessToken model, and integrators get a demo/sandbox environment
+    to prototype before going live. Real-time propagation is delivered through webhooks that push changes
+    (reservations, spend, guest profiles, payments) to connected systems as soon as they occur, which is the
+    technical basis for the "single data model" claim. The developer ecosystem is a genuine moat signal:
+    Mews advertises 1,000+ marketplace integrations with no connection fees, and partners receive a Partner
+    ID and must certify integrations before listing. Public developer-signal sources (the GitHub repo,
+    APItracker's profile, and the Mews status page) confirm the API documentation, webhook management, and
+    an operational status surface, though APItracker notes Mews does not expose some developer conveniences
+    (no public GraphQL playground, OAuth playground, or open-source SDKs listed). Beyond "Azure cloud-native"
+    and the API contract, deeper architecture — data residency, microservice topology, scaling design — is
+    not publicly documented and is recorded as an evidence gap.
+  claimRefs:
+  - CE015
+  - CE016
+  - CE017
+  - CE018
+  - CE019
+  - CE020
+  - CE021
+  - CE022
+  - CE023
+  tableRefs:
+  - TE003
+  figureRefs:
+  - FE001
+  - FE003
+
+- id: deployment-reliability-roadmap
+  title: Deployment, Integrations, Reliability, and Roadmap
+  body: >
+    Mews deploys as a browser-based SaaS, so onboarding is a data-migration and configuration exercise
+    rather than an install; the company emphasizes multi-property management "in a single call" through its
+    APIs. Integration breadth is the deployment story: 1,000+ marketplace apps and the new native SiteMinder
+    channel connection bring distribution, locks, and ancillary tools into one workflow. Reliability is
+    surfaced publicly through status.mews.com, which reports component-level operational status for the
+    Open API and other services; a recorded incident references a third-party dependency on Assa Abloy/Vostio
+    for digital key creation, illustrating that Mews's reliability is partly a function of integration
+    partners it does not control. The Mews trust center states a 24-hour Recovery Time Objective. The 2026
+    roadmap is unusually dense: at Unfold 2026 (27 May 2026) Mews launched five new products, including
+    Mews RMS, the SiteMinder Channel Manager, and Accounts Receivable, and the Flexkeeping housekeeping
+    workflow builder is slated for advanced capabilities through 2026. The DataChat acquisition (November
+    2025) feeds an agentic-AI roadmap where intelligent agents are intended to manage day-to-day operations.
+    The roadmap table (TE005) separates shipped-and-dated releases from forward-looking capability claims.
+    The central reliability and roadmap diligence question is execution risk: several flagship modules are
+    months old, integration of two 2025 acquisitions is ongoing, and public reliability data (uptime history,
+    SLA terms, RTO/RPO evidence) is thin relative to the breadth of the operational dependency hotels take on.
+  claimRefs:
+  - CE024
+  - CE025
+  - CE026
+  - CE027
+  - CE028
+  - CE029
+  - CE030
+  - CE031
+  tableRefs:
+  - TE005
+
+- id: differentiation-trust-compliance
+  title: Differentiation, Trust, Security, and Compliance
+  body: >
+    Mews's differentiation rests on three pillars: an open-API platform with a large no-fee integration
+    marketplace, embedded payments that turn the PMS into a fintech surface, and an AI-native single data
+    model that competitors built on legacy architecture struggle to match. The open API ("built in parallel,
+    not bolted on") and webhook real-time data are the clearest technical differentiators versus legacy
+    systems, while Mews Payments and Mews Spaces ($537M of ancillary revenue generated for hoteliers) are
+    the economic moat. On trust and compliance, Mews publishes a SafeBase-hosted trust center asserting
+    SOC 2, ISO 27001, PCI DSS, GDPR, CCPA, SOX, and NIST alignment; its help center documents PCI DSS
+    compliance for card handling, and French NF525 anti-fraud certification supports POS deployments in
+    France. The trust center states a 24-hour RTO and standard controls (two-factor authentication, DDoS
+    and brute-force protections). The critical diligence caveat is that public sources confirm the existence
+    of these certifications but not their current scope, type, or audit dates — for example, whether SOC 2
+    is Type 2, the ISO 27001 revision (2022), the PCI DSS version (v4.0), and which entities and products
+    each certificate covers. Mews's PayFac payment model, praised for convenience, is also a recurring
+    adverse signal on cost and lock-in. The compliance table (TE004) records each control's status, scope,
+    and the verification gap, and these unverified scopes are carried into evidenceGaps for commercial and
+    security diligence.
+  claimRefs:
+  - CE032
+  - CE033
+  - CE034
+  - CE035
+  - CE036
+  - CE037
+  - CE038
+  - CE039
+  - CE040
+  tableRefs:
+  - TE004
+
+tables:
+- id: TE001
+  title: Mews Product Module and Asset Matrix
+  columns:
+  - Module / Product Line
+  - Primary User
+  - Status / Maturity
+  - Differentiation
+  - Diligence Gap
+  rows:
+  - ["Mews PMS (operations core)", "Front desk / operations", "Mature — Best PMS HotelTechAwards 2024-2026", "Cloud-native single data model; open API from day one", "Adoption depth per segment and churn not disclosed"]
+  - ["Mews Booking Engine", "Revenue / distribution", "Mature — flagship direct-booking product", "Native to PMS; brandable booking flow", "Conversion-lift claims are customer anecdotes, not audited"]
+  - ["Mews Channel Manager (powered by SiteMinder)", "Distribution manager", "New — launched at Unfold 2026", "400+ OTAs under one contract/bill via SiteMinder partnership", "Months-old; reliability and partner economics unproven"]
+  - ["Mews RMS", "Revenue manager", "New — launched 27 May 2026", "150M daily pricing calcs; AI-native, embedded in platform", "13.7% revenue lift is company causal-inference study, not third-party"]
+  - ["Mews Kiosk / self check-in", "Guests / front desk", "Mature — referenced in prior metrics", "Contactless check-in integrated to PMS and payments", "Hardware dependencies and uptime not public"]
+  - ["Mews POS", "F&B / retail staff", "Mature — Best POS 2026; NF525 in France", "Unified F&B and room billing on one ledger", "Certification scope per country not detailed"]
+  - ["Housekeeping (Flexkeeping)", "Housekeeping ops", "Integrating — acquired 2025; advanced features 2026", "Workflow builder for operations teams", "Integration and rebrand to Mews still in progress"]
+  - ["Accounts Receivable", "Finance / B2B billing", "New — launched at Unfold 2026", "Invoice-to-cash with 100% automated reconciliation claim", "No independent verification of reconciliation rate"]
+  - ["Mews Payments (PayFac)", "Finance / all", "Mature — embedded across platform", "Embedded payments monetize transaction volume", "Adverse reviews on cost/lock-in; take rate undisclosed"]
+  - ["Mews Spaces (ancillary)", "Revenue / GM", "Mature — $537M hotelier revenue generated", "Monetizes non-room space inventory", "Mews revenue share on Spaces undisclosed"]
+  - ["DataChat AI / analytics", "All — agentic ops", "Integrating — acquired Nov 2025", "Conversational/semantic layer for agentic operations", "Product integration timeline and capability unproven"]
+  notes: "Maturity labels are author classifications from public product pages, press releases, and award listings; 'new' modules launched in 2026 lack independent reliability and adoption evidence. Differentiation and benefit claims marked as company-stated are not independently audited."
+  claimRefs:
+  - CE007
+  - CE008
+  - CE009
+  - CE010
+  - CE011
+  - CE012
+  - CE013
+
+- id: TE002
+  title: Guest-Journey Workflow and Use-Case Table
+  columns:
+  - User Job
+  - Legacy Workflow
+  - Mews Solution
+  - Stated Benefit
+  - Limitation
+  rows:
+  - ["Take a direct booking", "OTA-heavy distribution, third-party booking widget", "Mews Booking Engine native to PMS", "Higher direct bookings, brandable flow", "Conversion lift is customer testimony, not audited"]
+  - ["Distribute to OTAs", "Separate channel manager, manual rate sync", "Channel Manager powered by SiteMinder (400+ OTAs)", "One contract, one bill, native sync", "Launched 2026; dependency on SiteMinder partnership"]
+  - ["Price rooms dynamically", "Manual spreadsheets or bolt-on RMS", "Mews RMS, 150M daily pricing calculations", "13.7% lift in revenue per sq m (company study)", "No manual override transparency published"]
+  - ["Check guests in", "Front-desk queue, paper forms", "Mews Kiosk self-check-in + contactless key", "Faster arrival, less front-desk load", "Digital key depends on Assa Abloy/Vostio integration"]
+  - ["Collect payment", "Standalone terminal + reconciliation", "Mews Payments embedded across touchpoints", "Single ledger, automated reconciliation", "PayFac markup and lock-in flagged in reviews"]
+  - ["Run housekeeping", "Radios, paper boards, separate app", "Housekeeping (Flexkeeping) workflow builder", "Task automation synced to PMS status", "Acquisition integration still in progress"]
+  - ["Chase B2B invoices", "7-8 day manual invoicing delay", "Accounts Receivable invoice-to-cash module", "Auto-issuance, 100% automated reconciliation", "New module; reconciliation rate unverified"]
+  - ["Get insights / act on data", "Static BI exports", "DataChat conversational/semantic AI layer", "Natural-language analytics, agentic actions", "Integration immature; agentic claims forward-looking"]
+  notes: "Legacy-workflow descriptions and stated benefits are drawn from Mews press and product pages; benefit figures (13.7%, 100% reconciliation, ROI) are company claims and are not independently verified."
+  claimRefs:
+  - CE002
+  - CE003
+  - CE008
+  - CE009
+  - CE024
+
+- id: TE003
+  title: Technology and Operating Architecture Table
+  columns:
+  - Layer / Component
+  - Role
+  - Dependency
+  - Risk
+  rows:
+  - ["Cloud infrastructure", "Hosting and compute", "Microsoft Azure", "Single-cloud concentration; no public multi-region detail"]
+  - ["Single data model", "Unified state across modules", "Mews internal platform", "Architecture not publicly documented beyond marketing"]
+  - ["Open APIs (Connector, Channel Manager, Booking Engine, POS, Loyalty Partner)", "Integration and data exchange", "docs.mews.com / GitHub monorepo", "API versioning and rate limits not fully public"]
+  - ["Authentication", "Access control for integrators", "ClientToken + AccessToken model", "No public OAuth/SSO playground; token security details thin"]
+  - ["Webhooks / real-time events", "Push reservation, payment, profile changes", "Mews event system", "Delivery guarantees and retry semantics undisclosed"]
+  - ["Marketplace / integrations", "Third-party app ecosystem", "1,000+ partners, no connection fees", "Reliability inherits partner uptime (e.g., Assa Abloy/Vostio)"]
+  - ["Embedded payments", "Transaction processing (PayFac)", "Adyen / Stripe backends", "Processor switch at Mews discretion; opacity for hotels"]
+  - ["AI / analytics layer", "Pricing, insights, agentic ops", "DataChat (acquired 2025)", "Newly acquired; integration depth unproven"]
+  notes: "Architecture rows synthesize Mews public docs, API pages, status page, and acquisition press. Items beyond the API contract and 'Azure cloud-native' positioning are inferred and not confirmed by published architecture documentation."
+  claimRefs:
+  - CE015
+  - CE016
+  - CE017
+  - CE018
+  - CE019
+  - CE021
+
+- id: TE004
+  title: Trust, Security, and Compliance Control Table
+  columns:
+  - Control / Certification
+  - Stated Status
+  - Scope (as published)
+  - Verification Gap
+  rows:
+  - ["PCI DSS", "Compliant (help center documents card handling)", "Payment card data across Mews Payments", "Version (v4.0) and AoC/attestation date not in public sources"]
+  - ["SOC 2", "Held (trust center / SafeBase)", "Security/availability of platform", "Type 1 vs Type 2 and report period not publicly confirmed"]
+  - ["ISO 27001", "Certified (trust center)", "Information security management system", "Revision year (2013 vs 2022) and certificate scope unconfirmed"]
+  - ["GDPR", "Compliant (trust center)", "EU personal data processing", "DPA terms and sub-processor list not enumerated publicly"]
+  - ["CCPA", "Compliant (trust center)", "California consumer data", "Scope and verification not detailed"]
+  - ["NF525 (France anti-fraud)", "Certified for POS", "French point-of-sale / cash systems", "Certificate reference and renewal date not public"]
+  - ["Recovery Time Objective", "24 hours (trust center)", "Disaster recovery target", "No public RPO, uptime SLA, or DR test evidence"]
+  - ["Account security controls", "2FA, DDoS / brute-force protection", "Login and infrastructure", "Independent pen-test / audit reports not public"]
+  notes: "Status reflects what Mews and SafeBase/trustlists publish as of June 2026; the existence of each certification is corroborated, but current scope, type, version, and audit dates are not independently verifiable from public sources and are carried into evidenceGaps."
+  claimRefs:
+  - CE032
+  - CE033
+  - CE034
+  - CE035
+  - CE036
+
+- id: TE005
+  title: Roadmap, Release, and Development-Stage Table
+  columns:
+  - Date / Stage
+  - Feature / Milestone
+  - Status
+  - Implication
+  - Source
+  rows:
+  - ["Nov 2025", "DataChat acquisition (generative AI / semantic layer)", "Closed; integrating", "Foundation for agentic operations roadmap", "Mews press / PR Newswire"]
+  - ["2025", "Flexkeeping acquisition (housekeeping)", "Closed; integrating", "Adds operations workflow builder", "Mews press / HotelTechReport"]
+  - ["27 May 2026", "Unfold 2026: five new products launched", "Shipped", "Completes AI-native operating system", "Mews / PR Newswire / HospitalityTech"]
+  - ["27 May 2026", "Mews RMS (150M daily pricing calcs)", "Shipped", "AI-native revenue management embedded", "Mews OS press"]
+  - ["27 May 2026", "Channel Manager powered by SiteMinder (400+ OTAs)", "Shipped", "Native distribution under one contract", "TravelDailyNews / Lodging"]
+  - ["27 May 2026", "Accounts Receivable invoice-to-cash", "Shipped", "Replaces 7-8 day invoicing delay", "Mews OS press"]
+  - ["2026 (Q2/Q3)", "Flexkeeping advanced housekeeping capabilities", "Roadmap", "Deeper operations automation", "HotelTechReport"]
+  - ["Forward-looking", "Agentic AI managing day-to-day operations", "Vision / roadmap", "Strategic bet on autonomous operations", "Mews DataChat press / ITB"]
+  notes: "Dated rows are shipped releases verifiable from press; 'roadmap' and 'forward-looking' rows are company-stated intentions, not delivered capability. Sources are listed by publisher; full URLs are in localEvidence.sources."
+  claimRefs:
+  - CE024
+  - CE025
+  - CE026
+  - CE027
+  - CE028
+  - CE029
+  - CE030
+
+figures:
+- id: FE001
+  title: Mews Product Architecture Map (Stack)
+  type: stack
+  layout: standard
+  summary: >
+    Layered view of the Mews operating system, from Azure cloud infrastructure through the single data
+    model, open APIs, application modules, and the embedded payments and AI layers.
+  data:
+    layers:
+    - label: "Cloud infrastructure"
+      detail: "Microsoft Azure — cloud-native, multi-tenant SaaS host for the platform"
+    - label: "Unified data model"
+      detail: "Single source of truth; a change posts once and propagates across modules"
+    - label: "Open API + webhook layer"
+      modules:
+      - "Connector API"
+      - "Channel Manager API"
+      - "Booking Engine API"
+      - "POS API"
+      - "Loyalty Partner API"
+      - "Webhooks (real-time events)"
+    - label: "Application modules"
+      modules:
+      - "PMS"
+      - "Booking Engine"
+      - "RMS"
+      - "Channel Manager (SiteMinder)"
+      - "Kiosk"
+      - "POS"
+      - "Housekeeping (Flexkeeping)"
+      - "Accounts Receivable"
+    - label: "Embedded fintech layer"
+      detail: "Mews Payments (PayFac via Adyen/Stripe) and Mews Spaces ancillary revenue"
+    - label: "AI / agentic layer"
+      detail: "DataChat conversational + semantic intelligence powering agentic operations"
+  approximationNotes: "Layering is an author synthesis from Mews public product, API, and acquisition sources; internal microservice topology and data residency are not publicly documented."
+  claimRefs:
+  - CE001
+  - CE015
+  - CE016
+  - CE018
+  - CE021
+
+- id: FE002
+  title: Customer Operating Flow — Guest Journey on Mews
+  type: flow
+  layout: wide
+  summary: >
+    How a hotel uses Mews across the guest lifecycle, from distribution and booking through check-in,
+    in-stay operations, payment, and post-stay receivables, all on one data model.
+  data:
+    nodes:
+    - id: distribute
+      label: "Distribute: Channel Manager (SiteMinder, 400+ OTAs) + Booking Engine"
+    - id: price
+      label: "Price: Mews RMS dynamic pricing"
+    - id: book
+      label: "Book: reservation created on single data model"
+    - id: prearrival
+      label: "Pre-arrival: upsells + AI guest messaging"
+    - id: checkin
+      label: "Check-in: Mews Kiosk + contactless key"
+    - id: instay
+      label: "In-stay: POS, housekeeping, messaging"
+    - id: pay
+      label: "Pay: Mews Payments embedded"
+    - id: poststay
+      label: "Post-stay: Accounts Receivable invoice-to-cash"
+    - id: data
+      label: "Insights: DataChat analytics + agentic actions"
+    edges:
+    - from: distribute
+      to: book
+      label: "availability + rates"
+    - from: price
+      to: distribute
+      label: "dynamic rates"
+    - from: book
+      to: prearrival
+      label: "reservation record"
+    - from: prearrival
+      to: checkin
+      label: "guest profile"
+    - from: checkin
+      to: instay
+      label: "room assignment"
+    - from: instay
+      to: pay
+      label: "charges posted"
+    - from: pay
+      to: poststay
+      label: "settlement + AR"
+    - from: poststay
+      to: data
+      label: "financial events"
+    - from: data
+      to: price
+      label: "feedback loop"
+  approximationNotes: "Flow is a representative guest-journey synthesis from Mews product pages; exact handoffs and automation depth vary by hotel configuration and module adoption."
+  claimRefs:
+  - CE002
+  - CE003
+  - CE008
+  - CE024
+
+- id: FE003
+  title: Critical Dependency Map (DAG)
+  type: dag
+  layout: wide
+  summary: >
+    External platforms, partners, and acquired assets the Mews operating system depends on, showing where
+    reliability and economics are inherited from third parties Mews does not fully control.
+  data:
+    nodes:
+    - id: mews
+      label: "Mews Operating System"
+    - id: azure
+      label: "Microsoft Azure (cloud host)"
+    - id: payments
+      label: "Adyen / Stripe (payment backends)"
+    - id: siteminder
+      label: "SiteMinder (channel distribution)"
+    - id: assaabloy
+      label: "Assa Abloy / Vostio (digital keys)"
+    - id: datachat
+      label: "DataChat (AI / analytics, acquired)"
+    - id: flexkeeping
+      label: "Flexkeeping (housekeeping, acquired)"
+    - id: marketplace
+      label: "1,000+ marketplace integrations"
+    - id: hotel
+      label: "Hotel operations + guest experience"
+    edges:
+    - from: azure
+      to: mews
+      label: "hosting / compute"
+    - from: payments
+      to: mews
+      label: "payment processing"
+    - from: siteminder
+      to: mews
+      label: "OTA distribution"
+    - from: assaabloy
+      to: mews
+      label: "digital key API"
+    - from: datachat
+      to: mews
+      label: "AI / semantic layer"
+    - from: flexkeeping
+      to: mews
+      label: "housekeeping workflows"
+    - from: marketplace
+      to: mews
+      label: "third-party apps"
+    - from: mews
+      to: hotel
+      label: "unified operations"
+  approximationNotes: "Dependencies are identified from Mews status page, acquisition press, and payment analyses; the full vendor list and contractual terms are not public."
+  claimRefs:
+  - CE016
+  - CE019
+  - CE021
+  - CE027
+  - CE031
+
+- id: FE004
+  title: Product Maturity and Capability Map (Matrix)
+  type: matrix
+  layout: standard
+  summary: >
+    Maturity and diligence-risk scoring across major Mews modules on four dimensions: delivery maturity,
+    differentiation strength, API/integration coverage, and remaining diligence risk.
+  data:
+    columns:
+    - "Delivery maturity"
+    - "Differentiation"
+    - "API coverage"
+    - "Diligence risk"
+    rows:
+    - label: "PMS (core)"
+      values: ["Mature", "High", "Full", "Low"]
+    - label: "Booking Engine"
+      values: ["Mature", "Medium", "Full", "Low"]
+    - label: "RMS"
+      values: ["New (2026)", "High", "Partial", "High"]
+    - label: "Channel Manager (SiteMinder)"
+      values: ["New (2026)", "High", "Partial", "High"]
+    - label: "POS"
+      values: ["Mature", "Medium", "Full", "Medium"]
+    - label: "Housekeeping (Flexkeeping)"
+      values: ["Integrating", "Medium", "Partial", "Medium"]
+    - label: "Accounts Receivable"
+      values: ["New (2026)", "Medium", "Partial", "High"]
+    - label: "Payments"
+      values: ["Mature", "High", "Full", "Medium"]
+    - label: "AI / DataChat"
+      values: ["Integrating", "High", "Unknown", "High"]
+  approximationNotes: "Scores are author judgments derived from public product pages, launch dates, award listings, and acquisition status; they are qualitative diligence flags, not benchmarked measurements."
+  claimRefs:
+  - CE007
+  - CE009
+  - CE010
+  - CE013
+  - CE040
+
+callouts:
+- calloutType: strength
+  title: Open API and No-Fee Marketplace Are a Genuine, Verifiable Technical Moat
+  body: >
+    Unlike legacy PMS vendors, Mews exposes five public APIs (Connector, Channel Manager, Booking Engine,
+    POS, Loyalty Partner) with documentation hosted on docs.mews.com and source-controlled in the public
+    GitHub monorepo MewsSystems/open-api-docs, plus webhooks for real-time event propagation and a sandbox
+    for safe prototyping. The 1,000+ integration marketplace with no connection fees is a structural
+    advantage: it lowers switching friction for partners and compounds platform stickiness. This is one of
+    the few Mews claims that is independently verifiable from developer-signal sources (GitHub, APItracker,
+    the live status page), which materially de-risks the "open platform" narrative relative to competitors
+    whose integrations are gated or fee-based.
+  claimRefs:
+  - CE015
+  - CE016
+  - CE017
+  - CE020
+
+- calloutType: risk
+  title: Flagship 2026 Modules and Unverified Certification Scopes Are the Core Product Diligence Gaps
+  body: >
+    Three of Mews's most strategically important capabilities — Mews RMS, the SiteMinder-powered Channel
+    Manager, and Accounts Receivable — all shipped on 27 May 2026, and two 2025 acquisitions (DataChat,
+    Flexkeeping) are still integrating. Their headline benefits (a 13.7% revenue lift, 100% automated
+    reconciliation) are company-stated and not independently audited, and reliability history is thin. In
+    parallel, public sources confirm that Mews holds PCI DSS, SOC 2, ISO 27001, GDPR, and NF525
+    certifications but not their current scope, type, version, or audit dates. A buyer should require the
+    SOC 2 Type 2 report, ISO 27001:2022 certificate, PCI DSS v4.0 AoC, RMS validation methodology, and
+    uptime/SLA evidence before underwriting the platform's reliability and compliance posture.
+  claimRefs:
+  - CE009
+  - CE026
+  - CE028
+  - CE033
+  - CE040
+
+localEvidence:
+  searchQueries:
+  - query: "Mews operating system architecture Azure cloud-native PMS RMS POS single data model 2026"
+    engine: web_search
+    hits: 10
+    retainedSourceRefs:
+    - SE009
+    - SE010
+    - SE011
+    - SE021
+  - query: "Mews open API Connector Channel Manager Booking Engine POS Loyalty Partner developer docs GitHub 2026"
+    engine: web_search
+    hits: 10
+    retainedSourceRefs:
+    - SE001
+    - SE002
+    - SE003
+    - SE004
+    - SE005
+  - query: "Mews RMS revenue management launch May 2026 150 million pricing calculations 13.7% SiteMinder channel manager"
+    engine: web_search
+    hits: 10
+    retainedSourceRefs:
+    - SE009
+    - SE010
+    - SE012
+    - SE013
+  - query: "Mews DataChat acquisition 2025 generative AI agentic hospitality semantic layer 2026"
+    engine: web_search
+    hits: 8
+    retainedSourceRefs:
+    - SE014
+    - SE015
+    - SE016
+  - query: "Mews Flexkeeping acquisition housekeeping workflow builder 2026 advanced capabilities"
+    engine: web_search
+    hits: 6
+    retainedSourceRefs:
+    - SE017
+    - SE018
+  - query: "Mews PCI DSS SOC 2 ISO 27001 GDPR NF525 trust center security compliance 2026"
+    engine: web_search
+    hits: 8
+    retainedSourceRefs:
+    - SE006
+    - SE007
+    - SE008
+  - query: "Mews status page uptime reliability RTO recovery digital key Assa Abloy 2026"
+    engine: web_search
+    hits: 6
+    retainedSourceRefs:
+    - SE022
+    - SE007
+  - query: "Mews Unfold 2026 five new products announcements operating system review"
+    engine: web_search
+    hits: 8
+    retainedSourceRefs:
+    - SE019
+    - SE020
+
+  researchQuestions:
+  - id: QE001
+    question: "What does Mews deliver to a hotel in customer-workflow terms across the guest lifecycle?"
+    type: enumeration
+    targets:
+    - "contentRequirements/0"
+    - "plannedTables/workflow-use-case-table"
+    status: answered
+  - id: QE002
+    question: "Which product modules and product lines make up the Mews platform?"
+    type: enumeration
+    targets:
+    - "contentRequirements/1"
+    - "plannedTables/product-module-asset-matrix"
+    status: answered
+  - id: QE003
+    question: "What is the maturity and development stage of each major Mews module as of June 2026?"
+    type: verification
+    targets:
+    - "contentRequirements/1"
+    - "plannedFigures/product-maturity-capability-map"
+    status: answered
+  - id: QE004
+    question: "What cloud infrastructure and core architecture does Mews run on?"
+    type: verification
+    targets:
+    - "contentRequirements/2"
+    - "plannedTables/technology-operating-architecture-table"
+    status: answered
+  - id: QE005
+    question: "Which open APIs does Mews expose and how are they documented?"
+    type: enumeration
+    targets:
+    - "contentRequirements/2"
+    - "plannedFigures/product-architecture-map"
+    status: answered
+  - id: QE006
+    question: "What developer-signal evidence (GitHub, API tracker, status page) confirms the Mews developer surface?"
+    type: verification
+    targets:
+    - "contentRequirements/2"
+    status: answered
+  - id: QE007
+    question: "How many marketplace integrations does Mews offer and are there connection fees?"
+    type: quantification
+    targets:
+    - "contentRequirements/4"
+    - "plannedTables/technology-operating-architecture-table"
+    status: answered
+  - id: QE008
+    question: "What authentication and real-time event mechanisms does the Mews API use?"
+    type: mechanism
+    targets:
+    - "contentRequirements/2"
+    status: answered
+  - id: QE009
+    question: "What did Mews launch at Unfold 2026 and on what date?"
+    type: freshness
+    targets:
+    - "contentRequirements/3"
+    - "plannedTables/roadmap-release-development-stage-table"
+    status: answered
+  - id: QE010
+    question: "What are the stated performance metrics for Mews RMS (pricing calculations and revenue lift)?"
+    type: quantification
+    targets:
+    - "contentRequirements/3"
+    - "plannedTables/workflow-use-case-table"
+    status: answered
+  - id: QE011
+    question: "How does the SiteMinder partnership change Mews distribution capability?"
+    type: mechanism
+    targets:
+    - "contentRequirements/1"
+    status: answered
+  - id: QE012
+    question: "What does the DataChat acquisition add to Mews's product and AI roadmap?"
+    type: verification
+    targets:
+    - "contentRequirements/3"
+    status: answered
+  - id: QE013
+    question: "What does the Flexkeeping acquisition add and what is its 2026 roadmap?"
+    type: verification
+    targets:
+    - "contentRequirements/3"
+    - "plannedTables/roadmap-release-development-stage-table"
+    status: answered
+  - id: QE014
+    question: "Which security and compliance certifications does Mews publicly claim?"
+    type: enumeration
+    targets:
+    - "contentRequirements/5"
+    - "plannedTables/trust-quality-compliance-table"
+    status: answered
+  - id: QE015
+    question: "What is the verification gap on Mews's certification scope, type, and audit dates?"
+    type: adverse
+    targets:
+    - "contentRequirements/5"
+    - "plannedTables/trust-quality-compliance-table"
+    status: answered
+  - id: QE016
+    question: "What Recovery Time Objective and reliability controls does Mews publish?"
+    type: quantification
+    targets:
+    - "contentRequirements/5"
+    status: answered
+  - id: QE017
+    question: "What third-party dependencies create reliability risk for the Mews platform?"
+    type: verification
+    targets:
+    - "contentRequirements/2"
+    - "plannedFigures/critical-dependency-map"
+    status: answered
+  - id: QE018
+    question: "What differentiates Mews technically from legacy PMS competitors?"
+    type: comparison
+    targets:
+    - "contentRequirements/4"
+    status: answered
+  - id: QE019
+    question: "How does Mews's embedded payments model function as a differentiator and a risk?"
+    type: mechanism
+    targets:
+    - "contentRequirements/4"
+    - "contentRequirements/5"
+    status: answered
+  - id: QE020
+    question: "What is the deployment model and onboarding approach for Mews?"
+    type: verification
+    targets:
+    - "contentRequirements/3"
+    status: answered
+  - id: QE021
+    question: "What developer conveniences does Mews NOT expose (GraphQL, OAuth playground, SDKs)?"
+    type: adverse
+    targets:
+    - "contentRequirements/2"
+    status: answered
+  - id: QE022
+    question: "How does Mews validate its 13.7% RMS revenue-lift claim?"
+    type: verification
+    targets:
+    - "contentRequirements/3"
+    status: partial
+  - id: QE023
+    question: "What is Mews's microservice topology, data residency, and scaling architecture?"
+    type: mechanism
+    targets:
+    - "contentRequirements/2"
+    - "plannedTables/technology-operating-architecture-table"
+    status: unresolved
+  - id: QE024
+    question: "What uptime SLA, RPO, and DR-test evidence does Mews publish beyond the 24-hour RTO?"
+    type: quantification
+    targets:
+    - "contentRequirements/5"
+    status: unresolved
+  - id: QE025
+    question: "How does Mews compare with competitors on API openness and integration economics?"
+    type: comparison
+    targets:
+    - "contentRequirements/4"
+    status: answered
+  - id: QE026
+    question: "What ROI does Mews cite for adopting its operating system and what is the source?"
+    type: quantification
+    targets:
+    - "contentRequirements/0"
+    status: answered
+
+  sources:
+  - id: SE001
+    publisher: Mews
+    title: "Mews Open API — Your hotel, your way"
+    url: "https://www.mews.com/en/products/api"
+    date: '2026-01-01'
+    accessDate: '2026-06-25'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics: ["open API", "integrations", "webhooks", "marketplace", "no connection fees"]
+    keyQuote: "Every new Mews feature comes with a ready-to-use API, so you can connect tools instantly."
+  - id: SE002
+    publisher: Mews
+    title: "Mews Open API Developer Documentation (docs.mews.com)"
+    url: "https://docs.mews.com/"
+    date: '2026-06-25'
+    accessDate: '2026-06-25'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics: ["API docs", "Connector API", "POS API", "Booking Engine", "Channel Manager API", "Loyalty Partner API", "authentication"]
+    keyQuote: "Welcome to the Mews Open API developer documentation."
+  - id: SE003
+    publisher: "GitHub (MewsSystems)"
+    title: "MewsSystems/open-api-docs — Mews Open API documentation repository"
+    url: "https://github.com/MewsSystems/open-api-docs"
+    date: '2026-06-25'
+    accessDate: '2026-06-25'
+    accessStatus: ok
+    stance: confirming
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: company
+    topics: ["GitHub", "open API", "GitBook", "developer documentation", "monorepo"]
+    keyQuote: "This repository contains the source documentation for Mews Open APIs. The public documentation is hosted at https://docs.mews.com/ and is published using Gitbook."
+  - id: SE004
+    publisher: APItracker
+    title: "Mews API Profile — styles, webhooks, sandbox, authentication"
+    url: "https://apitracker.io/a/mews"
+    date: '2026-06-25'
+    accessDate: '2026-06-25'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics: ["API tracker", "webhooks", "sandbox", "developer surface", "GraphQL"]
+    keyQuote: "Webhooks management API; Sandbox environment; OpenAPI/Swagger specs."
+  - id: SE005
+    publisher: Codelevate
+    title: "Mews API Integration Guide for 2026"
+    url: "https://www.codelevate.com/blog/mews-api-integration-guide-for-2026"
+    date: '2026-01-01'
+    accessDate: '2026-06-25'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: independent
+    topics: ["Mews API", "Connector API", "Booking Engine API", "integration", "demo environment"]
+    keyQuote: "Mews supports multiple open APIs (including Connector API and Booking Engine API) and a demo environment for development and testing."
+  - id: SE006
+    publisher: Mews
+    title: "PCI Compliance — Mews Help Center"
+    url: "https://help.mews.com/s/article/pci-compliance"
+    date: '2026-01-01'
+    accessDate: '2026-06-25'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics: ["PCI DSS", "payment security", "compliance", "card handling"]
+  - id: SE007
+    publisher: "Mews (SafeBase Trust Center)"
+    title: "Mews Trust Center — Security and Compliance"
+    url: "https://trust.mews.com/"
+    date: '2026-06-25'
+    accessDate: '2026-06-25'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics: ["SOC 2", "ISO 27001", "PCI DSS", "GDPR", "two-factor authentication", "RTO", "DDoS"]
+    keyQuote: "Is it possible to secure the login with a two-factor authentication?"
+  - id: SE008
+    publisher: Trustlists
+    title: "Mews Compliance & Certifications (SafeBase-verified)"
+    url: "https://trustlists.org/company/mews/"
+    date: '2026-06-01'
+    accessDate: '2026-06-25'
+    accessStatus: ok
+    stance: neutral
+    sourceType: review
+    reputationTier: low
+    independence: independent
+    topics: ["SOC 2", "ISO 27001", "PCI DSS", "GDPR", "CCPA", "NIST", "certifications"]
+    keyQuote: "Mews holds SOC 2, ISO 27001, PCI DSS, GDPR, CCPA, SOX, NIST certifications."
+  - id: SE009
+    publisher: Mews
+    title: "Mews unveils the operating system for hospitality at Unfold 2026"
+    url: "https://www.mews.com/en/press/mews-operating-system-unfold-2026"
+    date: '2026-05-27'
+    accessDate: '2026-06-25'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics: ["Unfold 2026", "operating system", "RMS", "SiteMinder", "Accounts Receivable", "150 million pricing", "13.7%"]
+    keyQuote: "Mews RMS embeds dynamic pricing inside the platform, running 150 million pricing calculations a day ... lifting total revenue per square meter up 13.7% on average against hotels with no RMS."
+  - id: SE010
+    publisher: "PR Newswire"
+    title: "Mews Unveils the Operating System for Hospitality"
+    url: "https://www.prnewswire.com/news-releases/mews-unveils-the-operating-system-for-hospitality-302783322.html"
+    date: '2026-05-27'
+    accessDate: '2026-06-25'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics: ["operating system", "five new products", "RMS", "Channel Manager", "Accounts Receivable"]
+  - id: SE011
+    publisher: HospitalityTech
+    title: "Mews Reimagines the Hospitality Stack, Launching Unified, AI-Native Operating System"
+    url: "https://hospitalitytech.com/mews-reimagines-hospitality-stack-launching-unified-ai-native-operating-system"
+    date: '2026-05-27'
+    accessDate: '2026-06-25'
+    accessStatus: ok
+    stance: confirming
+    sourceType: news
+    reputationTier: medium
+    independence: independent
+    topics: ["Mews operating system", "AI-native", "Unfold 2026", "unified stack"]
+  - id: SE012
+    publisher: TravelDailyNews
+    title: "Mews and SiteMinder launch integrated hotel distribution platform"
+    url: "https://www.traveldailynews.com/technology/mews-and-siteminder-launch-integrated-hotel-distribution-platform/"
+    date: '2026-05-27'
+    accessDate: '2026-06-25'
+    accessStatus: ok
+    stance: confirming
+    sourceType: news
+    reputationTier: medium
+    independence: independent
+    topics: ["SiteMinder", "channel manager", "distribution", "400 OTAs"]
+  - id: SE013
+    publisher: "Lodging Magazine"
+    title: "Mews Debuts New Products and Partners With SiteMinder"
+    url: "https://lodgingmagazine.com/mews-debuts-new-products-and-partners-with-siteminder/"
+    date: '2026-05-27'
+    accessDate: '2026-06-25'
+    accessStatus: ok
+    stance: confirming
+    sourceType: news
+    reputationTier: medium
+    independence: independent
+    topics: ["Mews products", "SiteMinder", "distribution", "Unfold 2026"]
+  - id: SE014
+    publisher: Mews
+    title: "Mews acquires DataChat, a leading generative AI analytics platform"
+    url: "https://www.mews.com/en/press/mews-acquires-datachat"
+    date: '2025-11-01'
+    accessDate: '2026-06-25'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics: ["DataChat", "generative AI", "agentic", "analytics", "acquisition"]
+  - id: SE015
+    publisher: "PR Newswire"
+    title: "Mews Accelerates the Dawn of Agentic Hospitality with Acquisition of DataChat"
+    url: "https://www.prnewswire.com/news-releases/mews-accelerates-the-dawn-of-agentic-hospitality-with-acquisition-of-datachat-a-leading-generative-ai-analytics-platform-302596355.html"
+    date: '2025-11-01'
+    accessDate: '2026-06-25'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics: ["DataChat", "agentic hospitality", "NLP", "semantic layer", "acquisition"]
+    keyQuote: "DataChat's 'conversational intelligence' platform allows users to interact directly with their existing business data through natural language."
+  - id: SE016
+    publisher: "Hotel Technology News"
+    title: "Mews Acquires Conversational Intelligence Provider DataChat"
+    url: "https://hoteltechnologynews.com/2025/11/mews-acquires-conversational-intelligence-provider-datachat-to-expand-push-into-agentic-hotel-operations/"
+    date: '2025-11-01'
+    accessDate: '2026-06-25'
+    accessStatus: ok
+    stance: neutral
+    sourceType: news
+    reputationTier: medium
+    independence: independent
+    topics: ["DataChat", "agentic hotel operations", "AI acquisition"]
+  - id: SE017
+    publisher: Mews
+    title: "Mews acquires Flexkeeping"
+    url: "https://www.mews.com/en/press/mews-acquires-flexkeeping"
+    date: '2025-01-01'
+    accessDate: '2026-06-25'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics: ["Flexkeeping", "housekeeping", "operations", "acquisition"]
+  - id: SE018
+    publisher: "HotelTechReport"
+    title: "Flexkeeping by Mews Set to Launch Advanced Capabilities in 2026"
+    url: "https://hoteltechreport.com/news/flexkeeping-by-mews-set-to-launch-advanced-capabilities-in-2026"
+    date: '2025-12-09'
+    accessDate: '2026-06-25'
+    accessStatus: ok
+    stance: neutral
+    sourceType: news
+    reputationTier: medium
+    independence: independent
+    topics: ["Flexkeeping", "housekeeping", "workflow builder", "2026 roadmap"]
+  - id: SE019
+    publisher: "Foursides Consulting"
+    title: "Hoteliers Digest: Mews Unfold, Connected Hotel Systems and Revenue Automation"
+    url: "https://www.foursidesconsulting.com/hoteliers-digest-9-mews-unfold-connected-hotel-systems-and-revenue-automation/"
+    date: '2026-06-01'
+    accessDate: '2026-06-25'
+    accessStatus: ok
+    stance: neutral
+    sourceType: news
+    reputationTier: low
+    independence: independent
+    topics: ["Unfold 2026", "connected systems", "revenue automation"]
+  - id: SE020
+    publisher: Mews
+    title: "Mews Operating System — Cloud Hospitality Platform (products)"
+    url: "https://www.mews.com/en/products"
+    date: '2026-06-25'
+    accessDate: '2026-06-25'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics: ["products", "PMS", "Kiosk", "Booking Engine", "guest experience", "476% ROI"]
+    keyQuote: "Trusted by 15,000 properties worldwide. Delivering a 476% three-year ROI."
+  - id: SE021
+    publisher: "Mews (status page)"
+    title: "Mews System Status — Open API and services"
+    url: "https://status.mews.com/"
+    date: '2026-06-25'
+    accessDate: '2026-06-25'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics: ["status page", "uptime", "Open API", "Assa Abloy", "Vostio", "digital key"]
+    keyQuote: "Our observability tools have detected errors indicating a potential outage with a third-party provider (Assa Abloy/Vostio API), which may impact digital key creation."
+  - id: SE022
+    publisher: "Mews (SafeBase Trust Center)"
+    title: "Mews Trust Center — Disaster Recovery and RTO"
+    url: "https://trust.mews.com/?itemUid=rto"
+    date: '2026-06-25'
+    accessDate: '2026-06-25'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics: ["RTO", "disaster recovery", "24-hour", "business continuity"]
+  - id: SE023
+    publisher: Mews
+    title: "Mews Open API — Build with Mews (API guide page)"
+    url: "https://www.mews.com/en/products/api#build"
+    date: '2026-06-25'
+    accessDate: '2026-06-25'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics: ["API", "build", "marketplace", "custom integration", "data pipeline"]
+  - id: SE024
+    publisher: Trustpilot
+    title: "Mews Reviews — Trustpilot"
+    url: "https://www.trustpilot.com/review/mews.com"
+    date: '2026-06-01'
+    accessDate: '2026-06-25'
+    accessStatus: ok
+    stance: adverse
+    sourceType: review
+    reputationTier: low
+    independence: independent
+    topics: ["customer reviews", "payments", "support", "lock-in", "adverse"]
+  - id: SE025
+    publisher: "HotelTechReport"
+    title: "Mews — #1 PMS HotelTechAwards 2026"
+    url: "https://hoteltechreport.com/operations/property-management-systems/mews"
+    date: '2026-01-01'
+    accessDate: '2026-06-25'
+    accessStatus: ok
+    stance: confirming
+    sourceType: review
+    reputationTier: medium
+    independence: independent
+    topics: ["HotelTechAwards", "Best PMS", "2026", "reviews"]
+
+  claims:
+  - id: CE001
+    statement: "Mews is a cloud-native hospitality operating system hosted on Microsoft Azure that unifies PMS, RMS, POS, housekeeping, and embedded payments on a single data model."
+    type: company-claimed
+    topic: product-definition
+    sourceRefs:
+    - SE009
+    - SE020
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE004
+  - id: CE002
+    statement: "The Mews platform spans the full guest lifecycle: booking, pre-arrival personalization and upsells, self-check-in via Kiosk, in-stay operations, embedded payments, and post-stay receivables."
+    type: observed
+    topic: product-definition
+    sourceRefs:
+    - SE020
+    - SE009
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+  - id: CE003
+    statement: "Mews's core promise is that every team works from the same platform on one data model, so a change posts once and propagates everywhere without manual reconciliation."
+    type: company-claimed
+    topic: product-definition
+    sourceRefs:
+    - SE009
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+  - id: CE004
+    statement: "Mews cites a 476% three-year ROI from IDC research for adopting its operating system."
+    type: company-claimed
+    topic: product-definition
+    sourceRefs:
+    - SE020
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE026
+  - id: CE005
+    statement: "Mews serves 15,000 customers across 85 countries as of 2026."
+    type: company-claimed
+    topic: product-definition
+    sourceRefs:
+    - SE009
+    - SE020
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+  - id: CE006
+    statement: "Mews markets the platform to modern independent and group hotels and to 'shared spaces' operators, positioning consolidation of eight-to-ten vendors as the core benefit."
+    type: company-claimed
+    topic: product-definition
+    sourceRefs:
+    - SE009
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+  - id: CE007
+    statement: "Mews PMS is the platform's mature reservation and operations core, winning Best PMS at the HotelTechAwards in 2024, 2025, and 2026."
+    type: third-party-reported
+    topic: module-map
+    sourceRefs:
+    - SE009
+    - SE025
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE002
+    - QE003
+  - id: CE008
+    statement: "Mews RMS, launched 27 May 2026, runs 150 million pricing calculations a day and executes rate changes against live demand without manual intervention."
+    type: company-claimed
+    topic: module-map
+    sourceRefs:
+    - SE009
+    - SE010
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE010
+  - id: CE009
+    statement: "Mews states its RMS lifts total revenue per square meter by 13.7% on average versus hotels with no RMS, based on a company causal-inference study over properties with auto-recommendations active nine or more months."
+    type: company-claimed
+    topic: module-map
+    sourceRefs:
+    - SE009
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE010
+    - QE022
+  - id: CE010
+    statement: "The Mews Channel Manager 'powered by SiteMinder' connects hotels to 400+ OTAs through one contract, one bill, and one support line, launched at Unfold 2026."
+    type: company-claimed
+    topic: module-map
+    sourceRefs:
+    - SE009
+    - SE012
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE011
+  - id: CE011
+    statement: "Mews launched an Accounts Receivable module at Unfold 2026 that brings B2B invoice-to-cash inside the platform, claiming 100% automated reconciliation and replacing a typical 7-8 day invoicing delay."
+    type: company-claimed
+    topic: module-map
+    sourceRefs:
+    - SE009
+    - SE010
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE009
+  - id: CE012
+    statement: "Mews acquired housekeeping software Flexkeeping in 2025 and plans advanced housekeeping capabilities through 2026."
+    type: company-claimed
+    topic: module-map
+    sourceRefs:
+    - SE017
+    - SE018
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE013
+  - id: CE013
+    statement: "Mews Spaces generated $537 million of ancillary revenue for hoteliers through non-room space inventory, evidencing the platform's monetization moat."
+    type: company-claimed
+    topic: module-map
+    sourceRefs:
+    - SE009
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE002
+  - id: CE014
+    statement: "Several flagship Mews modules (RMS, Accounts Receivable, the SiteMinder Channel Manager) were launched in 2026, so their reliability and adoption are not yet independently established."
+    type: inferred
+    topic: module-map
+    sourceRefs:
+    - SE009
+    - SE011
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE003
+  - id: CE015
+    statement: "Mews exposes five public APIs — Connector, Channel Manager, Booking Engine, POS, and Loyalty Partner — documented on docs.mews.com."
+    type: observed
+    topic: architecture
+    sourceRefs:
+    - SE002
+    - SE001
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE005
+  - id: CE016
+    statement: "The Mews Open API documentation source is hosted in the public GitHub monorepo MewsSystems/open-api-docs and published via GitBook to docs.mews.com."
+    type: observed
+    topic: architecture
+    sourceRefs:
+    - SE003
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE006
+  - id: CE017
+    statement: "Mews advertises 1,000+ marketplace integrations with no connection fees, and partners receive a Partner ID and must certify integrations before listing."
+    type: company-claimed
+    topic: architecture
+    sourceRefs:
+    - SE001
+    - SE002
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE007
+  - id: CE018
+    statement: "Mews API authentication uses a ClientToken plus AccessToken model and provides a demo/sandbox environment for integrators."
+    type: observed
+    topic: architecture
+    sourceRefs:
+    - SE005
+    - SE004
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE008
+  - id: CE019
+    statement: "Mews uses webhooks to push real-time changes (reservations, spend, guest profiles, payments) to connected systems as soon as they occur."
+    type: observed
+    topic: architecture
+    sourceRefs:
+    - SE001
+    - SE004
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE008
+  - id: CE020
+    statement: "APItracker confirms Mews offers webhook management, a sandbox environment, and OpenAPI/Swagger specs as part of its developer surface."
+    type: third-party-reported
+    topic: architecture
+    sourceRefs:
+    - SE004
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE006
+  - id: CE021
+    statement: "Mews is a cloud-native, multi-tenant SaaS application rather than a retrofitted on-premise system, built with an open API from day one."
+    type: company-claimed
+    topic: architecture
+    sourceRefs:
+    - SE001
+    - SE020
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE004
+    - QE018
+  - id: CE022
+    statement: "APItracker indicates Mews does not expose some developer conveniences such as a public GraphQL playground, OAuth playground, or listed open-source SDKs."
+    type: observed
+    topic: architecture
+    sourceRefs:
+    - SE004
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE021
+  - id: CE023
+    statement: "Beyond 'Azure cloud-native' positioning and the public API contract, Mews's microservice topology, data residency, and scaling design are not publicly documented."
+    type: inferred
+    topic: architecture
+    sourceRefs:
+    - SE002
+    - SE001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE023
+  - id: CE024
+    statement: "At Unfold 2026 on 27 May 2026 Mews launched five new products, completing an AI-native operating system unifying PMS, RMS, messaging, automations, and accounts receivable."
+    type: company-claimed
+    topic: roadmap
+    sourceRefs:
+    - SE009
+    - SE011
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE009
+  - id: CE025
+    statement: "Mews acquired DataChat, a US-based generative-AI analytics company, in November 2025 to build conversational and semantic intelligence for agentic hospitality operations."
+    type: company-claimed
+    topic: roadmap
+    sourceRefs:
+    - SE014
+    - SE015
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE012
+  - id: CE026
+    statement: "Mews's most strategically important new capabilities (RMS, SiteMinder Channel Manager, Accounts Receivable) all shipped on the same day (27 May 2026), concentrating execution risk."
+    type: inferred
+    topic: roadmap
+    sourceRefs:
+    - SE009
+    - SE013
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE009
+  - id: CE027
+    statement: "Mews publishes a component-level status page (status.mews.com) reporting operational status for the Open API and other services."
+    type: observed
+    topic: roadmap
+    sourceRefs:
+    - SE021
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE017
+  - id: CE028
+    statement: "The Mews trust center states a 24-hour Recovery Time Objective for disaster recovery."
+    type: company-claimed
+    topic: roadmap
+    sourceRefs:
+    - SE007
+    - SE022
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE016
+  - id: CE029
+    statement: "Mews deploys as browser-based SaaS, so onboarding is a data-migration and configuration exercise, and APIs handle multi-property management in a single call."
+    type: company-claimed
+    topic: roadmap
+    sourceRefs:
+    - SE001
+    - SE020
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE020
+  - id: CE030
+    statement: "Flexkeeping's advanced housekeeping capabilities are slated to roll out through 2026 as the product integrates into Mews."
+    type: company-claimed
+    topic: roadmap
+    sourceRefs:
+    - SE018
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE013
+  - id: CE031
+    statement: "A recorded Mews status incident referencing Assa Abloy/Vostio digital-key APIs shows that platform reliability is partly a function of integration partners Mews does not control."
+    type: observed
+    topic: roadmap
+    sourceRefs:
+    - SE021
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE017
+  - id: CE032
+    statement: "Mews publishes a SafeBase-hosted trust center asserting SOC 2, ISO 27001, PCI DSS, GDPR, CCPA, SOX, and NIST alignment."
+    type: company-claimed
+    topic: trust-compliance
+    sourceRefs:
+    - SE007
+    - SE008
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE014
+  - id: CE033
+    statement: "Public sources confirm the existence of Mews's certifications but not their current scope, type (e.g., SOC 2 Type 2), revision (ISO 27001:2022), version (PCI DSS v4.0), or audit dates."
+    type: inferred
+    topic: trust-compliance
+    sourceRefs:
+    - SE007
+    - SE008
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE015
+  - id: CE034
+    statement: "Mews's help center documents PCI DSS compliance for handling payment card data across Mews Payments."
+    type: company-claimed
+    topic: trust-compliance
+    sourceRefs:
+    - SE006
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE014
+  - id: CE035
+    statement: "Mews holds French NF525 anti-fraud certification supporting POS deployments in France."
+    type: company-claimed
+    topic: trust-compliance
+    sourceRefs:
+    - SE007
+    confidence: low
+    freshness: current
+    answersQuestionRefs:
+    - QE014
+  - id: CE036
+    statement: "Mews's trust center documents standard account-security controls including two-factor authentication and DDoS/brute-force protection."
+    type: company-claimed
+    topic: trust-compliance
+    sourceRefs:
+    - SE007
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE016
+  - id: CE037
+    statement: "Mews's open API built in parallel with every feature, plus webhook real-time data, is its clearest technical differentiator versus legacy PMS systems."
+    type: company-claimed
+    topic: trust-compliance
+    sourceRefs:
+    - SE001
+    - SE005
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE018
+    - QE025
+  - id: CE038
+    statement: "Mews Payments operates as an embedded payment facilitator (PayFac) on Adyen/Stripe backends, functioning as both an economic differentiator and a lock-in/cost risk flagged in customer reviews."
+    type: observed
+    topic: trust-compliance
+    sourceRefs:
+    - SE024
+    - SE020
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE019
+  - id: CE039
+    statement: "Customer reviews on Trustpilot include adverse signals about Mews payments cost, support, and lock-in despite high product ratings elsewhere."
+    type: third-party-reported
+    topic: trust-compliance
+    sourceRefs:
+    - SE024
+    confidence: low
+    freshness: current
+    answersQuestionRefs:
+    - QE019
+  - id: CE040
+    statement: "Unverified certification scopes and months-old flagship modules together constitute the core product and security diligence gaps a buyer should resolve before underwriting."
+    type: inferred
+    topic: trust-compliance
+    sourceRefs:
+    - SE007
+    - SE009
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE015
+    - QE003
+
+  evidenceGaps:
+  - type: missing-source
+    severity: material
+    topic: architecture
+    missingEvidence: "Mews's published architecture details — microservice topology, data residency/regions, scaling design, and API rate limits/versioning policy."
+    whyItMatters: "Without architecture documentation, reliability, data-sovereignty, and scalability cannot be independently underwritten beyond the 'Azure cloud-native' marketing claim."
+    diligencePath: "Request an architecture brief and security whitepaper from Mews; review API versioning and rate-limit docs under NDA."
+    relatedQuestionRefs:
+    - QE023
+  - type: private-evidence-only
+    severity: material
+    topic: trust-compliance
+    missingEvidence: "Current SOC 2 Type 2 report, ISO 27001:2022 certificate, and PCI DSS v4.0 Attestation of Compliance with scope and audit dates."
+    whyItMatters: "Public sources confirm certifications exist but not their type, version, scope, or recency, which is essential for security and regulatory underwriting."
+    diligencePath: "Request the SOC 2 Type 2 report, ISO certificate, and PCI AoC directly from Mews trust center under NDA; verify auditor and report period."
+    relatedQuestionRefs:
+    - QE015
+  - type: missing-source
+    severity: material
+    topic: reliability
+    missingEvidence: "Published uptime SLA, RPO, historical uptime data, and disaster-recovery test evidence beyond the stated 24-hour RTO."
+    whyItMatters: "Hotels concentrate full operational dependency on Mews; thin public reliability evidence makes the operational risk hard to quantify."
+    diligencePath: "Request SLA terms, uptime history, and DR test results from Mews; review status.mews.com incident history over time."
+    relatedQuestionRefs:
+    - QE024
+  - type: conflicting-data
+    severity: minor
+    topic: rms-validation
+    missingEvidence: "Independent validation of the 13.7% RMS revenue-lift claim beyond Mews's own causal-inference study."
+    whyItMatters: "The headline RMS benefit underpins upsell economics; a company-run study is not equivalent to third-party verification."
+    diligencePath: "Request the underlying methodology and dataset; seek third-party or customer-reference validation of the revenue lift."
+    relatedQuestionRefs:
+    - QE022
+
+acknowledgedWarnings:
+- dimension: tableNotes
+  reason: "All five tables carry explicit one-line notes describing data sources, author classification of maturity labels, and which benefit/certification claims are company-stated versus independently verified; no further caveat is needed."
