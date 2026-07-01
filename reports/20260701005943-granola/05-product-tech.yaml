@@ -1,0 +1,2266 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: granola
+runDate: '2026-07-01'
+company:
+  name: Granola
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: 'Granola''s product is a bot-free, device-level AI meeting notepad: it captures microphone and system audio locally, transcribes it in real time via third-party ASR vendors (Deepgram, AssemblyAI),
+    and uses OpenAI and Anthropic models to blend the transcript with a user''s own notes into structured, shareable meeting memory, now extended by an agentic Chat, Briefs, Recipes, and a Model Context
+    Protocol (MCP) integration layer. The architecture -- Electron desktop client, native iOS app, AWS-hosted US VPC storage, zero audio retention -- is independently corroborated by a security researcher''s
+    teardown of the Mac app and by a reverse-engineered open-source client, and it is the direct reason Granola states it completed SOC 2 Type II certification in roughly three months. That same architecture
+    has produced three disclosed public postmortems (an AssemblyAI API key exposure and two Google Workspace access-control gaps), a still-unresolved HIPAA gap, no EU-hosted or on-premise deployment option,
+    no independent accuracy benchmark, and a March 2026 local-database-encryption change that a prominent investor publicly criticized for breaking third-party agent access -- undercutting the "private
+    by default" and open-data claims central to Granola''s own marketing.'
+sections:
+- id: product-overview-module-map
+  title: Product Overview and Core Module / SKU Map
+  body: 'Granola is a meeting-memory application built around a single differentiated mechanism: it captures microphone and system audio locally on the user''s own device rather than joining a call as a
+    visible bot participant, and the user must manually start the app before a meeting begins (CE001, CE002). That capture layer now underwrites a wider product line rather than a single note-taking tool.
+    The AI Notepad itself ships on macOS, Windows, and iOS; on top of it sit an agentic Granola Chat that can answer questions across a user''s entire meeting history, Briefs that auto-generate pre-meeting
+    prep, Recipes (reusable AI prompt templates), Team Spaces/Folders for shared organizational memory, a Personal API and a separate Enterprise Admin API, and Granola MCP, an integration layer that exposes
+    meeting context to external AI tools (CE003). Granola for Enterprise adds a distinct governance layer on top of that core product -- SSO/SAML, SCIM provisioning, an admin dashboard, domain management,
+    flexible data-retention windows, and SOC 2 Type II documentation -- rather than a different product architecture (CE004).
+
+
+    Commercially, Granola is distributed as a free tier plus paid Business and Enterprise plans that are differentiated mainly by feature access such as meeting-history depth, CRM integrations, and admin
+    controls (CE006); the Personal API is bundled into Business and Enterprise, while the Enterprise Admin API is Enterprise-only, and neither is priced as a standalone line item (CE007). Two gaps stand
+    out in the module map itself. First, Granola''s own careers page lists an Android Engineer among current team members, yet no Android app appears on Granola''s sitemap or any public app store as of
+    the run date -- a clear roadmap signal without a committed ship date (CE005). Second, Granola''s own /integrations marketing URL returned an HTTP 404 at the time of this review, so no single official,
+    current page catalogues the company''s full integration surface (CE008).'
+  claimRefs:
+  - CE001
+  - CE002
+  - CE003
+  - CE004
+  - CE006
+  - CE007
+  - CE005
+  - CE008
+  tableRefs:
+  - TE001
+- id: workflow-use-cases
+  title: Workflow and Use-Case Proof
+  body: 'Granola''s own published customer case studies give the clearest picture of how the product is actually used inside organizations, spanning four distinct buyer/user contexts. Zapier''s Principal
+    Designer adopted Granola for a design/product/engineering organization after other AI transcription tools felt invasive, and the company-published case study reports 830+ hours saved per month and 52%
+    organization-wide adoption (CE009). Vanta''s VP of Customer Success adopted Granola for internal 1:1s, standups, and cross-functional syncs specifically because SOC 2 Type II certification, encryption,
+    and notice-and-consent recording controls mattered for a security-and-compliance company, reporting 69% organization-wide adoption and a 61% increase in meeting visibility (CE010). Brex''s Head of IT
+    rolled Granola out company-wide after employees had already adopted it organically, citing SSO/SCIM delivery and a no-public-model-training commitment inside a regulated fintech, with the case study
+    reporting over 50% adoption across knowledge workers within six months and 427 hours saved per week (CE011). Vercel''s sales-engineering team replaced a slower transcription tool with Granola and now
+    uses its "chat with the transcript" feature to retrieve specific technical objections raised by prospects, reporting 100% GTM team adoption, 11 hours saved weekly per user, and a 25% GTM productivity
+    increase (CE012).
+
+
+    Beyond these four flagship accounts, Granola''s own reporting names executive search firm Daversa Partners as deploying Granola across 136 of its 150 employees specifically because bot-free, device-level
+    capture felt less intrusive than visible-bot tools for confidential candidate and client conversations (CE013), and an independent Product Hunt community thread cites in-person, multilingual conversation
+    capture -- translating a Japanese conversation into English notes, for example -- as a distinguishing real-world use case for the mobile app (CE014). None of the four flagship case studies, however,
+    discloses a seat count, contract value, renewal rate, or churn figure; every quantified benefit is limited to adoption percentages and hours-saved estimates rather than revenue-linked proof (CE015),
+    which is the central limitation of workflow evidence in this chapter.'
+  claimRefs:
+  - CE009
+  - CE010
+  - CE011
+  - CE012
+  - CE013
+  - CE014
+  - CE015
+  tableRefs:
+  - TE002
+- id: technology-operating-architecture
+  title: Technology and Operating Architecture
+  body: 'Granola''s desktop client is an Electron application packaged for macOS and Windows -- confirmed both by Granola''s own engineering blog describing the difficulty of customizing the app''s dock/taskbar
+    icon, and independently by security research firm Tenable, which unpacked the macOS .asar archive to inspect the client''s JavaScript (CE016). The core AI pipeline is entirely vendor-dependent: transcription
+    runs on third-party ASR providers Deepgram and AssemblyAI, and note-enhancement, chat, and summarization run on third-party OpenAI and Anthropic LLM APIs, a company-stated architecture corroborated
+    by Tenable''s discovery of AssemblyAI references and a live API key inside the client (CE017). That same Tenable research found a concrete flaw: an unauthenticated api.granola.ai endpoint ("get-feature-flags")
+    returned a live AssemblyAI key that could be used to pull meeting transcript IDs and content directly from AssemblyAI''s own API (CE018), which Granola''s own postmortem later confirmed affected roughly
+    300-333 iOS TestFlight beta testers between November 2024 and March 2025 with no evidence of exploitation beyond the researcher''s own testing (CE019).
+
+
+    On-device, Granola stores meeting metadata, transcripts, and AI summaries in a local application cache file (cache-v3.json) with a nested "double-JSON" structure that an independent open-source Python
+    project reverse-engineered entirely offline, without calling Granola''s own servers (CE020); the same project documents an alternative, undocumented path of extracting session tokens from a local supabase.json
+    configuration file to call Granola''s cloud API directly, which its maintainer chose not to implement for privacy and reliability reasons (CE021). In March 2026, Granola encrypted that local database,
+    which a prominent a16z partner publicly criticized (in a tweet viewed roughly 327,000 times) for cutting off third-party agents that previously read the plaintext cache file directly (CE022); Granola''s
+    co-founder pointed to Granola MCP as the replacement path, but the critic countered that MCP requires MCP-specific client support rather than open file or API access, leaving the underlying complaint
+    unresolved (CE023). Granola''s own engineering blog frames a related tradeoff behind its April 2026 agentic Chat rebuild: reading full transcripts is roughly 10x more token-expensive than reading condensed
+    notes, forcing an explicit depth-versus-cost choice for cross-meeting agent queries (CE024). Granola MCP itself, launched February 4, 2026, implements the open Model Context Protocol so tools like Claude,
+    ChatGPT, Cursor, and Claude Code can query a user''s notes as context, though enterprise MCP access remains an early-access beta that is off by default (CE025). Stored data -- transcripts, notes, AI
+    summaries -- lives in an AWS-hosted, US-region Virtual Private Cloud, encrypted at rest and in transit and backed up daily, while raw audio is never stored at all (CE026); authentication runs through
+    Google Workspace or Microsoft OAuth tied to the user''s calendar (CE027).'
+  claimRefs:
+  - CE016
+  - CE017
+  - CE018
+  - CE019
+  - CE020
+  - CE021
+  - CE022
+  - CE023
+  - CE024
+  - CE025
+  - CE026
+  - CE027
+  tableRefs:
+  - TE003
+  figureRefs:
+  - FE001
+  - FE003
+- id: deployment-integration-reliability-roadmap
+  title: Deployment, Integration, Reliability, Support, and Roadmap
+  body: 'Granola''s public release history shows a near-monthly cadence of shipped features from its July 2024 desktop launch onward: a $20M raise alongside the original notepad (November 2024), native
+    iOS availability (May 2025), Windows availability paired with SOC 2 Type II completion (July 2025), Recipes (September 2025), Granola MCP (February 2026), a $125M Series C (March 2026), an agentic Chat
+    rebuild (April 2026), and Briefs (May 2026) (CE028). Integration surface area grew alongside it: Slack posting (October 2024), Notion sharing (March 2025), and Zapier connecting Granola to 8,000+ apps
+    alongside Attio and HubSpot (mid-to-late 2025), all documented in Granola''s own changelog (CE029).
+
+
+    Reliability visibility, however, is thin and largely third-party. An independent uptime-monitoring aggregator recorded four Granola incidents in the 90 days before the run date, with a median resolution
+    time of about 2 hours 34 minutes, including an iOS transcription outage (June 25, 2026), a Granola Chat outage from a "broken deployment" (March 10, 2026), and -- notably -- a separate incident in which
+    Claude users specifically could not connect to Granola MCP (March 9, 2026), the first direct evidence that the MCP integration layer has its own operational failure modes (CE030). No source reviewed
+    discloses a Granola-published uptime SLA or a company-maintained public status page; the only incident visibility available comes from this unaffiliated third-party monitor (CE031). Two further roadmap
+    gaps stand out on the deployment side: despite an Android-engineer role on the team roster, no Android app has shipped or been dated (CE032), and Granola''s own MCP announcement explicitly flags "advanced
+    access controls, usage monitoring and analytics, higher rate limits, and flexible pricing options" as still forthcoming rather than shipped Enterprise MCP capabilities (CE033). Platform rollout itself
+    was sequential rather than simultaneous -- iOS in May 2025 (CE050) and Windows in July 2025 (CE051) -- and iOS distribution today depends entirely on Apple''s App Store review and policy environment
+    as the only identified public iOS channel (CE052).'
+  claimRefs:
+  - CE028
+  - CE029
+  - CE030
+  - CE031
+  - CE032
+  - CE033
+  - CE050
+  - CE051
+  - CE052
+  tableRefs:
+  - TE005
+  figureRefs:
+  - FE002
+- id: differentiation
+  title: Differentiation
+  body: 'Granola''s stated core differentiation is architectural rather than feature-based: bot-free, local capture with zero server-side audio storage and immediate audio deletion after transcription,
+    which the company says is the direct reason it completed SOC 2 Type II certification in roughly three months rather than the typical 12-18 (CE034). Layered on top of that architecture, Granola frames
+    its Chat product around a "CODE" framework (Capture, Organize, Distill, Express), arguing that keyword search over raw transcripts alone does not produce reusable organizational memory (CE035), and
+    its Recipes feature differentiates the prompt-library approach by sourcing shareable templates from named external experts such as Lenny Rachitsky and Matt Mochary rather than only generic, company-authored
+    prompts (CE036).
+
+
+    These claims are only partially durable under independent scrutiny. A competitor-published review (tl;dv) estimates Granola''s transcription accuracy at roughly 94-95% versus tl;dv''s own claimed 97%+,
+    and states Granola supports about 15 languages versus tl;dv''s 30+ -- framing Granola''s real differentiation as workflow and capture design rather than raw transcription performance, though the source
+    itself carries an evident competitive bias (CE037). More materially, Granola''s "bot-free" and "private by default" positioning has been publicly and independently contested on two separate fronts:
+    one independent reviewer rates Granola''s enterprise readiness at just 3 out of 10, citing weak default sharing settings and no EU or on-prem hosting option, while a separate outlet reports that notes
+    are shareable via link to anyone who obtains it by default unless a user manually changes that setting (CE038). Taken together, Granola''s differentiation is real at the architecture level but neither
+    exclusive nor fully corroborated at the marketing-claim level -- a distinction that matters for how much pricing power and switching-cost durability that architecture can actually support.'
+  claimRefs:
+  - CE034
+  - CE035
+  - CE036
+  - CE037
+  - CE038
+  figureRefs:
+  - FE004
+- id: trust-safety-security-compliance
+  title: Trust, Safety, Security, Privacy, Compliance, and Quality Controls
+  body: 'Granola states it is SOC 2 Type II certified (first announced July 7, 2025) and GDPR compliant, with independent audit documentation available to enterprise procurement teams through a Trust Center
+    (CE039), and its Data Processing Addendum designates Granola as a data processor for customer-submitted personal data with a Personal Data Breach notification duty "without undue delay," while separately
+    designating Granola an independent controller for its own business-contact and usage data (CE040). A concrete compliance gap remains open: Granola does not currently hold a HIPAA Business Associate
+    Agreement, a gap the company discloses directly on its own blog even though its help center separately maintains a dedicated Healthcare & HIPAA FAQ section (CE041). On model training, Granola''s Enterprise
+    plan turns training off by default and contractually bars OpenAI and Anthropic from training on customer data, while free and standard consumer accounts are opted into anonymized training by default
+    with a manual opt-out (CE042).
+
+
+    Granola maintains a public Vulnerability Disclosure Policy and has published three detailed security postmortems since mid-2025 (CE043). The first, identified by independent security firm Tenable, involved
+    an unauthenticated API endpoint leaking a live AssemblyAI transcription key (CE018, CE019). The second disclosed that, until a fix on May 23, 2025, workspace auto-join checked only whether a user''s
+    Google email domain matched the workspace domain, which could let an unmanaged personal account auto-join an enterprise workspace, though Granola''s own database check found no workspace had actually
+    been affected (CE044). The third disclosed that 187 users removed, suspended, or deleted from their linked Google Workspace retained active Granola sessions and could keep accessing historical notes
+    and transcripts until session-validity checks were deployed between May 28 and June 2, 2025 (CE045). On the positive side of the ledger, both Granola''s security page and its local-first architecture
+    blog state that meeting audio itself is never stored on any server -- only the resulting text persists -- which narrows the blast radius of any future breach to text rather than stored audio or biometric
+    voice data (CE046), and an independent open-source project confirms the local cache can be read entirely offline without contacting Granola''s servers, though that path was partially foreclosed once
+    local-database encryption shipped in March 2026 (CE047). No source reviewed publishes an independent transcription-accuracy benchmark for Granola; the only figure available (~94-95%) comes from a single
+    competitor-authored review and should be read as directional only (CE048). Enterprise transparency controls -- an optional on-screen recording watermark and an automatic in-meeting chat notification
+    when transcription starts -- round out the admin-configurable trust layer (CE049).'
+  claimRefs:
+  - CE039
+  - CE040
+  - CE041
+  - CE042
+  - CE043
+  - CE044
+  - CE045
+  - CE046
+  - CE047
+  - CE048
+  - CE049
+  - CE018
+  - CE019
+  tableRefs:
+  - TE004
+tables:
+- id: TE001
+  title: Product module / asset matrix
+  columns:
+  - Module / asset
+  - Primary user
+  - Status / maturity
+  - Differentiation
+  - Diligence gap
+  rows:
+  - - AI Notepad (macOS, Windows, iOS)
+    - Individual meeting attendee
+    - Mature -- core product since Jul 2024 (desktop), May 2025 (iOS), Jul 2025 (Windows)
+    - Bot-free local audio capture; no visible call participant
+    - No independent accuracy benchmark exists (CE048)
+  - - Granola Chat (agentic)
+    - Individual / team, cross-meeting Q&A
+    - Rebuilt agentic Apr 2026; actively evolving
+    - Full-transcript vs condensed-notes token-cost tradeoff is explicit in design (CE024)
+    - No public benchmark of answer accuracy or hallucination rate
+  - - Briefs
+    - Individual, pre-meeting prep
+    - Shipped May 2026; recent
+    - Auto-generated using calendar + past notes + optional Gmail context
+    - No usage-adoption or accuracy data disclosed
+  - - Recipes
+    - Individual / team, reusable prompts
+    - Shipped Sep 2025
+    - Expert-authored template marketplace (Lenny Rachitsky, Matt Mochary, others)
+    - No usage or retention data for Recipes specifically
+  - - Team Spaces / Folders
+    - Team / organization
+    - Shipped, expanded around Mar 2026 Series C
+    - Shared organizational memory beyond individual notes
+    - No org-level adoption metric disclosed
+  - - Personal API + Enterprise Admin API
+    - Developers / IT admins
+    - Announced Mar 2026; not separately priced
+    - Bundled agent/automation access to notes
+    - No usage volume, rate limits, or SLA published
+  - - Granola MCP
+    - External AI tools (Claude, ChatGPT, Cursor)
+    - Launched Feb 2026; Enterprise access is early-access beta, off by default
+    - Open Model Context Protocol standard vs proprietary API only
+    - Advanced access controls and usage monitoring explicitly not yet shipped (CE033)
+  - - Granola for Enterprise (admin layer)
+    - IT / security admins
+    - Mature -- SOC 2 Type II since Jul 2025
+    - SSO/SAML, SCIM, admin dashboard, retention controls, watermark/notification transparency
+    - No HIPAA BAA and no EU/on-prem hosting option (CE041)
+  - - Android app
+    - Android-using individuals
+    - Unshipped -- Android Engineer role exists on team roster but no product or date
+    - n/a
+    - No committed release date (CE005, CE032)
+  notes: Status/maturity and differentiation are drawn from Granola's own product pages and changelog; diligence gaps mark where no independent or company-disclosed metric exists for that specific module.
+  claimRefs:
+  - CE003
+  - CE004
+  - CE006
+  - CE007
+  - CE025
+  - CE036
+  - CE033
+  - CE041
+  - CE005
+  - CE032
+  - CE024
+- id: TE002
+  title: Workflow / use-case table
+  columns:
+  - User job
+  - Prior workflow
+  - Granola solution
+  - Measurable benefit (company-published)
+  - Limitation
+  rows:
+  - - Design/product/eng standups and 1:1s (Zapier)
+    - Manual note-taking across 30+ weekly meetings; no shared source of truth
+    - Bot-free desktop capture + shared team folders
+    - 830+ hours saved per month; 52% org-wide adoption
+    - No seat count, contract value, or retention figure disclosed
+  - - Customer success 1:1s, standups, syncs (Vanta)
+    - Live note-taking reconciled with raw transcript by hand
+    - Bot-free capture + SOC 2/encryption/consent controls
+    - 69% org-wide adoption; 61% increase in meeting visibility
+    - No churn or renewal data disclosed
+  - - Enterprise-wide IT rollout (Brex)
+    - Mixed manual and partial-AI note-taking; no external-meeting coverage
+    - Company-wide Enterprise deployment with SSO/SCIM
+    - Over 50% adoption in 6 months; 25k+ hours saved; 427 hours/week
+    - No cost-per-seat or ROI-in-dollars figure disclosed
+  - - Sales engineering discovery calls (Vercel)
+    - Slower transcription tool with clunky UX and delayed processing
+    - '"Chat with the transcript" for technical objection recall'
+    - 100% GTM adoption; 11 hours saved weekly per user; 25% productivity increase
+    - No win-rate or deal-velocity impact quantified
+  - - Confidential executive-search calls (Daversa Partners)
+    - Manual or bot-based tools felt intrusive for candidate/client calls
+    - Bot-free device-level capture
+    - 136 of 150 employees using Granola
+    - No outcome or placement-rate metric tied to adoption
+  - - In-person, multilingual conversations (individual users)
+    - No structured way to capture and translate in-person, non-English conversation
+    - Mobile app captures and outputs English notes from foreign-language audio
+    - Anecdotal community praise (Product Hunt); no measured accuracy figure
+    - Single community post, not a company-verified benchmark
+  notes: All measurable-benefit figures are drawn from Granola's own published customer case studies or its own community/marketing surfaces; none is independently audited.
+  claimRefs:
+  - CE009
+  - CE010
+  - CE011
+  - CE012
+  - CE013
+  - CE014
+  - CE015
+- id: TE003
+  title: Technology / operating architecture table
+  columns:
+  - Layer / component
+  - Role
+  - Dependency
+  - Risk
+  rows:
+  - - Desktop client (Electron, macOS/Windows)
+    - Local audio capture, UI, note editing
+    - Electron framework; confirmed via .asar teardown
+    - Client-side code is unpacked-inspectable, as Tenable's research demonstrated
+  - - iOS client (native)
+    - Mobile/in-person + phone-call capture
+    - Apple App Store distribution
+    - Distribution entirely gated by Apple review/policy (CE052)
+  - - Transcription pipeline
+    - Real-time speech-to-text
+    - Deepgram, AssemblyAI (third-party ASR vendors)
+    - Vendor API keys exposed via an unauthenticated endpoint in 2024-2025 (CE018)
+  - - AI reasoning / summarization
+    - Note enhancement, Chat, Briefs, Recipes
+    - OpenAI, Anthropic (third-party LLM APIs)
+    - Core product quality and cost tied to external model providers, not owned IP
+  - - Storage layer
+    - Transcript/notes persistence
+    - AWS-hosted US-region VPC, encrypted at rest/in transit, daily backups
+    - US-only hosting; no EU/on-prem option identified (CE012)
+  - - Local on-device cache (cache-v3.json)
+    - Offline access to meeting metadata/transcripts/summaries
+    - Proprietary nested JSON format; independently reverse-engineered
+    - Encrypted since Mar 2026, breaking prior third-party agent read access (CE022)
+  - - Auth layer (Google Workspace / Microsoft OAuth)
+    - Login + calendar sync
+    - Google/Microsoft identity platforms
+    - Two of three disclosed postmortems trace to Google Workspace account-state edge cases (CE044, CE045)
+  - - Granola MCP server
+    - Exposes notes as context to external AI tools
+    - Model Context Protocol open standard
+    - Enterprise MCP is early-access beta; had its own dated outage (CE030)
+  notes: Compiled from Granola's own security page and blog posts, an independent Tenable security-research writeup, and a third-party open-source client that reverse-engineered the local cache format.
+  claimRefs:
+  - CE016
+  - CE017
+  - CE018
+  - CE026
+  - CE020
+  - CE022
+  - CE027
+  - CE025
+  - CE012
+  - CE052
+- id: TE004
+  title: Trust / quality / compliance table
+  columns:
+  - Control / certification / metric
+  - Status
+  - Scope
+  - Gap
+  rows:
+  - - SOC 2 Type II
+    - Certified (first announced Jul 7, 2025)
+    - Company-wide security controls
+    - Self-attested; audit report itself not independently reviewed in this chapter
+  - - GDPR compliance
+    - Company states compliant
+    - EU personal-data processing
+    - No ISO 27001 or EU-hosting option identified for EU-sovereignty-sensitive buyers
+  - - HIPAA Business Associate Agreement
+    - Not currently offered
+    - Healthcare/health-adjacent data
+    - Closes off regulated healthcare buyers until a BAA is available (CE041)
+  - - Vulnerability Disclosure Policy + postmortems
+    - 3 public postmortems since mid-2025
+    - API key exposure; 2x Google Workspace access-control gaps
+    - Unclear whether 3 disclosed incidents are the complete incident history (evidenceGap)
+  - - AI model training opt-out
+    - Default off for Enterprise; default on (opt-out available) for free/standard
+    - Customer meeting data vs anonymized product-improvement data
+    - Consumer-tier default is opt-out, not opt-in, unless user acts (CE042)
+  - - Encryption at rest / in transit
+    - AES-based encryption on AWS US VPC; local cache encrypted since Mar 2026
+    - Transcripts, notes, local cache
+    - Audio itself is never stored, but this also means no raw-audio audit trail exists
+  - - Independent transcription-accuracy benchmark
+    - None published by Granola or an independent third party
+    - Core product quality
+    - Only data point is a single competitor-authored estimate (~94-95%) (CE048)
+  - - Notes privacy / sharing defaults
+    - Company states "private by default"
+    - Individual notes
+    - Independent reporting states link-sharing is open by default unless changed (CE038)
+  - - Enterprise transparency controls (watermark, chat notification)
+    - Available, admin-configurable
+    - In-meeting participant disclosure
+    - Adoption/usage rate of these optional controls not disclosed
+  notes: Certification and policy statements are company-self-attested unless otherwise noted; postmortem details are drawn directly from Granola's own published post-incident reports and corroborated where
+    possible by independent security research.
+  claimRefs:
+  - CE039
+  - CE040
+  - CE041
+  - CE043
+  - CE042
+  - CE046
+  - CE048
+  - CE038
+  - CE049
+- id: TE005
+  title: Roadmap / release / development-stage table
+  columns:
+  - Date
+  - Feature / milestone
+  - Status
+  - Implication
+  rows:
+  - - Jul 2024
+    - Granola desktop launch (AI-powered notepad for meetings)
+    - Shipped
+    - Establishes bot-free capture as the founding product thesis
+  - - Nov 2024
+    - $20M raise + original AI notepad announced together
+    - Shipped
+    - Ties early capital directly to core product narrative
+  - - May 2025
+    - Native iOS app launch
+    - Shipped
+    - Extends capture beyond desktop to in-person/phone-call meetings
+  - - Jul 2025
+    - Windows availability + SOC 2 Type II certification
+    - Shipped
+    - Both enterprise-readiness milestones land in the same month
+  - - Sep 2025
+    - Recipes (reusable, expert-authored AI prompt templates)
+    - Shipped
+    - Adds a content/community layer competitors largely lack
+  - - Feb 2026
+    - Granola MCP launch (Model Context Protocol integration)
+    - Shipped; Enterprise MCP is early-access beta
+    - Opens Granola context to external AI tools, but only partially for Enterprise
+  - - Mar 2026
+    - Local notes database encryption + $125M Series C
+    - Shipped
+    - Security hardening coincided with public criticism over lost third-party agent access (CE022)
+  - - Apr 2026
+    - Granola Chat rebuilt to be agentic
+    - Shipped
+    - Explicit transcript-vs-notes token-cost tradeoff now embedded in product design
+  - - May 2026
+    - Briefs (auto-generated pre-meeting prep)
+    - Shipped
+    - Extends the product from reactive notes to proactive agentic prep
+  - - Undated (as of run date)
+    - Android app
+    - Roadmap only -- Android Engineer role exists, no shipped product
+    - Timing and scope remain unconfirmed (CE005, CE032)
+  - - Undated (as of run date)
+    - Advanced Enterprise MCP capabilities (access controls, usage monitoring, higher rate limits)
+    - Roadmap only, per company's own announcement
+    - Enterprise MCP maturity still trails the base product (CE033)
+  notes: Dates and milestones are drawn from Granola's own public changelog, blog posts, and MCP announcement; "roadmap only" rows have no company-committed date.
+  claimRefs:
+  - CE028
+  - CE029
+  - CE050
+  - CE051
+  - CE025
+  - CE033
+  - CE005
+  - CE032
+  - CE022
+figures:
+- id: FE001
+  title: Product architecture map
+  type: stack
+  layout: wide
+  summary: Granola's stack runs from local device capture through third-party ASR/LLM inference to encrypted cloud storage and an agent-integration layer, wrapped in an enterprise admin/control layer.
+  data:
+    layers:
+    - id: capture
+      label: Capture layer
+      detail: Local microphone + system audio capture on macOS/Windows (Electron) and native iOS; manual start, no auto-join bot.
+    - id: transcription
+      label: Transcription layer
+      detail: Real-time speech-to-text via third-party Deepgram and AssemblyAI ASR vendors.
+    - id: reasoning
+      label: AI reasoning layer
+      detail: OpenAI and Anthropic LLM APIs power note enhancement, agentic Chat, Briefs, and Recipes; full-transcript vs condensed-notes context is an explicit design tradeoff.
+    - id: storage
+      label: Storage layer
+      detail: AWS-hosted US VPC (encrypted transcripts/notes, daily backups, no stored audio) plus an encrypted local on-device cache (cache-v3.json).
+    - id: integration
+      label: Integration / agent layer
+      detail: Granola MCP (Model Context Protocol), Zapier (8,000+ apps), native Slack/Notion/CRM connectors, Personal and Enterprise Admin APIs.
+    - id: admin
+      label: Enterprise admin / control layer
+      detail: SSO/SAML, SCIM provisioning, domain management, retention policy, admin dashboard, participant-notification and watermark controls.
+  approximationNotes: Layers are synthesized from Granola's own security/enterprise pages, engineering blog posts, an independent security-research teardown, and a third-party open-source client, not from
+    a single official architecture diagram.
+  claimRefs:
+  - CE016
+  - CE017
+  - CE026
+  - CE020
+  - CE025
+  - CE003
+- id: FE002
+  title: Customer workflow / operating flow
+  type: flow
+  layout: wide
+  summary: How a Granola user moves from a scheduled meeting through capture, in-meeting assistance, post-meeting synthesis, and organization-wide memory.
+  data:
+    nodes:
+    - id: n1
+      label: Calendar sync detects upcoming meeting
+      detail: Granola syncs with the user's calendar ahead of a scheduled meeting.
+      tone: neutral
+    - id: n2
+      label: User manually starts Granola
+      detail: No auto-join or auto-record; the app only activates when the user starts it.
+      tone: neutral
+    - id: n3
+      label: Local audio capture + real-time transcription
+      detail: Device microphone/system audio captured locally; transcribed via Deepgram/AssemblyAI.
+      tone: positive
+    - id: n4
+      label: AI note enhancement blends transcript + user notes
+      detail: OpenAI/Anthropic models enrich the user's rough notes using transcript context.
+      tone: positive
+    - id: n5
+      label: In-meeting or pre-meeting agent assistance
+      detail: Ask Granola live during a call, or open an auto-generated Brief before joining.
+      tone: positive
+    - id: n6
+      label: Post-meeting synthesis (Chat, Recipes)
+      detail: Draft follow-ups, apply expert-authored Recipes, or query the agentic Chat across meetings.
+      tone: positive
+    - id: n7
+      label: Share to team folder / Spaces
+      detail: Notes pushed into shared organizational memory for the team or org.
+      tone: neutral
+    - id: n8
+      label: External AI tool queries via MCP
+      detail: Claude, ChatGPT, or Cursor can pull meeting context through Granola MCP (Enterprise MCP is beta, off by default).
+      tone: warning
+    edges:
+    - from: n1
+      to: n2
+    - from: n2
+      to: n3
+    - from: n3
+      to: n4
+    - from: n4
+      to: n5
+    - from: n5
+      to: n6
+    - from: n6
+      to: n7
+    - from: n7
+      to: n8
+  approximationNotes: Flow is inferred from Granola's own product, blog, and changelog pages describing sequential feature releases, not from a single official workflow diagram.
+  claimRefs:
+  - CE002
+  - CE027
+  - CE049
+  - CE025
+  - CE036
+  - CE028
+- id: FE003
+  title: Critical dependency map
+  type: dag
+  layout: wide
+  summary: Granola's product depends on third-party ASR/LLM vendors, US-only cloud hosting, app-store distribution, and Google/Microsoft identity platforms -- two of which have already produced disclosed
+    security postmortems.
+  data:
+    nodes:
+    - id: granola
+      label: Granola core product
+    - id: deepgram
+      label: Deepgram (ASR vendor)
+    - id: assemblyai
+      label: AssemblyAI (ASR vendor)
+    - id: openai
+      label: OpenAI (LLM vendor)
+    - id: anthropic
+      label: Anthropic (LLM vendor)
+    - id: aws
+      label: AWS US VPC hosting
+    - id: appstore
+      label: Apple App Store
+    - id: googlems
+      label: Google Workspace / Microsoft OAuth
+    - id: zapier
+      label: Zapier (8,000+ app integrations)
+    - id: mcp
+      label: Model Context Protocol ecosystem
+    edges:
+    - from: granola
+      to: deepgram
+      label: real-time transcription
+    - from: granola
+      to: assemblyai
+      label: transcription; source of 2025 key-exposure incident
+    - from: granola
+      to: openai
+      label: note/chat summarization
+    - from: granola
+      to: anthropic
+      label: note/chat summarization
+    - from: granola
+      to: aws
+      label: encrypted transcript/notes storage, US-only
+    - from: granola
+      to: appstore
+      label: sole iOS distribution channel
+    - from: granola
+      to: googlems
+      label: login + calendar; source of two 2025 access-control postmortems
+    - from: granola
+      to: zapier
+      label: workflow automation distribution
+    - from: granola
+      to: mcp
+      label: external AI-tool agent access
+  approximationNotes: Dependency edges are drawn from Granola's own security/enterprise pages, its MCP and changelog posts, and independent Tenable security research; the map covers only externally visible
+    dependencies.
+  claimRefs:
+  - CE017
+  - CE018
+  - CE026
+  - CE027
+  - CE029
+  - CE025
+  - CE052
+- id: FE004
+  title: Product maturity / capability map
+  type: matrix
+  layout: wide
+  summary: Granola's core bot-free capture and enterprise-controls capabilities are well-evidenced and mature; agent/MCP integration and data-residency/quality-assurance capabilities are shipped but contested
+    or still gapped.
+  data:
+    columns:
+    - Not yet shipped / roadmap only
+    - Shipped but contested or gapped
+    - Shipped and well-evidenced
+    rows:
+    - label: Bot-free local capture
+      values:
+      - label: n/a
+        tone: neutral
+      - label: n/a
+        tone: neutral
+      - label: Core mechanism since Jul 2024; independently corroborated by security research (CE001, CE016)
+        tone: positive
+    - label: Cross-meeting agentic Chat
+      values:
+      - label: n/a
+        tone: neutral
+      - label: No public accuracy/hallucination benchmark for Chat answers
+        tone: warning
+      - label: n/a
+        tone: neutral
+    - label: MCP / external agent integration
+      values:
+      - label: Advanced enterprise access controls and usage monitoring not yet shipped (CE033)
+        tone: warning
+      - label: Enterprise MCP is early-access beta; had a dated outage; local-db encryption controversy (CE022, CE030)
+        tone: warning
+      - label: n/a
+        tone: neutral
+    - label: Mobile platforms
+      values:
+      - label: 'Android app: engineer hired, no shipped product or date (CE005, CE032)'
+        tone: warning
+      - label: n/a
+        tone: neutral
+      - label: iOS shipped May 2025 (CE050)
+        tone: positive
+    - label: Enterprise admin & compliance controls
+      values:
+      - label: n/a
+        tone: neutral
+      - label: No HIPAA BAA offered (CE041)
+        tone: warning
+      - label: SSO/SCIM/admin dashboard/SOC 2 Type II since Jul 2025 (CE004, CE039)
+        tone: positive
+    - label: Data residency / on-prem options
+      values:
+      - label: No EU-hosted or on-premise option identified (evidenceGap)
+        tone: warning
+      - label: n/a
+        tone: neutral
+      - label: n/a
+        tone: neutral
+    - label: Independent quality / security assurance
+      values:
+      - label: No independent transcription-accuracy benchmark (CE048)
+        tone: warning
+      - label: 3 disclosed postmortems; completeness of incident history unconfirmed (CE043)
+        tone: warning
+      - label: n/a
+        tone: neutral
+  approximationNotes: Maturity placements are qualitative judgments synthesized from company disclosures, independent security research, and independent reviews; they are not a scored vendor-assessment
+    framework.
+  claimRefs:
+  - CE001
+  - CE016
+  - CE033
+  - CE022
+  - CE030
+  - CE005
+  - CE032
+  - CE050
+  - CE041
+  - CE039
+  - CE048
+  - CE043
+callouts:
+- calloutType: strength
+  title: Bot-free architecture is real and independently corroborated
+  body: 'Granola''s local-capture, zero-audio-retention design is not just marketing: an independent security researcher''s teardown of the Mac client and a separate open-source project''s reverse engineering
+    of the local cache both confirm the architecture Granola describes, and the company credits that design for a three-month SOC 2 Type II certification versus a typical 12-18 months.'
+  claimRefs:
+  - CE016
+  - CE017
+  - CE034
+- calloutType: risk
+  title: Three disclosed postmortems in one year, two from the same root cause
+  body: Granola has publicly disclosed an AssemblyAI API key exposure and two separate Google Workspace account-state gaps within about a year, all found by outside parties rather than proactively. That
+    pattern -- particularly two distinct Google Workspace access-control failures -- raises the question of whether additional undisclosed issues exist in adjacent authentication flows.
+  claimRefs:
+  - CE018
+  - CE019
+  - CE044
+  - CE045
+- calloutType: risk
+  title: '"Private by default" is contested, and HIPAA/EU hosting gaps remain open'
+  body: Independent reporting states notes are shareable via link by default unless a user changes the setting, directly at odds with Granola's own "private by default" messaging. Separately, Granola discloses
+    it holds no HIPAA Business Associate Agreement and offers no EU-hosted or on-premise deployment option, closing off two regulated or sovereignty-sensitive buyer segments until those gaps close.
+  claimRefs:
+  - CE038
+  - CE041
+- calloutType: insight
+  title: The local-database-encryption controversy is a genuine security-vs-openness tradeoff, not a false alarm
+  body: Encrypting the local notes database in March 2026 was a real security hardening step, but it also cut off third-party agents that previously read the plaintext cache file, and Granola's proposed
+    MCP substitute requires MCP-specific client support rather than open file or API access. Both the company and its critics have a defensible position; the underlying data-portability question remains
+    unresolved.
+  claimRefs:
+  - CE022
+  - CE023
+  - CE047
+- calloutType: recommendation
+  title: Verify incident completeness and accuracy claims directly with the company
+  body: Because no independent transcription-accuracy benchmark and no confirmation of complete incident-history disclosure exist in any source reviewed, diligence should request (1) Granola's internal
+    security-incident log beyond the three public postmortems, and (2) a third-party, apples-to-apples accuracy benchmark before relying on either metric.
+  claimRefs:
+  - CE048
+  - CE043
+localEvidence:
+  searchQueries:
+  - query: Granola AI meeting assistant bot-free architecture how it works 2026
+    engine: web
+    hits: null
+    retainedSourceRefs:
+    - SE001
+    - SE004
+  - query: Granola AI product roadmap features launched 2026 changelog
+    engine: web
+    hits: null
+    retainedSourceRefs:
+    - SE005
+    - SE007
+  - query: Granola AI Enterprise SSO SCIM admin controls security page
+    engine: web
+    hits: null
+    retainedSourceRefs:
+    - SE003
+  - query: Granola AI careers engineering team roles Android iOS 2026
+    engine: web
+    hits: null
+    retainedSourceRefs:
+    - SE006
+  - query: Granola AI customer case study Brex Vanta Zapier Vercel hours saved adoption 2026
+    engine: web
+    hits: null
+    retainedSourceRefs:
+    - SE029
+    - SE030
+    - SE031
+    - SE032
+  - query: Granola AI Electron app architecture macOS Windows engineering blog
+    engine: web
+    hits: null
+    retainedSourceRefs:
+    - SE019
+  - query: Granola API endpoint vulnerability security research disclosure Tenable
+    engine: web
+    hits: null
+    retainedSourceRefs:
+    - SE025
+  - query: Granola AI postmortem security incident AssemblyAI API key exposure 2026
+    engine: web
+    hits: null
+    retainedSourceRefs:
+    - SE022
+  - query: Granola AI postmortem Google Workspace auto-join session logout vulnerability
+    engine: web
+    hits: null
+    retainedSourceRefs:
+    - SE023
+    - SE024
+  - query: GranolaMCP GitHub open source local cache reverse engineered
+    engine: web
+    hits: null
+    retainedSourceRefs:
+    - SE026
+  - query: Granola AI local database encryption controversy a16z 2026
+    engine: web
+    hits: null
+    retainedSourceRefs:
+    - SE034
+  - query: Granola AI MCP Model Context Protocol Claude ChatGPT Cursor announced 2026
+    engine: web
+    hits: null
+    retainedSourceRefs:
+    - SE017
+  - query: Granola AI SOC 2 Type II GDPR HIPAA compliance data residency 2026
+    engine: web
+    hits: null
+    retainedSourceRefs:
+    - SE011
+    - SE012
+    - SE014
+    - SE015
+  - query: Granola AI status uptime outage incident history 2026
+    engine: web
+    hits: null
+    retainedSourceRefs:
+    - SE028
+  - query: Granola AI review accuracy comparison tl;dv Fireflies Otter 2026
+    engine: web
+    hits: null
+    retainedSourceRefs:
+    - SE036
+  - query: Granola AI privacy notes shared by default enterprise readiness review
+    engine: web
+    hits: null
+    retainedSourceRefs:
+    - SE033
+    - SE035
+  - query: Granola AI Recipes second brain organizational memory Chat agent design
+    engine: web
+    hits: null
+    retainedSourceRefs:
+    - SE009
+    - SE010
+    - SE018
+  - query: Granola AI Product Hunt community reviews use cases 2026
+    engine: web
+    hits: null
+    retainedSourceRefs:
+    - SE027
+  researchQuestions:
+  - id: QE001
+    question: What are the distinct product modules, SKUs, or asset lines that make up Granola's current product lineup?
+    type: enumeration
+    targets:
+    - contentRequirements/1
+    - plannedTables/product-module-asset-matrix
+    status: answered
+  - id: QE002
+    question: Does Granola's own marketing describe its meeting-capture mechanism as bot-free, local, on-device capture rather than a bot-based cloud recorder?
+    type: verification
+    targets:
+    - contentRequirements/0
+    status: answered
+  - id: QE003
+    question: How does a user actually start and use Granola during a live meeting -- manual start, auto-join, or another mechanism?
+    type: mechanism
+    targets:
+    - contentRequirements/0
+    - plannedFigures/customer-workflow-operating-flow
+    status: answered
+  - id: QE004
+    question: What enterprise-only controls does Granola for Enterprise add on top of the base product?
+    type: enumeration
+    targets:
+    - plannedTables/product-module-asset-matrix
+    status: answered
+  - id: QE005
+    question: Is Granola currently developing, or has it shipped, a native Android app?
+    type: verification
+    targets:
+    - plannedTables/roadmap-release-development-stage-table
+    status: partial
+  - id: QE006
+    question: What engineering roles does Granola's careers page list, and what do they reveal about the underlying architecture and roadmap?
+    type: enumeration
+    targets:
+    - contentRequirements/1
+    status: answered
+  - id: QE007
+    question: Is there a single official Granola page that currently documents its full, up-to-date integration catalog?
+    type: verification
+    targets:
+    - contentRequirements/3
+    status: partial
+  - id: QE008
+    question: How do the workflows described in Granola's own customer case studies (Brex, Vanta, Zapier, Vercel) differ across enterprise IT, customer success, product/design, and sales use cases?
+    type: comparison
+    targets:
+    - contentRequirements/0
+    - plannedTables/workflow-use-case-table
+    status: answered
+  - id: QE009
+    question: Do any of Granola's published customer case studies disclose seat count, contract value, renewal rate, or churn, or are they limited to qualitative time-saved claims?
+    type: adverse
+    targets:
+    - plannedTables/workflow-use-case-table
+    status: answered
+  - id: QE010
+    question: What confidentiality-sensitive verticals outside standard enterprise software (e.g., executive search) have adopted Granola, and why?
+    type: enumeration
+    targets:
+    - contentRequirements/0
+    status: answered
+  - id: QE011
+    question: What is Granola's underlying application architecture (client framework, platform) for its desktop app?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    - plannedFigures/product-architecture-map
+    status: answered
+  - id: QE012
+    question: Which third-party transcription and AI-model vendors does Granola rely on for its core speech-to-text and summarization pipeline?
+    type: enumeration
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+    - plannedFigures/critical-dependency-map
+    status: answered
+  - id: QE013
+    question: Has any independent security researcher identified a vulnerability in Granola's production API or client application?
+    type: adverse
+    targets:
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+    status: answered
+  - id: QE014
+    question: As of the 2026-07-01 run date, how many public security postmortems has Granola disclosed, and when was the most recent one published?
+    type: freshness
+    targets:
+    - contentRequirements/5
+    status: answered
+  - id: QE015
+    question: What does Granola's local on-device application cache store, and has any independent party documented its structure?
+    type: enumeration
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QE016
+    question: Did Granola's March 2026 decision to encrypt its local notes database provoke public criticism, and on what grounds?
+    type: adverse
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QE017
+    question: How does Granola's own engineering team describe the tradeoffs of feeding an AI agent full transcripts versus condensed notes?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QE018
+    question: Does Granola's MCP integration require an Enterprise plan, and is it generally available or still in beta for enterprise workspaces?
+    type: verification
+    targets:
+    - contentRequirements/3
+    - plannedFigures/product-architecture-map
+    status: answered
+  - id: QE019
+    question: Where and how is Granola's stored meeting data (transcripts, notes) hosted, encrypted, and backed up?
+    type: quantification
+    targets:
+    - contentRequirements/5
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+  - id: QE020
+    question: What native integrations and product/platform milestones has Granola shipped, and on what dates?
+    type: enumeration
+    targets:
+    - contentRequirements/3
+    - plannedTables/roadmap-release-development-stage-table
+    status: answered
+  - id: QE021
+    question: What does third-party uptime monitoring show about Granola's incident frequency and resolution time over the trailing period before the run date?
+    type: quantification
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QE022
+    question: Does Granola publish a committed uptime SLA or maintain its own public status page?
+    type: adverse
+    targets:
+    - contentRequirements/3
+    status: unresolved
+  - id: QE023
+    question: How does an independent, competitor-authored review rate Granola's transcription accuracy and language support against a rival product?
+    type: comparison
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QE024
+    question: Have independent reviewers or press outlets contradicted Granola's own 'private by default' marketing claim?
+    type: adverse
+    targets:
+    - contentRequirements/5
+    status: answered
+  - id: QE025
+    question: Is Granola SOC 2 Type II certified and GDPR compliant, and does it hold a HIPAA Business Associate Agreement?
+    type: verification
+    targets:
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+    - plannedFigures/product-maturity-capability-map
+    status: answered
+  - id: QE026
+    question: What specific gap did each of Granola's three disclosed security postmortems describe, and how many users were affected by each?
+    type: quantification
+    targets:
+    - contentRequirements/5
+    status: answered
+  - id: QE027
+    question: As of 2026-07-01, does Granola offer an EU-hosted or on-premise deployment option comparable to some competitors?
+    type: freshness
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QE028
+    question: Does Granola publish any independent or company-run transcription-accuracy benchmark (e.g., word error rate) for its own product?
+    type: quantification
+    targets:
+    - contentRequirements/2
+    status: unresolved
+  sources:
+  - id: SE001
+    publisher: Granola
+    title: AI Meeting Assistant - Without the Bot | Granola
+    url: https://www.granola.ai/ai-meeting-assistant
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - product-positioning
+    - architecture
+    keyQuote: Granola's meeting assistant takes a different approach than bot-centered tools. Our AI notepad runs on your device, captures your meeting audio locally.
+  - id: SE002
+    publisher: Granola
+    title: Granola — AI that already knows what you're working on (Chat)
+    url: https://www.granola.ai/chat
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - product-modules
+    - ai-chat
+    keyQuote: Recipes are simple shortcuts for complex questions or your most-used prompts. Share your Recipes with others or borrow one from an expert.
+  - id: SE003
+    publisher: Granola
+    title: Granola for Enterprise
+    url: https://www.granola.ai/enterprise
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - enterprise-controls
+    - product-modules
+    - trust
+    keyQuote: SSO / SAML ... SCIM provisioning ... SOC 2 Type II certified. Independently audited. Security documentation available for procurement.
+  - id: SE004
+    publisher: Granola
+    title: Security at Granola
+    url: https://www.granola.ai/security
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - architecture
+    - security
+    - privacy
+    keyQuote: Granola uses best-in-class transcription providers (like Deepgram and Assembly) and AI providers (like OpenAI and Anthropic) to summarize your meeting.
+  - id: SE005
+    publisher: Granola
+    title: Updates - Latest features and improvements from Granola
+    url: https://www.granola.ai/updates
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - roadmap
+    - release-history
+    - integrations
+    keyQuote: Introducing Granola MCP. Granola MCP connects your meeting notes to Claude, ChatGPT, Cursor, and other AI tools via Model Context Protocol.
+  - id: SE006
+    publisher: Granola
+    title: Careers - Come build the future of work | Granola
+    url: https://www.granola.ai/jobs
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - team
+    - roadmap-signal
+    keyQuote: We're growing. Each day Granola transcribes millions of minutes of conversation.
+  - id: SE007
+    publisher: Granola
+    title: Granola raises $125M to put your company's context to work
+    url: https://www.granola.ai/blog/series-c
+    date: '2026-03-25'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - product-modules
+    - roadmap
+    - api
+    keyQuote: A personal API for people to access their notes...(available on Business and Enterprise plans). An enterprise API, for admins to work with team context (available on Enterprise plan).
+  - id: SE008
+    publisher: Granola
+    title: 'New: Briefs prepare you for your next meeting as you join'
+    url: https://www.granola.ai/blog/briefs-prepare-you-for-your-next-meeting-as-you-join
+    date: '2026-05-20'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - product-modules
+    - ai-agent
+    keyQuote: Overnight, Granola starts preparing for your day ahead. First, it checks who you're meeting.
+  - id: SE009
+    publisher: Granola
+    title: 'Second brain for meetings: Why meeting search alone is not enough'
+    url: https://www.granola.ai/blog/second-brain-meetings-organizational-memory
+    date: '2026-05-08'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - differentiation
+    - product-philosophy
+    keyQuote: A second brain for meetings applies the CODE framework (Capture, Organize, Distill, Express) to build compounding organizational memory.
+  - id: SE010
+    publisher: Granola
+    title: Introducing Recipes, in the all-new Granola Chat
+    url: https://www.granola.ai/blog/say-hello-to-recipes
+    date: '2025-09-30'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - product-modules
+    - differentiation
+    keyQuote: Today, we're launching with Recipes written by Lenny Rachitsky, Matt Mochary, Ridd, and lots of other experts.
+  - id: SE011
+    publisher: Granola
+    title: 'Local-first AI notetakers vs. cloud-based: Enterprise security & data control'
+    url: https://www.granola.ai/blog/local-first-ai-notetaker-vs-cloud
+    date: '2026-05-07'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - architecture
+    - compliance
+    - differentiation
+    keyQuote: Granola's zero-audio-retention model is why the company completed SOC 2 Type 2 certification in three months. ... Granola does not currently hold a HIPAA Business Associate Agreement.
+  - id: SE012
+    publisher: Granola
+    title: 'Data residency & deployment models for enterprise AI notetakers: On-premise vs. cloud'
+    url: https://www.granola.ai/blog/ai-notetaker-data-residency-deployment-models
+    date: '2026-05-05'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - deployment
+    - compliance
+    keyQuote: Granola achieved SOC 2 Type 2 certification in three months rather than the typical twelve to eighteen.
+  - id: SE013
+    publisher: Apple
+    title: Granola - AI Meeting Notes App - App Store
+    url: https://apps.apple.com/ie/app/granola-ai-meeting-notes/id6739429409
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - platform-availability
+    keyQuote: Granola is the AI notepad for people in back-to-back meetings, trusted by top founders, VCs, and recruiters. And now it's available on your iPhone.
+  - id: SE014
+    publisher: Granola
+    title: Data Processing Addendum
+    url: https://docs.granola.ai/help-center/policies/data-processing-addendum
+    date: '2025-07-02'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: legal
+    reputationTier: medium
+    independence: company
+    topics:
+    - compliance
+    - privacy
+    keyQuote: In the event of a Personal Data Breach, Granola shall, without undue delay, inform Customer of the Personal Data Breach.
+  - id: SE015
+    publisher: Granola
+    title: Privacy Policy
+    url: https://docs.granola.ai/help-center/policies/privacy-policy
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: legal
+    reputationTier: medium
+    independence: company
+    topics:
+    - compliance
+    - privacy
+    keyQuote: Personal Data may be collected, used, and disclosed with the government, including law enforcement, or other parties to meet certain legal requirements.
+  - id: SE016
+    publisher: Granola
+    title: Platform Terms of Service (Terms & Policies index)
+    url: https://docs.granola.ai/help-center/policies/terms-of-service/platform-terms-of-service
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: legal
+    reputationTier: medium
+    independence: company
+    topics:
+    - compliance
+    - security-disclosure
+    keyQuote: 'Vulnerability Disclosure Policy ... Security Reports: Post-Mortem: AssemblyAI API Key Exposure, Post-Mortem: Legacy Unmanaged Google Accounts Workspace Auto-Join, Post-Mortem: Google Workspace
+      Session Logout Vulnerability.'
+  - id: SE017
+    publisher: Granola
+    title: Introducing Granola MCP
+    url: https://www.granola.ai/blog/granola-mcp
+    date: '2026-02-04'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - architecture
+    - integrations
+    - roadmap
+    keyQuote: MCP (Model Context Protocol) is a standard that lets AI tools connect to external data sources... If you're on a Granola Enterprise plan, MCP is available in early access beta. It's off by
+      default.
+  - id: SE018
+    publisher: Granola
+    title: How Granola thinks about designing agents
+    url: https://www.granola.ai/blog/how-granola-thinks-about-designing-agents
+    date: '2026-05-06'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - ai-architecture
+    - engineering
+    keyQuote: Transcripts are the most vivid reenactment of what happened in the meeting, but they are messy... roughly 10x the number of tokens compared to meeting notes.
+  - id: SE019
+    publisher: Granola
+    title: So, you think it's easy to change an app icon?
+    url: https://www.granola.ai/blog/so-you-think-its-easy-to-change-an-app-icon
+    date: '2026-02-09'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - architecture
+    - engineering
+    keyQuote: Granola is an Electron app, so we started with the obvious.
+  - id: SE020
+    publisher: Granola
+    title: Security, Privacy & Data FAQs - Granola Docs & Help Center
+    url: https://docs.granola.ai/help-center/consent-security-privacy/security-privacy-data-faqs
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - compliance
+    - security
+    keyQuote: Security & Compliance Overview, Data Storage & Residency, Healthcare & HIPAA, Education & FERPA, Note Privacy & Sharing, AI & Model Training.
+  - id: SE021
+    publisher: Granola
+    title: Our Security Standards - Granola Docs & Help Center
+    url: https://docs.granola.ai/help-center/consent-security-privacy/our-security-standards
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - security
+    - compliance
+    keyQuote: 'We''ve made our security information easily accessible across several dedicated resources: Security Page, Trust Center, Privacy and Security Policies.'
+  - id: SE022
+    publisher: Granola
+    title: 'Post-Mortem: AssemblyAI API Key Exposure'
+    url: https://docs.granola.ai/help-center/policies/security-reports/post-mortem-assembly-ai-api-key-exposure
+    date: '2025-05-16'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: adverse
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - security-incident
+    - vulnerability-disclosure
+    keyQuote: An unauthenticated feature-flag endpoint exposed an AssemblyAI API key; impact was limited to iOS TestFlight beta testers between November 2024 and March 2025.
+  - id: SE023
+    publisher: Granola
+    title: 'Post-Mortem: Legacy Unmanaged Google Accounts Workspace Auto-Join'
+    url: https://docs.granola.ai/help-center/policies/security-reports/post-mortem-legacy-unmanaged-google-accounts-workspace-auto-join
+    date: '2025-06-03'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: adverse
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - security-incident
+    - access-control
+    keyQuote: Auto-provisioning for workspaces was based only on a user's Google OAuth email domain, until a fix on May 23, 2025 required explicit Google Workspace membership.
+  - id: SE024
+    publisher: Granola
+    title: 'Post-Mortem: Google Workspace Session Logout Vulnerability'
+    url: https://docs.granola.ai/help-center/policies/security-reports/post-mortem-google-workspace-session-logout-vulnerability
+    date: '2025-06-03'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: adverse
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - security-incident
+    - session-management
+    keyQuote: 187 Granola Workspace users removed from their linked Google Workspace were not automatically logged out of the Granola app.
+  - id: SE025
+    publisher: Tenable
+    title: Granola API Endpoint Information Disclosure (TRA-2025-07)
+    url: https://www.tenable.com/security/research/tra-2025-07
+    date: '2025-05-13'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: adverse
+    sourceType: technical-docs
+    reputationTier: high
+    independence: independent
+    topics:
+    - security-incident
+    - vulnerability-research
+    keyQuote: One of those endpoints, "get-feature-flags," returns data without authentication. This includes a value called "assembly_key."
+  - id: SE026
+    publisher: pedramamini (GitHub)
+    title: 'GranolaMCP: Programmatic, CLI, and MCP access to Granola.ai data'
+    url: https://github.com/pedramamini/GranolaMCP
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics:
+    - architecture
+    - developer-tooling
+    - data-portability
+    keyQuote: GranolaMCP operates entirely on local cache files - it reads meeting data directly from Granola's local cache file (cache-v3.json) without making any API calls to Granola's servers.
+  - id: SE027
+    publisher: Product Hunt (via Wayback Machine)
+    title: Granola Forums on Product Hunt
+    url: https://web.archive.org/web/20260226053000/https://www.producthunt.com/p/granola
+    date: '2026-02-26'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: low
+    independence: independent
+    topics:
+    - practitioner-community
+    - use-cases
+    keyQuote: I've tested so many AI Note takers as of late... Recently I've been using Granola's new mobile app for in-person convos... in Japanese... Granola captures all key points and WRITES THE NOTES
+      IN ENGLISH.
+  - id: SE028
+    publisher: IsDown
+    title: Is Granola Down? Check current status and user reports
+    url: https://isdown.app/status/granola
+    date: '2026-07-01'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: other
+    reputationTier: low
+    independence: independent
+    topics:
+    - reliability
+    - uptime
+    keyQuote: In the last 90 days, Granola had 4 incidents with a median duration of 2 hours 34 minutes.
+  - id: SE029
+    publisher: Granola (customer case study)
+    title: Brex saves 427 hours a week with Granola
+    url: https://www.granola.ai/customers/brex
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: customer-proof
+    reputationTier: medium
+    independence: customer
+    topics:
+    - workflow
+    - roi-proxy
+    - enterprise-adoption
+    keyQuote: Over 50% adoption rate across knowledge workers in 6 months; 25k+ hours saved since adopting Granola; 427 hours saved per week.
+  - id: SE030
+    publisher: Granola (customer case study)
+    title: Vanta saves 260+ hours annually per user with Granola
+    url: https://www.granola.ai/customers/vanta
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: customer-proof
+    reputationTier: medium
+    independence: customer
+    topics:
+    - workflow
+    - roi-proxy
+    - trust
+    keyQuote: 69% adoption rate across the organization; 61% increase in meeting visibility with Granola.
+  - id: SE031
+    publisher: Granola (customer case study)
+    title: Zapier saves 830+ hours per month with Granola
+    url: https://www.granola.ai/customers/zapier
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: customer-proof
+    reputationTier: medium
+    independence: customer
+    topics:
+    - workflow
+    - roi-proxy
+    keyQuote: 830+ hours saved per month; 52% organization-wide adoption rate.
+  - id: SE032
+    publisher: Granola (customer case study)
+    title: Vercel's entire GTM team boosts meeting productivity with Granola
+    url: https://www.granola.ai/customers/vercel
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: customer-proof
+    reputationTier: medium
+    independence: customer
+    topics:
+    - workflow
+    - roi-proxy
+    keyQuote: 100% adoption rate across GTM teams; 11 hours saved weekly per user; 25% GTM team productivity increase.
+  - id: SE033
+    publisher: BuildBetter
+    title: Do they own your data? Granola.ai Privacy Policy Reviewed.
+    url: https://blog.buildbetter.ai/do-they-own-your-data-granola-ai-privacy-policy-reviewed/
+    date: '2025-01-01'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: adverse
+    sourceType: review
+    reputationTier: low
+    independence: competitor
+    topics:
+    - privacy
+    - enterprise-readiness
+    keyQuote: 'Final Enterprise Readiness Rating: 3/10. Not enterprise-ready (Reviewed 2025).'
+  - id: SE034
+    publisher: Shadow
+    title: Granola Encrypted Its Local Database. Here's Why That Matters -- and What to Use Instead.
+    url: https://www.shadow.do/blog/granola-encrypted-its-local-database-heres-why-that-matters----and-what-to-use-instead
+    date: '2026-03-17'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: adverse
+    sourceType: review
+    reputationTier: low
+    independence: independent
+    topics:
+    - controversy
+    - data-portability
+    - local-database
+    keyQuote: Sorry to see Granola @meetgranola going closed. They encrypted their local db, no local and no cloud API... In a world where notes are managed by agents, the app now has zero value.
+  - id: SE035
+    publisher: Startup Fortune
+    title: Granola AI Meeting Notes Are Not as Private as You Might Think
+    url: https://startupfortune.com/granola-ai-meeting-notes-are-not-as-private-as-you-might-think/
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: adverse
+    sourceType: news
+    reputationTier: low
+    independence: independent
+    topics:
+    - privacy
+    - sharing-defaults
+    keyQuote: Granola, a popular AI meeting notepad, exposes user notes to anyone with a link by default and trains internal AI models on your transcripts unless you manually opt out.
+  - id: SE036
+    publisher: tl;dv
+    title: 'Granola AI Review: My Honest Thoughts After 20+ Meetings (2026)'
+    url: https://tldv.io/blog/granola-review/
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: adverse
+    sourceType: review
+    reputationTier: low
+    independence: competitor
+    topics:
+    - differentiation
+    - accuracy-comparison
+    keyQuote: 'Transcription accuracy: tl;dv 97%+, Granola ~94-95%. Languages supported: tl;dv 30+, Granola ~15.'
+  - id: SE037
+    publisher: Granola
+    title: Integrations page (granola.ai/integrations)
+    url: https://www.granola.ai/integrations
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: broken
+    stance: neutral
+    sourceType: other
+    reputationTier: low
+    independence: company
+    topics:
+    - official-site-maintenance
+    keyQuote: HTTP 404 returned; page title falls back to the generic Granola homepage title with no integration catalog content rendered.
+  claims:
+  - id: CE001
+    statement: 'Granola markets its core mechanism as bot-free, device-level capture: the app runs on the user''s own computer, captures meeting audio locally, and never joins a call as a visible bot participant.'
+    type: company-claimed
+    topic: product-positioning
+    sourceRefs:
+    - SE001
+    - SE004
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE002
+  - id: CE002
+    statement: A user must manually start Granola before a meeting; the app does not auto-join, auto-record, or otherwise activate itself for a call.
+    type: company-claimed
+    topic: product-mechanics
+    sourceRefs:
+    - SE004
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE003
+  - id: CE003
+    statement: Granola's current product lineup comprises the AI Notepad (macOS, Windows, iOS), an agentic Granola Chat, Briefs, Recipes, Team Spaces/Folders, a Personal API, an Enterprise Admin API, and
+      Granola MCP.
+    type: company-claimed
+    topic: product-modules
+    sourceRefs:
+    - SE005
+    - SE007
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+  - id: CE004
+    statement: Granola for Enterprise adds SSO/SAML, SCIM provisioning, an admin dashboard, domain management, flexible data-retention windows, and SOC 2 Type II documentation as an enterprise-only control
+      layer on top of the base product.
+    type: company-claimed
+    topic: enterprise-controls
+    sourceRefs:
+    - SE003
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE004
+  - id: CE005
+    statement: Granola's own careers page lists an 'Android Engineer' among current team members, even though no Android app is listed on Granola's sitemap or on any public app store as of the run date.
+    type: observed
+    topic: roadmap-gap
+    sourceRefs:
+    - SE006
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE006
+  - id: CE006
+    statement: Granola is distributed as a free tier plus paid Business and Enterprise plans that are differentiated primarily by feature access (meeting-history depth, CRM integrations, admin controls)
+      rather than by a different underlying product architecture.
+    type: company-claimed
+    topic: tiering
+    sourceRefs:
+    - SE003
+    - SE005
+    confidence: medium
+    freshness: current
+  - id: CE007
+    statement: A personal API for accessing one's own notes is bundled into the Business and Enterprise plans, and a separate enterprise admin API for organization-wide context is bundled into the Enterprise
+      plan only, with neither priced as a standalone product.
+    type: company-claimed
+    topic: api-products
+    sourceRefs:
+    - SE007
+    confidence: medium
+    freshness: current
+  - id: CE008
+    statement: Granola's own /integrations marketing URL returned an HTTP 404 at the time of this review, leaving no single official, current page cataloguing the company's full integration list.
+    type: observed
+    topic: official-site-maintenance
+    sourceRefs:
+    - SE037
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE007
+  - id: CE009
+    statement: Zapier's Principal Designer adopted Granola for the whole design/product/engineering org after other AI transcription tools felt invasive; the published case study reports 830+ hours saved
+      per month and 52% organization-wide adoption.
+    type: company-claimed
+    topic: customer-workflow
+    sourceRefs:
+    - SE031
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE008
+  - id: CE010
+    statement: Vanta's VP of Customer Success adopted Granola for internal 1:1s, standups, and cross-functional syncs, citing SOC 2 Type II certification, encryption, and notice-and-consent recording controls
+      as prerequisites for a security-and-compliance company; the case study reports 69% organization-wide adoption and a 61% increase in meeting visibility.
+    type: company-claimed
+    topic: customer-workflow
+    sourceRefs:
+    - SE030
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE008
+  - id: CE011
+    statement: Brex's Head of IT rolled Granola out company-wide after employees adopted it organically, valuing SSO/SCIM delivery and a no-public-model-training commitment for a regulated fintech; the
+      case study reports over 50% adoption across knowledge workers within six months and 427 hours saved per week.
+    type: company-claimed
+    topic: customer-workflow
+    sourceRefs:
+    - SE029
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE008
+  - id: CE012
+    statement: Vercel's sales-engineering team replaced a slower transcription tool with Granola, using its 'chat with the transcript' capability to retrieve specific technical objections raised by prospects;
+      the case study reports 100% GTM team adoption, 11 hours saved weekly per user, and a 25% GTM productivity increase.
+    type: company-claimed
+    topic: customer-workflow
+    sourceRefs:
+    - SE032
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE008
+  - id: CE013
+    statement: Executive search firm Daversa Partners deployed Granola across 136 of its 150 employees specifically because device-level, bot-free capture felt less intrusive than visible-bot tools for
+      confidential candidate and client conversations.
+    type: third-party-reported
+    topic: customer-workflow
+    sourceRefs:
+    - SE011
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE010
+  - id: CE014
+    statement: An independent Product Hunt community thread cites in-person, multilingual conversation capture -- for example, translating a Japanese conversation into English notes -- as a distinguishing
+      real-world use case for Granola's mobile app.
+    type: third-party-reported
+    topic: use-case-proof
+    sourceRefs:
+    - SE027
+    confidence: low
+    freshness: recent
+  - id: CE015
+    statement: None of Granola's four published customer case studies (Brex, Vanta, Zapier, Vercel) discloses a seat count, contract value, renewal rate, or churn figure; all quantified benefits are limited
+      to adoption percentages and hours-saved estimates.
+    type: observed
+    topic: evidence-limits
+    sourceRefs:
+    - SE029
+    - SE030
+    - SE031
+    - SE032
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE009
+  - id: CE016
+    statement: Granola's desktop client is built as an Electron application packaged for macOS and Windows, confirmed both by Granola's own engineering blog and independently by a security researcher who
+      unpacked the macOS .asar archive to inspect its JavaScript.
+    type: observed
+    topic: architecture
+    sourceRefs:
+    - SE019
+    - SE025
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE011
+  - id: CE017
+    statement: Granola's transcription pipeline runs on third-party ASR vendors Deepgram and AssemblyAI, and its AI note-enhancement, chat, and summarization pipeline runs on third-party OpenAI and Anthropic
+      LLM APIs, per the company's own security page and corroborated by an independent researcher's discovery of AssemblyAI references inside the client.
+    type: company-claimed
+    topic: architecture
+    sourceRefs:
+    - SE004
+    - SE025
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE012
+  - id: CE018
+    statement: Independent security research firm Tenable found that an unauthenticated api.granola.ai endpoint ('get-feature-flags') returned a live AssemblyAI API key that could be used to enumerate and
+      pull meeting transcript IDs and content directly from AssemblyAI's own API.
+    type: third-party-reported
+    topic: security-incident
+    sourceRefs:
+    - SE025
+    - SE022
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE013
+  - id: CE019
+    statement: Granola's own postmortem states the AssemblyAI key exposure affected roughly 300-333 iOS TestFlight beta testers between November 2024 and March 2025, that the production macOS app was unaffected,
+      and that no evidence of exploitation was found beyond the reporting researcher's own testing.
+    type: company-claimed
+    topic: security-incident
+    sourceRefs:
+    - SE022
+    - SE025
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE013
+  - id: CE020
+    statement: Granola's local desktop application cache stores meeting metadata, transcripts, and AI summaries in a nested 'double-JSON' local file (cache-v3.json); an independent open-source Python project
+      reverse-engineered this structure without making any calls to Granola's own servers.
+    type: third-party-reported
+    topic: architecture
+    sourceRefs:
+    - SE026
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE015
+  - id: CE021
+    statement: The same open-source project documents an undocumented alternative access path -- extracting session tokens from a local supabase.json configuration file to call Granola's cloud API directly
+      -- which its maintainer explicitly chose not to implement, citing privacy, performance, and reliability reasons.
+    type: third-party-reported
+    topic: architecture
+    sourceRefs:
+    - SE026
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE015
+  - id: CE022
+    statement: In March 2026, Granola encrypted its local on-device notes database; an a16z partner publicly criticized the change in a tweet viewed roughly 327,000 times for cutting off third-party agents
+      and APIs that previously read the plaintext cache file directly.
+    type: third-party-reported
+    topic: controversy
+    sourceRefs:
+    - SE034
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE016
+  - id: CE023
+    statement: Granola's co-founder responded to the local-database-encryption criticism by pointing to Granola MCP as the replacement access path; the critic countered that MCP requires MCP-specific client
+      support rather than open file or API access, so the substitution did not resolve the underlying data-portability complaint.
+    type: third-party-reported
+    topic: controversy
+    sourceRefs:
+    - SE034
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE016
+  - id: CE024
+    statement: 'Granola''s own engineering blog describes a deliberate architecture tradeoff behind its April 2026 agentic rebuild of Granola Chat: reading full meeting transcripts is roughly 10x more token-expensive
+      than reading condensed AI-generated notes, forcing an explicit depth-versus-cost/latency choice when the agent answers cross-meeting questions.'
+    type: company-claimed
+    topic: ai-architecture
+    sourceRefs:
+    - SE018
+    - SE005
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE017
+  - id: CE025
+    statement: Granola MCP, launched February 4, 2026, implements the open Model Context Protocol standard so external AI tools such as Claude, ChatGPT, Cursor, and Claude Code can query a user's Granola
+      notes as context; enterprise MCP access remains an early-access beta that is off by default for admins to enable.
+    type: company-claimed
+    topic: architecture
+    sourceRefs:
+    - SE017
+    - SE005
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE018
+  - id: CE026
+    statement: Granola's transcripts, notes, and AI summaries are stored in an AWS-hosted, US-region Virtual Private Cloud, encrypted at rest and in transit and backed up daily, while raw meeting audio
+      is never stored -- it is transcribed in real time and then discarded.
+    type: company-claimed
+    topic: architecture
+    sourceRefs:
+    - SE004
+    - SE011
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE019
+  - id: CE027
+    statement: Granola authenticates users through Google Workspace or Microsoft OAuth login tied to the user's calendar rather than through a Granola-specific username/password system.
+    type: company-claimed
+    topic: architecture
+    sourceRefs:
+    - SE004
+    confidence: medium
+    freshness: current
+  - id: CE028
+    statement: Granola's public release history shows a near-monthly cadence of shipped features from its July 2024 desktop launch through May 2026, spanning a $20M raise alongside the original notepad
+      (Nov 2024), iOS launch (May 2025), Windows availability paired with SOC 2 Type II completion (Jul 2025), Recipes (Sep 2025), Granola MCP (Feb 2026), a $125M Series C (Mar 2026), an agentic Chat rebuild
+      (Apr 2026), and Briefs (May 2026).
+    type: company-claimed
+    topic: roadmap
+    sourceRefs:
+    - SE005
+    - SE007
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE020
+  - id: CE029
+    statement: 'Granola''s own changelog documents native or Zapier-mediated integrations added over time: Slack posting (Oct 2024), Notion sharing (Mar 2025), Attio and Zapier connecting to 8,000+ apps
+      (Jul-Sep 2025), and HubSpot (Sep 2025).'
+    type: company-claimed
+    topic: integrations
+    sourceRefs:
+    - SE005
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE020
+  - id: CE030
+    statement: A third-party uptime-monitoring aggregator recorded four Granola incidents in the 90 days before the run date, with a median resolution time of about 2 hours 34 minutes, including an iOS
+      transcription outage (Jun 25, 2026), a Granola Chat outage from a 'broken deployment' (Mar 10, 2026), and a separate incident in which Claude users could not connect to Granola MCP (Mar 9, 2026).
+    type: third-party-reported
+    topic: reliability
+    sourceRefs:
+    - SE028
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE021
+  - id: CE031
+    statement: No source reviewed discloses a Granola-published uptime SLA or a company-maintained public status page; the only incident and uptime visibility identified comes from an unaffiliated third-party
+      monitoring aggregator.
+    type: open-question
+    topic: reliability
+    sourceRefs: []
+    confidence: low
+    freshness: unknown
+    answersQuestionRefs:
+    - QE022
+  - id: CE032
+    statement: Despite an Android-engineer role on Granola's team roster, no Android application appears on Granola's sitemap or on Google Play as of the run date, indicating Android support is an internal
+      roadmap item rather than a shipped product.
+    type: observed
+    topic: roadmap-gap
+    sourceRefs:
+    - SE006
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE005
+  - id: CE033
+    statement: 'Granola''s own MCP announcement states the company is ''also working on additional enterprise capabilities: advanced access controls, usage monitoring and analytics, higher rate limits,
+      and flexible pricing options,'' each explicitly described as forthcoming rather than shipped.'
+    type: company-claimed
+    topic: roadmap
+    sourceRefs:
+    - SE017
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE020
+  - id: CE050
+    statement: Granola launched its native iOS app in May 2025, extending capture from desktop-only to in-person, on-the-go meetings and phone calls.
+    type: company-claimed
+    topic: roadmap
+    sourceRefs:
+    - SE005
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE020
+  - id: CE051
+    statement: Granola launched Windows availability in July 2025, the same month it first announced SOC 2 Type II compliance.
+    type: company-claimed
+    topic: roadmap
+    sourceRefs:
+    - SE005
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE020
+  - id: CE052
+    statement: Granola's iOS distribution depends entirely on Apple's App Store review and policy environment, which its own App Store listing identifies as the only public iOS distribution channel.
+    type: observed
+    topic: dependency
+    sourceRefs:
+    - SE013
+    confidence: medium
+    freshness: current
+  - id: CE034
+    statement: Granola states that its bot-free, zero-audio-retention architecture -- local capture, no server-side audio storage, immediate audio deletion after transcription -- is the direct reason it
+      completed SOC 2 Type II certification in roughly three months versus a typical 12-18 months.
+    type: company-claimed
+    topic: differentiation
+    sourceRefs:
+    - SE011
+    - SE004
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE016
+  - id: CE035
+    statement: Granola frames its Chat product around a 'CODE' framework (Capture, Organize, Distill, Express), arguing that keyword search over raw transcripts alone does not produce reusable organizational
+      memory the way structured, relationship-aware synthesis does.
+    type: company-claimed
+    topic: differentiation
+    sourceRefs:
+    - SE009
+    confidence: medium
+    freshness: current
+  - id: CE036
+    statement: Recipes, launched September 2025, differentiates Granola's prompt-library approach by sourcing shareable, reusable prompt templates from named external experts (e.g., Lenny Rachitsky, Matt
+      Mochary) rather than relying only on generic, company-authored prompts.
+    type: company-claimed
+    topic: differentiation
+    sourceRefs:
+    - SE010
+    confidence: medium
+    freshness: current
+  - id: CE037
+    statement: An independent, competitor-published review (tl;dv) estimates Granola's transcription accuracy at roughly 94-95% versus tl;dv's own claimed 97%+, and states Granola supports about 15 languages
+      versus tl;dv's 30+, framing Granola's core differentiation as workflow and capture design rather than raw transcription performance.
+    type: third-party-reported
+    topic: differentiation-limits
+    sourceRefs:
+    - SE036
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE023
+  - id: CE038
+    statement: 'Granola''s ''bot-free'' and ''private by default'' differentiation claims have each been publicly and independently contested: one independent reviewer rates Granola''s enterprise readiness
+      at 3 out of 10, citing weak default sharing settings and no EU or on-prem hosting option, and a separate outlet reports that notes are shareable via link to anyone who obtains it by default unless
+      a user changes that setting.'
+    type: third-party-reported
+    topic: differentiation-limits
+    sourceRefs:
+    - SE033
+    - SE035
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE024
+  - id: CE039
+    statement: Granola states it is SOC 2 Type II certified (first announced July 7, 2025) and GDPR compliant, with independent audit documentation available to enterprise procurement teams through a Trust
+      Center.
+    type: company-claimed
+    topic: compliance
+    sourceRefs:
+    - SE005
+    - SE003
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE025
+  - id: CE040
+    statement: Granola's Data Processing Addendum designates Granola as a data processor for customer-submitted personal data, sets a Personal Data Breach notification duty 'without undue delay,' and separately
+      designates Granola an independent controller for its own business-contact and usage data.
+    type: company-claimed
+    topic: compliance
+    sourceRefs:
+    - SE014
+    - SE015
+    confidence: high
+    freshness: current
+  - id: CE041
+    statement: Granola does not currently hold a HIPAA Business Associate Agreement, a gap the company discloses directly on its own blog rather than in marketing copy, even though its help center separately
+      maintains a dedicated Healthcare & HIPAA FAQ section.
+    type: company-claimed
+    topic: compliance-gap
+    sourceRefs:
+    - SE011
+    - SE020
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE025
+  - id: CE042
+    statement: Granola's Enterprise plan turns off AI model training by default and contractually prohibits its third-party AI providers (OpenAI, Anthropic) from training on customer meeting data; free
+      and standard consumer accounts are instead opted into anonymized model training by default, with a manual opt-out available in Settings.
+    type: company-claimed
+    topic: privacy
+    sourceRefs:
+    - SE004
+    - SE011
+    confidence: high
+    freshness: current
+  - id: CE043
+    statement: 'Granola maintains a public Vulnerability Disclosure Policy and has published three detailed security postmortems since mid-2025: an AssemblyAI API key exposure, a Google Workspace auto-join
+      account-matching gap, and a Google Workspace session-logout gap.'
+    type: company-claimed
+    topic: security-disclosure
+    sourceRefs:
+    - SE016
+    - SE022
+    - SE023
+    - SE024
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE014
+    - QE026
+  - id: CE044
+    statement: The Google Workspace auto-join postmortem discloses that, until a fix shipped May 23, 2025, workspace auto-join checked only whether a user's Google email domain matched the workspace domain,
+      which could let a personal ('unmanaged') Google account sharing that domain automatically join an enterprise workspace; Granola's own database check found no workspace had actually been affected before
+      the fix.
+    type: company-claimed
+    topic: security-incident
+    sourceRefs:
+    - SE023
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE026
+  - id: CE045
+    statement: The Google Workspace session-logout postmortem discloses that 187 users who were removed, suspended, or deleted from their linked Google Workspace retained active Granola sessions and could
+      keep accessing historical notes and transcripts until session-validity checks were deployed between May 28 and June 2, 2025.
+    type: company-claimed
+    topic: security-incident
+    sourceRefs:
+    - SE024
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE026
+  - id: CE046
+    statement: Granola's security page and its own local-first architecture blog both state that meeting audio is never stored on any server -- only the resulting text transcript and notes persist -- which
+      narrows the blast radius of any future data breach to text rather than stored audio or biometric voice data.
+    type: company-claimed
+    topic: security
+    sourceRefs:
+    - SE004
+    - SE011
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE019
+  - id: CE047
+    statement: An independent open-source project confirms Granola's local cache can be read entirely offline without any Granola server interaction, technically corroborating the company's on-device-data
+      claim, though the same ecosystem shows that path was partially foreclosed once Granola began encrypting the local database in March 2026.
+    type: third-party-reported
+    topic: architecture
+    sourceRefs:
+    - SE026
+    - SE034
+    confidence: medium
+    freshness: current
+  - id: CE048
+    statement: No source reviewed publishes an independent, company-run, or third-party audited transcription-accuracy benchmark for Granola; the only accuracy figure identified (approximately 94-95%) comes
+      from a single competitor-authored review and should be treated as directional rather than verified.
+    type: third-party-reported
+    topic: quality-benchmark
+    sourceRefs:
+    - SE036
+    confidence: low
+    freshness: current
+    answersQuestionRefs:
+    - QE028
+  - id: CE049
+    statement: Granola's enterprise transparency controls include an optional on-screen recording watermark and an automatic in-meeting chat notification when transcription starts, both configurable by
+      admins to match regional consent requirements.
+    type: company-claimed
+    topic: trust-controls
+    sourceRefs:
+    - SE003
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE004
+  evidenceGaps:
+  - type: missing-source
+    severity: material
+    topic: compliance-hipaa
+    missingEvidence: A HIPAA Business Associate Agreement, or a stated timeline for offering one.
+    whyItMatters: Without a BAA, healthcare or health-adjacent enterprise buyers cannot legally use Granola for conversations involving protected health information, closing off an entire regulated-buyer
+      segment.
+    diligencePath: Request Granola's current HIPAA/BAA roadmap and timeline directly from the enterprise sales team as part of any healthcare-sector diligence.
+    relatedQuestionRefs:
+    - QE025
+  - type: missing-source
+    severity: material
+    topic: quality-benchmark
+    missingEvidence: An independent or company-run transcription-accuracy benchmark (e.g., word error rate) for Granola across languages and audio conditions.
+    whyItMatters: The only accuracy figure in any source reviewed is a single competitor-authored estimate (~94-95%), which may be biased and is not independently reproducible.
+    diligencePath: Commission or request a third-party, apples-to-apples transcription-accuracy benchmark across Granola and named competitors on a shared audio test set.
+    relatedQuestionRefs:
+    - QE028
+  - type: missing-source
+    severity: minor
+    topic: reliability-sla
+    missingEvidence: A Granola-published uptime SLA or a first-party status page with historical incident data.
+    whyItMatters: Enterprise buyers evaluating Granola for mission-critical workflows cannot verify committed uptime without relying on an unaffiliated third-party monitor.
+    diligencePath: Ask Granola's enterprise sales team directly for an SLA and any first-party incident-history page before signing an enterprise contract.
+    relatedQuestionRefs:
+    - QE022
+  - type: enumeration-incomplete
+    severity: minor
+    topic: roadmap-android
+    missingEvidence: A confirmed Android release date or public roadmap commitment.
+    whyItMatters: An Android-engineer role signals investment but does not establish scope or timing; sales cycles involving Android-only buyer organizations cannot be sized without a date.
+    diligencePath: Ask Granola directly for its Android release timeline and beta-access process.
+    relatedQuestionRefs:
+    - QE005
+  - type: stale
+    severity: minor
+    topic: integrations-catalog
+    missingEvidence: A working, current version of Granola's official /integrations marketing page.
+    whyItMatters: A broken official integrations page makes it harder for a prospective enterprise buyer to verify Granola's full current integration surface from primary sources alone.
+    diligencePath: Request an up-to-date integration list directly from Granola's sales or partnerships team, or verify the page has been restored before relying on it.
+    relatedQuestionRefs:
+    - QE007
+  - type: enumeration-incomplete
+    severity: material
+    topic: security-incident-disclosure
+    missingEvidence: Confirmation of whether the three published postmortems represent the complete set of material security incidents since Granola's founding, or only the subset the company chose to disclose.
+    whyItMatters: A pattern of two disclosed Google Workspace access-control gaps in the same year raises the question of whether additional, undisclosed access-control issues exist in adjacent authentication
+      flows.
+    diligencePath: Request Granola's internal incident log and remediation history as part of a security due-diligence data-room review, not just the public postmortem page.
+    relatedQuestionRefs:
+    - QE014
+    - QE026
+  - type: missing-source
+    severity: material
+    topic: data-residency
+    missingEvidence: A Granola-specific EU-hosted or on-premise/VPC deployment option, or a stated roadmap for one.
+    whyItMatters: Granola's own security page confirms US-only AWS VPC hosting; competitors named in Granola's own deployment-models blog (tl;dv, Jamie, Leexi, Voicegain) already offer EU-hosted or on-premise
+      options, which could block EU-data-sovereignty-constrained buyers from adopting Granola at all.
+    diligencePath: Ask Granola's enterprise sales team directly whether an EU-hosted or on-premise deployment is available or planned, and on what timeline.
+    relatedQuestionRefs:
+    - QE027
+  - type: conflicting-data
+    severity: minor
+    topic: data-portability
+    missingEvidence: A resolution of whether Granola's MCP integration functionally replaces the open local-file/API access that existed before the March 2026 local-database encryption change.
+    whyItMatters: The company and its most vocal public critic disagree on whether MCP is a sufficient substitute for direct file or API access, which matters for any buyer relying on third-party agents
+      or automation built against Granola's local cache.
+    diligencePath: Test whether a representative sample of the buyer's existing third-party agent/automation tooling can still access Granola data post-encryption via MCP before committing to a rollout.
+    relatedQuestionRefs:
+    - QE016
