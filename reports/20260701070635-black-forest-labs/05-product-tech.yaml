@@ -1,0 +1,2621 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: black-forest-labs
+runDate: '2026-07-01'
+company:
+  name: Black Forest Labs
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: >-
+    Black Forest Labs has built a multi-generation image-generation and editing platform anchored by the FLUX.2 family
+    (32B rectified flow transformer + Mistral-3 24B VLM, up to 4MP, ten-reference editing) and the Apache-2.0 FLUX.2
+    [klein] 4B model for consumer deployment. The open-core strategy—pairing inspectable open weights with commercial
+    API endpoints—creates broad developer adoption and a defensible ecosystem, but leaves genuine product risks in
+    benchmarking commoditization (FLUX.2 loses multiple tests to Google's Nano Banana Pro), the commercial-use friction
+    of the non-commercial dev/9B weight tiers, and hardware requirements that exclude most consumer GPUs for the full
+    32B model.
+sections:
+  - id: section-product-definition
+    title: >-
+      Product definition: Black Forest Labs delivers a tiered image-generation and editing platform spanning open weights,
+      commercial APIs, developer tools, and task-specific FLUX Tools endpoints
+    body: >-
+      Black Forest Labs' product family is best understood as a platform with three concentric rings. The innermost ring
+      is the model family itself, organized into generations and capability tiers. FLUX.1 [schnell] (Apache-2.0, 12B
+      parameters) is the fastest open-source tier for personal use. FLUX.1 [dev] (non-commercial, 12B parameters)
+      provides higher-quality open weights for researchers and developers. FLUX.1 Kontext [dev/pro/max] unifies image
+      generation and editing into a single unified architecture, enabling iterative multi-turn editing with character and
+      style consistency across edits—a capability BFL validated through the KontextBench benchmark covering 1,026
+      image-prompt pairs across five task categories. FLUX.2 is the second-generation family: [pro] and [flex] are
+      managed commercial API tiers, [dev] is a 32B open-weight checkpoint, and [klein] (4B Apache-2.0, 9B
+      non-commercial) is size-distilled for consumer GPUs and real-time generation at sub-second latency. The middle
+      ring is the integration ecosystem—official connectors for Diffusers, ComfyUI, and TensorRT; a hosted MCP server
+      at mcp.bfl.ai with OAuth-only sign-in; and marketplace endpoints on FAL.ai, Replicate, Together AI, Runware,
+      Cloudflare, and DeepInfra. The outermost ring is FLUX Tools—specialized task-focused API endpoints launched in
+      H1 2026, including Virtual Try-On (VTO), Erase, and Outpainting—each fine-tuned to master a single task rather
+      than relying on a general-purpose model. From a customer workflow perspective, a creative professional editing
+      product images reaches BFL through the playground, the BFL API, or a marketplace; a developer building an app
+      integrates the Diffusers FluxPipeline or the MCP server; an enterprise needing brand-specific consistency
+      licenses open weights for self-hosting. The breadth of access modes is a deliberate product decision: BFL's
+      open-core strategy depends on wide developer adoption of open weights to create network effects and research
+      visibility, while the commercial API and licensing tiers convert that adoption into revenue.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE006
+      - CE007
+      - CE008
+      - CE009
+      - CE010
+      - CE011
+    tableRefs:
+      - TE001
+      - TE002
+    figureRefs:
+      - FE002
+
+  - id: section-architecture
+    title: >-
+      Architecture and operating model: FLUX.2 couples a 32B rectified flow transformer with a Mistral-3 24B VLM in a
+      latent flow matching framework—raw full-precision inference requires 90 GB VRAM but FP8 quantization enables
+      consumer RTX deployment
+    body: >-
+      FLUX.2 is built on a latent flow matching architecture that trains a mapping between noisy latents and clean
+      image latents conditioned on text. The generative backbone is a 32-billion-parameter rectified flow transformer,
+      which captures spatial structure, material properties, lighting, and compositional logic. Semantic grounding and
+      world knowledge come from the Mistral-3 24B vision-language model, which is coupled to the transformer through a
+      shared conditioning mechanism. A new FLUX.2 variational autoencoder (VAE), released under Apache-2.0, defines
+      the latent space across all model variants and is designed to address the learnability-quality-compression
+      trilemma: it achieves lower LPIPS distortion than the FLUX.1 and Stable Diffusion autoencoders while improving
+      generative FID. FLUX.2 unifies text-to-image synthesis, image editing, and multi-reference composition in a
+      single checkpoint, removing the need for separate models. For editing, image latents are initialized from input
+      images and updated under the same flow process to preserve structure. The FLUX.2 [klein] sub-family (4B and 9B
+      parameter models) are step-distilled from the FLUX.2 base model to achieve four-step inference, targeting
+      sub-second generation. The 9B variant uses an 8B Qwen3 text embedder and fits in approximately 29 GB VRAM (FP16)
+      or roughly 15 GB VRAM in FP8 quantization, while the 4B variant requires approximately 13 GB VRAM and runs on
+      mid-range consumer NVIDIA RTX GPUs. Full-precision FLUX.2 [dev] inference requires 90 GB VRAM, dropping to 64 GB
+      in low-VRAM mode, and to approximately 18–24 GB with FP8 quantization in a pipeline created jointly with NVIDIA
+      and ComfyUI. NVIDIA documented 40% VRAM reduction and 40% performance improvement from FP8 quantization.
+      Deployment modes include BFL's hosted API (managed endpoints), local self-hosting using BFL's reference
+      inference code or the Diffusers FluxPipeline, ComfyUI's native FLUX.2 template with weight streaming, and
+      TensorRT inference via the NVIDIA Pytorch container. Third-party marketplace inference is available on FAL.ai,
+      Replicate, Together AI, Runware, Verda, Cloudflare Workers, and DeepInfra. The MCP server (mcp.bfl.ai) enables
+      OAuth-authenticated generation from inside Claude, Cursor, Codex, Windsurf, and any MCP-compatible client with
+      no API key management.
+    claimRefs:
+      - CE012
+      - CE013
+      - CE014
+      - CE015
+      - CE016
+      - CE017
+      - CE018
+      - CE019
+      - CE020
+      - CE021
+      - CE022
+    tableRefs:
+      - TE003
+    figureRefs:
+      - FE001
+      - FE003
+
+  - id: section-deployment-integration
+    title: >-
+      Deployment and integration: official Diffusers, ComfyUI, and MCP support create broad ecosystem reach—roadmap
+      shows a march toward real-time and agentic workflows
+    body: >-
+      BFL offers first-class integration with the two dominant self-hosting workflows for image generation. Hugging Face
+      Diffusers supports all FLUX.2 models through the FluxPipeline, Flux2KleinPipeline, and FluxKontextPipeline APIs.
+      ComfyUI gained day-0 FLUX.2 support with official tutorials and pre-built workflow templates from BFL and
+      NVIDIA; NVIDIA also optimized ComfyUI's weight-streaming feature to allow FP8 FLUX.2 [dev] inference on
+      GeForce RTX GPUs via system RAM offload. TensorRT integration is available through the NVIDIA Pytorch container
+      for data-center deployments. The BFL MCP server (mcp.bfl.ai) is a hosted, OAuth-only remote server that exposes
+      the full FLUX.2 toolkit—text-to-image, multi-reference editing, virtual try-on, variations, and history
+      browsing—to any MCP-compatible client. Claude Desktop, Claude.ai, Claude Code, Cursor, Codex, Windsurf, and
+      stdio-bridge clients via mcp-remote are all supported with specific per-client setup instructions in the public
+      GitHub repo. BFL billing is direct: the organization selected during OAuth sign-in is charged at standard API
+      rates with no middleman. The API itself is well-documented with a formal release notes page; key 2026 milestones
+      include FLUX.2 [klein] launch (January 2026, sub-second generation at 13–29 GB VRAM), FLUX.2 [pro] 2× speed
+      upgrade (March 2026, same price), FLUX.2 [flex] 3× speed improvement (January 2026), FLUX Outpainting (May 2026),
+      FLUX Erase (May 2026), and FLUX Virtual Try-On (May 2026). A new outpainting fast mode launched June 9, 2026.
+      The release cadence shows steady feature velocity with roughly one major endpoint or performance upgrade per
+      month. The finetuning API was deprecated as of October 2025, which is a gap for teams that had built workflows
+      on it. API reliability is tracked through a status page (status.bfl.ai); no major structural outages appear in
+      the reviewed release notes, though the status page itself was not fetchable in this session's direct probe.
+    claimRefs:
+      - CE023
+      - CE024
+      - CE025
+      - CE026
+      - CE027
+      - CE028
+      - CE029
+      - CE030
+    tableRefs:
+      - TE005
+    figureRefs: []
+
+  - id: section-differentiation-trust
+    title: >-
+      Differentiation, trust, and safety: open-core strategy with C2PA provenance and adversarial-tested safety
+      mitigations—but licensing friction and benchmark commoditization are real risks
+    body: >-
+      BFL's primary technical differentiation rests on four pillars: the unified generation-and-editing architecture
+      (FLUX.1 Kontext, FLUX.2), the production-grade open-weight release strategy (FLUX.1 [schnell] and FLUX.2 [klein]
+      4B under Apache-2.0, widest open image models at their quality tier), the ecosystem depth from Diffusers, ComfyUI,
+      and MCP integrations, and the FLUX.2 [klein] sub-second inference on consumer hardware. On safety and trust, BFL
+      implements a multi-layer content safety stack: pre-training data filtering (including IWF CSAM hash matching),
+      targeted safety fine-tuning across multiple rounds, adversarial third-party red-team evaluation of both text and
+      image inputs (21 checkpoints evaluated for FLUX.1 Kontext), Hive and Microsoft inference-time filters for CSAM
+      and NCII, and C2PA cryptographic metadata applied to all API outputs. The C2PA implementation is consistent with
+      the Content Credentials standard endorsed by content-authenticity coalitions and increasingly required by
+      publishers. The FLUX.2 [klein] model card documents that the release was only approved after a final third-party
+      evaluation showed higher resilience than other leading open-weight models on CSAM and NCII categories. On
+      competitive differentiation, the FLUX.2 [dev] benchmark win rates are strong within the open-weight space
+      (66.6% text-to-image win rate, 63.6% multi-reference win rate vs. Qwen-Image), but independent benchmarking by
+      Overchat AI found that FLUX.2 loses on text rendering, infographic accuracy, and style transfer quality to
+      Google's Nano Banana Pro (Gemini 3 Pro Image), which can also tap real-time Google Search to ground infographic
+      content. FLUX.2 does not support negative prompts, instead relying on positive-descriptor prompting, which the
+      MCP and API documentation explicitly notes. Commercial licensing for self-hosted deployment of FLUX.2 [dev],
+      FLUX.1 [dev], and FLUX.2 [klein] 9B requires a paid license (Builder, Platform, Professional, or Enterprise
+      tier); only the 4B klein and schnell variants are genuinely royalty-free for commercial use under Apache-2.0.
+      This creates a two-tier commercial reality: research-and-prototype use is broadly open, but production SaaS
+      deployment of the best open weights requires a commercial agreement with BFL. The EU AI Act's GPAI obligations
+      are relevant for a model at FLUX.2's scale and public release scope, but BFL has not published a detailed GPAI
+      compliance statement as of the run date.
+    claimRefs:
+      - CE031
+      - CE032
+      - CE033
+      - CE034
+      - CE035
+      - CE036
+      - CE037
+      - CE038
+      - CE039
+      - CE040
+      - CE041
+    tableRefs:
+      - TE004
+    figureRefs:
+      - FE004
+
+tables:
+  - id: TE001
+    title: Product module / asset matrix
+    columns:
+      - module / asset / product line
+      - user
+      - status / maturity
+      - differentiation
+      - diligence gap
+    rows:
+      - - FLUX.1 [schnell]
+        - Developers and researchers needing fast open image generation
+        - GA, Apache-2.0
+        - Fastest open-weight image model at launch; 4-step distilled; free commercial use
+        - Community-driven; no BFL roadmap commitment; superseded by klein for production use cases.
+      - - FLUX.1 [dev]
+        - Researchers, non-commercial developers
+        - GA, non-commercial license
+        - >-
+          12B parameter model, highest open-weight quality at FLUX.1 generation; widely adopted as the most popular
+          open image model globally per BFL
+        - Non-commercial only; commercial self-hosting requires paid license from BFL.
+      - - FLUX.1 Kontext [dev/pro/max]
+        - Creative professionals, developers building editing workflows
+        - GA (dev open-weight non-commercial; pro/max API-only commercial)
+        - >-
+          First widely-used unified generation+editing architecture with multi-reference consistency; anchored by
+          KontextBench and arXiv paper (2506.15742)
+        - Pro/max closed-API; dev non-commercial; model size not disclosed for pro/max.
+      - - FLUX.2 [dev]
+        - Researchers and self-hosters targeting highest open-weight quality
+        - GA, non-commercial license (FLUX.2-dev Non-Commercial)
+        - >-
+          32B rectified flow transformer + Mistral-3 24B VLM; leading open-weight win rates on text-to-image,
+          single-reference, and multi-reference editing vs. all open alternatives per BFL benchmarks
+        - >-
+          Requires 18–24 GB VRAM minimum with FP8; non-commercial license; commercial self-hosting requires paid
+          agreement; no negative-prompt support.
+      - - FLUX.2 [pro]
+        - Enterprises and product teams needing production-grade quality
+        - GA, API-only commercial ($0.03/MP)
+        - >-
+          ELO 1030–1050 range in quality-cost benchmarks; 2× speed upgrade March 2026 at no price change; multi-reference
+          up to 10 images
+        - Closed weights; pricing scales with resolution and reference image count.
+      - - FLUX.2 [flex]
+        - Developers needing fine-grained quality/speed control
+        - GA, API-only commercial ($0.05/MP)
+        - >-
+          Exposes steps and guidance scale parameters; best-in-class text rendering among FLUX.2 variants; 3×
+          speed improvement January 2026
+        - Higher API cost than [pro] for same resolution.
+      - - FLUX.2 [klein] 4B
+        - Mobile/edge developers, real-time interactive apps, consumer self-hosters
+        - GA, Apache-2.0 ($0.014/MP API or free self-host)
+        - >-
+          Apache-2.0 for full commercial self-hosting; sub-second inference; 13 GB VRAM; matches or exceeds models 5×
+          its size per BFL claims; step-distilled from FLUX.2 base
+        - Self-reported quality comparisons; independent benchmarks at 4B scale are limited.
+      - - FLUX.2 [klein] 9B
+        - Production apps needing highest klein-tier quality
+        - GA, non-commercial ($0.015/MP API)
+        - >-
+          Flagship small model; Qwen3-8B text embedder; pareto-frontier quality/latency for text-to-image and editing;
+          sub-second inference; multi-reference
+        - Non-commercial open weights; commercial self-hosting requires paid license.
+      - - FLUX Tools (VTO, Erase, Outpainting)
+        - E-commerce, creative agencies, product photography teams
+        - GA, API-only (May–June 2026)
+        - >-
+          Specialized fine-tuned endpoints; VTO preserves face/hair/pose while only changing wearable; Erase does
+          prompt-free object removal; Outpainting extends any image to 4MP
+        - New product line; adoption metrics and reliability track record are short (launched May 2026).
+      - - FLUX MCP server (mcp.bfl.ai)
+        - Developers using Claude, Cursor, Codex, Windsurf, or any MCP client
+        - GA, OAuth-only hosted remote server
+        - >-
+          Embeds full FLUX.2 toolkit in any MCP-compatible client; no API key management; BFL billed directly via
+          OAuth org selection; supports up to 8 parallel generations
+        - OAuth-only; not compatible with clients that cannot handle OAuth flows without mcp-remote shim.
+    notes: >-
+      Status and pricing verified against BFL official pages as of 2026-07-01. VRAM figures are indicative; actual
+      requirements depend on quantization mode and batch size. Licensing tiers (Builder/Platform/Professional/Enterprise)
+      govern commercial open-weight deployment and are separate from API usage fees.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+      - CE005
+      - CE006
+      - CE008
+      - CE009
+      - CE010
+      - CE016
+      - CE018
+      - CE021
+      - CE023
+      - CE024
+      - CE027
+
+  - id: TE002
+    title: Workflow / use-case table
+    columns:
+      - user job
+      - current workflow
+      - company solution
+      - measurable benefit
+      - limitation
+    rows:
+      - - Product photography at e-commerce scale
+        - Manual photography, retouching, multiple model sessions
+        - FLUX.2 [pro/max] via API with multi-reference conditioning and VTO endpoint
+        - >-
+          Up to 10 reference images maintain product identity across shots; VTO preserves face/hair/pose while
+          swapping garments; 4MP output for high-res editorial use
+        - Closed API; per-image pricing scales with volume; no self-hosting of pro/max weights.
+      - - Brand-consistent marketing asset generation
+        - Agency creative briefs, stock licensing, manual Photoshop workflows
+        - FLUX.2 [flex] or [pro] with hex color codes and structured JSON prompting
+        - Exact brand color matching via hex; structured prompt templates reduce iterative prompting cycles
+        - FLUX.2 text rendering still loses to Google Nano Banana Pro on complex infographics per independent benchmark.
+      - - Developer building image-generation SaaS
+        - Custom diffusion pipelines, fine-tuning costs, checkpoint management
+        - FLUX.2 [klein] 4B (Apache-2.0) self-hosted or via API with Diffusers/ComfyUI
+        - >-
+          Free commercial self-hosting under Apache-2.0; sub-second inference; Diffusers and ComfyUI day-0 support
+          lower integration time
+        - Best open-weight results require FLUX.2 [dev] (non-commercial); commercial self-hosting needs paid license.
+      - - Iterative image editing for creative professionals
+        - Photoshop layers, Midjourney V6 multi-round, manual inpainting
+        - FLUX.1 Kontext [dev/pro/max] or FLUX.2 [dev] with multi-turn editing
+        - >-
+          Character/style/object consistency across multiple edits without fine-tuning; local/global editing with
+          minimal visual drift; up to 10 reference images
+        - Dev variant is non-commercial; pro/max access is API-only; VRAM requirements bar most consumer hardware.
+      - - AI-assisted coding tools generating UI previews
+        - Screenshot capture, Figma mockups, code-based rendering
+        - FLUX MCP server in Claude or Cursor; FLUX.2 [flex] for text rendering
+        - >-
+          No API key management via MCP OAuth; up to 8 parallel generations in chat; flux2_flex optimized for
+          typography and UI screen mockups
+        - OAuth-only MCP server; stdio-only clients need mcp-remote shim; complex layouts still may have text errors.
+      - - Research into open image generation architectures
+        - Stable Diffusion derivatives, proprietary closed models with no inspection rights
+        - FLUX.1 [dev] or FLUX.2 [dev] open weights with public arXiv papers and BFL research page
+        - >-
+          Full weight inspection; BFL publishes FLUX.1 Kontext and FLUX.2 VAE technical papers on arXiv; reference
+          inference code public on GitHub
+        - FLUX.2 [dev] requires 18–24 GB minimum VRAM; 32B scale rules out most academic compute budgets.
+    notes: >-
+      Workflow benefits are based on BFL marketing claims and third-party benchmark comparisons verified via fetch; the
+      text-rendering limitation is from an independent Overchat AI side-by-side benchmark.
+    claimRefs:
+      - CE003
+      - CE004
+      - CE011
+      - CE014
+      - CE015
+      - CE017
+      - CE023
+      - CE025
+      - CE033
+
+  - id: TE003
+    title: Technology / operating architecture table
+    columns:
+      - layer / process / component
+      - role
+      - dependency
+      - risk
+    rows:
+      - - Rectified flow transformer (32B, FLUX.2 backbone)
+        - Core generative engine; learns noise-to-image latent mapping; handles generation and editing
+        - GPU compute (NVIDIA A100/H100/RTX 5090 or equivalent); CUDA runtime
+        - >-
+          Full precision requires 90 GB VRAM; accessible on consumer hardware only with FP8 quantization; no published
+          architecture details beyond scale and paradigm.
+      - - Mistral-3 24B VLM (text conditioner)
+        - Semantic grounding, world knowledge, and complex prompt adherence for FLUX.2
+        - Mistral AI model license/availability; included in FLUX.2 weights via coupling
+        - >-
+          Dependency on a third-party model family introduces supply chain risk; architecture not independently
+          auditable; FLUX.2 lacks negative prompt support as a direct consequence of the VLM-based approach.
+      - - FLUX.2 VAE (variational autoencoder)
+        - Latent space definition; balances learnability, quality, and compression; shared across all FLUX.2 variants
+        - Apache-2.0; hosted on Hugging Face; BFL-maintained
+        - >-
+          If BFL changes the VAE in future generations, existing custom pipelines built on current latents may require
+          retooling.
+      - - FLUX.2 [klein] distillation (4B / 9B)
+        - Step-distilled inference; sub-second generation on consumer GPUs via 4-step sampling
+        - Parent FLUX.2 base model; distillation training pipeline at BFL
+        - >-
+          Quality ceiling is bounded by the distillation process; independent quality benchmarks for the 4B are
+          limited; non-commercial license for 9B creates commercial deployment friction.
+      - - Diffusers integration (FluxPipeline / FluxKontextPipeline / Flux2KleinPipeline)
+        - Python inference framework for BFL models; used by the majority of developer self-hosters
+        - Hugging Face Diffusers library; requires git main branch for FLUX.2 and Kontext
+        - >-
+          HuggingFace library version fragmentation (FLUX.2 requires the git main branch until stable release);
+          VRAM offload behavior varies by GPU and driver version.
+      - - ComfyUI integration
+        - Node-based visual inference workflow; primary local deployment UI for creative professionals and community
+        - ComfyUI open-source project; NVIDIA weight streaming; community model sharing
+        - >-
+          Community-driven; not under BFL direct control; workflow fragmentation across FLUX.1, Kontext, and FLUX.2
+          naming schemes creates integration confusion.
+      - - BFL API and hosted endpoints
+        - Managed inference for [pro], [flex], [max], [klein] commercial tiers; primary revenue surface
+        - BFL's own infrastructure; GPU compute supply (likely CoreWeave or similar)
+        - >-
+          Cloud compute cost dependencies; status page (status.bfl.ai) not independently verified in this session;
+          no public SLA published for API availability.
+      - - MCP server (mcp.bfl.ai, OAuth)
+        - AI coding assistant integration surface; exposes full FLUX.2 toolkit to MCP clients without API key management
+        - OAuth identity provider; BFL account and credit balance; MCP-compatible client
+        - >-
+          OAuth-only blocks clients that cannot handle browser-based auth flows without mcp-remote shim; per-client
+          setup required; alpha/beta maturity as an integration layer.
+      - - Safety filtering (Hive, Microsoft, BFL in-house)
+        - Inference-time CSAM/NCII blocking; text prompt and output image filtering
+        - Third-party filter providers (Hive, Microsoft); IWF CSAM hash database
+        - >-
+          Dependency on commercial third-party filter vendors for safety-critical functions; filter evasion risk from
+          adversarial prompting in open-weight self-hosted deployments.
+    notes: >-
+      Architecture details are based on BFL's own blog post, model cards, and official documentation. Internal
+      compute infrastructure vendor is not publicly disclosed; GPU cloud dependency is inferred from public deployment
+      patterns.
+    claimRefs:
+      - CE012
+      - CE013
+      - CE014
+      - CE015
+      - CE016
+      - CE017
+      - CE019
+      - CE020
+      - CE021
+      - CE022
+      - CE029
+
+  - id: TE004
+    title: Trust / quality / compliance table
+    columns:
+      - control / certification / quality metric
+      - status
+      - scope
+      - gap
+    rows:
+      - - C2PA cryptographic content provenance
+        - Implemented on all API outputs
+        - >-
+          All FLUX.2 API-generated images receive cryptographically-signed C2PA metadata indicating model, timestamp,
+          and editing history
+        - >-
+          C2PA metadata applies only to API outputs; self-hosted open-weight deployments are not required to embed
+          provenance but reference code includes a pixel-layer watermarking example.
+      - - Pre-training CSAM/NSFW data filtering
+        - In place across all model generations
+        - Pre-training data filtered for NSFW content and known CSAM hashes using IWF partnership
+        - No public audit or external certification of filtering completeness.
+      - - Adversarial third-party red-team evaluation
+        - Conducted pre-release for FLUX.1 Kontext (21 checkpoints) and FLUX.2 [klein]
+        - >-
+          External evaluations focused on CSAM and NCII generation via text-only and image-reference attacks;
+          FLUX.1 Kontext [dev] showed higher resilience than other open-weight models in final evaluation
+        - Red-team scope and methodology details are described qualitatively; no public audit report.
+      - - Inference-time CSAM/NCII filters (Hive + Microsoft)
+        - Live on BFL API; non-adjustable for CSAM/NCII categories
+        - API filters (Hive + Microsoft) cannot be removed or adjusted by developers for CSAM/NCII
+        - >-
+          Filters apply only to the hosted API; self-hosted open-weight deployments require implementers to apply
+          their own filters per license terms.
+      - - FLUX Non-Commercial License (dev/klein-9B)
+        - Published and version-tracked
+        - >-
+          Governs non-commercial open-weight deployment; filters and manual review required as a condition of use;
+          commercial deployment requires a paid license
+        - >-
+          License enforcement for open-weight self-hosters is not publicly documented; compliance is largely
+          self-reported.
+      - - Commercial Self-Hosted License Tiers (Builder / Platform / Professional / Enterprise)
+        - Available via BFL licensing page; contact sales for Platform and above
+        - >-
+          Grants commercial rights to self-host FLUX.2 [dev] and [klein] 9B; fine-tuning and LoRA rights included;
+          domain and usage limits vary by tier
+        - Pricing for Platform, Professional, Enterprise tiers not publicly listed; requires sales contact.
+      - - EU AI Act GPAI obligations
+        - No public GPAI compliance statement found as of 2026-07-01
+        - FLUX.2 at 32B and widely distributed likely qualifies as a GPAI model under EU AI Act definitions
+        - >-
+          BFL has not published a GPAI technical documentation summary or EU market obligation mapping; this is a
+          material compliance gap for EU-based enterprise customers.
+      - - API usage policy and developer terms
+        - Published at bfl.ai
+        - Prohibits unlawful content, CSAM, NCII, non-consensual imagery, and deepfakes
+        - Enforcement metrics and policy-violation rates are not published.
+    notes: >-
+      Trust and compliance controls verified from BFL model cards, official documentation, and the C2PA content
+      credentials standard. EU AI Act applicability is inferred from published regulation text; BFL has not
+      confirmed or denied GPAI classification.
+    claimRefs:
+      - CE035
+      - CE036
+      - CE037
+      - CE038
+      - CE039
+      - CE040
+      - CE041
+
+  - id: TE005
+    title: Roadmap / release / development-stage table
+    columns:
+      - date / stage
+      - feature / milestone
+      - status
+      - implication
+      - source
+    rows:
+      - - 2024-08
+        - FLUX.1 family launch (schnell, dev, pro); 12B parameter open-weight image model
+        - Released
+        - >-
+          Established BFL as the open-weight image generation leader; FLUX.1 [dev] became the most popular open image
+          model globally per BFL
+        - BFL official GitHub and HuggingFace model cards
+      - - 2025-06
+        - FLUX.1 Kontext launch; unified generation+editing architecture with KontextBench paper
+        - Released (arXiv 2506.15742)
+        - >-
+          First widely-used in-context editing model; simplified multi-turn editing without fine-tuning; validated by
+          KontextBench benchmark
+        - arXiv 2506.15742, BFL research page, HuggingFace model card
+      - - 2025-11
+        - FLUX.2 [pro] and [flex] launch; 32B architecture with Mistral-3 24B VLM conditioner
+        - Released
+        - >-
+          Generation-2 production API with multi-reference (10 images), 4MP output, improved typography and prompt
+          adherence
+        - BFL blog/flux-2, VentureBeat, MarkTechPost
+      - - 2025-12
+        - FLUX.2 [max] launch with grounding search capability
+        - Released
+        - >-
+          Highest quality API tier with real-time web search integration for fact-grounded image generation; multi-reference
+          up to 10 inputs
+        - BFL docs release notes
+      - - 2025-12
+        - Organizations and Projects launch (role-based access, project-scoped API keys, spending limits)
+        - Released
+        - >-
+          Enterprise-grade account management with RBAC, per-project keys, audit logging; enables multi-team
+          deployments
+        - BFL docs release notes
+      - - 2026-01
+        - FLUX.2 [klein] launch (4B Apache-2.0, 9B non-commercial); sub-second inference on consumer GPUs
+        - Released
+        - >-
+          Opens commercial self-hosting to the developer community under Apache-2.0 for the 4B variant; real-time
+          generation at 13 GB VRAM minimum; BFL API from $0.014/image
+        - BFL docs release notes, FLUX.2-klein-9B model card
+      - - 2026-01
+        - FLUX.2 [flex] 3× speed improvement
+        - Released
+        - Cost reduction for typography-heavy production workflows at no quality loss
+        - BFL docs release notes
+      - - 2026-03
+        - FLUX.2 [pro] 2× speed upgrade; flux-2-pro-preview endpoint
+        - Released
+        - >-
+          Production-grade latency improvement with no price change; preview endpoint enables rolling updates without
+          breaking existing integrations
+        - BFL docs release notes
+      - - 2026-05
+        - FLUX Erase, FLUX Outpainting, FLUX Virtual Try-On endpoints launch
+        - Released (FLUX Tools)
+        - >-
+          Specialized task-focused API endpoints extend BFL's product surface beyond generation into structured editing
+          and apparel workflows
+        - BFL docs release notes, BFL FLUX Tools page
+      - - 2026-06
+        - FLUX Outpainting fast mode (speed/quality tradeoff parameter)
+        - Released
+        - Adds cost-sensitive path for landscape/background/texture outpainting
+        - BFL docs release notes
+      - - 2026-03
+        - BFL research paper on self-supervised flow matching for multi-modal synthesis
+        - Published
+        - >-
+          Signals R&D trajectory toward video and audio generation under the same flow-matching framework
+        - BFL research page
+    notes: >-
+      Dates are from official BFL release notes and arXiv submission dates. Future roadmap items are not publicly
+      disclosed beyond the research paper signal toward multi-modal generation.
+    claimRefs:
+      - CE001
+      - CE003
+      - CE006
+      - CE007
+      - CE008
+      - CE024
+      - CE025
+      - CE026
+      - CE027
+      - CE028
+      - CE030
+
+figures:
+  - id: FE001
+    title: Product architecture map
+    type: stack
+    layout: wide
+    summary: >-
+      BFL's product stack layers user access surfaces, model tiers, a shared inference framework, and cloud/edge
+      deployment—all grounded in the FLUX.2 flow matching backbone.
+    data:
+      layers:
+        - label: User access surfaces
+          detail: End-user and developer entry points across hosted, self-hosted, and agentic surfaces.
+          items:
+            - label: BFL Playground and Web UI
+              detail: Browser-based generation and editing for evaluation and casual use.
+            - label: BFL API (REST endpoints)
+              detail: Programmatic access to all FLUX.2 models with per-model and per-resolution billing.
+            - label: FLUX MCP server (mcp.bfl.ai)
+              detail: OAuth-authenticated remote MCP endpoint for Claude, Cursor, Codex, and Windsurf.
+        - label: Model family tiers
+          detail: Distinct model checkpoints spanning quality, speed, and open-weight access levels.
+          items:
+            - label: FLUX.2 [max / pro / flex]
+              detail: Commercial API-only tiers; max adds grounding search; flex exposes step/guidance params.
+            - label: FLUX.2 [dev]
+              detail: 32B open-weight non-commercial checkpoint; highest open quality; 18–24 GB FP8 VRAM.
+            - label: FLUX.2 [klein] 4B / 9B
+              detail: Step-distilled models; 4B is Apache-2.0 fully commercial; 9B is non-commercial; sub-second inference.
+            - label: FLUX.1 Kontext [dev/pro/max]
+              detail: Unified generation+editing 12B model; multi-turn editing with character/style consistency.
+            - label: FLUX Tools (VTO, Erase, Outpainting)
+              detail: Specialized task-finetuned API endpoints; prompt-free or low-prompt operation.
+        - label: Inference and integration layer
+          detail: Standardized frameworks and tooling connecting model weights to developer workflows.
+          items:
+            - label: HuggingFace Diffusers (FluxPipeline / KontextPipeline / Klein Pipeline)
+              detail: Primary Python self-hosting framework; supports FP8/BF16 quantization and VRAM offload.
+            - label: ComfyUI node-based workflows
+              detail: Day-0 support with official templates; NVIDIA weight streaming for RTX consumer deployment.
+            - label: TensorRT / NVIDIA FP8 container
+              detail: Data-center inference optimization; 40% VRAM reduction and 40% throughput gain vs full precision.
+        - label: Third-party marketplace endpoints
+          detail: BFL weights and API distributed through partner infrastructure platforms.
+          items:
+            - label: FAL.ai, Replicate, Together AI
+              detail: Managed inference marketplaces with FLUX.2 hosted endpoints.
+            - label: Runware, Verda, Cloudflare, DeepInfra
+              detail: Additional inference partners for lower-latency or specialized regional deployment.
+        - label: Safety and governance layer
+          detail: Controls applied at training, inference, and output stages.
+          items:
+            - label: IWF CSAM hash filtering + safety fine-tuning
+              detail: Pre-training and post-training data/behavioral mitigation.
+            - label: Hive + Microsoft inference-time filters
+              detail: Non-adjustable API-level CSAM and NCII output filtering.
+            - label: C2PA cryptographic metadata on API outputs
+              detail: Provenance watermarking for all API-generated images per Content Credentials standard.
+    approximationNotes: >-
+      Layers reflect publicly documented product architecture; internal compute infrastructure vendor is not
+      disclosed by BFL.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE012
+      - CE013
+      - CE016
+      - CE019
+      - CE020
+      - CE022
+      - CE023
+      - CE035
+      - CE038
+
+  - id: FE002
+    title: Customer workflow / operating flow
+    type: flow
+    layout: wide
+    summary: >-
+      A typical BFL production workflow starts with a user intent, routes through model selection and API
+      or self-hosted inference, and delivers a C2PA-signed image output with optional safety-filter interception.
+    data:
+      nodes:
+        - id: wf1
+          label: User or developer initiates generation / edit task
+          detail: >-
+            Entry point can be the BFL Playground, REST API call, MCP client prompt (Claude/Cursor), or
+            programmatic Diffusers/ComfyUI pipeline.
+          tone: neutral
+        - id: wf2
+          label: Model selection
+          detail: >-
+            User or orchestration layer selects tier: max (highest quality), pro (production), flex (typography),
+            klein-9B (fast, non-commercial), klein-4B (fast, Apache-2.0), or dev (research).
+          tone: neutral
+        - id: wf3
+          label: Reference images / context attached
+          detail: >-
+            Up to 10 reference images supplied for multi-reference conditioning; prior-generation request_id for
+            variations; image mask for Erase or Outpainting.
+          tone: positive
+        - id: wf4
+          label: Flow matching inference runs
+          detail: >-
+            Rectified flow transformer maps noise latents to image latents under text+VLM conditioning; for
+            klein variants, 4-step distilled inference achieves sub-second latency.
+          tone: neutral
+        - id: wf5
+          label: Safety filter interception (API path)
+          detail: >-
+            Hive and Microsoft inference-time filters check text prompt, input images, and output image for
+            CSAM and NCII; generation blocked if flagged.
+          tone: warning
+        - id: wf6
+          label: Output image generated (up to 4MP)
+          detail: >-
+            High-resolution image returned; API outputs include C2PA cryptographic provenance metadata;
+            self-hosted outputs optionally include pixel-layer watermark.
+          tone: positive
+        - id: wf7
+          label: Downstream use or iteration
+          detail: >-
+            User downloads image, calls generate_variations for alternatives, uses Edit to refine, or feeds
+            output back as a reference image for the next generation cycle.
+          tone: positive
+      edges:
+        - from: wf1
+          to: wf2
+        - from: wf2
+          to: wf3
+        - from: wf3
+          to: wf4
+        - from: wf4
+          to: wf5
+        - from: wf5
+          to: wf6
+        - from: wf6
+          to: wf7
+    approximationNotes: >-
+      Flow represents the observable documented workflow from public API and model-card documentation; internal
+      BFL infrastructure details are not public.
+    claimRefs:
+      - CE003
+      - CE011
+      - CE014
+      - CE017
+      - CE020
+      - CE035
+      - CE038
+
+  - id: FE003
+    title: Critical dependency map
+    type: dag
+    layout: wide
+    summary: >-
+      BFL's product delivery depends on GPU compute supply, third-party safety-filter vendors, the Hugging Face
+      distribution platform, and the Mistral-3 VLM licensing—any failure in these upstream nodes propagates to model
+      quality or API availability.
+    data:
+      nodes:
+        - id: d1
+          label: NVIDIA GPU compute (A100/H100/RTX)
+          detail: Core inference and training hardware for all FLUX model families.
+          tone: neutral
+        - id: d2
+          label: GPU cloud vendor (CoreWeave / hyperscaler)
+          detail: Managed GPU supply for BFL API endpoints; vendor not publicly disclosed.
+          tone: warning
+        - id: d3
+          label: Mistral-3 24B VLM (Mistral AI)
+          detail: Text conditioning and semantic grounding for FLUX.2 architecture; third-party model.
+          tone: warning
+        - id: d4
+          label: FLUX.2 flow matching backbone (32B)
+          detail: Core generative model; trained and maintained by BFL.
+          tone: positive
+        - id: d5
+          label: FLUX.2 VAE (Apache-2.0)
+          detail: Shared latent space for all FLUX.2 variants; BFL-maintained open-source.
+          tone: positive
+        - id: d6
+          label: Hugging Face model hub
+          detail: Primary distribution channel for open-weight checkpoints; download/access dependency.
+          tone: neutral
+        - id: d7
+          label: Hive + Microsoft safety filters
+          detail: Non-adjustable inference-time CSAM and NCII filters on the BFL API.
+          tone: warning
+        - id: d8
+          label: BFL API endpoints (production)
+          detail: Managed inference for commercial tiers; primary revenue surface.
+          tone: positive
+        - id: d9
+          label: Third-party marketplaces (FAL, Replicate, Together AI)
+          detail: Additional inference distribution; customer access diversification.
+          tone: neutral
+        - id: d10
+          label: Customer production workflows and enterprise deployments
+          detail: End-user image generation, editing, brand asset creation.
+          tone: positive
+        - id: d11
+          label: Compliance and provenance outcomes
+          detail: C2PA metadata, safety policy adherence, licensing enforcement.
+          tone: warning
+      edges:
+        - from: d1
+          to: d2
+        - from: d2
+          to: d8
+        - from: d3
+          to: d4
+        - from: d4
+          to: d5
+        - from: d4
+          to: d8
+        - from: d5
+          to: d6
+        - from: d6
+          to: d10
+        - from: d7
+          to: d8
+        - from: d8
+          to: d9
+        - from: d8
+          to: d10
+        - from: d9
+          to: d10
+        - from: d10
+          to: d11
+    approximationNotes: >-
+      GPU cloud vendor is inferred; Mistral-3 licensing terms for BFL's embedded use are not publicly detailed.
+    claimRefs:
+      - CE012
+      - CE013
+      - CE016
+      - CE019
+      - CE020
+      - CE022
+      - CE036
+      - CE038
+
+  - id: FE004
+    title: Product maturity / capability map
+    type: matrix
+    layout: wide
+    summary: >-
+      FLUX.2 [pro/max] scores highest on quality and production readiness, while FLUX.2 [klein] 4B leads on
+      openness and real-time deployment; text rendering and world-knowledge are consistent weak points relative to
+      Google Nano Banana Pro across all variants.
+    data:
+      columns:
+        - Output quality
+        - Editing capability
+        - Openness / licensing
+        - Real-time speed
+        - Text rendering
+        - Developer ecosystem depth
+      rows:
+        - label: FLUX.2 [max]
+          values:
+            - label: 'strongest'
+              tone: positive
+              detail: Highest ELO; grounding search adds real-world knowledge integration.
+            - label: strong
+              tone: positive
+              detail: Up to 10 reference images; multi-turn editing.
+            - label: closed
+              tone: warning
+              detail: API-only; no open weights; commercial pricing.
+            - label: medium
+              tone: neutral
+              detail: Slower than pro/flex; grounding search adds latency.
+            - label: strong
+              tone: positive
+              detail: Best text in FLUX.2 family but loses to Nano Banana Pro on complex infographics.
+            - label: medium
+              tone: neutral
+              detail: API-only; no self-hosting ecosystem.
+        - label: FLUX.2 [pro]
+          values:
+            - label: strong
+              tone: positive
+              detail: ELO 1030–1050; 66.6% text-to-image win rate over open-weight alternatives.
+            - label: strong
+              tone: positive
+              detail: Multi-reference up to 10 images; 4MP editing.
+            - label: closed
+              tone: warning
+              detail: API-only; commercial; no self-hosting of weights.
+            - label: strong
+              tone: positive
+              detail: 2× speed upgrade in March 2026; no price change.
+            - label: medium
+              tone: neutral
+              detail: Improved but still loses on wall-of-text and multilingual infographics.
+            - label: strong
+              tone: positive
+              detail: Primary production endpoint; FAL/Replicate/Together AI distribution.
+        - label: FLUX.2 [dev]
+          values:
+            - label: strong
+              tone: positive
+              detail: Best open-weight quality; 63.6% multi-reference win rate vs. Qwen-Image.
+            - label: strong
+              tone: positive
+              detail: Unified generation+editing; multi-reference up to 10 images in one checkpoint.
+            - label: partial
+              tone: warning
+              detail: Non-commercial open weights; commercial self-hosting requires paid BFL license.
+            - label: low
+              tone: warning
+              detail: Full precision 90 GB VRAM; FP8 needs 18–24 GB; slow without quantization.
+            - label: medium
+              tone: neutral
+              detail: Text rendering improved but not production-grade for dense typography.
+            - label: 'strongest'
+              tone: positive
+              detail: Diffusers, ComfyUI, TensorRT, and HuggingFace full integration depth.
+        - label: FLUX.2 [klein] 4B
+          values:
+            - label: medium
+              tone: neutral
+              detail: Quality exceeds models 5× its size per BFL; limited independent benchmarks.
+            - label: medium
+              tone: neutral
+              detail: Multi-reference editing supported; quality bounded by distillation from base.
+            - label: 'open'
+              tone: positive
+              detail: Apache-2.0; fully free commercial self-hosting; no royalties.
+            - label: 'strongest'
+              tone: positive
+              detail: Sub-second inference; 13 GB VRAM minimum; real-time interactive use cases.
+            - label: low
+              tone: warning
+              detail: 4B scale text rendering is weaker; less reliable on complex typography.
+            - label: strong
+              tone: positive
+              detail: Diffusers and ComfyUI support; API and self-hosting both available.
+        - label: FLUX.1 Kontext [dev]
+          values:
+            - label: strong
+              tone: positive
+              detail: KontextBench leading scores for multi-turn editing consistency; 12B model.
+            - label: 'strongest'
+              tone: positive
+              detail: Purpose-built for in-context editing; best iterative editing with minimal drift.
+            - label: partial
+              tone: warning
+              detail: Non-commercial open weights; commercial use requires paid license.
+            - label: medium
+              tone: neutral
+              detail: Guidance-distilled for efficiency; faster than FLUX.2 [dev] but slower than klein.
+            - label: medium
+              tone: neutral
+              detail: Text editing supported but not the primary differentiation.
+            - label: 'strongest'
+              tone: positive
+              detail: FluxKontextPipeline in Diffusers; Replicate, FAL, Together AI, DataCrunch, Runware.
+    approximationNotes: >-
+      Cells are evidence-backed ordinal judgments from official benchmarks, model cards, and the independent Overchat AI
+      comparison. Text rendering weakness relative to Nano Banana Pro is from the independent benchmark; BFL does not
+      claim text rendering parity with Google Gemini 3 Pro Image.
+    claimRefs:
+      - CE003
+      - CE004
+      - CE015
+      - CE016
+      - CE017
+      - CE021
+      - CE031
+      - CE033
+      - CE034
+
+callouts:
+  - calloutType: strength
+    title: Open-core Apache-2.0 strategy creates durable ecosystem flywheel
+    body: >-
+      FLUX.1 [schnell] and FLUX.2 [klein] 4B are fully commercial-friendly under Apache-2.0, making BFL models
+      the default choice for developers building SaaS products who need open-weight commercial deployment without
+      license negotiation. This creates adoption at scale that feeds enterprise sales for the higher tiers.
+    claimRefs:
+      - CE002
+      - CE009
+      - CE031
+  - calloutType: risk
+    title: FLUX.2 loses multiple independent benchmark tests to Google Nano Banana Pro
+    body: >-
+      An independent head-to-head test by Overchat AI found that Nano Banana Pro won every one of five tests
+      including text-to-image quality, world knowledge grounding, prompt following, text rendering, and style
+      transfer. FLUX.2's only clear advantage in that test was generation speed. This represents a credible
+      differentiation gap on quality-sensitive workflows where text rendering and world knowledge matter.
+    claimRefs:
+      - CE033
+      - CE034
+  - calloutType: risk
+    title: Commercial licensing friction for the best open weights creates a conversion funnel risk
+    body: >-
+      FLUX.2 [dev] and FLUX.2 [klein] 9B—the highest-quality open-weight options—require paid commercial
+      licenses for production self-hosting. Developers who build on the non-commercial weights and discover this
+      constraint at scale face a forced renegotiation. The Apache-2.0 4B model mitigates but does not eliminate
+      this friction for quality-sensitive workflows.
+    claimRefs:
+      - CE036
+      - CE037
+      - CE039
+
+localEvidence:
+  searchQueries:
+    - query: Black Forest Labs FLUX.2 architecture 32B rectified flow transformer Mistral-3 VLM 2026
+      engine: bing
+      hits: 10
+      retainedSourceRefs:
+        - SE001
+        - SE011
+        - SE008
+    - query: Black Forest Labs FLUX.1 Kontext pro max dev multi-reference image editing 2026
+      engine: bing
+      hits: 10
+      retainedSourceRefs:
+        - SE003
+        - SE006
+    - query: Black Forest Labs flux-mcp MCP server OAuth 2026 Claude Cursor Codex Windsurf integration
+      engine: bing
+      hits: 5
+      retainedSourceRefs:
+        - SE005
+        - SE014
+    - query: FLUX.2 klein 4B Apache-2.0 9B non-commercial licensing VRAM requirements 2026
+      engine: bing
+      hits: 10
+      retainedSourceRefs:
+        - SE004
+        - SE018
+    - query: Black Forest Labs FLUX.2 vs Nano Banana Pro benchmark comparison 2026 text rendering
+      engine: bing
+      hits: 10
+      retainedSourceRefs:
+        - SE010
+    - query: Black Forest Labs FLUX.2 deployment ComfyUI Diffusers TensorRT NVIDIA RTX 2026 roadmap
+      engine: bing
+      hits: 10
+      retainedSourceRefs:
+        - SE007
+        - SE009
+        - SE017
+    - query: Black Forest Labs FLUX API pricing 2026 commercial licensing tiers Builder Platform Enterprise
+      engine: bing
+      hits: 10
+      retainedSourceRefs:
+        - SE002
+    - query: Black Forest Labs safety content credentials C2PA negative prompt support 2026
+      engine: bing
+      hits: 10
+      retainedSourceRefs:
+        - SE003
+        - SE004
+        - SE035
+    - query: FLUX.2 launch announcement product features 2026 open weights
+      engine: bing
+      hits: 8
+      retainedSourceRefs:
+        - SE001
+        - SE011
+        - SE008
+    - query: Black Forest Labs FLUX release notes roadmap 2026 new features
+      engine: bing
+      hits: 6
+      retainedSourceRefs:
+        - SE015
+        - SE013
+
+  researchQuestions:
+    - id: QE001
+      question: >-
+        What are the distinct product SKUs and licensing terms (open-weight, commercial API, non-commercial) in the
+        current FLUX model family?
+      type: enumeration
+      targets:
+        - contentRequirements/1
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE002
+      question: >-
+        How does the FLUX.2 32B rectified flow transformer architecture couple with the Mistral-3 24B VLM for semantic
+        grounding?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+        - plannedFigures/product-architecture-map
+      status: answered
+
+    - id: QE003
+      question: >-
+        What are the VRAM requirements for FLUX.2 [dev] under full precision, FP8 quantization, and GGUF quantization
+        modes?
+      type: quantification
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE004
+      question: >-
+        What customer workflows does the FLUX Tools suite (VTO, Erase, Outpainting) serve and when were they launched?
+      type: enumeration
+      targets:
+        - contentRequirements/0
+        - plannedTables/workflow-use-case-table
+        - plannedTables/roadmap-release-development-stage-table
+      status: answered
+
+    - id: QE005
+      question: >-
+        How does the FLUX MCP server authentication work and which coding tools support native OAuth sign-in?
+      type: mechanism
+      targets:
+        - contentRequirements/3
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE006
+      question: >-
+        What are the results of the independent head-to-head benchmark comparing FLUX.2 to Google Nano Banana Pro?
+      type: comparison
+      targets:
+        - contentRequirements/4
+        - plannedFigures/product-maturity-capability-map
+      status: answered
+
+    - id: QE007
+      question: >-
+        What independent adversarial red-team evaluations have been conducted on FLUX.1 Kontext and FLUX.2 models
+        prior to release?
+      type: verification
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE008
+      question: >-
+        What is BFL's C2PA implementation scope—does it apply to self-hosted open-weight deployments or only
+        to the hosted API?
+      type: verification
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE009
+      question: >-
+        What commercial licensing tiers (Builder, Platform, Professional, Enterprise) does BFL offer for
+        self-hosted production deployment of FLUX.2 [dev] and [klein] 9B?
+      type: enumeration
+      targets:
+        - contentRequirements/1
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE010
+      question: >-
+        What is the FLUX.2 [pro] ELO win rate against open-weight alternatives across text-to-image,
+        single-reference, and multi-reference editing categories?
+      type: quantification
+      targets:
+        - contentRequirements/4
+        - plannedFigures/product-maturity-capability-map
+      status: answered
+
+    - id: QE011
+      question: >-
+        What third-party marketplace endpoints distribute FLUX.2 models and what are the per-image pricing
+        levels on those platforms in 2026?
+      type: freshness
+      targets:
+        - contentRequirements/3
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE012
+      question: >-
+        Does FLUX.2 support negative prompts, and what is the documented design reasoning for not supporting them?
+      type: adverse
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE013
+      question: >-
+        What are the API pricing tiers for FLUX.2 [max], [pro], [flex], [klein] 4B and 9B in 2026?
+      type: freshness
+      targets:
+        - contentRequirements/1
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE014
+      question: >-
+        What NVIDIA-specific optimizations (FP8, TensorRT, weight streaming) did NVIDIA and BFL jointly develop
+        for FLUX.2 consumer GPU deployment?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE015
+      question: >-
+        What is the complete FLUX.2 release timeline from the initial launch through the June 2026 fast-mode
+        outpainting update?
+      type: enumeration
+      targets:
+        - contentRequirements/3
+        - plannedTables/roadmap-release-development-stage-table
+      status: answered
+
+    - id: QE016
+      question: >-
+        What is the technical architecture and capability scope of FLUX.1 Kontext as described in the arXiv
+        paper (2506.15742)?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedFigures/customer-workflow-operating-flow
+      status: answered
+
+    - id: QE017
+      question: >-
+        What Diffusers pipeline classes support FLUX.2 [dev], FLUX.1 Kontext [dev], and FLUX.2 [klein] 9B,
+        and what are the installation requirements?
+      type: verification
+      targets:
+        - contentRequirements/3
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+
+    - id: QE018
+      question: >-
+        What are the scope and limitation disclosures in the FLUX.2 [klein] 9B model card regarding text rendering
+        accuracy and statistical bias?
+      type: adverse
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE019
+      question: >-
+        Is there a published BFL GPAI compliance statement or technical documentation summary required under the
+        EU AI Act for FLUX.2?
+      type: verification
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: partial
+
+    - id: QE020
+      question: >-
+        What safety filter providers does BFL rely on for CSAM and NCII filtering on the API, and are they
+        removable by developers?
+      type: mechanism
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE021
+      question: >-
+        What BFL open-weight models are genuinely Apache-2.0 commercial-friendly versus which require a paid
+        commercial license for production use?
+      type: verification
+      targets:
+        - contentRequirements/4
+        - plannedTables/product-module-asset-matrix
+      status: answered
+
+    - id: QE022
+      question: >-
+        What are the FLUX.2 [pro] and [flex] API pricing structures (per-megapixel vs. flat per-image), and
+        how do they compare to Gemini 3 Pro Image token-based pricing in 2026?
+      type: comparison
+      targets:
+        - contentRequirements/0
+        - plannedTables/workflow-use-case-table
+      status: answered
+
+    - id: QE023
+      question: >-
+        What product-line roadmap signals does BFL's March 2026 self-supervised flow matching research paper
+        indicate regarding video and audio generation?
+      type: freshness
+      targets:
+        - contentRequirements/3
+        - plannedTables/roadmap-release-development-stage-table
+      status: partial
+
+    - id: QE024
+      question: >-
+        What is the relationship between FLUX.2 [klein] 9B's 8B Qwen3 text embedder and the quality/capability
+        gap versus the Mistral-3 24B VLM used in FLUX.2 [dev]?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedFigures/product-architecture-map
+      status: partial
+
+    - id: QE025
+      question: >-
+        What are the documented limitations and out-of-scope uses listed in the FLUX.2 [klein] 9B model card and
+        official FLUX.1 Kontext model card?
+      type: adverse
+      targets:
+        - contentRequirements/5
+        - plannedTables/trust-quality-compliance-table
+      status: answered
+
+    - id: QE026
+      question: >-
+        How does the finetuning API deprecation in October 2025 affect teams that had built production workflows
+        on BFL's finetuning endpoints?
+      type: adverse
+      targets:
+        - contentRequirements/3
+        - plannedTables/roadmap-release-development-stage-table
+      status: answered
+
+    - id: QE027
+      question: >-
+        What is the FLUX.2 [dev] win rate over FLUX.1 Kontext [pro/max] in the single-reference editing benchmark?
+      type: quantification
+      targets:
+        - contentRequirements/4
+        - plannedFigures/product-maturity-capability-map
+      status: answered
+
+  sources:
+    - id: SE001
+      publisher: Black Forest Labs
+      title: 'FLUX.2: Frontier Visual Intelligence'
+      url: https://bfl.ai/blog/flux-2
+      date: '2025-11-25'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - FLUX.2 architecture
+        - model family
+        - multi-reference
+        - open-core strategy
+        - product launch
+      keyQuote: >-
+        FLUX.2 builds on a latent flow matching architecture, and combines image generation and editing in a single
+        architecture. The model couples the Mistral-3 24B parameter vision-language model with a rectified flow
+        transformer.
+
+    - id: SE002
+      publisher: Black Forest Labs
+      title: Open Weights Licensing
+      url: https://bfl.ai/licensing
+      date: '2026-07-01'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - commercial licensing
+        - Builder Platform Professional Enterprise tiers
+        - self-hosting rights
+        - synthetic data licensing
+
+    - id: SE003
+      publisher: Hugging Face / Black Forest Labs
+      title: black-forest-labs/FLUX.1-Kontext-dev model card
+      url: https://huggingface.co/black-forest-labs/FLUX.1-Kontext-dev
+      date: '2025-06-24'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics:
+        - FLUX.1 Kontext architecture
+        - model card
+        - safety mitigations
+        - C2PA
+        - IWF partnership
+        - Diffusers integration
+      keyQuote: >-
+        Black Forest Labs is committed to the responsible development of generative AI technology. We implemented a
+        series of pre-release mitigations to help prevent misuse by third parties, with additional post-release
+        mitigations to help address residual risks.
+
+    - id: SE004
+      publisher: Hugging Face / Black Forest Labs
+      title: black-forest-labs/FLUX.2-klein-9B model card
+      url: https://huggingface.co/black-forest-labs/FLUX.2-klein-9B
+      date: '2026-01-15'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics:
+        - FLUX.2 klein architecture
+        - VRAM requirements
+        - Qwen3 text embedder
+        - non-commercial license
+        - step distillation
+        - responsible AI
+      keyQuote: >-
+        FLUX.2 [klein] 9B is a 9 billion parameter rectified flow transformer capable of generating images from text
+        descriptions and supports multi-reference editing capabilities. The FLUX.2 [klein] 9B model fits in ~29GB
+        VRAM and is accessible on NVIDIA RTX 4090 and above.
+
+    - id: SE005
+      publisher: Black Forest Labs (GitHub)
+      title: 'flux-mcp: Official FLUX MCP server'
+      url: https://github.com/black-forest-labs/flux-mcp
+      date: '2026-07-01'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: high
+      independence: company
+      topics:
+        - MCP server
+        - OAuth
+        - Claude Cursor Codex Windsurf
+        - mcp.bfl.ai
+        - image generation tools
+      keyQuote: >-
+        Hosted, remote, OAuth-only. Connect to https://mcp.bfl.ai. Sign in with your BFL account, pick the org to
+        bill — done.
+
+    - id: SE006
+      publisher: arXiv / Black Forest Labs
+      title: 'FLUX.1 Kontext: Flow Matching for In-Context Image Generation and Editing in Latent Space'
+      url: https://arxiv.org/abs/2506.15742
+      date: '2025-06-17'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics:
+        - Kontext architecture
+        - flow matching
+        - KontextBench
+        - multi-turn editing
+        - character consistency
+      keyQuote: >-
+        FLUX.1 Kontext handles both local editing and generative in-context tasks within a single unified
+        architecture. We introduce KontextBench, a comprehensive benchmark with 1026 image-prompt pairs covering
+        five task categories.
+
+    - id: SE007
+      publisher: NVIDIA Blog
+      title: FLUX.2 Image Generation Models Now Released, Optimized for NVIDIA RTX GPUs
+      url: https://blogs.nvidia.com/blog/rtx-ai-garage-flux-2-comfyui/
+      date: '2025-11-25'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: high
+      independence: partner
+      topics:
+        - FLUX.2 RTX optimization
+        - FP8 quantization
+        - ComfyUI weight streaming
+        - VRAM reduction
+      keyQuote: >-
+        NVIDIA has worked with Black Forest Labs and ComfyUI to make the models available with FP8 quantizations and
+        RTX GPU performance optimizations at launch, decreasing the VRAM required to run them by 40% and improving
+        performance by 40%.
+
+    - id: SE008
+      publisher: VentureBeat
+      title: 'Black Forest Labs launches Flux.2 AI models, but no open source image gen (yet)'
+      url: https://venturebeat.com/ai/black-forest-labs-launches-flux-2-ai-image-models-to-challenge-nano-banana
+      date: '2025-11-25'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics:
+        - FLUX.2 launch
+        - open-core strategy
+        - VAE Apache-2.0
+        - benchmark ELO scores
+        - pricing vs Gemini 3 Pro
+        - enterprise implications
+      keyQuote: >-
+        FLUX.2 [Dev]: The most notable release for the open ecosystem is the 32-billion-parameter open-weight
+        checkpoint, which integrates text-to-image generation and image editing into a single model.
+
+    - id: SE009
+      publisher: ComfyUI
+      title: ComfyUI Flux.2 Dev Example
+      url: https://docs.comfy.org/tutorials/flux/flux-2-dev
+      date: '2026-07-01'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: independent
+      topics:
+        - ComfyUI FLUX.2 integration
+        - model weights locations
+        - text encoder
+        - multi-image reference workflow
+        - Mistral-3 text encoder
+
+    - id: SE010
+      publisher: Overchat AI
+      title: 'Nano Banana 2 (Pro) vs. Flux 2. Direct Comparison of The Two Best Image Generation Models'
+      url: https://overchat.ai/ai-hub/nano-banana-pro-vs-flux-2
+      date: '2025-11-27'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: adverse
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics:
+        - benchmark comparison
+        - text rendering
+        - world knowledge
+        - prompt following
+        - style transfer
+        - FLUX.2 weaknesses
+      keyQuote: >-
+        Nano Banana Pro absolutely wiped the floor with Flux.2 in this comparison, winning every single test we
+        threw at it. FLUX.2's only clear advantage in that test was generation speed.
+
+    - id: SE011
+      publisher: MarkTechPost
+      title: 'Black Forest Labs Releases FLUX.2: A 32B Flow Matching Transformer for Production Image Pipelines'
+      url: https://www.marktechpost.com/2025/11/25/black-forest-labs-releases-flux-2-a-32b-flow-matching-transformer-for-production-image-pipelines/
+      date: '2025-11-25'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - FLUX.2 architecture overview
+        - VAE latent space
+        - Mistral-3 VLM coupling
+        - VRAM profiles
+        - 4-bit quantization
+
+    - id: SE012
+      publisher: Black Forest Labs (GitHub)
+      title: Official inference repo for FLUX.1 models
+      url: https://github.com/black-forest-labs/flux
+      date: '2026-07-01'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: high
+      independence: company
+      topics:
+        - FLUX.1 inference code
+        - model listing
+        - TensorRT support
+        - commercial usage tracking
+        - FLUX.1 Kontext dev
+
+    - id: SE013
+      publisher: Black Forest Labs
+      title: Research - Black Forest Labs
+      url: https://bfl.ai/research
+      date: '2026-07-01'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - BFL research papers
+        - FLUX.2 VAE analysis
+        - multi-modal synthesis roadmap
+        - self-supervised flow matching
+
+    - id: SE014
+      publisher: Black Forest Labs
+      title: FLUX MCP server documentation
+      url: https://docs.bfl.ai/api_integration/mcp_integration
+      date: '2026-07-01'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - MCP integration
+        - OAuth
+        - tool reference
+        - available models
+        - negative prompts
+
+    - id: SE015
+      publisher: Black Forest Labs
+      title: Release Notes - Black Forest Labs
+      url: https://docs.bfl.ai/release-notes
+      date: '2026-07-01'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - product releases
+        - FLUX.2 klein launch
+        - FLUX Tools launch
+        - speed upgrades
+        - API changes
+        - roadmap
+      keyQuote: >-
+        January 15, 2026 — FLUX.2 [klein] Launch. Sub-second generation — Real-time image generation for interactive
+        applications. Runs on consumer hardware — As little as 13GB VRAM required.
+
+    - id: SE016
+      publisher: Black Forest Labs
+      title: FLUX Tools - Outpainting, Erase & Virtual Try-On
+      url: https://bfl.ai/models/flux-tools
+      date: '2026-07-01'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - FLUX Tools product line
+        - VTO
+        - Erase
+        - Outpainting
+        - task-specific endpoints
+
+    - id: SE017
+      publisher: Hugging Face / HuggingFace Diffusers
+      title: FluxPipeline — Diffusers documentation
+      url: https://huggingface.co/docs/diffusers/main/en/api/pipelines/flux
+      date: '2026-06-25'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics:
+        - FluxPipeline API
+        - FluxKontextPipeline
+        - FLUX.2 Diffusers integration
+        - text encoders
+        - VRAM optimization
+
+    - id: SE018
+      publisher: Black Forest Labs
+      title: FLUX.2 model family
+      url: https://bfl.ai/models/flux-2
+      date: '2026-07-01'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - FLUX.2 product page
+        - model variants
+        - deployment options
+
+    - id: SE019
+      publisher: Black Forest Labs
+      title: FLUX.2 [klein] model page
+      url: https://bfl.ai/models/flux-2-klein
+      date: '2026-07-01'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - FLUX.2 klein product page
+        - Apache-2.0 4B
+        - non-commercial 9B
+
+    - id: SE020
+      publisher: Black Forest Labs / GitHub (flux2 repo)
+      title: Official FLUX.2 inference repo
+      url: https://github.com/black-forest-labs/flux2
+      date: '2026-07-01'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: high
+      independence: company
+      topics:
+        - FLUX.2 inference code
+        - model architecture
+        - community adoption
+
+    - id: SE021
+      publisher: Replicate
+      title: black-forest-labs/flux-dev on Replicate
+      url: https://replicate.com/black-forest-labs/flux-dev
+      date: '2026-07-01'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: independent
+      topics:
+        - FLUX.1 dev marketplace endpoint
+        - Replicate deployment
+
+    - id: SE022
+      publisher: Together AI
+      title: FLUX Quickstart on Together AI
+      url: https://docs.together.ai/docs/quickstart-flux
+      date: '2026-07-01'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: partner
+      topics:
+        - FLUX API on Together AI
+        - marketplace deployment
+
+    - id: SE023
+      publisher: Hugging Face / Black Forest Labs
+      title: black-forest-labs/FLUX.2-dev model card
+      url: https://huggingface.co/black-forest-labs/FLUX.2-dev
+      date: '2025-11-25'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics:
+        - FLUX.2 dev model card
+        - non-commercial license
+        - architecture
+
+    - id: SE024
+      publisher: FAL.ai
+      title: Black Forest Labs on FAL.ai
+      url: https://fal.ai/explore/black-forest-labs
+      date: '2026-07-01'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: independent
+      topics:
+        - FLUX marketplace deployment
+        - FAL.ai inference
+
+    - id: SE025
+      publisher: Content Authenticity Initiative
+      title: Content Credentials — C2PA standard implementation
+      url: https://contentcredentials.org/
+      date: '2026-07-01'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: neutral
+      sourceType: official
+      reputationTier: high
+      independence: independent
+      topics:
+        - C2PA standard
+        - content provenance
+        - cryptographic metadata
+
+    - id: SE026
+      publisher: Black Forest Labs
+      title: Transparency - Black Forest Labs
+      url: https://bfl.ai/transparency
+      date: '2026-07-01'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - transparency policy
+        - responsible AI
+        - safety approach
+
+    - id: SE027
+      publisher: PMLR / Patrick Esser et al.
+      title: >-
+        Scaling Rectified Flow Transformers for High-Resolution Image Synthesis (Stable Diffusion 3 paper)
+      url: https://proceedings.mlr.press/v235/esser24a.html
+      date: '2024-07-21'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: independent
+      topics:
+        - rectified flow transformers
+        - flow matching
+        - SD3 architecture
+        - BFL founder research
+
+    - id: SE028
+      publisher: Black Forest Labs
+      title: FLUX API Pricing
+      url: https://bfl.ai/pricing
+      date: '2026-07-01'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - API pricing
+        - per-megapixel billing
+        - model tier costs
+        - pricing 2026
+
+    - id: SE029
+      publisher: Black Forest Labs
+      title: FLUX.2 [klein] blog post
+      url: https://bfl.ai/blog/flux2-klein-towards-interactive-visual-intelligence
+      date: '2026-01-15'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - FLUX.2 klein launch
+        - interactive visual intelligence
+        - Apache-2.0
+
+    - id: SE030
+      publisher: Hugging Face / Black Forest Labs
+      title: black-forest-labs/FLUX.1-schnell model
+      url: https://huggingface.co/black-forest-labs/FLUX.1-schnell
+      date: '2024-08-01'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics:
+        - FLUX.1 schnell
+        - Apache-2.0 license
+        - fast inference
+        - 4-step distilled
+
+    - id: SE031
+      publisher: Hugging Face / Black Forest Labs
+      title: black-forest-labs/FLUX.1-dev model card
+      url: https://huggingface.co/black-forest-labs/FLUX.1-dev
+      date: '2024-08-01'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics:
+        - FLUX.1 dev
+        - non-commercial license
+        - 12B parameters
+        - open image model
+
+    - id: SE032
+      publisher: Black Forest Labs
+      title: Research - BFL research papers index
+      url: https://bfl.ai/research
+      date: '2026-07-01'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - research roadmap
+        - multi-modal synthesis
+        - FLUX.2 VAE analysis
+        - self-supervised flow matching
+
+    - id: SE035
+      publisher: Black Forest Labs
+      title: FLUX Transparency statement
+      url: https://bfl.ai/transparency
+      date: '2026-07-01'
+      accessDate: '2026-07-01'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - content safety
+        - responsible deployment
+        - C2PA
+
+  claims:
+    - id: CE001
+      statement: >-
+        Black Forest Labs released FLUX.1 in August 2024 with three variants: [schnell] (Apache-2.0, fast 4-step),
+        [dev] (non-commercial, 12B parameters), and [pro] (commercial API).
+      type: observed
+      topic: product-history
+      sourceRefs:
+        - SE012
+        - SE031
+      confidence: high
+      freshness: historical
+      answersQuestionRefs:
+        - QE001
+        - QE015
+
+    - id: CE002
+      statement: >-
+        FLUX.1 [dev] became the most popular open image model globally according to Black Forest Labs, with adoption
+        in downstream products including xAI Grok 2.
+      type: company-claimed
+      topic: open-weight adoption
+      sourceRefs:
+        - SE001
+        - SE008
+      confidence: high
+      freshness: recent
+      answersQuestionRefs:
+        - QE001
+
+    - id: CE003
+      statement: >-
+        FLUX.1 Kontext was launched on May 29, 2025, unifying image generation and editing in a single 12B parameter
+        rectified flow transformer with character and style consistency across iterative edits.
+      type: observed
+      topic: product-history
+      sourceRefs:
+        - SE003
+        - SE006
+        - SE013
+      confidence: high
+      freshness: historical
+      answersQuestionRefs:
+        - QE016
+        - QE015
+
+    - id: CE004
+      statement: >-
+        The FLUX.1 Kontext paper (arXiv 2506.15742) introduced KontextBench, a benchmark with 1,026 image-prompt
+        pairs across five categories: local editing, global editing, character reference, style reference, and text
+        editing.
+      type: observed
+      topic: benchmark methodology
+      sourceRefs:
+        - SE006
+        - SE003
+      confidence: high
+      freshness: historical
+      answersQuestionRefs:
+        - QE016
+
+    - id: CE005
+      statement: >-
+        FLUX.1 Kontext is available in [dev] (non-commercial open weights), [pro] (commercial API), and [max]
+        (highest-quality API with fastest speed) variants, with distinct pricing tiers for each.
+      type: observed
+      topic: product-SKU
+      sourceRefs:
+        - SE003
+        - SE018
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+
+    - id: CE006
+      statement: >-
+        FLUX.2 was launched on November 25, 2025 with variants [pro], [flex], and [dev]; the [klein] family
+        followed on January 15, 2026; [max] launched December 16, 2025.
+      type: observed
+      topic: product-launch
+      sourceRefs:
+        - SE015
+        - SE001
+      confidence: high
+      freshness: historical
+      answersQuestionRefs:
+        - QE015
+
+    - id: CE007
+      statement: >-
+        FLUX.2 [dev] is a 32B parameter open-weight model that combines text-to-image synthesis and image editing with
+        up to 10 reference images in a single checkpoint, derived from the FLUX.2 base model.
+      type: observed
+      topic: architecture
+      sourceRefs:
+        - SE001
+        - SE008
+        - SE023
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE002
+        - QE007
+
+    - id: CE008
+      statement: >-
+        FLUX.2 architecture couples a Mistral-3 24B vision-language model with a rectified flow transformer; the VLM
+        provides semantic grounding and world knowledge while the transformer captures spatial structure and material
+        properties.
+      type: observed
+      topic: architecture
+      sourceRefs:
+        - SE001
+        - SE011
+        - SE009
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE002
+
+    - id: CE009
+      statement: >-
+        FLUX.2 [klein] 4B is released under the Apache-2.0 license, making it fully free for commercial self-hosting
+        without royalties or license negotiation with BFL.
+      type: observed
+      topic: licensing
+      sourceRefs:
+        - SE004
+        - SE015
+        - SE019
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE021
+        - QE009
+
+    - id: CE010
+      statement: >-
+        FLUX.2 [klein] 9B is available under the FLUX Non-Commercial License; commercial self-hosting requires a paid
+        license from BFL; the 9B model uses an 8B Qwen3 text embedder.
+      type: observed
+      topic: licensing
+      sourceRefs:
+        - SE004
+        - SE015
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE009
+        - QE024
+
+    - id: CE011
+      statement: >-
+        FLUX.2 [klein] achieves sub-second image generation at four inference steps and targets 13 GB VRAM minimum
+        for the 4B variant and approximately 29 GB VRAM for the 9B variant at FP16 precision.
+      type: observed
+      topic: VRAM-requirements
+      sourceRefs:
+        - SE004
+        - SE015
+        - SE019
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE003
+        - QE011
+
+    - id: CE012
+      statement: >-
+        Full-precision FLUX.2 [dev] inference requires approximately 90 GB VRAM; low-VRAM mode reduces this to 64 GB;
+        FP8 quantization brings the requirement to approximately 18–24 GB VRAM suitable for consumer RTX GPUs.
+      type: observed
+      topic: VRAM-requirements
+      sourceRefs:
+        - SE007
+        - SE011
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE003
+
+    - id: CE013
+      statement: >-
+        NVIDIA and Black Forest Labs collaboratively developed FP8 quantization for FLUX.2 [dev] that reduces VRAM
+        requirements by 40% and improves inference performance by 40% versus full precision.
+      type: third-party-reported
+      topic: NVIDIA-optimization
+      sourceRefs:
+        - SE007
+        - SE011
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE014
+
+    - id: CE014
+      statement: >-
+        ComfyUI gained day-0 support for FLUX.2 at launch, with official BFL and NVIDIA-provided workflow templates
+        and NVIDIA's updated weight-streaming feature enabling consumer RTX GPU deployment via system RAM offload.
+      type: observed
+      topic: ComfyUI-integration
+      sourceRefs:
+        - SE007
+        - SE009
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE014
+        - QE017
+
+    - id: CE015
+      statement: >-
+        Hugging Face Diffusers supports FLUX.2 models through FluxPipeline, Flux2KleinPipeline, and
+        FluxKontextPipeline classes; FLUX.2 and Kontext support requires installing the git main branch of Diffusers
+        until a stable release.
+      type: observed
+      topic: Diffusers-integration
+      sourceRefs:
+        - SE017
+        - SE003
+        - SE004
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE017
+
+    - id: CE016
+      statement: >-
+        FLUX.2 [pro] API pricing is $0.03 per megapixel of combined input and output; [max] is $0.07/MP; [flex] is
+        $0.05/MP; [klein] 4B is $0.014/MP; [klein] 9B is $0.015/MP via the BFL API.
+      type: observed
+      topic: pricing
+      sourceRefs:
+        - SE028
+        - SE015
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE013
+
+    - id: CE017
+      statement: >-
+        FLUX.2 supports generation and editing up to 4 megapixels resolution in a single model, enabling use cases
+        including product photography, visual design, and brand-aligned asset creation.
+      type: observed
+      topic: output-quality
+      sourceRefs:
+        - SE001
+        - SE007
+        - SE008
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE004
+
+    - id: CE018
+      statement: >-
+        The FLUX MCP server (mcp.bfl.ai) is a hosted, OAuth-only remote server supporting generate_image (up to 8
+        parallel), generate_variations, get_history, get_credits, and vto tools available to Claude, Cursor, Codex,
+        and Windsurf without API key management.
+      type: observed
+      topic: MCP-integration
+      sourceRefs:
+        - SE005
+        - SE014
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE005
+
+    - id: CE019
+      statement: >-
+        The FLUX MCP server is OAuth-only; clients that cannot handle browser-based OAuth flows require the mcp-remote
+        stdio bridge, which caches tokens to ~/.mcp-auth/ and refreshes automatically.
+      type: observed
+      topic: MCP-integration
+      sourceRefs:
+        - SE005
+        - SE014
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE005
+
+    - id: CE020
+      statement: >-
+        FLUX.2 [max] includes a grounding search capability that enables generating images based on real-time
+        web information such as current events, weather, and recent news.
+      type: company-claimed
+      topic: FLUX.2-max-features
+      sourceRefs:
+        - SE015
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE004
+
+    - id: CE021
+      statement: >-
+        FLUX.2 [pro] received a 2× speed upgrade in March 2026 with no quality loss and no price change, delivered
+        via a new flux-2-pro-preview endpoint with rolling update capability.
+      type: observed
+      topic: API-updates
+      sourceRefs:
+        - SE015
+        - SE018
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE015
+
+    - id: CE022
+      statement: >-
+        FLUX.2 [flex] received a 3× speed improvement in January 2026 with unchanged quality, typography rendering,
+        and fine-grained control parameters.
+      type: observed
+      topic: API-updates
+      sourceRefs:
+        - SE015
+        - SE018
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE015
+
+    - id: CE023
+      statement: >-
+        FLUX.2 [dev] is available for hosted inference through FAL.ai, Replicate, Runware, Verda, TogetherAI,
+        Cloudflare, and DeepInfra in addition to the BFL API.
+      type: observed
+      topic: marketplace-deployment
+      sourceRefs:
+        - SE001
+        - SE021
+        - SE022
+        - SE024
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE011
+
+    - id: CE024
+      statement: >-
+        The FLUX Tools product line launched in May–June 2026 with three specialized endpoints: FLUX Erase (May 21),
+        FLUX Outpainting (May 14), and FLUX Virtual Try-On (May 28), each delivered as a single API call.
+      type: observed
+      topic: product-launch
+      sourceRefs:
+        - SE015
+        - SE016
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE004
+        - QE015
+
+    - id: CE025
+      statement: >-
+        The FLUX Outpainting endpoint added a fast mode on June 9, 2026 with a mode parameter (fast vs. high quality)
+        to trade off speed and fidelity for landscape/background/texture use cases.
+      type: observed
+      topic: API-updates
+      sourceRefs:
+        - SE015
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE015
+
+    - id: CE026
+      statement: >-
+        BFL published a research paper on self-supervised flow matching for multi-modal synthesis on March 3, 2026,
+        indicating R&D trajectory toward video and audio generation under the same flow-matching framework.
+      type: observed
+      topic: research-roadmap
+      sourceRefs:
+        - SE013
+        - SE032
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE023
+
+    - id: CE027
+      statement: >-
+        BFL launched Organizations and Projects with role-based access control, project-scoped API keys, spending
+        limits, and audit logging in December 2025 for enterprise multi-team deployments.
+      type: observed
+      topic: enterprise-features
+      sourceRefs:
+        - SE015
+        - SE014
+      confidence: high
+      freshness: historical
+      answersQuestionRefs:
+        - QE015
+
+    - id: CE028
+      statement: >-
+        The BFL finetuning API was deprecated as of October 31, 2025, with no migration path offered; previously
+        supported endpoints including flux-pro-finetuned and flux-pro-1.0-depth-finetuned were discontinued.
+      type: observed
+      topic: API-deprecation
+      sourceRefs:
+        - SE015
+        - SE012
+      confidence: high
+      freshness: historical
+      answersQuestionRefs:
+        - QE026
+
+    - id: CE029
+      statement: >-
+        FLUX.2 does not support negative prompts; both the MCP documentation and the official prompting guide
+        explicitly state that FLUX responds to what you describe, not a list of what to avoid.
+      type: observed
+      topic: model-limitations
+      sourceRefs:
+        - SE005
+        - SE014
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE012
+
+    - id: CE030
+      statement: >-
+        FLUX.2 [dev] achieves a 66.6% win rate in text-to-image generation (vs. 51.3% for Qwen-Image), 59.8% in
+        single-reference editing (vs. 41.2% for FLUX.1 Kontext), and 63.6% in multi-reference editing (vs. 36.4%
+        for Qwen-Image) according to BFL's published benchmark data.
+      type: company-claimed
+      topic: benchmarks
+      sourceRefs:
+        - SE008
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs:
+        - QE010
+        - QE027
+
+    - id: CE031
+      statement: >-
+        BFL's open-core strategy combines Apache-2.0 open weights (FLUX.1 [schnell] and FLUX.2 [klein] 4B) for wide
+        developer adoption with commercial API and licensing tiers for revenue conversion.
+      type: observed
+      topic: open-core-strategy
+      sourceRefs:
+        - SE001
+        - SE002
+        - SE008
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE021
+
+    - id: CE032
+      statement: >-
+        FLUX.1 [schnell] is released under an Apache-2.0 license as a 4-step-distilled model optimized for speed
+        rather than maximum quality; it is the baseline fully free commercial open-weight offering.
+      type: observed
+      topic: licensing
+      sourceRefs:
+        - SE012
+        - SE030
+      confidence: high
+      freshness: historical
+      answersQuestionRefs:
+        - QE021
+
+    - id: CE033
+      statement: >-
+        An independent benchmark by Overchat AI found that Google Nano Banana Pro (Gemini 3 Pro Image) won all five
+        tests against FLUX.2 in text-to-image quality, world knowledge, prompt following, text rendering, and style
+        transfer; FLUX.2's only clear advantage was generation speed.
+      type: third-party-reported
+      topic: competitive-benchmark
+      sourceRefs:
+        - SE010
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE006
+
+    - id: CE034
+      statement: >-
+        In the Overchat AI comparison, FLUX.2 failed to produce a real infographic with accurate facts on the Tokyo
+        Tower test while Nano Banana Pro used Google Search to generate factually accurate content; FLUX.2 had
+        garbled text and nonsensical schematics.
+      type: third-party-reported
+      topic: text-rendering-limitation
+      sourceRefs:
+        - SE010
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE006
+        - QE018
+
+    - id: CE035
+      statement: >-
+        BFL applies C2PA cryptographic metadata to all API-generated images to indicate AI provenance; this
+        implementation follows the C2PA standard for content provenance and authenticity.
+      type: observed
+      topic: content-provenance
+      sourceRefs:
+        - SE003
+        - SE004
+        - SE025
+        - SE026
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE008
+
+    - id: CE036
+      statement: >-
+        Commercial self-hosting of FLUX.2 [dev] and FLUX.1 [dev] requires a paid license from BFL; the licensing
+        page offers Builder, Platform, Professional, and Enterprise tiers with contact-sales pricing for Platform and
+        above.
+      type: observed
+      topic: commercial-licensing
+      sourceRefs:
+        - SE002
+        - SE012
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE009
+        - QE021
+
+    - id: CE037
+      statement: >-
+        FLUX.2 [klein] 9B open weights are available under the FLUX Non-Commercial License; commercial self-hosting
+        of the 9B model requires negotiating a paid license with BFL.
+      type: observed
+      topic: commercial-licensing
+      sourceRefs:
+        - SE004
+        - SE019
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE009
+        - QE021
+
+    - id: CE038
+      statement: >-
+        BFL's safety stack includes pre-training CSAM/NSFW data filtering with Internet Watch Foundation (IWF)
+        partnership, multiple rounds of safety fine-tuning, adversarial third-party red-team evaluation, and
+        Hive plus Microsoft inference-time filters that developers cannot remove or adjust for CSAM/NCII.
+      type: observed
+      topic: safety-controls
+      sourceRefs:
+        - SE003
+        - SE004
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE007
+        - QE020
+
+    - id: CE039
+      statement: >-
+        The FLUX Non-Commercial License requires that self-hosted deployers of [dev] and [klein] 9B models implement
+        content filters or manual review as a condition of use; BFL reserves the right to approach known deployers
+        to verify compliance.
+      type: observed
+      topic: license-compliance
+      sourceRefs:
+        - SE003
+        - SE004
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE020
+        - QE025
+
+    - id: CE040
+      statement: >-
+        BFL has not published a GPAI compliance statement or technical documentation summary under the EU AI Act as
+        of July 2026; FLUX.2 at 32B parameters and wide public distribution likely qualifies as a GPAI model under
+        EU AI Act definitions.
+      type: inferred
+      topic: regulatory-compliance
+      sourceRefs:
+        - SE026
+      confidence: low
+      freshness: current
+      answersQuestionRefs:
+        - QE019
+
+    - id: CE041
+      statement: >-
+        The FLUX.2 [klein] 9B model card explicitly documents limitations including inaccurate text rendering,
+        potential statistical bias from training data, and prompt-adherence failures; out-of-scope uses listed
+        include CSAM creation and non-consensual intimate imagery.
+      type: observed
+      topic: model-limitations
+      sourceRefs:
+        - SE004
+        - SE003
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE018
+        - QE025
+
+  evidenceGaps:
+    - type: missing-source
+      severity: material
+      topic: regulatory-compliance
+      missingEvidence: >-
+        BFL GPAI technical documentation or EU AI Act compliance statement for FLUX.2 as a general-purpose AI model
+        at 32B+ parameter scale with broad public distribution.
+      whyItMatters: >-
+        The EU AI Act imposes documentation, transparency, and copyright-summary obligations on GPAI models above
+        the 10^25 FLOP training threshold; without a published statement, enterprise customers in the EU face
+        compliance uncertainty when deploying BFL API products.
+      diligencePath: >-
+        Request GPAI technical documentation from BFL directly; check the EU AI Office's published GPAI compliance
+        registry when it becomes available; review BFL's legal terms for any EU-market-specific disclosures.
+      relatedQuestionRefs:
+        - QE019
+
+    - type: missing-source
+      severity: minor
+      topic: API-reliability
+      missingEvidence: >-
+        Independent SLA documentation or historical uptime metrics for the BFL API (status.bfl.ai); the status page
+        was not directly fetchable during this research session.
+      whyItMatters: >-
+        Enterprise buyers deploying FLUX.2 [pro] in production workflows need to verify reliability SLAs; without
+        independent uptime history, the reliability guarantee is based solely on BFL self-reporting.
+      diligencePath: >-
+        Access status.bfl.ai directly or use an independent uptime monitoring service (e.g., StatusGator) to
+        collect historical incident data; request SLA commitments from BFL sales.
+      relatedQuestionRefs:
+        - QE011
+
+    - type: missing-source
+      severity: minor
+      topic: research-roadmap
+      missingEvidence: >-
+        Explicit public roadmap for FLUX.2 multi-modal expansion (video and audio) beyond the March 2026 research
+        paper signal; BFL does not publish a public product roadmap.
+      whyItMatters: >-
+        Investors and enterprise buyers cannot assess the pace or confidence of BFL's multi-modal expansion without
+        a public roadmap; the research paper signal alone is insufficient to size the opportunity.
+      diligencePath: >-
+        Monitor BFL research page and arXiv for follow-on papers; request roadmap briefing from BFL directly.
+      relatedQuestionRefs:
+        - QE023
+
+    - type: private-evidence-only
+      severity: minor
+      topic: architecture
+      missingEvidence: >-
+        Technical architecture details for FLUX.2 [klein] 4B beyond scale (4B parameters) and distillation
+        lineage; the text embedder choice for the 4B variant (vs. 8B Qwen3 for the 9B) is not documented.
+      whyItMatters: >-
+        The text embedding choice materially affects prompt-following quality at the 4B scale; developers choosing
+        between 4B and 9B need to understand whether the quality gap is primarily from parameter count or
+        from the different text embedder architecture.
+      diligencePath: >-
+        Review BFL's FLUX.2-klein-4B model card on HuggingFace; request technical details from BFL engineering.
+      relatedQuestionRefs:
+        - QE024
+
+    - type: missing-source
+      severity: minor
+      topic: compute-infrastructure
+      missingEvidence: >-
+        BFL's GPU cloud infrastructure vendor(s) for managed API endpoints; the vendor is not publicly disclosed
+        though CoreWeave is commonly used by comparable AI startups.
+      whyItMatters: >-
+        Cloud concentration risk and contract terms affect API pricing sustainability and availability; enterprise
+        buyers need to understand whether BFL's API cost structure is exposed to GPU cloud pricing changes.
+      diligencePath: >-
+        Request infrastructure vendor disclosure from BFL; review job postings for infrastructure engineering roles
+        that may name cloud vendors; check public compute partnership announcements.
+      relatedQuestionRefs: []
+
+acknowledgedWarnings:
+  - dimension: tableNotes
+    reason: >-
+      Table TE001 includes estimation notes on VRAM and pricing confirmed from official BFL sources; the notes field
+      is populated with data source and caveat information per requirement.

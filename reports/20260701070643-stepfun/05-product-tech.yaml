@@ -1,0 +1,1881 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: stepfun
+runDate: '2026-07-01'
+company:
+  name: StepFun
+chapter:
+  number: 5
+  title: Product and Technology
+  summary: StepFun's product line runs from the flagship Step 3.7 Flash agentic vision-language model down to open-sourced Step-Audio, Step-Video, and Step1X image tooling, all distributed through an API platform, GitHub/Hugging Face open-weight releases, and the Yuewen consumer app. The technology is genuinely differentiated on cost-efficient sparse-MoE and attention-disaggregation architecture, but StepFun's own release material mixes vendor-stated and independently-reproduced benchmark figures, an independent vendor-neutral leaderboard ranks the flagship model far lower than StepFun's narrower agentic-benchmark claims imply, and no independent security certification, uptime SLA, or content-labeling implementation is disclosed for the commercial platform.
+sections:
+- id: product-and-model-lineup
+  title: 'Product line: from Step 3.7 Flash down to open-sourced audio, video, and image tooling'
+  body: 'StepFun''s commercial surface is a single API platform (platform.stepfun.com in China, platform.stepfun.ai globally) that meters a family of models rather than one flagship product. The current flagship, Step 3.7 Flash, is a 198B-parameter sparse Mixture-of-Experts vision-language model (196B language backbone plus a 1.8B vision encoder) that activates roughly 11B parameters per token, supports a 256K context window, and is priced at RMB1.35/RMB0.27 (cache-miss/cache-hit) input and RMB8.1 output per million tokens. Its predecessor, Step 3.5 Flash (196B/11B active, 262K context), remains served and ranked #3 on OpenRouter''s free-model leaderboard shortly after its February 2026 release. Below the Flash tier sits Step-2, StepFun''s original trillion-parameter MoE model launched at WAIC 2024, and the Step-1V/Step-1.5V multimodal line that StepFun has said powers its more-than-40-million embedded smartphone AI features. A separate creative-tooling line covers text-to-image and image editing (step-2x-large, step-image-edit-2, billed per generated image) and an extensive audio family: Step-Audio 2, an open-source end-to-end speech-conversation LLM with retrieval-augmented generation and tool-calling, plus realtime, TTS, voice-cloning, and ASR product tiers each billed on their own metering unit, and installable via pip as well as GitHub. StepFun also open-sourced Step-Video-T2V, a 30B-parameter text-to-video model, and maintains developer-facing tooling beyond the models themselves, including the STEP-GUI GUI-agent framework (repository gelab-zero) and Step-Realtime-CLI/Console voice-agent tooling. On the consumer side, none of these models carry a separate consumer brand; they sit behind the 阶跃AI (跃问 / Yuewen) chat app and embedded device assistants, meaning StepFun''s consumer distribution is entirely a reasoning-backend relationship rather than a stand-alone product.'
+  claimRefs:
+  - CE001
+  - CE002
+  - CE004
+  - CE005
+  - CE006
+  - CE007
+  - CE008
+  - CE009
+  - CE010
+  - CE011
+  - CE012
+  - CE035
+  - CE041
+  tableRefs:
+  - TE001
+  figureRefs: []
+- id: architecture-and-differentiation
+  title: 'Architecture: sparse MoE, attention disaggregation, and the domestic-chip wedge'
+  body: 'Step 3.7 Flash''s cost efficiency rests on fine-grained MoE routing: independent technical analysis of the release describes 42 of 45 language layers as routed MoE layers, each holding 288 experts, with a learned router selecting only the top 8 per token -- roughly 5.6% of weights computing on any given token. A separate, larger model in the family, Step-3 (321B total / 38B active parameters), pushes further on hardware-aware efficiency: its co-design paper introduces Multi-Matrix Factorization Attention (MFA) to shrink KV-cache size and Attention-FFN Disaggregation (AFD) to split attention and FFN compute into specialized subsystems, claiming a decoding throughput of 4,039 tokens/second/GPU on Hopper hardware versus 2,324 for DeepSeek-V3 in the same test setup -- a StepFun-run, StepFun-favorable comparison rather than an independent benchmark. StepFun has also tried to reduce compute-supply risk directly: in July 2025 it co-founded the Model-Chip Ecosystem Innovation Alliance with roughly ten domestic chip and platform vendors (Huawei Ascend, MetaX, Biren, Enflame, Iluvatar CoreX, Moore Threads, Cambricon among them) and adapted Step 3''s MFA architecture to run on domestic accelerators including MetaX GPUs. As of June 2026, however, industry commentary characterized the alliance''s progress as still concentrated in hardware adaptation and basic integration testing rather than large-scale production deployment. On the product-efficiency side, Step 3.7 Flash''s Advisor Mode -- routing most of an agent trajectory through the cheap executor and escalating to a larger model only at planning or failure-recovery inflection points -- is StepFun''s own implementation of an escalation pattern it attributes to Anthropic, and its reported ''emergent'' cross-tool combination behavior (independently calling Python crop/zoom utilities inside visual-search loops) is a vendor observation StepFun itself has not put through independent reproduction.'
+  claimRefs:
+  - CE002
+  - CE013
+  - CE014
+  - CE015
+  - CE044
+  - CE042
+  - CE034
+  tableRefs:
+  - TE003
+  figureRefs:
+  - FE001
+  - FE003
+- id: customer-workflows-and-deployment
+  title: Customer workflows, deployment footprint, and release roadmap
+  body: 'StepFun''s most concrete efficiency pitch is agentic coding economics: Step 3.7 Flash''s Advisor Mode is claimed to run an agent task for about $0.19 versus roughly $1.76 for a larger advisor model, a claim StepFun itself frames as an internal scaffold benchmark rather than an independently audited comparison. Beyond coding, the model line covers enterprise document/screenshot parsing (native multimodal perception), web/visual search-augmented question answering, end-to-end conversational voice agents via Step-Audio 2, and GUI-driven desktop automation via the STEP-GUI framework. Deployment is genuinely flexible on paper: Step 3.7 Flash ships for cloud, data-center, and local use, is integrated with vLLM, SGLang, Hugging Face Transformers, llama.cpp, the NVIDIA NeMo ecosystem, and NVIDIA NIM, and is available at release on StepFun''s own platform, OpenRouter, and NVIDIA NIM (with DeepInfra, Fireworks AI, and Modal announced as forthcoming). Standard API access is rate-limited on a five-tier ladder (V0 through V5) gated by cumulative account recharge rather than a fixed developer plan, separate from a newer subscription ''Step Plan.'' Genuinely local deployment, however, has a real hardware floor: even the smallest published quantization needs at least 128GB of unified memory, which rules out ordinary consumer laptops and confines local runs to workstation-class hardware such as DGX Spark, Mac Studio M4 Max, or AMD Ryzen AI Max+ 395 systems. StepFun''s release cadence across 2025-2026 -- Step-Audio 2 and Step-3''s technical papers in July 2025, open-sourced Step-Audio 2 mini variants and a vLLM backend that August-September, Step 3.5 Flash in February 2026, and Step 3.7 Flash in May 2026 -- shows a major model-family update roughly every one to three months, with Step-Audio 2 also distributed as a standard pip-installable PyPI package alongside its GitHub source.'
+  claimRefs:
+  - CE003
+  - CE016
+  - CE029
+  - CE030
+  - CE033
+  - CE036
+  - CE041
+  tableRefs:
+  - TE002
+  - TE005
+  figureRefs:
+  - FE002
+- id: benchmark-credibility-and-positioning
+  title: Benchmark credibility and competitive positioning
+  body: 'StepFun''s own release material is unusually explicit that some of its headline comparisons are vendor-stated rather than independently reproduced: its Step 3.7 Flash benchmark chart notes that a rival''s Terminal-Bench 2.1 score came from StepFun''s own internal testing while other vendors'' figures are their own reported results on a different benchmark version (Terminal-Bench 2.0), and it leads with the higher, contamination-flagged 76.5% SWE-Bench Verified score even though the more contamination-resistant SWE-Bench Pro figure (56.3%, good for 15th of 35 tracked models) is the cleaner signal per independent analysis. Independent hands-on testing on an NVIDIA DGX Spark did report a genuine positive: a 100% tool-call success rate across a multi-step evaluation suite, consistent with (though not proof of) the model''s first-place 67.1 ClawEval-1.1 score. But a broader, vendor-neutral aggregator (Crafiq) ranks Step 3.7 Flash a comparatively modest #108 overall on intelligence and #89 on coding -- a useful corrective to the narrower agentic-benchmark framing StepFun''s own material emphasizes. StepFun also reports strong search-augmented scores (79.2 SimpleVQA-with-tool, 75.82% BrowseComp, 92.82% DeepSearchQA) and enterprise-occupation coverage (45.8% GDPval across 44 occupations, 98%+ pass rate on Tau2-bench Telecom tiers), and narrowed cross-harness performance variance from 43-73% (Step 3.5 Flash) to 64.5-71.5% on its own Step-SWE-Bench -- all still self-measured. Independent review coverage of Step 3.5 Flash''s February 2026 debut, by contrast, generated real Hacker News and local-inference community buzz, and StepFun''s GitHub organization backs that up with roughly 1,700 followers and 32 public repositories, including a 2,100+-star Step-3.5-Flash repo and a rapidly-growing Step-3.7-Flash repo.'
+  claimRefs:
+  - CE017
+  - CE018
+  - CE019
+  - CE020
+  - CE021
+  - CE022
+  - CE023
+  - CE031
+  - CE032
+  - CE037
+  - CE038
+  - CE039
+  tableRefs: []
+  figureRefs:
+  - FE004
+- id: trust-safety-and-compliance
+  title: Trust, safety, security, and compliance
+  body: StepFun's open-weight releases (Step 3.7 Flash, Step 3.5 Flash, Step-Audio 2, Step-Video-T2V, Step1X-Edit) are consistently distributed under the permissive Apache 2.0 license, which is a genuine trust and transparency positive versus fully closed competitors. Set against that, several trust gaps remain undocumented in the public record reviewed for this chapter. China's national AI-Generated Synthetic Content Labeling Measures, effective from their March 2025 issuance, require visible and technical (watermark/metadata) labeling of AI-generated audio, image, and video content -- an obligation that squarely covers Step-Audio's voice-cloning/TTS outputs and the step-2x-large/step-image-edit-2 image models, yet no StepFun-specific labeling or watermarking implementation is described in the sources reviewed. Separately, Chinese authorities (CNCERT/CC, MIIT, and the National Computer Virus Emergency Response Center) have warned about Trojan-laced counterfeit skill packages on the OpenClaw agent platform -- the same ecosystem StepFun's own release material lists as a supported, highly-ranked integration for both Step 3.5 and Step 3.7 Flash -- without any disclosed StepFun-specific skill-verification or sandboxing control. No independent SOC 2, ISO 27001, or comparable security certification is disclosed for the platform.stepfun.com API service, and the only available reliability signal is a low-reputation, crowd-sourced uptime monitor (operating normally as of July 1, 2026, 26 problem reports in 30 days) rather than a StepFun-published SLA or incident postmortem. Finally, Step-Audio 2's claimed state-of-the-art benchmark performance versus other open-source and commercial audio models is a comparison authored entirely by the StepFun team, not an independent evaluator.
+  claimRefs:
+  - CE024
+  - CE025
+  - CE026
+  - CE027
+  - CE028
+  - CE040
+  tableRefs:
+  - TE004
+  figureRefs: []
+tables:
+- id: TE001
+  title: Product module / asset matrix
+  columns:
+  - Module / Product
+  - User / Buyer
+  - Status / Maturity
+  - Differentiation
+  - Diligence Gap
+  rows:
+  - - Step 3.7 Flash (198B/11B active MoE VLM)
+    - Agent/coding developers
+    - GA (May 29, 2026)
+    - Native vision + agentic tool orchestration at Flash-tier cost
+    - Headline benchmarks are largely vendor-stated pending independent audit
+  - - Step 3.5 Flash (196B/11B active MoE)
+    - Developers, OpenRouter users
+    - GA, still served (Feb 2026)
+    - '#3 OpenRouter free-model rank at release'
+    - Retirement/support timeline vs Step 3.7 Flash undisclosed
+  - - Step-2 (1T-param MoE LLM)
+    - Enterprise/consumer chat backend
+    - GA since Jul 2024, no confirmed successor announcement
+    - First Chinese trillion-parameter MoE LLM
+    - Unclear whether still in active production use behind current products
+  - - Step-1V / Step-1.5V (multimodal)
+    - Consumer app (Yuewen), OEM devices
+    - GA
+    - Powers 40M+ embedded smartphone AI features
+    - Current model version behind Yuewen today not disclosed
+  - - step-2x-large / step-image-edit-2 (image gen/edit)
+    - Developers, consumer creative use
+    - GA; free tier ended Jun 12, 2026
+    - Per-image metered generation and editing
+    - No independent image-quality benchmark located
+  - - Step-Audio 2 / Step-Audio R1.5 family (speech LLM)
+    - Developers building voice agents
+    - GA, open-sourced
+    - End-to-end ASR + speech conversation + RAG + tool-calling
+    - Voice-cloning misuse safeguards not independently documented
+  - - Step-Video-T2V / TI2V (text/image-to-video)
+    - Developers, content creators
+    - Open-sourced Feb 2025, no confirmed 2026 update
+    - 30B-param Video-VAE + DiT text-to-video
+    - Unclear if kept pace with 2026 competitor video models (out of this chapter's scope)
+  - - STEP-GUI (gelab-zero)
+    - Agent-framework developers
+    - Open source, active repo
+    - GUI-agent research framework, 2.2k GitHub stars
+    - Production readiness vs. research demo unclear
+  - - Step-Realtime-CLI / Console
+    - Developers building voice UIs
+    - Open source, active commits (Jun 2026)
+    - Reference tooling for realtime voice API
+    - Adoption metrics not disclosed
+  notes: Status/maturity and star counts reflect the access date (2026-07-01); parameter counts for image/video models are as disclosed in official technical reports.
+  claimRefs:
+  - CE001
+  - CE002
+  - CE004
+  - CE005
+  - CE006
+  - CE007
+  - CE008
+  - CE009
+  - CE010
+  - CE011
+  - CE012
+- id: TE002
+  title: Workflow / use-case table
+  columns:
+  - User Job
+  - Current Workflow
+  - StepFun Solution
+  - Measurable Benefit
+  - Limitation
+  rows:
+  - - Ship code changes/tests autonomously
+    - Human developer or expensive frontier-model agent loop
+    - Step 3.7 Flash + Advisor Mode escalation
+    - ~$0.19/task vs ~$1.76 for a larger advisor model (vendor claim, ~9.3x)
+    - Cost multiple is StepFun's own scaffold estimate, not independently audited
+  - - Parse dense financial reports, UI screenshots, documents
+    - Manual extraction or GPT-4o-class vision APIs
+    - Step 3.7 Flash native multimodal parsing
+    - Single-pass ingestion of mixed visual/text input
+    - SimpleVQA/V* scores are vendor-stated pending independent replication
+  - - Answer questions needing fresh, multi-source evidence
+    - Cascaded search + summarization pipelines
+    - Web & visual search enhancement in Step 3.7 Flash
+    - 79.2 SimpleVQA (Search), 75.82% BrowseComp (vendor)
+    - Comparison models drawn from different eval harnesses, not strictly apples-to-apples
+  - - Natural two-way voice conversation with tool use
+    - Cascaded ASR + LLM + TTS pipelines
+    - Step-Audio 2 end-to-end audio LLM with RAG + tool-calling
+    - Vendor-claimed SOTA on several open ASR/paralinguistic benchmarks
+    - Comparison authored entirely by StepFun, not an independent evaluator
+  - - General assistant / search inside China
+    - Doubao, ERNIE, DeepSeek consumer apps
+    - 跃问 (Yuewen) app + embedded smartphone assistant
+    - 40M+ embedded devices (per Company Overview)
+    - Yuewen itself is absent from China's top-50 apps by MAU (per Competitors chapter)
+  - - Run an agent privately on owned hardware
+    - Cloud-only frontier APIs
+    - Open-weight GGUF quantizations for llama.cpp/vLLM/SGLang
+    - 100% tool-call success in one independent DGX Spark test
+    - Requires >=128GB unified memory; local throughput ~27 tok/s vs ~400 tok/s cloud
+  - - Operate desktop software via screen understanding
+    - Manual UI scripting or RPA tools
+    - STEP-GUI (gelab-zero) framework
+    - Open-sourced, 2.2k GitHub stars
+    - Framed as a research-grade GUI agent solution; production reliability unproven independently
+  notes: Benefit figures are vendor-stated unless marked independent; limitations flag where independent corroboration is missing or partial.
+  claimRefs:
+  - CE003
+  - CE009
+  - CE016
+  - CE022
+  - CE035
+  - CE036
+  - CE037
+- id: TE003
+  title: Technology / operating architecture table
+  columns:
+  - Layer / Component
+  - Role
+  - Dependency
+  - Risk
+  rows:
+  - - 'Vision-language backbone (Step 3.7 Flash: 196B LM + 1.8B ViT)'
+    - Native multimodal perception and reasoning
+    - Proprietary training data and compute
+    - Benchmark figures are largely vendor-stated
+  - - Sparse MoE routing (top-8-of-288 experts, ~11B active of 198B)
+    - Cost-efficient inference at large nominal scale
+    - Stable expert-routing training
+    - Emergent tool-combination behavior is a vendor observation, not independently reproduced
+  - - MFA + AFD architecture (separate Step-3, 321B/38B active)
+    - Reduces KV-cache size and decoding cost
+    - Hopper-class GPU deployment for stated throughput
+    - Head-to-head comparison run and framed by StepFun itself in favorable scenarios
+  - - Domestic chip co-design (Model-Chip Ecosystem Innovation Alliance)
+    - Reduce reliance on export-controlled Nvidia GPUs
+    - ~10 domestic chip vendors' hardware maturity
+    - 'June 2026 commentary: still hardware-adaptation stage, not full-scale deployment'
+  - - Agent-harness compatibility layer (Claude Code, KiloCode, Hermes Agent, OpenClaw, MCP)
+    - Lowers integration cost across third-party agent frameworks
+    - External harness ecosystems StepFun does not control
+    - OpenClaw platform separately flagged for Trojan-laced counterfeit skill packages
+  - - Open-weight distribution (GitHub, Hugging Face, ModelScope; ~32 public repos)
+    - Developer trust/adoption channel under Apache 2.0
+    - Community maintenance via opensource@stepfun.com
+    - Rapid churn -- some releases (e.g. Audio R1.5) already supersede prior versions within months
+  - - API metering and platform infrastructure (platform.stepfun.com/.ai, V0-V5 tiers)
+    - Commercial delivery and fairness-based rate limiting
+    - Cumulative account recharge gates throughput (TPM/RPM)
+    - No disclosed uptime SLA; only a low-reputation third-party monitor tracks status
+  notes: Risk column reflects gaps and caveats identified from independent sources or StepFun's own disclosure, not a formal risk rating.
+  claimRefs:
+  - CE002
+  - CE013
+  - CE014
+  - CE015
+  - CE044
+  - CE017
+  - CE025
+  - CE026
+  - CE030
+- id: TE004
+  title: Trust / quality / compliance table
+  columns:
+  - Control / Certification / Metric
+  - Status
+  - Scope
+  - Gap
+  rows:
+  - - Apache 2.0 open-weight license
+    - Confirmed via GitHub/Hugging Face release pages
+    - Model weights and inference code for Step 3.7/3.5 Flash, Step-Audio 2, Step-Video-T2V, Step1X-Edit
+    - No independent license-compliance audit located
+  - - China AI-Generated Synthetic Content Labeling Measures (eff. 2025)
+    - Binding sector-wide regulatory obligation
+    - Applies to Step-Audio TTS/voice-cloning and Step-1X/step-2x-large image generation outputs
+    - StepFun's own labeling/watermark implementation not independently documented
+  - - OpenClaw agent-platform security warnings (Trojan skill packages)
+    - Active regulatory concern (CNCERT/CC, MIIT, National Computer Virus Emergency Response Center)
+    - Shared ecosystem where Step 3.5/3.7 Flash rank near top of usage
+    - No disclosed StepFun-specific skill-verification or sandboxing control
+  - - SWE-Bench Pro vs. Verified disclosure practice
+    - Both scores published side by side by StepFun and independent trackers
+    - Coding-agent benchmark claims
+    - Several headline figures (Terminal-Bench 2.1, Advisor-Mode cost) remain vendor-stated, not yet on public independent leaderboards
+  - - Platform uptime / incident disclosure
+    - No formal SLA or status page published by StepFun
+    - platform.stepfun.com API delivery
+    - Only independent evidence is a low-reputation crowd monitor; no verified historical uptime % or postmortems
+  - - Independent security certification (SOC 2 / ISO 27001)
+    - Not found in public sources reviewed
+    - Developer account and API usage data handling
+    - No certification, audit report, or trust-center page located
+  notes: Status reflects public disclosure as of the July 1, 2026 access date; absence of a control in public sources does not necessarily mean the control does not exist internally.
+  claimRefs:
+  - CE024
+  - CE025
+  - CE027
+  - CE028
+  - CE026
+  - CE019
+- id: TE005
+  title: Roadmap / release / development-stage table
+  columns:
+  - Date / Stage
+  - Feature / Milestone
+  - Status
+  - Implication
+  - Source
+  rows:
+  - - Jul 2024 (WAIC 2024)
+    - Step-2 official launch (trillion-param MoE), Step-1.5V, Step-1X
+    - GA
+    - Establishes first Chinese trillion-param MoE plus multimodal and image-gen lines
+    - Entireweb company summary
+  - - Feb 2025
+    - Step-Video-T2V (30B) + Step-Video-TI2V open-sourced
+    - Open-source GA
+    - Establishes multimodal open-source release cadence
+    - arXiv 2502.10248; GitHub Step-Video-T2V
+  - - Jul 2025
+    - Step-Audio 2 technical report; Step-3 (321B/38B) co-design paper; Model-Chip Ecosystem Innovation Alliance founded
+    - Technical publication / alliance formation
+    - Establishes hardware-aware efficient-decoding architecture and domestic-chip ambitions
+    - arXiv 2507.16632; arXiv 2507.19427; Baidu Baike
+  - - Aug-Sep 2025
+    - Step-Audio 2 mini / mini Base / mini Think open-sourced; vLLM backend released
+    - GA
+    - Broadens audio open-source family and inference-engine support
+    - GitHub Step-Audio2
+  - - Feb 2, 2026
+    - Step 3.5 Flash release (196B/11B active, 262K context)
+    - GA
+    - 'Becomes #3 OpenRouter free-model by usage shortly after release'
+    - Hugging Face Step-3.5-Flash; ComputerTech review
+  - - May 29, 2026
+    - Step 3.7 Flash release (198B, native vision, 256K context, Apache 2.0)
+    - GA
+    - Positions as production-grade agentic-vision successor to Step 3.5 Flash
+    - StepFun official blog; Hugging Face Step-3.7-Flash
+  - - Jun 12, 2026
+    - step-2x-large image model ends limited-time free tier (moves to RMB0.1/image)
+    - Pricing change
+    - Signals shift from user-acquisition freebies toward metered monetization
+    - StepFun platform pricing docs
+  - - Ongoing (per Jun 2026 commentary)
+    - Model-Chip Ecosystem Innovation Alliance domestic-chip adaptation
+    - Hardware-adaptation / testing stage
+    - Signals compute-diversification mitigant not yet at production scale
+    - Baidu Baike
+  notes: Dates are the earliest confirmed public disclosure found for each milestone; sources are abbreviated publisher names matching the sources[] list above.
+  claimRefs:
+  - CE006
+  - CE007
+  - CE011
+  - CE009
+  - CE014
+  - CE015
+  - CE044
+  - CE005
+  - CE023
+  - CE001
+  - CE008
+  - CE033
+figures:
+- id: FE001
+  title: StepFun Product Architecture Stack
+  type: stack
+  layout: wide
+  summary: Layered stack from consumer/developer surfaces down through the model family to serving infrastructure and the API platform.
+  data:
+    layers:
+    - label: Application / Consumer Surface
+      modules:
+      - label: 跃问 (Yuewen) chat app
+        notes: Consumer assistant at chat.stepfun.com
+      - label: Embedded smartphone / automotive assistant
+        notes: 40M+ devices, Geely cockpit integration
+      - label: Studio (model playground)
+        notes: No-code model/API exploration
+      - label: Agent harnesses (Claude Code, KiloCode, OpenClaw, Hermes Agent)
+        notes: Third-party integration surfaces
+    - label: Model Family
+      modules:
+      - label: Step 3.7 Flash / Step 3.5 Flash
+        notes: Flagship agentic vision-language MoE models
+      - label: Step-2 / Step-1V / Step-1.5V
+        notes: Trillion-param and multimodal legacy tier
+      - label: Step-Audio 2 / R1.5 / TTS / ASR family
+        notes: End-to-end speech and voice models
+      - label: Step-Video-T2V / TI2V, step-2x-large, step-image-edit-2
+        notes: Video and image generation/editing
+    - label: Serving Infrastructure
+      modules:
+      - label: vLLM / SGLang / llama.cpp / HF Transformers
+        notes: Open-source inference engines
+      - label: NVIDIA Hopper / DGX / NIM microservice
+        notes: Cloud and on-prem GPU serving
+      - label: Domestic chip alliance (Huawei Ascend, MetaX, etc.)
+        notes: Early-stage adaptation, not full-scale yet
+      - label: GGUF quantizations (IQ4_XS, Q4_K_S, Q3_K_L)
+        notes: Local workstation deployment, 128GB+ memory floor
+    - label: API / Commercial Platform
+      modules:
+      - label: platform.stepfun.com / platform.stepfun.ai
+        notes: China and global API endpoints
+      - label: OpenRouter / NVIDIA NIM / DeepInfra (forthcoming)
+        notes: Third-party marketplace distribution
+      - label: Rate-limit tiers V0-V5
+        notes: Gated by cumulative account recharge
+      - label: Step Plan (monthly credit subscription)
+        notes: Separate from pay-as-you-go metering
+  claimRefs:
+  - CE001
+  - CE002
+  - CE016
+  - CE029
+  - CE030
+- id: FE002
+  title: Agentic Task Workflow with Step 3.7 Flash
+  type: flow
+  layout: wide
+  summary: How an agentic task flows through reasoning-tier selection, multimodal perception, tool orchestration, and optional advisor escalation.
+  data:
+    nodes:
+    - id: n1
+      label: User task / prompt submitted via agent harness
+    - id: n2
+      label: Reasoning-tier selection (low / medium / high)
+    - id: n3
+      label: Multimodal perception (screenshot, document, UI parsing)
+    - id: n4
+      label: Tool orchestration (browser, terminal, Office, search)
+    - id: n5
+      label: Advisor Mode escalation (optional, larger model)
+    - id: n6
+      label: Result delivered back to harness (Claude Code, OpenClaw, KiloCode, Hermes Agent)
+    edges:
+    - from: n1
+      to: n2
+      label: Select cost/latency vs. depth tradeoff
+    - from: n2
+      to: n3
+      label: Parse visual/text context if present
+    - from: n3
+      to: n4
+      label: Determine required tool calls
+    - from: n4
+      to: n5
+      label: Escalate only at planning/failure inflection points
+    - from: n5
+      to: n4
+      label: Advisor guidance returned to executor
+    - from: n4
+      to: n6
+      label: Deliver completed trajectory / output
+  claimRefs:
+  - CE003
+  - CE042
+  - CE018
+- id: FE003
+  title: StepFun Critical Dependency Map
+  type: dag
+  layout: standard
+  summary: Dependencies underpinning StepFun's model training, serving, distribution, and regulatory exposure.
+  data:
+    nodes:
+    - id: d1
+      label: StepFun model training and serving
+    - id: d2
+      label: NVIDIA Hopper GPU supply (export-control exposed)
+    - id: d3
+      label: Domestic chip alliance hardware maturity (Huawei Ascend, MetaX, Biren, etc.)
+    - id: d4
+      label: Open-source distribution channels (GitHub, Hugging Face, ModelScope)
+    - id: d5
+      label: Third-party agent-harness ecosystems (OpenClaw, Claude Code, MCP)
+    - id: d6
+      label: China CAC/MIIT AI content-labeling and agent-security regulation
+    - id: d7
+      label: Geely automotive OEM relationship
+    edges:
+    - from: d2
+      to: d1
+      label: Primary training/inference compute
+    - from: d3
+      to: d1
+      label: Diversification path, still early-stage
+    - from: d1
+      to: d4
+      label: Open-weight releases distributed
+    - from: d1
+      to: d5
+      label: Model integrated into external harnesses StepFun does not control
+    - from: d6
+      to: d1
+      label: Labeling and agent-security compliance obligations
+    - from: d6
+      to: d5
+      label: OpenClaw-specific security warnings
+    - from: d7
+      to: d1
+      label: Embedded automotive distribution dependency
+  claimRefs:
+  - CE015
+  - CE024
+  - CE025
+  - CE027
+- id: FE004
+  title: Product Maturity / Capability Map
+  type: matrix
+  layout: wide
+  summary: Maturity and independent-verification coverage across StepFun's major model lines.
+  data:
+    columns:
+    - Production Maturity
+    - Open-Weight Available
+    - Independent Benchmark Coverage
+    - Trust/Security Disclosure
+    - Agent-Harness Compatibility
+    rows:
+    - label: Step 3.7 Flash
+      values:
+      - label: GA
+        tone: positive
+      - label: Yes (Apache 2.0)
+        tone: positive
+      - label: Partial (DGX Spark, Crafiq)
+        tone: neutral
+      - label: No cert disclosed
+        tone: negative
+      - label: Broad (Claude Code, OpenClaw, etc.)
+        tone: positive
+    - label: Step-2 (legacy trillion-param)
+      values:
+      - label: GA, unclear successor
+        tone: neutral
+      - label: 'No'
+        tone: negative
+      - label: Limited (2024-era)
+        tone: negative
+      - label: No cert disclosed
+        tone: negative
+      - label: Not agent-oriented
+        tone: negative
+    - label: Step-Audio 2
+      values:
+      - label: GA, open-sourced
+        tone: positive
+      - label: Yes (Apache 2.0)
+        tone: positive
+      - label: Self-reported only
+        tone: negative
+      - label: No cert disclosed
+        tone: negative
+      - label: Tool-calling / RAG native
+        tone: positive
+    - label: Step-Video-T2V
+      values:
+      - label: Open-sourced Feb 2025, no 2026 update confirmed
+        tone: neutral
+      - label: Yes (Apache 2.0)
+        tone: positive
+      - label: Self-reported eval only
+        tone: negative
+      - label: No cert disclosed
+        tone: negative
+      - label: Not agent-oriented
+        tone: negative
+    - label: step-2x-large / step-image-edit-2
+      values:
+      - label: GA, now paid
+        tone: neutral
+      - label: Unclear
+        tone: neutral
+      - label: No independent benchmark found
+        tone: negative
+      - label: No cert disclosed
+        tone: negative
+      - label: Not agent-oriented
+        tone: negative
+    - label: STEP-GUI (gelab-zero)
+      values:
+      - label: Research-grade, open source
+        tone: neutral
+      - label: 'Yes'
+        tone: positive
+      - label: No independent benchmark found
+        tone: negative
+      - label: No cert disclosed
+        tone: negative
+      - label: GUI-agent specific
+        tone: positive
+  claimRefs:
+  - CE021
+  - CE027
+  - CE028
+  - CE032
+  - CE040
+callouts:
+- calloutType: strength
+  title: Genuine cost-efficiency architecture, not just marketing framing
+  body: Independent technical analysis corroborates the core efficiency mechanism -- fine-grained MoE routing activating ~11B of 198B parameters, plus a separately published MFA/AFD co-design for the larger Step-3 model -- as a real architectural differentiator, not just a benchmark artifact, even though the exact cost multiples StepFun advertises remain unaudited.
+  claimRefs:
+  - CE002
+  - CE013
+  - CE014
+- calloutType: risk
+  title: Benchmark framing conflates vendor-stated and independent results
+  body: 'StepFun''s own release material mixes internally-reproduced comparison figures with officially reported third-party scores in the same chart, leads with a contamination-flagged SWE-Bench Verified score over the cleaner SWE-Bench Pro figure, and a vendor-neutral aggregator ranks the model far lower (#108 intelligence, #89 coding) than the "first place" framing StepFun applies to narrower agentic benchmarks.'
+  claimRefs:
+  - CE017
+  - CE019
+  - CE021
+- calloutType: risk
+  title: Trust and security disclosure lags the product surface area
+  body: StepFun operates in a regulatory environment with binding AI-content-labeling and agent-security-warning obligations, and its flagship model is deeply integrated with the same OpenClaw ecosystem flagged for Trojan-laced skill packages -- yet no StepFun-specific labeling implementation, security certification, or platform SLA is disclosed in public sources.
+  claimRefs:
+  - CE024
+  - CE025
+  - CE028
+- calloutType: assumption
+  title: Domestic-chip diversification is a stated ambition, not yet a proven hedge
+  body: The Model-Chip Ecosystem Innovation Alliance gives StepFun a credible-sounding path to reduce Nvidia dependence, and Step 3's architecture has genuinely been adapted for domestic accelerators, but independent commentary as of June 2026 still describes the alliance's progress as early-stage hardware adaptation rather than production-scale deployment.
+  claimRefs:
+  - CE015
+  - CE044
+localEvidence:
+  searchQueries:
+  - query: StepFun platform.stepfun.com docs model list Step-3.7 Flash Step-2 Step-1V Step-Audio Step-Video 2026
+    engine: web
+    hits: 10
+    retainedSourceRefs:
+    - SE001
+    - SE003
+    - SE004
+  - query: StepFun Step-Audio Step-Video technical report arxiv paper open source GitHub
+    engine: web
+    hits: 9
+    retainedSourceRefs:
+    - SE006
+    - SE007
+    - SE010
+    - SE011
+  - query: reddit LocalLLaMA OR Hacker News "Step 3.5 Flash" OR "Step-3.7" StepFun discussion 2026
+    engine: web
+    hits: 8
+    retainedSourceRefs:
+    - SE021
+  - query: StepFun Step-2 trillion parameter MoE architecture technical report 2024 2025
+    engine: web
+    hits: 8
+    retainedSourceRefs:
+    - SE017
+  - query: StepFun API status reliability outage OR downtime developer complaints 2026
+    engine: web
+    hits: 7
+    retainedSourceRefs:
+    - SE017
+  - query: StepFun Step-Video-T2V technical report arxiv text-to-video 30B parameters
+    engine: web
+    hits: 6
+    retainedSourceRefs:
+    - SE011
+    - SE007
+  - query: '"Step-Audio" voice cloning safety safeguard misuse OR watermark AI content labeling China 2026'
+    engine: web
+    hits: 9
+    retainedSourceRefs:
+    - SE019
+  - query: 模型能力总览 OR model capability overview step-2 step-1v step-audio site:platform.stepfun.com
+    engine: web
+    hits: 4
+    retainedSourceRefs:
+    - SE002
+  researchQuestions:
+  - id: QE001
+    question: What does StepFun's own platform messaging say Step 3.7 Flash is designed to do for production agent workflows?
+    type: verification
+    targets:
+    - contentRequirements/0
+    status: answered
+  - id: QE002
+    question: What are Step 3.7 Flash's disclosed parameter count, active-parameter count, and context window size?
+    type: quantification
+    targets:
+    - contentRequirements/0
+    - plannedTables/product-module-asset-matrix
+    status: answered
+  - id: QE003
+    question: What cloud and local inference throughput figures are reported for Step 3.7 Flash, and how do vendor and independent figures compare?
+    type: comparison
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QE004
+    question: What are StepFun's current per-million-token API prices for step-3.7-flash and step-3.5-flash?
+    type: quantification
+    targets:
+    - contentRequirements/0
+    status: answered
+  - id: QE005
+    question: What is the full lineup of models StepFun currently sells or distributes across text, vision, audio, and image generation?
+    type: enumeration
+    targets:
+    - contentRequirements/1
+    - plannedTables/product-module-asset-matrix
+    status: answered
+  - id: QE006
+    question: When was Step-2 launched and what architecture does it use?
+    type: verification
+    targets:
+    - contentRequirements/1
+    status: answered
+  - id: QE007
+    question: What multimodal models power StepFun's more-than-40-million embedded smartphone AI features?
+    type: verification
+    targets:
+    - contentRequirements/1
+    status: answered
+  - id: QE008
+    question: What per-image and per-character prices does StepFun charge for its image-generation and speech models?
+    type: quantification
+    targets:
+    - contentRequirements/1
+    - plannedTables/product-module-asset-matrix
+    status: answered
+  - id: QE009
+    question: What architecture underlies Step-Audio 2's end-to-end speech conversation capability?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QE010
+    question: What architecture underlies Step-Video-T2V's text-to-video generation?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QE011
+    question: What agent-framework tooling does StepFun maintain beyond its foundation models?
+    type: enumeration
+    targets:
+    - contentRequirements/1
+    status: answered
+  - id: QE012
+    question: How does Step 3.7 Flash's sparse Mixture-of-Experts routing reduce active compute per token?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    - plannedFigures/product-architecture-map
+    status: answered
+  - id: QE013
+    question: What architectural innovations does the separate 321B-parameter Step-3 model use to cut decoding cost?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QE014
+    question: Has StepFun adapted its model architecture to run on domestic (non-Nvidia) Chinese AI chips?
+    type: verification
+    targets:
+    - contentRequirements/2
+    - contentRequirements/4
+    status: answered
+  - id: QE015
+    question: How mature is the Model-Chip Ecosystem Innovation Alliance's domestic-chip deployment as of mid-2026?
+    type: adverse
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QE016
+    question: What deployment paths and inference-engine integrations does StepFun support for Step 3.7 Flash?
+    type: enumeration
+    targets:
+    - contentRequirements/3
+    - plannedFigures/product-architecture-map
+    status: answered
+  - id: QE017
+    question: Does StepFun distinguish vendor-stated benchmark figures from independently reproduced results in its own disclosure?
+    type: adverse
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QE018
+    question: How does Step 3.7 Flash's harness-to-harness performance variance compare with its predecessor?
+    type: comparison
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QE019
+    question: Is Step 3.7 Flash's headline SWE-Bench figure drawn from a benchmark independent analysts consider contamination-resistant?
+    type: adverse
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QE020
+    question: Did an independent reviewer test Step 3.7 Flash's tool-calling reliability outside StepFun's own benchmarks?
+    type: verification
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QE021
+    question: Where does Step 3.7 Flash rank on a broad, vendor-neutral model leaderboard rather than StepFun's own selected benchmarks?
+    type: comparison
+    targets:
+    - contentRequirements/4
+    - plannedFigures/product-maturity-capability-map
+    status: answered
+  - id: QE022
+    question: Is StepFun's claimed cost advantage for Advisor Mode independently audited?
+    type: adverse
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QE023
+    question: How did the developer community receive Step 3.5 Flash immediately after its February 2026 release?
+    type: freshness
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QE024
+    question: What Chinese regulatory labeling obligations apply to StepFun's AI-generated audio and image outputs?
+    type: verification
+    targets:
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+    status: answered
+  - id: QE025
+    question: Have Chinese authorities flagged security risks on the same agent platforms where StepFun's models rank highly?
+    type: adverse
+    targets:
+    - contentRequirements/5
+    status: answered
+  - id: QE026
+    question: Is there independent evidence of StepFun's platform uptime or reliability?
+    type: verification
+    targets:
+    - contentRequirements/5
+    status: answered
+  - id: QE027
+    question: Under what license are StepFun's open-weight models distributed?
+    type: verification
+    targets:
+    - contentRequirements/5
+    - contentRequirements/4
+    status: answered
+  - id: QE028
+    question: Does StepFun disclose independent security certifications (SOC 2, ISO 27001) for its API platform?
+    type: adverse
+    targets:
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+    status: unresolved
+  - id: QE029
+    question: What deployment/availability channels carry Step 3.7 Flash at release?
+    type: enumeration
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QE030
+    question: What are StepFun's API rate-limit tiers and how are they gated?
+    type: quantification
+    targets:
+    - contentRequirements/3
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+  - id: QE031
+    question: How large and active is StepFun's open-source developer community on GitHub?
+    type: quantification
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QE032
+    question: How do StepFun's most-starred open-source repos compare with each other in traction?
+    type: comparison
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QE033
+    question: What is StepFun's model release cadence across 2025-2026?
+    type: freshness
+    targets:
+    - contentRequirements/3
+    - plannedTables/roadmap-release-development-stage-table
+    status: answered
+  - id: QE034
+    question: What 'emergent' behavior does StepFun claim for Step 3.7 Flash, and has it been independently verified?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    status: partial
+  - id: QE035
+    question: Through which consumer-facing surfaces does StepFun distribute its foundation models to end users?
+    type: verification
+    targets:
+    - contentRequirements/0
+    status: answered
+  - id: QE036
+    question: What is the minimum hardware needed to run Step 3.7 Flash locally?
+    type: quantification
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QE037
+    question: What search-augmented and enterprise-occupation benchmark scores does StepFun disclose for Step 3.7 Flash?
+    type: quantification
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QE038
+    question: Is Step-Audio 2's benchmark superiority claim independently evaluated or self-reported?
+    type: adverse
+    targets:
+    - contentRequirements/5
+    status: answered
+  - id: QE039
+    question: Is there a standard package-manager distribution path for Step-Audio 2 beyond GitHub?
+    type: verification
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QE040
+    question: How does Step 3.7 Flash's Advisor Mode reduce cost while preserving quality on agentic tasks?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QE041
+    question: Does the Model-Chip Ecosystem Innovation Alliance publish an independently audited efficiency comparison for Step 3 on domestic chips versus Nvidia hardware?
+    type: adverse
+    targets:
+    - contentRequirements/2
+    - contentRequirements/4
+    status: partial
+  sources:
+  - id: SE001
+    publisher: StepFun (Official Platform)
+    title: StepFun Open Platform homepage
+    url: https://platform.stepfun.com/
+    date: '2026-07-01'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - official-platform
+    - step-3.7-flash
+    - agent-ecosystem
+    - '2026'
+    keyQuote: 'Step 3.7 Flash: 面向生产级 Agent 的高效率 Flash 模型 (production-oriented, high-efficiency Flash model for agents).'
+  - id: SE002
+    publisher: StepFun (Official Platform Docs)
+    title: 定价与限速 (Pricing and rate limits) — StepFun Open Platform documentation
+    url: https://platform.stepfun.com/docs/zh/guides/pricing/details
+    date: '2026-06-12'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - pricing
+    - rate-limits
+    - model-list
+    - '2026'
+    keyQuote: 'step-3.7-flash: 1.35元 input(cache-miss)/0.27元(cache-hit)/8.1元 output per 1M tokens; step-2x-large 已于2026年06月12日结束限时免费.'
+  - id: SE003
+    publisher: Hugging Face / StepFun
+    title: stepfun-ai/Step-3.7-Flash model card
+    url: https://huggingface.co/stepfun-ai/Step-3.7-Flash
+    date: '2026-05-29'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - model-card
+    - architecture
+    - moe
+    - vision-language
+    - '2026'
+    keyQuote: Step 3.7 Flash is a 198B-parameter sparse MoE vision-language model...activates approximately 11B parameters per token and delivers a throughput of up to 400 tokens per second.
+  - id: SE004
+    publisher: StepFun (Official Blog)
+    title: Step 3.7 Flash — A high-efficiency Flash model for Real-World
+    url: https://static.stepfun.com/blog/step-3.7-flash/
+    date: '2026-05-29'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - product-launch
+    - benchmarks
+    - deployment
+    - '2026'
+    keyQuote: Step 3.7 Flash is available on the StepFun Open Platform...OpenRouter, and NVIDIA NIM...supports flexible deployment across cloud, data center, and local environments.
+  - id: SE005
+    publisher: GitHub / StepFun
+    title: stepfun-ai GitHub organization
+    url: https://github.com/stepfun-ai
+    date: '2026-06-21'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: developer-signal
+    reputationTier: high
+    independence: company
+    topics:
+    - open-source
+    - github
+    - developer-community
+    - '2026'
+    keyQuote: 1.7k followers; Showing 10 of 32 repositories; Step-3.5-Flash 2.1k stars/85 forks; Step-3.7-Flash 257 stars/22 forks.
+  - id: SE006
+    publisher: GitHub / StepFun
+    title: stepfun-ai/Step-Audio2 repository
+    url: https://github.com/stepfun-ai/Step-Audio2
+    date: '2026-06-01'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: developer-signal
+    reputationTier: high
+    independence: company
+    topics:
+    - step-audio
+    - open-source
+    - speech-llm
+    - '2026'
+    keyQuote: Step-Audio 2 is an end-to-end multi-modal large language model designed for industry-strength audio understanding and speech conversation.
+  - id: SE007
+    publisher: GitHub / StepFun
+    title: stepfun-ai/Step-Video-T2V repository
+    url: https://github.com/stepfun-ai/Step-Video-T2V
+    date: '2025-03-17'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: developer-signal
+    reputationTier: high
+    independence: company
+    topics:
+    - step-video
+    - open-source
+    - text-to-video
+    - '2025'
+    keyQuote: We release the inference code and model weights of Step-Video-T2V...Step-Video-TI2V, an image-to-video model based on Step-Video-T2V.
+  - id: SE008
+    publisher: GitHub / StepFun
+    title: stepfun-ai/Step1X-Edit repository
+    url: https://github.com/stepfun-ai/Step1X-Edit
+    date: '2026-04-29'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: developer-signal
+    reputationTier: high
+    independence: company
+    topics:
+    - step1x
+    - image-editing
+    - open-source
+    - '2026'
+    keyQuote: A SOTA open-source image editing model, which aims to provide comparable performance against the closed-source models like GPT-4o and Gemini 2 Flash. 2,232 stars / 101 forks.
+  - id: SE009
+    publisher: GitHub / StepFun
+    title: stepfun-ai/gelab-zero (STEP-GUI) repository
+    url: https://github.com/stepfun-ai/gelab-zero
+    date: '2026-05-11'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: developer-signal
+    reputationTier: high
+    independence: company
+    topics:
+    - step-gui
+    - agent-framework
+    - open-source
+    - '2026'
+    keyQuote: 'STEP-GUI: The top GUI agent solution in the galaxy. Developed by the StepFun-GELab team...2,209 stars / 196 forks.'
+  - id: SE010
+    publisher: arXiv / StepFun
+    title: Step-Audio 2 Technical Report (arXiv:2507.16632)
+    url: https://arxiv.org/abs/2507.16632
+    date: '2025-07-23'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - step-audio
+    - technical-report
+    - rag
+    - tool-calling
+    - '2025'
+    keyQuote: Step-Audio 2...integrates a latent audio encoder and reasoning-centric reinforcement learning (RL)...achieves state-of-the-art performance on various audio understanding and conversational benchmarks compared to other open-source and commercial solutions.
+  - id: SE011
+    publisher: arXiv / StepFun
+    title: Step-Video-T2V Technical Report (arXiv:2502.10248)
+    url: https://arxiv.org/abs/2502.10248
+    date: '2025-02-14'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - step-video
+    - technical-report
+    - video-generation
+    - '2025'
+    keyQuote: Step-Video-T2V, a state-of-the-art text-to-video pre-trained model with 30B parameters...Video-VAE...16x16 spatial and 8x temporal compression...Video-DPO...to reduce artifacts.
+  - id: SE012
+    publisher: arXiv / StepFun
+    title: 'Step-3 is Large yet Affordable: Model-system Co-design for Cost-effective Decoding (arXiv:2507.19427)'
+    url: https://arxiv.org/abs/2507.19427
+    date: '2025-07-25'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - step-3
+    - architecture
+    - mfa
+    - afd
+    - '2025'
+    keyQuote: Step-3, a 321B-parameter VLM...Multi-Matrix Factorization Attention (MFA)...Attention-FFN Disaggregation (AFD)...decoding throughput of up to 4,039 tokens per second per GPU...higher than DeepSeek-V3's 2,324 in the same setup.
+  - id: SE013
+    publisher: Digital Applied
+    title: 'StepFun Step 3.7 Flash: 196B MoE Agentic Vision Model'
+    url: https://www.digitalapplied.com/blog/stepfun-step-3-7-flash-196b-moe-agentic-vision-release
+    date: '2026-05-30'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: adverse
+    sourceType: analyst-market-data
+    reputationTier: medium
+    independence: independent
+    topics:
+    - independent-analysis
+    - benchmark-skepticism
+    - moe-architecture
+    - '2026'
+    keyQuote: Most performance figures here are vendor-stated at release; we label them as such...the exact 9.3x multiple is not something we would underwrite without running the comparison on your own tasks.
+  - id: SE014
+    publisher: Crafiq
+    title: 'Step 3.7 Flash by StepFun: LLM Benchmarks, Rankings and Specs'
+    url: https://crafiq.ai/models/language/stepfun-step-3-7-flash
+    date: '2026-06-01'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: adverse
+    sourceType: review
+    reputationTier: medium
+    independence: independent
+    topics:
+    - leaderboard-ranking
+    - benchmark-aggregator
+    - '2026'
+    keyQuote: 'Intelligence #108...Coding #89...Context 262K...Parameters 198B (11B active).'
+  - id: SE015
+    publisher: OpenRouter
+    title: Step 3.7 Flash - API Pricing and Benchmarks | OpenRouter
+    url: https://openrouter.ai/stepfun/step-3.7-flash
+    date: '2026-06-01'
+    accessDate: '2026-07-01'
+    accessStatus: js-only
+    stance: neutral
+    sourceType: analyst-market-data
+    reputationTier: medium
+    independence: independent
+    topics:
+    - marketplace-listing
+    - '2026'
+    keyQuote: null
+  - id: SE016
+    publisher: Flowtivity
+    title: 'Step 3.7 Flash Review: We Tested StepFun''s 198B Model on a DGX Spark'
+    url: https://flowtivity.ai/blog/step-3-7-flash-review-dgx-spark/
+    date: '2026-05-30'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: review
+    reputationTier: medium
+    independence: independent
+    topics:
+    - independent-review
+    - local-deployment
+    - tool-calling
+    - '2026'
+    keyQuote: We deployed the IQ4_XS quantization (105GB)...Our observed generation speed was approximately 27 tokens per second...requires at minimum 128GB of unified memory...Consumer laptops with 16-32GB of RAM cannot run this model locally.
+  - id: SE017
+    publisher: Entireweb Status
+    title: Is StepFun Down Right Now? Live Status, Outages and Service Issues
+    url: https://www.entireweb.com/status/stepfun
+    date: '2026-07-01'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: analyst-market-data
+    reputationTier: low
+    independence: independent
+    topics:
+    - uptime-monitor
+    - reliability
+    - '2026'
+    keyQuote: 'StepFun is operating normally right now (1 July 2026)...In the past 24 hours, StepFun has received 0 user reports...Last 30 Days: 26 [problem reports].'
+  - id: SE018
+    publisher: State Council Information Office (chinavoices)
+    title: China accelerates AI agent governance amid emerging security risks
+    url: http://english.scio.gov.cn/chinavoices/2026-05/15/content_118495318.html
+    date: '2026-05-15'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: adverse
+    sourceType: regulatory
+    reputationTier: high
+    independence: independent
+    topics:
+    - china
+    - ai-agent-security
+    - openclaw
+    - regulatory
+    - '2026'
+    keyQuote: Chinese authorities have issued high-level warnings about vulnerabilities and counterfeit skill packages embedded with Trojan viruses on the OpenClaw agent platform.
+  - id: SE019
+    publisher: Cyberspace Administration of China (CAC)
+    title: 关于印发《人工智能生成合成内容标识办法》的通知 (Notice on AI-Generated Synthetic Content Labeling Measures)
+    url: https://www.cac.gov.cn/2025-03/14/c_1743654684782215.htm
+    date: '2025-03-14'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: regulatory
+    reputationTier: high
+    independence: independent
+    topics:
+    - china
+    - ai-content-labeling
+    - regulatory
+    - watermarking
+    keyQuote: 国家互联网信息办公室、工业和信息化部、公安部、国家广播电视总局制定了《人工智能生成合成内容标识办法》.
+  - id: SE020
+    publisher: PyPI
+    title: step-audio2 package page
+    url: https://pypi.org/project/step-audio2/
+    date: '2025-09-03'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: developer-signal
+    reputationTier: high
+    independence: company
+    topics:
+    - package-registry
+    - pip-install
+    - step-audio
+    - '2025'
+    keyQuote: Step-Audio 2...We release our vLLM backend and corresponding examples.
+  - id: SE021
+    publisher: ComputerTech
+    title: 'Step 3.5 Flash Review 2026: Better Than GPT-5? (We Tested It)'
+    url: https://computertech.co/step-3-5-flash-review-2026-the-open-source-model-thats-embarrassing-gpt-5/
+    date: '2026-02-10'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: review
+    reputationTier: medium
+    independence: independent
+    topics:
+    - step-3.5-flash
+    - community-reception
+    - independent-review
+    - '2026'
+    keyQuote: The Hacker News crowd is buzzing about it. Developers are running it locally on Mac Studios...trades blows with GPT-5.2 and Claude Opus 4.5.
+  - id: SE022
+    publisher: Hugging Face / StepFun
+    title: stepfun-ai/Step-3.5-Flash model card
+    url: https://huggingface.co/stepfun-ai/Step-3.5-Flash
+    date: '2026-02-02'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - model-card
+    - step-3.5-flash
+    - '2026'
+    keyQuote: 'Step 3.5 Flash: 196B MoE, 11B active parameters, 262K context window.'
+  - id: SE023
+    publisher: GitHub / StepFun
+    title: stepfun-ai/Step3 repository
+    url: https://github.com/stepfun-ai/Step3
+    date: '2025-07-25'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: developer-signal
+    reputationTier: high
+    independence: company
+    topics:
+    - step-3
+    - architecture
+    - open-source
+    - '2025'
+    keyQuote: Step3 is our cutting-edge multimodal reasoning model...321B total parameters and 38B active...Multi-Matrix Factorization Attention (MFA) and Attention-FFN Disaggregation (AFD).
+  - id: SE024
+    publisher: Baidu Baike
+    title: 模芯生态创新联盟 (Model-Chip Ecosystem Innovation Alliance)
+    url: https://baike.baidu.com/item/%E6%A8%A1%E8%8A%AF%E7%94%9F%E6%80%81%E5%88%9B%E6%96%B0%E8%81%94%E7%9B%9F/66250519
+    date: '2026-06-01'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: other
+    reputationTier: medium
+    independence: independent
+    topics:
+    - chip-alliance
+    - compute
+    - domestic-chips
+    - '2026'
+    keyQuote: 2026年6月，有行业评论指出，模芯生态创新联盟成立近一年来，其合作仍主要集中于硬件适配与基础调试，在推动规模化部署和吸引广大开发者迁移方面成果有限。
+  - id: SE025
+    publisher: StepFun (Official Consumer App)
+    title: 阶跃AI (跃问) chat.stepfun.com
+    url: https://chat.stepfun.com/
+    date: '2026-07-01'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - yuewen
+    - consumer-app
+    - '2026'
+    keyQuote: null
+  - id: SE026
+    publisher: GitHub / StepFun
+    title: stepfun-ai/Step-Realtime-Console repository
+    url: https://github.com/stepfun-ai/Step-Realtime-Console
+    date: '2026-06-09'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: developer-signal
+    reputationTier: high
+    independence: company
+    topics:
+    - realtime-voice
+    - developer-tooling
+    - open-source
+    - '2026'
+    keyQuote: 基于阶跃星辰实时语音 API 的前端演示项目...实时语音输入和输出，实现流畅的人机对话体验.
+  claims:
+  - id: CE001
+    statement: StepFun's official platform homepage and product blog headline Step 3.7 Flash as a production-oriented, high-efficiency agentic Flash model with native multimodal understanding, web/visual search enhancement, reliable tool orchestration, and agent-ecosystem compatibility with frameworks such as Claude Code, KiloCode, Hermes Agent, and OpenClaw.
+    type: company-claimed
+    topic: product-positioning
+    sourceRefs:
+    - SE001
+    - SE004
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+  - id: CE002
+    statement: Step 3.7 Flash is a 198B-parameter sparse Mixture-of-Experts vision-language model combining a 196B-parameter language backbone with a 1.8B-parameter vision encoder, activating roughly 11B parameters per token via top-8-of-288 expert routing, with a 256,000-token context window and three selectable reasoning tiers (low, medium, high).
+    type: company-claimed
+    topic: architecture-spec
+    sourceRefs:
+    - SE003
+    - SE013
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE002
+  - id: CE003
+    statement: Step 3.7 Flash delivers up to 400 tokens/second cloud throughput per StepFun, and independent measurement by Artificial Analysis recorded 415.9 tokens/second output throughput, while an independent DGX Spark deployment of the IQ4_XS local quantization measured only about 27 tokens/second.
+    type: third-party-reported
+    topic: inference-throughput
+    sourceRefs:
+    - SE013
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE003
+  - id: CE004
+    statement: StepFun's official pricing documentation lists step-3.7-flash at RMB1.35 (cache-miss) / RMB0.27 (cache-hit) input and RMB8.1 output per million tokens, and step-3.5-flash at RMB0.70 / RMB0.14 input and RMB2.1 output per million tokens.
+    type: observed
+    topic: api-pricing
+    sourceRefs:
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE004
+  - id: CE005
+    statement: 'Step 3.5 Flash is a 196B-parameter MoE model with roughly 11B active parameters and a 262,000-token context window, released February 2, 2026, and ranked #3 on OpenRouter''s free-model leaderboard at 1.38 trillion weekly tokens shortly after release.'
+    type: third-party-reported
+    topic: product-module
+    sourceRefs:
+    - SE022
+    - SE021
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE005
+  - id: CE006
+    statement: Step-2 is StepFun's trillion-parameter Mixture-of-Experts LLM, officially launched at WAIC 2024 in July 2024 with a 16,000-token context window, and remains listed among the reasoning-model tiers in StepFun's current pricing documentation.
+    type: third-party-reported
+    topic: product-module
+    sourceRefs:
+    - SE017
+    - SE002
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QE006
+  - id: CE007
+    statement: Step-1V and Step-1.5V are StepFun's multimodal large models, with Step-1.5V launched alongside Step-2's official release at WAIC 2024, underpinning the more-than-40-million embedded smartphone AI features StepFun has publicly cited.
+    type: third-party-reported
+    topic: product-module
+    sourceRefs:
+    - SE017
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QE007
+  - id: CE008
+    statement: StepFun's text-to-image and image-editing lineup (step-2x-large and step-image-edit-2) is billed per generated image at RMB0.1 and RMB0.02 respectively, with step-2x-large's limited-time free tier ending June 12, 2026.
+    type: observed
+    topic: product-module
+    sourceRefs:
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE008
+  - id: CE009
+    statement: Step-Audio 2 is an end-to-end, open-source multimodal large language model for audio understanding and speech conversation that integrates a latent audio encoder, reasoning-centric reinforcement learning, and retrieval-augmented generation with external tool-calling (e.g., web search, audio search for timbre switching).
+    type: company-claimed
+    topic: architecture-mechanism
+    sourceRefs:
+    - SE010
+    - SE006
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE009
+  - id: CE010
+    statement: The Step-Audio product family on StepFun's platform spans realtime conversational (stepaudio-2.5-realtime, stepaudio-2.5-chat), text-to-speech (stepaudio-2.5-tts, step-tts-2, step-tts-mini), voice-cloning, and automatic speech recognition (stepaudio-2.5-asr, step-asr, and streaming variants) tiers, each billed on distinct per-character, per-clone, or per-hour metering.
+    type: observed
+    topic: product-module
+    sourceRefs:
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE008
+  - id: CE011
+    statement: Step-Video-T2V is a 30-billion-parameter text-to-video foundation model using a deep-compression Video-VAE (16x16 spatial / 8x temporal compression) and a Diffusion Transformer with 3D full attention trained via Flow Matching, open-sourced in February 2025 alongside an image-to-video variant, Step-Video-TI2V.
+    type: company-claimed
+    topic: architecture-mechanism
+    sourceRefs:
+    - SE011
+    - SE007
+    confidence: high
+    freshness: historical
+    answersQuestionRefs:
+    - QE010
+  - id: CE012
+    statement: StepFun's GitHub organization also maintains STEP-GUI (repository gelab-zero), described as a GUI-agent solution built by the StepFun-GELab team, and Step-Realtime-CLI/Console tooling for real-time voice and agent development, both with active 2026 commit history.
+    type: observed
+    topic: developer-tooling
+    sourceRefs:
+    - SE009
+    - SE005
+    - SE026
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE011
+  - id: CE013
+    statement: Step 3.7 Flash's sparse MoE design routes each token through 8 of 288 experts per layer across 42 routed MoE layers of 45 total language layers, so roughly 5.6% of weights compute on any given token, per independent technical analysis of the release.
+    type: third-party-reported
+    topic: architecture-mechanism
+    sourceRefs:
+    - SE013
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE012
+  - id: CE014
+    statement: Step-3, a separate 321-billion-parameter (38-billion-active) multimodal reasoning model, introduces Multi-Matrix Factorization Attention (MFA) and Attention-FFN Disaggregation (AFD), reducing KV-cache size and decoupling attention/FFN compute into specialized subsystems, achieving a claimed 4,039 tokens/second/GPU decoding throughput on Hopper GPUs versus 2,324 for DeepSeek-V3 in the same head-to-head test setup.
+    type: company-claimed
+    topic: architecture-mechanism
+    sourceRefs:
+    - SE012
+    - SE023
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QE013
+  - id: CE015
+    statement: StepFun co-founded the Model-Chip Ecosystem Innovation Alliance in July 2025 with roughly ten domestic chip and platform vendors (including Huawei Ascend, MetaX, Biren, Enflame, Iluvatar CoreX, Moore Threads, and Cambricon), adapting Step 3's Multi-Matrix Factorization Attention architecture to domestic accelerators including MetaX GPUs to reduce reliance on foreign chips.
+    type: third-party-reported
+    topic: domestic-chip-adaptation
+    sourceRefs:
+    - SE024
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE014
+  - id: CE016
+    statement: Step 3.7 Flash supports flexible cloud, data-center, and local deployment, running on NVIDIA DGX Station, AMD Ryzen AI Max+ 395 systems, and Mac Studio/MacBook Pro devices with at least 128GB unified memory, and integrates with vLLM, SGLang, Hugging Face Transformers, llama.cpp, the NVIDIA NeMo ecosystem (AutoModel, Megatron Core, Megatron Bridge), and NVIDIA NIM.
+    type: company-claimed
+    topic: deployment
+    sourceRefs:
+    - SE004
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE016
+  - id: CE017
+    statement: StepFun's own Step 3.7 Flash benchmark disclosure mixes internally-reproduced ('vendor-stated') and officially-reported third-party figures within the same comparison chart, e.g. DeepSeek V4 Flash's Terminal-Bench 2.1 score comes from StepFun's own internal testing while Kimi K2.6, GPT 5.5, and Claude Opus 4.7 figures are those vendors' own reported Terminal-Bench 2.0 results, a different benchmark version.
+    type: observed
+    topic: benchmark-disclosure
+    sourceRefs:
+    - SE004
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE017
+  - id: CE018
+    statement: Step 3.7 Flash narrowed cross-harness performance variance from a 43-73% spread on Step 3.5 Flash to 64.5-71.5% on StepFun's in-house Step-SWE-Bench across coding harnesses including Hermes Agent, OpenClaw, Claude Code, KiloCode, OpenCode, and RooCode.
+    type: company-claimed
+    topic: benchmark-consistency
+    sourceRefs:
+    - SE013
+    - SE004
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE018
+  - id: CE019
+    statement: On SWE-Bench Pro (a 1,865-task, four-language, contamination-mitigated benchmark), Step 3.7 Flash's vendor-stated 56.3% placed 15th of 35 tracked models and 2nd among non-Anthropic models at release, while its higher 76.5% SWE-Bench Verified score sits on a 500-task, Python-only benchmark that frontier labs including OpenAI have flagged for training-data contamination.
+    type: third-party-reported
+    topic: benchmark-comparison
+    sourceRefs:
+    - SE013
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE019
+  - id: CE020
+    statement: Independent hands-on testing on an NVIDIA DGX Spark reported a 100% tool-call success rate for Step 3.7 Flash across a multi-step tool-calling evaluation suite, which the reviewer frames as consistent with -- but not a substitute for -- the model's first-place 67.1 ClawEval-1.1 score.
+    type: third-party-reported
+    topic: independent-testing
+    sourceRefs:
+    - SE016
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE020
+  - id: CE021
+    statement: 'Independent benchmark aggregator Crafiq ranks Step 3.7 Flash #108 overall on intelligence and #89 on coding among tracked models, a materially more modest position than the ''first place'' / top-tier framing StepFun''s own release material emphasizes for narrower agentic benchmarks like ClawEval-1.1.'
+    type: third-party-reported
+    topic: benchmark-comparison
+    sourceRefs:
+    - SE014
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE021
+  - id: CE022
+    statement: StepFun's Advisor-Mode cost claim -- roughly $0.19 per agentic task for Step 3.7 Flash versus about $1.76 for a larger advisor model, a roughly 9.3x difference -- is StepFun's own internal scaffold-based estimate rather than an independently audited comparison, per independent analyst review.
+    type: third-party-reported
+    topic: cost-claim-audit
+    sourceRefs:
+    - SE013
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE022
+  - id: CE023
+    statement: Independent review coverage described Step 3.5 Flash as trading blows with GPT-5.2-class and Claude Opus 4.5-class closed models on selected benchmarks while running at a fraction of the compute, generating substantial Hacker News and local-inference community attention around Mac Studio deployment shortly after its February 2026 release.
+    type: third-party-reported
+    topic: community-reception
+    sourceRefs:
+    - SE021
+    confidence: low
+    freshness: current
+    answersQuestionRefs:
+    - QE023
+  - id: CE024
+    statement: China's national AI-Generated Synthetic Content Labeling Measures (issued March 14, 2025 by the Cyberspace Administration of China, MIIT, Ministry of Public Security, and National Radio and Television Administration) require visible and technical (watermark/metadata) labeling of AI-generated text, image, audio, and video content on Chinese platforms -- an obligation that applies to StepFun's Step-Audio voice/TTS outputs and Step-1X/step-2x-large image generation, but StepFun's own product-level labeling or watermarking implementation is not independently documented in the public sources reviewed for this chapter.
+    type: observed
+    topic: content-labeling-compliance
+    sourceRefs:
+    - SE019
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE024
+  - id: CE025
+    statement: Chinese authorities (CNCERT/CC, MIIT, and the National Computer Virus Emergency Response Center) issued high-level 2026 warnings about vulnerabilities and Trojan-laced counterfeit skill packages on the OpenClaw agent platform -- the same agent ecosystem in which StepFun's own release material lists both Step 3.5 Flash and Step 3.7 Flash as compatible and highly-ranked -- and no StepFun-specific skill-verification or sandboxing control is disclosed in the public sources reviewed.
+    type: observed
+    topic: agent-platform-security
+    sourceRefs:
+    - SE018
+    - SE004
+    confidence: high
+    freshness: recent
+    answersQuestionRefs:
+    - QE025
+  - id: CE026
+    statement: A third-party crowd-sourced uptime monitor recorded StepFun operating normally as of July 1, 2026, with only 26 user-submitted problem reports over the trailing 30 days and no listed historical outage events, though this reflects automated/crowd monitoring rather than a StepFun-published SLA or incident postmortem.
+    type: third-party-reported
+    topic: platform-reliability
+    sourceRefs:
+    - SE017
+    confidence: low
+    freshness: current
+    answersQuestionRefs:
+    - QE026
+  - id: CE027
+    statement: Step 3.7 Flash, Step 3.5 Flash, Step-Audio 2, Step-Video-T2V, and Step1X-Edit are all distributed under the Apache 2.0 license on GitHub and Hugging Face, permitting unrestricted commercial and enterprise use of the open-weight releases.
+    type: observed
+    topic: licensing
+    sourceRefs:
+    - SE003
+    - SE006
+    - SE007
+    - SE008
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE027
+  - id: CE028
+    statement: Public sources reviewed for this chapter do not disclose a StepFun-specific SOC 2, ISO 27001, or other independent security/data-protection certification for the platform.stepfun.com API service, even though the platform's tiered rate-limiting (V0-V5) is gated on cumulative account recharge rather than any disclosed compliance tier.
+    type: open-question
+    topic: security-certification-gap
+    sourceRefs: []
+    confidence: medium
+    freshness: current
+  - id: CE029
+    statement: Step 3.7 Flash is available at release on StepFun's own Open Platform (platform.stepfun.ai globally, platform.stepfun.com in China), OpenRouter, and NVIDIA NIM, with DeepInfra, Fireworks AI, and Modal availability announced as forthcoming.
+    type: company-claimed
+    topic: deployment-availability
+    sourceRefs:
+    - SE004
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE029
+  - id: CE030
+    statement: StepFun's standard pay-as-you-go rate-limiting tiers scale from V0 (RMB0 cumulative recharge; 5 concurrent requests, 10 RPM, 5,000,000 TPM) up to V5 (RMB200,000+ cumulative recharge; 100,000,000 TPM), explicitly separate from the subscription-based 'Step Plan' monthly-credit tier.
+    type: observed
+    topic: rate-limiting
+    sourceRefs:
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE030
+  - id: CE031
+    statement: StepFun's GitHub organization (contact opensource@stepfun.com) maintains at least 32 public repositories and had approximately 1,700 followers as of the access date, with flagship pinned repositories Step-3.5-Flash (2,100+ stars, 85 forks) and Step-3.7-Flash (257 stars, 22 forks shortly after its May 2026 release).
+    type: observed
+    topic: developer-community
+    sourceRefs:
+    - SE005
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE031
+  - id: CE032
+    statement: Step1X-Edit, StepFun's open-source image-editing model targeting parity with GPT-4o- and Gemini 2 Flash-class closed editors, has accumulated 2,232 GitHub stars and 101 forks, while the STEP-GUI GUI-agent repository (gelab-zero) has 2,209 stars and 196 forks.
+    type: observed
+    topic: developer-community
+    sourceRefs:
+    - SE008
+    - SE009
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE032
+  - id: CE033
+    statement: StepFun's publicly-dated release cadence across 2025-2026 runs from the Step-Audio 2 technical report and Step-3 co-design paper (July 2025), through open-sourced Step-Audio 2 mini variants and a vLLM backend (August-September 2025), Step 3.5 Flash (February 2, 2026), and Step 3.7 Flash (May 29, 2026) -- roughly one major model-family release or update every one to three months.
+    type: observed
+    topic: release-cadence
+    sourceRefs:
+    - SE010
+    - SE012
+    - SE006
+    - SE022
+    - SE004
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE033
+  - id: CE034
+    statement: StepFun's own release material describes an 'emergent ability' in which Step 3.7 Flash combined visual and non-visual tools (independently calling Python crop/zoom/bounding-box utilities) inside multi-step visual-search workflows without being explicitly trained to do so -- a vendor-observed behavior that independent analysis characterizes as a promising but not independently reproduced signal.
+    type: company-claimed
+    topic: emergent-behavior
+    sourceRefs:
+    - SE013
+    confidence: low
+    freshness: current
+  - id: CE035
+    statement: StepFun's consumer-facing distribution runs through the 阶跃AI (跃问 / Yuewen) chat app at chat.stepfun.com and embedded smartphone/automotive assistants, positioning the Step-series foundation models as the reasoning backend behind that consumer surface rather than as a separately branded consumer product.
+    type: observed
+    topic: consumer-distribution
+    sourceRefs:
+    - SE001
+    - SE025
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE035
+  - id: CE036
+    statement: 'Minimum local-hardware requirements for Step 3.7 Flash exclude consumer laptops: even the smallest published quantization (Q3_K_M, 94GB) plus a 4GB vision-projector and OS overhead requires at least 128GB of unified/system memory, restricting genuinely local deployment to workstation-class hardware such as NVIDIA DGX Spark, Mac Studio M4 Max, or AMD Ryzen AI Max+ 395 systems.'
+    type: third-party-reported
+    topic: deployment-hardware-floor
+    sourceRefs:
+    - SE016
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE036
+  - id: CE037
+    statement: On search-augmented benchmarks, StepFun reports Step 3.7 Flash scoring 79.2 on SimpleVQA (with tool/search), 75.82% on BrowseComp, and 92.82% F1 on DeepSearchQA -- the latter StepFun frames as comparable to Kimi K2.6, a considerably larger 1-trillion-parameter/32-billion-active model.
+    type: company-claimed
+    topic: benchmark-scores
+    sourceRefs:
+    - SE004
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE037
+  - id: CE038
+    statement: On enterprise/occupation-coverage testing, StepFun reports Step 3.7 Flash reaching 45.8% on GDPval across 44 occupations and passing at over 98% across reasoning-difficulty tiers on Tau2-bench Telecom.
+    type: company-claimed
+    topic: benchmark-scores
+    sourceRefs:
+    - SE004
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE037
+  - id: CE039
+    statement: On Toolathlon (multi-tool coordination) and ClawEval-1.1 (real-world autonomous task execution), StepFun reports Step 3.7 Flash scoring 49.5% and 67.1% respectively, describing the ClawEval-1.1 score as first place among tracked peers as of the benchmark's May 2026 snapshot.
+    type: company-claimed
+    topic: benchmark-scores
+    sourceRefs:
+    - SE004
+    confidence: medium
+    freshness: current
+  - id: CE040
+    statement: Step-Audio 2's technical report claims state-of-the-art performance versus other open-source and commercial solutions on automatic speech recognition and paralinguistic (emotion/accent/style) understanding benchmarks, a comparison authored entirely by the StepFun team rather than an independent evaluator.
+    type: company-claimed
+    topic: benchmark-independence-gap
+    sourceRefs:
+    - SE010
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QE038
+  - id: CE041
+    statement: PyPI hosts an installable step-audio2 package alongside the GitHub source release, giving Python developers a standard package-manager path (pip install step-audio2) to the model's inference code separate from manually cloning the repository.
+    type: observed
+    topic: developer-tooling
+    sourceRefs:
+    - SE020
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QE039
+  - id: CE042
+    statement: Step 3.7 Flash's Advisor Mode routes the bulk of an agent trajectory through the low-cost Step 3.7 Flash executor and escalates only to a larger advisor model at planning or failure-recovery inflection points, an escalation pattern StepFun's release material attributes to an advisor strategy described by Anthropic.
+    type: company-claimed
+    topic: architecture-mechanism
+    sourceRefs:
+    - SE004
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE040
+  - id: CE043
+    statement: Step-Video-T2V generates videos up to 204 frames using bilingual (English/Chinese) text encoders and a video-based Direct Preference Optimization (Video-DPO) step intended to reduce visual artifacts, evaluated on StepFun's own Step-Video-T2V-Eval benchmark rather than a third-party video-generation leaderboard.
+    type: company-claimed
+    topic: architecture-mechanism
+    sourceRefs:
+    - SE011
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QE010
+  - id: CE044
+    statement: As of June 2026, industry commentary summarized by Baidu Baike characterized the Model-Chip Ecosystem Innovation Alliance's progress as still concentrated in hardware adaptation and basic integration testing rather than large-scale production deployment or a broad developer migration.
+    type: third-party-reported
+    topic: domestic-chip-adaptation
+    sourceRefs:
+    - SE024
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE015
+  - id: CE045
+    statement: Step 3.7 Flash is also listed on OpenRouter's model marketplace, though the page's primary content renders client-side and did not yield extractable pricing/benchmark text during this review, illustrating an access gap in independently verifying third-party marketplace claims.
+    type: observed
+    topic: marketplace-listing
+    sourceRefs:
+    - SE015
+    confidence: low
+    freshness: current
+  evidenceGaps:
+  - type: missing-source
+    severity: material
+    topic: security-certification-gap
+    missingEvidence: A published SOC 2, ISO 27001, or comparable independent audit/certification for platform.stepfun.com.
+    whyItMatters: Enterprise buyers in regulated sectors typically require formal security certification before granting API access to production data; its absence is a commercialization friction point.
+    diligencePath: Request StepFun's latest security/compliance attestation directly from platform@stepfun.com and check for a forthcoming public trust-center page.
+    relatedQuestionRefs:
+    - QE028
+  - type: conflicting-data
+    severity: material
+    topic: emergent-behavior
+    missingEvidence: An independent, third-party reproduction of the claimed emergent visual/non-visual tool-combination behavior in Step 3.7 Flash.
+    whyItMatters: Emergent-capability claims are easy to overstate from a single vendor demo; without independent reproduction, the behavior cannot be relied upon for underwriting agentic-reliability claims.
+    diligencePath: Commission or locate an independent red-team/evaluation report that specifically tests the described tool-combination behavior across varied visual-search tasks.
+    relatedQuestionRefs:
+    - QE034
+  - type: missing-source
+    severity: minor
+    topic: domestic-chip-adaptation
+    missingEvidence: An independently audited throughput/cost comparison of Step 3 running on domestic chips (MetaX, Huawei Ascend, etc.) versus Nvidia Hopper hardware.
+    whyItMatters: StepFun's own claims of 3x DeepSeek-R1 throughput on domestic chips and 70%+ gains on Nvidia Hopper are vendor-stated; the Model-Chip Ecosystem Innovation Alliance itself is reported to still be in early hardware-adaptation stages.
+    diligencePath: Track the Model-Chip Ecosystem Innovation Alliance's public disclosures for a benchmarked, reproducible comparison, or request one directly from StepFun during diligence.
+    relatedQuestionRefs:
+    - QE041
+  - type: access-blocked
+    severity: minor
+    topic: marketplace-listing
+    missingEvidence: OpenRouter's rendered pricing/benchmark content for Step 3.7 Flash, which loads client-side and could not be extracted as static text.
+    whyItMatters: 'OpenRouter is an independent usage/ranking signal already used elsewhere in this report (e.g., Step 3.5 Flash''s #3 free-model rank); losing access to its live Step 3.7 Flash page limits a like-for-like update check.'
+    diligencePath: Re-fetch the OpenRouter page with a JS-rendering-capable tool or consult OpenRouter's public API for the same pricing/usage fields.
+    relatedTableRefs:
+    - TE001
+  - type: private-evidence-only
+    severity: material
+    topic: platform-reliability
+    missingEvidence: A StepFun-published historical uptime percentage, incident postmortem log, or formal API status page.
+    whyItMatters: The only reliability signal found is a low-reputation crowd-sourced monitor, which is not a substitute for a vendor-disclosed SLA when evaluating production dependency risk.
+    diligencePath: Request platform.stepfun.com uptime history and incident-response documentation directly from StepFun as part of technical diligence.
+    relatedQuestionRefs:
+    - QE026
