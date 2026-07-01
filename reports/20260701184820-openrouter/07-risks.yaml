@@ -1,0 +1,2181 @@
+schemaVersion: report-v2
+artifact: risks
+slug: openrouter
+runDate: '2026-07-01'
+company:
+  name: OpenRouter
+chapter:
+  number: 7
+  title: Risks
+  summary: OpenRouter's biggest risk is that it sells reliability, privacy control, and routing abstraction while still concentrating failure and compliance burden in its own control plane. The most material residual exposures are (1) routing-layer outages and billing/logging faults that directly undermine the product promise, (2) privacy and regulatory leakage when customers do not correctly constrain multi-provider routing, and (3) disintermediation and take-rate compression as AWS, Microsoft, and model vendors ship native routing and rate-limit controls.
+sections:
+- id: overall-risk-ranking-and-regulatory-overhang
+  title: Overall Risk Ranking and Regulatory / Legal Overhang
+  body: |-
+    OpenRouter's residual-risk profile is unusual because the company is both a control layer and a new concentration point. The product promise is stronger uptime, lower cost, and better compliance through routing, but the same architecture means OpenRouter becomes the place where model-provider terms, routing policy, privacy settings, logging choices, and customer spend governance all converge. That makes legal and compliance risk more than a pure paperwork issue: if the router defaults, documentation, or policy toggles are misunderstood, the error can propagate across many providers and many customers at once.
+
+    The most immediate regulatory issue is not that OpenRouter is itself obviously a banned AI practice, but that it is increasingly used as plumbing for enterprise and agentic workloads subject to evolving AI-governance obligations. The European Commission's AI Act guidance says GPAI obligations are already effective and that transparency obligations arrive in August 2026, while high-risk use cases require logging, documentation, human oversight, and cybersecurity controls. OpenRouter has responded with public materials on EU in-region routing, zero data retention, human oversight patterns, and data-processing terms, but several of these protections are configuration-dependent or enterprise-gated rather than universal defaults.
+
+    That opt-in structure matters because OpenRouter's own privacy and provider-logging materials say it does not control upstream LLM handling of inputs and outputs, that some providers may train on prompts unless the customer disables them, and that some non-training endpoints may still retain data for abuse or legal reasons. The DPA and privacy policy give a contractual path through SCCs and audit rights, yet those contractual protections do not remove execution risk. Net result: the highest legal/regulatory risk is not a single lawsuit already on file, but the possibility that regulated traffic is routed, retained, logged, or explained in a way enterprise buyers later view as non-compliant or insufficiently documented.
+  claimRefs:
+  - CR001
+  - CR002
+  - CR003
+  - CR004
+  - CR005
+  - CR007
+  - CR008
+  - CR009
+  - CR010
+  - CR011
+  - CR012
+  - CR013
+  - CR014
+  - CR015
+  - CR023
+  - CR024
+  - CR025
+  - CR026
+  - CR027
+  - CR049
+  tableRefs:
+  - TR001
+  figureRefs:
+  - FR001
+- id: operational-and-security-reliability
+  title: Operational, Security, and Reliability Risk
+  body: |-
+    Operationally, OpenRouter's highest-severity risk is self-inflicted control-plane failure. The February 17 and 19, 2026 postmortem showed that a third-party caching dependency failure degraded all API surfaces, first as 500s and then as misleading 401 authentication errors after cache invalidation pushed too many lookups onto the database. The company's own write-up says the second outage made clear that the caching layer, not just a concurrent denial-of-service event, was the root cause. This is a structurally important signal because the entire value proposition is to make AI access more reliable than any single direct-provider integration.
+
+    The narrower status incidents reinforce that the problem is not limited to one root cause. OpenRouter disclosed a Clerk authentication incident that affected logins and account access, an Amazon Bedrock outage that propagated into the platform, a separate 401-errors incident across chat and generation APIs, and a nearly five-hour logging incident that delayed budgets and billing events. Meanwhile, OpenRouter's own routing docs say provider failover is on by default but model fallbacks are opt-in, and that restricting providers for compliance reasons narrows the fallback set. In other words, the same controls that make OpenRouter attractive to regulated buyers can reduce recovery paths when upstream systems fail.
+
+    The company does have credible mitigants: circuit breakers, fallback caching, prompt-injection blocking, sensitive-info redaction, and spend limits. But several safeguards are optional, and some of the sensitive-info detection remains beta-like and can allow requests through on timeout. Investors should therefore treat reliability as the master risk: if OpenRouter-originated incidents recur, the platform becomes a new single point of failure rather than a resilience layer.
+  claimRefs:
+  - CR017
+  - CR018
+  - CR019
+  - CR020
+  - CR021
+  - CR022
+  - CR029
+  - CR030
+  - CR031
+  - CR032
+  - CR033
+  - CR034
+  - CR035
+  - CR036
+  - CR037
+  - CR038
+  - CR043
+  - CR048
+  - CR049
+  tableRefs:
+  - TR002
+  figureRefs:
+  - FR002
+- id: partner-dependency-and-economic-compression
+  title: Partner Dependency, Disintermediation, and Economic Compression
+  body: |-
+    OpenRouter depends on a stack of counterparties that are simultaneously suppliers, policy setters, and in some cases direct substitutes. Upstream model providers still determine many of the hard constraints that matter most to customers: who can process data, whether prompts may be retained or used for training, what rate limits or quotas apply, and which terms govern output ownership or service suspension. OpenRouter can route around some failures, but it cannot remove provider policy dependence. Its own terms say model access may be suspended if customers violate provider terms or if a provider requests action, and its routing docs make clear that routing choices such as only/order/ignore and data_collection filters trade off resilience for control.
+
+    The economic risk is amplified because major platforms now sell native routing rather than just raw model endpoints. Amazon Bedrock offers prompt routing across model families, and Microsoft Foundry's model router already optimizes across quality, cost, and latency inside a single deployment. That makes routing increasingly feature-like rather than standalone. Add OpenAI and Google quota systems on top, and OpenRouter can become the party blamed for slowness, throttling, or cost volatility even when the upstream constraint sits elsewhere.
+
+    There are also softer but still real partner dependencies around authentication, billing, and payment rails. The status pages show that Clerk and Bedrock events can surface at the OpenRouter layer, while the terms page links Stripe and Coinbase legal agreements into parts of the billing stack. None of this means the model is broken; it means investors should assume margin pressure, support friction, and partner-policy shocks are endemic to the business model unless OpenRouter proves it can keep buyers loyal despite direct-routing alternatives.
+  claimRefs:
+  - CR002
+  - CR003
+  - CR011
+  - CR021
+  - CR028
+  - CR029
+  - CR030
+  - CR035
+  - CR036
+  - CR038
+  - CR039
+  - CR040
+  - CR041
+  - CR042
+  - CR044
+  - CR045
+  - CR046
+  - CR047
+  - CR050
+  - CR051
+  tableRefs:
+  - TR003
+  - TR004
+  figureRefs:
+  - FR003
+- id: mitigations-monitors-and-thesis-breaks
+  title: Mitigations, Monitors, Thesis-Break Triggers, and Diligence Asks
+  body: |-
+    OpenRouter is not ignoring these risks; the public product surface shows a serious effort to productize mitigation. Customers can force zero-data-retention routing, restrict providers, set per-key and per-workspace spend caps, route regulated workloads through EU-only endpoints, and block or redact prompt-injection patterns and sensitive inputs before traffic reaches providers. The outage postmortem also documents concrete remediation steps such as circuit breakers, better error codes, and fallback caching. For underwriting purposes, these are meaningful positives because they show the company is translating risk lessons into features rather than relying only on process.
+
+    The key investment question is not whether mitigations exist, but whether they are default enough, adopted enough, and independently auditable enough to change enterprise buying behavior. Several controls are enterprise-only, some are opt-in, and some rely on customer discipline to configure correctly. Public materials also leave important blind spots: concentration by provider, public uptime/SLO history, independent security attestations, and a comprehensive diligence-ready disclosure pack remain incomplete from the outside.
+
+    Accordingly, the monitor set should stay concrete. Repeated OpenRouter-originated Sev-1 incidents, evidence that regulated traffic cannot stay inside approved jurisdictions or providers, persistent billing-credit disputes, or rising win-loss pressure from hyperscaler-native routers would all be thesis-damaging. Before underwriting mission-critical or regulated adoption, investors should request provider concentration, SLA/SLO data, subprocessor and certification detail, and historical credit-adjustment / dispute metrics under NDA.
+  claimRefs:
+  - CR013
+  - CR017
+  - CR018
+  - CR019
+  - CR020
+  - CR021
+  - CR022
+  - CR031
+  - CR037
+  - CR043
+  - CR048
+  - CR049
+  - CR050
+  - CR051
+  - CR052
+  - CR053
+  - CR054
+  tableRefs:
+  - TR005
+tables:
+- id: TR001
+  title: Regulatory / legal risk register
+  enumerationScope:
+    coverage: partial
+    basis: Ordered from the highest-severity public legal and regulatory exposures observable from OpenRouter terms, privacy docs, DPA materials, and EU / copyright guidance as of 2026-07-01; excludes non-public customer contracts and undisclosed regulator correspondence.
+  columns:
+  - Risk
+  - Public evidence
+  - Likelihood
+  - Impact
+  - Mitigation maturity
+  - Residual exposure
+  - Investment implication
+  - Diligence ask
+  rows:
+  - - Regulated or EU traffic is routed outside approved providers or jurisdictions
+    - EU-only routing and some stricter controls are enterprise-only or opt-in; default routing maximizes reach rather than the strictest privacy posture
+    - Medium
+    - High
+    - Medium
+    - High
+    - Could block regulated-workload expansion or force bespoke enterprise packaging
+    - Request proof of eu.openrouter.ai usage, provider-allowlist defaults, and exception handling for no-compliant-provider cases
+  - - Provider retention or training settings diverge from customer expectations
+    - Provider logging says some providers may train unless disabled, while some non-training endpoints still retain for abuse or legal reasons
+    - High
+    - High
+    - Medium
+    - High
+    - Raises churn and legal-review friction in privacy-sensitive accounts
+    - Review provider-policy matrix, account defaults, and how many customers actively enforce data_collection deny or ZDR
+  - - AI Act / GPAI compliance burden slows enterprise adoption
+    - EU guidance says transparency obligations arrive in Aug 2026 and high-risk use needs logging, documentation, oversight, and cybersecurity
+    - Medium
+    - Medium
+    - Medium
+    - Medium
+    - Lengthens enterprise sales cycles and increases support cost for regulated use cases
+    - Ask which customer segments trigger AI Act reviews and what compliance artifacts ship by default
+  - - Model-provider terms suspend access or alter output-right assumptions
+    - OpenRouter terms tie output rights to provider model terms and permit suspensions if providers request action
+    - High
+    - Medium
+    - Low
+    - Medium
+    - A model-policy shock can break customer workflows and trust without OpenRouter controlling the root cause
+    - Request historical model takedowns, policy changes, and customer communication playbooks
+  - - Cross-border transfer documentation is challenged in diligence
+    - Privacy and DPA rely on SCC-style transfer mechanisms, but buyers still must validate execution and subprocessors
+    - Medium
+    - Medium
+    - Medium
+    - Medium
+    - May delay security review or procurement close for large enterprises
+    - Request DPA schedules, subprocessor detail, and audit-report availability under NDA
+  - - Copyright and IP liability for outputs or training remains unsettled
+    - The Copyright Office is still working through training, licensing, and liability questions for generative AI
+    - Medium
+    - Medium
+    - Low
+    - Medium
+    - Could constrain high-value enterprise use cases or require stronger indemnity terms
+    - Request current indemnity position and enterprise redlines on output-use and training claims
+  notes: Likelihood, impact, mitigation maturity, and residual exposure are qualitative author ratings derived from cited primary/legal sources plus company documentation; rows are ordered by residual severity, not by legal certainty alone.
+  claimRefs:
+  - CR001
+  - CR002
+  - CR003
+  - CR004
+  - CR005
+  - CR007
+  - CR008
+  - CR009
+  - CR010
+  - CR011
+  - CR012
+  - CR013
+  - CR014
+  - CR023
+  - CR024
+  - CR025
+  - CR026
+  - CR027
+  - CR028
+  - CR038
+  - CR049
+- id: TR002
+  title: Operational / quality / security risk register
+  columns:
+  - Failure mode
+  - Public evidence
+  - Likelihood
+  - Impact
+  - Mitigation maturity
+  - Residual exposure
+  - Investment implication
+  - Unresolved gap
+  rows:
+  - - OpenRouter control-plane outage affects all API surfaces
+    - Feb. 17 and 19, 2026 outages came from a third-party caching failure and escalated into widespread 500/401 errors
+    - Medium
+    - High
+    - Medium
+    - High
+    - If this recurs, the company's core reliability thesis is impaired
+    - Public uptime, SLO history, and post-remediation incident rate are not disclosed
+  - - Billing / logging backlogs distort spend governance
+    - Status page says delayed request logs also delayed budgets and billing events for almost five hours
+    - Medium
+    - High
+    - Medium
+    - High
+    - Billing disputes can hit trust, margin, and support load simultaneously
+    - No public metric on credit adjustments or dispute frequency
+  - - Auth or upstream-provider incidents degrade customer experience
+    - Clerk login degradation and an Amazon Bedrock outage both propagated into OpenRouter status incidents
+    - Medium
+    - Medium
+    - Medium
+    - Medium
+    - Dependency incidents increase support burden even when inference survives
+    - No public map of redundancy or failover SLAs for auth and key dependencies
+  - - Compliance-restricted routing reduces fallback headroom
+    - Provider selection and sovereign-routing docs say only/order/data filters shrink the eligible provider set
+    - High
+    - Medium
+    - Medium
+    - Medium
+    - Regulated customers may trade uptime for control, reducing the value of the router
+    - Unknown share of traffic already running under strict allowlists
+  - - Prompt-injection or sensitive-data leakage bypasses controls
+    - Guardrails can block/redact before provider handoff, but some NLP detectors are beta and timeout can allow requests through
+    - Medium
+    - Medium
+    - Medium
+    - Medium
+    - A visible failure here would damage trust with agentic and enterprise buyers
+    - No public false-positive / false-negative performance data for guardrails
+  - - Observability features widen prompt-disclosure surface
+    - I/O logging and Broadcast can store or export full prompts, outputs, provider names, and cost traces
+    - Medium
+    - Medium
+    - Medium
+    - Medium
+    - Misconfiguration could increase privacy incidents or customer concern
+    - Unknown default state and customer adoption of logging / broadcast features
+  notes: Operational ratings reflect direct 2026 incident evidence plus documented guardrail behavior. Residual exposure remains elevated where controls are optional, enterprise-only, or lack public performance metrics.
+  claimRefs:
+  - CR015
+  - CR016
+  - CR017
+  - CR018
+  - CR019
+  - CR020
+  - CR021
+  - CR022
+  - CR029
+  - CR030
+  - CR031
+  - CR032
+  - CR033
+  - CR034
+  - CR035
+  - CR036
+  - CR037
+  - CR043
+  - CR048
+- id: TR003
+  title: Partner / dependency risk register
+  columns:
+  - Dependency
+  - Counterparty role
+  - Failure scenario
+  - Likelihood
+  - Impact
+  - Mitigation maturity
+  - Residual exposure
+  - Investment implication
+  rows:
+  - - Upstream frontier-model providers
+    - OpenAI / Anthropic / Google and other model hosts supply capacity, data-policy terms, and uptime
+    - Provider policy change, rate limit, or outage removes attractive routing paths or forces repricing
+    - High
+    - High
+    - Medium
+    - High
+    - OpenRouter may be blamed for provider shocks it cannot fully control
+  - - Hyperscaler-native routers
+    - AWS Bedrock and Microsoft Foundry now ship built-in routing across models
+    - Routing becomes bundled platform feature, compressing OpenRouter take-rate and differentiation
+    - High
+    - High
+    - Low
+    - High
+    - Gross-margin durability becomes the central underwriting question
+  - - Authentication provider
+    - Clerk gates logins and account access
+    - Auth degradation blocks console access and increases support load even if API remains up
+    - Medium
+    - Medium
+    - Medium
+    - Medium
+    - Operational friction can erode developer trust
+  - - Caching / internal control-plane dependency
+    - Third-party cache mediates fast API-key lookups against the database
+    - Dependency failure recreates the February 2026 failure mode across all API surfaces
+    - Medium
+    - High
+    - Medium
+    - High
+    - A repeated control-plane incident would directly cut against the company's reliability claim
+  - - Payment and credits rails
+    - Stripe and Coinbase terms sit under parts of credits / payment functionality
+    - Terms changes, suspension, or degraded settlement flow disrupt credits, onboarding, or disputes
+    - Medium
+    - Medium
+    - Low
+    - Medium
+    - Adds avoidable churn and support friction around a core monetization surface
+  - - Regulatory counterparts
+    - EU AI / GDPR authorities shape what routing and logging postures are saleable to enterprises
+    - New guidance or scrutiny forces stricter defaults, extra documentation, or regional segregation
+    - Medium
+    - Medium
+    - Medium
+    - Medium
+    - Compliance cost can rise faster than gross volume if sales shift up-market
+  notes: Concentration is partly qualitative because OpenRouter does not publicly disclose traffic or revenue split by provider, payment rail, or customer segment; that opacity itself is a risk factor.
+  claimRefs:
+  - CR002
+  - CR003
+  - CR011
+  - CR021
+  - CR028
+  - CR029
+  - CR030
+  - CR032
+  - CR035
+  - CR036
+  - CR038
+  - CR039
+  - CR040
+  - CR041
+  - CR042
+  - CR044
+  - CR045
+  - CR046
+  - CR047
+  - CR050
+  - CR051
+- id: TR004
+  title: People / execution and financial model risk register
+  columns:
+  - Role / economic exposure
+  - Current gap or pressure
+  - Likelihood
+  - Impact
+  - Mitigation maturity
+  - Residual exposure
+  - Diligence path
+  - Investment implication
+  rows:
+  - - Take-rate durability
+    - Hyperscaler routers and direct-provider quotas make routing look more feature-like over time
+    - High
+    - High
+    - Low
+    - High
+    - Request gross-margin bridge, rebate economics, and win/loss pricing data
+    - Volume growth alone may mask deteriorating unit economics
+  - - Provider concentration transparency
+    - Public materials do not disclose traffic, spend, or GMV concentration by provider
+    - High
+    - High
+    - Low
+    - High
+    - Request top-provider traffic / spend split and concentration guardrails
+    - A single-provider concentration spike could turn routing diversification into an illusion
+  - - Enterprise compliance packaging
+    - Many strongest controls are opt-in or enterprise-only rather than default for all users
+    - Medium
+    - Medium
+    - Medium
+    - Medium
+    - Ask what share of enterprise accounts uses EU routing, guardrails, and ZDR defaults
+    - Sales efficiency may weaken if buyers need bespoke configuration help
+  - - Support and trust operations
+    - Billing edge cases, misleading 401s, and account-access incidents increase customer-support burden
+    - Medium
+    - Medium
+    - Medium
+    - Medium
+    - Request support ticket volumes, credit-adjustment rates, and major-incident retrospectives
+    - Support intensity can compress margins even when volume grows
+  - - Security / audit disclosure readiness
+    - Reviewed public materials do not provide a complete diligence-ready certification and subprocessor pack
+    - Medium
+    - Medium
+    - Low
+    - Medium
+    - Request SOC2 / ISO artifacts, pen-test cadence, and subprocessor schedule under NDA
+    - Missing disclosure can slow procurement and weaken regulated-workload conversion
+  - - Legal exposure readiness
+    - No public docket or enforcement pack was located in direct materials reviewed for this chapter
+    - Low
+    - Medium
+    - Low
+    - Medium
+    - Run counsel-led litigation, sanctions, and privacy-enforcement sweep by legal entity and founders
+    - Unexpected legal issues would reprice the thesis more than current docs imply
+  notes: This table deliberately blends execution and economic-model risk because OpenRouter's financial exposure is inseparable from product reliability, provider concentration, and disclosure readiness.
+  claimRefs:
+  - CR022
+  - CR023
+  - CR037
+  - CR038
+  - CR039
+  - CR040
+  - CR041
+  - CR042
+  - CR043
+  - CR044
+  - CR045
+  - CR046
+  - CR047
+  - CR049
+  - CR050
+  - CR051
+  - CR052
+- id: TR005
+  title: Mitigation and kill criteria table
+  columns:
+  - Risk
+  - Monitorable trigger
+  - Threshold / event
+  - Action implication
+  - Diligence ask
+  rows:
+  - - Routing-layer reliability
+    - OpenRouter-originated major incidents
+    - More than one material platform-caused outage in a quarter after the Feb-2026 remediations
+    - Treat reliability as thesis-broken until root-cause trend is demonstrably fixed
+    - Request monthly Sev-1/Sev-2 log, postmortems, and uptime/SLO history
+  - - Regulated-data compliance
+    - Evidence that compliant routing has to fail open or leave approved jurisdictions/providers
+    - Any inability to prove EU-only processing, ZDR, or data_collection-deny behavior for target workloads
+    - Restrict use to non-sensitive workloads and haircut enterprise upside
+    - Request architecture walkthrough, logs, and sample audit evidence for regulated traffic
+  - - Price / take-rate compression
+    - Native-routing expansion by AWS, Microsoft, or model vendors coincides with price cuts or rebate pressure
+    - Sustained routing-price concessions without offsetting retention or upsell gains
+    - Lower margin assumptions and require stronger retention proof
+    - Request cohort retention, blended take-rate, and top-win / top-loss pricing cases
+  - - Billing integrity
+    - Credit disputes or incorrect failed-request charges
+    - Recurring complaints that 429 / partial-output paths still consume credits without fast remediation
+    - Increase support-cost assumptions and pressure-test gross margin
+    - Request dispute volumes, average credit-adjustment latency, and billing QA controls
+  - - Provider concentration
+    - Traffic or spend becomes overly dependent on one frontier model family
+    - Any single provider >50% of traffic or spend without contracted fallback commitments
+    - Apply concentration discount and question routing defensibility
+    - Request monthly provider-mix dashboard and contractual flexibility summary
+  - - Compliance disclosure readiness
+    - Lack of independent security / privacy artifacts during diligence
+    - Inability to produce current certification, pen-test, or subprocessor documentation under NDA
+    - Pause regulated or mission-critical underwriting
+    - Request full trust package, audit reports, and remediation tracker
+  - - Payment / account dependency
+    - Stripe, Coinbase, or auth-provider policy/service changes affect onboarding or credits
+    - Any suspension, settlement disruption, or prolonged login outage tied to core external services
+    - Increase churn assumptions and reevaluate checkout friction
+    - Request dependency map, fallback plans, and incident response for billing/auth surfaces
+  - - Legal / enforcement posture
+    - New privacy, AI-governance, or IP challenge emerges
+    - Any formal regulator inquiry, injunction, or material lawsuit tied to routing, retention, or outputs
+    - Pause investment or require repricing until exposure is bounded
+    - Have counsel run litigation, privacy, sanctions, and AI-governance diligence before close
+  notes: 'These are intentionally monitorable gates: they are designed to tell an investor when OpenRouter''s residual risk is merely operationally noisy versus when the underwriting thesis should be paused, repriced, or broken.'
+  claimRefs:
+  - CR020
+  - CR021
+  - CR022
+  - CR031
+  - CR037
+  - CR043
+  - CR048
+  - CR049
+  - CR050
+  - CR051
+  - CR052
+  - CR053
+  - CR054
+figures:
+- id: FR001
+  title: Risk heatmap
+  type: matrix
+  layout: wide
+  summary: Residual-risk view of the six exposures most likely to impair OpenRouter's investment case.
+  data:
+    columns:
+    - Likelihood
+    - Impact
+    - Mitigation maturity
+    - Residual exposure
+    rows:
+    - label: Routing-layer outage
+      values:
+      - Medium
+      - High
+      - Medium
+      - High
+    - label: Privacy / compliance misroute
+      values:
+      - Medium
+      - High
+      - Medium
+      - High
+    - label: Hyperscaler disintermediation
+      values:
+      - High
+      - High
+      - Low
+      - High
+    - label: Provider policy / rate-limit shock
+      values:
+      - High
+      - Medium
+      - Medium
+      - Medium
+    - label: Billing / logging integrity
+      values:
+      - Medium
+      - High
+      - Medium
+      - High
+    - label: IP / legal uncertainty
+      values:
+      - Medium
+      - Medium
+      - Low
+      - Medium
+  approximationNotes: Cells synthesize cited product docs, incident disclosures, and regulator guidance; they are analyst judgments about residual risk after visible public mitigations, not company-published scores.
+  claimRefs:
+  - CR023
+  - CR024
+  - CR028
+  - CR032
+  - CR033
+  - CR037
+  - CR039
+  - CR040
+  - CR043
+  - CR048
+  - CR049
+  - CR050
+- id: FR002
+  title: Risk transmission map
+  type: dag
+  layout: wide
+  summary: How control-plane, privacy, and billing faults propagate into churn, margin, and valuation pressure.
+  data:
+    nodes:
+    - id: cache
+      label: Control-plane or cache failure
+    - id: provider
+      label: Upstream provider outage / limit
+    - id: compliance
+      label: Compliance-restricted routing
+    - id: billing
+      label: Billing / logging anomaly
+    - id: errors
+      label: Customer-visible errors or miscodes
+    - id: trust
+      label: Developer and enterprise trust loss
+    - id: support
+      label: Support cost / credit adjustments
+    - id: nrr
+      label: NRR / churn pressure
+    - id: margin
+      label: Margin compression
+    - id: valuation
+      label: Valuation and financing pressure
+    edges:
+    - from: cache
+      to: errors
+    - from: provider
+      to: errors
+    - from: compliance
+      to: errors
+    - from: billing
+      to: support
+    - from: errors
+      to: trust
+    - from: trust
+      to: nrr
+    - from: support
+      to: margin
+    - from: nrr
+      to: valuation
+    - from: margin
+      to: valuation
+    - from: errors
+      to: support
+  approximationNotes: Edges show plausible economic propagation paths described or implied by the cited incident, routing, and billing sources; no edge weight is being claimed.
+  claimRefs:
+  - CR029
+  - CR030
+  - CR031
+  - CR032
+  - CR033
+  - CR037
+  - CR043
+  - CR048
+  - CR050
+  - CR053
+- id: FR003
+  title: Dependency map
+  type: dag
+  layout: wide
+  summary: Critical counterparties and policy setters that can constrain OpenRouter availability, compliance, or margin.
+  data:
+    nodes:
+    - id: openai
+      label: OpenAI
+    - id: anthropic
+      label: Anthropic
+    - id: google
+      label: Google
+    - id: aws
+      label: AWS Bedrock
+    - id: azure
+      label: Microsoft Foundry
+    - id: clerk
+      label: Clerk auth
+    - id: payments
+      label: Stripe / Coinbase
+    - id: eu
+      label: EU AI / GDPR authorities
+    - id: router
+      label: OpenRouter control plane
+    - id: customers
+      label: Enterprise / developer customers
+    edges:
+    - from: openai
+      to: router
+    - from: anthropic
+      to: router
+    - from: google
+      to: router
+    - from: aws
+      to: router
+    - from: azure
+      to: router
+    - from: clerk
+      to: router
+    - from: payments
+      to: router
+    - from: eu
+      to: router
+    - from: router
+      to: customers
+  approximationNotes: Edges denote operational or commercial dependence, not formal exclusivity. Several nodes are both suppliers and substitutes, which increases strategic risk.
+  claimRefs:
+  - CR002
+  - CR003
+  - CR021
+  - CR035
+  - CR036
+  - CR039
+  - CR040
+  - CR041
+  - CR042
+  - CR044
+  - CR045
+  - CR046
+  - CR047
+  - CR050
+  - CR051
+callouts:
+- calloutType: risk
+  title: The router itself is the top residual risk
+  body: 'The February 2026 incidents matter more than normal SaaS downtime because they cut directly against OpenRouter''s core promise: buyers adopt the product to remove single-provider fragility, so repeated OpenRouter-originated failures would collapse the differentiation narrative.'
+  claimRefs:
+  - CR031
+  - CR032
+  - CR033
+  - CR048
+- calloutType: risk
+  title: Compliance controls are meaningful but not universally default
+  body: OpenRouter has real controls—ZDR, guardrails, EU routing, human-oversight guidance, and spend caps—but several are opt-in or enterprise-only. That means regulated-workload safety depends not just on product existence, but on configuration, plan tier, and customer operational discipline.
+  claimRefs:
+  - CR018
+  - CR020
+  - CR021
+  - CR022
+  - CR023
+  - CR025
+  - CR049
+- calloutType: recommendation
+  title: Ask for concentration, SLA, and certification data before underwriting
+  body: The fastest way to de-risk the story is not another product demo; it is an NDA package showing provider concentration, uptime/SLO history, security attestations, and billing-dispute rates. Without that, the biggest remaining questions sit exactly where the business model is most fragile.
+  claimRefs:
+  - CR051
+  - CR052
+  - CR053
+  - CR054
+localEvidence:
+  searchQueries:
+  - query: OpenRouter outage 2026 status incidents caching dependency
+    engine: duckduckgo
+    hits: null
+    retainedSourceRefs:
+    - SR013
+    - SR014
+    - SR015
+    - SR016
+    - SR017
+    - SR018
+  - query: OpenRouter privacy data retention provider logging 2026
+    engine: duckduckgo
+    hits: null
+    retainedSourceRefs:
+    - SR002
+    - SR003
+    - SR004
+    - SR005
+    - SR006
+    - SR010
+    - SR020
+    - SR021
+    - SR022
+  - query: OpenRouter terms arbitration model provider suspend 2026
+    engine: duckduckgo
+    hits: null
+    retainedSourceRefs:
+    - SR001
+    - SR032
+    - SR033
+  - query: OpenRouter AI Act GDPR data residency 2026
+    engine: duckduckgo
+    hits: null
+    retainedSourceRefs:
+    - SR021
+    - SR022
+    - SR023
+    - SR024
+    - SR025
+    - SR026
+    - SR027
+  - query: OpenRouter Stripe Coinbase billing risk 2026
+    engine: duckduckgo
+    hits: null
+    retainedSourceRefs:
+    - SR014
+    - SR019
+    - SR032
+    - SR033
+  researchQuestions:
+  - id: QR001
+    question: How do OpenRouter's terms allocate dispute venue and customer remedy in 2026?
+    type: verification
+    targets:
+    - contentRequirements/1
+    - plannedTables/regulatory-legal-risk-register
+    status: answered
+  - id: QR002
+    question: Can OpenRouter or an upstream model provider suspend model access based on provider terms?
+    type: verification
+    targets:
+    - contentRequirements/1
+    - plannedTables/regulatory-legal-risk-register
+    status: answered
+  - id: QR003
+    question: What responsibility does OpenRouter disclaim for how underlying LLM providers handle inputs and outputs?
+    type: verification
+    targets:
+    - contentRequirements/1
+    - plannedTables/regulatory-legal-risk-register
+    status: answered
+  - id: QR004
+    question: What cross-border transfer mechanism does OpenRouter publicly use for EU/EEA data exports?
+    type: verification
+    targets:
+    - contentRequirements/1
+    - plannedTables/regulatory-legal-risk-register
+    status: answered
+  - id: QR005
+    question: Which AI Act deadlines and GPAI obligations become relevant to OpenRouter customers by 2026?
+    type: freshness
+    targets:
+    - contentRequirements/1
+    - plannedTables/regulatory-legal-risk-register
+    status: answered
+  - id: QR006
+    question: What logging, documentation, and human-oversight obligations matter if OpenRouter is used in regulated or high-risk workflows?
+    type: mechanism
+    targets:
+    - contentRequirements/1
+    - plannedTables/regulatory-legal-risk-register
+    status: answered
+  - id: QR007
+    question: Do OpenRouter's public docs guarantee EU-only routing for every customer or only for enterprise plans?
+    type: adverse
+    targets:
+    - contentRequirements/1
+    - plannedTables/regulatory-legal-risk-register
+    status: answered
+  - id: QR008
+    question: What copyright or output-ownership uncertainty remains around generative-AI outputs and training liability?
+    type: adverse
+    targets:
+    - contentRequirements/1
+    - plannedTables/regulatory-legal-risk-register
+    status: answered
+  - id: QR009
+    question: Is OpenRouter's own prompt retention opt-in or default?
+    type: verification
+    targets:
+    - contentRequirements/1
+    - plannedTables/regulatory-legal-risk-register
+    status: answered
+  - id: QR010
+    question: Can routed providers still retain or train on prompts depending on settings and endpoint policy?
+    type: verification
+    targets:
+    - contentRequirements/1
+    - plannedTables/regulatory-legal-risk-register
+    status: answered
+  - id: QR011
+    question: Do OpenRouter's optional logging and broadcast features create extra prompt-disclosure surfaces?
+    type: adverse
+    targets:
+    - contentRequirements/1
+    - contentRequirements/2
+    - plannedTables/operational-quality-security-risk-register
+    status: answered
+  - id: QR012
+    question: Can sensitive data be redacted or blocked before traffic reaches model providers?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    - plannedTables/operational-quality-security-risk-register
+    status: answered
+  - id: QR013
+    question: What documented control exists for prompt-injection and jailbreak defense at the routing layer?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    - plannedTables/operational-quality-security-risk-register
+    status: answered
+  - id: QR014
+    question: What public incidents show OpenRouter itself was a single point of failure in 2026?
+    type: adverse
+    targets:
+    - contentRequirements/2
+    - plannedTables/operational-quality-security-risk-register
+    - plannedFigures/risk-transmission-map
+    status: answered
+  - id: QR015
+    question: What was the root cause and blast radius of the February 17 and 19, 2026 outages?
+    type: adverse
+    targets:
+    - contentRequirements/2
+    - plannedTables/operational-quality-security-risk-register
+    status: answered
+  - id: QR016
+    question: What other 2026 incidents show dependency on Clerk, Amazon Bedrock, or logging / billing systems?
+    type: enumeration
+    targets:
+    - contentRequirements/2
+    - plannedTables/partner-dependency-risk-register
+    status: answered
+  - id: QR017
+    question: How does provider failover work by default, and where can it still fail?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    - contentRequirements/3
+    - plannedFigures/risk-transmission-map
+    status: answered
+  - id: QR018
+    question: Do compliance controls such as only/order or strict data filters reduce OpenRouter reliability headroom?
+    type: comparison
+    targets:
+    - contentRequirements/2
+    - contentRequirements/3
+    - plannedTables/operational-quality-security-risk-register
+    status: answered
+  - id: QR019
+    question: What explicit billing, payment, or account-access dependencies can change service availability or terms?
+    type: verification
+    targets:
+    - contentRequirements/3
+    - plannedTables/partner-dependency-risk-register
+    status: answered
+  - id: QR020
+    question: What budget controls exist to cap runaway spend or failed-request exposure?
+    type: mechanism
+    targets:
+    - contentRequirements/4
+    - plannedTables/people-execution-risk-register
+    status: answered
+  - id: QR021
+    question: What evidence is there that failed requests or delayed logs can still create billing noise or credit disputes in 2026?
+    type: adverse
+    targets:
+    - contentRequirements/4
+    - plannedTables/people-execution-risk-register
+    status: answered
+  - id: QR022
+    question: How vulnerable is OpenRouter to upstream rate limits and provider-side quotas?
+    type: verification
+    targets:
+    - contentRequirements/3
+    - contentRequirements/4
+    - plannedTables/partner-dependency-risk-register
+    status: answered
+  - id: QR023
+    question: Are hyperscaler-native routers already shipping functionality similar to OpenRouter's core value proposition?
+    type: comparison
+    targets:
+    - contentRequirements/3
+    - contentRequirements/4
+    - plannedTables/partner-dependency-risk-register
+    status: answered
+  - id: QR024
+    question: What do native routing products and provider quotas imply for pricing power or take-rate durability?
+    type: adverse
+    targets:
+    - contentRequirements/4
+    - plannedTables/people-execution-risk-register
+    - plannedFigures/risk-heatmap
+    status: answered
+  - id: QR025
+    question: Are OpenRouter's strongest governance controls universally available or plan-gated?
+    type: adverse
+    targets:
+    - contentRequirements/4
+    - plannedTables/people-execution-risk-register
+    status: answered
+  - id: QR026
+    question: What public security and compliance assurances remain incomplete from outside the company?
+    type: verification
+    targets:
+    - contentRequirements/5
+    - plannedTables/people-execution-risk-register
+    status: partial
+  - id: QR027
+    question: Is there public evidence of litigation or enforcement against OpenRouter as of 2026?
+    type: adverse
+    targets:
+    - contentRequirements/1
+    - contentRequirements/5
+    - plannedTables/regulatory-legal-risk-register
+    status: unresolved
+  - id: QR028
+    question: How concentrated is OpenRouter's traffic or revenue by provider or enterprise customer?
+    type: quantification
+    targets:
+    - contentRequirements/3
+    - contentRequirements/4
+    - plannedTables/partner-dependency-risk-register
+    status: partial
+  - id: QR029
+    question: What monitorable triggers would indicate the OpenRouter investment thesis is breaking?
+    type: mechanism
+    targets:
+    - contentRequirements/0
+    - contentRequirements/5
+    - plannedTables/mitigation-and-kill-criteria-table
+    - plannedFigures/risk-heatmap
+    status: answered
+  - id: QR030
+    question: What diligence asks remain before underwriting regulated or mission-critical OpenRouter adoption?
+    type: mechanism
+    targets:
+    - contentRequirements/5
+    - plannedTables/mitigation-and-kill-criteria-table
+    status: answered
+  sources:
+  - id: SR001
+    publisher: OpenRouter
+    title: Terms of Service
+    url: https://openrouter.ai/terms
+    date: '2026-05-06'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: legal
+    reputationTier: high
+    independence: company
+    topics:
+    - terms
+    - arbitration
+    - provider-policy
+    keyQuote: These Terms provide that all disputes between you and OpenRouter will be resolved by BINDING ARBITRATION.
+  - id: SR002
+    publisher: OpenRouter
+    title: Privacy Policy
+    url: https://openrouter.ai/privacy
+    date: '2025-04-15'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: legal
+    reputationTier: high
+    independence: company
+    topics:
+    - privacy
+    - personal-data
+    - training
+    keyQuote: We do not control, and are not responsible for, LLMs’ handling of your Inputs or Outputs, including for use in their model training.
+  - id: SR003
+    publisher: OpenRouter
+    title: Data Processing Agreement
+    url: https://openrouter.ai/data-processing-agreement
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: legal
+    reputationTier: high
+    independence: company
+    topics:
+    - dpa
+    - processor
+    - audit
+    keyQuote: OpenRouter will make available to Customer all information necessary to demonstrate compliance with the obligations of this DPA and allow for and contribute to audits.
+  - id: SR004
+    publisher: OpenRouter
+    title: Data Collection - OpenRouter Privacy
+    url: https://openrouter.ai/docs/guides/privacy/data-collection
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - privacy
+    - prompt-retention
+    - data-use
+    keyQuote: Any prompt retention on OpenRouter is always opt-in.
+  - id: SR005
+    publisher: OpenRouter
+    title: Provider Logging - Provider Data Retention Policies
+    url: https://openrouter.ai/docs/guides/privacy/provider-logging
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - provider-policy
+    - training
+    - retention
+    keyQuote: OpenRouter does not have routing rules that change based on data retention policies of providers.
+  - id: SR006
+    publisher: OpenRouter
+    title: Zero Data Retention - How OpenRouter gives you control over your data
+    url: https://openrouter.ai/docs/guides/features/zdr
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - zdr
+    - retention
+    - privacy
+    keyQuote: OpenRouter itself has a ZDR policy; your prompts are not retained unless you specifically opt in to prompt logging.
+  - id: SR007
+    publisher: OpenRouter
+    title: Guardrails - Organization Spending and Access Controls
+    url: https://openrouter.ai/docs/guides/features/guardrails/overview
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - guardrails
+    - budgets
+    - provider-controls
+    keyQuote: Guardrails let organizations control how their members and API keys can use OpenRouter.
+  - id: SR008
+    publisher: OpenRouter
+    title: Prompt Injection Detection - Guardrail Regex Patterns
+    url: https://openrouter.ai/docs/guides/features/guardrails/prompt-injection
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - guardrails
+    - prompt-injection
+    - security
+    keyQuote: Block — The entire request is rejected with a 403 before it reaches the model.
+  - id: SR009
+    publisher: OpenRouter
+    title: Sensitive Info Guardrail - Automatic PII Detection and Redaction
+    url: https://openrouter.ai/docs/guides/features/guardrails/sensitive-info
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - guardrails
+    - pii
+    - redaction
+    keyQuote: The entire request is rejected with an HTTP 403 Forbidden error.
+  - id: SR010
+    publisher: OpenRouter
+    title: Input & Output Logging - Privately Store Prompts and Completions
+    url: https://openrouter.ai/docs/guides/features/input-output-logging
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - logging
+    - retention
+    - observability
+    keyQuote: 'Retention: Data is retained for a minimum of 3 months, and may be retained beyond 3 months at OpenRouter’s discretion unless you request deletion.'
+  - id: SR011
+    publisher: OpenRouter
+    title: Provider Routing - Smart Multi-Provider Request Management
+    url: https://openrouter.ai/docs/guides/routing/provider-selection
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - routing
+    - fallbacks
+    - provider-controls
+    keyQuote: OpenRouter routes requests to the best available providers for your model. By default, requests are load balanced across the top providers to maximize uptime.
+  - id: SR012
+    publisher: OpenRouter
+    title: Model Fallbacks - Automatic Failover Between Models
+    url: https://openrouter.ai/docs/guides/routing/model-fallbacks
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - routing
+    - fallbacks
+    - reliability
+    keyQuote: The models parameter lets you automatically try other models if the primary model’s providers are down, rate-limited, or refuse to reply due to content moderation.
+  - id: SR013
+    publisher: OpenRouter
+    title: OpenRouter Outages on February 17 and 19, 2026 — OpenRouter Blog
+    url: https://openrouter.ai/blog/announcements/openrouter-outages-on-february-17-and-19-2026/
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: adverse
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - outage
+    - cache
+    - incident
+    keyQuote: A portion of users saw 500 or 401 errors on all API endpoints for 38 minutes starting at 5:27 AM UTC on February 17th, and for 35 minutes starting at 7:36 AM UTC on February 19th.
+  - id: SR014
+    publisher: OpenRouter
+    title: 'OpenRouter Failover: Provider Failover vs Model Fallbacks Explained — OpenRouter Blog'
+    url: https://openrouter.ai/blog/insights/reliability-failover/
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - reliability
+    - fallbacks
+    - billing
+    keyQuote: Some users have reported cases where error 429 consumed credits, or where partial outputs were counted despite an error.
+  - id: SR015
+    publisher: OpenRouter Status
+    title: Degraded website login | OpenRouter Status
+    url: https://status.openrouter.ai/incidents/lrkj1G0wmMoe
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: adverse
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - incident
+    - auth
+    - clerk
+    keyQuote: Clerk, our authentication provider, is experiencing degraded performance. Logins and account access may be impacted while Clerk rolls out the identified fix.
+  - id: SR016
+    publisher: OpenRouter Status
+    title: Amazon Bedrock Outage | OpenRouter Status
+    url: https://status.openrouter.ai/incidents/opJAdRNJ-dlR
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: adverse
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - incident
+    - bedrock
+    - provider-outage
+    keyQuote: Amazon Bedrock Outage.
+  - id: SR017
+    publisher: OpenRouter Status
+    title: 401 Errors across API surfaces | OpenRouter Status
+    url: https://status.openrouter.ai/incidents/0DVAaeZB9ozn
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: adverse
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - incident
+    - 401-errors
+    - api
+    keyQuote: 'Components impacted: Chat (/api/v1/chat/completions) and Generation (/api/v1/generation).'
+  - id: SR018
+    publisher: OpenRouter Status
+    title: API Request Logs and Budget Enforcement are Delayed | OpenRouter Status
+    url: https://status.openrouter.ai/incidents/4d39RZb7-1rp
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: adverse
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - incident
+    - billing
+    - logging
+    keyQuote: We are currently investigating an issue with delayed logging of API requests. This extends to delays in updating budgets and billing events.
+  - id: SR019
+    publisher: OpenRouter
+    title: Workspace Budgets - Per-Workspace Spend Limits
+    url: https://openrouter.ai/docs/guides/features/workspaces/workspace-budgets
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - budgets
+    - enterprise
+    - spend-control
+    keyQuote: Workspace budgets are available on the Enterprise plan.
+  - id: SR020
+    publisher: OpenRouter
+    title: Broadcast - Send Traces to Observability Platforms
+    url: https://openrouter.ai/docs/guides/features/broadcast/overview
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - broadcast
+    - observability
+    - logging
+    keyQuote: 'Each broadcast trace includes comprehensive information about your API request: Request & Response Data, Token Usage, Cost Information, Timing, Model Information, and Tool Usage.'
+  - id: SR021
+    publisher: OpenRouter
+    title: Sovereign AI - In-Region AI Routing with OpenRouter
+    url: https://openrouter.ai/docs/guides/features/sovereign-ai
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - eu-routing
+    - sovereign-ai
+    - privacy
+    keyQuote: When enabled, your requests are guaranteed to only be decrypted within the designated region, and are only routed to providers operating in that region.
+  - id: SR022
+    publisher: OpenRouter
+    title: Enforce AI Data Residency at the Routing Layer — OpenRouter Blog
+    url: https://openrouter.ai/blog/insights/ai-data-residency/
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - data-residency
+    - regulated-workloads
+    - routing
+    keyQuote: Before you route regulated workloads this way, audit OpenRouter’s own data handling policies and confirm the routing behavior matches your requirements.
+  - id: SR023
+    publisher: OpenRouter
+    title: 'EU AI Act & Colorado ADMT Compliance: Human Oversight for AI Agents — OpenRouter Blog'
+    url: https://openrouter.ai/blog/tutorials/human-oversight-eu-ai-act-compliance-agent-sdk/
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - ai-act
+    - human-oversight
+    - compliance
+    keyQuote: The first hard deadline lands in August 2026.
+  - id: SR024
+    publisher: European Commission
+    title: AI Act
+    url: https://digital-strategy.ec.europa.eu/en/policies/regulatory-framework-ai
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: regulatory
+    reputationTier: high
+    independence: independent
+    topics:
+    - ai-act
+    - gpai
+    - transparency
+    keyQuote: The transparency rules of the AI Act will come into effect in August 2026.
+  - id: SR025
+    publisher: EU Artificial Intelligence Act
+    title: The Act Texts | EU Artificial Intelligence Act
+    url: https://artificialintelligenceact.eu/the-act/
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: other
+    reputationTier: medium
+    independence: independent
+    topics:
+    - ai-act
+    - official-journal
+    - implementation
+    keyQuote: The EU AI Act was published in the Official Journal (OJ) of the European Union on 12 July 2024.
+  - id: SR026
+    publisher: European Commission
+    title: Standard Contractual Clauses (SCC)
+    url: https://commission.europa.eu/law/law-topic/data-protection/international-dimension-data-protection/standard-contractual-clauses-scc_en
+    date: '2021-06-04'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: regulatory
+    reputationTier: high
+    independence: independent
+    topics:
+    - gdpr
+    - scc
+    - data-transfers
+    keyQuote: On 4 June 2021, the Commission issued modernised standard contractual clauses under the GDPR for data transfers.
+  - id: SR027
+    publisher: U.S. Copyright Office
+    title: 'Copyright and Artificial Intelligence, Part 2: Copyrightability Report'
+    url: https://copyright.gov/ai/Copyright-and-Artificial-Intelligence-Part-2-Copyrightability-Report.pdf
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: legal
+    reputationTier: high
+    independence: independent
+    topics:
+    - copyright
+    - ai-liability
+    - ip
+    keyQuote: A subsequent part will turn to the training of AI models on copyrighted works, licensing considerations, and allocation of any liability.
+  - id: SR028
+    publisher: Amazon Web Services
+    title: Understanding intelligent prompt routing in Amazon Bedrock
+    url: https://docs.aws.amazon.com/bedrock/latest/userguide/prompt-routing.html
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: competitor
+    topics:
+    - routing
+    - competition
+    - bedrock
+    keyQuote: Amazon Bedrock intelligent prompt routing provides a single serverless endpoint to efficiently route requests between different foundational models within the same model family.
+  - id: SR029
+    publisher: Microsoft
+    title: Model router for Microsoft Foundry concepts - Microsoft Foundry
+    url: https://learn.microsoft.com/en-us/azure/foundry/openai/concepts/model-router
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: competitor
+    topics:
+    - routing
+    - competition
+    - azure
+    keyQuote: Model router optimizes costs and latencies while maintaining comparable quality.
+  - id: SR030
+    publisher: OpenAI
+    title: Rate limits | OpenAI API
+    url: https://platform.openai.com/docs/guides/rate-limits
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: partner
+    topics:
+    - rate-limits
+    - quota
+    - provider-policy
+    keyQuote: Rate limits are defined at the organization level and at the project level, not user level.
+  - id: SR031
+    publisher: Google Cloud
+    title: Generative AI on Gemini Enterprise Agent Platform quotas and system limits
+    url: https://cloud.google.com/vertex-ai/generative-ai/docs/quotas
+    date: null
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: partner
+    topics:
+    - quotas
+    - capacity
+    - provider-policy
+    keyQuote: This page provides a list of quotas by region and model, and shows you how to view and edit your quotas in the Google Cloud console.
+  - id: SR032
+    publisher: Stripe
+    title: Stripe Services Agreement - General Terms
+    url: https://stripe.com/legal/ssa
+    date: '2025-11-18'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: legal
+    reputationTier: high
+    independence: partner
+    topics:
+    - payments
+    - billing
+    - arbitration
+    keyQuote: Disputes between User and Stripe are subject to a class action waiver and will be resolved by individual binding arbitration.
+  - id: SR033
+    publisher: Coinbase
+    title: User Agreement - Coinbase
+    url: https://www.coinbase.com/legal/user_agreement/united_states
+    date: '2026-06-08'
+    accessDate: '2026-07-01'
+    accessStatus: ok
+    stance: neutral
+    sourceType: legal
+    reputationTier: high
+    independence: partner
+    topics:
+    - payments
+    - billing
+    - arbitration
+    keyQuote: APPENDIX 5 INCLUDES AN AGREEMENT TO ARBITRATE WHICH REQUIRES, WITH LIMITED EXCEPTIONS, THAT ALL DISPUTES BETWEEN YOU AND US SHALL BE RESOLVED BY BINDING AND FINAL ARBITRATION.
+  claims:
+  - id: CR001
+    statement: OpenRouter terms say disputes with OpenRouter are resolved by binding arbitration and New York governing law.
+    type: observed
+    topic: terms-disputes
+    sourceRefs:
+    - SR001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR001
+  - id: CR002
+    statement: OpenRouter terms say the company may suspend, restrict, disable, or terminate access to a model if a user may violate model terms or if a model provider requests action.
+    type: observed
+    topic: provider-policy
+    sourceRefs:
+    - SR001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR002
+    - QR019
+  - id: CR003
+    statement: OpenRouter terms disclaim liability for model suspension, removal, degradation, or modification arising from model-provider terms or provider acts and omissions.
+    type: observed
+    topic: provider-policy
+    sourceRefs:
+    - SR001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR002
+    - QR019
+  - id: CR004
+    statement: OpenRouter terms say users retain copyright in their inputs while output ownership depends on the model terms of the provider used.
+    type: observed
+    topic: ip-rights
+    sourceRefs:
+    - SR001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR008
+  - id: CR005
+    statement: OpenRouter privacy says the company does not control or take responsibility for how underlying LLMs handle inputs or outputs, including model training use.
+    type: observed
+    topic: privacy
+    sourceRefs:
+    - SR002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR003
+  - id: CR006
+    statement: OpenRouter privacy discloses use of Google Analytics to monitor and analyze site usage.
+    type: observed
+    topic: privacy-analytics
+    sourceRefs:
+    - SR002
+    confidence: medium
+    freshness: current
+  - id: CR007
+    statement: OpenRouter privacy says transfers outside the EEA or UK rely on European Commission adequacy decisions or standard contractual clauses.
+    type: observed
+    topic: data-transfers
+    sourceRefs:
+    - SR002
+    - SR026
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR004
+  - id: CR008
+    statement: OpenRouter's DPA frames OpenRouter as a processor or service provider handling personal data on behalf of customer controllers.
+    type: observed
+    topic: dpa
+    sourceRefs:
+    - SR003
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR004
+    - QR026
+  - id: CR009
+    statement: OpenRouter's DPA says customers can request information necessary to demonstrate compliance and contribute to audits.
+    type: observed
+    topic: dpa
+    sourceRefs:
+    - SR003
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR004
+    - QR026
+  - id: CR010
+    statement: OpenRouter's privacy guide says prompt retention on OpenRouter is always opt-in.
+    type: company-claimed
+    topic: prompt-retention
+    sourceRefs:
+    - SR004
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR009
+  - id: CR011
+    statement: OpenRouter's provider-logging guide says customers can block routing to providers that may train on prompts.
+    type: company-claimed
+    topic: provider-policy
+    sourceRefs:
+    - SR005
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR010
+  - id: CR012
+    statement: OpenRouter's provider-logging guide says routing does not automatically change based on provider retention policies, so users must ignore providers that do not meet their own requirements.
+    type: company-claimed
+    topic: provider-policy
+    sourceRefs:
+    - SR005
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR010
+    - QR018
+  - id: CR013
+    statement: OpenRouter's ZDR guide says some endpoints may retain data for abuse or legal reasons even if they do not train on that data.
+    type: company-claimed
+    topic: zdr
+    sourceRefs:
+    - SR006
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR010
+    - QR029
+  - id: CR014
+    statement: OpenRouter's ZDR guide says the company itself does not retain prompts unless the customer specifically opts into prompt logging.
+    type: company-claimed
+    topic: zdr
+    sourceRefs:
+    - SR006
+    - SR010
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR009
+    - QR011
+  - id: CR015
+    statement: OpenRouter's ZDR guide says in-memory prompt caching is not treated as retention for ZDR purposes.
+    type: company-claimed
+    topic: zdr
+    sourceRefs:
+    - SR006
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR010
+  - id: CR016
+    statement: OpenRouter's Input & Output Logging feature stores prompts and completions in isolated Google Cloud Storage for at least three months and possibly longer unless customers request deletion.
+    type: company-claimed
+    topic: logging
+    sourceRefs:
+    - SR010
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR011
+  - id: CR017
+    statement: OpenRouter Broadcast can send full request and response content, token counts, cost, provider, and tool-usage traces to external observability destinations.
+    type: company-claimed
+    topic: broadcast
+    sourceRefs:
+    - SR020
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR011
+  - id: CR018
+    statement: OpenRouter's Sensitive Info Guardrail can redact or block matching inputs before requests reach a provider, but beta NLP detectors for names and addresses may allow a request through if the check times out.
+    type: company-claimed
+    topic: guardrails
+    sourceRefs:
+    - SR009
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR012
+    - QR026
+  - id: CR019
+    statement: OpenRouter's prompt-injection guardrail scans requests before forwarding and can flag, redact, or block a request with HTTP 403.
+    type: company-claimed
+    topic: guardrails
+    sourceRefs:
+    - SR008
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR013
+  - id: CR020
+    statement: OpenRouter guardrails and workspace budgets let customers set spend limits that block requests once limits are exceeded.
+    type: company-claimed
+    topic: spend-governance
+    sourceRefs:
+    - SR007
+    - SR019
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR020
+    - QR029
+  - id: CR021
+    statement: OpenRouter's sovereign-AI guide says EU in-region routing is available only for enterprise customers and keeps decryption and processing within the EU.
+    type: company-claimed
+    topic: eu-routing
+    sourceRefs:
+    - SR021
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR007
+    - QR025
+  - id: CR022
+    statement: OpenRouter's data-residency blog says customers should audit OpenRouter itself before routing regulated workloads because trust shifts from many providers to the routing layer.
+    type: company-claimed
+    topic: data-residency
+    sourceRefs:
+    - SR022
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR007
+    - QR026
+  - id: CR023
+    statement: European Commission AI Act guidance says GPAI obligations took effect in August 2025 and transparency obligations take effect in August 2026.
+    type: observed
+    topic: ai-act
+    sourceRefs:
+    - SR024
+    - SR025
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR005
+    - QR025
+  - id: CR024
+    statement: European Commission AI Act guidance says high-risk AI systems require risk management, logging, documentation, human oversight, robustness, and cybersecurity controls.
+    type: observed
+    topic: ai-act
+    sourceRefs:
+    - SR024
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR006
+  - id: CR025
+    statement: OpenRouter's human-oversight blog says deployers bear liability for consequential AI decisions and identifies August 2026 as the first hard deadline for relevant EU AI Act obligations.
+    type: company-claimed
+    topic: ai-governance
+    sourceRefs:
+    - SR023
+    - SR024
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR005
+    - QR006
+  - id: CR026
+    statement: The U.S. Copyright Office says a subsequent AI report will address model training, licensing, and liability, showing that core generative-AI IP questions remain unresolved.
+    type: observed
+    topic: copyright
+    sourceRefs:
+    - SR027
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QR008
+  - id: CR027
+    statement: OpenRouter's reliability guide says provider failover is automatic by default, while model-level fallbacks are opt-in.
+    type: company-claimed
+    topic: routing-reliability
+    sourceRefs:
+    - SR014
+    - SR011
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR017
+  - id: CR028
+    statement: OpenRouter's provider-selection guide says allow_fallbacks defaults to true and data_collection defaults to allow.
+    type: company-claimed
+    topic: routing-defaults
+    sourceRefs:
+    - SR011
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR017
+  - id: CR029
+    statement: OpenRouter's model-fallbacks guide says fallback models can be triggered by rate limits, downtime, context-length errors, and moderation refusals.
+    type: company-claimed
+    topic: routing-reliability
+    sourceRefs:
+    - SR012
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR017
+  - id: CR030
+    statement: OpenRouter's routing and reliability docs say narrowing the provider set with only, ignore, or order reduces fallback options and can trade reliability for control.
+    type: company-claimed
+    topic: routing-defaults
+    sourceRefs:
+    - SR011
+    - SR014
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QR018
+  - id: CR031
+    statement: OpenRouter's outages blog says a third-party caching dependency caused the February 17 and 19, 2026 outages and that the company added circuit breakers, fallback caching, and more accurate 503 responses afterward.
+    type: company-claimed
+    topic: outage-root-cause
+    sourceRefs:
+    - SR013
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QR014
+    - QR015
+    - QR029
+  - id: CR032
+    statement: OpenRouter said the February 17 outage began as roughly 20% failing requests and escalated into 80–90% failure rates once cache invalidation forced a thundering herd onto database lookups.
+    type: company-claimed
+    topic: outage-impact
+    sourceRefs:
+    - SR013
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QR014
+    - QR015
+  - id: CR033
+    statement: OpenRouter acknowledged that infrastructure lookup failures were misreported to customers as 401 authentication errors during the February outages.
+    type: company-claimed
+    topic: outage-impact
+    sourceRefs:
+    - SR013
+    - SR017
+    confidence: high
+    freshness: recent
+    answersQuestionRefs:
+    - QR014
+    - QR015
+    - QR021
+  - id: CR034
+    statement: OpenRouter Status recorded a separate 401-errors incident that affected both chat and generation APIs for about 1 hour and 21 minutes.
+    type: observed
+    topic: incident-history
+    sourceRefs:
+    - SR017
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QR014
+    - QR016
+  - id: CR035
+    statement: OpenRouter Status said Clerk authentication-provider degradation affected website logins and account access while API requests were unaffected.
+    type: observed
+    topic: incident-history
+    sourceRefs:
+    - SR015
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QR016
+    - QR019
+  - id: CR036
+    statement: OpenRouter Status recorded an Amazon Bedrock outage as a platform incident, showing that upstream-provider issues can surface at the OpenRouter layer.
+    type: observed
+    topic: incident-history
+    sourceRefs:
+    - SR016
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QR016
+    - QR022
+  - id: CR037
+    statement: OpenRouter Status said delayed API request logs also delayed budgets and billing events for nearly five hours.
+    type: observed
+    topic: incident-history
+    sourceRefs:
+    - SR018
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QR016
+    - QR021
+  - id: CR038
+    statement: OpenRouter's routing docs imply that strict data and provider restrictions can leave requests with fewer eligible paths when no compliant provider is available.
+    type: inferred
+    topic: routing-defaults
+    sourceRefs:
+    - SR011
+    - SR021
+    - SR022
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR018
+  - id: CR039
+    statement: Amazon Bedrock now offers prompt routing across model families through a single endpoint to optimize quality and cost.
+    type: observed
+    topic: competition
+    sourceRefs:
+    - SR028
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR023
+  - id: CR040
+    statement: Microsoft Foundry's model router offers cost, balanced, and quality modes inside one deployment and auto-updates supported models over time.
+    type: observed
+    topic: competition
+    sourceRefs:
+    - SR029
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR023
+    - QR024
+  - id: CR041
+    statement: OpenAI enforces rate limits and monthly usage limits at the organization and project level rather than only at the end-user level.
+    type: observed
+    topic: upstream-limits
+    sourceRefs:
+    - SR030
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR022
+  - id: CR042
+    statement: Google Cloud publishes region-by-region and model-by-model quotas for generative AI and agent-runtime request capacity.
+    type: observed
+    topic: upstream-limits
+    sourceRefs:
+    - SR031
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR022
+  - id: CR043
+    statement: OpenRouter's reliability guide says some 429 paths or partial-output failures have still consumed credits, so failed-request economics are not perfectly insulated.
+    type: company-claimed
+    topic: billing-risk
+    sourceRefs:
+    - SR014
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QR020
+    - QR021
+  - id: CR044
+    statement: OpenRouter's terms page links Stripe and Coinbase legal agreements into payment and credits-related functionality.
+    type: observed
+    topic: payment-rails
+    sourceRefs:
+    - SR001
+    - SR032
+    - SR033
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR019
+  - id: CR045
+    statement: Stripe's services agreement uses binding arbitration and lets Stripe modify or discontinue aspects of its services subject to security, law, or provider obligations.
+    type: observed
+    topic: payment-rails
+    sourceRefs:
+    - SR032
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR019
+  - id: CR046
+    statement: Coinbase's user agreement uses binding arbitration and says Coinbase may refuse, suspend, or terminate accounts or trading in its sole discretion.
+    type: observed
+    topic: payment-rails
+    sourceRefs:
+    - SR033
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR019
+  - id: CR047
+    statement: OpenRouter's workspace budgets are enterprise-only, so strong spend-governance defaults are not universally available across the customer base.
+    type: company-claimed
+    topic: spend-governance
+    sourceRefs:
+    - SR019
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR020
+    - QR025
+  - id: CR048
+    statement: Because OpenRouter sells reliability abstraction, a control-plane outage at OpenRouter is more thesis-damaging than a normal SaaS incident at a company whose product is not itself routing and failover.
+    type: inferred
+    topic: top-risk
+    sourceRefs:
+    - SR013
+    - SR014
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QR014
+    - QR029
+  - id: CR049
+    statement: OpenRouter's privacy and compliance controls are real, but many are opt-in, configuration-dependent, or enterprise-only, leaving residual exposure material for regulated traffic.
+    type: inferred
+    topic: top-risk
+    sourceRefs:
+    - SR006
+    - SR007
+    - SR019
+    - SR021
+    - SR022
+    - SR023
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR007
+    - QR024
+    - QR025
+    - QR029
+  - id: CR050
+    statement: AWS and Microsoft shipping native routing, combined with upstream quota and policy control by model vendors, makes take-rate compression a more plausible long-term risk than raw traffic shortfall.
+    type: inferred
+    topic: economic-risk
+    sourceRefs:
+    - SR028
+    - SR029
+    - SR030
+    - SR031
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR024
+    - QR029
+  - id: CR051
+    statement: The public materials reviewed for this chapter do not disclose OpenRouter traffic or revenue concentration by model provider or enterprise customer.
+    type: inferred
+    topic: concentration-opacity
+    sourceRefs:
+    - SR011
+    - SR021
+    - SR022
+    confidence: low
+    freshness: current
+    answersQuestionRefs:
+    - QR028
+  - id: CR052
+    statement: The public materials reviewed for this chapter provide a DPA, routing controls, and AI-governance guidance, but they do not surface a fully diligence-ready certification and subprocessor pack.
+    type: inferred
+    topic: assurance-gap
+    sourceRefs:
+    - SR003
+    - SR021
+    - SR022
+    - SR023
+    confidence: low
+    freshness: current
+    answersQuestionRefs:
+    - QR026
+  - id: CR053
+    statement: The most important thesis-break triggers are repeated OpenRouter-originated outages, evidence that regulated traffic cannot stay within approved routing boundaries, or persistent billing-credit disputes.
+    type: inferred
+    topic: thesis-break
+    sourceRefs:
+    - SR013
+    - SR018
+    - SR021
+    - SR022
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR029
+  - id: CR054
+    statement: Pre-investment diligence should request provider concentration, uptime/SLO history, security attestations, and billing-dispute metrics under NDA before underwriting regulated or mission-critical adoption.
+    type: inferred
+    topic: diligence-asks
+    sourceRefs:
+    - SR013
+    - SR018
+    - SR021
+    - SR022
+    - SR023
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR030
+  evidenceGaps:
+  - type: private-evidence-only
+    severity: material
+    topic: provider-concentration
+    missingEvidence: Provider-level traffic, spend, GMV, rebate, and failover concentration by major model family and by top enterprise customers.
+    whyItMatters: Without concentration data, it is impossible to tell whether OpenRouter's diversification story is real or whether one provider or customer already dominates the economics.
+    diligencePath: Request a monthly provider-mix and top-customer concentration dashboard under NDA, plus any contractual minimums or preferential terms with key model providers.
+    relatedQuestionRefs:
+    - QR028
+    relatedTableRefs:
+    - TR003
+  - type: missing-source
+    severity: material
+    topic: security-assurance
+    missingEvidence: Independent security attestations, current certification pack, public or NDA subprocessor schedule, and uptime / SLO history.
+    whyItMatters: Regulated or mission-critical buyers will care less about feature breadth than about independently auditable evidence that the control plane is secure, resilient, and properly subcontracted.
+    diligencePath: Request SOC 2 / ISO reports, pen-test cadence, subprocessor list, trust-center materials, and monthly uptime / incident metrics before underwriting enterprise expansion.
+    relatedQuestionRefs:
+    - QR026
+    relatedTableRefs:
+    - TR004
+  - type: missing-source
+    severity: minor
+    topic: litigation-enforcement
+    missingEvidence: A counsel-led docket and regulatory sweep under the company legal name, founder names, and known jurisdictions.
+    whyItMatters: The direct public materials reviewed here did not reveal a formal litigation or enforcement issue, but absence from product and policy pages is not the same as legal clearance.
+    diligencePath: Have external counsel run litigation, privacy-enforcement, sanctions, and AI-governance searches across federal, state, and EU sources before close.
+    relatedQuestionRefs:
+    - QR027
+    relatedTableRefs:
+    - TR001
