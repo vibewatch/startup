@@ -1,0 +1,1810 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: applied-compute
+runDate: '2026-07-05'
+company:
+  name: Applied Compute
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: 'Applied Compute is not selling a generic chatbot: it is selling a managed Train/Serve/Improve platform that post-trains customer-specific agents on proprietary data, deploys them in production-grade single-tenant or VPC environments, and feeds real usage traces back into continual-learning loops. The technical story is unusually detailed for a 2025-founded startup, but the public evidence still leans heavily on company-authored research and case studies, with limited independent verification of security scope, uptime, or self-serve developer maturity.'
+sections:
+- id: specific-intelligence-platform
+  title: Specific Intelligence is a managed specialization layer, not a general-purpose model API
+  body: 'Applied Compute defines the product in concrete workflow terms as a cloud for training, inference, and continuous improvement rather than as a standalone base model. The homepage breaks the platform into Train, Serve, and Improve: customers bring their own data, harnesses, and graders; Applied Compute post-trains tool-using agents across text, images, code, and structured data; and the resulting model is then served in production and updated from live feedback. The company repeatedly frames this as a specialization layer that sits above commoditizing frontier models, allowing the customer to keep its own reward functions, evals, and memory rather than outsourcing intelligence to a single upstream foundation-model vendor. That framing is consistent across the homepage, the fundraise post, the Modal customer story, and later technical research posts. Importantly, the platform is pitched as model-flexible rather than model-monolithic: Applied Compute says customers can train from the
+    best available base model and later upgrade without rebuilding the harness, data pipeline, or deployment stack. In practice, that means the product promise is less “we have the best foundation model” and more “we help enterprises turn proprietary judgment into a durable, reusable training-and-deployment loop.”'
+  claimRefs:
+  - CE001
+  - CE002
+  - CE003
+  - CE004
+  - CE011
+  - CE037
+  - CE038
+  tableRefs:
+  - TE001
+  figureRefs:
+  - FE001
+- id: training-and-context-architecture
+  title: The technical architecture couples RL post-training with a context-and-memory system
+  body: 'Applied Compute’s public technical corpus shows two tightly linked product bets. The first is reinforcement-learning-based post-training in realistic, replayable environments. DoorDash’s deployment turned internal QA labels into an automated grader and then used that grader as a reward signal; Cognition’s SWE-check case recreated the production Windsurf harness during RL and then split post-training into capability and product-alignment phases; Mercor’s work used long-horizon RL over expert-labeled worlds and trajectory-level observability to catch reward-design failures. The second bet is that weights alone are insufficient, so agents also need a runtime memory layer. The Context Engine papers describe a Remember/Refine/Retrieve pipeline that ingests SaaS data and agent traces, distills them into a Contextbase, and exposes retrieval APIs to the agent at runtime; the follow-on “Memory in the wild” post shows the same loop pointed at Applied Compute’s own code traces, with critical-memory
+    retrieval rising from under 10% to around 20% over two weeks. The company’s newer “neural cheat-sheets” work further suggests it wants context compression itself to become a trained capability, not just a prompting trick. Together, these materials imply a full-stack architecture: custom environments and graders produce better weights, while traces and context systems preserve what the model should remember between runs.'
+  claimRefs:
+  - CE007
+  - CE008
+  - CE009
+  - CE010
+  - CE014
+  - CE016
+  - CE018
+  - CE026
+  - CE027
+  tableRefs:
+  - TE002
+  - TE003
+  figureRefs:
+  - FE002
+- id: serving-deployment-and-control-plane
+  title: Serving is optimized for long-horizon agents and controlled enterprise deployment
+  body: 'The Serve and Improve layers are as central to the product as the training loop. Applied Compute says customers can move from training to production with zero train-to-deployment mismatch, promote checkpoints instantly, and configure deployments around throughput, latency, and concurrency requirements ranging from asynchronous agents to real-time user experiences. The company also claims support for serverless deployment on its own cloud or full operation inside the customer’s VPC from a single control plane, plus single-tenant regional deployments and audit logging on every dispatch. Several research posts explain why these claims matter technically. The inference benchmark argues that agentic workloads differ materially from classic prompt/response serving because they create dozens of short generations, long-lived KV caches, and heavy-tailed tool latencies. The async-RL staleness post shows how utilization, queue capacity, rollout concurrency, and response-length tailness affect
+    training quality once serving and learning are disaggregated. The public GitHub evidence is thin but directionally consistent: the organization exposes one Apache-licensed repo, `trie`, that replays inference traffic against an endpoint, matching the benchmarking narrative in the research posts. The result is a coherent picture of a platform optimized for trace-heavy, tool-using agents rather than single-turn chat throughput.'
+  claimRefs:
+  - CE005
+  - CE006
+  - CE012
+  - CE013
+  - CE022
+  - CE023
+  - CE024
+  - CE033
+  - CE035
+  - CE036
+  tableRefs:
+  - TE004
+  figureRefs:
+  - FE003
+- id: differentiation-roadmap-and-technical-risks
+  title: Differentiation is credible, but technical risk still sits in verification, security, and productization depth
+  body: 'Applied Compute’s differentiation is strongest where it stays narrow and operational. Cognition’s SWE-check case supports the thesis that a smaller specialist can approach frontier accuracy on a single task with much lower latency and cost; Mercor’s benchmark work suggests the company can extract large gains from scarce expert data; and the Modal story indicates the team has already built around the infrastructure realities of rollouts, eval fan-out, and GPU-bound serving. Its 2026 publication cadence also signals a rapidly iterating research organization rather than a static services shop. That said, the public evidence has real limits. The best security claims — SOC 2 certification, data never leaving the customer perimeter, RBAC and audit logs — come from Applied Compute’s own marketing surfaces, with no public audit report, trust-center detail, or uptime history located in this pass. External guidance from Anthropic, Cohere, OpenAI, Microsoft, and CISA all converges on the same
+    theme: production agents need tight orchestration, observability, and guardrails because flexibility increases cost and error surfaces. The independent Reward Hacking Benchmark adds a sharper warning for Applied Compute’s chosen paradigm, showing that RL-trained tool-using agents can exploit shortcuts unless environments are hardened. In short, the product story is unusually sophisticated for a very young company, but the public verification surface still lags the ambition of the architecture.'
+  claimRefs:
+  - CE015
+  - CE017
+  - CE019
+  - CE020
+  - CE021
+  - CE025
+  - CE028
+  - CE029
+  - CE030
+  - CE031
+  - CE032
+  - CE034
+  - CE039
+  - CE040
+  tableRefs:
+  - TE005
+  figureRefs:
+  - FE004
+tables:
+- id: TE001
+  title: Product module / asset matrix
+  columns:
+  - module / asset
+  - primary user
+  - status / maturity
+  - differentiation
+  - diligence gap
+  rows:
+  - - Train
+    - Applied Compute researchers plus customer ML / engineering teams
+    - Core product, repeatedly evidenced
+    - Post-trains tool-using agents on customer data, harnesses, and graders across multiple modalities
+    - No public API / SDK docs showing a fully self-serve training workflow or pricing model
+  - - Serve
+    - Platform / infra teams operating production agents
+    - Core product, repeatedly evidenced
+    - Keeps the deployment harness aligned with training, supports single-tenant regions and VPC operation, and optimizes for agentic latency / throughput tradeoffs
+    - No public uptime SLA, status page history, or benchmark against customer production traffic outside company-authored posts
+  - - Improve
+    - Product / ML teams closing the learning loop
+    - Core product, repeatedly evidenced
+    - Turns production traces, human feedback, and rollout observability into online RL or self-distillation updates
+    - No public retention or regression-rate data showing how often production updates are safely promoted
+  - - Context Engine / Contextbase
+    - Enterprise knowledge workers and agent builders
+    - Emerging but clearly productized in 2026 research
+    - Adds Remember / Refine / Retrieve memory so institutional knowledge compounds over time instead of living only in weights
+    - No public customer deployment count or external audit of retrieval quality beyond company benchmarks
+  - - Router / benchmark tooling
+    - Internal platform teams and advanced customers
+    - Early but real
+    - Multi-model routing, trace replay, and workload benchmarking reflect a platform built around agent operations rather than just model hosting
+    - Public developer footprint is one repo and company-authored research; breadth of customer-facing tooling remains unclear
+  notes: Rows distinguish the three homepage modules from adjacent technical assets surfaced in 2026 research. “Status / maturity” reflects only the public evidence reviewed in this chapter, not internal SKU boundaries.
+  claimRefs:
+  - CE001
+  - CE002
+  - CE004
+  - CE007
+  - CE020
+  - CE021
+  - CE035
+  - CE038
+- id: TE002
+  title: Workflow / use-case table
+  columns:
+  - user job
+  - current workflow
+  - Applied Compute solution
+  - measurable benefit
+  - limitation
+  rows:
+  - - Merchant menu onboarding at DoorDash
+    - Human experts verify messy menu outputs and QA labels catch quality failures after automated extraction
+    - Build a calibrated grader from expert QA labels, then RL-train an error-correction model against DoorDash quality standards
+    - Low-quality menus fell by roughly 30% relative and the model rolled out to all U.S. menu traffic
+    - Benefits come from company and case-study evidence; public cost savings and false-positive rates are not disclosed
+  - - Real-time bug detection at Cognition / Windsurf
+    - Frontier models can find subtle bugs but may be too slow or expensive for instant IDE feedback
+    - Replicate the production harness during RL and train a specialist bug-detection model aligned to product latency constraints
+    - Roughly 10x faster than Opus 4.6 with an in-distribution delta F1 gap closed from 0.09 to 0
+    - Out-of-distribution gap remains non-zero, so specialization improves but does not eliminate frontier-model tradeoffs
+  - - Professional-work agents with Mercor data
+    - General models struggle on long-horizon legal, consulting, and banking tasks
+    - Use expert-labeled tasks plus long-horizon RL and trajectory observability to post-train a small specialist model
+    - Pass@1 and mean score nearly doubled overall; corporate-law Pass@1 tripled on the cited experiment
+    - Evidence is benchmark-centered rather than customer production ROI
+  - - Enterprise memory / context management
+    - Institutional knowledge sits in documents, traces, and SMEs rather than in reusable agent memory
+    - Remember / Refine / Retrieve builds a Contextbase and feeds relevant memory back to runtime agents
+    - GPT-5.4 APEX-Agents score improved from 44.2% to 51.7% in the cited benchmark; internal ACL-Wiki memory criticality roughly doubled
+    - Most evidence is company-authored and benchmark-based, not third-party production telemetry
+  notes: Each row maps a real customer or benchmark workflow to the product intervention Applied Compute describes. Metrics are recorded exactly as the cited public sources present them and should not be read as generalized across all customers.
+  claimRefs:
+  - CE008
+  - CE009
+  - CE014
+  - CE015
+  - CE016
+  - CE017
+  - CE018
+  - CE019
+  - CE039
+- id: TE003
+  title: Technology / operating architecture table
+  columns:
+  - layer / process
+  - role
+  - public evidence
+  - dependency
+  - risk
+  rows:
+  - - Replayable environments and harnesses
+    - Let models attempt tasks inside the same or similar environment they will see in production
+    - DoorDash, Cognition, Mercor, and Modal descriptions all emphasize environment fidelity
+    - Customer systems, tool definitions, sandbox provider
+    - Train-test mismatch if mocks diverge from real production behavior
+  - - Graders / reward functions
+    - Score outputs so RL can reinforce desirable behavior
+    - DoorDash automated grader; Mercor rubric redesign; leverage / entropy / staleness research
+    - Human labels, task design, reward calibration
+    - Bad reward shaping can reward refusal, shortcutting, or brittle behavior
+  - - Serving and inference optimization
+    - Operate long-horizon, tool-using traces with acceptable latency and cost
+    - Inference benchmark and async-RL staleness papers; single-tenant and VPC claims on homepage
+    - Inference engines, KV-cache management, concurrency tuning, GPU supply
+    - Tail latencies and cache eviction can degrade both user experience and training quality
+  - - Context Engine / retrieval APIs
+    - Expose refined enterprise memory at runtime
+    - Remember / Refine / Retrieve and Memory in the Wild posts
+    - Enterprise documentation, trace logging, retrieval quality
+    - Poor summarization or stale memory can degrade agent reliability and auditability
+  - - Routing / orchestration layer
+    - Choose the right model or workflow for the task instead of forcing one default
+    - Agentic-router research and Anthropic workflow guidance
+    - Model panel quality, routing features, orchestration logic
+    - Router mistakes can add cost without improving success rate
+  notes: The “public evidence” column intentionally mixes customer cases and research posts because Applied Compute’s product narrative is unusually research-led. Risks capture where the architecture can fail even if the underlying idea is sound.
+  claimRefs:
+  - CE010
+  - CE012
+  - CE013
+  - CE020
+  - CE021
+  - CE022
+  - CE023
+  - CE024
+  - CE025
+  - CE026
+- id: TE004
+  title: Trust / quality / compliance table
+  columns:
+  - control / quality signal
+  - status
+  - scope
+  - best public evidence
+  - gap
+  rows:
+  - - SOC 2 certification
+    - Company-claimed
+    - Platform security / controls
+    - Homepage footer and security language
+    - No public audit report, effective date, scope statement, or trust-center artifact located
+  - - Data stays in customer perimeter
+    - Company-claimed
+    - Sensitive enterprise deployments
+    - 'Homepage: serverless or VPC deployment; “data never leaves your perimeter”'
+    - No public architecture diagram showing how telemetry, logs, or training traces are isolated by deployment mode
+  - - Role-based access control and audit logs
+    - Company-claimed
+    - Access, dispatch, and lifecycle events
+    - Homepage trust copy
+    - No public admin or audit UX screenshots; cannot verify granularity or retention
+  - - Checkpoint promotion and monitoring
+    - Strongly implied product capability
+    - Model release management and A/B testing
+    - Homepage Improve section and research corpus on observability
+    - No public rollback/SLO metrics or incident disclosures
+  - - Agent security risk guidance
+    - Independently corroborated as a real concern
+    - Tool use, autonomy, and oversight
+    - CISA guidance plus reward-hacking benchmark
+    - Company has not publicly mapped its guardrails to a named external framework
+  notes: This table separates company-claimed controls from independently evidenced risk signals. The absence of an external trust center or public uptime/security detail is itself a diligence finding for an enterprise-AI platform at this valuation.
+  claimRefs:
+  - CE005
+  - CE006
+  - CE023
+  - CE033
+  - CE034
+- id: TE005
+  title: Roadmap / release / development-stage table
+  columns:
+  - date / stage
+  - feature or milestone
+  - status
+  - implication
+  - source
+  rows:
+  - - '2026-03-24'
+    - High-leverage-samples RL research
+    - Published
+    - Signals focus on training compute-efficiency and rollout selection
+    - Applied Compute research post
+  - - '2026-04-22'
+    - Inference benchmark + trace replay harness
+    - Published
+    - Shows a serving / observability layer tuned for agentic workloads rather than chat-only traffic
+    - Applied Compute research post + GitHub trie repo
+  - - 2026-05-01 to 2026-05-08
+    - Context Engine and Memory in the Wild
+    - Published
+    - Suggests a move from one-off post-training into reusable runtime memory products
+    - Applied Compute research posts
+  - - 2026-05-22 to 2026-06-16
+    - RMSD, routing, and entropy-preserving RL
+    - Published
+    - Roadmap emphasis is on making custom models more stable, cheaper, and better targeted to enterprise tasks
+    - Applied Compute research posts
+  - - 2026-06-26 to 2026-07-03
+    - Neural cheat-sheets and async-RL staleness control
+    - Published
+    - Points toward context compression and system-level RL optimization as next-layer product bets
+    - Applied Compute research posts
+  - - '2026-05-06'
+    - DoorDash launches AI-powered self-serve onboarding tools
+    - Live at customer
+    - Shows the broader merchant-onboarding workflow is still expanding even after the earlier RL correction work
+    - DoorDash newsroom
+  - - '2026-07-02'
+    - Public trie repo last updated
+    - Active but narrow
+    - Confirms at least one public developer artifact is maintained into the run date
+    - GitHub Applied-Compute/trie
+  notes: Because Applied Compute does not publish a formal roadmap page, this table reconstructs roadmap direction from dated releases and external customer launches. It is better read as a release cadence map than as a committed GA roadmap.
+  claimRefs:
+  - CE009
+  - CE020
+  - CE021
+  - CE022
+  - CE024
+  - CE026
+  - CE027
+  - CE036
+  - CE039
+figures:
+- id: FE001
+  title: Product architecture map
+  type: stack
+  layout: wide
+  summary: Applied Compute layers a Train/Serve/Improve control plane over customer data, enterprise memory, and long-horizon RL instrumentation.
+  data:
+    layers:
+    - label: Customer context layer
+      detail: Customer data, SME judgment, SOPs, traces, and proprietary harnesses
+      tone: neutral
+      modules:
+      - Documents and structured data
+      - Tool definitions
+      - Human QA labels
+      - Production traces
+      outputs:
+      - Enterprise-specific ground truth
+    - label: Train layer
+      detail: Post-training and evaluation infrastructure for specialized models
+      tone: positive
+      modules:
+      - RL rollouts
+      - Graders / reward functions
+      - Self-distillation
+      - Evaluation harnesses
+      outputs:
+      - Customer-specific checkpoints
+    - label: Serve layer
+      detail: Production inference aligned to the same harness used in training
+      tone: positive
+      modules:
+      - Single-tenant serving
+      - VPC deployments
+      - Concurrency / latency tuning
+      - Checkpoint promotion
+      outputs:
+      - Live agent responses
+    - label: Improve layer
+      detail: Continuous learning from runtime behavior
+      tone: positive
+      modules:
+      - Trace capture
+      - A/B testing
+      - Online RL / self-distillation
+      - Regression detection
+      outputs:
+      - Updated models and policies
+    - label: Context layer
+      detail: Remember / Refine / Retrieve memory system alongside the weights
+      tone: positive
+      modules:
+      - Contextbase
+      - Memory retrieval APIs
+      - Neural cheat-sheets
+      outputs:
+      - Reusable institutional knowledge
+    - label: Governance layer
+      detail: Company-claimed security controls plus external guardrail need
+      tone: warning
+      modules:
+      - SOC 2 (claimed)
+      - RBAC and audit logs
+      - Oversight / hardening requirements
+      outputs:
+      - Enterprise deployment control
+  approximationNotes: Layer boundaries are reconstructed from Applied Compute’s homepage, research posts, and customer cases. The governance layer intentionally mixes company-claimed controls with independently evidenced guardrail needs because the public verification surface is incomplete.
+  claimRefs:
+  - CE001
+  - CE004
+  - CE005
+  - CE006
+  - CE007
+  - CE010
+  - CE011
+- id: FE002
+  title: Customer workflow / operating flow
+  type: flow
+  layout: wide
+  summary: Across customers, Applied Compute follows a repeatable flow from expert judgment capture to production deployment and continuous improvement.
+  data:
+    nodes:
+    - id: problem
+      label: Customer problem and quality bar
+      detail: A domain-specific task with measurable failure modes
+      tone: neutral
+    - id: signals
+      label: Collect data, traces, and labels
+      detail: Internal docs, QA labels, expert tasks, or production traces
+      tone: positive
+    - id: grader
+      label: Build harness and grader
+      detail: Encode what “good” looks like in the customer’s environment
+      tone: positive
+    - id: train
+      label: Post-train specialized model
+      detail: RL and/or self-distillation against the customer objective
+      tone: positive
+    - id: deploy
+      label: Serve in production
+      detail: Launch inside the customer workflow with latency and security constraints
+      tone: positive
+    - id: improve
+      label: Capture traces and improve
+      detail: Use production behavior, evals, and monitoring to update the system
+      tone: positive
+    edges:
+    - from: problem
+      to: signals
+      label: define judgment and data
+    - from: signals
+      to: grader
+      label: turn expertise into rewards
+    - from: grader
+      to: train
+      label: score rollouts
+    - from: train
+      to: deploy
+      label: promote best checkpoint
+    - from: deploy
+      to: improve
+      label: observe real usage
+    - from: improve
+      to: signals
+      label: feed back new traces
+  claimRefs:
+  - CE007
+  - CE009
+  - CE014
+  - CE015
+  - CE016
+  - CE018
+- id: FE003
+  title: Critical dependency map
+  type: dag
+  layout: wide
+  summary: Applied Compute depends on customer environments, inference infrastructure, trace quality, and guardrails; failure at any node transmits directly to production reliability.
+  data:
+    nodes:
+    - id: core
+      label: Applied Compute platform
+      detail: Train / Serve / Improve control plane
+      tone: neutral
+    - id: customer
+      label: Customer data + harness
+      detail: Proprietary docs, tools, evals, and SMEs
+      tone: neutral
+    - id: infra
+      label: Sandbox / compute infrastructure
+      detail: Rollouts, grading fan-out, inference capacity
+      tone: neutral
+    - id: memory
+      label: Trace and memory quality
+      detail: Remember / Refine / Retrieve and context compression
+      tone: neutral
+    - id: routing
+      label: Model routing / orchestration
+      detail: Selecting the right model or workflow for the task
+      tone: neutral
+    - id: security
+      label: Guardrails and security hardening
+      detail: Oversight against reward hacking, unsafe tool use, and drift
+      tone: warning
+    - id: outcome
+      label: Production agent outcome
+      detail: Customer-facing quality, latency, and reliability
+      tone: positive
+    edges:
+    - from: customer
+      to: core
+      label: defines objectives
+    - from: infra
+      to: core
+      label: supports rollouts and serving
+    - from: memory
+      to: core
+      label: improves context
+    - from: routing
+      to: core
+      label: optimizes cost-quality mix
+    - from: security
+      to: core
+      label: constrains safe operation
+    - from: core
+      to: outcome
+      label: deploys specialized agent
+    - from: security
+      to: outcome
+      label: reduces exploit surface
+    - from: memory
+      to: outcome
+      label: improves recall and consistency
+  approximationNotes: The graph is qualitative rather than quantitative. It is intended to show transmission pathways, not a weighted causal model.
+  claimRefs:
+  - CE012
+  - CE013
+  - CE022
+  - CE023
+  - CE024
+  - CE033
+  - CE034
+- id: FE004
+  title: Product maturity / capability map
+  type: matrix
+  layout: wide
+  summary: Training, serving, and specialization are the most evidenced capabilities; public trust, self-serve tooling, and independent verification are the weakest.
+  data:
+    columns:
+    - Maturity
+    - Evidence strength
+    - Diligence gap
+    rows:
+    - label: Customer-specific post-training
+      values:
+      - label: high
+        tone: positive
+        detail: Repeated across homepage, Modal, DoorDash, Cognition, and Mercor
+      - label: strong
+        tone: positive
+        detail: Multiple concrete cases with metrics or workflow detail
+      - label: medium
+        tone: neutral
+        detail: No public price, win-rate, or customer-count disclosure by module
+    - label: Agent serving / deployment
+      values:
+      - label: medium-high
+        tone: positive
+        detail: Core homepage module plus inference benchmark and staleness research
+      - label: medium
+        tone: neutral
+        detail: Evidence is detailed but still mostly company-authored
+      - label: high
+        tone: warning
+        detail: No public uptime, SLA, or incident-history evidence found
+    - label: Context / memory system
+      values:
+      - label: medium-high
+        tone: positive
+        detail: Substantial 2026 research output and internal deployment story
+      - label: medium
+        tone: neutral
+        detail: Benchmark and internal gains are specific, but third-party validation is limited
+      - label: medium-high
+        tone: warning
+        detail: Need external customer proof that Contextbase quality persists outside AC benchmarks
+    - label: Developer surface / public tooling
+      values:
+      - label: medium-low
+        tone: warning
+        detail: One public repo and no visible public members on GitHub
+      - label: medium-low
+        tone: warning
+        detail: Public benchmark harness exists, but breadth of API / SDK productization is unclear
+      - label: high
+        tone: warning
+        detail: Request product docs, SDK maturity, and support model under NDA
+    - label: Security / trust verification
+      values:
+      - label: medium
+        tone: neutral
+        detail: Claims are plausible and standard for enterprise AI
+      - label: low-medium
+        tone: warning
+        detail: Public evidence is mostly marketing copy plus external general-risk guidance
+      - label: high
+        tone: warning
+        detail: Need trust-center artifacts, certification scope, and incident / audit history
+  claimRefs:
+  - CE006
+  - CE015
+  - CE019
+  - CE023
+  - CE035
+  - CE036
+callouts:
+- calloutType: strength
+  title: Applied Compute has a coherent full-loop product thesis
+  body: 'The public materials line up around the same idea: capture enterprise judgment in graders and traces, train a specialist model in a replayable environment, deploy it in production, and keep improving it from live feedback. For a 2025-founded startup, the architecture is unusually explicit rather than purely marketing-level.'
+  claimRefs:
+  - CE001
+  - CE007
+  - CE011
+  - CE012
+- calloutType: insight
+  title: The moat claim is operational, not foundational
+  body: Applied Compute’s strongest differentiation is not owning a frontier base model. It is owning the specialization loop — the harnesses, reward functions, routing logic, and memory systems that let a customer keep improving a task-specific agent even as the underlying model market changes.
+  claimRefs:
+  - CE002
+  - CE020
+  - CE027
+  - CE038
+- calloutType: risk
+  title: Public trust evidence lags the sophistication of the product story
+  body: The company publicly claims SOC 2, auditability, and perimeter-preserving deployment, but the best independent evidence in this chapter is generic risk guidance and external benchmarks showing how easily tool-using RL agents can go wrong without hardening. That gap is manageable in diligence, but it is real.
+  claimRefs:
+  - CE006
+  - CE033
+  - CE034
+localEvidence:
+  searchQueries:
+  - query: Applied Compute product platform train serve improve 2026
+    engine: web_search
+    hits: 10
+    retainedSourceRefs:
+    - SE001
+    - SE002
+  - query: Applied Compute Context Engine enterprise agents 2026
+    engine: web_search
+    hits: 10
+    retainedSourceRefs:
+    - SE006
+    - SE007
+    - SE014
+  - query: Applied Compute reinforcement learning routing staleness self-distillation 2026
+    engine: web_search
+    hits: 10
+    retainedSourceRefs:
+    - SE008
+    - SE009
+    - SE010
+    - SE012
+    - SE013
+  - query: Applied Compute Modal reinforcement learning infrastructure 2026
+    engine: web_search
+    hits: 10
+    retainedSourceRefs:
+    - SE015
+  - query: Applied Compute GitHub trie inference benchmark 2026
+    engine: web_search
+    hits: 10
+    retainedSourceRefs:
+    - SE016
+    - SE017
+  - query: Cognition SWE-check Applied Compute 2026
+    engine: web_search
+    hits: 10
+    retainedSourceRefs:
+    - SE018
+  - query: Mercor Applied Compute APEX-Agents long-horizon RL 2026
+    engine: web_search
+    hits: 10
+    retainedSourceRefs:
+    - SE019
+  - query: Anthropic building effective agents 2026
+    engine: web_search
+    hits: 10
+    retainedSourceRefs:
+    - SE020
+  - query: Cohere agentic workflows enterprise 2026
+    engine: web_search
+    hits: 10
+    retainedSourceRefs:
+    - SE021
+  - query: OpenAI new tools for building agents 2026
+    engine: web_search
+    hits: 10
+    retainedSourceRefs:
+    - SE022
+  - query: Microsoft Copilot Studio create AI agents 2026
+    engine: web_search
+    hits: 10
+    retainedSourceRefs:
+    - SE023
+  - query: DoorDash AI-powered merchant tools onboarding 2026
+    engine: web_search
+    hits: 10
+    retainedSourceRefs:
+    - SE024
+  - query: CISA agentic AI services security guidance 2026
+    engine: web_search
+    hits: 10
+    retainedSourceRefs:
+    - SE025
+  - query: reward hacking benchmark LLM agents tool use 2026
+    engine: web_search
+    hits: 10
+    retainedSourceRefs:
+    - SE026
+  - query: on-policy distillation self-distillation agent RL 2026
+    engine: web_search
+    hits: 10
+    retainedSourceRefs:
+    - SE027
+    - SE028
+    - SE029
+    - SE030
+  - query: ZenML DoorDash reinforcement learning merchant onboarding 2026
+    engine: web_search
+    hits: 10
+    retainedSourceRefs:
+    - SE031
+  researchQuestions:
+  - id: QE001
+    question: What does Applied Compute sell in customer workflow terms rather than frontier-model terms?
+    type: verification
+    targets:
+    - contentRequirements/0
+    - plannedTables/product-module-asset-matrix
+    status: answered
+  - id: QE002
+    question: How are the Train, Serve, and Improve modules separated operationally?
+    type: mechanism
+    targets:
+    - contentRequirements/1
+    - plannedFigures/product-architecture-map
+    status: answered
+  - id: QE003
+    question: What data types and task surfaces can customers train on with the platform?
+    type: verification
+    targets:
+    - contentRequirements/1
+    status: answered
+  - id: QE004
+    question: How does model-flexibility reduce rebuild cost as stronger base models ship?
+    type: mechanism
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QE005
+    question: How is enterprise memory or context handled alongside model weights?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    - plannedFigures/product-architecture-map
+    status: answered
+  - id: QE006
+    question: What role do replayable environments, harnesses, and graders play in Applied Compute training?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+  - id: QE007
+    question: What benchmark or customer evidence shows that specialization improves downstream performance?
+    type: comparison
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QE008
+    question: What latency or quality benefit did Cognition report from a specialized bug-detection model?
+    type: comparison
+    targets:
+    - contentRequirements/3
+    - plannedTables/workflow-use-case-table
+    status: answered
+  - id: QE009
+    question: What measurable quality benefit did DoorDash report from Applied Compute training?
+    type: quantification
+    targets:
+    - contentRequirements/3
+    - plannedTables/workflow-use-case-table
+    status: answered
+  - id: QE010
+    question: How much can expert data move performance in the Mercor / APEX-Agents workflow?
+    type: quantification
+    targets:
+    - contentRequirements/4
+    - plannedTables/workflow-use-case-table
+    status: answered
+  - id: QE011
+    question: What does the public GitHub footprint reveal about developer-facing product maturity?
+    type: adverse
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QE012
+    question: How much open-source tooling does Applied Compute expose publicly?
+    type: enumeration
+    targets:
+    - contentRequirements/1
+    status: answered
+  - id: QE013
+    question: What inference workload characteristics is the platform explicitly optimizing for?
+    type: quantification
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+  - id: QE014
+    question: What serving bottlenecks does Applied Compute identify for long-horizon agent workloads?
+    type: adverse
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QE015
+    question: How does Applied Compute try to continue training without entropy collapse or catastrophic forgetting?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QE016
+    question: How does self-distillation help with out-of-distribution enterprise behavior?
+    type: mechanism
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QE017
+    question: How does routing across multiple frontier models fit the product?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    - plannedFigures/critical-dependency-map
+    status: answered
+  - id: QE018
+    question: What deployment, audit, and compliance controls are publicly claimed?
+    type: enumeration
+    targets:
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+    status: answered
+  - id: QE019
+    question: Is there public independent verification of the scope or recency of Applied Compute’s SOC 2 claim?
+    type: adverse
+    targets:
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+    status: partial
+  - id: QE020
+    question: What trust and safety risks are inherent in tool-using enterprise agent platforms?
+    type: adverse
+    targets:
+    - contentRequirements/5
+    status: answered
+  - id: QE021
+    question: What evidence suggests RL-trained tool-using agents can reward-hack or drift off-policy?
+    type: adverse
+    targets:
+    - contentRequirements/5
+    status: answered
+  - id: QE022
+    question: How does Applied Compute’s architecture compare with the agent-platform guidance published by Anthropic, Cohere, OpenAI, and Microsoft?
+    type: comparison
+    targets:
+    - contentRequirements/4
+    - plannedFigures/product-maturity-capability-map
+    status: answered
+  - id: QE023
+    question: Does Applied Compute expose public API, SDK, or pricing detail sufficient for a self-serve developer motion?
+    type: verification
+    targets:
+    - contentRequirements/3
+    status: partial
+  - id: QE024
+    question: How fast is Applied Compute shipping net-new product or research surfaces in 2026?
+    type: freshness
+    targets:
+    - contentRequirements/3
+    - plannedTables/roadmap-release-development-stage-table
+    status: answered
+  - id: QE025
+    question: What roadmap can be reconstructed from dated 2026 public releases?
+    type: enumeration
+    targets:
+    - contentRequirements/3
+    - plannedTables/roadmap-release-development-stage-table
+    status: answered
+  - id: QE026
+    question: How dependent is the product on external infrastructure partners and customer environments?
+    type: adverse
+    targets:
+    - contentRequirements/2
+    - plannedFigures/critical-dependency-map
+    status: answered
+  - id: QE027
+    question: Can customers deploy in their own VPC or single-tenant region rather than only on Applied Compute’s cloud?
+    type: verification
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QE028
+    question: Which product surfaces remain thinly evidenced or too marketing-heavy for underwritten diligence?
+    type: adverse
+    targets:
+    - contentRequirements/5
+    status: partial
+  sources:
+  - id: SE001
+    publisher: Applied Compute
+    title: Applied Compute | Applied Compute
+    url: https://www.appliedcompute.com/
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - product-platform
+    - train-serve-improve
+    - deployment
+    keyQuote: Applied Compute is the cloud for model training, inference, and continuous improvement.
+  - id: SE002
+    publisher: Applied Compute
+    title: Blog | Applied Compute | Applied Compute
+    url: https://www.appliedcompute.com/blog
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - release-cadence
+    - research-index
+    - '2026'
+  - id: SE003
+    publisher: Applied Compute
+    title: Unlocking Real-Time Bug Detection at Cognition
+    url: https://www.appliedcompute.com/case-studies/cognition
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: customer-proof
+    reputationTier: medium
+    independence: company
+    topics:
+    - customer-proof
+    - cognition
+    - bug-detection
+  - id: SE004
+    publisher: Applied Compute
+    title: Automating Merchant Onboarding at DoorDash
+    url: https://www.appliedcompute.com/case-studies/doordash
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: customer-proof
+    reputationTier: medium
+    independence: company
+    topics:
+    - customer-proof
+    - doordash
+    - merchant-onboarding
+  - id: SE005
+    publisher: Applied Compute
+    title: Building State-of-the-Art Agents with Mercor
+    url: https://www.appliedcompute.com/case-studies/mercor
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: customer-proof
+    reputationTier: medium
+    independence: company
+    topics:
+    - customer-proof
+    - mercor
+    - benchmarking
+  - id: SE006
+    publisher: Applied Compute
+    title: 'Remember, Refine, Retrieve: A Context Engine for Enterprise Agents'
+    url: https://www.appliedcompute.com/research/remember-refine-retrieve
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - context-engine
+    - memory
+    - enterprise-agents
+  - id: SE007
+    publisher: Applied Compute
+    title: 'Memory in the wild: how we use Context Engine on our own code'
+    url: https://www.appliedcompute.com/research/memory-in-the-wild
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - memory
+    - coding-agents
+    - context-engine
+  - id: SE008
+    publisher: Applied Compute
+    title: Speeding up RL with high-leverage samples
+    url: https://www.appliedcompute.com/research/speeding-up-rl-with-high-leverage-samples
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - reinforcement-learning
+    - sample-efficiency
+  - id: SE009
+    publisher: Applied Compute
+    title: Bringing Capabilities in Distribution via Relevance-Masked Self-Distillation
+    url: https://www.appliedcompute.com/research/relevance-masked-self-distillation
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - self-distillation
+    - out-of-distribution
+    - enterprise-formats
+  - id: SE010
+    publisher: Applied Compute
+    title: Training an Agentic Router for Optimal Cost-Performance on SWE Tasks
+    url: https://www.appliedcompute.com/research/training-an-agentic-router
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - routing
+    - model-selection
+    - swe
+  - id: SE011
+    publisher: Applied Compute
+    title: Benchmarking Inference Engines on Agentic Workloads
+    url: https://www.appliedcompute.com/research/inference-benchmark
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - inference
+    - agentic-workloads
+    - serving
+  - id: SE012
+    publisher: Applied Compute
+    title: Continued Training with Entropy Preserving RL
+    url: https://www.appliedcompute.com/research/continued-training-with-entropy-preserving-rl
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - entropy
+    - continual-learning
+    - rl
+  - id: SE013
+    publisher: Applied Compute
+    title: Predicting and Controlling Staleness in Fully Asynchronous RL Training
+    url: https://www.appliedcompute.com/research/staleness-in-fully-async-rl
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - async-rl
+    - staleness
+    - systems
+  - id: SE014
+    publisher: Applied Compute
+    title: 'Neural Cheat Sheets: Learning to Summarize with Reinforcement Learning'
+    url: https://www.appliedcompute.com/research/neural-cheat-sheets-learning-to-summarize-with-reinforcement-learning
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - summarization
+    - memory
+    - reinforcement-learning
+  - id: SE015
+    publisher: Modal
+    title: Scaling reinforcement learning at Applied Compute
+    url: https://modal.com/blog/applied-compute-reinforcement-learning
+    date: '2026-05-20'
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: partner-proof
+    reputationTier: high
+    independence: partner
+    topics:
+    - infrastructure
+    - reinforcement-learning
+    - modal
+  - id: SE016
+    publisher: GitHub
+    title: Applied Compute · GitHub
+    url: https://github.com/Applied-Compute
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: high
+    independence: independent
+    topics:
+    - developer-signal
+    - github
+    - open-source
+  - id: SE017
+    publisher: GitHub
+    title: 'GitHub - Applied-Compute/trie: Lightweight harness for replaying inference traffic against an endpoint'
+    url: https://github.com/Applied-Compute/trie
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: high
+    independence: independent
+    topics:
+    - developer-signal
+    - trie
+    - benchmarking
+  - id: SE018
+    publisher: Cognition
+    title: 'Introducing SWE-Check: 10x Faster Bug Detection'
+    url: https://cognition.com/blog/swe-check-10x-faster
+    date: '2026-04-14'
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: customer-proof
+    reputationTier: high
+    independence: customer
+    topics:
+    - cognition
+    - swe-check
+    - customer-proof
+  - id: SE019
+    publisher: Mercor
+    title: Expert data drives model performance
+    url: https://www.mercor.com/blog/expert-data-drives-model-performance/
+    date: '2026-01-23'
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: customer-proof
+    reputationTier: medium
+    independence: customer
+    topics:
+    - mercor
+    - apex-agents
+    - customer-proof
+  - id: SE020
+    publisher: Anthropic
+    title: Building Effective AI Agents
+    url: https://www.anthropic.com/engineering/building-effective-agents
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: competitor
+    topics:
+    - agent-architecture
+    - workflow-guidance
+    - comparison
+  - id: SE021
+    publisher: Cohere
+    title: Agentic Workflows | Cohere
+    url: https://cohere.com/blog/agentic-workflows
+    date: '2025-03-06'
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: competitor
+    topics:
+    - agentic-workflows
+    - enterprise-agents
+    - comparison
+  - id: SE022
+    publisher: OpenAI
+    title: New tools for building agents
+    url: https://openai.com/index/new-tools-for-building-agents/
+    date: '2025-03-11'
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: competitor
+    topics:
+    - agent-platform
+    - tool-use
+    - observability
+  - id: SE023
+    publisher: Microsoft
+    title: Microsoft Copilot Studio | Create AI Agents
+    url: https://www.microsoft.com/en-us/microsoft-365-copilot/microsoft-copilot-studio
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: competitor
+    topics:
+    - copilot-studio
+    - agent-platform
+    - comparison
+  - id: SE024
+    publisher: DoorDash
+    title: DoorDash Introduces New AI-Powered Tools to Help Merchants Get Started Faster and Grow Across Channels
+    url: https://about.doordash.com/en-us/news/ai-powered-merchant-tools
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: customer
+    topics:
+    - doordash
+    - merchant-tools
+    - ai-onboarding
+  - id: SE025
+    publisher: Cybersecurity and Infrastructure Security Agency (CISA)
+    title: Careful Adoption of Agentic AI Services | CISA
+    url: https://www.cisa.gov/resources-tools/resources/careful-adoption-agentic-ai-services
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: adverse
+    sourceType: regulatory
+    reputationTier: high
+    independence: independent
+    topics:
+    - agentic-ai
+    - security
+    - governance
+  - id: SE026
+    publisher: arXiv
+    title: 'Reward Hacking Benchmark: Measuring Exploits in LLM Agents with Tool Use'
+    url: https://arxiv.org/abs/2605.02964
+    date: '2026-05-03'
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: adverse
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: independent
+    topics:
+    - reward-hacking
+    - tool-use
+    - safety
+  - id: SE027
+    publisher: arXiv
+    title: Reinforcement Learning via Self-Distillation
+    url: https://arxiv.org/abs/2601.20802
+    date: '2026-01-28'
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: independent
+    topics:
+    - self-distillation
+    - rlvr
+    - dense-feedback
+  - id: SE028
+    publisher: arXiv
+    title: 'OpenClaw-RL: Train Any Agent Simply by Talking'
+    url: https://arxiv.org/abs/2603.10165
+    date: '2026-03-10'
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: independent
+    topics:
+    - online-learning
+    - agent-rl
+    - next-state-signals
+  - id: SE029
+    publisher: arXiv
+    title: 'Self-Distilled Reasoner: On-Policy Self-Distillation for Large Language Models'
+    url: https://arxiv.org/abs/2601.18734
+    date: '2026-01-26'
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: independent
+    topics:
+    - on-policy-distillation
+    - reasoning
+    - self-distillation
+  - id: SE030
+    publisher: Thinking Machines Lab
+    title: On-Policy Distillation
+    url: https://thinkingmachines.ai/blog/on-policy-distillation/
+    date: '2025-10-27'
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: independent
+    topics:
+    - on-policy-distillation
+    - comparison
+    - compute-efficiency
+  - id: SE031
+    publisher: ZenML
+    title: Automating Merchant Onboarding with Reinforcement Learning
+    url: https://www.zenml.io/llmops-database/automating-merchant-onboarding-with-reinforcement-learning
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: review
+    reputationTier: medium
+    independence: independent
+    topics:
+    - doordash
+    - reinforcement-learning
+    - llmops
+  claims:
+  - id: CE001
+    statement: Applied Compute sells a Train/Serve/Improve platform for model training, inference, and continuous improvement rather than a standalone frontier base model.
+    type: observed
+    topic: product-platform
+    sourceRefs:
+    - SE001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+    - QE002
+  - id: CE002
+    statement: Applied Compute says customers can train from the best available base models and later upgrade without changing the harness, data pipeline, or deployment stack.
+    type: company-claimed
+    topic: model-flexibility
+    sourceRefs:
+    - SE001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE004
+  - id: CE003
+    statement: Applied Compute says its Train layer supports post-training across text, images, code, and structured data using the customer’s own harnesses and graders.
+    type: company-claimed
+    topic: training-stack
+    sourceRefs:
+    - SE001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE003
+    - QE006
+  - id: CE004
+    statement: Applied Compute says customers can serve the model in the same harness it was trained in, reducing train-to-deployment mismatch.
+    type: company-claimed
+    topic: deployment-alignment
+    sourceRefs:
+    - SE001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE002
+    - QE027
+  - id: CE005
+    statement: Applied Compute publicly claims support for dedicated single-tenant deployments in any region and operation either on its own cloud or fully inside the customer’s VPC.
+    type: company-claimed
+    topic: deployment-security
+    sourceRefs:
+    - SE001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE018
+    - QE027
+  - id: CE006
+    statement: Applied Compute publicly claims SOC 2 certification, role-based access control, audit logs on every dispatch, and data that never leaves the customer perimeter.
+    type: company-claimed
+    topic: trust-controls
+    sourceRefs:
+    - SE001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE018
+    - QE019
+  - id: CE007
+    statement: 'The Context Engine architecture is organized as Remember, Refine, and Retrieve: ingest enterprise resources and traces, refine them into a Contextbase, and expose retrieval APIs at runtime.'
+    type: observed
+    topic: context-engine
+    sourceRefs:
+    - SE006
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE005
+  - id: CE008
+    statement: In Applied Compute’s APEX-Agents benchmark write-up, adding a Contextbase improved GPT-5.4 mean score@3 from 44.2% to 51.7% and GPT-5.4-mini from 33.4% to 38.7%.
+    type: third-party-reported
+    topic: context-performance
+    sourceRefs:
+    - SE006
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE007
+  - id: CE009
+    statement: Applied Compute’s internal ACL-Wiki memory system raised critical-memory retrieval from under 10% to around 20% over roughly two weeks as more traces and feedback accumulated.
+    type: company-claimed
+    topic: memory-loop
+    sourceRefs:
+    - SE007
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE005
+    - QE024
+    - QE025
+  - id: CE010
+    statement: Applied Compute’s “neural cheat-sheets” work explicitly tries to learn auditable context summaries that approach the utility of learned KV-cache-style memory without losing natural-language interpretability.
+    type: company-claimed
+    topic: context-compression
+    sourceRefs:
+    - SE014
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE005
+  - id: CE011
+    statement: Modal describes Applied Compute’s core training loop as rollouts, evals, and inference operating continuously around custom customer tasks, with RL as the core training mechanism.
+    type: third-party-reported
+    topic: rl-loop
+    sourceRefs:
+    - SE015
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+    - QE006
+  - id: CE012
+    statement: Modal says Applied Compute needed infrastructure that let rollouts, grading, and inference each run with different performance profiles while sharing state across the loop.
+    type: third-party-reported
+    topic: infra-design
+    sourceRefs:
+    - SE015
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE006
+    - QE026
+  - id: CE013
+    statement: Modal says Applied Compute treats train-test mismatch as a consistent failure mode in deployed RL systems and therefore cares about high-fidelity mock environments and replayability.
+    type: third-party-reported
+    topic: environment-fidelity
+    sourceRefs:
+    - SE015
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE006
+    - QE026
+  - id: CE014
+    statement: DoorDash and Applied Compute turned internal QA labels into an automated grader and then used that grader as the reward function for reinforcement learning.
+    type: company-claimed
+    topic: grader-design
+    sourceRefs:
+    - SE004
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE006
+    - QE009
+  - id: CE015
+    statement: Applied Compute says its DoorDash menu-error-correction model reduced the share of low-quality menus by roughly 30% relative to baseline and was rolled out to all U.S. menu traffic, and ZenML repeats the same outcome in an independent LLMOps case summary.
+    type: third-party-reported
+    topic: doordash-outcome
+    sourceRefs:
+    - SE004
+    - SE031
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE007
+    - QE009
+  - id: CE016
+    statement: Cognition says the jointly developed SWE-check bug-detection model matched frontier in-distribution performance much more closely than its starting point while running roughly 10x faster than Opus 4.6.
+    type: third-party-reported
+    topic: cognition-outcome
+    sourceRefs:
+    - SE018
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE007
+    - QE008
+  - id: CE017
+    statement: Cognition frames SWE-check as evidence that smaller, specialized models can rival frontier generalists on the tasks they are trained for while materially lowering cost and latency.
+    type: third-party-reported
+    topic: specialization-thesis
+    sourceRefs:
+    - SE018
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE007
+    - QE008
+  - id: CE018
+    statement: Mercor says fewer than 1,000 high-quality data points nearly doubled Pass@1 and mean score overall and tripled corporate-law Pass@1 in the cited long-horizon RL experiment.
+    type: third-party-reported
+    topic: mercor-outcome
+    sourceRefs:
+    - SE019
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE007
+    - QE010
+  - id: CE019
+    statement: 'Applied Compute and Mercor both present “Applied Compute: Small” as ranking #1 in corporate law and #4 overall on the APEX-Agents leaderboard at a fraction of the cost of larger frontier models.'
+    type: company-claimed
+    topic: benchmark-ranking
+    sourceRefs:
+    - SE005
+    - SE019
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE007
+    - QE010
+  - id: CE020
+    statement: Applied Compute’s routing research argues that model quality is not scalar and that different models excel at distinct task shapes, making routing a product capability rather than just an ops optimization.
+    type: inferred
+    topic: routing-architecture
+    sourceRefs:
+    - SE010
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE017
+    - QE022
+  - id: CE021
+    statement: In Applied Compute’s router experiment, oracle routing across Nemotron 3 Ultra, Claude Opus 4.7, and GPT-5.5 achieved a 0.890 average pass score versus 0.834 for the best single-model baseline.
+    type: company-claimed
+    topic: routing-performance
+    sourceRefs:
+    - SE010
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE017
+  - id: CE022
+    statement: Applied Compute’s inference benchmark says production multi-turn traces average about twenty tool turns with long tails into the hundreds, with assistant outputs in the low hundreds of tokens and prompts centered around roughly 10k tokens.
+    type: company-claimed
+    topic: agentic-workloads
+    sourceRefs:
+    - SE011
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE013
+  - id: CE023
+    statement: Applied Compute says its primary serving bottleneck on these agentic workloads is KV capacity and that cache management, scheduler pressure, and tool-latency tails are central system constraints.
+    type: company-claimed
+    topic: serving-bottlenecks
+    sourceRefs:
+    - SE011
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE013
+    - QE014
+    - QE018
+  - id: CE024
+    statement: Applied Compute’s staleness research says fully asynchronous RL improves utilization but creates off-policy lag whose magnitude depends on utilization, batch size, queue capacity, rollout concurrency, and response-length tailness.
+    type: company-claimed
+    topic: async-rl-staleness
+    sourceRefs:
+    - SE013
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE014
+    - QE024
+    - QE025
+  - id: CE025
+    statement: Applied Compute’s high-leverage-samples research argues that when success probability is 10%, each successful rollout can carry roughly 81 times as much learning signal as a failed rollout.
+    type: company-claimed
+    topic: sample-efficiency
+    sourceRefs:
+    - SE008
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE014
+  - id: CE026
+    statement: Applied Compute’s entropy-preserving RL work says entropy collapse produces brittle, repetitive deployment behavior and worse continued training stability, while its REPO-R controller preserved entropy and kept multi-phase training improving.
+    type: company-claimed
+    topic: entropy-control
+    sourceRefs:
+    - SE012
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE015
+    - QE025
+  - id: CE027
+    statement: Applied Compute’s RMSD research argues that self-distillation can teach out-of-distribution enterprise behaviors more effectively than standard SFT or sparse-reward RL while preserving existing capabilities.
+    type: company-claimed
+    topic: self-distillation
+    sourceRefs:
+    - SE009
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE016
+    - QE025
+  - id: CE028
+    statement: Thinking Machines Lab independently argues that on-policy distillation combines the on-policy relevance of RL with dense token-level supervision and can be more compute-efficient than reward-only RL for later-stage training.
+    type: third-party-reported
+    topic: distillation-comparison
+    sourceRefs:
+    - SE030
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE016
+  - id: CE029
+    statement: Anthropic recommends using the simplest architecture that works, reserving agent loops for cases where flexible model-directed action is necessary and explicitly warning that agents trade cost and latency for performance.
+    type: observed
+    topic: agent-guidance
+    sourceRefs:
+    - SE020
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE022
+  - id: CE030
+    statement: Cohere describes agentic workflows as automation of complex business processes with control, oversight, and security, emphasizing orchestration rather than pure chat UX.
+    type: observed
+    topic: agent-guidance
+    sourceRefs:
+    - SE021
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE022
+  - id: CE031
+    statement: OpenAI presents its Responses API as a foundation for production agents by bundling tool use, orchestration, and integrated tracing / observability into one surface.
+    type: observed
+    topic: agent-guidance
+    sourceRefs:
+    - SE022
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE022
+  - id: CE032
+    statement: Microsoft Copilot Studio positions itself as a platform for building and managing agents connected to business data, including autonomous capabilities and a shared control plane.
+    type: observed
+    topic: agent-guidance
+    sourceRefs:
+    - SE023
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE022
+  - id: CE033
+    statement: CISA says organizations adopting agentic AI need to align the systems with existing cybersecurity frameworks and strengthen oversight because agentic deployments introduce distinct security challenges and risks.
+    type: third-party-reported
+    topic: agent-security
+    sourceRefs:
+    - SE025
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE018
+    - QE020
+  - id: CE034
+    statement: The Reward Hacking Benchmark reports exploit rates as high as 13.9% in tool-using RL-trained agents and says simple environmental hardening reduced exploit rates by 5.7 percentage points, or 87.7% relative.
+    type: third-party-reported
+    topic: agent-safety
+    sourceRefs:
+    - SE026
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE020
+    - QE021
+  - id: CE035
+    statement: Applied Compute’s GitHub organization shows one public repository and no public members, which limits how much external developers can independently verify about product breadth or community adoption.
+    type: observed
+    topic: developer-signal
+    sourceRefs:
+    - SE016
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE011
+    - QE012
+    - QE023
+  - id: CE036
+    statement: The public `trie` repository is an Apache-2.0 lightweight harness for replaying inference traffic against an endpoint, with 21 stars, 3 forks, and a Jul. 2, 2026 update date visible in the fetched snapshot.
+    type: observed
+    topic: developer-signal
+    sourceRefs:
+    - SE017
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE011
+    - QE012
+    - QE025
+  - id: CE037
+    statement: 'Applied Compute’s homepage attributes customer uses to more than coding: legal-agent training, support-ticket judgment, merchant menu onboarding, and biology benchmark work all appear in public testimonials.'
+    type: observed
+    topic: use-case-breadth
+    sourceRefs:
+    - SE001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+    - QE003
+  - id: CE038
+    statement: Applied Compute says it can work with open-weight models from 1B to 1T+ parameters and swap models without rebuilding the stack.
+    type: company-claimed
+    topic: model-flexibility
+    sourceRefs:
+    - SE001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE004
+  - id: CE039
+    statement: DoorDash says its 2026 self-serve onboarding experience can help merchants launch more than 35% faster by using AI to pull photos, store hours, and menu items from an existing web presence.
+    type: third-party-reported
+    topic: doordash-platform-context
+    sourceRefs:
+    - SE024
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE009
+    - QE024
+  - id: CE040
+    statement: Modal says Applied Compute evaluated nearly every sandbox and execution provider it could find before standardizing on Modal for rollouts, grading, and inference support.
+    type: third-party-reported
+    topic: infra-design
+    sourceRefs:
+    - SE015
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE026
+  evidenceGaps:
+  - type: missing-source
+    severity: material
+    topic: trust-controls
+    missingEvidence: Public trust-center artifacts showing the scope, auditor, and effective dates of Applied Compute’s claimed SOC 2 controls.
+    whyItMatters: Enterprise buyers and investors need to know whether the security posture is independently verified at the product level or only asserted in marketing copy.
+    diligencePath: Request the latest SOC 2 report, bridge letter, and architecture notes covering VPC versus managed-cloud deployments.
+    relatedQuestionRefs:
+    - QE019
+    relatedTableRefs:
+    - TE004
+  - type: missing-source
+    severity: material
+    topic: developer-surface
+    missingEvidence: Public API docs, SDK docs, or pricing pages that demonstrate a repeatable self-serve developer motion.
+    whyItMatters: The current public footprint could still describe a high-touch applied-research service business rather than a broadly productized platform.
+    diligencePath: Request product documentation, customer onboarding flows, and any public/private SDK or API roadmaps.
+    relatedQuestionRefs:
+    - QE023
+    relatedTableRefs:
+    - TE001
+  - type: private-evidence-only
+    severity: material
+    topic: production-reliability
+    missingEvidence: Service-level objectives, uptime history, rollback rates, and regression metrics for Train/Serve/Improve deployments.
+    whyItMatters: Serving and online-improvement claims are central to the valuation story, but reliability cannot be underwritten from research posts alone.
+    diligencePath: Request customer-facing SLA language, incident logs, and recent production scorecards from at least two deployments.
+    relatedQuestionRefs:
+    - QE028
+    relatedTableRefs:
+    - TE004
+  - type: private-evidence-only
+    severity: minor
+    topic: community-adoption
+    missingEvidence: Internal usage or customer usage metrics for public tooling such as trie, eval harnesses, or any private SDKs not exposed in GitHub.
+    whyItMatters: Without it, open-source activity understates or obscures whether the platform has real developer pull outside bespoke engagements.
+    diligencePath: Request repo-level download/usage telemetry, private package distribution stats, and a map of customer-visible versus internal-only tooling.
+    relatedQuestionRefs:
+    - QE011
+    - QE012
+    - QE023
