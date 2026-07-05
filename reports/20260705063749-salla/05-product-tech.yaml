@@ -1,0 +1,1743 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: salla
+runDate: '2026-07-05'
+company:
+  name: Salla
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: Salla is a full-stack e-commerce SaaS platform -- storefront builder, merchant dashboard, native mobile apps, payments/BNPL, logistics, and marketing tooling -- wrapped around a REST API, OAuth2 authentication, a webhook event system, and a Twilight theming/component framework that a real (if modest-sized) external developer ecosystem builds on. Salla's own npm-scoped packages (CLI, theming toolkit, web components, Apple Pay SDK) show active, recently published tooling, and independent GitHub projects (an OAuth2 Passport strategy, a Python client, a Telegram bot wrapper, and an AI-agent "MCP server") confirm third parties build against Salla's API without official sponsorship. Public developer-community signal is uneven -- Salla has zero tagged questions on Stack Overflow, no disclosed hosting/infrastructure provider, and no independently certified security/compliance credential in this corpus -- PCI DSS compliance and ZATCA e-invoicing integration are company-claimed, not third-party-audited. A single independent merchant-side review corroborates fast setup and strong local-payment/Arabic-market fit, but also documents a materially smaller plugin ecosystem than Shopify's, thin free-tier analytics, limited non-GCC international shipping/tax support, and unresolved buyer-protection complaints given Salla's storefront-builder (not marketplace-mediator) model. This chapter can describe Salla's product surface and technical architecture with reasonable confidence, but cannot verify its security certifications, hosting resilience, or long-run release cadence beyond a single point-in-time status snapshot.
+sections:
+- id: product-overview-and-module-map
+  title: 'Product overview and module map: a full merchant-operations suite, not just a storefront builder'
+  body: 'Salla packages far more than a storefront template into one merchant product. Its own marketing content (via a 2026 sponsored feature on Tap Payments'' blog) describes a single dashboard that covers store setup, product listings, order and inventory management, native payment acceptance (mada, Visa, Mastercard, American Express, Apple Pay, and Tabby buy-now-pay-later, across 15-plus currencies), logistics-carrier connections with no separate contracts, built-in loyalty and rewards tooling, and marketing integrations spanning email (Klaviyo, Mailchimp), social advertising (Snapchat, Instagram, TikTok, X, Google), and WhatsApp order-confirmation messaging. A distinct native-app-builder module lets a merchant generate a branded Android or iOS shopping app "in 72 hours, no code," which stays synchronized with the main web store; this module is delivered separately from Salla''s own first-party mobile apps. Salla ships at least one confirmed first-party app on Google Play -- a merchant-management app (package com.emoney.sallacp, developer "Nawaf Hariri", 500,000-plus installs) for running an existing store from a phone. A second Google Play listing, "Salla | sala" (package com.faya.sala), markets itself as a cross-store consumer shopping app, but its developer field reads "Faya Dev Ltd" (a UK-registered entity) with only 100-plus downloads -- this corpus cannot confirm whether that listing is an official Salla-operated app, an authorized white-label build, or an unrelated third party trading on the Salla name, so it is treated as an open brand-attribution question rather than a confirmed first-party asset.
+
+
+    Layered on top of this merchant-facing suite is a third-party App Store (apps.salla.sa) and a Partners Portal (docs.salla.dev / salla.partners) that let external developers list paid "Private" or "Public" apps and build custom integrations -- the same ecosystem quantified in this report''s Financials chapter. A real, if modest, external tooling layer backs that ecosystem: Salla publishes five distinct packages under the `@salla.sa` scope on npm (a CLI, a base UI kit, a web-component library, a Tailwind theme, and an Apple Pay SDK), and a search of the public npm registry for "salla" returns 53 total packages, including at least one independent community-built package (an n8n workflow-automation node) that is not part of Salla''s own scope -- evidence that outside developers invest engineering effort in Salla integrations beyond what Salla itself ships.'
+  claimRefs:
+  - CE001
+  - CE002
+  - CE003
+  - CE004
+  - CE005
+  - CE009
+  - CE010
+  - CE012
+  - CE013
+  - CE014
+  - CE030
+  - CE031
+  - CE033
+  - CE025
+  - CE026
+  tableRefs:
+  - TE001
+  - TE002
+  figureRefs:
+  - FE002
+- id: architecture-and-developer-ecosystem
+  title: 'Architecture and developer ecosystem: REST, OAuth2, webhooks, and a real (if small) third-party build surface'
+  body: 'Salla''s own developer documentation describes a Merchant REST API secured by OAuth 2.0, a webhook system for real-time store-event notifications, a serverless "App Functions" layer for hosting custom app logic without merchant-facing infrastructure, and a Twilight theming framework for building and publishing custom storefront themes. This architecture is exposed to developers through the official `@salla.sa/cli` npm package -- described on its own package page as "the Official Salla Command Line Interface" -- which provides commands to create, serve, authenticate, link, delete, and upgrade a Salla App project from the command line, and republishes a working example at a public GitHub repository (SallaApp/Salla-CLI). Salla also publishes `@salla.sa/twilight` (a theme toolkit bundling web components, event handling, request utilities), `@salla.sa/twilight-components` (the underlying web-component library), and `@salla.sa/twilight-tailwind-theme` (a Tailwind CSS theme built on that toolkit) -- all at the same version number and all published within days of the runDate for this report, indicating an actively maintained, coordinated release train rather than an abandoned tool. `@salla.sa/twilight-tailwind-theme` alone reports roughly 15,000 weekly npm downloads and four dependent packages, a directional (not audited) proxy for how many themes or projects build on Salla''s official component layer.
+
+
+    A meaningfully sized independent developer surface exists on top of Salla''s own tooling. A GitHub code search for "salla-api" surfaces multiple third-party, unofficial open-source projects: a Node.js Passport.js OAuth 2.0 authentication strategy scoped specifically to Salla''s login flow, a Python client library for the Salla API, a Telegram bot wrapper for Salla store data, and -- most notably given the runDate -- a "Salla Merchant API MCP Server," a Model Context Protocol server that would let AI agents interact with Salla merchant data programmatically. None of these are Salla-maintained; their existence indicates organic third-party investment in Salla''s API surface, but also means their reliability, security posture, and maintenance are entirely outside Salla''s control. Set against this, Salla''s public developer-community visibility on Stack Overflow is effectively nil: a search of the platform''s "salla" tag returns zero tagged questions as of this report''s runDate, in contrast to the real, if modest, activity visible on GitHub and npm -- suggesting that whatever developer support exists for Salla routes through its own Partners Portal, direct support channels, or informal channels rather than public Q&A. On the positive side, Salla''s Partners Portal was itself a nominee in the 2025 Developer Portal Awards, an independent, third-party-run recognition program, which is some evidence that Salla''s documentation quality is viewed favorably by at least one external developer-experience judging body -- though nomination is not the same as winning, and no source in this corpus confirms an award outcome.'
+  claimRefs:
+  - CE015
+  - CE016
+  - CE017
+  - CE018
+  - CE019
+  - CE020
+  - CE021
+  - CE022
+  - CE023
+  - CE024
+  - CE027
+  - CE028
+  - CE029
+  - CE035
+  - CE044
+  - CE045
+  tableRefs:
+  - TE003
+  figureRefs:
+  - FE001
+  - FE003
+- id: reliability-integrations-and-roadmap
+  title: 'Reliability, integrations, and roadmap: a real-time status page and a confirmed platform generation, but no long-run SLA or cadence disclosure'
+  body: 'Salla operates a public system-status page (status.salla.com) that separately monitors seven components -- App Store, Merchant APIs, Merchant Dashboard, Store Websites, Mahally, Salla Website, and Store APIs -- all showing an "Operational" state and a reported 100% uptime figure at the time this chapter''s source was fetched. This is a genuine, if narrow, reliability signal: it confirms Salla runs formal, component-level status monitoring akin to peers like Shopify and BigCommerce, but the single point-in-time snapshot captured here says nothing about historical incident frequency, mean time to recovery, or any formal uptime SLA Salla contractually offers merchants. Salla also maintains a dedicated public changelog/updates portal (changelog.salla.sa) that organizes release notes by category, confirming the company communicates product changes through a structured channel rather than an ad hoc blog -- though the fetched page itself did not surface a specific, dated release history within the accessible content, so this chapter cannot state a concrete release cadence (e.g., weekly, monthly) from that source alone.
+
+
+    On the product-generation side, sponsored coverage on Tap Payments'' blog describes a "Salla 4.0" platform version explicitly, in the context of Salla''s Tap-powered payment stack and merchant tooling, indicating at least one named major-version milestone exists in Salla''s public product history; however, the specific release date of that version is not stated in the reviewed source, so this chapter treats "Salla 4.0" as a confirmed named milestone with an unresolved exact date. On the integration side, the same source documents concrete third-party connectivity beyond payments: logistics-carrier integrations with no separate contracts required, and marketing-stack integrations spanning Klaviyo, Mailchimp, and major social ad networks -- integration breadth this chapter can confirm, even though the underlying infrastructure provider (cloud host, CDN, database vendor) Salla runs on is not disclosed anywhere in this corpus.'
+  claimRefs:
+  - CE032
+  - CE033
+  - CE034
+  - CE004
+  - CE014
+  - CE042
+  tableRefs:
+  - TE005
+- id: trust-security-and-compliance
+  title: 'Trust, security, and compliance: strong claimed controls, no independent certification found'
+  body: 'Salla''s own marketing content claims a meaningful trust and security stack: AI-based fraud detection, 3D Secure card-verification, "full PCI DSS compliance," and direct electronic-invoice integration with Saudi Arabia''s Zakat, Tax and Customs Authority (ZATCA), alongside full Arabic-language support across the dashboard, storefront, and apps. These are real, specific claims -- more concrete than generic "secure and reliable" marketing language -- but every one of them is company-stated rather than independently certified in this corpus: no PCI Security Standards Council attestation of compliance, no SOC 2 report, no ISO 27001 certificate, and no third-party audit of Salla''s ZATCA e-invoicing conformance appears in any reviewed source, which is consistent with the unresolved ZATCA-compliance-status gap already identified in this report''s Financials chapter. Independent, arms-length evidence is more mixed than Salla''s own marketing suggests. A detailed third-party merchant-side review (ZatcaHub, 2026) corroborates several of Salla''s strengths first-hand -- a live store within a day, five-minute Mada/Tabby setup, and clean, non-technical-friendly Arabic UI -- but also documents concrete limitations: free/basic-tier analytics that omit basic sales-by-category breakdowns without an upgrade, a plugin/app ecosystem the same reviewer calls "much smaller than Shopify''s," and international shipping/multi-country tax configuration for non-GCC markets that requires significant manual work. The same review cites an unverified Trustpilot complaint alleging Salla does not effectively mediate buyer-merchant disputes, and explicitly frames Salla as "a store builder, not a marketplace" that does not intervene in disputes the way Amazon or Noon would -- a structural, not incidental, difference in buyer protection. Salla''s own official merchant-management app on Google Play (com.emoney.sallacp) carries a 3.3-out-of-5 rating across 5,800 reviews with 500,000-plus installs, a quantifiable, independently-aggregated satisfaction signal that sits below what a best-in-class merchant tool would typically carry, though Google Play does not disclose a review-sentiment breakdown in the fetched listing.'
+  claimRefs:
+  - CE006
+  - CE007
+  - CE008
+  - CE011
+  - CE041
+  - CE036
+  - CE037
+  - CE038
+  - CE039
+  - CE040
+  - CE030
+  - CE043
+  tableRefs:
+  - TE004
+  figureRefs:
+  - FE004
+tables:
+- id: TE001
+  title: Product module / asset matrix
+  columns:
+  - module/asset
+  - primary user
+  - maturity/status
+  - differentiation
+  - diligence gap
+  rows:
+  - - Merchant web storefront + dashboard
+    - Merchants
+    - Mature -- core product since 2016 founding
+    - Localized Arabic UX, one-dashboard orders/inventory/payments view
+    - No independent uptime-history or feature-completeness benchmark found
+  - - Native mobile app builder ("launch app in 72 hours")
+    - Merchants
+    - Marketed as production-ready; no independent adoption count found
+    - No-code branded Android/iOS app synced to main store
+    - No source discloses how many merchants have generated an app via this module
+  - - Official merchant-management app (com.emoney.sallacp)
+    - Merchants (on mobile)
+    - Live on Google Play; 500K+ installs, 5.8K reviews
+    - Lets merchants run stores from a phone
+    - 3.3/5 rating is below best-in-class; no sentiment breakdown available
+  - - Consumer shopping app listing (com.faya.sala, "Salla | sala")
+    - End shoppers
+    - Live on Google Play under developer "Faya Dev Ltd"; 100+ downloads
+    - Markets itself as a cross-store marketplace app under the Salla brand
+    - Developer attribution does not match Salla's own account; official/first-party status unconfirmed
+  - - App Store / third-party marketplace (apps.salla.sa)
+    - Merchants and third-party developers
+    - Active; exact listed-app count not disclosed
+    - Lets non-Salla developers extend merchant functionality for a fee
+    - No public count of total listed apps or app-quality review process found
+  - - Partners Portal / developer documentation (docs.salla.dev, salla.partners)
+    - Third-party developers, agencies
+    - Active; 2025 Developer Portal Awards nominee
+    - REST API, OAuth2, webhooks, App Functions, Twilight theming documented in one place
+    - No confirmed award outcome; documentation completeness not independently audited
+  - - Official npm developer packages (@salla.sa scope -- cli, base, twilight, twilight-components, twilight-tailwind-theme, applepay)
+    - Third-party developers, theme/app builders
+    - Actively maintained -- coordinated version releases within days of runDate
+    - Full local dev toolchain (CLI, UI kit, theming, Apple Pay SDK) unusual among regional peers
+    - No source discloses total unique developers or apps built with this toolchain
+  - - System status page (status.salla.com)
+    - Merchants, developers, prospective customers
+    - Live; 7 components tracked, all "Operational" at fetch time
+    - Transparent, component-level status monitoring akin to larger SaaS peers
+    - Single snapshot only; no historical incident log or SLA commitment found
+  notes: Maturity/status assessments combine Salla's own marketing and documentation with independently observable signals (Google Play ratings, npm download/version data, GitHub presence); features with no independent corroboration are flagged as such in the diligence-gap column rather than assumed true.
+  claimRefs:
+  - CE001
+  - CE003
+  - CE009
+  - CE030
+  - CE031
+  - CE033
+  - CE035
+  - CE019
+  - CE020
+  - CE032
+- id: TE002
+  title: Workflow / use-case table
+  columns:
+  - user job
+  - current workflow
+  - Salla's solution
+  - measurable benefit
+  - limitation
+  rows:
+  - - Launch a new online store
+    - Historically required custom development or a generic template builder with manual local-payment integration
+    - Pick a template, add products, connect Mada/Tabby, go live -- per an independent reviewer, live within a day
+    - Independently confirmed fast time-to-launch (under 1 hour for a basic store, per the same reviewer)
+    - Setup speed is reviewer-observed for one case, not a benchmarked average across store types
+  - - Accept local Saudi payments and BNPL
+    - Merchants previously needed separate gateway contracts per payment method
+    - One-dashboard native support for mada, Visa, Mastercard, Amex, Apple Pay, and Tabby BNPL
+    - Reviewer reports 5-minute Mada/Tabby setup time
+    - Fee/commission terms for these integrations are not disclosed in this corpus
+  - - Sell to customers outside Saudi/GCC
+    - Would otherwise require a separate international tax/shipping stack
+    - Salla supports 15+ currencies for checkout
+    - Currency breadth is a concrete, quantified claim
+    - Independent reviewer reports multi-country tax setup and non-GCC shipping remain manual and limited
+  - - Extend the store with custom functionality
+    - Would otherwise require bespoke development against an undocumented backend
+    - App Store (apps.salla.sa) plus a documented REST API, OAuth2, webhooks, and CLI/SDK tooling
+    - A real, if modest, external developer ecosystem (npm packages, GitHub projects) already exists
+    - Reviewer reports the plugin ecosystem is "much smaller than Shopify's," so specific integrations may not exist
+  - - Analyze store performance
+    - Would otherwise require exporting raw order data to a spreadsheet or BI tool
+    - Built-in dashboard shows orders, inventory, and revenue in one place
+    - Confirmed usable "out of the box" per independent reviewer
+    - Free/basic-tier reporting omits sales-by-category breakdowns without a paid upgrade
+  - - Resolve a buyer-merchant dispute
+    - Marketplace platforms (Amazon, Noon) typically mediate disputes directly
+    - Salla positions itself as a store builder, not a marketplace, and does not mediate
+    - Clear structural expectation-setting for merchants who want full control
+    - Cited third-party complaint alleges weak buyer recourse when a merchant does not respond
+  notes: Benefit and limitation columns are drawn primarily from one detailed independent merchant-side review (ZatcaHub, 2026) corroborated where possible against Salla's own documentation and help-center articles; single-source observations are noted as such rather than generalized.
+  claimRefs:
+  - CE036
+  - CE037
+  - CE038
+  - CE039
+  - CE040
+  - CE005
+  - CE043
+- id: TE003
+  title: Technology / operating architecture table
+  columns:
+  - layer/component
+  - role
+  - dependency
+  - risk
+  rows:
+  - - Merchant REST API
+    - Core programmatic interface for reading/writing store data (products, orders, customers)
+    - OAuth 2.0 authorization layer
+    - No published rate-limit, versioning, or deprecation policy found in this corpus
+  - - OAuth 2.0 authentication
+    - Secures API and app access for merchants and third-party developers
+    - Underlies every App Store and CLI-based integration
+    - No independent security audit of the auth implementation found
+  - - Webhooks
+    - Real-time push notifications for store events (orders, inventory changes)
+    - Consumed by third-party apps and integrations (e.g., marketing/automation tools)
+    - No disclosed delivery-guarantee, retry, or latency SLA
+  - - App Functions (serverless layer)
+    - Hosts custom app backend logic without merchant-managed infrastructure
+    - Underlying cloud/hosting provider not disclosed
+    - Vendor lock-in and cold-start/latency characteristics are unknown
+  - - Twilight theming framework + web components
+    - Powers custom storefront themes and UI components
+    - Distributed via `@salla.sa/twilight`, `@salla.sa/twilight-components`, `@salla.sa/twilight-tailwind-theme` npm packages
+    - GPL-3.0 licensing on some packages may constrain certain commercial theme-resale models
+  - - Salla CLI (@salla.sa/cli)
+    - Local developer tool for creating, serving, and publishing Salla Apps
+    - Requires Node.js/npm toolchain; Laravel/Express keywords suggest a PHP+Node hybrid backend ecosystem
+    - Last published version (per npm) is roughly three months old versus the frontend/theme packages' three-day-old releases, a slower cadence for this specific tool
+  - - Third-party unofficial SDKs (Python client, Node.js Passport strategy, Telegram bot, MCP server)
+    - Extend Salla API access to additional languages/agents beyond official tooling
+    - Entirely maintained outside Salla; depend on Salla's REST API remaining stable
+    - Not vetted, security-reviewed, or supported by Salla; breakage risk on any API change
+  - - Payment and BNPL integrations (mada, Tabby, Apple Pay, and via partner Tamara)
+    - Handles transaction processing and buy-now-pay-later checkout
+    - External payment/BNPL providers' own infrastructure and compliance
+    - Fee/revenue-share terms and provider-side outage risk are not disclosed
+  notes: Architecture facts are drawn from Salla's own developer documentation, npm package metadata, and GitHub search results; risk column reflects gaps this chapter could not independently verify rather than confirmed defects.
+  claimRefs:
+  - CE015
+  - CE016
+  - CE017
+  - CE018
+  - CE019
+  - CE027
+  - CE028
+  - CE005
+- id: TE004
+  title: Trust / quality / compliance table
+  columns:
+  - control/certification/quality metric
+  - status
+  - scope
+  - gap
+  rows:
+  - - PCI DSS compliance
+    - Company-claimed ("full PCI DSS compliance") in marketing content
+    - Payment-card data handling across the platform
+    - No PCI Security Standards Council attestation of compliance (AOC) or QSA report found
+  - - ZATCA e-invoicing integration
+    - Company-claimed ("direct integration to Saudi ZATCA")
+    - Electronic invoice generation for Saudi merchants
+    - No independent confirmation Salla is a listed/certified ZATCA-compliant solution provider
+  - - AI fraud detection and 3D Secure
+    - Company-claimed
+    - Card-present and card-not-present transaction screening
+    - No independent fraud-loss-rate or false-positive data disclosed
+  - - SOC 2 / ISO 27001 certification
+    - Not found in any reviewed source
+    - Would cover information-security controls generally
+    - Absence itself is the finding; cannot confirm certification exists or does not exist beyond "not found in this corpus"
+  - - Google Play merchant-app user rating
+    - 3.3 out of 5 across 5,800 reviews (independently aggregated by Google)
+    - Merchant-management mobile app only
+    - Below best-in-class rating benchmark; no sentiment breakdown by complaint category
+  - - Buyer-dispute mediation
+    - Explicitly not offered -- Salla positions itself as a store builder, not a marketplace
+    - Buyer-merchant transaction disputes across Salla-hosted stores
+    - Cited Trustpilot complaint alleges weak buyer recourse when a merchant is unresponsive
+  - - Developer Portal Awards recognition
+    - Nominated, 2025 cycle (outcome not confirmed)
+    - Salla Partners developer documentation/portal
+    - No source confirms whether Salla won, placed, or the nomination's evaluation criteria
+  notes: This table separates company-claimed controls from independently observable quality signals; every "company-claimed" status row should be read as unverified in this corpus unless a separate independent source is cited.
+  claimRefs:
+  - CE006
+  - CE007
+  - CE008
+  - CE041
+  - CE030
+  - CE040
+  - CE035
+- id: TE005
+  title: Roadmap / release / development-stage table
+  columns:
+  - date/stage
+  - feature/milestone
+  - status
+  - implication
+  - source
+  rows:
+  - - '2016'
+    - Salla founded by Nawaf Hariri and Salman Butt
+    - Historical fact
+    - Platform has roughly a decade of operating history informing current product maturity
+    - Tap Payments blog (2026 feature)
+  - - Unspecified (referenced as of 2026 coverage)
+    - Salla 4.0 named platform version referenced in sponsored coverage
+    - Confirmed as a named milestone; exact release date not disclosed
+    - At least one major version increment has occurred, but release cadence cannot be timed precisely
+    - Tap Payments blog
+  - - Ongoing (undated within fetched content)
+    - Public changelog/updates portal (changelog.salla.sa) organizes release notes by category
+    - Live and structured, but no specific dated entries surfaced in the accessible fetch
+    - Confirms a formal release-communication channel exists; cadence (weekly/monthly) cannot be confirmed from this source
+    - changelog.salla.sa
+  - - '2026-07-05 (fetch date)'
+    - Coordinated npm releases across `@salla.sa/twilight`, `@salla.sa/twilight-components`, `@salla.sa/twilight-tailwind-theme`, `@salla.sa/base`, and `@salla.sa/applepay`, all at the same version, published 3 days prior
+    - Active, recently shipped
+    - Indicates an actively maintained frontend/theming release train as of this report's runDate
+    - npm registry package pages
+  - - Roughly 3 months before runDate
+    - Salla's `@salla.sa/cli` version 3.2.30 published
+    - Active, but a slower cadence than the frontend/theme packages
+    - CLI/developer-tooling releases may follow a different (slower) cycle than theming packages
+    - npm registry (@salla.sa/cli package page)
+  - - 2025 cycle
+    - Salla Partners Portal nominated for the Developer Portal Awards
+    - Nomination confirmed; outcome not disclosed
+    - External signal of growing investment in developer-experience quality
+    - devportalawards.org
+  notes: Dates reflect what each source explicitly states; where a source references a milestone without a specific calendar date (e.g., "Salla 4.0"), this table records the milestone as confirmed but the date as unresolved rather than estimating one.
+  claimRefs:
+  - CE001
+  - CE034
+  - CE020
+  - CE021
+  - CE022
+  - CE023
+  - CE024
+  - CE019
+  - CE035
+figures:
+- id: FE001
+  title: Product architecture map
+  type: stack
+  layout: wide
+  summary: Salla layers merchant-facing commerce features over a documented API/auth/event core, with theming and CLI tooling exposed to a real but modest external developer ecosystem.
+  data:
+    layers:
+    - label: Experience layer
+      detail: Merchant web dashboard, native mobile app builder, and two first-party Google Play apps (merchant management and consumer shopping)
+      tone: positive
+      modules:
+      - Merchant dashboard
+      - No-code app builder
+      - com.emoney.sallacp (merchant app)
+      - com.faya.sala (consumer app)
+      outputs:
+      - Store setup, order/inventory management, mobile shopping
+    - label: Commerce services layer
+      detail: Native payments, BNPL, logistics, loyalty, and marketing-tool integrations
+      tone: positive
+      modules:
+      - mada / Visa / Mastercard / Amex / Apple Pay
+      - Tabby BNPL
+      - Logistics carrier connections
+      - Klaviyo / Mailchimp / social ads / WhatsApp
+      outputs:
+      - Checkout, fulfillment, retention, growth campaigns
+    - label: Extensibility layer
+      detail: Third-party App Store and Partners Portal documentation for external developers
+      tone: neutral
+      modules:
+      - apps.salla.sa App Store
+      - docs.salla.dev / salla.partners
+      outputs:
+      - Paid third-party apps, custom integrations
+    - label: Platform API layer
+      detail: Merchant REST API secured by OAuth 2.0, webhooks, and a serverless App Functions layer
+      tone: neutral
+      modules:
+      - REST API
+      - OAuth 2.0
+      - Webhooks
+      - App Functions
+      outputs:
+      - Programmatic access, event notifications, custom app logic
+    - label: Developer tooling layer
+      detail: Official CLI and theming SDKs, plus organic third-party open-source projects
+      tone: neutral
+      modules:
+      - '@salla.sa/cli'
+      - '@salla.sa/twilight (+components, +tailwind-theme)'
+      - Third-party Python/Node/Telegram/MCP projects
+      outputs:
+      - Local app/theme development, unofficial integrations
+    - label: Trust and compliance layer
+      detail: Company-claimed fraud detection, 3D Secure, PCI DSS, and ZATCA e-invoicing integration; no independent certification found
+      tone: warning
+      modules:
+      - AI fraud detection (claimed)
+      - 3D Secure (claimed)
+      - PCI DSS (claimed)
+      - ZATCA integration (claimed)
+      outputs:
+      - Claimed transaction security and tax compliance
+  approximationNotes: Layer boundaries are inferred from Salla's own documentation, marketing content, and npm/GitHub evidence; the trust/compliance layer is explicitly marked as company-claimed because no independent certification was found in this corpus.
+  claimRefs:
+  - CE015
+  - CE016
+  - CE017
+  - CE018
+  - CE019
+  - CE006
+  - CE008
+  - CE041
+- id: FE002
+  title: Customer workflow / operating flow
+  type: flow
+  layout: wide
+  summary: A merchant's path from sign-up to an ongoing store mirrors a fast, locally-optimized setup flow, but hits real limits at analytics depth, international expansion, and buyer-dispute handling.
+  data:
+    nodes:
+    - id: signup
+      label: Merchant signs up
+      detail: Self-serve account creation; free plan available for evaluation
+      tone: positive
+    - id: template
+      label: Selects a storefront template
+      detail: Twilight-based themes; independent reviewer reports live setup within a day
+      tone: positive
+    - id: payments
+      label: Connects local payments
+      detail: mada and Tabby configured in roughly 5 minutes per an independent reviewer
+      tone: positive
+    - id: catalog
+      label: Lists products and shipping
+      detail: Logistics-carrier connections available without separate contracts
+      tone: positive
+    - id: launch
+      label: Store goes live
+      detail: Dashboard shows orders, inventory, and revenue in one place
+      tone: positive
+    - id: extend
+      label: Extends via App Store or custom app
+      detail: Third-party apps or a merchant-generated native mobile app can be added post-launch
+      tone: neutral
+    - id: sell_intl
+      label: Attempts to sell outside Saudi/GCC
+      detail: Multi-country tax and international shipping setup reported as manual and limited
+      tone: warning
+    - id: analytics
+      label: Reviews performance analytics
+      detail: Free/basic tier omits sales-by-category breakdowns without a paid upgrade
+      tone: warning
+    - id: dispute
+      label: Buyer-merchant dispute arises
+      detail: Salla does not mediate; positions itself as a store builder, not a marketplace
+      tone: negative
+    edges:
+    - from: signup
+      to: template
+    - from: template
+      to: payments
+    - from: payments
+      to: catalog
+    - from: catalog
+      to: launch
+    - from: launch
+      to: extend
+    - from: launch
+      to: sell_intl
+    - from: launch
+      to: analytics
+    - from: launch
+      to: dispute
+  approximationNotes: Flow reflects the sequence described by Salla's own marketing content and corroborated, where noted, by an independent merchant-side review; branch nodes (sell_intl, analytics, dispute) represent points where independent evidence diverges from Salla's own marketing framing.
+  claimRefs:
+  - CE003
+  - CE036
+  - CE037
+  - CE038
+  - CE039
+  - CE040
+  - CE009
+- id: FE003
+  title: Critical dependency map
+  type: dag
+  layout: wide
+  summary: Salla's storefront experience depends on external payment/BNPL providers, logistics carriers, app-store distribution channels, and an undisclosed cloud/hosting layer, none of which Salla directly controls end-to-end.
+  data:
+    nodes:
+    - id: core
+      label: Salla core platform
+      detail: REST API, OAuth2, webhooks, App Functions
+      tone: neutral
+    - id: hosting
+      label: Cloud / hosting infrastructure
+      detail: Provider not disclosed in any reviewed source
+      tone: warning
+    - id: payments
+      label: Payment processors
+      detail: mada, Visa, Mastercard, Amex, Apple Pay
+      tone: neutral
+    - id: bnpl
+      label: BNPL providers
+      detail: Tabby (native) and Tamara (partner integration)
+      tone: neutral
+    - id: logistics
+      label: Logistics carriers
+      detail: Multiple shipping partners, no separate merchant contracts required
+      tone: neutral
+    - id: zatca
+      label: ZATCA regulatory integration
+      detail: E-invoicing mandate; compliance status company-claimed, not independently certified
+      tone: warning
+    - id: appstores
+      label: Google Play / app-store distribution
+      detail: Both first-party Salla apps and merchant-generated apps depend on Google Play (and presumably Apple App Store) approval and hosting
+      tone: neutral
+    - id: devecosystem
+      label: Developer ecosystem (npm registry, GitHub)
+      detail: Official and third-party packages depend on npm and GitHub availability and Salla API stability
+      tone: neutral
+    - id: merchant_experience
+      label: Merchant and shopper experience
+      detail: End-to-end outcome depending on every upstream node
+      tone: positive
+    edges:
+    - from: hosting
+      to: core
+    - from: core
+      to: payments
+    - from: core
+      to: bnpl
+    - from: core
+      to: logistics
+    - from: core
+      to: zatca
+    - from: core
+      to: appstores
+    - from: core
+      to: devecosystem
+    - from: payments
+      to: merchant_experience
+    - from: bnpl
+      to: merchant_experience
+    - from: logistics
+      to: merchant_experience
+    - from: zatca
+      to: merchant_experience
+    - from: appstores
+      to: merchant_experience
+    - from: devecosystem
+      to: merchant_experience
+  approximationNotes: The hosting/infrastructure node is included because its absence from Salla's public disclosures is itself a material dependency risk this chapter could not resolve, not because a specific provider was confirmed.
+  claimRefs:
+  - CE042
+  - CE005
+  - CE008
+  - CE027
+  - CE028
+  - CE035
+- id: FE004
+  title: Product maturity / capability map
+  type: matrix
+  layout: wide
+  summary: Salla's core storefront, payments, and Saudi-market localization are the most mature, best-evidenced capabilities; independent security certification, international support, and long-run reliability history are the weakest.
+  data:
+    columns:
+    - Maturity
+    - Evidence strength
+    - Diligence gap
+    rows:
+    - label: Core storefront and merchant dashboard
+      values:
+      - label: high
+        tone: positive
+        detail: A decade of operating history and hundreds of thousands of merchant relationships across cited sources
+      - label: strong
+        tone: positive
+        detail: Corroborated by company documentation and an independent merchant-side review
+      - label: low
+        tone: positive
+        detail: Well-evidenced; remaining gaps are mostly around price-tier detail, covered in the Financials chapter
+    - label: Native payments and BNPL
+      values:
+      - label: high
+        tone: positive
+        detail: Specific, named integrations (mada, Tabby, Apple Pay, Tamara) with reviewer-confirmed setup speed
+      - label: strong
+        tone: positive
+        detail: Confirmed by both company content and independent review
+      - label: medium
+        tone: neutral
+        detail: Fee/revenue-share terms with payment/BNPL partners remain undisclosed
+    - label: Developer tooling and API (CLI, SDKs, docs)
+      values:
+      - label: medium-high
+        tone: positive
+        detail: Actively maintained npm packages, public GitHub org, documented REST API
+      - label: medium
+        tone: neutral
+        detail: Confirmed via npm/GitHub, but total developer count and API SLA are undisclosed
+      - label: medium
+        tone: neutral
+        detail: Zero Stack Overflow activity limits visibility into real-world developer pain points
+    - label: Native mobile apps
+      values:
+      - label: medium
+        tone: neutral
+        detail: Both apps are live with real installs, but merchant app rating (3.3/5) trails best-in-class benchmarks
+      - label: strong
+        tone: positive
+        detail: Independently aggregated Google Play data (rating, review count, install tier)
+      - label: medium
+        tone: warning
+        detail: No sentiment breakdown behind the 3.3/5 rating is available
+    - label: International (non-GCC) support
+      values:
+      - label: low
+        tone: warning
+        detail: Independent reviewer reports multi-country tax/shipping as manual and limited
+      - label: medium
+        tone: neutral
+        detail: Single detailed independent review; not cross-confirmed by a second source
+      - label: high
+        tone: warning
+        detail: No company-disclosed roadmap or timeline for improved international support found
+    - label: Trust, security, and compliance certification
+      values:
+      - label: unverified
+        tone: warning
+        detail: PCI DSS, fraud detection, and ZATCA integration are company-claimed only
+      - label: weak
+        tone: warning
+        detail: No independent certification, audit report, or attestation found in this corpus
+      - label: high
+        tone: warning
+        detail: This is the single largest trust/security diligence gap identified in this chapter
+    - label: Reliability / uptime disclosure
+      values:
+      - label: low-medium
+        tone: neutral
+        detail: A live, component-level status page exists, but only a single "100% operational" snapshot was captured
+      - label: weak
+        tone: warning
+        detail: No historical incident log, MTTR data, or contractual SLA found
+      - label: high
+        tone: warning
+        detail: Cannot assess reliability trend or resilience without a longer observation window
+  approximationNotes: Ratings in this matrix are this chapter's qualitative synthesis of the evidence gathered, not a scored framework published by Salla or any third party; they are directional, not a certified maturity assessment.
+  claimRefs:
+  - CE030
+  - CE041
+  - CE037
+  - CE039
+  - CE032
+  - CE029
+callouts:
+- calloutType: risk
+  title: No independent security or compliance certification found
+  body: Salla claims full PCI DSS compliance, AI fraud detection, 3D Secure, and direct ZATCA e-invoicing integration in its own marketing content, but no reviewed source -- audit firm, certification body, or regulator -- independently confirms any of these controls. This is the single largest trust-and-security diligence gap in this chapter and should be resolved before relying on Salla's own compliance statements for underwriting purposes.
+  claimRefs:
+  - CE006
+  - CE008
+  - CE041
+- calloutType: insight
+  title: A real, if modest, third-party developer ecosystem exists beyond Salla's own tooling
+  body: Independent GitHub projects (a Python client, a Node.js Passport OAuth2 strategy, a Telegram bot wrapper, and an AI-agent MCP server) and at least one independent npm package (an n8n automation node) show organic developer investment in Salla's API surface that Salla itself did not build or fund -- a healthier ecosystem signal than official tooling alone would suggest, even though public Q&A visibility (zero Stack Overflow questions) remains thin.
+  claimRefs:
+  - CE027
+  - CE028
+  - CE026
+  - CE029
+- calloutType: assumption
+  title: '"Salla 4.0" and the status-page snapshot are treated as point-in-time facts, not trends'
+  body: This chapter treats the "Salla 4.0" platform-version reference and the "100% operational" status-page reading as accurate at the time each source was captured, not as evidence of a specific release cadence or long-run reliability trend. Any downstream use of either fact should be re-verified against a current fetch rather than assumed to persist.
+  claimRefs:
+  - CE032
+  - CE034
+localEvidence:
+  searchQueries:
+  - query: Salla ecommerce platform GitHub SDK CLI Twilight theme npm package developers 2026
+    engine: web_search
+    dateRun: '2026-07-05'
+    resultsUsed: 3
+  - query: Salla developer community Discord Stack Overflow salla.dev forum 2026
+    engine: web_search
+    dateRun: '2026-07-05'
+    resultsUsed: 2
+  researchQuestions:
+  - id: QE001
+    question: What modules and products does Salla offer across storefront, mobile, payments, and developer tooling?
+    type: enumeration
+    targets:
+    - contentRequirements/0
+    - plannedTables/product-module-asset-matrix
+    status: answered
+  - id: QE002
+    question: How does a merchant's typical workflow proceed from sign-up to an operating store on Salla?
+    type: mechanism
+    targets:
+    - contentRequirements/0
+    - plannedTables/workflow-use-case-table
+    status: answered
+  - id: QE003
+    question: What official Salla developer packages are published on npm, and what does each one cover?
+    type: enumeration
+    targets:
+    - contentRequirements/1
+    - contentRequirements/2
+    status: answered
+  - id: QE004
+    question: How many weekly downloads and dependents do Salla's official npm packages report?
+    type: quantification
+    targets:
+    - contentRequirements/1
+    status: answered
+  - id: QE005
+    question: Does Salla maintain a public GitHub presence with open developer tooling?
+    type: verification
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QE006
+    question: What third-party or community projects exist that integrate with Salla's API beyond its own official SDKs?
+    type: enumeration
+    targets:
+    - contentRequirements/2
+    - contentRequirements/4
+    status: answered
+  - id: QE007
+    question: Is there recent public developer Q&A activity (e.g., Stack Overflow) tied to Salla as of the current runDate?
+    type: freshness
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QE008
+    question: What is Salla's core platform architecture (API, authentication, events, serverless layer) per its own developer documentation?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QE009
+    question: What native payment and BNPL integrations does Salla support?
+    type: enumeration
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QE010
+    question: Is Salla's claimed PCI DSS compliance independently certified or only company-stated?
+    type: verification
+    targets:
+    - contentRequirements/5
+    status: unresolved
+  - id: QE011
+    question: Does any independent source confirm Salla is a certified ZATCA-compliant e-invoicing solution provider?
+    type: verification
+    targets:
+    - contentRequirements/5
+    status: unresolved
+  - id: QE012
+    question: What complaints or limitations do third-party reviewers report about Salla's buyer-protection and dispute-resolution process?
+    type: adverse
+    targets:
+    - contentRequirements/5
+    status: answered
+  - id: QE013
+    question: What ratings and review-volume data exist for Salla's official mobile apps, and what do they suggest about product quality?
+    type: adverse
+    targets:
+    - contentRequirements/3
+    - contentRequirements/5
+    status: answered
+  - id: QE014
+    question: How does Salla's app/plugin ecosystem size compare with Shopify's or BigCommerce's?
+    type: comparison
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QE015
+    question: How does Salla's public developer-tooling maturity compare with Shopify's or BigCommerce's headless/API-first architecture?
+    type: comparison
+    targets:
+    - contentRequirements/2
+    - contentRequirements/4
+    status: answered
+  - id: QE016
+    question: How many components does Salla disclose on its public status page, and what uptime figure is reported?
+    type: quantification
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QE017
+    question: When was Salla's most recent named major platform version (e.g., "Salla 4.0") released?
+    type: freshness
+    targets:
+    - contentRequirements/3
+    status: partial
+  - id: QE018
+    question: What release/changelog mechanism does Salla provide to communicate product updates to merchants and developers?
+    type: enumeration
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QE019
+    question: Does Salla disclose its underlying cloud/hosting infrastructure provider?
+    type: verification
+    targets:
+    - contentRequirements/2
+    status: unresolved
+  - id: QE020
+    question: How does Salla's native app-builder feature work from a merchant's perspective?
+    type: mechanism
+    targets:
+    - contentRequirements/0
+    - contentRequirements/3
+    status: answered
+  - id: QE021
+    question: What marketing and growth-tool integrations does Salla natively support?
+    type: enumeration
+    targets:
+    - contentRequirements/1
+    status: answered
+  - id: QE022
+    question: Has Salla received independent recognition for its developer experience or documentation quality?
+    type: verification
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QE023
+    question: What star rating and review count do Salla's official apps hold on Google Play?
+    type: quantification
+    targets:
+    - contentRequirements/5
+    status: answered
+  - id: QE024
+    question: What limitations do independent reviewers report for Salla's free/basic-tier analytics and reporting tools?
+    type: adverse
+    targets:
+    - contentRequirements/0
+    - contentRequirements/5
+    status: answered
+  - id: QE025
+    question: What limitations exist in Salla's support for international (non-GCC) shipping and multi-country tax configuration?
+    type: adverse
+    targets:
+    - contentRequirements/3
+    - contentRequirements/4
+    status: answered
+  - id: QE026
+    question: How does Salla's App Store/marketplace technically integrate third-party developer apps into a merchant's storefront?
+    type: mechanism
+    targets:
+    - contentRequirements/1
+    - contentRequirements/2
+    status: answered
+  - id: QE027
+    question: How does Salla's claimed trust/security feature set compare with the trust and security claims made by Shopify and BigCommerce?
+    type: comparison
+    targets:
+    - contentRequirements/5
+    status: answered
+  - id: QE028
+    question: Does any reviewed source disclose Salla's mobile app crash rate, API uptime SLA, or a formal historical incident log beyond the current status snapshot?
+    type: verification
+    targets:
+    - contentRequirements/3
+    status: unresolved
+  sources:
+  - id: SE001
+    publisher: Salla
+    title: شركاء سلة (Salla Partners homepage)
+    url: https://salla.partners/
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - partner-ecosystem
+    - app-marketplace
+  - id: SE002
+    publisher: Salla
+    title: 'Salla Partners: Apps Store'
+    url: https://salla.partners/en/apps
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - app-marketplace
+    - developer-ecosystem
+  - id: SE003
+    publisher: Salla
+    title: Salla Partners' documentations
+    url: https://docs.salla.dev/
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: company
+    topics:
+    - api
+    - architecture
+    - developer-docs
+  - id: SE004
+    publisher: Salla
+    title: Enabling the BNPL Tabby
+    url: https://help.salla.sa/en/article/enabling-the-bnpl-tabby/dy7yvan3npix92pammram3jv
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - payments
+    - bnpl-integration
+  - id: SE005
+    publisher: Tap Payments (sponsored feature)
+    title: Salla 4.0 Powers 68,000 Saudi Stores with Tap Payments
+    url: https://blog.tap.company/salla-4-0-saudi-ecommerce/
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: partner-proof
+    reputationTier: medium
+    independence: partner
+    topics:
+    - product-features
+    - payments
+    - roadmap
+    keyQuote: Accept every major payment method including mada, Visa, Mastercard, American Express, Apple Pay, and Tabby. Sell in over 15 currencies, all managed in one place. Stay protected with AI fraud detection, 3D Secure, and full PCI DSS compliance.
+  - id: SE006
+    publisher: ZatcaHub
+    title: Salla ERP Review 2026
+    url: https://www.zatcahub.com/reviews/salla/
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: adverse
+    sourceType: review
+    reputationTier: medium
+    independence: independent
+    topics:
+    - merchant-review
+    - product-limitations
+    - buyer-protection
+    keyQuote: 'One Trustpilot user wrote: "Horrible platform for buyers, merchants mostly scam people and the platform does jack all about it."'
+  - id: SE007
+    publisher: devportalawards.org
+    title: Salla Partners Portal - 2025 Developer Portal Awards nominee
+    url: https://devportalawards.org/nominees/2025/salla-partners-portal
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics:
+    - developer-experience
+    - recognition
+  - id: SE008
+    publisher: Zakat, Tax and Customs Authority (ZATCA)
+    title: E-Invoicing
+    url: https://zatca.gov.sa/en/E-Invoicing/Pages/default.aspx
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: regulatory
+    reputationTier: high
+    independence: independent
+    topics:
+    - compliance
+    - regulatory-mandate
+  - id: SE009
+    publisher: Zakat, Tax and Customs Authority (ZATCA)
+    title: Roll-out phases
+    url: https://zatca.gov.sa/en/E-Invoicing/Introduction/Pages/Roll-out-phases.aspx
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: regulatory
+    reputationTier: high
+    independence: independent
+    topics:
+    - compliance
+    - regulatory-mandate
+  - id: SE010
+    publisher: GetLatka
+    title: Salla Revenue, Valuation & Funding (2026)
+    url: https://getlatka.com/companies/salla.com
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: analyst-market-data
+    reputationTier: low
+    independence: independent
+    topics:
+    - company-profile
+    - headcount
+  - id: SE011
+    publisher: Shopify
+    title: Shopify Plus
+    url: https://www.shopify.com/plus
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: high
+    independence: competitor
+    topics:
+    - competitor-architecture
+    - headless-commerce
+  - id: SE012
+    publisher: BigCommerce
+    title: BigCommerce product platform
+    url: https://www.bigcommerce.com/product/
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: high
+    independence: competitor
+    topics:
+    - competitor-architecture
+    - open-api
+  - id: SE013
+    publisher: General Authority for Statistics (Saudi Arabia)
+    title: 'GASTAT: Digital Economy accounts for 15.6% of Saudi Arabia''s GDP'
+    url: https://www.stats.gov.sa/en/w/news/46
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: regulatory
+    reputationTier: high
+    independence: independent
+    topics:
+    - market-context
+    - digital-economy
+  - id: SE014
+    publisher: MAGNiTT
+    title: Salla partners with Tamara to offer buy now, pay later service to over 10,000 e-commerce stores
+    url: https://magnitt.com/news/salla-partners-tamara-offer-buy-now-pay-later-10-000-e-commerce-stores-52231
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: news
+    reputationTier: medium
+    independence: independent
+    topics:
+    - bnpl-integration
+    - partnership
+  - id: SE015
+    publisher: storeleads.app
+    title: The State of Salla in 2026
+    url: https://storeleads.app/reports/salla
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: analyst-market-data
+    reputationTier: medium
+    independence: independent
+    topics:
+    - scale-metrics
+    - store-count
+  - id: SE016
+    publisher: Salla (via apps.salla.sa)
+    title: سلة | متجر التطبيقات (Salla App Store)
+    url: https://apps.salla.sa/
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - app-marketplace
+    - merchant-tooling
+  - id: SE017
+    publisher: Salla (via changelog.salla.sa)
+    title: منصة سلة للتجارة الإلكترونية - مركز التحديثات (Salla update center)
+    url: https://changelog.salla.sa/
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - release-notes
+    - roadmap
+  - id: SE018
+    publisher: Google Play (listing - SallaApp)
+    title: 'سلة: تجارة إلكترونية سهلة - Apps on Google Play'
+    url: https://play.google.com/store/apps/details?id=com.emoney.sallacp&hl=en-US
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: customer-proof
+    reputationTier: medium
+    independence: independent
+    topics:
+    - mobile-app
+    - merchant-tooling
+  - id: SE019
+    publisher: Google Play (search results)
+    title: salla - Android Apps on Google Play
+    url: https://play.google.com/store/search?q=salla&c=apps&hl=en-US
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: adverse
+    sourceType: customer-proof
+    reputationTier: medium
+    independence: independent
+    topics:
+    - app-rating
+    - install-count
+    keyQuote: 3.3 rating, 5.8K reviews, 500K+ Downloads
+  - id: SE020
+    publisher: GitHub
+    title: SallaApp (organization profile)
+    url: https://github.com/SallaApp
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: company
+    topics:
+    - open-source
+    - developer-tooling
+  - id: SE021
+    publisher: npm, Inc.
+    title: salla - npm search
+    url: https://www.npmjs.com/search?q=salla
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: company
+    topics:
+    - package-registry
+    - developer-ecosystem
+    keyQuote: 53 packages found
+  - id: SE022
+    publisher: Stack Overflow
+    title: Newest 'salla' Questions
+    url: https://stackoverflow.com/questions/tagged/salla
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: high
+    independence: independent
+    topics:
+    - developer-community
+    - q-and-a-activity
+    keyQuote: There are no questions tagged salla.
+  - id: SE023
+    publisher: Salla (via status.salla.com)
+    title: حالة النظام - سلة (Salla system status)
+    url: https://status.salla.com/
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - reliability
+    - uptime
+  - id: SE024
+    publisher: npm, Inc.
+    title: '@salla.sa/cli'
+    url: https://www.npmjs.com/package/@salla.sa/cli
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: company
+    topics:
+    - cli-tool
+    - developer-ecosystem
+    keyQuote: The Salla Command Line Interface (Salla CLI) is your way to create your starter Salla Apps which works with the Salla APIs.
+  - id: SE025
+    publisher: GitHub
+    title: 'Code search results: salla-api'
+    url: https://github.com/search?q=salla-api&type=repositories
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics:
+    - third-party-projects
+    - open-source
+    keyQuote: 'Passport strategy is used with Salla as an authentication middleware module using the OAuth 2.0 API. Salla.sa API for Python. Salla Telegram Bot API. Salla Merchant API MCP Server.'
+  - id: SE026
+    publisher: Google Play (listing - sala/Faya)
+    title: سلة | sala - Apps on Google Play
+    url: https://play.google.com/store/apps/details?id=com.faya.sala&hl=en-US
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: neutral
+    sourceType: customer-proof
+    reputationTier: medium
+    independence: independent
+    topics:
+    - mobile-app
+    - consumer-marketplace
+  - id: SE027
+    publisher: Investcorp
+    title: Salla - Investcorp
+    url: https://www.investcorp.com/portfolio/salla/
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: partner
+    topics:
+    - scale-metrics
+    - funding-context
+  - id: SE028
+    publisher: STV
+    title: 'STV Doubles Down on Salla: Accelerating E-Commerce Innovation in MENA'
+    url: https://stv.vc/blog/en/salla-series-b
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: partner-proof
+    reputationTier: medium
+    independence: partner
+    topics:
+    - scale-metrics
+    - funding-context
+  - id: SE029
+    publisher: Wamda
+    title: Saudi Arabia's Salla raises $130 million pre-IPO investment
+    url: https://www.wamda.com/2024/03/saudi-arabia-salla-raises-130-million-pre-ipo-investment
+    accessDate: '2026-07-05'
+    accessStatus: ok
+    stance: confirming
+    sourceType: news
+    reputationTier: medium
+    independence: independent
+    topics:
+    - founders-context
+    - funding-context
+  claims:
+  - id: CE001
+    statement: Nawaf Hariri and Salman Butt founded Salla in 2016, and Nawaf Hariri serves as its Founder and CEO.
+    type: observed
+    topic: founders
+    sourceRefs:
+    - SE005
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QE018
+  - id: CE002
+    statement: Salla's product is explicitly built and localized for the Saudi and wider GCC market, including full Arabic-language support across its dashboard, storefront, and apps.
+    type: company-claimed
+    topic: localization
+    sourceRefs:
+    - SE005
+    confidence: medium
+    freshness: current
+  - id: CE003
+    statement: Salla's core product combines store setup, product listings, order/inventory management, payments, and shipping into a single merchant dashboard.
+    type: observed
+    topic: product-overview
+    sourceRefs:
+    - SE005
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+  - id: CE004
+    statement: Sponsored coverage on Tap Payments' blog states that over 68,000 online stores in Saudi Arabia run on Salla, one of several differing scale figures disclosed across this report's sources.
+    type: third-party-reported
+    topic: scale-metrics
+    sourceRefs:
+    - SE005
+    confidence: medium
+    freshness: recent
+  - id: CE005
+    statement: Salla natively supports mada, Visa, Mastercard, American Express, Apple Pay, and Tabby buy-now-pay-later, with checkout available in more than 15 currencies.
+    type: company-claimed
+    topic: payments
+    sourceRefs:
+    - SE005
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE009
+  - id: CE006
+    statement: Salla's marketing content claims AI-based fraud detection, 3D Secure card verification, and full PCI DSS compliance across its payment stack.
+    type: company-claimed
+    topic: trust-security
+    sourceRefs:
+    - SE005
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE027
+  - id: CE007
+    statement: Salla claims full Arabic-language support across its dashboard, storefront, and apps, alongside 24/7 Arabic-language customer support.
+    type: company-claimed
+    topic: support
+    sourceRefs:
+    - SE005
+    confidence: medium
+    freshness: current
+  - id: CE008
+    statement: Salla's marketing content claims direct electronic-invoice integration with Saudi Arabia's Zakat, Tax and Customs Authority (ZATCA), though no independent source in this corpus confirms Salla is a certified ZATCA-compliant solution provider.
+    type: company-claimed
+    topic: trust-security
+    sourceRefs:
+    - SE005
+    - SE008
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE011
+  - id: CE009
+    statement: Salla offers a native-app-builder module that lets a merchant generate a branded Android or iOS shopping app within 72 hours without writing code, kept in sync with the main web storefront.
+    type: company-claimed
+    topic: product-overview
+    sourceRefs:
+    - SE005
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE020
+  - id: CE010
+    statement: Salla includes built-in loyalty and rewards tooling as part of its native marketing feature set.
+    type: company-claimed
+    topic: product-overview
+    sourceRefs:
+    - SE005
+    confidence: medium
+    freshness: current
+  - id: CE011
+    statement: Salla claims to provide 24/7 customer support delivered by real people in Arabic.
+    type: company-claimed
+    topic: support
+    sourceRefs:
+    - SE005
+    confidence: low
+    freshness: current
+  - id: CE012
+    statement: Salla connects merchants to multiple logistics carriers without requiring separate shipping contracts, per its own marketing content.
+    type: company-claimed
+    topic: logistics
+    sourceRefs:
+    - SE005
+    confidence: medium
+    freshness: current
+  - id: CE013
+    statement: Salla's marketing content claims its merchant network reaches over 13 million shoppers, a figure not independently corroborated elsewhere in this corpus.
+    type: company-claimed
+    topic: scale-metrics
+    sourceRefs:
+    - SE005
+    confidence: low
+    freshness: current
+  - id: CE014
+    statement: Salla natively integrates marketing tools including Klaviyo and Mailchimp for email, Snapchat, Instagram, TikTok, X, and Google for advertising, and WhatsApp for automated order-confirmation messaging.
+    type: company-claimed
+    topic: marketing-integrations
+    sourceRefs:
+    - SE005
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE021
+  - id: CE015
+    statement: Salla's developer documentation describes a Merchant REST API secured by OAuth 2.0 authentication as the core programmatic interface for third-party integrations.
+    type: observed
+    topic: architecture
+    sourceRefs:
+    - SE003
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE008
+  - id: CE016
+    statement: Salla's platform includes a webhook system that pushes real-time store-event notifications (such as new orders or inventory changes) to integrated third-party applications.
+    type: observed
+    topic: architecture
+    sourceRefs:
+    - SE003
+    confidence: medium
+    freshness: current
+  - id: CE017
+    statement: Salla provides a serverless "App Functions" layer that lets third-party developers host custom app backend logic without managing their own merchant-facing infrastructure.
+    type: observed
+    topic: architecture
+    sourceRefs:
+    - SE003
+    confidence: medium
+    freshness: current
+  - id: CE018
+    statement: Salla's Twilight framework provides theming and web-component tooling for building and publishing custom storefront themes.
+    type: observed
+    topic: architecture
+    sourceRefs:
+    - SE003
+    confidence: medium
+    freshness: current
+  - id: CE019
+    statement: Salla publishes an official command-line interface, @salla.sa/cli, on npm, described as "the Official Salla Command Line Interface," at version 3.2.30 as of roughly three months before this report's runDate, providing commands to create, serve, authenticate, link, delete, and upgrade a Salla App project.
+    type: observed
+    topic: developer-tooling
+    sourceRefs:
+    - SE024
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE003
+  - id: CE020
+    statement: Salla publishes @salla.sa/twilight-components, described as a "Salla Web Component" library, at version 2.14.484 published 3 days before this report's runDate under a GPL-3.0 license, reporting roughly 13,524 weekly downloads.
+    type: observed
+    topic: developer-tooling
+    sourceRefs:
+    - SE021
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE004
+  - id: CE021
+    statement: Salla publishes @salla.sa/twilight, a theme toolkit bundling web components, event handling, and request utilities, at the same version 2.14.484, with 6 dependent packages and roughly 12,547 weekly downloads.
+    type: observed
+    topic: developer-tooling
+    sourceRefs:
+    - SE021
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE004
+  - id: CE022
+    statement: Salla publishes @salla.sa/twilight-tailwind-theme, a Tailwind CSS theme built on the Twilight toolkit, at version 2.14.484 with 4 dependent packages and roughly 15,005 weekly downloads.
+    type: observed
+    topic: developer-tooling
+    sourceRefs:
+    - SE021
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE004
+  - id: CE023
+    statement: Salla publishes @salla.sa/base, described as "Salla Base," at version 2.14.484 with roughly 8,675 weekly downloads.
+    type: observed
+    topic: developer-tooling
+    sourceRefs:
+    - SE021
+    confidence: medium
+    freshness: current
+  - id: CE024
+    statement: Salla publishes @salla.sa/applepay, an Apple Pay integration package, at version 2.14.484 under an UNLICENSED license with 4 dependent packages and roughly 8,342 weekly downloads.
+    type: observed
+    topic: developer-tooling
+    sourceRefs:
+    - SE021
+    confidence: medium
+    freshness: current
+  - id: CE025
+    statement: A search of the public npm registry for "salla" returns 53 total packages, spanning Salla's own @salla.sa scope and independent, community-published packages.
+    type: observed
+    topic: developer-ecosystem
+    sourceRefs:
+    - SE021
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE006
+  - id: CE026
+    statement: An independent, community-published npm package (n8n-nodes-salla-n8nai) provides Salla integration nodes for the n8n workflow-automation platform, built and maintained outside Salla's own organization.
+    type: third-party-reported
+    topic: developer-ecosystem
+    sourceRefs:
+    - SE021
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE006
+  - id: CE027
+    statement: Salla maintains a public GitHub organization (SallaApp) with a pinned repository describing "Salla CLI provides a variety of commands for managing, viewing, and publishing your Salla Apps on Salla Partners Portal."
+    type: observed
+    topic: developer-ecosystem
+    sourceRefs:
+    - SE020
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE005
+  - id: CE028
+    statement: A GitHub code search for "salla-api" surfaces multiple independent, unofficial open-source projects, including a Node.js Passport.js OAuth 2.0 authentication strategy for Salla, a Python client library for the Salla API, a Telegram bot wrapper for Salla store data, and a "Salla Merchant API MCP Server" for AI-agent integration.
+    type: observed
+    topic: developer-ecosystem
+    sourceRefs:
+    - SE025
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE006
+  - id: CE029
+    statement: Stack Overflow's "salla" tag returns zero tagged questions as of this report's runDate, indicating negligible public developer Q&A activity on that specific platform despite real GitHub and npm activity.
+    type: observed
+    topic: developer-community
+    sourceRefs:
+    - SE022
+    - SE020
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE007
+  - id: CE030
+    statement: Salla's official merchant-management app on Google Play (package com.emoney.sallacp) holds a 3.3-out-of-5 rating across 5,800 reviews with 500,000-plus installs, per the Google Play search listing.
+    type: observed
+    topic: mobile-app-quality
+    sourceRefs:
+    - SE019
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE023
+  - id: CE031
+    statement: A Google Play listing named "Salla | sala" (package com.faya.sala) describes a consumer shopping app aggregating products across stores, but its developer is listed as "Faya Dev Ltd" (a UK-registered entity) with only 100-plus downloads, not Salla's own developer account -- an unresolved brand-attribution question rather than a confirmed first-party Salla consumer app.
+    type: observed
+    topic: product-overview
+    sourceRefs:
+    - SE026
+    confidence: medium
+    freshness: current
+  - id: CE032
+    statement: Salla's public system-status page reports seven monitored components -- App Store, Merchant APIs, Merchant Dashboard, Store Websites, Mahally, Salla Website, and Store APIs -- all shown as "Operational" with a reported 100% uptime figure at the time of the fetch.
+    type: observed
+    topic: reliability
+    sourceRefs:
+    - SE023
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE016
+  - id: CE033
+    statement: Salla operates a dedicated public App Store storefront at apps.salla.sa for merchant-facing third-party add-ons, separate from its Partners developer-documentation portal.
+    type: observed
+    topic: product-overview
+    sourceRefs:
+    - SE016
+    confidence: medium
+    freshness: current
+  - id: CE034
+    statement: Salla maintains a public changelog/updates portal (changelog.salla.sa) that organizes release notes by category, though the fetched content did not surface specific dated release entries.
+    type: observed
+    topic: roadmap
+    sourceRefs:
+    - SE017
+    confidence: low
+    freshness: current
+    answersQuestionRefs:
+    - QE018
+  - id: CE035
+    statement: Salla's Partners Portal was a nominee in the 2025 Developer Portal Awards, an independent third-party recognition program, though no source confirms the nomination's outcome.
+    type: third-party-reported
+    topic: developer-experience
+    sourceRefs:
+    - SE007
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE022
+  - id: CE036
+    statement: An independent merchant-side reviewer (ZatcaHub, 2026) reports that setting up a basic Salla store was fast, achievable within a day, with a clean Arabic interface manageable by non-technical staff.
+    type: third-party-reported
+    topic: merchant-experience
+    sourceRefs:
+    - SE006
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE002
+  - id: CE037
+    statement: The same independent reviewer reports Salla's third-party plugin/app ecosystem is "much smaller than Shopify's," so merchants needing a specific integration may need to build it themselves or wait.
+    type: third-party-reported
+    topic: ecosystem-comparison
+    sourceRefs:
+    - SE006
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE014
+  - id: CE038
+    statement: The same independent reviewer reports that Salla's free and basic subscription tiers restrict analytics to overly simple reporting, omitting a sales-by-product-category breakdown without a paid upgrade.
+    type: third-party-reported
+    topic: product-limitations
+    sourceRefs:
+    - SE006
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE024
+  - id: CE039
+    statement: The same independent reviewer reports that selling to customers outside Saudi Arabia (e.g., the UAE or Kuwait) surfaces limited international shipping rules and manual multi-country tax setup.
+    type: third-party-reported
+    topic: international-limitations
+    sourceRefs:
+    - SE006
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE025
+  - id: CE040
+    statement: The same independent reviewer cites an unverified Trustpilot complaint alleging Salla does not effectively mediate buyer-merchant disputes, and explicitly frames Salla as a store-builder platform (not a marketplace) that does not intervene in disputes the way Amazon or Noon would.
+    type: third-party-reported
+    topic: buyer-protection
+    sourceRefs:
+    - SE006
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE012
+  - id: CE041
+    statement: No reviewed source discloses an independent PCI Security Standards Council attestation of compliance, SOC 2 report, or ISO 27001 certificate for Salla, despite the company's own claims of full PCI DSS compliance and strong security controls.
+    type: open-question
+    topic: trust-security
+    sourceRefs: []
+    confidence: low
+    freshness: current
+    answersQuestionRefs:
+    - QE010
+  - id: CE042
+    statement: No reviewed source discloses the specific cloud hosting provider, CDN, or database infrastructure underlying Salla's platform.
+    type: open-question
+    topic: infrastructure
+    sourceRefs: []
+    confidence: low
+    freshness: current
+    answersQuestionRefs:
+    - QE019
+  - id: CE043
+    statement: Salla's checkout supports transactions in more than 15 currencies, per its own marketing content, a specific and quantified claim relevant to cross-border and multi-currency merchant use cases.
+    type: company-claimed
+    topic: payments
+    sourceRefs:
+    - SE005
+    confidence: medium
+    freshness: current
+  - id: CE044
+    statement: Shopify Plus's own product page advertises headless commerce APIs and an extensive app ecosystem as a differentiator, a structurally larger and more mature developer surface than Salla's documented REST-plus-webhook model.
+    type: observed
+    topic: competitor-comparison
+    sourceRefs:
+    - SE011
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE015
+  - id: CE045
+    statement: BigCommerce's product page similarly emphasizes an open, API-first architecture as a competitive differentiator against more template-locked e-commerce platforms.
+    type: observed
+    topic: competitor-comparison
+    sourceRefs:
+    - SE012
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE015
+  evidenceGaps:
+  - type: missing-source
+    severity: material
+    topic: pci-dss-certification-gap
+    missingEvidence: An independent PCI Security Standards Council attestation of compliance, SOC 2 report, or ISO 27001 certificate for Salla.
+    whyItMatters: Salla's own marketing claims strong security and compliance controls, but without independent certification this chapter cannot verify those claims meet any recognized third-party standard.
+    diligencePath: Request Salla's most recent PCI DSS Attestation of Compliance, SOC 2 report, or ISO 27001 certificate directly from the company, or check the PCI Security Standards Council's list of validated service providers.
+    relatedQuestionRefs:
+    - QE010
+  - type: access-blocked
+    severity: minor
+    topic: zatca-solution-provider-listing-gap
+    missingEvidence: An independent confirmation, such as a listing in ZATCA's own compliant e-invoicing solution provider registry, that Salla is a certified ZATCA-compliant platform.
+    whyItMatters: ZATCA e-invoicing compliance is a legal mandate for Saudi taxpayers; without independent confirmation, this chapter can describe the requirement but not verify Salla's own conformance.
+    diligencePath: Search ZATCA's published solution-provider or vendor registry for a Salla listing, or request a compliance attestation directly from Salla.
+    relatedQuestionRefs:
+    - QE011
+  - type: missing-source
+    severity: minor
+    topic: platform-version-date-gap
+    missingEvidence: A specific, dated release announcement for the "Salla 4.0" platform version referenced in sponsored coverage.
+    whyItMatters: Without a confirmed release date, this chapter cannot establish Salla's actual major-version release cadence or timing relative to competitor platform updates.
+    diligencePath: Search Salla's own changelog/updates portal or press coverage archives for a dated "Salla 4.0" launch announcement.
+    relatedQuestionRefs:
+    - QE017
+  - type: missing-source
+    severity: material
+    topic: hosting-infrastructure-gap
+    missingEvidence: The specific cloud hosting provider, CDN, or database infrastructure Salla's platform runs on.
+    whyItMatters: Infrastructure choice materially affects reliability, data-residency compliance, and disaster-recovery posture, none of which can be assessed without knowing the underlying provider.
+    diligencePath: Request Salla's infrastructure and data-residency documentation directly from the company, or review any published case study from a cloud provider naming Salla as a customer.
+    relatedQuestionRefs:
+    - QE019
+  - type: private-evidence-only
+    severity: material
+    topic: reliability-history-gap
+    missingEvidence: A historical incident log, mean-time-to-recovery data, or a contractual uptime SLA for Salla's platform beyond the single status-page snapshot captured in this chapter.
+    whyItMatters: A single "100% operational" reading says nothing about past outage frequency or severity, which is what a reliability underwriting decision actually requires.
+    diligencePath: Request Salla's historical status-page incident archive or any merchant-facing SLA documentation directly from the company.
+    relatedQuestionRefs:
+    - QE028
+  - type: missing-source
+    severity: minor
+    topic: developer-count-gap
+    missingEvidence: A disclosed total count of unique third-party developers or apps built using Salla's official CLI, SDKs, and App Functions layer.
+    whyItMatters: Without a developer-count figure, this chapter can describe the tooling's existence and activity level but cannot size the overall developer ecosystem relative to competitors like Shopify.
+    diligencePath: Request developer-ecosystem metrics (registered developers, published apps, active integrations) directly from Salla's Partners team.
+    relatedQuestionRefs:
+    - QE006
