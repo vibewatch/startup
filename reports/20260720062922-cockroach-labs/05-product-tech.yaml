@@ -1,0 +1,1687 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: cockroach-labs
+runDate: '2026-07-20'
+company:
+  name: Cockroach Labs
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: 'CockroachDB is now a broad transactional platform rather than only a clever distributed-SQL engine: it pairs PostgreSQL compatibility with multi-region locality controls, migration tooling, enterprise trust features, and a growing AI/vector surface. The architecture still looks differentiated where portability, consistency, and geographic control must coexist, but the product is also undeniably complex, and some of the newest capabilities remain better documented by Cockroach than independently validated by customers. The product-tech case is therefore strong, with the main diligence burden shifting from “can this work?” to “which parts are mature enough for the target workload today?”'
+sections:
+- id: SE001
+  title: Product definition and SKU map
+  body: |-
+    CockroachDB’s product definition is more concrete than “distributed SQL.” Public materials consistently frame it as a transactional system-of-record database for always-on, cloud-native applications that need PostgreSQL familiarity, resilience, and global scale at the same time. That workflow orientation matters because it separates CockroachDB from both pure analytical systems and from document or multi-model platforms that solve different jobs.
+
+    The product surface is also broader than a single engine. Cockroach Labs sells managed cloud, self-hosted enterprise software, migration tooling, and support around the same database core. Basic or serverless-style entry points are there to reduce trial friction, while Standard and Advanced are structured for progressively more demanding production and regulated workloads, procurement paths, and security expectations in enterprise accounts.
+
+    This module map reveals the company’s strategic intent: use familiarity and easy starts to get into the workflow, then expand into higher-value production, compliance, and migration work. The product story is therefore not only about feature count. It is about turning a hard replacement category into a platform decision that can begin small and still scale into a mission-critical control plane.
+  claimRefs:
+  - CE001
+  - CE002
+  - CE003
+  - CE026
+  - CE027
+  - CE031
+  - CE033
+  tableRefs:
+  - TE001
+  - TE002
+  figureRefs:
+  - FE001
+- id: SE002
+  title: Core architecture and deployment model
+  body: |-
+    CockroachDB’s technical identity starts in its architecture. The database accepts SQL on any node, converts those statements into key-value operations, and then coordinates them over distributed ranges replicated across the cluster. Ranges split as data grows, writes flow through Raft quorum, and locality metadata plus range placement lets the system optimize for resiliency and geography without asking the application to manage shards itself.
+
+    Multi-region controls are not an afterthought. The documentation exposes explicit abstractions for primary regions, table localities, super regions, secondary regions, and survival goals. That gives customers a way to trade latency, compliance, and resilience in SQL-visible terms rather than only in network topology diagrams. Cluster virtualization extends this direction by separating control and data planes through system and virtual clusters, which matters for physical cluster replication, resource isolation, and more governable operational models.
+
+    This is the layer that is hardest for customers to recreate themselves. PostgreSQL familiarity is relatively easy to understand; what is difficult is combining that familiarity with multi-region topology, consistent replication, portability, low-touch operations, and newer AI-ready indexing in one product. That is where the underlying architecture still looks differentiated.
+  claimRefs:
+  - CE004
+  - CE005
+  - CE006
+  - CE007
+  - CE008
+  - CE009
+  - CE010
+  - CE011
+  - CE018
+  - CE024
+  - CE028
+  - CE029
+  tableRefs:
+  - TE003
+  figureRefs:
+  - FE002
+  - FE003
+- id: SE003
+  title: Trust, quality, and operational controls
+  body: |-
+    The product’s maturity story is as much about control surfaces as it is about raw performance. Security and trust materials describe a stack that includes encryption, compliance programs, identity integration, CMEK, row-level security, and responsible-disclosure processes. Release 26.1 pushes that further with Azure compliance participation, automatic user provisioning, JWT and OIDC role synchronization, and native FIPS 140-3 support—signals that the company is courting regulated enterprises, not only growth startups.
+
+    Operational transparency is visible in the open. Cockroach Labs publishes technical advisories, a responsible-disclosure policy, and a public incident history. That transparency is a strength, but it also confirms the ordinary reality of a complex distributed database: the system is powerful enough that bugs, security issues, and nuanced operational edge cases are inevitable. Trust therefore depends on response quality, repeatable tooling, and platform discipline, not on pretending the architecture is simple.
+
+    The same tension appears in the broader product breadth. Migrations, CDC, multi-region settings, vector indexing, AI-agent governance, virtualization, and resilience benchmarking all increase product value for serious buyers. They also raise the operational surface area. For customers, the right question is not whether CockroachDB is technically rich—it clearly is—but whether the richness reduces net complexity for the target workload or simply moves complexity into a more centralized platform. The public materials make a strong case that resilience is deeply productized; they do not erase the need for careful operations, measured rollout discipline, and knowledgeable operators.
+  claimRefs:
+  - CE019
+  - CE020
+  - CE021
+  - CE022
+  - CE023
+  - CE024
+  - CE032
+  - CE034
+  - CE035
+  - CE037
+  - CE038
+  tableRefs:
+  - TE004
+  - TE005
+  figureRefs:
+  - FE004
+tables:
+- id: TE001
+  title: Product module / asset matrix
+  columns:
+  - module / SKU
+  - deployment form
+  - primary buyer need
+  - notable capability
+  - evidence status
+  rows:
+  - - Basic / serverless entry
+    - Managed cloud
+    - Fast start and low-friction experimentation
+    - Usage-based entry into distributed SQL
+    - publicly visible
+  - - Standard
+    - Managed cloud
+    - Production workloads with provisioned capacity
+    - Provisioned multi-region cluster planning
+    - publicly visible
+  - - Advanced
+    - Managed cloud
+    - Regulated or high-control production
+    - Dedicated nodes, deeper security and compliance
+    - publicly visible
+  - - Enterprise self-hosted
+    - Customer environment
+    - Control, portability, and own-environment operations
+    - Full feature surface outside Cockroach-managed cloud
+    - publicly visible
+  - - MOLT toolkit
+    - CLI / migration tooling
+    - Replacement of legacy databases
+    - Schema conversion, load, replication, verify
+    - publicly visible
+  - - Support / services
+    - Operational overlay
+    - Faster issue resolution and migration help
+    - Dedicated Slack, advisory, performance tuning
+    - publicly visible
+  notes: The module map focuses on what customers buy or use, not on every internal packaging nuance.
+  enumerationScope:
+    coverage: partial
+    basis: Captures the major deployment and service modules visible in public materials as of the 2026 run date. It excludes unpublished OEM bundles and custom enterprise contract structures.
+  claimRefs:
+  - CE002
+  - CE003
+  - CE024
+  - CE031
+- id: TE002
+  title: Workflow / use-case table
+  columns:
+  - workflow or use case
+  - why Cockroach fits
+  - best plan / module
+  - operational tradeoff
+  rows:
+  - - Always-on OLTP
+    - Strong consistency plus multi-active resilience
+    - Standard or Advanced
+    - Requires capacity and locality planning
+  - - Global consumer application
+    - Regional by row/table plus survival goals
+    - Advanced
+    - Cross-region traffic and compliance choices matter
+  - - Modernization off legacy relational estate
+    - PostgreSQL compatibility plus MOLT migration path
+    - Enterprise + MOLT
+    - Cutover and schema conversion still require discipline
+  - - Regulated workload
+    - CMEK, compliance posture, row-level security, identity integration
+    - Advanced
+    - Security features add setup and governance work
+  - - AI-semantic search near operational data
+    - Built-in vector indexing with distributed storage semantics
+    - Standard / Advanced
+    - Feature set is still maturing and vendor-authored
+  - - Developer evaluation or prototyping
+    - Low-friction managed start
+    - Basic / serverless
+    - Does not prove enterprise production fit by itself
+  notes: Use-case mapping translates database features into the actual jobs a buyer wants completed.
+  claimRefs:
+  - CE001
+  - CE003
+  - CE009
+  - CE015
+  - CE019
+  - CE020
+  - CE024
+  - CE034
+  - CE035
+- id: TE003
+  title: Technology / operating architecture table
+  columns:
+  - layer
+  - what it does
+  - public evidence
+  - why it matters
+  rows:
+  - - SQL layer
+    - Accepts SQL on any node and plans distributed execution
+    - Architecture overview
+    - Keeps the product relational and familiar
+  - - KV storage
+    - Translates SQL state into distributed key-value ranges
+    - Architecture overview
+    - Enables elastic splitting and rebalancing
+  - - Replication layer
+    - Replicates ranges via Raft quorum
+    - Architecture overview
+    - Drives consistency and survivability
+  - - Multi-region abstractions
+    - Adds regions, localities, super regions, secondary regions, survival goals
+    - Multi-region overview
+    - Makes geography and resilience configurable in product terms
+  - - Cluster virtualization
+    - Separates control plane and data plane into system and virtual clusters
+    - Cluster virtualization overview
+    - Supports more isolated operational topologies
+  - - Vector indexing layer
+    - Stores partitioned vector index structures in ranges
+    - C-SPANN materials
+    - Extends product into AI-native search without a separate engine
+  notes: This table abstracts implementation layers into operating concepts relevant to buyers and operators.
+  claimRefs:
+  - CE004
+  - CE005
+  - CE006
+  - CE008
+  - CE011
+  - CE015
+  - CE016
+  - CE018
+- id: TE004
+  title: Trust / quality / compliance table
+  columns:
+  - control area
+  - public control
+  - why buyer cares
+  - remaining caveat
+  rows:
+  - - Identity and access
+    - JWT / OIDC role sync, automatic user provisioning, LDAP/AD lineage
+    - Reduces manual security operations
+    - Configuration still matters
+  - - Encryption and key management
+    - CMEK and encryption controls
+    - Supports regulated-cloud deployments
+    - Cloud-specific setup complexity remains
+  - - Compliance posture
+    - HIPAA, PCI, SOC 2, ISO, FIPS messaging
+    - Shortens enterprise security review
+    - Scope differs by plan and cloud
+  - - Data sovereignty
+    - Regional by row, super regions, jurisdiction pinning
+    - Supports domicile rules
+    - Tradeoffs with latency and topology must be chosen carefully
+  - - Disclosure discipline
+    - Responsible disclosure policy and advisories
+    - Signals maturity and transparency
+    - Also exposes recurring bug surface
+  - - Incident visibility
+    - Public cloud incident history
+    - Shows operational accountability
+    - Confirms non-zero outage risk
+  notes: Trust posture combines product controls and operational disclosure rather than only compliance badges.
+  claimRefs:
+  - CE019
+  - CE020
+  - CE021
+  - CE022
+  - CE023
+  - CE034
+  - CE038
+- id: TE005
+  title: Roadmap / release / development-stage table
+  columns:
+  - area
+  - 2025-2026 public signal
+  - stage or maturity cue
+  - strategic implication
+  rows:
+  - - Throughput improvements
+    - 25.2 cites 50% average throughput gain across nine workloads
+    - recent release claim
+    - Performance remains a central roadmap axis
+  - - Buffered writes
+    - Preview in 25.2 with 15-40% cited gains
+    - preview
+    - Still improving write path efficiency
+  - - Vector indexing
+    - Preview in 25.2 plus deeper C-SPANN internals
+    - preview but strategically important
+    - AI-search use cases are becoming first-class
+  - - Row-level security
+    - GA in 25.2
+    - generally available
+    - Better tenant isolation for regulated apps
+  - - Identity-aware access
+    - 26.1 JWT and OIDC automation
+    - recent release
+    - Strengthens enterprise security posture
+  - - FIPS / compliance / Azure support
+    - 26.1 compliance and native FIPS support
+    - recent release
+    - Pushes deeper into regulated workloads
+  notes: Roadmap signals are vendor-authored release notes, so they show direction and maturity cues more reliably than they prove customer-level outcomes.
+  claimRefs:
+  - CE013
+  - CE014
+  - CE015
+  - CE017
+  - CE019
+  - CE020
+  - CE025
+  - CE035
+figures:
+- id: FE001
+  title: Product architecture map
+  type: flow
+  layout: standard
+  summary: Connects customer-facing product modules to the underlying database core and service layers.
+  data:
+    nodes:
+    - id: p1
+      label: Basic / serverless entry
+      detail: Low-friction managed start for developers.
+      tone: positive
+    - id: p2
+      label: Standard / Advanced cloud
+      detail: Production and regulated managed deployments.
+      tone: positive
+    - id: p3
+      label: Enterprise self-hosted
+      detail: Customer-controlled deployment option.
+      tone: positive
+    - id: p4
+      label: CockroachDB core engine
+      detail: Distributed PostgreSQL-compatible SQL database.
+      tone: positive
+    - id: p5
+      label: Migration + support layer
+      detail: MOLT, services, advisory, and operations help.
+      tone: warning
+    edges:
+    - from: p1
+      to: p4
+      label: runs on
+    - from: p2
+      to: p4
+      label: runs on
+    - from: p3
+      to: p4
+      label: runs on
+    - from: p5
+      to: p2
+      label: accelerates
+    - from: p5
+      to: p3
+      label: supports
+  claimRefs:
+  - CE001
+  - CE002
+  - CE003
+  - CE024
+  - CE031
+- id: FE002
+  title: Customer workflow / operating flow
+  type: flow
+  layout: standard
+  summary: Shows the path from migration or prototype to regulated multi-region operation.
+  data:
+    nodes:
+    - id: w1
+      label: Prototype or migrate
+      detail: Developer trial or MOLT-led replacement project.
+      tone: neutral
+    - id: w2
+      label: Deploy cluster
+      detail: Managed or self-hosted cluster brought online.
+      tone: positive
+    - id: w3
+      label: Configure locality and survival
+      detail: Regions, localities, and failover intent set.
+      tone: positive
+    - id: w4
+      label: Operate with security controls
+      detail: Identity, CMEK, row-level security, compliance.
+      tone: positive
+    - id: w5
+      label: Extend into AI / vector use cases
+      detail: Operational data and semantic search converge.
+      tone: positive
+    edges:
+    - from: w1
+      to: w2
+      label: becomes
+    - from: w2
+      to: w3
+      label: then requires
+    - from: w3
+      to: w4
+      label: and is governed by
+    - from: w4
+      to: w5
+      label: while expanding into
+  claimRefs:
+  - CE003
+  - CE008
+  - CE020
+  - CE024
+  - CE035
+- id: FE003
+  title: Critical dependency map
+  type: dag
+  layout: standard
+  summary: Maps the main product dependencies that make CockroachDB powerful but operationally non-trivial.
+  data:
+    nodes:
+    - id: n1
+      label: SQL compatibility
+      detail: Keeps developers in familiar tools.
+    - id: n2
+      label: KV ranges + Raft
+      detail: Core consistency and replication engine.
+    - id: n3
+      label: Locality metadata
+      detail: Regions, localities, and survival goals.
+    - id: n4
+      label: Security controls
+      detail: Identity, CMEK, compliance, disclosure.
+    - id: n5
+      label: Vector indexing
+      detail: AI-native retrieval over operational data.
+    - id: n6
+      label: Operational discipline
+      detail: Upgrades, settings, and incident response.
+    edges:
+    - from: n1
+      to: n2
+      label: translates into
+    - from: n2
+      to: n3
+      label: is shaped by
+    - from: n2
+      to: n5
+      label: supports
+    - from: n3
+      to: n6
+      label: requires
+    - from: n4
+      to: n6
+      label: requires
+    - from: n5
+      to: n6
+      label: adds
+  claimRefs:
+  - CE006
+  - CE008
+  - CE011
+  - CE016
+  - CE019
+  - CE022
+  - CE032
+  - CE035
+- id: FE004
+  title: Product maturity / capability map
+  type: matrix
+  layout: standard
+  summary: Separates mature core capabilities from newer expansion surfaces inside the product.
+  data:
+    columns:
+    - Core engine maturity
+    - Enterprise trust maturity
+    - AI/vector maturity
+    rows:
+    - label: SQL compatibility
+      values:
+      - Strong
+      - Moderate
+      - Low
+    - label: Multi-region topology
+      values:
+      - Strong
+      - Strong
+      - Low
+    - label: Migrations / CDC
+      values:
+      - Strong
+      - Moderate
+      - Low
+    - label: Security / compliance
+      values:
+      - Moderate
+      - Strong
+      - Low
+    - label: Cluster virtualization
+      values:
+      - Moderate
+      - Moderate
+      - Low
+    - label: Vector indexing / AI-agent controls
+      values:
+      - Moderate
+      - Moderate
+      - Emerging but fast-moving
+  claimRefs:
+  - CE015
+  - CE019
+  - CE022
+  - CE024
+  - CE025
+  - CE031
+  - CE035
+  - CE037
+  - CE038
+callouts:
+- calloutType: strength
+  title: The architecture converts complexity into product abstractions
+  body: CockroachDB’s real product strength is not just replication; it is the way regions, localities, survival goals, and compatibility are exposed in a form application teams can use without hand-building their own sharding and failover model.
+  claimRefs:
+  - CE007
+  - CE008
+  - CE027
+  - CE028
+- calloutType: risk
+  title: Breadth and maturity are not the same thing
+  body: Vector indexing, virtualization, and compliance controls broaden the platform, but public performance and maturity evidence in those newer areas is still mostly vendor-authored. Buyers should separate directionally impressive from fully de-risked.
+  claimRefs:
+  - CE012
+  - CE015
+  - CE019
+  - CE036
+localEvidence:
+  searchQueries:
+  - query: CockroachDB architecture 2026 official docs raft mvcc multi-region vector index cluster virtualization
+    engine: web_search
+    hits: null
+    retainedSourceRefs:
+    - SE015
+    - SE016
+    - SE017
+    - SE020
+  - query: What official 2026 CockroachDB pages describe serverless cloud enterprise migration and security features
+    engine: web_search
+    hits: null
+    retainedSourceRefs:
+    - SE014
+    - SE003
+    - SE004
+    - SE013
+    - SE006
+    - SE007
+    - SE018
+  researchQuestions:
+  - id: QE001
+    question: How should CockroachDB be defined in customer workflow terms rather than only in database taxonomy terms?
+    type: verification
+    targets:
+    - contentRequirements/0
+    status: answered
+  - id: QE002
+    question: What product modules or deployment SKUs are publicly visible in 2026?
+    type: enumeration
+    targets:
+    - contentRequirements/1
+    - plannedTables/product-module-asset-matrix
+    status: answered
+  - id: QE003
+    question: What customer workflows does Basic or serverless serve best?
+    type: mechanism
+    targets:
+    - contentRequirements/1
+    - plannedTables/workflow-use-case-table
+    status: answered
+  - id: QE004
+    question: What customer workflows do Standard and Advanced serve best?
+    type: mechanism
+    targets:
+    - contentRequirements/1
+    - plannedTables/workflow-use-case-table
+    status: answered
+  - id: QE005
+    question: How does CockroachDB’s distributed architecture translate SQL into underlying storage operations?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+  - id: QE006
+    question: How do ranges, replicas, and Raft work in CockroachDB?
+    type: verification
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QE007
+    question: How does CockroachDB support multi-region deployment, locality, and survival goals?
+    type: verification
+    targets:
+    - contentRequirements/2
+    - plannedFigures/product-architecture-map
+    status: answered
+  - id: QE008
+    question: What does cluster virtualization add to the operating model?
+    type: freshness
+    targets:
+    - contentRequirements/2
+    - plannedFigures/critical-dependency-map
+    status: answered
+  - id: QE009
+    question: How does CockroachDB handle vector search and AI-native indexing as of 2026?
+    type: freshness
+    targets:
+    - contentRequirements/2
+    - plannedTables/roadmap-release-development-stage-table
+    status: answered
+  - id: QE010
+    question: How does the platform use PostgreSQL compatibility as a product design principle?
+    type: comparison
+    targets:
+    - contentRequirements/0
+    - contentRequirements/4
+    status: answered
+  - id: QE011
+    question: What deployment and integration environments are explicitly supported?
+    type: enumeration
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QE012
+    question: What reliability and maintenance characteristics are promised publicly?
+    type: verification
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QE013
+    question: What migration and CDC tooling are publicly visible?
+    type: enumeration
+    targets:
+    - contentRequirements/3
+    - plannedFigures/customer-workflow-operating-flow
+    status: answered
+  - id: QE014
+    question: What security and compliance controls are publicly visible?
+    type: verification
+    targets:
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+    status: answered
+  - id: QE015
+    question: How does CockroachDB address identity-aware access and AI-agent governance?
+    type: freshness
+    targets:
+    - contentRequirements/5
+    status: answered
+  - id: QE016
+    question: What disclosure or quality-control processes are visible for bugs and incidents?
+    type: adverse
+    targets:
+    - contentRequirements/5
+    status: answered
+  - id: QE017
+    question: What roadmap velocity is visible from the 25.2 and 26.1 releases?
+    type: freshness
+    targets:
+    - contentRequirements/3
+    - plannedTables/roadmap-release-development-stage-table
+    status: answered
+  - id: QE018
+    question: What differentiators are strongest against PostgreSQL, Aurora, or Spanner?
+    type: comparison
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QE019
+    question: Which parts of the architecture are likely hardest for customers to reproduce themselves?
+    type: comparison
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QE020
+    question: Which parts of the architecture are still complex or operationally risky despite the product promise?
+    type: adverse
+    targets:
+    - contentRequirements/3
+    - contentRequirements/5
+    status: answered
+  - id: QE021
+    question: How mature is the cloud-to-self-hosted product surface?
+    type: verification
+    targets:
+    - contentRequirements/1
+    - contentRequirements/3
+    status: answered
+  - id: QE022
+    question: What evidence suggests CockroachDB is built for regulated and global workloads?
+    type: verification
+    targets:
+    - contentRequirements/5
+    status: answered
+  - id: QE023
+    question: What evidence suggests the product is broadening into AI-era use cases?
+    type: freshness
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QE024
+    question: Can public sources fully quantify product performance versus direct rivals in customer-specific workloads?
+    type: verification
+    targets:
+    - contentRequirements/4
+    status: partial
+  - id: QE025
+    question: What product-tech verdict best fits the public evidence?
+    type: comparison
+    targets:
+    - contentRequirements/4
+    - contentRequirements/5
+    status: answered
+  sources:
+  - publisher: Cockroach Labs
+    title: CockroachDB | Distributed SQL for always-on customer experiences
+    url: https://www.cockroachlabs.com/
+    date: null
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - product
+    - resilience
+    - customers
+    - compliance
+    id: SE001
+    accessDate: '2026-07-20'
+  - publisher: Cockroach Labs
+    title: Product Overview | Enable modern, resilient applications with CockroachDB
+    url: https://www.cockroachlabs.com/product/overview/
+    date: null
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - product
+    - postgresql
+    - security
+    - compliance
+    id: SE002
+    accessDate: '2026-07-20'
+  - publisher: Cockroach Labs
+    title: CockroachDB Cloud | Fast. Flexible. Fully managed.
+    url: https://www.cockroachlabs.com/product/cloud/
+    date: null
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - cloud
+    - pricing
+    - availability
+    id: SE003
+    accessDate: '2026-07-20'
+  - publisher: Cockroach Labs
+    title: CockroachDB Enterprise
+    url: https://www.cockroachlabs.com/product/enterprise/
+    date: null
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - enterprise
+    - self-hosted
+    - support
+    id: SE004
+    accessDate: '2026-07-20'
+  - publisher: Cockroach Labs
+    title: CockroachDB Pricing | Cockroach Labs
+    url: https://www.cockroachlabs.com/pricing/
+    date: null
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - pricing
+    - cloud
+    - plans
+    id: SE005
+    accessDate: '2026-07-20'
+  - publisher: Cockroach Labs
+    title: CockroachDB - Scalable distributed SQL now in a few clicks | Cockroach Labs
+    url: https://www.cockroachlabs.com/security/
+    date: null
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - security
+    - cloud
+    - compliance
+    id: SE006
+    accessDate: '2026-07-20'
+  - publisher: Cockroach Labs
+    title: Trust Center | Cockroach Labs
+    url: https://www.cockroachlabs.com/trust-center/
+    date: null
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - trust
+    - compliance
+    - privacy
+    id: SE007
+    accessDate: '2026-07-20'
+  - publisher: Cockroach Labs
+    title: Technical Advisories - CockroachDB
+    url: https://www.cockroachlabs.com/docs/advisories
+    date: null
+    accessStatus: ok
+    stance: adverse
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - security
+    - bugs
+    - data-loss
+    id: SE008
+    accessDate: '2026-07-20'
+  - publisher: CockroachDB Cloud Status
+    title: CockroachDB Cloud Status - Incident History
+    url: https://status.cockroachlabs.cloud/history
+    date: null
+    accessStatus: ok
+    stance: adverse
+    sourceType: other
+    reputationTier: medium
+    independence: company
+    topics:
+    - status
+    - outages
+    - availability
+    id: SE009
+    accessDate: '2026-07-20'
+  - publisher: GitHub
+    title: 'GitHub - cockroachdb/cockroach: CockroachDB — the cloud native, distributed SQL database designed for high availability, effortless scale, and control over data placement.'
+    url: https://github.com/cockroachdb/cockroach
+    date: null
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: high
+    independence: company
+    topics:
+    - open-source
+    - developer-signal
+    - repository
+    id: SE010
+    accessDate: '2026-07-20'
+  - publisher: PR Newswire
+    title: Cockroach Labs Accelerates Momentum into 2026 as Enterprises Rebuild for AI-Scale Resilience
+    url: https://www.prnewswire.com/news-releases/cockroach-labs-accelerates-momentum-into-2026-as-enterprises-rebuild-for-ai-scale-resilience-302660764.html
+    date: null
+    accessStatus: ok
+    stance: confirming
+    sourceType: news
+    reputationTier: high
+    independence: company
+    topics:
+    - '2026'
+    - partnerships
+    - leadership
+    - ai
+    - customers
+    id: SE011
+    accessDate: '2026-07-20'
+  - publisher: Cockroach Labs
+    title: Database Migrations | CockroachDB Migration Toolkit
+    url: https://www.cockroachlabs.com/migrations/
+    date: null
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - migration
+    - oracle
+    - postgresql
+    id: SE012
+    accessDate: '2026-07-20'
+  - publisher: Cockroach Labs
+    title: Database Migrations | CockroachDB Migration Toolkit
+    url: https://www.cockroachlabs.com/molt-migration/
+    date: null
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - migration
+    - tooling
+    id: SE013
+    accessDate: '2026-07-20'
+  - publisher: Cockroach Labs
+    title: CockroachCloud - Scalable distributed SQL now in a few clicks | Cockroach Labs
+    url: https://www.cockroachlabs.com/lp/serverless/
+    date: null
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - serverless
+    - cloud
+    - product
+    id: SE014
+    accessDate: '2026-07-20'
+  - publisher: Cockroach Labs
+    title: Multi-Region Capabilities Overview - CockroachDB
+    url: https://www.cockroachlabs.com/docs/v26.2/multiregion-overview
+    date: null
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - multiregion
+    - locality
+    - survival-goals
+    id: SE015
+    accessDate: '2026-07-20'
+  - publisher: Cockroach Labs
+    title: Architecture Overview - CockroachDB
+    url: https://www.cockroachlabs.com/docs/v26.2/architecture/overview
+    date: null
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - architecture
+    - raft
+    - mvcc
+    - sql-kv
+    id: SE016
+    accessDate: '2026-07-20'
+  - publisher: Cockroach Labs
+    title: Cluster Virtualization Overview - CockroachDB
+    url: https://www.cockroachlabs.com/docs/stable/cluster-virtualization-overview
+    date: null
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - cluster-virtualization
+    - pcr
+    - virtual-cluster
+    id: SE017
+    accessDate: '2026-07-20'
+  - publisher: Cockroach Labs
+    title: 'CockroachDB v26.1: Security and Compliance for Regulated Workloads'
+    url: https://www.cockroachlabs.com/blog/cockroachdb-v26-1-security-and-compliance/
+    date: '2026-02-03'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - release
+    - security
+    - compliance
+    - azure
+    id: SE018
+    accessDate: '2026-07-20'
+  - publisher: Cockroach Labs
+    title: 'CockroachDB''s 10-Year Release: Vector Indexing, Performance, and More'
+    url: https://www.cockroachlabs.com/blog/cockroachdb-252-performance-vector-indexing/
+    date: null
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - release
+    - performance
+    - vector
+    - row-level-security
+    id: SE019
+    accessDate: '2026-07-20'
+  - publisher: Cockroach Labs
+    title: Real-Time Indexing for Billions of Vectors with CockroachDB
+    url: https://www.cockroachlabs.com/blog/cspann-real-time-indexing-billions-vectors/
+    date: null
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - vector
+    - cspann
+    - architecture
+    - ai
+    id: SE020
+    accessDate: '2026-07-20'
+  - publisher: Cockroach Labs
+    title: AI Agent Identity Security | CockroachDB
+    url: https://www.cockroachlabs.com/blog/ai-agent-identity-security/
+    date: null
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - ai
+    - security
+    - row-level-security
+    id: SE021
+    accessDate: '2026-07-20'
+  - publisher: Cockroach Labs
+    title: Cockroach Labs | Responsible Disclosure Policy
+    url: https://www.cockroachlabs.com/security/responsible-disclosure-policy/
+    date: null
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - security
+    - responsible-disclosure
+    id: SE022
+    accessDate: '2026-07-20'
+  - publisher: Cockroach Labs
+    title: Row-Level Security (RLS) Overview - CockroachDB
+    url: https://www.cockroachlabs.com/docs/v26.2/row-level-security
+    date: null
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - security
+    - row-level-security
+    id: SE023
+    accessDate: '2026-07-20'
+  - publisher: Cockroach Labs
+    title: Vector Indexes - CockroachDB
+    url: https://www.cockroachlabs.com/docs/v26.2/vector-indexes
+    date: null
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - vector
+    - indexes
+    - ai
+    id: SE024
+    accessDate: '2026-07-20'
+  - publisher: Cockroach Labs
+    title: Tested under pressure. Proven performance and resilience.
+    url: https://www.cockroachlabs.com/performance-under-adversity/
+    date: null
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - benchmark
+    - resilience
+    - performance
+    id: SE025
+    accessDate: '2026-07-20'
+  - publisher: Cockroach Labs
+    title: 'Outages Observer: Why True Resilience Means Never Going Down'
+    url: https://www.cockroachlabs.com/blog/outage-resilience/
+    date: null
+    accessStatus: ok
+    stance: adverse
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - outages
+    - aws
+    - resilience
+    id: SE026
+    accessDate: '2026-07-20'
+  - publisher: Amazon Web Services
+    title: Amazon Aurora Pricing
+    url: https://aws.amazon.com/rds/aurora/pricing/
+    date: null
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: high
+    independence: competitor
+    topics:
+    - competition
+    - pricing
+    - aurora
+    id: SE027
+    accessDate: '2026-07-20'
+  - publisher: Google Cloud
+    title: Spanner pricing
+    url: https://cloud.google.com/spanner/pricing
+    date: null
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: high
+    independence: competitor
+    topics:
+    - competition
+    - pricing
+    - spanner
+    id: SE028
+    accessDate: '2026-07-20'
+  - publisher: PostgreSQL Global Development Group
+    title: What is PostgreSQL?
+    url: https://www.postgresql.org/about/
+    date: null
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: independent
+    topics:
+    - postgresql
+    - open-source
+    id: SE029
+    accessDate: '2026-07-20'
+  - publisher: Stack Overflow
+    title: 2024 Stack Overflow Developer Survey
+    url: https://survey.stackoverflow.co/2024/technology#most-popular-technologies-database
+    date: '2024-07-24'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: high
+    independence: independent
+    topics:
+    - postgresql
+    - developer-preference
+    id: SE030
+    accessDate: '2026-07-20'
+  - publisher: Yugabyte
+    title: Distributed PostgreSQL for Modern Apps
+    url: https://www.yugabyte.com/
+    date: null
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: medium
+    independence: competitor
+    topics:
+    - competition
+    - yugabyte
+    - postgresql
+    id: SE031
+    accessDate: '2026-07-20'
+  - publisher: PingCAP
+    title: Modern Database Architecture for Real-Time Data | TiDB
+    url: https://www.pingcap.com/tidb/
+    date: null
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: medium
+    independence: competitor
+    topics:
+    - competition
+    - tidb
+    - mysql
+    - real-time
+    id: SE032
+    accessDate: '2026-07-20'
+  claims:
+  - id: CE001
+    statement: CockroachDB is positioned as a PostgreSQL-compatible distributed SQL database for always-on customer experiences rather than as a generic analytics or document platform.
+    type: company-claimed
+    topic: product-definition
+    sourceRefs:
+    - SE001
+    - SE002
+    - SE029
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+    - QE010
+  - id: CE002
+    statement: Cockroach Labs publicly sells multiple deployment forms around that core engine, including managed cloud, self-hosted enterprise, migration tooling, and support.
+    type: company-claimed
+    topic: module-map
+    sourceRefs:
+    - SE003
+    - SE004
+    - SE012
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE002
+    - QE021
+  - id: CE003
+    statement: The serverless or Basic motion is designed for fast starts and low-friction experimentation, while Standard and Advanced target progressively heavier production, security, and multi-region needs.
+    type: inferred
+    topic: module-map
+    sourceRefs:
+    - SE005
+    - SE003
+    - SE004
+    - SE014
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE002
+    - QE003
+    - QE004
+  - id: CE004
+    statement: CockroachDB’s architecture documentation says clients can send SQL to any node, which is then translated into key-value operations over distributed ranges.
+    type: company-claimed
+    topic: architecture
+    sourceRefs:
+    - SE016
+    - SE010
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE005
+  - id: CE005
+    statement: CockroachDB stores data in contiguous ranges of key-value pairs, automatically splits those ranges as they grow, and replicates them to at least three nodes by default.
+    type: company-claimed
+    topic: architecture
+    sourceRefs:
+    - SE016
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE005
+    - QE006
+  - id: CE006
+    statement: Writes require quorum agreement through the Raft protocol, and the leaseholder or Raft leader coordinates consistent reads and writes for a range.
+    type: company-claimed
+    topic: architecture
+    sourceRefs:
+    - SE016
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE006
+  - id: CE007
+    statement: CockroachDB was designed to accept reads and writes on all nodes while remaining highly automated and deployable in any environment without platform lock-in.
+    type: company-claimed
+    topic: architecture
+    sourceRefs:
+    - SE016
+    - SE001
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+    - QE018
+    - QE019
+  - id: CE008
+    statement: Multi-region capabilities include primary regions, table localities such as global, regional by table, and regional by row, plus configurable survival goals.
+    type: company-claimed
+    topic: multiregion
+    sourceRefs:
+    - SE015
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE007
+    - QE022
+  - id: CE009
+    statement: Super regions and data-domiciling controls are explicitly documented as a way to keep replicas within selected regions for compliance-sensitive deployments.
+    type: company-claimed
+    topic: multiregion
+    sourceRefs:
+    - SE015
+    - SE018
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE007
+    - QE022
+  - id: CE010
+    statement: Secondary regions can be configured to improve failover behavior by pre-positioning leaseholder candidates when a primary region fails.
+    type: company-claimed
+    topic: multiregion
+    sourceRefs:
+    - SE015
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE007
+    - QE012
+  - id: CE011
+    statement: Cluster virtualization separates a cluster’s control plane from its data plane and introduces a system virtual cluster plus user virtual clusters with separate administrative boundaries.
+    type: company-claimed
+    topic: cluster-virtualization
+    sourceRefs:
+    - SE017
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE008
+    - QE019
+  - id: CE012
+    statement: Cockroach Labs documents cluster virtualization as necessary only for physical cluster replication and currently limits a physical cluster to one system virtual cluster and one virtual cluster.
+    type: company-claimed
+    topic: cluster-virtualization
+    sourceRefs:
+    - SE017
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE008
+    - QE020
+  - id: CE013
+    statement: CockroachDB v25.2 claims roughly 50 percent higher throughput than 24.3 on average across nine workloads.
+    type: company-claimed
+    topic: performance
+    sourceRefs:
+    - SE019
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE017
+    - QE023
+  - id: CE014
+    statement: The same release describes preview buffered writes that improved performance by roughly 15 to 40 percent in cited tests by reducing round trips and redundant writes.
+    type: company-claimed
+    topic: performance
+    sourceRefs:
+    - SE019
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE017
+  - id: CE015
+    statement: CockroachDB added preview vector indexing in 25.2 using Cockroach-SPANN, positioning the database for large-scale semantic search without moving data into a separate specialist store.
+    type: company-claimed
+    topic: vector
+    sourceRefs:
+    - SE019
+    - SE020
+    confidence: high
+    freshness: recent
+    answersQuestionRefs:
+    - QE009
+    - QE023
+  - id: CE016
+    statement: The C-SPANN architecture stores vector partitions as self-contained units in CockroachDB ranges so index data can split, merge, and rebalance like ordinary table data.
+    type: company-claimed
+    topic: vector
+    sourceRefs:
+    - SE020
+    - SE016
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE009
+    - QE019
+  - id: CE017
+    statement: C-SPANN uses quantization based on RaBitQ and claims roughly a 94 percent reduction in vector size in common cases.
+    type: company-claimed
+    topic: vector
+    sourceRefs:
+    - SE020
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE009
+  - id: CE018
+    statement: CockroachDB vector indexes support prefix columns so searches can be partitioned by user or region, aligning vector search with tenancy and data-locality controls.
+    type: company-claimed
+    topic: vector
+    sourceRefs:
+    - SE020
+    - SE015
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE009
+    - QE022
+  - id: CE019
+    statement: CockroachDB v26.1 adds expanded HIPAA and PCI participation for Cloud Advanced on Azure, JWT and OpenID Connect role synchronization, automatic user provisioning, unified CMEK management, and native FIPS 140-3 support.
+    type: company-claimed
+    topic: security
+    sourceRefs:
+    - SE018
+    - SE023
+    confidence: high
+    freshness: recent
+    answersQuestionRefs:
+    - QE014
+    - QE015
+    - QE022
+  - id: CE020
+    statement: The AI-agent security post frames row-level security, strict authorization, and jurisdiction-based data placement as product controls for zero-trust AI access.
+    type: company-claimed
+    topic: security
+    sourceRefs:
+    - SE021
+    - SE018
+    - SE023
+    confidence: high
+    freshness: recent
+    answersQuestionRefs:
+    - QE015
+    - QE022
+  - id: CE021
+    statement: Trust and security materials also emphasize SOC 2, ISO, HIPAA readiness, PCI capability, and encryption controls as core elements of the product package.
+    type: company-claimed
+    topic: security
+    sourceRefs:
+    - SE007
+    - SE006
+    - SE018
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE014
+    - QE022
+  - id: CE022
+    statement: Cockroach Labs publishes a responsible disclosure policy, technical advisories, and a public cloud incident history, which shows mature quality-control and incident-transparency processes.
+    type: company-claimed
+    topic: quality-controls
+    sourceRefs:
+    - SE022
+    - SE008
+    - SE009
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE016
+  - id: CE023
+    statement: Those same advisories show that the product surface is broad and correctness-sensitive enough to generate real security and data-integrity issues, which is the ordinary downside of a complex distributed database.
+    type: inferred
+    topic: quality-controls
+    sourceRefs:
+    - SE008
+    - SE009
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE016
+    - QE020
+  - id: CE024
+    statement: Migration tooling includes MOLT plus change-data-capture and replication workflows, reinforcing that CockroachDB is built to replace existing transactional systems rather than only to power greenfield applications.
+    type: company-claimed
+    topic: workflow
+    sourceRefs:
+    - SE013
+    - SE012
+    - SE002
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE013
+    - QE019
+  - id: CE025
+    statement: CockroachDB’s roadmap velocity is visible in the short span between 25.2 performance and vector-indexing updates and 26.1 security and compliance updates.
+    type: inferred
+    topic: roadmap
+    sourceRefs:
+    - SE019
+    - SE018
+    - SE018
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE017
+    - QE025
+  - id: CE026
+    statement: The product is explicitly cloud-aware across AWS, GCP, and Azure while also supporting self-hosted and hybrid patterns, which is a meaningful differentiator versus one-cloud relational services.
+    type: company-claimed
+    topic: deployment
+    sourceRefs:
+    - SE001
+    - SE003
+    - SE004
+    - SE018
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE011
+    - QE018
+  - id: CE027
+    statement: PostgreSQL compatibility remains central to the product design, allowing use of familiar SQL tools while avoiding the organizational friction of a wholly new query model.
+    type: company-claimed
+    topic: product-definition
+    sourceRefs:
+    - SE002
+    - SE016
+    - SE029
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE010
+    - QE018
+  - id: CE028
+    statement: Compared with PostgreSQL alone, CockroachDB’s native range replication, multi-active topology, and locality controls are the hardest parts for customers to reproduce themselves.
+    type: inferred
+    topic: differentiation
+    sourceRefs:
+    - SE016
+    - SE015
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE018
+    - QE019
+  - id: CE029
+    statement: Compared with Aurora and Spanner, CockroachDB’s main product-tech edge is portability across clouds and self-hosted environments rather than merely offering another managed relational endpoint.
+    type: inferred
+    topic: differentiation
+    sourceRefs:
+    - SE027
+    - SE028
+    - SE001
+    - SE003
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE011
+    - QE018
+  - id: CE030
+    statement: Compared with Yugabyte and TiDB, CockroachDB leans harder into PostgreSQL familiarity, locality-aware SQL abstractions, and integrated vector or security messaging rather than broader compatibility with MySQL or multi-model workloads.
+    type: inferred
+    topic: differentiation
+    sourceRefs:
+    - SE031
+    - SE032
+    - SE002
+    - SE019
+    - SE018
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE018
+    - QE023
+  - id: CE031
+    statement: The product breadth is now wide enough to encompass core SQL, multi-region topology, migrations, CDC, compliance, vector indexing, and AI-agent governance in one platform story.
+    type: inferred
+    topic: product-breadth
+    sourceRefs:
+    - SE002
+    - SE015
+    - SE013
+    - SE019
+    - SE018
+    - SE021
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE002
+    - QE013
+    - QE014
+    - QE023
+  - id: CE032
+    statement: That breadth is a strength for enterprise buyers but also a complexity risk because upgrades, security settings, locality choices, and index behavior all need disciplined operation.
+    type: inferred
+    topic: product-breadth
+    sourceRefs:
+    - SE017
+    - SE015
+    - SE008
+    - SE018
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE020
+    - QE025
+  - id: CE033
+    statement: Developer-signal evidence from the GitHub repository and the PostgreSQL ecosystem helps explain why CockroachDB emphasizes compatibility and operational automation rather than asking users to abandon the relational toolchain.
+    type: inferred
+    topic: developer-signal
+    sourceRefs:
+    - SE010
+    - SE029
+    - SE030
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE010
+    - QE021
+  - id: CE034
+    statement: The public product story increasingly targets regulated and global workloads where row-level security, CMEK, data sovereignty, and multi-region failover are buying criteria rather than nice-to-have features.
+    type: inferred
+    topic: regulated-workloads
+    sourceRefs:
+    - SE018
+    - SE015
+    - SE007
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE014
+    - QE022
+  - id: CE035
+    statement: 'The AI-era expansion is not just marketing: CockroachDB now documents billions-scale vector indexing, owner-aware partitioning, and security controls for AI agents in the main product surface.'
+    type: company-claimed
+    topic: ai-expansion
+    sourceRefs:
+    - SE020
+    - SE024
+    - SE021
+    - SE019
+    confidence: high
+    freshness: recent
+    answersQuestionRefs:
+    - QE009
+    - QE015
+    - QE023
+  - id: CE036
+    statement: Public sources still cannot fully quantify how CockroachDB’s performance compares with direct rivals on customer-specific workloads, because the strongest performance claims remain vendor-authored rather than independently benchmarked.
+    type: inferred
+    topic: evidence-gap
+    sourceRefs:
+    - SE019
+    - SE001
+    - SE031
+    - SE032
+    confidence: low
+    freshness: current
+    answersQuestionRefs:
+    - QE024
+  - id: CE037
+    statement: The best product-tech verdict is that CockroachDB has evolved from a narrowly distributed-SQL proposition into a broad transactional platform with serious multi-region, compliance, and AI-era credibility.
+    type: inferred
+    topic: verdict
+    sourceRefs:
+    - SE002
+    - SE015
+    - SE019
+    - SE018
+    - SE020
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE025
+  - id: CE038
+    statement: Cockroach Labs continues to make resilience a first-class product theme through explicit performance-under-adversity positioning and outage-focused messaging, reinforcing that reliability is sold as a feature rather than only as an implementation detail.
+    type: company-claimed
+    topic: resilience-positioning
+    sourceRefs:
+    - SE025
+    - SE026
+    - SE011
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE012
+    - QE025
+  evidenceGaps:
+  - type: missing-source
+    severity: material
+    topic: independent-performance-benchmarks
+    missingEvidence: Independent, workload-specific benchmarks comparing CockroachDB against direct distributed SQL rivals on the same workloads.
+    whyItMatters: The strongest performance claims in the accessible source set are still vendor-authored and therefore insufficient for high-confidence technical underwriting.
+    diligencePath: Request customer benchmark studies or reproduce representative workloads in a controlled proof-of-concept.
+    relatedQuestionRefs:
+    - QE024
+  - type: private-evidence-only
+    severity: minor
+    topic: production-feature-adoption
+    missingEvidence: Real customer adoption rates for cluster virtualization, vector indexing, row-level security, and AI-agent controls.
+    whyItMatters: Public release notes show capability velocity, but not how much of the new surface is already production-proven.
+    diligencePath: Request feature-adoption and support-volume data from product leadership.
+    relatedQuestionRefs:
+    - QE017
+    - QE023
