@@ -1,0 +1,1554 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: stark-bank
+runDate: '2026-08-21'
+company:
+  name: Stark Bank
+chapter:
+  number: 5
+  title: Product & Technology
+summary: Stark’s public product surface looks materially more developer-native than a typical regional business-banking product. The company documents a single REST API across Pix, boleto, cards, transfers, and banking; public blog material extends that surface with Pix Automático, Bolepix, acquiring, and treasury-like workflows; and multi-language SDK repositories reinforce the technical posture. Public trust signals are also strong on paper—Grade A Pix quality, signed requests, signed webhooks, sandbox parity, and multi-language SDK support—but the public package still leaves internal resilience design, release discipline, and independent performance benchmarks as major diligence topics.
+sections:
+- id: SE001
+  title: 'Product surface: a corporate-finance operating layer built around APIs'
+  body: 'The cleanest way to understand Stark’s product is as a programmable corporate-finance layer rather than a traditional digital bank. The technical documentation presents one REST API spanning Pix, boleto, cards, transfers, and banking. Blog material expands that operating surface with treasury/fixed-income products, acquiring, Pix Automático, Bolepix, and corporate-card management. In customer-workflow terms, the platform is meant to replace manual finance tasks—issuing collections, monitoring settlement, paying bills and taxes, blocking or creating cards, reconciling events, and routing cash—inside the customer’s own systems rather than through a human clicking around bank portals.
+
+
+    That product packaging matters because it ties multiple modules to one integration contract. Customers do not need separate vendor relationships for Pix, boleto, transfer orchestration, or card management if the core APIs and event model stay coherent. The docs claim a first invoice can be created in about five lines of code, most teams finish integration in roughly two days, and the sandbox mirrors production behavior. Those assertions, if true in diligence, are important commercial advantages because many enterprise finance teams will only switch providers if the deployment burden is low enough to justify migration risk.
+
+
+    The platform also appears to keep widening at the edge. Product material reviewed for this run emphasizes recurring Pix collection through Pix Automático, hybrid boleto-with-Pix collection through Bolepix, acquiring without intermediaries, unlimited physical and virtual corporate cards, and fixed-income parking for balances. The result is a system that wants to be both the transaction engine and the control plane around it.'
+  claimRefs:
+  - CE001
+  - CE002
+  - CE003
+  - CE004
+  - CE005
+  - CE006
+  - CE007
+  - CE008
+  - CE011
+  - CE012
+  tableRefs:
+  - TE001
+  - TE002
+  figureRefs:
+  - FE001
+  - FE002
+- id: SE002
+  title: Architecture, developer ergonomics, and operating model
+  body: 'Public architecture evidence is unusually strong for a private fintech because Stark’s docs and SDKs expose the integration model in some detail. Authentication is based on ECDSA key pairs rather than shared API keys: the customer generates a private key, registers the public key in Stark’s web banking, and signs each request locally. The documentation emphasizes that write endpoints accept external IDs to make retries safe, that signed webhooks deliver status changes in real time, and that failed deliveries are retried with exponential backoff. This is not just a marketing surface; the Python and Java SDK READMEs also show webhook subscription resources, webhook event attempts, signature verification, transfer operations, bill payments, tax payments, and pagination/query primitives.
+
+
+    Developer ergonomics appear to be a real design priority. The docs say official SDKs exist in nine languages, the sandbox is free and unlimited, and production support is available 24/7 for live customers. The GitHub repositories for Go, Python, Java, and Node confirm the multi-language maintenance posture, while package-manager installation snippets in the Python and Java SDKs show the repos are meant to be practical entry points rather than brochureware. Although package-registry pages were less readable in this run than GitHub and docs were, the combination of detailed technical docs plus maintained SDK repos is a meaningful developer signal.
+
+
+    Operationally, the system depends on direct participation in Brazilian payment and regulatory rails. Settlement happens directly into a Stark account rather than an intermediary wallet; Pix settles in seconds 24/7; and other products follow rail-specific settlement windows. That means the architecture is not just frontend workflow software. It is tightly coupled to regulated money movement, which raises the importance of traceability, incident handling, and formal compliance controls.'
+  claimRefs:
+  - CE009
+  - CE010
+  - CE013
+  - CE014
+  - CE015
+  - CE016
+  - CE018
+  - CE019
+  - CE020
+  - CE021
+  - CE022
+  - CE027
+  - CE028
+  - CE029
+  - CE030
+  - CE031
+  - CE034
+  tableRefs:
+  - TE003
+  figureRefs:
+  - FE003
+  - FE004
+- id: SE003
+  title: Reliability, compliance, roadmap, and product risks
+  body: 'The strongest public trust signals come from the docs, regulator files, and status surfaces. Stark claims 99.99% uptime, sub-200ms median latency, Bacen Pix Grade A, PCI DSS 4.0.1, SOC 2, and ISO 27001. The BCB IQS file independently corroborates the Grade A Pix result, and the public status page at least shows that the company treats incident communication as a formal surface rather than an afterthought. Customer-facing case material also reinforces the operating-value proposition: Vertem highlighted centralizing payments, cards, and conciliation in one environment, while Simplic described lower manual work and better collection outcomes after adopting Stark Pix and boleto tools.
+
+
+    The risks are also visible in what public surfaces do not show. The main website pages fetched during this run were much thinner than the docs, blog posts, or SDK READMEs, so much of the technical understanding depends on company-authored documentation rather than third-party benchmarks. Several official case subpages fetched as empty shells, which means customer proof is stronger in blog narratives than in canonical case-center pages. Package-registry pages were partially blocked, leaving GitHub and documentation as the primary developer-signal evidence. And despite the rich API surface, there is still no public deep architecture description of internal ledgering, resilience design, data partitioning, or release engineering.
+
+
+    The correct product-tech verdict is positive but qualified. Stark looks meaningfully more developer-native and workflow-specific than many regional banking products, with strong public signals around authentication, sandbox parity, webhook design, and multi-language SDK support. But investors should still treat the internal reliability architecture, deployment success rate, and release/change-management discipline as diligence topics rather than as fully proven by public marketing.'
+  claimRefs:
+  - CE017
+  - CE023
+  - CE024
+  - CE025
+  - CE026
+  - CE032
+  - CE033
+  - CE035
+  - CE036
+  tableRefs:
+  - TE004
+  - TE005
+  figureRefs: []
+tables:
+- id: TE001
+  title: Product module / asset matrix
+  columns:
+  - Module / product line
+  - User
+  - Status / maturity
+  - Differentiation
+  - Diligence gap
+  rows:
+  - - Pix and BR Code flows
+    - Finance ops + engineering
+    - Mature
+    - Direct settlement, API-first orchestration, signed webhooks
+    - Need verified production conversion and failure-rate benchmarks
+  - - Boleto and Bolepix
+    - AR / billing teams
+    - Mature core; hybrid Bolepix newer
+    - Combines traditional boleto reach with Pix speed and reconciliation
+    - Need attach rate and default/settlement mix by customer segment
+  - - Cards and spend controls
+    - Finance + managers
+    - Mature enough for public case/marketing proof
+    - Unlimited physical/virtual cards, blocking, wallets, spend control
+    - Need card TPV, loss data, and enterprise adoption depth
+  - - Transfers, bills, and taxes
+    - AP / treasury teams
+    - Mature in SDK examples
+    - One API surface for operational disbursements
+    - Need proof of usage concentration by workflow
+  - - Treasury / fixed income
+    - Treasury / CFO
+    - Publicly available but thinner detail
+    - Turns balance handling into part of same platform
+    - Need evidence on balances, yields, and economic materiality
+  - - Stark Infra / institutional connectivity
+    - Fintech / bank product teams
+    - Growth adjacency
+    - Second product surface beyond direct corporate accounts
+    - Need exact revenue share and deployment count
+  notes: Maturity reflects public evidence depth, not internal release-stage labels.
+  claimRefs:
+  - CE001
+  - CE002
+  - CE003
+  - CE004
+  - CE005
+  - CE006
+  - CE007
+  - CE008
+- id: TE002
+  title: Workflow / use-case table
+  columns:
+  - User job
+  - Current workflow
+  - Stark solution
+  - Measurable benefit
+  - Limitation
+  rows:
+  - - Collect recurring payments
+    - Manual reminders or legacy debit
+    - Pix Automático via API
+    - Less manual collection effort and better predictability
+    - Attach rate not publicly disclosed
+  - - Receive invoices faster
+    - Boleto-only receivables with settlement lag
+    - Bolepix and Pix cobrança
+    - Instant settlement option and better reconciliation
+    - Economic uplift not quantified publicly
+  - - Control spend across teams
+    - Few shared corporate cards and manual approvals
+    - Physical/virtual cards plus control features
+    - Granular ownership and visibility
+    - Need independent proof beyond case studies
+  - - Pay suppliers, taxes, and bills
+    - Multiple bank portals and manual entries
+    - Unified transfer/payment endpoints and SDKs
+    - Lower operational fragmentation
+    - No public benchmark on time saved per workflow
+  - - Embed bank workflows in product
+    - Custom in-house rail handling
+    - REST API + SDKs + webhooks
+    - Faster integration path and traceable events
+    - Internal architecture depth still undisclosed
+  notes: Benefit statements are based on public product descriptions and case narratives, not audited ROI studies.
+  claimRefs:
+  - CE004
+  - CE005
+  - CE006
+  - CE007
+  - CE011
+  - CE013
+  - CE026
+  - CE034
+- id: TE003
+  title: Technology / operating architecture table
+  columns:
+  - Layer / component
+  - Role
+  - Dependency
+  - Risk
+  rows:
+  - - Docs and SDKs
+    - Developer entry point and contract surface
+    - Maintained repos and accurate docs
+    - Docs can overstate ease if production edge cases differ
+  - - ECDSA auth
+    - Protect request integrity without shared API keys
+    - Customer key management + signing libraries
+    - Operational complexity if customers mishandle keys
+  - - Webhook/event system
+    - Real-time status propagation
+    - Customer endpoint reliability + signature verification
+    - Missed or misprocessed events can break workflows
+  - - Sandbox parity
+    - Shorten implementation cycles
+    - Accurate environment mirroring
+    - If parity breaks, deployment risk rises sharply
+  - - Settlement and rail layer
+    - Move money over Pix/TED/boleto/card rails
+    - BCB rails and banking windows
+    - Rail incidents or timing differences hit customer trust
+  - - Support / traceability
+    - Production debugging and high-volume onboarding
+    - 24/7 support and structured logs
+    - Support quality may become bottleneck at larger scale
+  notes: Architecture is reconstructed only from public docs and SDKs; internal ledger and infrastructure details remain private.
+  claimRefs:
+  - CE009
+  - CE010
+  - CE012
+  - CE013
+  - CE014
+  - CE015
+  - CE020
+  - CE021
+  - CE027
+  - CE028
+  - CE029
+  - CE030
+  - CE031
+- id: TE004
+  title: Trust / quality / compliance table
+  columns:
+  - Control / metric
+  - Status
+  - Scope
+  - Gap
+  rows:
+  - - Bacen Pix Grade A
+    - Publicly supported
+    - Pix participant quality
+    - Need time-series persistence and peer comparison
+  - - 99.99% uptime / sub-200ms median latency
+    - Company-claimed
+    - API performance
+    - Need independent production benchmark
+  - - PCI DSS 4.0.1
+    - Company-claimed
+    - Card/security control surface
+    - Need certification scope and date
+  - - SOC 2 and ISO 27001
+    - Company-claimed
+    - Security/compliance posture
+    - Need report dates and covered entities
+  - - Public status page
+    - Verified surface exists
+    - Incident communication
+    - History depth and incident taxonomy are limited publicly
+  - - Signed webhooks and no shared API keys
+    - Verified in docs/SDKs
+    - Security model
+    - Need real-world deployment evidence at scale
+  notes: Controls mix independent regulator proof with company-authored trust claims.
+  claimRefs:
+  - CE009
+  - CE013
+  - CE016
+  - CE017
+  - CE022
+  - CE030
+- id: TE005
+  title: Roadmap / release / development-stage table
+  columns:
+  - Date / stage
+  - Feature / milestone
+  - Status
+  - Implication
+  - Source
+  rows:
+  - - 2026 live
+    - Pix Automático
+    - Launched / marketed
+    - Expands recurring-payment workflow coverage
+    - Blog
+  - - 2026 live
+    - Bolepix
+    - Launched / marketed
+    - Improves collections flexibility and receivable speed
+    - Blog
+  - - 2025-2026 public push
+    - Acquiring surface
+    - Publicly promoted
+    - Moves Stark closer to checkout and merchant conversion
+    - Solutions page
+  - - Current
+    - Multi-language SDK footprint
+    - Maintained public surface
+    - Reduces integration friction across customer stacks
+    - GitHub/docs
+  - - Current
+    - 24/7 production support + Arc assistant
+    - Publicly promoted
+    - Positions platform for higher-volume enterprise use
+    - Docs
+  - - Undisclosed
+    - Internal ledger / resilience architecture
+    - Not publicly described
+    - Keeps an important diligence gap open
+    - Docs + site-shell limitation
+  notes: The public roadmap is feature-led; internal release cadence and reliability engineering remain under-disclosed.
+  claimRefs:
+  - CE004
+  - CE005
+  - CE010
+  - CE016
+  - CE023
+  - CE035
+figures:
+- id: FE001
+  type: stack
+  layout: wide
+  title: Product architecture map
+  summary: Publicly visible stack from developer surfaces to regulated money movement.
+  approximationNotes: Built from public docs and SDK surfaces only; internal ledger and infra are not disclosed.
+  claimRefs:
+  - CE001
+  - CE009
+  - CE010
+  - CE013
+  - CE020
+  - CE021
+  - CE022
+  data:
+    layers:
+    - label: Developer surfaces
+      description: Docs, SDKs, examples, support, and package/install paths
+      detail: Entry layer for technical teams
+    - label: API and event primitives
+      description: REST resources, external IDs, signed webhooks, retries, pagination
+      detail: Core contract that ties modules together
+    - label: Workflow modules
+      description: Pix, boleto, cards, transfers, bills/taxes, treasury, acquiring, recurring collections
+      detail: Monetized operational capabilities
+    - label: Trust and controls
+      description: ECDSA auth, traceability, status page, quality and security claims
+      detail: Trust layer for enterprise and regulator-facing operations
+    - label: Settlement and regulatory rails
+      description: Stark account settlement, Pix rails, banking windows, BCB participation
+      detail: Underlying regulated money movement layer
+- id: FE002
+  type: matrix
+  layout: wide
+  title: Product maturity / capability map
+  summary: Ordinal view of which modules appear strongest in public evidence.
+  approximationNotes: Scores summarize public evidence depth, not internal roadmap confidence.
+  claimRefs:
+  - CE002
+  - CE003
+  - CE004
+  - CE005
+  - CE006
+  - CE007
+  - CE008
+  - CE035
+  data:
+    columns:
+    - Maturity
+    - Documentation depth
+    - Customer-proof depth
+    - Control depth
+    rows:
+    - label: Pix / core collections
+      values:
+      - High
+      - High
+      - Medium
+      - High
+    - label: Boleto / Bolepix
+      values:
+      - High
+      - High
+      - Medium
+      - Medium
+    - label: Cards / spend
+      values:
+      - Medium-High
+      - Medium
+      - Medium
+      - Medium
+    - label: Transfers / bills / taxes
+      values:
+      - High
+      - High
+      - Low
+      - Medium
+    - label: Treasury / fixed income
+      values:
+      - Medium
+      - Low
+      - Low
+      - Low
+    - label: Stark Infra / institutional
+      values:
+      - Medium
+      - Medium
+      - Low
+      - Medium
+- id: FE003
+  type: flow
+  layout: wide
+  title: Customer workflow / operating flow
+  summary: How a customer system typically integrates and runs Stark workflows.
+  approximationNotes: Sequence is derived from public docs and case materials rather than process telemetry.
+  claimRefs:
+  - CE011
+  - CE012
+  - CE013
+  - CE014
+  - CE026
+  - CE034
+  data:
+    nodes:
+    - id: a
+      label: Customer system chooses workflow
+    - id: b
+      label: SDK or REST request signed with ECDSA
+    - id: c
+      label: Stark API executes payment / card / collection action
+    - id: d
+      label: Funds settle into Stark account or rail-specific window
+    - id: e
+      label: Webhook returns signed status updates
+    - id: f
+      label: Customer reconciles / expands workflow
+    edges:
+    - from: a
+      to: b
+    - from: b
+      to: c
+    - from: c
+      to: d
+    - from: c
+      to: e
+    - from: e
+      to: f
+- id: FE004
+  type: dag
+  layout: wide
+  title: Critical dependency map
+  summary: Key technical and institutional dependencies behind Stark’s public product promise.
+  approximationNotes: null
+  claimRefs:
+  - CE014
+  - CE017
+  - CE019
+  - CE021
+  - CE028
+  - CE032
+  data:
+    nodes:
+    - id: n1
+      label: Stark APIs and SDKs
+    - id: n2
+      label: Customer integration quality
+    - id: n3
+      label: BCB Pix / banking rails
+    - id: n4
+      label: Security and compliance controls
+    - id: n5
+      label: Support / incident response
+    - id: n6
+      label: Customer trust and production uptime
+    edges:
+    - from: n2
+      to: n1
+    - from: n1
+      to: n4
+    - from: n3
+      to: n1
+    - from: n4
+      to: n6
+    - from: n5
+      to: n6
+    - from: n1
+      to: n6
+localEvidence:
+  searchQueries:
+  - query: Stark Bank API docs 2026 ECDSA webhooks SDK Pix boleto cards banking
+    engine: web_search
+    hits: null
+    retainedSourceRefs:
+    - SE001
+    - SE014
+    - SE015
+    - SE016
+    - SE017
+  - query: Stark Bank 2026 Pix Automático Bolepix adquirencia cartões corporativos
+    engine: web_search
+    hits: null
+    retainedSourceRefs:
+    - SE004
+    - SE005
+    - SE006
+    - SE026
+  - query: Stark Bank 2026 customer case Vertem Simplic finance automation
+    engine: web_search
+    hits: null
+    retainedSourceRefs:
+    - SE007
+    - SE008
+  - query: Stark Bank 2026 reliability status Pix quality PCI SOC ISO
+    engine: web_search
+    hits: null
+    retainedSourceRefs:
+    - SE002
+    - SE003
+    - SE009
+  - query: Stark Bank GitHub SDK Python Java Go Node 2026
+    engine: web_search
+    hits: null
+    retainedSourceRefs:
+    - SE014
+    - SE015
+    - SE016
+    - SE017
+  - query: Brazil BCB Pix participant Stark Bank 2026
+    engine: web_search
+    hits: null
+    retainedSourceRefs:
+    - SE010
+    - SE011
+    - SE012
+    - SE022
+  researchQuestions:
+  - id: QE001
+    question: What products and modules are publicly visible on Stark’s platform?
+    type: enumeration
+    targets:
+    - contentRequirements/0
+    status: answered
+  - id: QE002
+    question: Is the product best understood as an API bank rather than a branch-led digital bank?
+    type: mechanism
+    targets:
+    - contentRequirements/0
+    status: answered
+  - id: QE003
+    question: What new workflow modules beyond core Pix are visible in 2026?
+    type: enumeration
+    targets:
+    - contentRequirements/0
+    status: answered
+  - id: QE004
+    question: How does Pix Automático fit the workflow?
+    type: mechanism
+    targets:
+    - contentRequirements/0
+    status: answered
+  - id: QE005
+    question: How does Bolepix fit the workflow?
+    type: mechanism
+    targets:
+    - contentRequirements/0
+    status: answered
+  - id: QE006
+    question: What evidence exists for corporate-card breadth?
+    type: verification
+    targets:
+    - contentRequirements/0
+    status: answered
+  - id: QE007
+    question: What evidence exists for acquiring-like product breadth?
+    type: verification
+    targets:
+    - contentRequirements/0
+    status: answered
+  - id: QE008
+    question: How does authentication work?
+    type: verification
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+  - id: QE009
+    question: How do webhooks work and how are they protected?
+    type: verification
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+  - id: QE010
+    question: How do retries and duplicate prevention work?
+    type: verification
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+  - id: QE011
+    question: What developer tooling exists?
+    type: enumeration
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+  - id: QE012
+    question: How many SDK languages are publicly claimed?
+    type: quantification
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+  - id: QE013
+    question: What evidence exists that SDKs are maintained in public?
+    type: verification
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+  - id: QE014
+    question: Does the sandbox mirror production?
+    type: verification
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+  - id: QE015
+    question: What evidence exists for direct settlement?
+    type: verification
+    targets:
+    - contentRequirements/0
+    status: answered
+  - id: QE016
+    question: What trust and compliance claims are public?
+    type: enumeration
+    targets:
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+    status: answered
+  - id: QE017
+    question: Which trust claims are independently corroborated?
+    type: comparison
+    targets:
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+    status: answered
+  - id: QE018
+    question: What customer workflows are shown in public case material?
+    type: enumeration
+    targets:
+    - contentRequirements/3
+    - plannedTables/workflow-use-case-table
+    status: answered
+  - id: QE019
+    question: What production-support model is visible publicly?
+    type: verification
+    targets:
+    - contentRequirements/2
+    - plannedTables/technology-operating-architecture-table
+    status: answered
+  - id: QE020
+    question: What internal architecture details remain undisclosed?
+    type: adverse
+    targets:
+    - contentRequirements/0
+    status: answered
+  - id: QE021
+    question: Do package-registry surfaces provide strong adoption signal?
+    type: adverse
+    targets:
+    - contentRequirements/0
+    status: partial
+  - id: QE022
+    question: Are the main website product pages as informative as the docs?
+    type: adverse
+    targets:
+    - contentRequirements/3
+    - plannedTables/workflow-use-case-table
+    status: answered
+  - id: QE023
+    question: Do case-center pages provide robust product proof?
+    type: adverse
+    targets:
+    - contentRequirements/3
+    - plannedTables/workflow-use-case-table
+    status: answered
+  - id: QE024
+    question: What dependencies could break the product promise?
+    type: adverse
+    targets:
+    - contentRequirements/4
+    - contentRequirements/5
+    status: answered
+  - id: QE025
+    question: What roadmap items are clearly live versus merely promoted?
+    type: comparison
+    targets:
+    - contentRequirements/0
+    status: answered
+  - id: QE026
+    question: What release / change-management evidence is public?
+    type: verification
+    targets:
+    - contentRequirements/4
+    - contentRequirements/5
+    status: unresolved
+  - id: QE027
+    question: What parts of the security posture need diligence beyond the docs?
+    type: adverse
+    targets:
+    - contentRequirements/5
+    - plannedTables/trust-quality-compliance-table
+    status: answered
+  sources:
+  - id: SE001
+    publisher: Stark Bank
+    title: API | STARK BANK Documentation
+    url: https://docs.starkbank.com/
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - api-banking
+    - pix
+    - integration
+  - id: SE002
+    publisher: STARK BANK Status
+    title: STARK BANK Status
+    url: https://status.starkbank.com/
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - status
+    - incidents
+    - maintenance
+  - id: SE003
+    url: https://status.starkbank.com/history
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    publisher: STARK BANK Status
+    title: STARK BANK Status History
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    stance: adverse
+    topics:
+    - incidents
+    - history
+  - id: SE004
+    url: https://blog.starkbank.com/solucoes-financeiras/
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    publisher: Stark Bank Blog
+    title: Soluções financeiras
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    stance: confirming
+    topics:
+    - products
+    - clients
+  - id: SE005
+    url: https://blog.starkbank.com/pix-automatico/
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    publisher: Stark Bank Blog
+    title: Pix Automático
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    stance: confirming
+    topics:
+    - pix-automatico
+  - id: SE006
+    url: https://blog.starkbank.com/bolepix-o-guia-completo/
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    publisher: Stark Bank Blog
+    title: 'Bolepix: o guia completo'
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    stance: confirming
+    topics:
+    - bolepix
+    - boleto
+  - id: SE007
+    url: https://blog.starkbank.com/automacao-financeira-case-vertem/
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    publisher: Stark Bank Blog
+    title: 'Automação financeira: case Vertem'
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    stance: confirming
+    topics:
+    - case-study
+    - automation
+  - id: SE008
+    url: https://blog.starkbank.com/case-simplic/
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    publisher: Stark Bank Blog
+    title: Case Simplic
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    stance: confirming
+    topics:
+    - case-study
+    - pix
+  - id: SE009
+    publisher: Banco Central do Brasil
+    title: Índice de Qualidade de Serviço do Pix
+    url: https://www.bcb.gov.br/content/estabilidadefinanceira/pix/IQS_dados.pdf
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    stance: neutral
+    sourceType: regulatory
+    reputationTier: high
+    independence: independent
+    topics:
+    - iqs
+    - pix-quality
+  - id: SE010
+    publisher: Banco Central do Brasil
+    title: Participantes STR CSV
+    url: https://www.bcb.gov.br/content/estabilidadefinanceira/str1/ParticipantesSTR.csv
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    stance: neutral
+    sourceType: filing
+    reputationTier: high
+    independence: independent
+    topics:
+    - regulatory-status
+    - institution-record
+  - id: SE011
+    url: https://www.bcb.gov.br/meubc/encontreinstituicao
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    publisher: Banco Central do Brasil
+    title: Encontre uma instituição
+    sourceType: official
+    reputationTier: high
+    independence: independent
+    stance: neutral
+    topics:
+    - institution-lookup
+    - regulatory
+  - id: SE012
+    url: https://olinda.bcb.gov.br/olinda/servico/Pix_DadosAbertos/versao/v1/odata/Participantes?%24format=text/csv
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    publisher: Banco Central do Brasil
+    title: Participantes Pix OData CSV
+    sourceType: official
+    reputationTier: high
+    independence: independent
+    stance: neutral
+    topics:
+    - pix
+    - participants
+  - id: SE013
+    url: https://dashboard.openfinancebrasil.org.br/transactional-data/unique-consents/receivers
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    publisher: Open Finance Brasil
+    title: Unique consents receivers
+    sourceType: official
+    reputationTier: high
+    independence: independent
+    stance: neutral
+    topics:
+    - open-finance
+    - receivers
+  - id: SE014
+    url: https://github.com/starkbank/sdk-go
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    publisher: GitHub / Stark Bank
+    title: starkbank/sdk-go
+    sourceType: developer-signal
+    reputationTier: high
+    independence: company
+    stance: confirming
+    topics:
+    - github
+    - sdk-go
+  - id: SE015
+    url: https://github.com/starkbank/sdk-python
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    publisher: GitHub / Stark Bank
+    title: starkbank/sdk-python
+    sourceType: developer-signal
+    reputationTier: high
+    independence: company
+    stance: confirming
+    topics:
+    - github
+    - sdk-python
+  - id: SE016
+    url: https://github.com/starkbank/sdk-java
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    publisher: GitHub / Stark Bank
+    title: starkbank/sdk-java
+    sourceType: developer-signal
+    reputationTier: high
+    independence: company
+    stance: confirming
+    topics:
+    - github
+    - sdk-java
+  - id: SE017
+    url: https://github.com/starkbank/sdk-node
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    publisher: GitHub / Stark Bank
+    title: starkbank/sdk-node
+    sourceType: developer-signal
+    reputationTier: high
+    independence: company
+    stance: confirming
+    topics:
+    - github
+    - sdk-node
+  - id: SE018
+    url: https://starkbank.com/
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    publisher: Stark Bank
+    title: Stark Bank homepage
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    stance: neutral
+    topics:
+    - homepage
+  - id: SE019
+    url: https://starkbank.com/about-us
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    publisher: Stark Bank
+    title: About us
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    stance: neutral
+    topics:
+    - about
+  - id: SE020
+    url: https://starkbank.com/investor-relations
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    publisher: Stark Bank
+    title: Investor relations
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    stance: neutral
+    topics:
+    - investor-relations
+  - id: SE021
+    url: https://starkbank.com/cases
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    publisher: Stark Bank
+    title: Cases
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    stance: neutral
+    topics:
+    - cases
+  - id: SE022
+    url: https://www.bcb.gov.br/content/estabilidadefinanceira/spi-pdf/participantes-spi-20260819.pdf
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    publisher: Banco Central do Brasil
+    title: Participantes SPI PDF
+    sourceType: regulatory
+    reputationTier: high
+    independence: independent
+    stance: neutral
+    topics:
+    - spi
+    - participants
+  - id: SE023
+    url: https://developers.empresas.btgpactual.com/docs/category/banking-api
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    publisher: BTG Pactual Developers
+    title: Banking API | BTG
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    stance: neutral
+    topics:
+    - api
+    - comparison
+  - id: SE024
+    url: https://developers.inter.co/
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    publisher: Inter Developers
+    title: Developers Inter
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - api
+    - comparison
+  - id: SE025
+    publisher: TI Inside
+    title: Stark Bank processes R$ 670 billion in Pix transactions in 12 months
+    url: https://tiinside.com.br/en/02/06/2026/Stark-Bank-processes-R%24670-billion-in-PIX-payments-in-12-months./
+    date: '2026-06-02'
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    stance: confirming
+    sourceType: news
+    reputationTier: medium
+    independence: independent
+    topics:
+    - pix-volume
+    - infrastructure
+    - '2026'
+  - id: SE026
+    publisher: BP Money
+    title: Stark Bank mira 5 mil empresas e amplia atuação no Open Finance
+    url: https://bpmoney.com.br/negocios/stark-bank-mira-5-mil-empresas-e-amplia-atuacao-no-open-finance/
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    stance: neutral
+    sourceType: news
+    reputationTier: medium
+    independence: independent
+    topics:
+    - open-finance
+    - clients
+    - payment-initiation
+    - licenses
+  - id: SE027
+    publisher: Startups.com.br
+    title: Como a IA vai ajudar o Stark Bank a alcançar R$ 1 trilhão
+    url: https://startups.com.br/podcast/podcast-mvp/como-a-ia-vai-ajudar-o-stark-bank-a-alcancar-r-1-trilhao/
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    stance: confirming
+    sourceType: news
+    reputationTier: medium
+    independence: independent
+    topics:
+    - ai
+    - product
+  - id: SE028
+    publisher: Y Combinator
+    title: 'STARK BANK: Challenger bank for enterprises'
+    url: https://www.ycombinator.com/companies/stark-bank
+    accessDate: '2026-08-21'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: independent
+    topics:
+    - company-profile
+    - developer
+  claims:
+  - id: CE001
+    statement: Stark’s public docs position the product as one REST API for Pix, boleto, cards, transfers, and banking.
+    type: observed
+    topic: api-surface
+    sourceRefs:
+    - SE001
+    - SE004
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+    - QE002
+  - id: CE002
+    statement: The visible product modules span collections, disbursements, cards, treasury-adjacent banking, and infrastructure workflows rather than a single payment rail.
+    type: observed
+    topic: module-breadth
+    sourceRefs:
+    - SE001
+    - SE004
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+  - id: CE003
+    statement: The solutions page and related material add fixed income and acquiring to the core API-banking story.
+    type: observed
+    topic: module-expansion
+    sourceRefs:
+    - SE004
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE003
+    - QE007
+  - id: CE004
+    statement: Stark publicly launched Pix Automático as an API-integrated recurring-collection workflow.
+    type: third-party-reported
+    topic: pix-automatico
+    sourceRefs:
+    - SE005
+    - SE026
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE003
+    - QE004
+  - id: CE005
+    statement: Stark publicly describes Bolepix as a hybrid boleto-plus-Pix product designed to speed collections and reconciliation.
+    type: third-party-reported
+    topic: bolepix
+    sourceRefs:
+    - SE006
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE003
+    - QE005
+  - id: CE006
+    statement: Stark markets unlimited physical and virtual corporate cards, with Apple Wallet and Google Pay support, as part of the operating stack.
+    type: third-party-reported
+    topic: cards
+    sourceRefs:
+    - SE004
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE006
+  - id: CE007
+    statement: The solutions page also promotes acquiring with direct contracting and fewer intermediaries.
+    type: third-party-reported
+    topic: acquiring
+    sourceRefs:
+    - SE004
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE007
+  - id: CE008
+    statement: Stark Infra represents an adjacent institutional product surface beyond direct corporate accounts.
+    type: third-party-reported
+    topic: infra
+    sourceRefs:
+    - SE025
+    - SE026
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE001
+  - id: CE009
+    statement: Every request is signed with ECDSA key pairs rather than shared API keys.
+    type: observed
+    topic: auth
+    sourceRefs:
+    - SE001
+    - SE015
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE008
+  - id: CE010
+    statement: Stark says official SDKs exist in nine languages, and the public GitHub repos reviewed confirm at least Go, Python, Java, and Node SDKs.
+    type: observed
+    topic: sdk-footprint
+    sourceRefs:
+    - SE001
+    - SE014
+    - SE015
+    - SE016
+    - SE017
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE011
+    - QE012
+    - QE013
+  - id: CE011
+    statement: The docs say most teams complete integration in about two days and can create the first invoice in about five lines of code.
+    type: observed
+    topic: integration-speed
+    sourceRefs:
+    - SE001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE002
+    - QE018
+  - id: CE012
+    statement: The sandbox is described as free, unlimited, and behaviorally equivalent to production except for credentials and base URL.
+    type: observed
+    topic: sandbox
+    sourceRefs:
+    - SE001
+    - SE015
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE014
+  - id: CE013
+    statement: Webhooks deliver real-time status changes, use the same signature scheme as requests, and retry failed deliveries with exponential backoff.
+    type: observed
+    topic: webhooks
+    sourceRefs:
+    - SE001
+    - SE015
+    - SE016
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE009
+  - id: CE014
+    statement: Write endpoints accept external IDs so retries are safe and duplicate operations are prevented.
+    type: observed
+    topic: idempotency
+    sourceRefs:
+    - SE001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE010
+    - QE024
+  - id: CE015
+    statement: The docs say default rate limits are generous and can be adjusted for spike traffic or high-volume launches.
+    type: observed
+    topic: rate-limits
+    sourceRefs:
+    - SE001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE010
+  - id: CE016
+    statement: The public docs promote 24/7 production support and an AI assistant called Arc for integration help.
+    type: observed
+    topic: support
+    sourceRefs:
+    - SE001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE019
+  - id: CE017
+    statement: Stark publicly claims Bacen Pix Grade A, PCI DSS 4.0.1, SOC 2, ISO 27001, 99.99% uptime, and sub-200ms median latency.
+    type: observed
+    topic: trust-claims
+    sourceRefs:
+    - SE001
+    - SE009
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE016
+    - QE017
+  - id: CE018
+    statement: The Python and Java SDKs expose webhook subscriptions, webhook event attempts, transfer operations, and tax or utility-bill payment examples.
+    type: observed
+    topic: sdk-depth
+    sourceRefs:
+    - SE015
+    - SE016
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE011
+    - QE013
+  - id: CE019
+    statement: The Go and Node repositories add additional public evidence that Stark maintains SDKs for multiple engineering stacks.
+    type: observed
+    topic: developer-signal
+    sourceRefs:
+    - SE014
+    - SE017
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE013
+  - id: CE020
+    statement: The product architecture can be read as a stack from docs/SDKs to API primitives to workflow modules to trust controls to payment rails.
+    type: inferred
+    topic: architecture-stack
+    sourceRefs:
+    - SE001
+    - SE014
+    - SE015
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE024
+  - id: CE021
+    statement: Stark’s operating model depends on regulated Brazilian payment participation rather than on a pure overlay app detached from settlement rails.
+    type: inferred
+    topic: rail-dependency
+    sourceRefs:
+    - SE001
+    - SE010
+    - SE022
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE015
+    - QE024
+  - id: CE022
+    statement: Trust and compliance are part of the product itself because signed requests, signed webhooks, status communication, and quality ratings all affect buyer adoption.
+    type: inferred
+    topic: trust-in-product
+    sourceRefs:
+    - SE001
+    - SE002
+    - SE009
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE016
+    - QE017
+  - id: CE023
+    statement: Pix Automático, Bolepix, acquiring, and expanding customer-case narratives show active feature broadening in 2026, but the public roadmap is feature-led rather than release-process detailed.
+    type: inferred
+    topic: roadmap-visibility
+    sourceRefs:
+    - SE004
+    - SE005
+    - SE006
+    - SE007
+    - SE008
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE025
+    - QE026
+  - id: CE024
+    statement: The main Stark website pages fetched for this run were much thinner than the technical docs or blog posts, so product understanding relies disproportionately on company-authored documentation.
+    type: observed
+    topic: site-thinness
+    sourceRefs:
+    - SE018
+    - SE019
+    - SE020
+    - SE021
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE022
+  - id: CE025
+    statement: Package-registry surfaces were less readable than docs and GitHub during this run, weakening public third-party developer-adoption signal relative to repository and documentation evidence.
+    type: observed
+    topic: developer-signal-gap
+    sourceRefs:
+    - SE014
+    - SE015
+    - SE016
+    - SE017
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE021
+  - id: CE026
+    statement: Public case material says Vertem centralized payments, cards, and conciliation in one environment, while Simplic used Stark Pix and boleto to reduce manual work and improve collections.
+    type: third-party-reported
+    topic: case-proof
+    sourceRefs:
+    - SE007
+    - SE008
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE018
+  - id: CE027
+    statement: The docs emphasize end-to-end traceability, structured logs, and rich error messages as part of the operating model.
+    type: observed
+    topic: traceability
+    sourceRefs:
+    - SE001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE019
+  - id: CE028
+    statement: High-volume customers are promised a dedicated team in addition to the standard API tooling.
+    type: observed
+    topic: support-model
+    sourceRefs:
+    - SE001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE019
+    - QE024
+  - id: CE029
+    statement: SDK examples show operational workflows beyond simple transfers, including bill and tax payments.
+    type: observed
+    topic: workflow-depth
+    sourceRefs:
+    - SE015
+    - SE016
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE011
+  - id: CE030
+    statement: Webhook payloads are signed and are meant to be verified before the receiving system trusts the body.
+    type: observed
+    topic: webhook-security
+    sourceRefs:
+    - SE001
+    - SE015
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE009
+    - QE027
+  - id: CE031
+    statement: Developer ergonomics appear strongest in the core API surface and SDKs, not in visible package-registry or marketing-site polish.
+    type: inferred
+    topic: dx-balance
+    sourceRefs:
+    - SE001
+    - SE014
+    - SE017
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE021
+    - QE022
+  - id: CE032
+    statement: The critical dependency chain runs through customer implementation quality, BCB rails, compliance controls, and incident response.
+    type: inferred
+    topic: dependency-map
+    sourceRefs:
+    - SE001
+    - SE002
+    - SE022
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE024
+  - id: CE033
+    statement: Several official case-center pages fetched as empty shells, so canonical customer proof is weaker than the richer blog case studies suggest.
+    type: observed
+    topic: proof-surface-gap
+    sourceRefs:
+    - SE021
+    - SE007
+    - SE008
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE023
+  - id: CE034
+    statement: Direct settlement into a Stark account without an intermediary wallet or payout step is a core workflow differentiator.
+    type: observed
+    topic: direct-settlement
+    sourceRefs:
+    - SE001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE015
+  - id: CE035
+    statement: Public evidence is strongest for core payment rails and developer tooling, and weaker for undisclosed internal architecture and release engineering.
+    type: inferred
+    topic: maturity-balance
+    sourceRefs:
+    - SE001
+    - SE014
+    - SE024
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE020
+    - QE025
+  - id: CE036
+    statement: Investors should diligence internal resilience design, release/change management, and certification scope because those are not fully provable from the public surfaces alone.
+    type: inferred
+    topic: diligence-needed
+    sourceRefs:
+    - SE001
+    - SE002
+    - SE017
+    confidence: high
+    freshness: current
+    answersQuestionRefs:
+    - QE026
+    - QE027
+  evidenceGaps:
+  - type: private-evidence-only
+    severity: material
+    topic: internal-ledger-and-resilience
+    missingEvidence: Detailed internal ledgering, data-partitioning, failover, and resilience architecture.
+    whyItMatters: Public docs prove the integration contract, not the internal systems that sustain it under stress.
+    diligencePath: Request architecture review covering ledger, queuing, redundancy, and disaster recovery.
+    relatedQuestionRefs:
+    - QE020
+    - QE026
+    relatedTableRefs:
+    - TE003
+    - TE005
+  - type: missing-source
+    severity: material
+    topic: independent-performance-benchmark
+    missingEvidence: Independent benchmark for uptime, latency, and failed transaction rates versus peers.
+    whyItMatters: Company-claimed reliability metrics may be directionally true but are not yet independently benchmarked.
+    diligencePath: Request third-party reliability reports or major-customer references.
+    relatedQuestionRefs:
+    - QE017
+    relatedTableRefs:
+    - TE004
+  - type: stale
+    severity: minor
+    topic: package-registry-adoption
+    missingEvidence: Readable public package-registry metrics or install counts for Stark SDKs.
+    whyItMatters: GitHub repos show maintenance, but registry usage would better indicate practitioner adoption.
+    diligencePath: Revisit with live registry data or internal SDK download metrics.
+    relatedQuestionRefs:
+    - QE021
+  - type: missing-source
+    severity: minor
+    topic: case-center-proof-quality
+    missingEvidence: Richer canonical case-center pages with production detail and quantified outcomes.
+    whyItMatters: Blog case studies are useful but a thin official case center weakens third-party-style proof quality.
+    diligencePath: Request customer references or better-documented deployment summaries.
+    relatedQuestionRefs:
+    - QE023
+  - type: private-evidence-only
+    severity: material
+    topic: change-management-discipline
+    missingEvidence: Publicly inspectable release cadence, rollback process, postmortem discipline, and change-management controls.
+    whyItMatters: A product this operationally central needs strong deployment discipline, not just attractive docs.
+    diligencePath: Request incident review, release governance docs, and production change logs.
+    relatedQuestionRefs:
+    - QE026
+    - QE027
+    relatedTableRefs:
+    - TE005
