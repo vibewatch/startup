@@ -16,6 +16,11 @@ export const DEFAULT_CACHE_DIR = env.FETCH_URL_CACHE_DIR
 export const DEFAULT_CACHE_TTL_HOURS = 24 * 7;
 const DEFAULT_PROFILE = 'bingbot';
 const DEFAULT_THROTTLE_MS = 750;
+// Maximum response body size (50 MB). Prevents memory exhaustion from
+// unexpectedly large downloads (e.g. PDF archives served at trusted URLs).
+const MAX_BODY_BYTES = 50 * 1024 * 1024;
+// Only allow http/https URLs to prevent SSRF via javascript:, file:, data: schemes.
+const ALLOWED_SCHEMES = new Set(['http:', 'https:']);
 
 // curl-impersonate is shipped as a single binary `curl-impersonate` plus a
 // family of wrapper shell scripts (`curl_chrome120`, `curl_firefox133`, ...)
@@ -129,7 +134,8 @@ function loadHostStrategies() {
   if (!HOST_STRATEGIES_PATH || !existsSync(HOST_STRATEGIES_PATH)) return HOST_STRATEGIES_CACHE;
   try {
     HOST_STRATEGIES_CACHE = JSON.parse(readFileSync(HOST_STRATEGIES_PATH, 'utf8'));
-  } catch {
+  } catch (err) {
+    console.warn(`[fetch-url] could not load host strategies: ${err.message}`);
     HOST_STRATEGIES_CACHE = {};
   }
   return HOST_STRATEGIES_CACHE;
@@ -451,6 +457,17 @@ function profileSequence(opts) {
 // they want a string view (HTML path) and pass the Buffer through unchanged
 // when they want bytes (PDF path, --out).
 export async function fetchUrl(url, { timeoutMs = DEFAULT_TIMEOUT_MS, userAgent = null, profile = DEFAULT_PROFILE, headers = null, throttleMs = 0 } = {}) {
+  // Validate URL scheme to prevent SSRF
+  try {
+    const parsed = new URL(url);
+    if (!ALLOWED_SCHEMES.has(parsed.protocol)) {
+      throw new Error(`[fetch-url] Blocked URL with disallowed scheme: ${parsed.protocol}`);
+    }
+  } catch (err) {
+    if (err.message.includes('Blocked URL')) throw err;
+    throw new Error(`[fetch-url] Invalid URL: ${url}`);
+  }
+
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   const started = Date.now();
@@ -580,7 +597,15 @@ export async function fetchUrl(url, { timeoutMs = DEFAULT_TIMEOUT_MS, userAgent 
       signal: controller.signal,
       headers: headers ?? buildHeaders(profile, userAgent),
     });
+    // Enforce max body size to prevent memory exhaustion
+    const contentLengthHeader = response.headers.get('content-length');
+    if (contentLengthHeader && Number(contentLengthHeader) > MAX_BODY_BYTES) {
+      throw new Error(`[fetch-url] Response too large (${contentLengthHeader} bytes > ${MAX_BODY_BYTES} limit): ${url}`);
+    }
     const body = Buffer.from(await response.arrayBuffer());
+    if (body.length > MAX_BODY_BYTES) {
+      throw new Error(`[fetch-url] Response body too large (${body.length} bytes > ${MAX_BODY_BYTES} limit): ${url}`);
+    }
     return {
       url,
       finalUrl: response.url,
@@ -920,7 +945,8 @@ function readCache(dir, url, variant, ttlHours) {
     if (!Number.isFinite(ageMs) || ageMs < 0) return null;
     if (ttlHours > 0 && ageMs > ttlHours * 3_600_000) return null;
     return { ...raw, body: Buffer.from(raw.body, 'base64'), _cachePath: path, _ageMs: ageMs };
-  } catch {
+  } catch (err) {
+    console.warn(`[fetch-url] cache read failed for ${path}: ${err.message}`);
     return null;
   }
 }

@@ -138,7 +138,10 @@ export function listDirs(path) {
     .filter((name) => !name.startsWith('.') && !name.startsWith('_'))
     .filter((name) => {
       try { return statSync(join(path, name)).isDirectory(); }
-      catch { return false; }
+      catch (err) {
+        console.warn(`[utils] could not stat ${join(path, name)}: ${err.message}`);
+        return false;
+      }
     });
 }
 
@@ -172,11 +175,15 @@ export function normalizeDomain(value) {
   }
 }
 
+// Allowed URL schemes for source references. Reject javascript:, data:, file:, etc.
+const ALLOWED_URL_SCHEMES = new Set(['http:', 'https:']);
+
 export function canonicalSourceUrl(value) {
   const raw = String(value ?? '').trim();
   if (!raw) return '';
   try {
     const url = new URL(raw);
+    if (!ALLOWED_URL_SCHEMES.has(url.protocol)) return '';
     url.hash = '';
     for (const key of [...url.searchParams.keys()]) {
       const lower = key.toLowerCase();
@@ -187,7 +194,11 @@ export function canonicalSourceUrl(value) {
     url.pathname = url.pathname.replace(/\/$/, '') || '/';
     return url.toString().replace(/\/$/, '').toLowerCase();
   } catch {
-    return raw.replace(/#.*$/, '').replace(/\?.*utm_[^#]*/i, '').replace(/\/$/, '').toLowerCase();
+    // If URL parsing fails, only return a normalized form if it looks like http(s)
+    if (/^https?:\/\//i.test(raw)) {
+      return raw.replace(/#.*$/, '').replace(/\?.*utm_[^#]*/i, '').replace(/\/$/, '').toLowerCase();
+    }
+    return '';
   }
 }
 
