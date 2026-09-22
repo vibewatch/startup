@@ -196,63 +196,65 @@ jobs:
       - name: Generate company diligence report
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
-          COPILOT_TASK_WAIT_TIMEOUT_SECONDS: 3600
           COMPANY: ${{ steps.inputs.outputs.company }}
           COMPANY_URL: ${{ steps.inputs.outputs.url }}
-          MODEL: ${{ steps.inputs.outputs.model }}
-          EFFORT: ${{ steps.inputs.outputs.effort }}
           PROFILE: ${{ steps.inputs.outputs.profile }}
-          # fetch-url appends one JSON line per call here when set; chapter
-          # checks can use the trail to surface unverifiedSource warnings.
           STARTUP_FETCH_LOG_PATH: ${{ github.workspace }}/.research-cache/_fetch-log.jsonl
         run: |
           set -euo pipefail
           mkdir -p "$(dirname "$STARTUP_FETCH_LOG_PATH")"
           : > "$STARTUP_FETCH_LOG_PATH"
-          PROMPT=$(cat <<EOF
-          Produce one complete startup diligence report for the company below.
-
-          Do not use a workflow-provided run date. After create-report-run.mjs, use runtimeContext.run.runDate from load-chapter-runtime-context.mjs as the canonical research date, YAML runDate, and source-discovery freshness anchor.
-          Company: $COMPANY
-          Company URL: ${COMPANY_URL:-unknown}
-          Research profile: ${PROFILE:-fast}
-
-          If a finalized report folder for the same company or domain already exists under reports/<runId>/ (the create-report-run.mjs duplicate guard checks this) and there is no materially new reason to refresh it, do not create a duplicate folder; print a short duplicate note and exit successfully.
-          Immediately after creating the report folder, run npm run research:profile -- --report-folder <folder> --profile ${PROFILE:-fast}, then run npm run research:bootstrap -- --report-folder <folder> --company "$COMPANY" --website "${COMPANY_URL:-}" --profile ${PROFILE:-fast}. The profile command writes a per-report workflow snapshot: fast uses reduced but still binding evidence, exhibit, and depth floors, while deep preserves the repository defaults. The bootstrap allocates and prefetches each shared URL once. Use each chapter's chapterPools entry and fetched text instead of repeating searches or fetches.
-          Generate and finalize a complete startup diligence research report for this company.
-          Treat completion as an on-disk contract: if you create a report folder, it must end with all required chapter, metadata, and generated artifacts; otherwise skip before creating a folder. If you fan out chapter work, join every task, inspect failures, and never exit successfully with partial report folders.
-
-          Run the diligence workflow. After the shared search bootstrap, run `npm run research:workers -- --report-folder <folder> --concurrency 8 --timeout-seconds 900`, then run `npm run research:finalize -- --report-folder <folder> --timeout-seconds 900` even when the worker command reports convergence-only failures. These commands own chapter fan-out, convergence repair, report metadata, and finalization; do not launch chapter subagents, rerun passing workers, serially inspect fetched files, or perform a second manual repair loop in the parent. Treat a nonzero finalizer exit as a real failure. Fast chapters may cite only successful prefetched URLs already present in search-bundle.json.fetchedSources; never fetch, add, or manually log a new URL. Write the full required English YAML set under reports/<run>/. Follow the startup-research skill's source-verification rules; this workflow provides STARTUP_FETCH_LOG_PATH so fetch-url calls are auditable. Use the host search/source-discovery capability before fetch-url; if no source-discovery capability is available, stop before creating a report folder, print a clear source-discovery-unavailable note, and do not invent sources. Do not run any git command (git add, git commit, git push, git stash, git checkout, etc.) at any point in the workflow — leave every generated and modified file unstaged in the working tree; the workflow itself owns commit/push decisions.
-          EOF
-          )
-          mkdir -p "$RUNNER_TEMP/copilot-logs"
-          COPILOT_LOG="$RUNNER_TEMP/copilot-logs/run.log"
           started_at=$(date +%s)
+
           set +e
-          copilot --yolo --autopilot --excluded-tools "web_fetch" --model "$MODEL" --effort "$EFFORT" -p "$PROMPT" 2>&1 | tee "$COPILOT_LOG"
-          status=${PIPESTATUS[0]}
+          if [ -n "$COMPANY_URL" ]; then
+            REPORT_FOLDER=$(node .agents/skills/startup-research/scripts/create-report-run.mjs "$COMPANY" --website "$COMPANY_URL")
+          else
+            REPORT_FOLDER=$(node .agents/skills/startup-research/scripts/create-report-run.mjs "$COMPANY")
+          fi
+          create_status=$?
           set -e
+          if [ "$create_status" -eq 2 ]; then
+            echo "Duplicate finalized report exists; skipping fresh generation."
+            exit 0
+          fi
+          if [ "$create_status" -ne 0 ]; then
+            exit "$create_status"
+          fi
+          printf '%s\n' "$REPORT_FOLDER" > "$RUNNER_TEMP/report-folder.txt"
+
+          npm run research:profile -- --report-folder "$REPORT_FOLDER" --profile "$PROFILE"
+          bootstrap_args=(--report-folder "$REPORT_FOLDER" --company "$COMPANY" --profile "$PROFILE")
+          if [ -n "$COMPANY_URL" ]; then
+            bootstrap_args+=(--website "$COMPANY_URL")
+          fi
+          npm run research:bootstrap -- "${bootstrap_args[@]}"
+
+          set +e
+          npm run research:workers -- --report-folder "$REPORT_FOLDER" --concurrency 8 --timeout-seconds 900
+          worker_status=$?
+          set -e
+          if [ "$worker_status" -ne 0 ]; then
+            echo "Worker fan-out reported failures; bounded finalization will repair only failed chapters."
+          fi
+          npm run research:finalize -- --report-folder "$REPORT_FOLDER" --timeout-seconds 900
+
           wall_seconds=$(( $(date +%s) - started_at ))
           {
             echo
-            echo "### Copilot run stats"
-            echo "- profile/model/effort: $PROFILE / $MODEL / $EFFORT"
+            echo "### Deterministic research pipeline"
+            echo "- report folder: $REPORT_FOLDER"
+            echo "- profile: $PROFILE"
             echo "- wall seconds: $wall_seconds"
-            if [ -s "$COPILOT_LOG" ]; then
-              tail -n 20 "$COPILOT_LOG" | grep -iE '^(changes?|requests?|tokens?|ai credits?)\b' | sed 's/^/- /' || echo "- (no stats line emitted)"
-            else
-              echo "- (no Copilot output captured)"
-            fi
             if [ -s "$STARTUP_FETCH_LOG_PATH" ]; then
               fetch_calls=$(wc -l < "$STARTUP_FETCH_LOG_PATH")
               fetch_ok=$(grep -c '"ok":true' "$STARTUP_FETCH_LOG_PATH" || true)
               fetch_unique=$(node --input-type=module -e 'import fs from "node:fs"; const rows=fs.readFileSync(process.argv[1],"utf8").trim().split(/\r?\n/).filter(Boolean).map((line)=>JSON.parse(line)); console.log(new Set(rows.map((row)=>row.url).filter(Boolean)).size);' "$STARTUP_FETCH_LOG_PATH")
               echo "- fetch-url calls: $fetch_calls (ok=$fetch_ok, unique=$fetch_unique)"
             else
-              echo "- fetch-url trail empty (the agent did not call fetch-url; expect unverifiedSource warnings)"
+              echo "- fetch-url trail empty"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
-          exit "$status"
 
       - name: Finalize complete generated report folders
         # Safety net: if Copilot wrote every chapter YAML plus report-meta.yaml

@@ -1,6 +1,11 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
+import {
+  mkdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -54,6 +59,7 @@ try {
     '--dry-run',
     '--format', 'json',
   ]));
+  const companyWorkflow = readFileSync(resolve('.github/workflows/company.yml'), 'utf8');
   const checks = [
     [plan.runId === basename(folder), 'runner emitted the wrong runId'],
     [plan.concurrency === 8, 'runner default concurrency is not 8'],
@@ -64,6 +70,10 @@ try {
     [finalizer.model === 'gpt-5.4-mini', 'finalizer did not use the fast worker model'],
     [finalizer.reasoningEffort === 'medium', 'finalizer did not use medium effort'],
     [finalizer.timeoutSeconds === 900, 'finalizer default timeout is not 900 seconds'],
+    [companyWorkflow.includes('create-report-run.mjs "$COMPANY"'), 'company workflow does not create reports deterministically'],
+    [companyWorkflow.includes('npm run research:workers -- --report-folder "$REPORT_FOLDER"'), 'company workflow does not invoke the bounded worker runner directly'],
+    [companyWorkflow.includes('npm run research:finalize -- --report-folder "$REPORT_FOLDER"'), 'company workflow does not invoke the bounded finalizer directly'],
+    [!companyWorkflow.includes('copilot --yolo'), 'company workflow still uses a parent Copilot orchestration session'],
   ];
   const failures = checks.filter(([ok]) => !ok).map(([, message]) => message);
   if (failures.length) throw new Error(failures.join('; '));
