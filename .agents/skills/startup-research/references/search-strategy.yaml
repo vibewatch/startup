@@ -1,0 +1,41 @@
+schemaVersion: search-strategy-v1
+principles:
+  - Use broad search only to discover candidate URLs; fetch every retained URL with fetch-url before citing it.
+  - Prefer primary and independent evidence, then use semantic or deep search only to close named gaps.
+  - Reuse cached search results inside a run, but re-fetch volatile facts and direct evidence on every refresh.
+providers:
+  anysearch:
+    role: Default low-cost broad discovery and unified vertical routing.
+    env: ANYSEARCH_API_KEY
+    supportsAnonymous: true
+  brave:
+    role: Fresh web and news discovery with date filters and an independent index.
+    env: BRAVE_SEARCH_API_KEY
+    supportsAnonymous: false
+  tavily:
+    role: Content-rich search for fast source triage and gap filling.
+    env: TAVILY_API_KEY
+    supportsAnonymous: false
+  exa:
+    role: Semantic company, people, financial-report, and deep gap searches.
+    env: EXA_API_KEY
+    supportsAnonymous: false
+routing:
+  broad: [anysearch, brave, tavily, exa]
+  freshness: [brave, anysearch, tavily, exa]
+  primary: [brave, anysearch, exa, tavily]
+  semantic: [exa, tavily, anysearch, brave]
+  adverse: [brave, exa, anysearch, tavily]
+budgets:
+  freshQueriesPerChapter: 8
+  refreshQueriesPerChapter: 5
+  maxResultsPerQuery: 10
+  concurrency: 4
+  cacheTtlHours: 24
+quality:
+  requireIntents: [primary, freshness, adverse]
+  sourceFunnel:
+    - Official site, filings, regulator, legal, technical docs, and first-party announcements.
+    - Independent news, analyst or market data, customer proof, and partner proof.
+    - Adverse evidence, complaints, outages, litigation, and regulatory records.
+    - Semantic or deep search only for unresolved questions after the first three passes.

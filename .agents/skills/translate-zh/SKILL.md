@@ -53,7 +53,45 @@ npm run translate:zh -- finalize-summary "$REPORT"
 npm run translate:zh -- finalize-full "$REPORT"
 ```
 
-If both zh siblings already exist, do not rewrite them; run:
+Finalization runs a conservative quality gate after the structural check. It fails when a translatable leaf drops year/date anchors or explicit uncertainty qualifiers, or retains a high-confidence translationese pattern from the soundcheck. It emits advisory findings for glossary drift, untranslated ordinary descriptors, half-width Chinese punctuation, and dense `的` chains. Repair only the flagged cached leaf or part and rerun the narrow finalize command.
+
+Use `npm run audit:translations-zh -- --limit 20` for a non-blocking corpus sample. The audit reports hard semantic/style errors separately from advisory glossary drift, untranslated ordinary descriptors, half-width Chinese punctuation, and dense `的` chains. Use the report to target only weak leaves; do not rewrite clean overlays.
+
+To repair existing overlays one report at a time, seed the cache from the
+current Chinese files instead of retranslating from English:
+
+```sh
+npm run audit:translations-zh -- --report <run-id> --format json
+npm run translate:zh -- repair-init <run-id>
+```
+
+`repair-init` writes `quality.before.json`, prints the blocking target paths,
+and fills the sparse cache with the existing Chinese text. Edit only the
+flagged leaves, then finalize with `--keep-cache` and measure the delta:
+
+```sh
+npm run translate:zh -- lint-parts <run-id>
+npm run translate:zh -- finalize-summary <run-id>
+npm run translate:zh -- finalize-full <run-id> --keep-cache
+npm run translate:zh -- measure <run-id>
+npm run translate:zh -- cleanup <run-id>
+```
+
+The measurement is saved as `quality.after.json` and reports error/warning
+counts against the repair baseline. Process only one report at a time so each
+quality change remains attributable and reversible.
+
+For low-cost model routing, use `gemini-3.8-flash` for summary and long-form
+full-report drafts, then use `gpt-5.4-mini` for compact table/figure leaves
+where brevity matters. Run deterministic QA after translation and route only
+meaning-sensitive or still-awkward leaves to `gpt-5.6-luna`; reserve
+`gpt-5.6-sol-fast` for unresolved semantic conflicts. Keep
+`gemini-3.5-flash` for search planning and evidence extraction, where its
+lower-cost output is easier to verify. The shared policy is in
+`../startup-research/references/model-routing.yaml`.
+
+If both zh siblings already exist and no repair is requested, do not rewrite
+them; run:
 
 ```sh
 npm run translate:zh -- verify "$REPORT"
@@ -411,4 +449,3 @@ Common repair order:
   `U.S. federal courts` → `美国联邦法院`; `Series E at $61.5B` →
   `Series E 轮，估值 $61.5B`; `Responsible Scaling Policy v3.2` →
   `Responsible Scaling Policy v3.2（负责任扩展政策）`.
-

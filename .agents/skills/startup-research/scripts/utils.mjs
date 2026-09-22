@@ -172,6 +172,12 @@ export function normalizeDomain(value) {
   }
 }
 
+export function reportIdentityKey(company) {
+  const name = normalizeCompanyName(company?.name);
+  const domain = normalizeDomain(company?.website);
+  return name && domain ? `${name}|${domain}` : '';
+}
+
 export function canonicalSourceUrl(value) {
   const raw = String(value ?? '').trim();
   if (!raw) return '';
@@ -297,4 +303,3 @@ export function getCoreArtifacts(config = loadWorkflowConfig()) {
     ...Object.values(FINAL_ARTIFACTS),
   ];
 }
-

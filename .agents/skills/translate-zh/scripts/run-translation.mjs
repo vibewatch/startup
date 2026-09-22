@@ -1,8 +1,10 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync, readdirSync, rmSync, statSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
+import yaml from 'js-yaml';
+import { checkPairQuality } from './check-translation-quality.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '..', '..', '..', '..');
@@ -16,9 +18,11 @@ function usage(code = 0) {
   console.error('Commands:');
   console.error('  preflight         Validate repo, dependency, report, and cache paths');
   console.error('  init              Export summary/full bundles and split full-report into parts');
+  console.error('  repair-init       Seed bundles from existing zh overlays and record baseline quality');
   console.error('  lint-parts        Validate translated full-report parts without writing outputs');
   console.error('  finalize-summary  Import/apply/check summary-card.zh.yaml');
   console.error('  finalize-full     Merge parts when present, import/apply/check full-report.zh.yaml');
+  console.error('  measure           Record current quality and compare it with repair baseline');
   console.error('  verify            Strictly verify final summary/full zh overlays');
   console.error('  cleanup           Delete .translate-cache/<runId>');
   console.error('');
@@ -118,9 +122,43 @@ function pathsFor(input) {
     fullBundle: join(cacheDir, 'full-report.translate.yaml'),
     summaryJson: join(cacheDir, 'summary-card.zh.json'),
     fullJson: join(cacheDir, 'full-report.zh.json'),
+    qualityBefore: join(cacheDir, 'quality.before.json'),
+    qualityAfter: join(cacheDir, 'quality.after.json'),
     summaryOut: join(reportDir, 'summary-card.zh.yaml'),
     fullOut: join(reportDir, 'full-report.zh.yaml'),
   };
+}
+
+function loadYaml(path) {
+  return yaml.load(readFileSync(path, 'utf8')) ?? {};
+}
+
+function qualityFor(paths) {
+  const findings = [];
+  for (const [artifact, sourcePath, targetPath] of [
+    ['summary-card', paths.summarySource, paths.summaryOut],
+    ['full-report', paths.fullSource, paths.fullOut],
+  ]) {
+    if (!existsSync(targetPath)) continue;
+    for (const issue of checkPairQuality(loadYaml(sourcePath), loadYaml(targetPath))) {
+      findings.push({ artifact, ...issue });
+    }
+  }
+  const errorCount = findings.filter((finding) => finding.severity === 'error').length;
+  const warningCount = findings.filter((finding) => finding.severity === 'warning').length;
+  return {
+    schemaVersion: 'translation-repair-quality-v1',
+    runId: paths.runId,
+    measuredAt: new Date().toISOString(),
+    errorCount,
+    warningCount,
+    hardPass: errorCount === 0,
+    findings,
+  };
+}
+
+function writeQuality(path, quality) {
+  writeFileSync(path, `${JSON.stringify(quality, null, 2)}\n`, 'utf8');
 }
 
 function ensurePreflight(runId) {
@@ -173,6 +211,33 @@ function init(runId, options = {}) {
   console.log(`[translate-zh] edit full-report parts under: ${relative(repoRoot, paths.partsDir)}`);
 }
 
+function repairInit(runId, options = {}) {
+  const paths = ensurePreflight(runId);
+  if (!existsSync(paths.summaryOut) || !existsSync(paths.fullOut)) {
+    fail(`existing zh overlays are required for repair: reports/${paths.runId}`);
+  }
+  if (isNonEmptyDir(paths.cacheDir)) {
+    if (!options.force) {
+      fail(`cache is not empty: ${relative(repoRoot, paths.cacheDir)}; run cleanup first or pass --force to discard it`);
+    }
+    cleanup(paths.runId);
+  }
+  ensureDir(paths.cacheDir);
+  ensureDir(paths.partsDir);
+  runNodeScript('bundle-translatable.mjs', ['export', paths.summaryOut, '--out', paths.summaryBundle]);
+  runNodeScript('bundle-translatable.mjs', ['export', paths.fullOut, '--out', paths.fullBundle]);
+  runNodeScript('bundle-translatable.mjs', ['split', paths.fullBundle, '--out-dir', paths.partsDir, '--max-chars', FULL_SPLIT_MAX_CHARS, '--max-items', FULL_SPLIT_MAX_ITEMS]);
+  const baseline = qualityFor(paths);
+  writeQuality(paths.qualityBefore, baseline);
+  console.log(`[translate-zh] repair baseline: ${baseline.errorCount} error(s), ${baseline.warningCount} warning(s)`);
+  for (const finding of baseline.findings.filter((finding) => finding.severity === 'error')) {
+    console.log(`[translate-zh] target ${finding.artifact}:${finding.path} (${finding.code})`);
+  }
+  console.log(`[translate-zh] baseline: ${relative(repoRoot, paths.qualityBefore)}`);
+  console.log(`[translate-zh] edit summary bundle: ${relative(repoRoot, paths.summaryBundle)}`);
+  console.log(`[translate-zh] edit only targeted leaves in full-report parts under: ${relative(repoRoot, paths.partsDir)}`);
+}
+
 function lintParts(runId) {
   const paths = ensurePreflight(runId);
   if (!existsSync(paths.partsDir)) {
@@ -190,6 +255,7 @@ function finalizeSummary(runId) {
   runNodeScript('bundle-translatable.mjs', ['import', paths.summarySource, paths.summaryBundle, '--out', paths.summaryJson]);
   runNodeScript('apply-translation.mjs', [paths.summarySource, paths.summaryJson, '--out', paths.summaryOut]);
   runNodeScript('check-translation.mjs', [paths.reportDir, '--strict']);
+  runNodeScript('check-translation-quality.mjs', [paths.summarySource, paths.summaryOut]);
   console.log('[translate-zh] summary finalized');
 }
 
@@ -210,6 +276,8 @@ function finalizeFull(runId, keepCache) {
   runNodeScript('bundle-translatable.mjs', ['import', paths.fullSource, paths.fullBundle, '--out', paths.fullJson]);
   runNodeScript('apply-translation.mjs', [paths.fullSource, paths.fullJson, '--out', paths.fullOut]);
   runNodeScript('check-translation.mjs', [paths.reportDir, '--strict', '--require-final']);
+  runNodeScript('check-translation-quality.mjs', [paths.summarySource, paths.summaryOut]);
+  runNodeScript('check-translation-quality.mjs', [paths.fullSource, paths.fullOut]);
   if (!keepCache) cleanup(runId);
   console.log('[translate-zh] full report finalized');
 }
@@ -218,6 +286,25 @@ function verify(runId) {
   const paths = ensurePreflight(runId);
   runNodeScript('check-translation.mjs', [paths.reportDir, '--strict', '--require-final']);
   console.log('[translate-zh] final overlays verified');
+}
+
+function measure(runId) {
+  const paths = ensurePreflight(runId);
+  if (!existsSync(paths.summaryOut) || !existsSync(paths.fullOut)) {
+    fail(`final zh overlays are required for measurement: reports/${paths.runId}`);
+  }
+  ensureDir(paths.cacheDir);
+  const current = qualityFor(paths);
+  writeQuality(paths.qualityAfter, current);
+  if (existsSync(paths.qualityBefore)) {
+    const before = JSON.parse(readFileSync(paths.qualityBefore, 'utf8'));
+    console.log(`[translate-zh] quality errors ${before.errorCount} -> ${current.errorCount} (${current.errorCount - before.errorCount >= 0 ? '+' : ''}${current.errorCount - before.errorCount})`);
+    console.log(`[translate-zh] quality warnings ${before.warningCount} -> ${current.warningCount} (${current.warningCount - before.warningCount >= 0 ? '+' : ''}${current.warningCount - before.warningCount})`);
+  } else {
+    console.log(`[translate-zh] quality: ${current.errorCount} error(s), ${current.warningCount} warning(s)`);
+  }
+  console.log(`[translate-zh] hard pass: ${current.hardPass ? 'yes' : 'no'}`);
+  console.log(`[translate-zh] measurement: ${relative(repoRoot, paths.qualityAfter)}`);
 }
 
 function cleanup(runId) {
@@ -236,6 +323,9 @@ switch (args.command) {
   case 'init':
     init(args.runId, { force: args.force });
     break;
+  case 'repair-init':
+    repairInit(args.runId, { force: args.force });
+    break;
   case 'lint-parts':
     lintParts(args.runId);
     break;
@@ -244,6 +334,9 @@ switch (args.command) {
     break;
   case 'finalize-full':
     finalizeFull(args.runId, args.keepCache);
+    break;
+  case 'measure':
+    measure(args.runId);
     break;
   case 'verify':
     verify(args.runId);

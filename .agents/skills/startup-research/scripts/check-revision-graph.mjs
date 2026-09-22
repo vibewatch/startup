@@ -12,6 +12,7 @@ import {
   listDirs,
   normalizeRevision,
   readYaml,
+  reportIdentityKey,
   reportsDir,
 } from './utils.mjs';
 import {
@@ -62,6 +63,7 @@ function collectReports() {
     const revision = normalizeRevision(card?.revision);
     reports.push({
       runId,
+      company: card?.company ?? {},
       revisionStatus: revision.status,
       refreshOfRunId: revision.refreshOfRunId,
       supersededByRunId: revision.supersededByRunId,
@@ -128,9 +130,35 @@ function validateRevisionGraph(reports) {
   return issues;
 }
 
+function validateCurrentDuplicates(reports) {
+  const issues = [];
+  const groups = new Map();
+  for (const report of reports) {
+    if (report.revisionStatus === 'superseded') continue;
+    const key = reportIdentityKey(report.company);
+    if (!key) continue;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(report);
+  }
+  for (const matches of groups.values()) {
+    if (matches.length < 2) continue;
+    const runIds = matches.map((report) => report.runId).sort();
+    for (const report of matches) {
+      issues.push(validationIssue({
+        path: `${report.runId}/${SUMMARY_CARD_FILE}`,
+        message: `multiple current reports have the same normalized company name and website domain: ${runIds.join(', ')}`,
+        dimension: 'revisionGraph',
+        code: 'revisionGraph.duplicateCurrentIdentity',
+        fix: 'Run npm run reports:duplicates, review the exact-identity group, then run npm run reports:dedupe to keep only the newest finalized report.',
+      }));
+    }
+  }
+  return issues;
+}
+
 const args = parseArgs(process.argv.slice(2));
 const { reports, issues: parseIssues } = collectReports();
-const issues = [...parseIssues, ...validateRevisionGraph(reports)];
+const issues = [...parseIssues, ...validateRevisionGraph(reports), ...validateCurrentDuplicates(reports)];
 
 const result = validationEnvelope({
   ok: issues.length === 0,

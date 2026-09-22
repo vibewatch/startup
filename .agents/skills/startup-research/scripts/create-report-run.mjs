@@ -227,6 +227,7 @@ function writeRefreshContext({ base, companyName, website, refreshTarget, refres
       riskRating: previousCard.summary?.riskRating ?? null,
       valuationStance: previousCard.summary?.valuationStance ?? null,
       keyMetrics: previousCard.summary?.keyMetrics ?? {},
+      unresolvedGaps: previousCard.summary?.unresolvedGaps ?? [],
       sourceStats: previousCard.sourceStats ?? {},
     },
     refreshInstructions: [

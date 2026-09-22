@@ -1,0 +1,47 @@
+schemaVersion: model-routing-v1
+reviewedAt: 2026-09-21
+policy:
+  - Use the cheapest model that reliably preserves structure and evidence references.
+  - Escalate only failed leaves, unresolved claims, or cross-source conflicts; never rerun a whole report on a premium model by default.
+  - Keep provider prices out of executable logic because prices and promotional rates change independently of this repository.
+profiles:
+  search-planning:
+    defaultCopilotModel: gemini-3.5-flash
+    reasoningEffort: minimal
+    escalateTo: gpt-5.4-mini
+    rationale: Query expansion, URL triage, and source classification are high-volume and easy to verify.
+  evidence-extraction:
+    defaultCopilotModel: gemini-3.5-flash
+    reasoningEffort: minimal
+    escalateTo: gpt-5.4-mini
+    rationale: Atomic claim extraction is structured and checked by chapter validators.
+  chapter-synthesis:
+    defaultCopilotModel: gpt-5.4-mini
+    reasoningEffort: high
+    escalateTo: gpt-5.6-sol-fast
+    rationale: Cross-source synthesis needs stronger reasoning, but only conflict-heavy chapters need the premium fallback.
+  translation-draft:
+    defaultCopilotModel: gemini-3.8-flash
+    reasoningEffort: default
+    escalateTo: gpt-5.4-mini
+    rationale: Gemini 3.8 Flash produced a faithful, substantially more natural long-form repair at the bulk-translation tier; compact table and figure leaves still need a concise-model pass.
+  translation-compact:
+    defaultCopilotModel: gpt-5.4-mini
+    reasoningEffort: default
+    escalateTo: gpt-5.6-luna
+    rationale: In the same short-cell benchmark, GPT-5.4 Mini was the most concise natural rendering; Luna is the fallback when preserving an explicit relationship needs more context.
+  translation-qa:
+    defaultCopilotModel: gpt-5.6-luna
+    reasoningEffort: default
+    escalateTo: gpt-5.6-sol-fast
+    rationale: Review only meaning-sensitive leaves that survive deterministic checks or sound unnatural in cover-English review; reserve Sol Fast for unresolved semantic conflicts.
+apiAlternatives:
+  lowestCostBulk:
+    recommendation: Gemini Flash-Lite-class or DeepSeek Flash-class model.
+    useFor: Query planning, extraction, classification, and first-pass translation.
+  balancedSynthesis:
+    recommendation: Gemini Flash-class or a strong small reasoning model.
+    useFor: Chapter drafting and report-level synthesis.
+  chineseTranslation:
+    recommendation: A strong small multilingual reasoning model, followed by repository quality gates and targeted premium repair.
+    useFor: First-pass Simplified Chinese overlays when Copilot model routing is unavailable; benchmark Qwen and DeepSeek on the repository rubric before adopting either.
