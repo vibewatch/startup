@@ -1,0 +1,556 @@
+schemaVersion: "report-v2"
+artifact: "risks"
+slug: "motherduck"
+runDate: "2026-09-22"
+company:
+  name: "MotherDuck"
+chapter:
+  number: 7
+  title: "Risks"
+  summary: "MotherDuck's biggest risks are contractual control, platform dependence, and incomplete public proof of durable production adoption. The public terms are vendor-favorable, the product architecture concentrates operational leverage in MotherDuck-managed compute and log semantics, and the disclosed funding/adoption story is positive but still leaves concentration and resilience gaps that matter for diligence."
+sections:
+  - id: "risk-summary"
+    title: "Risk summary"
+    body: "MotherDuck looks less exposed to classic regulatory blowups than to a more ordinary but still meaningful set of control, dependency, and proof risks. Its public terms let the company process customer and usage data broadly, change or discontinue service, and disclaim most downstream platform risk. The product story is attractive because it combines isolated compute with hybrid local-cloud execution, but that same design means reliability, query correctness, and customer trust depend heavily on MotherDuck-managed infrastructure and on a transaction-log abstraction most buyers will not inspect directly. The funding and user-count disclosures are encouraging, yet the public record still leaves unanswered questions about the depth of production adoption, concentration, incidents, and security posture."
+    claimRefs:
+      - "CR003"
+      - "CR004"
+      - "CR005"
+      - "CR006"
+      - "CR007"
+      - "CR008"
+      - "CR012"
+      - "CR013"
+  - id: "legal-contractual-exposure"
+    title: "Legal, regulatory, and contractual exposure"
+    body: "The reviewed legal surface is straightforward but vendor-favorable. The terms of use give MotherDuck broad rights to process customer data and usage data, impose strong customer-side warranties around legal compliance, and cap liability at a nominal amount. They also let MotherDuck modify, suspend, or terminate the service and place most responsibility for third-party platforms, credentials, and customer permissions on the user. That structure is common for SaaS, but it matters more here because the product is itself a data-processing layer; if the service is interrupted, the customer may have limited contractual leverage and little recourse beyond support or switching costs. For underwriting, the key diligence question is not whether the terms exist, but whether enterprise customers have negotiated stronger paper or whether the standard contract is the practical norm."
+    claimRefs:
+      - "CR004"
+      - "CR005"
+      - "CR006"
+    tableRefs:
+      - "TR001"
+  - id: "operational-platform-risk"
+    title: "Operational and platform reliability risk"
+    body: "MotherDuck's architecture reduces some classic warehouse pain, but it also makes operational quality harder to observe from the outside. The company emphasizes isolated DuckDB instances per user or agent, which should limit noisy-neighbor issues, and it uses a transaction log to manage file-level changes rather than mutating parquet in place. That is efficient, but it also means correctness depends on the log being applied consistently and on users not confusing raw file contents with the logical table view. The platform therefore has a failure mode that looks less like a single catastrophic outage and more like a set of subtle correctness, freshness, and state-management issues. Those are the kinds of problems that usually show up only after production load and complicated data operations arrive."
+    claimRefs:
+      - "CR001"
+      - "CR002"
+      - "CR003"
+      - "CR009"
+      - "CR010"
+    tableRefs:
+      - "TR002"
+  - id: "dependency-market-gaps"
+    title: "Dependency, market, and diligence gaps"
+    body: "The remaining risk is a mix of dependency and market-size uncertainty. MotherDuck sits on top of DuckDB and must keep compatibility, performance, and developer trust aligned with that open-source base. At the same time, the company's public positioning favors lightweight, cost-sensitive analytics rather than the broadest possible warehouse market, which is good for clarity but can narrow the funnel. The public evidence of adoption is positive, but it is still not the same as a clean view of customer concentration, renewal strength, incident history, or formal security posture. The right diligence response is to ask for proof, not assume it: current uptime and incident disclosures, enterprise contract terms, certification status, and a clearer view of how much usage is still exploratory versus embedded in production."
+    claimRefs:
+      - "CR007"
+      - "CR008"
+      - "CR011"
+      - "CR012"
+      - "CR013"
+    tableRefs:
+      - "TR003"
+    figureRefs:
+      - "FR001"
+tables:
+  - id: "TR001"
+    title: "Regulatory / legal risk register"
+    columns:
+      - "Rule / issue"
+      - "Jurisdiction / scope"
+      - "Status"
+      - "Likelihood"
+      - "Severity"
+      - "Mitigation"
+      - "Residual exposure"
+      - "Diligence path"
+    rows:
+      - ["Broad data-processing and usage-data rights", "Contract / service terms", "Disclosed", "Medium", "High", "Standard MSA/DPA review; customer-side notices and consents", "MotherDuck keeps broad processing rights and customers carry most consent burden", "Review enterprise paper, DPA language, and any negotiated carve-outs"]
+      - ["Service change, suspension, or termination at will", "Contract / service continuity", "Disclosed", "Medium", "High", "Operational SLAs and internal migration planning", "Customers may have limited leverage if service scope changes or access is suspended", "Ask for SLA history, termination clauses, and support escalation paths"]
+      - ["Third-party platform and integration liability shift", "Third-party platforms", "Disclosed", "Medium", "High", "Integration testing and vendor review", "MotherDuck disclaims control over outside platforms, including availability and security", "Request integration map, platform dependencies, and contractual responsibility matrix"]
+    notes: "Analytical register built from reviewed public terms and product pages; likelihood and residual exposure are judgment calls, and the scope is limited to publicly visible contract language rather than negotiated customer paper."
+    enumerationScope:
+      coverage: "sample"
+      basis: "Top disclosed legal and contractual risk vectors visible in the reviewed public terms and product pages."
+    claimRefs:
+      - "CR004"
+      - "CR005"
+      - "CR006"
+      - "CR007"
+  - id: "TR002"
+    title: "Operational / quality / security risk register"
+    columns:
+      - "Failure mode"
+      - "Likelihood"
+      - "Severity"
+      - "Mitigation maturity"
+      - "Residual exposure"
+      - "Unresolved gap"
+    rows:
+      - ["Logical-state drift versus raw parquet", "Medium", "High", "Medium", "High", "Need evidence on versioning discipline, delete handling, and user safeguards"]
+      - ["Isolated compute or agent instance failure", "Medium", "High", "Medium", "Medium to High", "Need uptime history, rollback behavior, and isolation guarantees under load"]
+      - ["Hybrid local/cloud query complexity", "Medium", "High", "Medium", "Medium to High", "Need planner behavior, network-failure handling, and cross-environment consistency proof"]
+    notes: "Analytical register based on public architecture and demo material; the residual exposure estimates assume normal SaaS controls but no private incident or certification disclosures."
+    claimRefs:
+      - "CR001"
+      - "CR002"
+      - "CR003"
+      - "CR009"
+      - "CR010"
+  - id: "TR003"
+    title: "Partner / dependency risk register"
+    columns:
+      - "Dependency"
+      - "Counterparty / role"
+      - "Concentration"
+      - "Failure scenario"
+      - "Severity"
+      - "Mitigation"
+      - "Residual exposure"
+      - "Diligence path"
+    rows:
+      - ["DuckDB open-source base", "Core engine / ecosystem", "High", "Compatibility, roadmap, or performance divergence", "High", "Upstream stewardship and compatibility testing", "Medium to High", "Review release cadence, contribution pattern, and fallback options"]
+      - ["MotherDuck-controlled cloud runtime", "Primary platform", "High", "Instance outage or degraded query performance", "High", "Multi-region ops, monitoring, and customer comms", "High", "Request uptime, postmortems, and recovery objectives"]
+      - ["Third-party clouds and integrations", "Storage and external platforms", "Medium", "Interoperability or availability failures outside MotherDuck's control", "Medium to High", "Integration validation and contract mapping", "Medium to High", "Obtain dependency inventory and responsibility split"]
+      - ["Narrow lightweight-workload focus", "Go-to-market segment", "Medium", "Adoption stalls if the market stays niche or price-sensitive", "Medium to High", "Land-and-expand motion and usage-based pricing", "Medium to High", "Ask for pipeline mix, retention, and segment expansion data"]
+    notes: "Analytical register that mixes structural dependency risk with market-concentration risk; concentration and residual exposure are inferred from public positioning rather than a disclosed customer ledger."
+    claimRefs:
+      - "CR001"
+      - "CR003"
+      - "CR007"
+      - "CR008"
+      - "CR011"
+      - "CR012"
+      - "CR013"
+figures:
+  - id: "FR001"
+    title: "Risk heatmap"
+    type: "matrix"
+    layout: "wide"
+    summary: "Residual exposure is highest where contractual control, platform dependency, and opaque production proof overlap."
+    approximationNotes: "Cells are analytical ratings synthesized from the reviewed public record rather than company-issued risk scores."
+    claimRefs:
+      - "CR004"
+      - "CR005"
+      - "CR006"
+      - "CR009"
+      - "CR010"
+      - "CR011"
+      - "CR012"
+      - "CR013"
+    data:
+      columns:
+        - "Likelihood"
+        - "Impact"
+        - "Mitigation maturity"
+        - "Residual exposure"
+      rows:
+        - label: "Liability cap / unilateral service changes"
+          values: ["Medium", "High", "Low to Medium", "High"]
+        - label: "Third-party platform dependency"
+          values: ["Medium", "High", "Medium", "High"]
+        - label: "Logical-delete / parquet divergence"
+          values: ["Medium", "High", "Medium", "Medium to High"]
+        - label: "Narrow lightweight-workload focus"
+          values: ["High", "Medium to High", "Medium", "Medium to High"]
+        - label: "Public proof gaps on incidents / security"
+          values: ["Medium", "High", "Low", "High"]
+        - label: "Open-source DuckDB dependency"
+          values: ["Medium", "High", "Medium", "Medium to High"]
+        - label: "Skepticism / unverifiable third-party evidence"
+          values: ["Medium", "Medium", "Low", "Medium"]
+localEvidence:
+  searchQueries:
+    - query: "MotherDuck 2026 terms of use liability data processing termination"
+      engine: "anysearch"
+      hits: null
+      retainedSourceRefs:
+        - "SR003"
+    - query: "MotherDuck 2026 serverless analytics DuckDB isolated compute agent-first architecture"
+      engine: "anysearch"
+      hits: null
+      retainedSourceRefs:
+        - "SR001"
+    - query: "MotherDuck 2026 funding users total capital raised open for all"
+      engine: "anysearch"
+      hits: null
+      retainedSourceRefs:
+        - "SR002"
+        - "SR005"
+    - query: "MotherDuck 2026 lightweight cost-sensitive analytics DuckDB users developers"
+      engine: "anysearch"
+      hits: null
+      retainedSourceRefs:
+        - "SR002"
+        - "SR005"
+    - query: "MotherDuck 2026 Delta Lake parquet transaction log delete vectors"
+      engine: "anysearch"
+      hits: null
+      retainedSourceRefs:
+        - "SR004"
+    - query: "MotherDuck 2026 migration skill directory Motherduck Migrate To Motherduck"
+      engine: "anysearch"
+      hits: null
+      retainedSourceRefs:
+        - "SR006"
+    - query: "MotherDuck 2026 Reddit building on MotherDuck mistake"
+      engine: "anysearch"
+      hits: null
+      retainedSourceRefs:
+        - "SR008"
+    - query: "MotherDuck 2026 outages security certification status"
+      engine: "anysearch"
+      hits: null
+      retainedSourceRefs:
+        - "SR007"
+  researchQuestions:
+    - id: "QR001"
+      question: "What do MotherDuck's public terms say about customer-data processing, liability limits, and termination rights?"
+      type: "verification"
+      targets:
+        - "contentRequirements/0"
+        - "contentRequirements/5"
+      status: "answered"
+    - id: "QR002"
+      question: "How do isolated DuckDB compute and hybrid execution affect reliability and operational dependency risk?"
+      type: "mechanism"
+      targets:
+        - "contentRequirements/1"
+        - "contentRequirements/3"
+      status: "answered"
+    - id: "QR003"
+      question: "What public signals exist about MotherDuck's adoption, funding trajectory, and scale of usage?"
+      type: "quantification"
+      targets:
+        - "contentRequirements/4"
+        - "contentRequirements/5"
+      status: "answered"
+    - id: "QR004"
+      question: "How does MotherDuck's transaction-log model change the risk of stale reads or logical-versus-physical data mismatch?"
+      type: "comparison"
+      targets:
+        - "contentRequirements/1"
+      status: "answered"
+    - id: "QR005"
+      question: "What public skepticism or adverse user sentiment exists about building on MotherDuck?"
+      type: "adverse"
+      targets:
+        - "contentRequirements/5"
+      status: "answered"
+    - id: "QR006"
+      question: "Are there current 2026 disclosures on uptime, incidents, or security certifications that reduce the diligence gap?"
+      type: "adverse"
+      targets:
+        - "contentRequirements/0"
+        - "contentRequirements/1"
+      status: "unresolved"
+    - id: "QR007"
+      question: "What third-party platforms, integrations, or migration helpers make up MotherDuck's dependency surface?"
+      type: "enumeration"
+      targets:
+        - "contentRequirements/3"
+        - "contentRequirements/1"
+      status: "answered"
+    - id: "QR008"
+      question: "What adverse pricing and go-to-market signals in the reviewed public sources could constrain adoption?"
+      type: "adverse"
+      targets:
+        - "contentRequirements/4"
+      status: "answered"
+  sources:
+    - id: "SR001"
+      publisher: "MotherDuck"
+      title: "MotherDuck | The Cloud Data Warehouse Built on DuckDB"
+      url: "https://motherduck.com/"
+      accessDate: "2026-09-22"
+      accessStatus: "ok"
+      stance: "confirming"
+      sourceType: "official"
+      reputationTier: "high"
+      independence: "company"
+      topics:
+        - "architecture"
+        - "serverless"
+        - "agent-first"
+        - "isolated-compute"
+      keyQuote: "Every person, dashboard, and agent session gets its own isolated DuckDB instance."
+    - id: "SR002"
+      publisher: "MotherDuck"
+      title: "Duck and Roll: MotherDuck is Open for All With $100M in the Nest!"
+      url: "https://motherduck.com/blog/motherduck-open-for-all-with-series-b/"
+      accessDate: "2026-09-22"
+      accessStatus: "ok"
+      stance: "confirming"
+      sourceType: "official"
+      reputationTier: "high"
+      independence: "company"
+      topics:
+        - "funding"
+        - "users"
+        - "pricing"
+        - "launch"
+      keyQuote: "This round brings the total capital raised to $100M."
+    - id: "SR003"
+      publisher: "MotherDuck"
+      title: "MotherDuck: Terms of Use"
+      url: "https://motherduck.com/terms-of-use/"
+      date: "2026-02-02"
+      accessDate: "2026-09-22"
+      accessStatus: "ok"
+      stance: "neutral"
+      sourceType: "official"
+      reputationTier: "high"
+      independence: "company"
+      topics:
+        - "terms"
+        - "liability"
+        - "customer-data"
+        - "third-party-platforms"
+      keyQuote: "MotherDuck may modify or discontinue the Services at any time."
+    - id: "SR004"
+      publisher: "MotherDuck"
+      title: "Leveraging DuckDB and Delta Lake Together | MotherDuck"
+      url: "https://motherduck.com/videos/leveraging-duckdb-and-delta-lake-together/"
+      date: "2025-05-28"
+      accessDate: "2026-09-22"
+      accessStatus: "ok"
+      stance: "neutral"
+      sourceType: "technical-docs"
+      reputationTier: "high"
+      independence: "company"
+      topics:
+        - "delta-lake"
+        - "parquet"
+        - "transaction-log"
+        - "deletes"
+      keyQuote: "Delta log basically says pretend to delete this data just like just don't read from it anymore."
+    - id: "SR005"
+      publisher: "GeekWire"
+      title: "Seattle data analytics startup MotherDuck emerges from stealth, reveals $47.5M in funding"
+      url: "https://www.geekwire.com/2022/seattle-data-analytics-startup-motherduck-emerges-from-stealth-reveals-47-5m-in-funding/"
+      date: "2022-11-15"
+      accessDate: "2026-09-22"
+      accessStatus: "ok"
+      stance: "neutral"
+      sourceType: "news"
+      reputationTier: "high"
+      independence: "independent"
+      topics:
+        - "funding"
+        - "valuation"
+        - "lightweight-workloads"
+        - "competition"
+      keyQuote: "MotherDuck, valued at $175 million, was founded by Jordan Tigani."
+    - id: "SR006"
+      publisher: "Skills Directory"
+      title: "Motherduck Migrate To Motherduck (Grade A) - Claude Skill"
+      url: "https://www.skillsdirectory.com/skills/motherduckdb-motherduck-migrate-to-motherduck-91ecde5b"
+      date: "2026-09-05"
+      accessDate: "2026-09-22"
+      accessStatus: "ok"
+      stance: "neutral"
+      sourceType: "developer-signal"
+      reputationTier: "medium"
+      independence: "independent"
+      topics:
+        - "migration"
+        - "ecosystem"
+        - "developer-signal"
+      keyQuote: "Security-tested ai-agents skill for Claude AI."
+    - id: "SR007"
+      publisher: "Scribd"
+      title: "Client Challenge"
+      url: "https://www.scribd.com/document/765996334/DuckDB-in-Action-Final-MotherDuck"
+      accessDate: "2026-09-22"
+      accessStatus: "broken"
+      stance: "unknown"
+      sourceType: "other"
+      reputationTier: "low"
+      independence: "independent"
+      topics:
+        - "access-blocked"
+        - "pdf"
+        - "inaccessible"
+      keyQuote: "A required part of this site couldn’t load."
+    - id: "SR008"
+      publisher: "Reddit"
+      title: "Am I making a mistake building on motherduck?"
+      url: "https://www.reddit.com/r/dataengineering/comments/1qbnr9h/am_i_making_a_mistake_building_on_motherduck/"
+      accessDate: "2026-09-22"
+      accessStatus: "broken"
+      stance: "adverse"
+      sourceType: "review"
+      reputationTier: "low"
+      independence: "independent"
+      topics:
+        - "skepticism"
+        - "community"
+        - "adoption"
+      keyQuote: "Target URL returned error 403: Forbidden."
+  claims:
+    - id: "CR001"
+      statement: "MotherDuck's homepage frames the product as fast, serverless analytics powered by DuckDB with dedicated compute for every user and agent."
+      type: "company-claimed"
+      topic: "architecture"
+      sourceRefs:
+        - "SR001"
+      confidence: "medium"
+      freshness: "current"
+      answersQuestionRefs:
+        - "QR002"
+    - id: "CR002"
+      statement: "MotherDuck says each person, dashboard, and agent session gets its own isolated DuckDB instance that spins up in milliseconds."
+      type: "company-claimed"
+      topic: "isolation"
+      sourceRefs:
+        - "SR001"
+      confidence: "medium"
+      freshness: "current"
+      answersQuestionRefs:
+        - "QR002"
+    - id: "CR003"
+      statement: "MotherDuck's public messaging emphasizes hybrid local-cloud query execution and use cases for production apps, customer analytics, and internal insights."
+      type: "company-claimed"
+      topic: "go-to-market"
+      sourceRefs:
+        - "SR001"
+        - "SR002"
+      confidence: "high"
+      freshness: "current"
+      answersQuestionRefs:
+        - "QR002"
+        - "QR008"
+    - id: "CR004"
+      statement: "MotherDuck's terms authorize broad processing of customer and usage data, and they cap aggregate liability at $100."
+      type: "observed"
+      topic: "terms"
+      sourceRefs:
+        - "SR003"
+      confidence: "medium"
+      freshness: "current"
+      answersQuestionRefs:
+        - "QR001"
+    - id: "CR005"
+      statement: "MotherDuck reserves the right to modify, suspend, or discontinue the service at any time, including without notice."
+      type: "observed"
+      topic: "service-continuity"
+      sourceRefs:
+        - "SR003"
+      confidence: "medium"
+      freshness: "current"
+      answersQuestionRefs:
+        - "QR001"
+    - id: "CR006"
+      statement: "The terms place third-party platform security, availability, and interoperability outside MotherDuck's control and liability."
+      type: "observed"
+      topic: "third-party-platforms"
+      sourceRefs:
+        - "SR003"
+      confidence: "medium"
+      freshness: "current"
+      answersQuestionRefs:
+        - "QR001"
+        - "QR007"
+    - id: "CR007"
+      statement: "MotherDuck publicly said it had 2,000 users querying on the platform and that total capital raised reached $100M, while GeekWire reported $47.5M of funding in November 2022."
+      type: "third-party-reported"
+      topic: "funding-and-usage"
+      sourceRefs:
+        - "SR002"
+        - "SR005"
+      confidence: "high"
+      freshness: "recent"
+      answersQuestionRefs:
+        - "QR003"
+    - id: "CR008"
+      statement: "MotherDuck's public positioning targets lightweight, cost-sensitive analytics for existing DuckDB users, analysts, and developers rather than the broadest possible petabyte-scale warehouse market."
+      type: "inferred"
+      topic: "market-positioning"
+      sourceRefs:
+        - "SR005"
+        - "SR002"
+      confidence: "high"
+      freshness: "current"
+      answersQuestionRefs:
+        - "QR003"
+        - "QR008"
+    - id: "CR009"
+      statement: "The MotherDuck demo explains that its Delta log tracks appended and removed parquet files rather than mutating parquet data in place."
+      type: "observed"
+      topic: "delta-log"
+      sourceRefs:
+        - "SR004"
+      confidence: "medium"
+      freshness: "historical"
+      answersQuestionRefs:
+        - "QR004"
+    - id: "CR010"
+      statement: "The same demo says that deleting data is logical in the Delta layer, so direct queries against raw parquet files can still surface rows that the table view excludes."
+      type: "observed"
+      topic: "logical-deletes"
+      sourceRefs:
+        - "SR004"
+      confidence: "medium"
+      freshness: "historical"
+      answersQuestionRefs:
+        - "QR004"
+    - id: "CR011"
+      statement: "A third-party Skills Directory page lists a 'Motherduck Migrate To Motherduck' skill dated 2026-09-05, which indicates some external migration-tooling ecosystem activity."
+      type: "observed"
+      topic: "ecosystem"
+      sourceRefs:
+        - "SR006"
+      confidence: "low"
+      freshness: "current"
+      answersQuestionRefs:
+        - "QR007"
+    - id: "CR012"
+      statement: "The Scribd fetch for a 'DuckDB in Action Final MotherDuck' document returned only an inaccessible load-failure page, so the underlying document contents remain unverified."
+      type: "observed"
+      topic: "access-blocked"
+      sourceRefs:
+        - "SR007"
+      confidence: "low"
+      freshness: "current"
+      answersQuestionRefs:
+        - "QR005"
+    - id: "CR013"
+      statement: "A Reddit thread titled 'Am I making a mistake building on motherduck?' exists, but the fetch returned 403, so the underlying criticism could not be reviewed."
+      type: "observed"
+      topic: "skepticism"
+      sourceRefs:
+        - "SR008"
+      confidence: "low"
+      freshness: "current"
+      answersQuestionRefs:
+        - "QR005"
+  evidenceGaps:
+    - type: "missing-source"
+      severity: "material"
+      topic: "incidents-security"
+      missingEvidence: "A current uptime history, incident log, or security certification matrix for MotherDuck."
+      whyItMatters: "Without that record, reliability and security exposure remain based on inference rather than verified operating history."
+      diligencePath: "Request a trust center, SOC2 or equivalent certification status, and any public incident or postmortem archive."
+      relatedQuestionRefs:
+        - "QR006"
+    - type: "access-blocked"
+      severity: "material"
+      topic: "community-skepticism"
+      missingEvidence: "The underlying Reddit discussion and any substantive comments on MotherDuck adoption risk."
+      whyItMatters: "A skeptical community thread could surface failure modes or buyer objections that do not appear in company materials."
+      diligencePath: "Re-open the thread from an authenticated account or via another public mirror, and capture the substantive comments."
+      relatedQuestionRefs:
+        - "QR005"
+    - type: "enumeration-incomplete"
+      severity: "minor"
+      topic: "customer-concentration"
+      missingEvidence: "A public customer ledger, renewal cohort view, or concentration breakdown."
+      whyItMatters: "Concentration could materially change the severity of market and dependency risk."
+      diligencePath: "Ask management for top-customer concentration, renewal mix, and production-versus-pilot counts."
+      relatedQuestionRefs:
+        - "QR003"
+        - "QR008"
+      relatedTableRefs:
+        - "TR001"
