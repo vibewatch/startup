@@ -77,7 +77,7 @@ Read references/rules.md and the report-meta section of references/contracts.md.
 
 Binding sequence:
 1. Walk chapters in configured order and run normal then strict validation.
-2. For a timed-out/failed worker or a missing chapter, complete only that chapter directly from its worker-input context and pool. For completed workers, repair only named convergence failures. Enforce each chapter's convergence retry budget.
+2. For a timed-out/failed worker or a missing chapter, complete only that chapter directly from its worker-input context and pool. For completed workers, repair only the named normal, strict, or convergence validation failures in worker-results.json; never rewrite a chapter whose validation passed. Enforce each chapter's convergence retry budget.
 3. Fast chapters may use only successful prefetched URLs in that chapter's worker-input pool. Never borrow a URL from a sibling pool even if it appears in search-bundle fetchedSources. Do not search, fetch, use curl, add a URL, or write to the fetch trail.
 4. Author report-meta.yaml only after every chapter passes strict, validate it, then run finalize-report.mjs.
 5. Fix only concrete validator findings with already-prefetched evidence. Do not inspect historical reports, modify repository code/config/docs, or use git.
@@ -243,5 +243,9 @@ else {
   console.log(`[run-report-finalizer] ${output.status} in ${output.durationSeconds}s; result: ${outputPath}`);
   if (missingFiles.length) console.error(`[run-report-finalizer] missing artifacts: ${missingFiles.join(', ')}`);
   if (!reportCheck.ok && reportCheck.error) console.error(reportCheck.error);
+  if (output.status === 'failed' && output.tail) {
+    console.error('[run-report-finalizer] finalizer tail:');
+    console.error(output.tail);
+  }
 }
 process.exit(output.status === 'completed' ? EXIT.ok : EXIT.failure);
