@@ -246,7 +246,7 @@ jobs:
             if [ -s "$STARTUP_FETCH_LOG_PATH" ]; then
               fetch_calls=$(wc -l < "$STARTUP_FETCH_LOG_PATH")
               fetch_ok=$(grep -c '"ok":true' "$STARTUP_FETCH_LOG_PATH" || true)
-              fetch_unique=$(node --input-type=module -e 'import fs from "node:fs"; const rows=fs.readFileSync(process.argv[1],"utf8").trim().split("\\n").filter(Boolean).map((line)=>JSON.parse(line)); console.log(new Set(rows.map((row)=>row.url).filter(Boolean)).size);' "$STARTUP_FETCH_LOG_PATH")
+              fetch_unique=$(node --input-type=module -e 'import fs from "node:fs"; const rows=fs.readFileSync(process.argv[1],"utf8").trim().split(/\r?\n/).filter(Boolean).map((line)=>JSON.parse(line)); console.log(new Set(rows.map((row)=>row.url).filter(Boolean)).size);' "$STARTUP_FETCH_LOG_PATH")
               echo "- fetch-url calls: $fetch_calls (ok=$fetch_ok, unique=$fetch_unique)"
             else
               echo "- fetch-url trail empty (the agent did not call fetch-url; expect unverifiedSource warnings)"
