@@ -17,14 +17,21 @@ const searchSchema = z.object({
   providers: z.record(nonEmpty, providerSchema),
   routing: z.record(nonEmpty, z.array(nonEmpty).min(1)),
   budgets: z.object({
-    freshQueriesPerChapter: z.number().int().positive(),
-    refreshQueriesPerChapter: z.number().int().positive(),
-    maxResultsPerQuery: z.number().int().min(1).max(10),
-    concurrency: z.number().int().positive(),
     cacheTtlHours: z.number().positive(),
+    profiles: z.record(nonEmpty, z.object({
+      globalQueries: z.number().int().positive(),
+      freshQueriesPerChapter: z.number().int().positive(),
+      refreshQueriesPerChapter: z.number().int().positive(),
+      maxGapQueriesPerChapter: z.number().int().nonnegative(),
+      maxResultsPerQuery: z.number().int().min(1).max(10),
+      concurrency: z.number().int().positive(),
+    }).strict()),
   }).strict(),
+  chapterFocus: z.record(nonEmpty, z.array(nonEmpty).length(2)),
   quality: z.object({
     requireIntents: z.array(nonEmpty).min(1),
+    highReputationDomains: z.array(nonEmpty),
+    lowSignalDomains: z.array(nonEmpty),
     sourceFunnel: z.array(nonEmpty).min(1),
   }).strict(),
 }).strict();
@@ -51,11 +58,23 @@ function load(path) {
 
 const search = searchSchema.safeParse(load('.agents/skills/startup-research/references/search-strategy.yaml'));
 const models = modelSchema.safeParse(load('.agents/skills/startup-research/references/model-routing.yaml'));
+const workflow = load('.agents/skills/startup-research/references/workflow-config.yaml');
 const issues = [];
 if (!search.success) issues.push(...search.error.issues.map((issue) => `search-strategy.yaml ${issue.path.join('.')}: ${issue.message}`));
 if (!models.success) issues.push(...models.error.issues.map((issue) => `model-routing.yaml ${issue.path.join('.')}: ${issue.message}`));
 if (search.success) {
   const providers = new Set(Object.keys(search.data.providers));
+  for (const profile of ['fast', 'deep']) {
+    if (!search.data.budgets.profiles[profile]) {
+      issues.push(`search-strategy.yaml budgets.profiles: missing required ${profile} profile`);
+    }
+    const workflowProfiles = new Set(Object.keys(workflow.researchProfiles ?? {}));
+    for (const profile of Object.keys(search.data.budgets.profiles)) {
+      if (!workflowProfiles.has(profile)) {
+        issues.push(`search-strategy.yaml budgets.profiles.${profile}: missing matching workflow-config researchProfiles.${profile}`);
+      }
+    }
+  }
   for (const [intent, route] of Object.entries(search.data.routing)) {
     for (const provider of route) {
       if (!providers.has(provider)) issues.push(`search-strategy.yaml routing.${intent}: unknown provider ${provider}`);
@@ -63,6 +82,19 @@ if (search.success) {
   }
   for (const intent of search.data.quality.requireIntents) {
     if (!search.data.routing[intent]) issues.push(`search-strategy.yaml quality.requireIntents: missing routing.${intent}`);
+  }
+  const workflowChapterKeys = new Set(
+    (workflow.chapters ?? []).map((chapter) => chapter.key),
+  );
+  for (const chapterKey of workflowChapterKeys) {
+    if (!search.data.chapterFocus[chapterKey]) {
+      issues.push(`search-strategy.yaml chapterFocus: missing ${chapterKey}`);
+    }
+  }
+  for (const chapterKey of Object.keys(search.data.chapterFocus)) {
+    if (!workflowChapterKeys.has(chapterKey)) {
+      issues.push(`search-strategy.yaml chapterFocus.${chapterKey}: unknown analysis chapter`);
+    }
   }
 }
 if (issues.length) {

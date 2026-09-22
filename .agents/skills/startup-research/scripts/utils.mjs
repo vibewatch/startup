@@ -9,6 +9,7 @@ const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), '../../../..')
 export const reportsDir = join(repoRoot, 'reports');
 const researchCacheRoot = join(repoRoot, '.research-cache');
 export const workflowConfigPath = join(repoRoot, '.agents', 'skills', 'startup-research', 'references', 'workflow-config.yaml');
+export const modelRoutingPath = join(repoRoot, '.agents', 'skills', 'startup-research', 'references', 'model-routing.yaml');
 // Per-report config snapshot. Written by finalize-report so every finalized
 // report carries the exact workflow-config.yaml that produced it; check-*
 // and build-* scripts then validate/assemble each report against its own
@@ -266,10 +267,10 @@ export function loadWorkflowConfig({ reportFolder } = {}) {
   return normalizeWorkflowConfigFromSchema(readYaml(workflowConfigPath));
 }
 
-// Copy the head workflow-config.yaml into <reportFolder>/.workflow-snapshot.yaml
-// so subsequent validations of this report use the config it was produced
-// against. By default a no-op when the snapshot already exists; pass
-// `force: true` (wired via finalize-report --refresh-snapshot) to overwrite.
+// Copy the deep head workflow config into <reportFolder>/.workflow-snapshot.yaml
+// when no profile resolver has already written a snapshot. Subsequent checks
+// use the report snapshot. `force: true` intentionally resets to the current
+// deep head config via finalize-report --refresh-snapshot.
 export function writeWorkflowSnapshot(reportFolder, { force = false } = {}) {
   if (!existsSync(workflowConfigPath)) {
     throw new Error(`[workflow-config] missing ${workflowConfigPath}`);

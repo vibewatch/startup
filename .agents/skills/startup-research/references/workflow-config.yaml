@@ -1,5 +1,42 @@
 schemaVersion: workflow-config-v1
 reportSchemaVersion: report-v2
+activeResearchProfile: deep
+researchProfiles:
+  deep:
+    description: Full-depth diligence using the repository's default chapter and report gates.
+    defaultGate: {}
+    reportGate: {}
+    capChapterGateOverrides: false
+    clearRequiredSourceTypes: false
+  fast:
+    description: Time-bounded diligence with a smaller evidence and exhibit set while preserving strict validation, adverse evidence, source diversity, and report assembly.
+    defaultGate:
+      minArtifacts: 4
+      maxTables: 3
+      maxFigures: 1
+      minResearchQuestions: 8
+      maxResearchQuestions: 10
+      minQuestionTypeSpread: 3
+      minLocalSources: 8
+      maxLocalSources: 12
+      minLocalClaims: 12
+      maxLocalClaims: 16
+      minSourceDomains: 4
+      minNetNewSources: 3
+      minSourceTypeSpread: 3
+      depthFloor:
+        minSectionBodyWords: 70
+        minSectionWordsTotal: 300
+        minTableRowsTotal: 10
+        minFigureDataPointsTotal: 6
+    reportGate:
+      minDistinctDomains: 18
+      minIndependentSourceShare: 0.4
+      maxCompanyControlledSourceShare: 0.55
+    maxPlannedTablesPerChapter: 3
+    maxPlannedFiguresPerChapter: 1
+    capChapterGateOverrides: true
+    clearRequiredSourceTypes: true
 workflow:
   inputs:
     companyName:
@@ -23,6 +60,11 @@ workflow:
       type: string
       required: false
       description: Optional prior runId used only when refresh=true and create-report-run reports multiple current matching reports.
+    researchProfile:
+      type: string
+      required: false
+      default: deep
+      description: Research depth profile resolved into the per-report workflow snapshot before chapter generation.
   conditions:
     - key: source-discovery-ready
       description: The runtime has an approved web/search/source-discovery capability, or the user supplied authoritative source-pack URLs with metadata before any report folder is created.
@@ -33,6 +75,9 @@ workflow:
     - key: runtime-contract-loaded
       description: load-chapter-runtime-context.mjs returned the chapter list (--list) or chapter delta (--order <n>); the static frame (agent policy, gates, ID system, validator dimensions, renderer contracts) lives in references/rules.md.
       checkedBy: load-chapter-runtime-context.mjs
+    - key: research-profile-resolved
+      description: apply-research-profile.mjs wrote or reused the requested fast/deep workflow snapshot for this report.
+      checkedBy: apply-research-profile.mjs
     - key: all-chapters-exist
       description: Every file in workflow.allowedReportFiles.chapterArtifacts exists under the report folder.
       checkedBy: shell filesystem check
@@ -50,7 +95,7 @@ workflow:
       title: Setup runtime contract
       objective: Resolve inputs, confirm source discovery is possible, create or resume the report folder, and load the workflow/runtime contract before writing artifacts.
       entryConditions: []
-      exitConditions: [source-discovery-ready, report-run-created, runtime-contract-loaded]
+      exitConditions: [source-discovery-ready, report-run-created, research-profile-resolved, runtime-contract-loaded]
       steps:
         - key: preflight-source-discovery
           title: Confirm source discovery capability
@@ -82,6 +127,15 @@ workflow:
             - For explicit refresh runs, pass both --refresh and --refresh-reason <text>. If create-run reports multiple current matching reports, rerun with --refresh-of <priorRunId> before any folder is created; --resume reuses the cached reason from the original create-run invocation.
             - run.runDate is not printed by create-report-run; the per-chapter loader derives and emits it from the report folder runId when --report-folder is supplied.
             - On exit 3, rerun with --resume; if stderr lists multiple in-progress candidates, add --resume-run <runId>. Do not create suffixed duplicate folders.
+        - key: apply-research-profile
+          title: Resolve the report research profile
+          command: apply-research-profile.mjs --report-folder <reportFolder> --profile <researchProfile>
+          requires: [report-run-created, researchProfile]
+          produces: [research-profile-resolved, workflow-snapshot]
+          gate: apply-research-profile exit code
+          notes:
+            - The command defaults to deep, is idempotent for the same profile, and refuses profile changes after a snapshot exists.
+            - Fast mode trims configured evidence, exhibit, and depth floors before any chapter runtime context is loaded.
     - key: chapter-generation
       title: Generate configured chapters
       objective: Author each configured chapter from its runtime context, collect audited evidence, and clear check-chapter.
@@ -270,7 +324,7 @@ agentPolicy:
     - "Do not invent facts, metrics, customers, funding, valuation, or dates."
     - "Do not edit another chapter artifact while working on the current chapter."
     - "Keep scratch files under .research-cache/<runId>/, never under reports/<runId>/."
-    - "Only chapter YAMLs, report-meta.yaml, assembled final artifacts, and the finalize-written .workflow-snapshot.yaml belong under reports/<runId>/. Never hand-edit .workflow-snapshot.yaml; finalize-report writes it from the head workflow-config so each report stays validated against the config it was produced under."
+    - "Only chapter YAMLs, report-meta.yaml, assembled final artifacts, and the script-owned .workflow-snapshot.yaml belong under reports/<runId>/. Never hand-edit .workflow-snapshot.yaml: apply-research-profile.mjs writes the selected profile before chapter work, or finalize-report writes the deep head config when no profile snapshot exists."
     - "Do not run any git command (git add, git commit, git push, git stash, git checkout, etc.) at any point in the workflow — including after finalize-report exits 0. Leave every generated and modified file unstaged in the working tree; the caller owns commit decisions. The only exception is when the invocation prompt explicitly instructs the agent to commit."
   finalResponseFields:
     - report folder
@@ -331,6 +385,8 @@ reportGate:
   minDistinctDomains: 30          # distinct registrable domains across all sources in evidence.yaml
   requireAdverseSource: true      # at least one stance:adverse source must be present
   maxPaywallPercent: 0.3          # fail if >30% of sources are paywall/broken/rate-limited
+  minIndependentSourceShare: 0.4  # at least 40% of retained sources must be independent
+  maxCompanyControlledSourceShare: 0.55 # company-authored sources cannot dominate the report
   # Cross-chapter tolerances (used by check-cross-chapter.mjs for drift detection).
   # Metric drift: relative tolerance for numeric values across chapters (e.g., 0.1 = 10%).
   # Key-fact overlap: Jaccard threshold for matching identity facts across chapters (≥ threshold = match).

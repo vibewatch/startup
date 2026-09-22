@@ -7,8 +7,21 @@
 // dimensions, renderer contracts) lives in references/rules.md and
 // references/contracts.md and is generated from the same sources of truth —
 // read those once at session start instead of re-shipping them per chapter.
+import { existsSync } from 'node:fs';
 import { join, basename } from 'node:path';
-import { EXIT, isRunId, loadWorkflowConfig, companySlugFromRunId, researchCacheDir, runDateFromRunId, tryReadYaml, workflowConfigPath } from './utils.mjs';
+import {
+  EXIT,
+  isRunId,
+  loadWorkflowConfig,
+  modelRoutingPath,
+  readYaml,
+  companySlugFromRunId,
+  researchCacheDir,
+  runDateFromRunId,
+  tryReadYaml,
+  workflowConfigPath,
+  workflowSnapshotPathFor,
+} from './utils.mjs';
 import { RESTRICTED_ACCESS_STATUSES } from './validation-catalog.mjs';
 
 function usage() {
@@ -214,12 +227,12 @@ function runCacheContext(reportFolder) {
   return out;
 }
 
-function buildRuntimeContext(config, chapter) {
+function buildRuntimeContext(config, chapter, generatedFrom = workflowConfigPath) {
   const chapters = config.chapters;
   const index = chapters.findIndex((item) => item.order === chapter.order);
   const out = {
     schemaVersion: 'chapter-runtime-context-v3',
-    generatedFrom: workflowConfigPath,
+    generatedFrom,
     totalChapters: chapters.length,
     previousChapter: index > 0 ? compactChapter(chapters[index - 1]) : null,
     chapter: compactChapter(chapter),
@@ -229,10 +242,23 @@ function buildRuntimeContext(config, chapter) {
   // enforcement contract without re-reading rules.md. workflow-config.schema
   // makes both fields required, so we emit the policy block unconditionally.
   const retryPolicy = config.agentPolicy.retryPolicy;
+  const workerProfile = config.activeResearchProfile === 'fast'
+    ? 'chapter-synthesis-fast'
+    : 'chapter-synthesis';
+  const workerRoute = readYaml(modelRoutingPath).profiles?.[workerProfile];
+  if (!workerRoute?.defaultCopilotModel || !workerRoute?.reasoningEffort) {
+    throw new Error(`[chapter] missing model route for ${workerProfile}`);
+  }
   out.policy = {
     retryPolicy: {
       maxChapterRetries: retryPolicy.maxChapterRetries,
       requireMonotonicFailureDecrease: retryPolicy.requireMonotonicFailureDecrease,
+    },
+    workerRouting: {
+      profile: workerProfile,
+      model: workerRoute.defaultCopilotModel,
+      reasoningEffort: workerRoute.reasoningEffort,
+      escalateTo: workerRoute.escalateTo ?? null,
     },
   };
   return out;
@@ -245,10 +271,10 @@ function selectChapter(config, args) {
   return null;
 }
 
-function orderedList(config) {
+function orderedList(config, generatedFrom = workflowConfigPath) {
   return {
     schemaVersion: 'chapter-runtime-context-list-v3',
-    generatedFrom: workflowConfigPath,
+    generatedFrom,
     totalChapters: config.chapters.length,
     chapters: config.chapters.map(compactChapter),
   };
@@ -260,10 +286,14 @@ function printJson(value) {
 
 function main() {
   const args = parseArgs(process.argv.slice(2));
-  const config = loadWorkflowConfig();
+  const config = loadWorkflowConfig({ reportFolder: args.reportFolder });
+  const snapshotPath = args.reportFolder ? workflowSnapshotPathFor(args.reportFolder) : '';
+  const generatedFrom = snapshotPath && existsSync(snapshotPath)
+    ? snapshotPath
+    : workflowConfigPath;
 
   if (args.list) {
-    printJson(orderedList(config));
+    printJson(orderedList(config, generatedFrom));
     return;
   }
 
@@ -276,7 +306,7 @@ function main() {
     console.error('[chapter] --include-context requires --report-folder <path>');
     process.exit(EXIT.failure);
   }
-  const runtimeContext = buildRuntimeContext(config, chapter);
+  const runtimeContext = buildRuntimeContext(config, chapter, generatedFrom);
   // run identity (run.runDate) and runCache (refresh-context) are always
   // emitted when --report-folder is supplied, regardless of --include-context.
   // The agent needs run.runDate as the canonical clock anchor for chapter doc

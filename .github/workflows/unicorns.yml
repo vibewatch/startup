@@ -44,12 +44,21 @@ on:
         required: false
         default: "3"
         type: string
+      profile:
+        description: "Research speed/depth profile."
+        required: false
+        default: "fast"
+        type: choice
+        options:
+          - fast
+          - deep
       model:
         description: "Model."
         required: false
-        default: "claude-sonnet-4.6"
+        default: "gpt-5.4-mini"
         type: choice
         options:
+          - gpt-5.4-mini
           - gpt-5.5
           - gpt-5.4
           - claude-sonnet-4.6
@@ -59,14 +68,15 @@ permissions:
   pull-requests: write
 
 concurrency:
-  group: startup-research-${{ github.event.inputs.industry || 'all-industries' }}
+  # Shares the fresh-report lock with company.yml to close the duplicate race.
+  group: startup-new-report-generation
   cancel-in-progress: false
 
 jobs:
   research:
     name: Discover and generate unicorn diligence reports
     runs-on: ubuntu-latest
-    timeout-minutes: 360
+    timeout-minutes: 120
     steps:
       - name: Checkout repository history
         uses: actions/checkout@v6
@@ -95,7 +105,6 @@ jobs:
       - name: Install dependencies and Copilot CLI
         run: |
           npm ci || npm install --no-audit --no-fund
-          npm --prefix website ci || npm --prefix website install --no-audit --no-fund
           npm install -g @github/copilot
 
       - name: Restore curl-impersonate cache
@@ -124,14 +133,16 @@ jobs:
       - name: Normalize unicorn discovery inputs
         id: inputs
         env:
-          RAW_INDUSTRY: ${{ github.event.inputs.industry }}
-          RAW_COUNT: ${{ github.event.inputs.unicornCount }}
-          RAW_MODEL: ${{ github.event.inputs.model }}
+          RAW_INDUSTRY: ${{ inputs.industry }}
+          RAW_COUNT: ${{ inputs.unicornCount }}
+          RAW_PROFILE: ${{ inputs.profile }}
+          RAW_MODEL: ${{ inputs.model }}
         run: |
           set -euo pipefail
           trim() { printf '%s' "${1//$'\n'/ }" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'; }
           INDUSTRY="$(trim "$RAW_INDUSTRY")"
           COUNT="$(trim "$RAW_COUNT")"
+          PROFILE="$(trim "$RAW_PROFILE")"
           MODEL="$(trim "$RAW_MODEL")"
           CUTOFF_DATE="$(date -u -d '2 years ago' +%F)"
           if [ -z "$INDUSTRY" ]; then
@@ -147,9 +158,14 @@ jobs:
           if ! [[ "$COUNT" =~ ^[0-9]+$ ]] || [ "$COUNT" -lt 1 ]; then
             COUNT=3
           fi
+          case "$PROFILE" in
+            fast|deep) ;;
+            "") PROFILE="fast" ;;
+            *) echo "Unsupported profile: $PROFILE" >&2; exit 1 ;;
+          esac
           case "$MODEL" in
-            claude-sonnet-4.6|claude-opus-4.6|gpt-5.5|gpt-5.4) ;;
-            "") MODEL="claude-sonnet-4.6" ;;
+            gpt-5.4-mini|claude-sonnet-4.6|claude-opus-4.6|gpt-5.5|gpt-5.4) ;;
+            "") MODEL="gpt-5.4-mini" ;;
             *)
               echo "Unsupported model: $MODEL (allowed: claude-sonnet-4.6, claude-opus-4.6, gpt-5.5, gpt-5.4)" >&2
               exit 1
@@ -157,6 +173,9 @@ jobs:
           esac
           case "$MODEL" in
             gpt-5.5|gpt-5.4) EFFORT="xhigh" ;;
+            gpt-5.4-mini)
+              if [ "$PROFILE" = "fast" ]; then EFFORT="medium"; else EFFORT="high"; fi
+              ;;
             claude-sonnet-4.6|claude-opus-4.6) EFFORT="high" ;;
           esac
           if [ "$INDUSTRY" = "Any" ]; then
@@ -178,6 +197,7 @@ jobs:
             echo "safeLabel=$SAFE_LABEL"
             echo "model=$MODEL"
             echo "effort=$EFFORT"
+            echo "profile=$PROFILE"
             echo "cutoffDate=$CUTOFF_DATE"
           } >> "$GITHUB_OUTPUT"
 
@@ -187,6 +207,7 @@ jobs:
           INDUSTRY: ${{ steps.inputs.outputs.industry }}
           MODEL: ${{ steps.inputs.outputs.model }}
           EFFORT: ${{ steps.inputs.outputs.effort }}
+          PROFILE: ${{ steps.inputs.outputs.profile }}
           CUTOFF_DATE: ${{ steps.inputs.outputs.cutoffDate }}
           LABEL: ${{ steps.inputs.outputs.label }}
         run: |
@@ -199,6 +220,7 @@ jobs:
             echo "| Industry | ${INDUSTRY:-unknown} |"
             echo "| Model | ${MODEL:-unknown} |"
             echo "| Effort | ${EFFORT:-unknown} |"
+            echo "| Profile | ${PROFILE:-fast} |"
             echo "| Unicorn cutoff | ${CUTOFF_DATE:-unknown} |"
             echo "| Label | ${LABEL:-unknown} |"
           } >> "$GITHUB_STEP_SUMMARY"
@@ -289,11 +311,12 @@ jobs:
       - name: Generate recent-unicorn diligence reports
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
-          COPILOT_TASK_WAIT_TIMEOUT_SECONDS: 7200
+          COPILOT_TASK_WAIT_TIMEOUT_SECONDS: 5400
           COUNT: ${{ steps.inputs.outputs.count }}
           INDUSTRY_RULE: ${{ steps.inputs.outputs.industryRule }}
           MODEL: ${{ steps.inputs.outputs.model }}
           EFFORT: ${{ steps.inputs.outputs.effort }}
+          PROFILE: ${{ steps.inputs.outputs.profile }}
           CUTOFF_DATE: ${{ steps.inputs.outputs.cutoffDate }}
           COVERAGE_HINT: ${{ steps.coverage.outputs.coverageHint }}
           # fetch-url's main() appends one JSON line per call to this file
@@ -309,12 +332,13 @@ jobs:
           : > "$STARTUP_FETCH_LOG_PATH"
           PROMPT=$(cat <<EOF
           Produce full diligence reports for up to $COUNT private startup unicorns.
+          Research profile: ${PROFILE:-fast}
 
           Do not use a workflow-provided report run date. For each selected company, after create-report-run.mjs use runtimeContext.run.runDate from load-chapter-runtime-context.mjs as the canonical research date, YAML runDate, and source-discovery freshness anchor. A company only qualifies as recent if its unicorn-confirming valuation or financing evidence is dated on or after $CUTOFF_DATE; use that cutoff only for candidate screening.
           $INDUSTRY_RULE
           Pick only companies with credible public evidence of a \$1B+ private valuation or unicorn-confirming financing in that window. Use this portfolio hint: $COVERAGE_HINT
           Skip duplicates already in reports/ (each finalized run lives in reports/<runId>/summary-card.yaml; the create-report-run.mjs duplicate guard checks the same set) unless there is materially new evidence. If fewer than $COUNT qualify, research only the actual qualifying companies. If none qualify, do not create report folders; print a short no-candidates note and exit successfully.
-          For each selected company, generate and finalize a complete startup diligence research report.
+          For each selected company, generate and finalize a complete startup diligence research report. Immediately after creating each report folder, run npm run research:profile -- --report-folder <folder> --profile ${PROFILE:-fast}, then run npm run research:bootstrap -- --report-folder <folder> --company "<company>" --website "<url>" --profile ${PROFILE:-fast}. After bootstrap, run `npm run research:workers -- --report-folder <folder> --concurrency 4 --timeout-seconds 900`, then `npm run research:finalize -- --report-folder <folder> --timeout-seconds 900` even when workers report convergence-only failures. These commands own fan-out, convergence, metadata, and finalization; do not launch chapter subagents, rerun passing workers, or perform a parent repair loop. Treat a nonzero finalizer exit as a real failure before moving to the next company. Fast chapters may cite only successful prefetched URLs already present in search-bundle.json.fetchedSources; never fetch, add, or manually log a new URL. Pass runtime-context JSON or scratch only under .research-cache/<runId>/; never write scratch/context files into reports/<runId>/.
           Treat completion as an on-disk contract: every selected company must either have a finalized report folder with all required chapter, metadata, and generated artifacts, or be skipped before creating a folder. If you fan out work, join every company/chapter task, inspect failures, and never exit successfully with partial report folders.
 
           Follow the startup-research skill's source-verification rules; this workflow provides STARTUP_FETCH_LOG_PATH so fetch-url calls are auditable. Use the host search/source-discovery capability before fetch-url; if no source-discovery capability is available, stop before creating report folders, print a clear source-discovery-unavailable note, and do not invent sources. Do not run any git command (git add, git commit, git push, git stash, git checkout, etc.) at any point in the workflow — leave every generated and modified file unstaged in the working tree; the workflow itself owns commit/push decisions.
@@ -339,10 +363,12 @@ jobs:
           exec /usr/bin/git "$@"
           SH
           chmod +x "$GIT_GUARD_DIR/git"
+          started_at=$(date +%s)
           set +e
           PATH="$GIT_GUARD_DIR:$PATH" copilot --yolo --autopilot --excluded-tools "web_fetch" --model "$MODEL" --effort "$EFFORT" -p "$PROMPT" 2>&1 | tee "$COPILOT_LOG"
           status=${PIPESTATUS[0]}
           set -e
+          wall_seconds=$(( $(date +%s) - started_at ))
           # Per-step stats summary (best-effort: copilot CLI prints these on
           # the last few lines of its output). Also report fetch-url trail
           # size so the validate step's unverifiedSource warnings have
@@ -350,15 +376,18 @@ jobs:
           {
             echo
             echo "### Copilot run stats"
+            echo "- profile/model/effort: $PROFILE / $MODEL / $EFFORT"
+            echo "- wall seconds: $wall_seconds"
             if [ -s "$COPILOT_LOG" ]; then
-              tail -n 20 "$COPILOT_LOG" | grep -iE '^(changes?|requests?|tokens?)\b' | sed 's/^/- /' || echo "- (no stats line emitted)"
+              tail -n 20 "$COPILOT_LOG" | grep -iE '^(changes?|requests?|tokens?|ai credits?)\b' | sed 's/^/- /' || echo "- (no stats line emitted)"
             else
               echo "- (no Copilot output captured)"
             fi
             if [ -s "$STARTUP_FETCH_LOG_PATH" ]; then
               fetch_calls=$(wc -l < "$STARTUP_FETCH_LOG_PATH")
               fetch_ok=$(grep -c '"ok":true' "$STARTUP_FETCH_LOG_PATH" || true)
-              echo "- fetch-url calls: $fetch_calls (ok=$fetch_ok)"
+              fetch_unique=$(node --input-type=module -e 'import fs from "node:fs"; const rows=fs.readFileSync(process.argv[1],"utf8").trim().split("\\n").filter(Boolean).map((line)=>JSON.parse(line)); console.log(new Set(rows.map((row)=>row.url).filter(Boolean)).size);' "$STARTUP_FETCH_LOG_PATH")
+              echo "- fetch-url calls: $fetch_calls (ok=$fetch_ok, unique=$fetch_unique)"
             else
               echo "- fetch-url trail empty (the agent did not call fetch-url; expect unverifiedSource warnings)"
             fi
@@ -404,6 +433,51 @@ jobs:
             fi
             echo "::endgroup::"
           done
+
+      - name: Measure generated report quality
+        run: |
+          set -euo pipefail
+          current="$RUNNER_TEMP/reports-after-generation.txt"
+          find reports -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort > "$current"
+          mapfile -t new_runs < <(comm -13 "$RUNNER_TEMP/reports-before.txt" "$current")
+          {
+            echo
+            echo "### Generated report quality"
+          } >> "$GITHUB_STEP_SUMMARY"
+          measured=0
+          for run_id in "${new_runs[@]}"; do
+            folder="reports/$run_id"
+            [ -f "$folder/summary-card.yaml" ] || continue
+            worker_results=".research-cache/$run_id/worker-results.json"
+            if [ -f "$worker_results" ]; then
+              node --input-type=module - "$worker_results" >> "$GITHUB_STEP_SUMMARY" <<'NODE'
+          import fs from 'node:fs';
+          const r = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+          const credits = r.workers.reduce((sum, worker) => sum + (worker.aiCredits ?? 0), 0);
+          const slowest = [...r.workers].sort((a, b) => b.durationSeconds - a.durationSeconds)[0];
+          console.log(`- Worker fan-out: wall=${r.durationSeconds}s, credits=${credits.toFixed(2)}, slowest=${slowest?.chapter ?? 'n/a'} (${slowest?.durationSeconds ?? 0}s), failures=${r.workers.filter((worker) => worker.status !== 'completed').length}`);
+          NODE
+            fi
+            finalizer_result=".research-cache/$run_id/finalizer-result.json"
+            if [ -f "$finalizer_result" ]; then
+              node --input-type=module - "$finalizer_result" >> "$GITHUB_STEP_SUMMARY" <<'NODE'
+          import fs from 'node:fs';
+          const r = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+          console.log(`- Finalizer: status=${r.status}, wall=${r.durationSeconds}s, credits=${(r.aiCredits ?? 0).toFixed(2)}, missing-artifacts=${r.missingFiles.length}`);
+          NODE
+            fi
+            metrics="$RUNNER_TEMP/evaluate-$run_id.json"
+            npm run --silent research:evaluate -- "$folder" --format json > "$metrics"
+            node --input-type=module - "$metrics" >> "$GITHUB_STEP_SUMMARY" <<'NODE'
+          import fs from 'node:fs';
+          const m = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
+          console.log(`- **${m.company}** (${m.runId}): sources=${m.evidence.sourceEntries}, domains=${m.evidence.uniqueDomains}, independent=${m.evidence.independentSourceShare}, adverse=${m.evidence.adverseSourceShare}, company-controlled=${m.evidence.companyControlledSourceShare}, low-signal=${m.evidence.configuredLowSignalSourceShare}, answered=${m.evidence.answeredQuestionShare}, blocking-gaps=${m.evidence.blockingGaps}, tables=${m.output.tables}, figures=${m.output.figures}`);
+          NODE
+            measured=$((measured + 1))
+          done
+          if [ "$measured" -eq 0 ]; then
+            echo "- No new finalized report to measure." >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Stage new report files artifact
         # Capture only newly-created report files, including partial outputs,
@@ -559,13 +633,21 @@ jobs:
             exit 1
           fi
 
-      - name: Validate reports and website build
+      - name: Validate generated reports
         env:
           # Same trail file the research step appended to. check-chapter
           # cross-references it to surface unverifiedSource warnings for any
           # citation the agent did not retrieve through fetch-url.
           STARTUP_FETCH_LOG_PATH: ${{ github.workspace }}/.research-cache/_fetch-log.jsonl
-        run: npm run validate
+        run: |
+          set -euo pipefail
+          npm run check:automation-config
+          npm run check:workflow-config
+          npm run check:revision-graph
+          while IFS= read -r folder; do
+            [ -n "$folder" ] || continue
+            node .agents/skills/startup-research/scripts/check-report.mjs "reports/$folder" --contract --format compact
+          done < "$RUNNER_TEMP/reports-new.txt"
 
       - name: Commit and publish generated reports
         env:

@@ -37,21 +37,8 @@ function parseArgs(argv) {
   return args;
 }
 
-const highReputationDomains = new Set([
-  'bloomberg.com',
-  'ft.com',
-  'jpmorgan.com',
-  'reuters.com',
-  'sec.gov',
-  'techcrunch.com',
-  'wsj.com',
-]);
-const lowSignalDomains = new Set([
-  'facebook.com',
-  'instagram.com',
-  'tiktok.com',
-  'youtube.com',
-]);
+const highReputationDomains = new Set(strategy.quality.highReputationDomains);
+const lowSignalDomains = new Set(strategy.quality.lowSignalDomains);
 
 function hostname(value) {
   try { return new URL(value).hostname.toLowerCase().replace(/^www\./, ''); }
@@ -100,6 +87,12 @@ function providerAvailable(provider) {
   return config.supportsAnonymous || Boolean(process.env[config.env]);
 }
 
+function sanitizeError(message) {
+  return String(message)
+    .replace(/\b(api[_-]?key|password|username|authorization|token)\s*[=:]\s*\S+/gi, '$1=[REDACTED]')
+    .replace(/\b(?:as_sk_|sk-)[A-Za-z0-9_-]+\b/g, '[REDACTED]');
+}
+
 function selectProvider(args) {
   if (args.provider !== 'auto') {
     if (!providerAvailable(args.provider)) {
@@ -127,11 +120,22 @@ async function requestJson(url, options) {
 async function searchAnysearch(args) {
   const headers = { 'content-type': 'application/json' };
   if (process.env.ANYSEARCH_API_KEY) headers.authorization = `Bearer ${process.env.ANYSEARCH_API_KEY}`;
-  const body = await requestJson('https://api.anysearch.com/v1/search', {
+  const request = () => requestJson('https://api.anysearch.com/v1/search', {
     method: 'POST',
     headers,
     body: JSON.stringify({ query: args.query, max_results: args.maxResults, format: 'json' }),
   });
+  let body;
+  try {
+    body = await request();
+  } catch (error) {
+    const generatedKey = process.env.ANYSEARCH_API_KEY
+      ? null
+      : String(error.message).match(/\bapi_key=(as_sk_[A-Za-z0-9_-]+)\b/)?.[1];
+    if (!generatedKey) throw error;
+    headers.authorization = `Bearer ${generatedKey}`;
+    body = await request();
+  }
   return {
     requestId: body.request_id ?? null,
     results: (body.data?.results ?? []).map((item) => ({
@@ -284,6 +288,6 @@ try {
   writeFileSync(cachePath, `${JSON.stringify(output, null, 2)}\n`, 'utf8');
   console.log(JSON.stringify(output, null, 2));
 } catch (err) {
-  console.error(`[search-web] ${provider} failed: ${err.message}`);
+  console.error(`[search-web] ${provider} failed: ${sanitizeError(err.message)}`);
   process.exit(EXIT.failure);
 }

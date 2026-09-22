@@ -325,6 +325,20 @@ function checkReportLevelDiversity(run, ledger) {
 
   const totalSources = (ledger.sources ?? []).length;
   if (totalSources > 0) {
+    if (Number.isFinite(gate.minIndependentSourceShare)) {
+      const independentTotal = (ledger.sources ?? []).filter((source) => source?.independence === 'independent').length;
+      const independentShare = independentTotal / totalSources;
+      if (independentShare < gate.minIndependentSourceShare) {
+        fail(`${run}/${EVIDENCE_FILE}: ${independentTotal}/${totalSources} sources are independent (${Math.round(independentShare * 100)}%, min ${Math.round(gate.minIndependentSourceShare * 100)}%); replace company-controlled sources with independent evidence`, { path: `${run}/${EVIDENCE_FILE}`, dimension: 'sourceIndependence', code: 'reportIndependentSourceFloor', fix: `Retain independent reporting, customer evidence, benchmarks, or regulatory sources until the independent share is ≥ ${Math.round(gate.minIndependentSourceShare * 100)}%.` });
+      }
+    }
+    if (Number.isFinite(gate.maxCompanyControlledSourceShare)) {
+      const companyTotal = (ledger.sources ?? []).filter((source) => source?.independence === 'company').length;
+      const companyShare = companyTotal / totalSources;
+      if (companyShare > gate.maxCompanyControlledSourceShare) {
+        fail(`${run}/${EVIDENCE_FILE}: ${companyTotal}/${totalSources} sources are company-controlled (${Math.round(companyShare * 100)}%, max ${Math.round(gate.maxCompanyControlledSourceShare * 100)}%); independent corroboration is too thin`, { path: `${run}/${EVIDENCE_FILE}`, dimension: 'sourceIndependence', code: 'reportCompanyControlledCeiling', fix: `Replace company-authored sources with independent evidence until the company-controlled share is ≤ ${Math.round(gate.maxCompanyControlledSourceShare * 100)}%.` });
+      }
+    }
     const maxPaywallPercent = gate.maxPaywallPercent ?? 0.3;
     const blockedTotal = (matrix.byAccessStatus?.broken ?? 0) + (matrix.byAccessStatus?.paywall ?? 0) + (matrix.byAccessStatus?.['rate-limited'] ?? 0);
     if (blockedTotal / totalSources > maxPaywallPercent) {

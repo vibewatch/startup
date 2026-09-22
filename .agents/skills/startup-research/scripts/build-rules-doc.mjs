@@ -84,6 +84,12 @@ function policySection(policy) {
 
 function gatesSection(config) {
   const lines = [];
+  lines.push('#### `researchProfiles`');
+  lines.push('');
+  lines.push(`Head/default profile: \`${config.activeResearchProfile}\`. Automation may resolve one profile into the per-report workflow snapshot before chapter work.`);
+  lines.push('');
+  lines.push(yamlBlock(config.researchProfiles ?? {}));
+  lines.push('');
   lines.push('#### `defaultGate` (every chapter)');
   lines.push('');
   lines.push(yamlBlock(config.defaultGate ?? {}));
@@ -226,7 +232,7 @@ function build() {
     '',
     `# startup-research rules`,
     '',
-    `The rules and reference values an agent must know to author valid chapter YAML and triage validator output. Read once at session start; refer back as needed during chapter authoring and finalization.`,
+    `Binding policy and reference values for report authoring. Read Agent policy, Gates, ID system, and Renderer contracts before authoring. Consult only the validator dimension named by a failed check instead of preloading the full catalog.`,
     '',
     `Pairs with [SKILL.md](../SKILL.md) (the workflow narrative) and [contracts.md](contracts.md) (the field shapes for the YAML you write).`,
     '',

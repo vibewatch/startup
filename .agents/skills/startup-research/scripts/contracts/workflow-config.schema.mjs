@@ -108,6 +108,9 @@ const gateNumericFields = {
 
 export const CompleteGateSchema = z.object({
   ...gateNumericFields,
+  maxResearchQuestions: finiteNumber.optional(),
+  maxLocalSources: finiteNumber.optional(),
+  maxLocalClaims: finiteNumber.optional(),
   minQuestionAnswerRate: rateNumber,
   minContentRequirementCoverage: rateNumber,
   requiredSourceTypes: z.array(enumMember(SOURCE_TYPES, 'sourceType')),
@@ -122,6 +125,8 @@ export const ReportGateSchema = z.object({
   minDistinctDomains: positiveInteger.optional(),
   requireAdverseSource: z.boolean().optional(),
   maxPaywallPercent: rateNumber.optional(),
+  minIndependentSourceShare: rateNumber.optional(),
+  maxCompanyControlledSourceShare: rateNumber.optional(),
   crossChapterTolerances: z.object({
     metricDrift: rateNumber.optional(),
     keyFactOverlap: rateNumber.optional(),
@@ -133,6 +138,33 @@ export const AdverseDistributionSchema = z.object({
   requireAtLeastOneAdverseSource: z.array(kebabKey).default([]),
   warnIfChaptersWithAdverseSourceAtMost: nonNegativeInteger.optional(),
 }).strict();
+
+export const ResearchProfileSchema = z.object({
+  description: nonEmptyString,
+  defaultGate: GateOverrideSchema.default({}),
+  reportGate: ReportGateSchema.default({}),
+  maxPlannedTablesPerChapter: positiveInteger.optional(),
+  maxPlannedFiguresPerChapter: positiveInteger.optional(),
+  capChapterGateOverrides: z.boolean().default(false),
+  clearRequiredSourceTypes: z.boolean().default(false),
+}).strict();
+
+const LEGACY_RESEARCH_PROFILES = {
+  deep: {
+    description: 'Legacy full-depth workflow snapshot.',
+    defaultGate: {},
+    reportGate: {},
+    capChapterGateOverrides: false,
+    clearRequiredSourceTypes: false,
+  },
+  fast: {
+    description: 'Fast profile unavailable in this legacy workflow snapshot.',
+    defaultGate: {},
+    reportGate: {},
+    capChapterGateOverrides: false,
+    clearRequiredSourceTypes: false,
+  },
+};
 
 export const PlannedTableSchema = z.object({
   name: nonEmptyString,
@@ -165,6 +197,8 @@ export const ChapterConfigSchema = z.object({
 export const WorkflowConfigSchema = z.object({
   schemaVersion: z.literal('workflow-config-v1'),
   reportSchemaVersion: z.literal('report-v2'),
+  activeResearchProfile: kebabKey.default('deep'),
+  researchProfiles: z.record(kebabKey, ResearchProfileSchema).default(LEGACY_RESEARCH_PROFILES),
   workflow: WorkflowRuntimeSchema,
   agentPolicy: AgentPolicySchema,
   defaultGate: CompleteGateSchema,
@@ -213,6 +247,26 @@ function duplicateIssues(values, label) {
 
 function semanticIssues(config) {
   const issues = [];
+  const checkEvidenceCaps = (gate, path) => {
+    for (const [minKey, maxKey] of [
+      ['minResearchQuestions', 'maxResearchQuestions'],
+      ['minLocalSources', 'maxLocalSources'],
+      ['minLocalClaims', 'maxLocalClaims'],
+    ]) {
+      if (
+        typeof gate?.[minKey] === 'number'
+        && typeof gate?.[maxKey] === 'number'
+        && gate[minKey] > gate[maxKey]
+      ) {
+        issues.push(validationIssue({
+          path: `${path}.${maxKey}`,
+          message: `${maxKey} must be greater than or equal to ${minKey}`,
+          dimension: 'workflowConfigShape',
+          fix: `Raise ${maxKey} or lower ${minKey}.`,
+        }));
+      }
+    }
+  };
   const chapters = config.chapters ?? [];
   issues.push(...duplicateIssues(chapters.map((chapter) => chapter.order), 'chapters[].order'));
   issues.push(...duplicateIssues(chapters.map((chapter) => chapter.key), 'chapters[].key'));
@@ -221,6 +275,28 @@ function semanticIssues(config) {
   const knownKeys = new Set(chapters.map((chapter) => chapter.key));
   const knownConditions = new Set((config.workflow?.conditions ?? []).map((condition) => condition.key));
   const knownInputs = new Set(Object.keys(config.workflow?.inputs ?? {}));
+  if (!config.researchProfiles?.[config.activeResearchProfile]) {
+    issues.push(validationIssue({
+      path: 'activeResearchProfile',
+      message: `references unknown research profile "${config.activeResearchProfile}"`,
+      dimension: 'workflowConfigShape',
+      fix: 'Set activeResearchProfile to a key declared under researchProfiles.',
+    }));
+  }
+  for (const requiredProfile of ['deep', 'fast']) {
+    if (!config.researchProfiles?.[requiredProfile]) {
+      issues.push(validationIssue({
+        path: `researchProfiles.${requiredProfile}`,
+        message: `missing required ${requiredProfile} research profile`,
+        dimension: 'workflowConfigShape',
+        fix: `Declare researchProfiles.${requiredProfile}.`,
+      }));
+    }
+  }
+  checkEvidenceCaps(config.defaultGate, 'defaultGate');
+  for (const [profileName, profile] of Object.entries(config.researchProfiles ?? {})) {
+    checkEvidenceCaps(profile.defaultGate, `researchProfiles.${profileName}.defaultGate`);
+  }
 
   for (const [index, chapter] of chapters.entries()) {
     const chapterPath = `chapters.${index}`;

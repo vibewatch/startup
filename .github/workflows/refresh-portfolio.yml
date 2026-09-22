@@ -1,0 +1,110 @@
+name: Refresh report portfolio
+
+on:
+  schedule:
+    - cron: "17 2 * * *"
+  workflow_dispatch:
+    inputs:
+      maxBatch:
+        description: "Optional cap for this run; 0 uses the monthly completion rate."
+        required: false
+        default: "0"
+        type: string
+      profile:
+        description: "Research speed/depth profile."
+        required: false
+        default: "fast"
+        type: choice
+        options:
+          - fast
+          - deep
+      model:
+        description: "Copilot model."
+        required: false
+        default: "gpt-5.4-mini"
+        type: choice
+        options:
+          - gpt-5.4-mini
+          - gpt-5.5
+          - gpt-5.4
+          - claude-sonnet-4.6
+          - claude-opus-4.6
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: startup-monthly-refresh-planner
+  cancel-in-progress: false
+
+jobs:
+  plan:
+    name: Plan today's refresh batch
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.plan.outputs.matrix }}
+      count: ${{ steps.plan.outputs.count }}
+    steps:
+      - name: Checkout current reports
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js with npm cache
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: package-lock.json
+
+      - name: Install planner dependencies
+        run: npm ci || npm install --no-audit --no-fund
+
+      - name: Build deterministic daily matrix
+        id: plan
+        env:
+          MAX_BATCH: ${{ inputs.maxBatch || '0' }}
+        run: |
+          set -euo pipefail
+          limit_args=()
+          if [[ "$MAX_BATCH" =~ ^[1-9][0-9]*$ ]]; then
+            limit_args=(--limit "$MAX_BATCH")
+          fi
+          node .agents/skills/startup-research/scripts/plan-refresh-batch.mjs \
+            "${limit_args[@]}" > "$RUNNER_TEMP/refresh-plan.json"
+          jq '.matrix' "$RUNNER_TEMP/refresh-plan.json" > "$RUNNER_TEMP/refresh-matrix.json"
+          matrix="$(jq -c . "$RUNNER_TEMP/refresh-matrix.json")"
+          count="$(jq '.include | length' "$RUNNER_TEMP/refresh-matrix.json")"
+          echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+          echo "count=$count" >> "$GITHUB_OUTPUT"
+          {
+            echo "## Monthly refresh plan"
+            echo
+            jq -r '"- Current reports: \(.currentReportCount)\n- Still due this month: \(.eligibleReportCount)\n- Required today: \(.dailyRequired)\n- Planned today: \(.plannedCount)\n- Monthly completion guaranteed at this rate: \(.monthlyCompletionGuaranteed)"' "$RUNNER_TEMP/refresh-plan.json"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload refresh plan
+        uses: actions/upload-artifact@v7
+        with:
+          name: refresh-plan-${{ github.run_id }}
+          path: |
+            ${{ runner.temp }}/refresh-plan.json
+            ${{ runner.temp }}/refresh-matrix.json
+          retention-days: 30
+
+  refresh:
+    name: Refresh ${{ matrix.companyName }}
+    needs: plan
+    if: needs.plan.outputs.count != '0'
+    strategy:
+      fail-fast: false
+      max-parallel: 6
+      matrix: ${{ fromJson(needs.plan.outputs.matrix) }}
+    uses: ./.github/workflows/refresh-company.yml
+    with:
+      companyName: ${{ matrix.companyName }}
+      companyUrl: ${{ matrix.companyUrl }}
+      refreshReason: ${{ matrix.refreshReason }}
+      refreshOfRunId: ${{ matrix.runId }}
+      profile: ${{ inputs.profile || 'fast' }}
+      model: ${{ inputs.model || 'gpt-5.4-mini' }}
+    secrets: inherit

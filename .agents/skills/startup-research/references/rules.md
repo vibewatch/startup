@@ -2,7 +2,7 @@
 
 # startup-research rules
 
-The rules and reference values an agent must know to author valid chapter YAML and triage validator output. Read once at session start; refer back as needed during chapter authoring and finalization.
+Binding policy and reference values for report authoring. Read Agent policy, Gates, ID system, and Renderer contracts before authoring. Consult only the validator dimension named by a failed check instead of preloading the full catalog.
 
 Pairs with [SKILL.md](../SKILL.md) (the workflow narrative) and [contracts.md](contracts.md) (the field shapes for the YAML you write).
 
@@ -16,7 +16,7 @@ Pairs with [SKILL.md](../SKILL.md) (the workflow narrative) and [contracts.md](c
 - Do not invent facts, metrics, customers, funding, valuation, or dates.
 - Do not edit another chapter artifact while working on the current chapter.
 - Keep scratch files under .research-cache/<runId>/, never under reports/<runId>/.
-- Only chapter YAMLs, report-meta.yaml, assembled final artifacts, and the finalize-written .workflow-snapshot.yaml belong under reports/<runId>/. Never hand-edit .workflow-snapshot.yaml; finalize-report writes it from the head workflow-config so each report stays validated against the config it was produced under.
+- Only chapter YAMLs, report-meta.yaml, assembled final artifacts, and the script-owned .workflow-snapshot.yaml belong under reports/<runId>/. Never hand-edit .workflow-snapshot.yaml: apply-research-profile.mjs writes the selected profile before chapter work, or finalize-report writes the deep head config when no profile snapshot exists.
 - Do not run any git command (git add, git commit, git push, git stash, git checkout, etc.) at any point in the workflow — including after finalize-report exits 0. Leave every generated and modified file unstaged in the working tree; the caller owns commit decisions. The only exception is when the invocation prompt explicitly instructs the agent to commit.
 
 #### `researchRules`
@@ -84,6 +84,50 @@ Any `localEvidence.searchQueries[].query` whose lowercased text contains one of 
 
 Per-chapter `gate:` blocks in `workflow-config.yaml` override individual keys; un-overridden keys fall through to `defaultGate`. `check-chapter` enforces the merged gate per chapter; `check-report` enforces `reportGate` after finalization.
 
+#### `researchProfiles`
+
+Head/default profile: `deep`. Automation may resolve one profile into the per-report workflow snapshot before chapter work.
+
+```yaml
+deep:
+  description: Full-depth diligence using the repository's default chapter and report gates.
+  defaultGate: {}
+  reportGate: {}
+  capChapterGateOverrides: false
+  clearRequiredSourceTypes: false
+fast:
+  description: >-
+    Time-bounded diligence with a smaller evidence and exhibit set while preserving strict
+    validation, adverse evidence, source diversity, and report assembly.
+  defaultGate:
+    minArtifacts: 4
+    maxTables: 3
+    maxFigures: 1
+    minResearchQuestions: 8
+    minQuestionTypeSpread: 3
+    minLocalSources: 8
+    minLocalClaims: 12
+    minSourceDomains: 4
+    minNetNewSources: 3
+    minSourceTypeSpread: 3
+    maxResearchQuestions: 10
+    maxLocalSources: 12
+    maxLocalClaims: 16
+    depthFloor:
+      minSectionBodyWords: 70
+      minSectionWordsTotal: 300
+      minTableRowsTotal: 10
+      minFigureDataPointsTotal: 6
+  reportGate:
+    minDistinctDomains: 18
+    minIndependentSourceShare: 0.4
+    maxCompanyControlledSourceShare: 0.55
+  maxPlannedTablesPerChapter: 3
+  maxPlannedFiguresPerChapter: 1
+  capChapterGateOverrides: true
+  clearRequiredSourceTypes: true
+```
+
 #### `defaultGate` (every chapter)
 
 ```yaml
@@ -118,6 +162,8 @@ depthFloor:
 minDistinctDomains: 30
 requireAdverseSource: true
 maxPaywallPercent: 0.3
+minIndependentSourceShare: 0.4
+maxCompanyControlledSourceShare: 0.55
 crossChapterTolerances:
   metricDrift: 0.1
   keyFactOverlap: 0.7
@@ -173,53 +219,55 @@ Dimensions are grouped by class. Only the **chapter-warning** class is acknowled
 | 9 | `chapter-failure` | `researchQuestionAdverse` | Add type:adverse questions until you reach minAdverseQuestions. | `yamlParse`, `localEvidenceMissing` |
 | 10 | `chapter-failure` | `searchQueriesMissing` | Append the actual queries you ran into localEvidence.searchQueries[] ({query, engine, hits, retainedSourceRefs}). | `yamlParse`, `localEvidenceMissing` |
 | 11 | `chapter-failure` | `sourceShape` | Fill accessStatus and stance (and other required fields) on each source. | `yamlParse`, `localEvidenceMissing` |
-| 12 | `chapter-failure` | `sourceDomains` | Add sources from new registrable domains; do not duplicate publishers. Same dimension also fires at report scope (check-report) against reportGate.minDistinctDomains across the consolidated ledger. | `yamlParse`, `localEvidenceMissing` |
-| 13 | `chapter-failure` | `sourceTypeSpread` | Add sources with sourceType values you have not used yet. | `yamlParse`, `localEvidenceMissing` |
-| 14 | `chapter-failure` | `sourceStanceSpread` | Add at least one source with stance: adverse (regulator complaint, short report, skeptical analyst note, FT Alphaville-style critique, FOS/CFPB record). Mark a genuinely critical existing source as stance: adverse instead of inventing one. Same dimension also fires at report scope (check-report) when the entire report has no adverse-stance source; the risks chapter is the canonical owner. | `yamlParse`, `localEvidenceMissing` |
-| 15 | `chapter-failure` | `requiredSourceTypes` | Pull at least one source of each missing type listed in gate.requiredSourceTypes. | `yamlParse`, `localEvidenceMissing` |
-| 16 | `chapter-failure` | `netNewSources` | Run new searches to add URLs not seen in earlier chapters; reusing the global pool will not satisfy this gate. | `yamlParse`, `localEvidenceMissing` |
-| 18 | `chapter-failure` | `researchQuestions` | Add more researchQuestion entries until you hit the per-chapter floor. | `yamlParse`, `localEvidenceMissing` |
-| 19 | `chapter-failure` | `sources` | Add more sources until you hit the per-chapter floor. | `yamlParse`, `localEvidenceMissing` |
-| 20 | `chapter-failure` | `claims` | Add more claims until you hit the per-chapter floor. | `yamlParse`, `localEvidenceMissing` |
-| 21 | `chapter-failure` | `claimShape` | Fix the claim object: required fields (statement, type, topic, sourceRefs, confidence, freshness), valid enum values, non-empty sourceRefs unless type is open-question, and contradictsClaimRefs when type is conflicting. | `yamlParse`, `localEvidenceMissing` |
-| 22 | `chapter-failure` | `highConfidenceCorroboration` | Either downgrade confidence:high to medium, or ensure the claim has at least gate.minHighConfidenceCorroboration sourceRefs with at least one primary-tier source (filing\|regulatory\|legal\|official or reputationTier:high). | `yamlParse`, `localEvidenceMissing` |
-| 23 | `chapter-failure` | `researchQuestionAnswerCoverage` | Convert questions from unresolved/partial to answered by adding the missing claim and citing it via claim.answersQuestionRefs. | `yamlParse`, `localEvidenceMissing` |
-| 24 | `chapter-failure` | `researchQuestionClosure` | Add an evidenceGap whose relatedQuestionRefs[] includes the still-open question. | `yamlParse`, `localEvidenceMissing` |
-| 25 | `chapter-failure` | `claimAnswerRefs` | Resolve dangling answersQuestionRefs entries; do not duplicate evidence. | `yamlParse`, `localEvidenceMissing` |
-| 26 | `chapter-failure` | `claimContradictRefs` | Resolve dangling contradictsClaimRefs entries; type:conflicting requires non-empty contradictsClaimRefs. | `yamlParse`, `localEvidenceMissing` |
-| 27 | `chapter-failure` | `crossChapterRefLeak` | Local C<L>### appears to come from another chapter. Chapter-letter ids cannot be reused across chapters — restate the underlying fact as a new local claim here with its own sourceRefs[]. | `yamlParse`, `localEvidenceMissing` |
-| 28 | `chapter-failure` | `claimRefs` | Resolve dangling claimRefs across sections, tables, figures, and callouts. | `yamlParse`, `localEvidenceMissing` |
-| 29 | `chapter-failure` | `enumerationScope` | Add enumerationScope { coverage, basis(>=20 chars) } to the matching enumeration table. | `yamlParse`, `localEvidenceMissing` |
-| 30 | `chapter-failure` | `enumerationRows` | Add rows to reach expectedMinRows or set coverage to partial/sample with rationale. | `yamlParse`, `localEvidenceMissing` |
-| 31 | `chapter-failure` | `enumerationCoverageGap` | Open an evidenceGap whose topic mentions the table or whose relatedTableRefs[] cites it. | `yamlParse`, `localEvidenceMissing` |
-| 32 | `chapter-failure` | `enumerationTableCorroboration` | Extend the enumeration table's table-level claimRefs[] so the underlying sources span more registrable domains (table-level, not per-row). | `yamlParse`, `localEvidenceMissing` |
-| 33 | `chapter-failure` | `tableShape` | Fix the table: non-empty columns, every row has the same number of cells as columns, enumerationScope { coverage, basis(>=20 chars) } when present. | `yamlParse` |
-| 34 | `chapter-failure` | `figureShape` | Fix the figure data to satisfy its type contract (e.g. dag needs edges, range needs numeric low/high, matrix needs columns and rows). | `yamlParse` |
-| 36 | `chapter-failure` | `duplicateIds` | Renumber the duplicate or malformed table/figure id; ids must match T<ChapterLetter>### / F<ChapterLetter>### (e.g. TO001 / FO001) and be unique within the chapter. | `yamlParse` |
-| 37 | `chapter-failure` | `artifactRefs` | Resolve the dangling figureRef/tableRef: it must point at an id that exists in this chapter's figures[] / tables[]. | `yamlParse` |
-| 39 | `chapter-failure` | `duplicateAnalysis` | Either give the figure at least one claimRef the table does not have (a distinct slice/lens), rename it to reflect that lens, or merge it into the table. | `yamlParse` |
-| 40 | `chapter-failure` | `calloutShape` | Fix the callout: required title, body, claimRefs[], and optional calloutType in (strength\|risk\|recommendation\|insight\|assumption). | `yamlParse` |
-| 41 | `chapter-failure` | `sectionsMin` | Add the missing section(s) to reach minSections. | `yamlParse` |
-| 43 | `chapter-failure` | `artifactsMin` | Add the missing table or figure (or substitute a planned figure with an extra table when data shape does not fit). | `yamlParse` |
-| 46 | `chapter-failure` | `depthSection` | Expand the prose of the shortest section(s) only; leave the others untouched. | `yamlParse` |
-| 47 | `chapter-failure` | `depthSectionTotal` | Expand prose across short sections to reach minSectionWordsTotal. | `yamlParse` |
-| 48 | `chapter-failure` | `depthTableRows` | Add rows to existing tables to reach minTableRowsTotal. | `yamlParse` |
-| 49 | `chapter-failure` | `depthFigureData` | Add data points to existing figures to reach minFigureDataPointsTotal. | `yamlParse` |
-| 50 | `chapter-failure` | `contentRequirementCoverage` | Add researchQuestions whose targets[] cover the un-targeted contentRequirements. | `yamlParse`, `localEvidenceMissing` |
-| 51 | `chapter-failure` | `searchQueryFreshness` | For volatile-fact queries (funding/ARR/headcount/customers/leadership/regulatory/launches), plan source discovery with year/month tokens derived from runDate before searching; the runDate year is required and the prior year may only supplement explicit trailing-window searches. The searchQueryFreshness validator fails stale query logs and cannot be acknowledged away. | `yamlParse`, `localEvidenceMissing`, `documentHead`, `runDateConsistency` |
+| 12 | `chapter-failure` | `assignedSourcePool` | Replace every cross-pool URL with a successful prefetched source from this chapter’s assigned worker pool; sibling reservations are not reusable. | — |
+| 13 | `chapter-failure` | `sourceDomains` | Add sources from new registrable domains; do not duplicate publishers. Same dimension also fires at report scope (check-report) against reportGate.minDistinctDomains across the consolidated ledger. | `yamlParse`, `localEvidenceMissing` |
+| 14 | `chapter-failure` | `sourceTypeSpread` | Add sources with sourceType values you have not used yet. | `yamlParse`, `localEvidenceMissing` |
+| 15 | `chapter-failure` | `sourceStanceSpread` | Add at least one source with stance: adverse (regulator complaint, short report, skeptical analyst note, FT Alphaville-style critique, FOS/CFPB record). Mark a genuinely critical existing source as stance: adverse instead of inventing one. Same dimension also fires at report scope (check-report) when the entire report has no adverse-stance source; the risks chapter is the canonical owner. | `yamlParse`, `localEvidenceMissing` |
+| 16 | `chapter-failure` | `sourceIndependence` | At report scope, replace company-authored sources with independent reporting, customer evidence, benchmarks, or regulatory records until both configured source-mix thresholds pass. | — |
+| 17 | `chapter-failure` | `requiredSourceTypes` | Pull at least one source of each missing type listed in gate.requiredSourceTypes. | `yamlParse`, `localEvidenceMissing` |
+| 18 | `chapter-failure` | `netNewSources` | Run new searches to add URLs not seen in earlier chapters; reusing the global pool will not satisfy this gate. | `yamlParse`, `localEvidenceMissing` |
+| 20 | `chapter-failure` | `researchQuestions` | Add more researchQuestion entries until you hit the per-chapter floor. | `yamlParse`, `localEvidenceMissing` |
+| 21 | `chapter-failure` | `sources` | Add more sources until you hit the per-chapter floor. | `yamlParse`, `localEvidenceMissing` |
+| 22 | `chapter-failure` | `claims` | Add more claims until you hit the per-chapter floor. | `yamlParse`, `localEvidenceMissing` |
+| 23 | `chapter-failure` | `claimShape` | Fix the claim object: required fields (statement, type, topic, sourceRefs, confidence, freshness), valid enum values, non-empty sourceRefs unless type is open-question, and contradictsClaimRefs when type is conflicting. | `yamlParse`, `localEvidenceMissing` |
+| 24 | `chapter-failure` | `highConfidenceCorroboration` | Either downgrade confidence:high to medium, or ensure the claim has at least gate.minHighConfidenceCorroboration sourceRefs with at least one primary-tier source (filing\|regulatory\|legal\|official or reputationTier:high). | `yamlParse`, `localEvidenceMissing` |
+| 25 | `chapter-failure` | `researchQuestionAnswerCoverage` | Convert questions from unresolved/partial to answered by adding the missing claim and citing it via claim.answersQuestionRefs. | `yamlParse`, `localEvidenceMissing` |
+| 26 | `chapter-failure` | `researchQuestionClosure` | Add an evidenceGap whose relatedQuestionRefs[] includes the still-open question. | `yamlParse`, `localEvidenceMissing` |
+| 27 | `chapter-failure` | `claimAnswerRefs` | Resolve dangling answersQuestionRefs entries; do not duplicate evidence. | `yamlParse`, `localEvidenceMissing` |
+| 28 | `chapter-failure` | `claimContradictRefs` | Resolve dangling contradictsClaimRefs entries; type:conflicting requires non-empty contradictsClaimRefs. | `yamlParse`, `localEvidenceMissing` |
+| 29 | `chapter-failure` | `crossChapterRefLeak` | Local C<L>### appears to come from another chapter. Chapter-letter ids cannot be reused across chapters — restate the underlying fact as a new local claim here with its own sourceRefs[]. | `yamlParse`, `localEvidenceMissing` |
+| 30 | `chapter-failure` | `claimRefs` | Resolve dangling claimRefs across sections, tables, figures, and callouts. | `yamlParse`, `localEvidenceMissing` |
+| 31 | `chapter-failure` | `enumerationScope` | Add enumerationScope { coverage, basis(>=20 chars) } to the matching enumeration table. | `yamlParse`, `localEvidenceMissing` |
+| 32 | `chapter-failure` | `enumerationRows` | Add rows to reach expectedMinRows or set coverage to partial/sample with rationale. | `yamlParse`, `localEvidenceMissing` |
+| 33 | `chapter-failure` | `enumerationCoverageGap` | Open an evidenceGap whose topic mentions the table or whose relatedTableRefs[] cites it. | `yamlParse`, `localEvidenceMissing` |
+| 34 | `chapter-failure` | `enumerationTableCorroboration` | Extend the enumeration table's table-level claimRefs[] so the underlying sources span more registrable domains (table-level, not per-row). | `yamlParse`, `localEvidenceMissing` |
+| 35 | `chapter-failure` | `tableShape` | Fix the table: non-empty columns, every row has the same number of cells as columns, enumerationScope { coverage, basis(>=20 chars) } when present. | `yamlParse` |
+| 36 | `chapter-failure` | `figureShape` | Fix the figure data to satisfy its type contract (e.g. dag needs edges, range needs numeric low/high, matrix needs columns and rows). | `yamlParse` |
+| 38 | `chapter-failure` | `duplicateIds` | Renumber the duplicate or malformed table/figure id; ids must match T<ChapterLetter>### / F<ChapterLetter>### (e.g. TO001 / FO001) and be unique within the chapter. | `yamlParse` |
+| 39 | `chapter-failure` | `artifactRefs` | Resolve the dangling figureRef/tableRef: it must point at an id that exists in this chapter's figures[] / tables[]. | `yamlParse` |
+| 41 | `chapter-failure` | `duplicateAnalysis` | Either give the figure at least one claimRef the table does not have (a distinct slice/lens), rename it to reflect that lens, or merge it into the table. | `yamlParse` |
+| 42 | `chapter-failure` | `calloutShape` | Fix the callout: required title, body, claimRefs[], and optional calloutType in (strength\|risk\|recommendation\|insight\|assumption). | `yamlParse` |
+| 43 | `chapter-failure` | `sectionsMin` | Add the missing section(s) to reach minSections. | `yamlParse` |
+| 45 | `chapter-failure` | `artifactsMin` | Add the missing table or figure (or substitute a planned figure with an extra table when data shape does not fit). | `yamlParse` |
+| 48 | `chapter-failure` | `depthSection` | Expand the prose of the shortest section(s) only; leave the others untouched. | `yamlParse` |
+| 49 | `chapter-failure` | `depthSectionTotal` | Expand prose across short sections to reach minSectionWordsTotal. | `yamlParse` |
+| 50 | `chapter-failure` | `depthTableRows` | Add rows to existing tables to reach minTableRowsTotal. | `yamlParse` |
+| 51 | `chapter-failure` | `depthFigureData` | Add data points to existing figures to reach minFigureDataPointsTotal. | `yamlParse` |
+| 52 | `chapter-failure` | `contentRequirementCoverage` | Add researchQuestions whose targets[] cover the un-targeted contentRequirements. | `yamlParse`, `localEvidenceMissing` |
+| 53 | `chapter-failure` | `searchQueryFreshness` | For volatile-fact queries (funding/ARR/headcount/customers/leadership/regulatory/launches), plan source discovery with year/month tokens derived from runDate before searching; the runDate year is required and the prior year may only supplement explicit trailing-window searches. The searchQueryFreshness validator fails stale query logs and cannot be acknowledged away. | `yamlParse`, `localEvidenceMissing`, `documentHead`, `runDateConsistency` |
 
 #### Chapter warning-class (numeric `precedence` shared with the failure list — fills the gaps in the failure table's rank column; eligible for `acknowledgedWarnings` at chapter scope, except `tableNotes` which has no precedence rank)
 
 | Precedence | Class | Dimension | Default fix | Suppressed by |
 |---|---|---|---|---|
-| 17 | `chapter-warning` | `paywallRisk` | At chapter scope (warning, ack-able): swap restricted (paywall\|js-only\|broken\|rate-limited) sources for ok ones to stay under the report-level 30% ceiling. At report scope (failure from check-report, NOT ack-able): the per-report restricted share already exceeds the 30% ceiling and must be brought back below it before finalize-report can pass. | `yamlParse`, `localEvidenceMissing` |
-| 35 | `chapter-warning` | `figureType` | Render at least one of the planned figure types, or add an acknowledgedWarnings entry for dimension "figureType" with a >=30-char reason when the substitution is intentional. | `yamlParse` |
-| 38 | `chapter-warning` | `unsectionedExhibits` | Add each table/figure to the section.tableRefs[] / section.figureRefs[] of the section that introduces or relies on it. The trailing Exhibits section is a fallback for cross-cutting artifacts, not the default landing place. Acknowledge dimension "unsectionedExhibits" only when an exhibit is intentionally orphaned. | `yamlParse` |
-| 42 | `chapter-warning` | `sectionsMax` | Reduce or merge sections; the chapter looks over-fragmented. | `yamlParse` |
-| 44 | `chapter-warning` | `tablesMax` | Reduce or merge tables; the chapter looks over-fragmented. | `yamlParse` |
-| 45 | `chapter-warning` | `figuresMax` | Reduce or merge figures; the chapter looks over-fragmented. | `yamlParse` |
-| 52 | `chapter-warning` | `unverifiedSource` | One or more cited sources never went through fetch-url during this run; re-pull them so accessStatus, sourceType, and stance are based on the actual page rather than a guess. | — |
-| 53 | `chapter-warning` | `fetchTrailMissing` | Set STARTUP_FETCH_LOG_PATH=.research-cache/<runId>/_fetch-log.jsonl in your shell BEFORE running fetch-url so check-chapter can audit cited URLs against actual retrievals; the default gate warns and --strict fails when the trail is missing. | — |
+| 19 | `chapter-warning` | `paywallRisk` | At chapter scope (warning, ack-able): swap restricted (paywall\|js-only\|broken\|rate-limited) sources for ok ones to stay under the report-level 30% ceiling. At report scope (failure from check-report, NOT ack-able): the per-report restricted share already exceeds the 30% ceiling and must be brought back below it before finalize-report can pass. | `yamlParse`, `localEvidenceMissing` |
+| 37 | `chapter-warning` | `figureType` | Render at least one of the planned figure types, or add an acknowledgedWarnings entry for dimension "figureType" with a >=30-char reason when the substitution is intentional. | `yamlParse` |
+| 40 | `chapter-warning` | `unsectionedExhibits` | Add each table/figure to the section.tableRefs[] / section.figureRefs[] of the section that introduces or relies on it. The trailing Exhibits section is a fallback for cross-cutting artifacts, not the default landing place. Acknowledge dimension "unsectionedExhibits" only when an exhibit is intentionally orphaned. | `yamlParse` |
+| 44 | `chapter-warning` | `sectionsMax` | Reduce or merge sections; the chapter looks over-fragmented. | `yamlParse` |
+| 46 | `chapter-warning` | `tablesMax` | Reduce or merge tables; the chapter looks over-fragmented. | `yamlParse` |
+| 47 | `chapter-warning` | `figuresMax` | Reduce or merge figures; the chapter looks over-fragmented. | `yamlParse` |
+| 54 | `chapter-warning` | `unverifiedSource` | One or more cited sources never went through fetch-url during this run; re-pull them so accessStatus, sourceType, and stance are based on the actual page rather than a guess. | — |
+| 55 | `chapter-warning` | `fetchTrailMissing` | Set STARTUP_FETCH_LOG_PATH=.research-cache/<runId>/_fetch-log.jsonl in your shell BEFORE running fetch-url so check-chapter can audit cited URLs against actual retrievals; the default gate warns and --strict fails when the trail is missing. | — |
 | — | `chapter-warning` | `tableNotes` | Write tables[].notes (one line: data source / estimation / partial coverage / what null means), or acknowledge dimension "tableNotes" for pure factual snapshot tables. | — |
 
 #### Cross-chapter failure-class (`check-cross-chapter`, `precedence: —`, blocks `finalize-report`, NOT ack-able)

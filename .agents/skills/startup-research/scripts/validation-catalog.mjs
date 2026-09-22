@@ -317,6 +317,8 @@ export const FIX_HINTS = {
     required != null ? `Add sources with ${Math.max(required - (actual ?? 0), 1)} more sourceType value(s) you have not used yet (currently ${actual}, need ${required}).` : 'Add sources with sourceType values you have not used yet.',
   sourceStanceSpread: ({ actual, required } = {}) =>
     required != null ? `Add ${Math.max(required - (actual ?? 0), 1)} more stance:adverse source(s) (currently ${actual}, need ${required}). Mark a regulator complaint, short report, FT Alphaville-style critique, FOS/CFPB filing, or skeptical analyst note as stance: adverse — do not invent sources. Same dimension also fires at report scope from check-report when no chapter contributes an adverse-stance source; the risks chapter is the canonical owner.` : 'Add at least one source with stance: adverse (regulator complaint, short report, skeptical analyst note, FT Alphaville-style critique, FOS/CFPB record). Mark a genuinely critical existing source as stance: adverse instead of inventing one. Same dimension also fires at report scope (check-report) when the entire report has no adverse-stance source; the risks chapter is the canonical owner.',
+  sourceIndependence: 'At report scope, replace company-authored sources with independent reporting, customer evidence, benchmarks, or regulatory records until both configured source-mix thresholds pass.',
+  assignedSourcePool: 'Replace every cross-pool URL with a successful prefetched source from this chapter’s assigned worker pool; sibling reservations are not reusable.',
   requiredSourceTypes: ({ missing } = {}) =>
     missing ? `Pull at least one source with sourceType: ${missing}.` : 'Pull at least one source of each missing type listed in gate.requiredSourceTypes.',
   netNewSources: ({ actual, required } = {}) =>
@@ -509,7 +511,7 @@ export const RETRY_PRECEDENCE = [
   'missingArtifact', 'yamlParse', 'documentHead', 'slugConsistency', 'runDateConsistency', 'localEvidenceMissing',
   'researchQuestionShape', 'researchQuestionTargets', 'researchQuestionTypeMix', 'researchQuestionAdverse',
   'searchQueriesMissing',
-  'sourceShape', 'sourceDomains', 'sourceTypeSpread', 'sourceStanceSpread', 'requiredSourceTypes', 'netNewSources',
+  'sourceShape', 'assignedSourcePool', 'sourceDomains', 'sourceTypeSpread', 'sourceStanceSpread', 'sourceIndependence', 'requiredSourceTypes', 'netNewSources',
   'paywallRisk',
   'researchQuestions', 'sources', 'claims',
   'claimShape',

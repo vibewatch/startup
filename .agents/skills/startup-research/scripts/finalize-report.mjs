@@ -24,7 +24,7 @@
 // evidence.yaml; pass --rebuild to force a full ledger consolidation (which
 // reassigns canonical claim IDs).
 import { spawnSync } from 'node:child_process';
-import { existsSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
@@ -32,8 +32,10 @@ import {
   FINAL_ARTIFACTS,
   REPORT_META_FILE,
   WORKFLOW_SNAPSHOT_FILE,
+  canonicalSourceUrl,
   getAnalysisArtifacts,
   isRunId,
+  loadWorkflowConfig,
   researchCacheDir,
   tryReadYaml,
   writeWorkflowSnapshot,
@@ -103,6 +105,77 @@ function runStep(step) {
     // when the subprocess died from a signal (status === null).
     process.exit(result.status ?? EXIT.failure);
   }
+}
+
+function rejectScratchFilesInNewReport() {
+  if (existsSync(join(reportFolder, FINAL_ARTIFACTS.summaryCard.file))) return;
+  const allowed = new Set([
+    ...getAnalysisArtifacts().map((artifact) => artifact.file),
+    REPORT_META_FILE,
+    WORKFLOW_SNAPSHOT_FILE,
+    ...Object.values(FINAL_ARTIFACTS).map((artifact) => artifact.file),
+  ]);
+  const unexpected = readdirSync(reportFolder, { withFileTypes: true })
+    .filter((entry) => !allowed.has(entry.name))
+    .map((entry) => entry.name)
+    .sort();
+  if (unexpected.length === 0) return;
+  console.error(`[finalize-report] unexpected scratch file(s) in new report folder: ${unexpected.join(', ')}`);
+  console.error(`[finalize-report] move scratch/runtime context under .research-cache/${basename(reportFolder)}/ and rerun.`);
+  process.exit(EXIT.notFound);
+}
+
+function enforceFastPrefetchedSources() {
+  if (existsSync(join(reportFolder, FINAL_ARTIFACTS.summaryCard.file))) return;
+  const config = loadWorkflowConfig({ reportFolder });
+  if (config.activeResearchProfile !== 'fast') return;
+  const bundlePath = join(researchCacheDir(basename(reportFolder)), 'search-bundle.json');
+  if (!existsSync(bundlePath)) {
+    console.error(`[finalize-report] fast report is missing its search bundle: ${bundlePath}`);
+    console.error('[finalize-report] rerun research:bootstrap; fast reports may cite only successfully prefetched bundle URLs.');
+    process.exit(EXIT.notFound);
+  }
+  let bundle;
+  try {
+    bundle = JSON.parse(readFileSync(bundlePath, 'utf8'));
+  } catch (error) {
+    console.error(`[finalize-report] invalid fast search bundle ${bundlePath}: ${error.message}`);
+    process.exit(EXIT.failure);
+  }
+  const approved = new Set(
+    (bundle.fetchedSources ?? [])
+      .filter((entry) => entry?.ok)
+      .map((entry) => canonicalSourceUrl(entry.url))
+      .filter(Boolean),
+  );
+  const poolByKey = new Map(
+    (bundle.chapterPools ?? []).map((pool) => [
+      pool.key,
+      new Set(
+        [...(pool.recommended ?? []), ...(pool.reserve ?? [])]
+          .filter((candidate) => candidate.fetch?.ok)
+          .map((candidate) => canonicalSourceUrl(candidate.url))
+          .filter(Boolean),
+      ),
+    ]),
+  );
+  const unapproved = [];
+  for (const spec of getAnalysisArtifacts(config)) {
+    const chapter = tryReadYaml(join(reportFolder, spec.file));
+    if (!chapter.ok) continue;
+    const assigned = poolByKey.get(spec.key) ?? new Set();
+    for (const source of chapter.value?.localEvidence?.sources ?? []) {
+      const canonical = canonicalSourceUrl(source?.url);
+      if (canonical && (!approved.has(canonical) || !assigned.has(canonical))) {
+        unapproved.push(`${spec.file}:${source?.id ?? '?'} ${source.url}${approved.has(canonical) ? ' (assigned to another chapter)' : ''}`);
+      }
+    }
+  }
+  if (unapproved.length === 0) return;
+  console.error('[finalize-report] fast report cites URL(s) that were not successfully prefetched by research:bootstrap:');
+  for (const entry of unapproved) console.error(`  - ${entry}`);
+  console.error('[finalize-report] replace them with relevant successful entries from that chapter’s assigned pool; do not borrow sibling URLs or add fetch-trail lines manually.');
+  process.exit(EXIT.failure);
 }
 
 // Pre-finalization sweep: run check-chapter --strict on every configured
@@ -187,6 +260,7 @@ function ensureRefreshReasonMatchesCache() {
 // no-op when a snapshot already exists; --refresh-snapshot overwrites it
 // (use when an authored repair on an old report should be re-judged under
 // the latest rules).
+rejectScratchFilesInNewReport();
 const snapshotResult = writeWorkflowSnapshot(reportFolder, { force: parsedArgs.refreshSnapshot });
 if (snapshotResult.written) {
   console.log(`[finalize-report] wrote ${WORKFLOW_SNAPSHOT_FILE} (${parsedArgs.refreshSnapshot ? 'refreshed from head config' : 'first finalize'})`);
@@ -194,6 +268,7 @@ if (snapshotResult.written) {
   console.log(`[finalize-report] reusing existing ${WORKFLOW_SNAPSHOT_FILE}; pass --refresh-snapshot to re-freeze from the current head config.`);
 }
 
+enforceFastPrefetchedSources();
 strictCheckEveryChapter();
 
 // Refresh audit-trail consistency must hold before we touch report-meta.

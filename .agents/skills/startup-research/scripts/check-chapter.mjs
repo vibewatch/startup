@@ -706,6 +706,16 @@ function checkLocalEvidence(file, doc, counts, otherChapterClaimIds) {
       fail(dimension, `${file}: ${path} has ${counts[key]}, expected at least ${min}`, { actual: counts[key], required: min });
     }
   }
+  const maximums = [
+    ['researchQuestions', 'researchQuestions', 'localEvidence.researchQuestions[]', spec.gate.maxResearchQuestions],
+    ['sources', 'sources', 'localEvidence.sources[]', spec.gate.maxLocalSources],
+    ['claims', 'claims', 'localEvidence.claims[]', spec.gate.maxLocalClaims],
+  ];
+  for (const [key, dimension, path, max] of maximums) {
+    if (typeof max === 'number' && counts[key] > max) {
+      fail(dimension, `${file}: ${path} has ${counts[key]}, expected at most ${max} for this research profile`, { actual: counts[key], required: max });
+    }
+  }
   const localClaimIds = new Set((doc.localEvidence.claims ?? []).map((claim) => claim?.id));
   // Walk every claimRefs[] across sections / tables / figures / callouts. An
   // unresolved ref splits two ways:

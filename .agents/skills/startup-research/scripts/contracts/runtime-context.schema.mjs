@@ -85,6 +85,12 @@ export const ChapterRuntimeContextSchema = z.object({
       maxChapterRetries: z.number().int().nonnegative(),
       requireMonotonicFailureDecrease: z.boolean(),
     }).strict().describe('Per-chapter retry budget enforced by the agent (no script blocks a non-monotonic retry). Workers must surface a blocker once the budget is exhausted or the failure count fails to strictly decrease across retries.'),
+    workerRouting: z.object({
+      profile: z.enum(['chapter-synthesis', 'chapter-synthesis-fast']),
+      model: nonEmptyString,
+      reasoningEffort: nonEmptyString,
+      escalateTo: nullableString,
+    }).strict().describe('Binding model and reasoning effort for the chapter worker. The orchestrator must pass both values when spawning the worker; top-level CLI settings do not reliably propagate to subagents.'),
   }).strict().optional(),
 }).strict();
 
