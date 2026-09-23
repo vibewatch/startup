@@ -365,6 +365,17 @@ jobs:
             echo "::endgroup::"
           done
 
+      - name: Remove unexpected translation overlays
+        run: |
+          set -euo pipefail
+          current="$RUNNER_TEMP/reports-after-finalize.txt"
+          find reports -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort > "$current"
+          while IFS= read -r run_id; do
+            [ -n "$run_id" ] || continue
+            folder="reports/$run_id"
+            rm -f "$folder/summary-card.zh.yaml" "$folder/full-report.zh.yaml"
+          done < <(comm -13 "$RUNNER_TEMP/reports-before.txt" "$current")
+
       - name: Measure generated report quality
         run: |
           set -euo pipefail
