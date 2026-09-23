@@ -274,7 +274,7 @@ jobs:
           Prior report run ID: ${REFRESH_OF:-auto-resolve}
           Research profile: ${PROFILE:-fast}
 
-          This is an explicit full refresh. Create a new report folder even when a finalized report folder for the same company/domain already exists by using create-report-run.mjs with --refresh and --refresh-reason. When Prior report run ID is present, pass --refresh-of with that exact value; do not resolve a different current report. Otherwise resolve the previous report from the company name/domain. Treat the prior report as reusable background and stable evidence, but re-fetch volatile facts such as funding, valuation, headcount, customers, pricing, legal/regulatory status, outages, partnerships, and product launches.
+          This is an explicit full refresh. Create a new report folder even when a finalized report folder for the same company/domain already exists by using create-report-run.mjs with --refresh and --refresh-reason. When Prior report run ID is present, pass --refresh-of with that exact value; do not resolve a different current report. Otherwise resolve the previous report from the company name/domain. Treat the prior report as reusable background and stable evidence, but re-fetch volatile facts such as funding, valuation, headcount, customers, pricing, legal/regulatory status, outages, partnerships, and product launches. Never copy or seed chapter YAML, report-meta.yaml, evidence.yaml, full-report.yaml, summary-card.yaml, or translation overlays from the prior report; the worker and finalizer commands must generate the refreshed artifacts.
           Immediately after creating the report folder, run npm run research:profile -- --report-folder <folder> --profile ${PROFILE:-fast}, then run npm run research:bootstrap -- --report-folder <folder> --profile ${PROFILE:-fast}. The profile command writes a per-report workflow snapshot: fast uses reduced but still binding evidence, exhibit, and depth floors, while deep preserves the repository defaults. The bootstrap allocates and prefetches each shared URL once. Use each chapter's chapterPools entry and fetched text instead of repeating searches or fetches.
           Generate and finalize a complete refreshed startup diligence research report for this company.
           Treat completion as an on-disk contract: the new refresh report folder must end with all required chapter, metadata, and generated artifacts. If you fan out chapter work, join every task, inspect failures, and never exit successfully with partial report folders.
@@ -314,10 +314,10 @@ jobs:
       - name: Finalize complete refreshed report folders
         env:
           REFRESH_REASON: ${{ steps.inputs.outputs.refreshReason }}
-        # Safety net: if Copilot wrote every chapter YAML plus report-meta.yaml
-        # but skipped the finalize-report.mjs pipeline, run finalize ourselves.
-        # Only attempt finalize when all upstream inputs from the runtime
-        # context exist; truly partial folders are left for the prune step.
+        # Safety net: deterministically finalize every newly-created complete
+        # folder, even when Copilot already wrote assembled artifacts. Only
+        # pre-existing finalized folders may be skipped; otherwise a copied
+        # summary-card.yaml could bypass refresh linking and validation.
         run: |
           set -euo pipefail
           shopt -s nullglob
@@ -330,7 +330,8 @@ jobs:
             exit 1
           fi
           for dir in reports/*/; do
-            if [ -f "${dir}summary-card.yaml" ]; then
+            run_id="$(basename "${dir%/}")"
+            if grep -Fxq "$run_id" "$RUNNER_TEMP/reports-before.txt" && [ -f "${dir}summary-card.yaml" ]; then
               continue
             fi
             missing=()
@@ -342,7 +343,6 @@ jobs:
               continue
             fi
             echo "::group::Finalizing $dir"
-            run_id="$(basename "${dir%/}")"
             if grep -Fxq "$run_id" "$RUNNER_TEMP/reports-before.txt"; then
               echo "Skipping refresh args for pre-existing in-progress folder: $run_id"
               if node .agents/skills/startup-research/scripts/finalize-report.mjs "$dir"; then
