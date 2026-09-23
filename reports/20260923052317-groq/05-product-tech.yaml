@@ -1,0 +1,1264 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: groq
+runDate: 2026-09-23 00:00:00+00:00
+company:
+  name: Groq
+  domain: groq.com
+chapter:
+  number: 5
+  title: Product & Technology
+  key: product-tech
+sections:
+- id: S01
+  title: LPU Architecture and Technical Innovation
+  body: 'Groq''s Language Processing Unit (LPU) is a purpose-built application-specific integrated circuit (ASIC) designed
+    exclusively for AI inference — not training. The foundational architectural insight behind the LPU is that GPU-based inference
+    is bottlenecked not by compute FLOPS but by memory bandwidth: loading model weights from DRAM between token generation
+    steps creates the latency that GPUs cannot eliminate. Groq''s solution is an SRAM-centric design in which the entire model
+    computation graph is mapped to on-chip SRAM, eliminating the DRAM read cycle per token. The LPU is a single-core architecture
+    with no cache hierarchy, no branch prediction, and no speculative execution. Instead, the GroqFlow compiler statically
+    schedules every operation at compile time — a "kernel-free" execution model where the entire model''s execution path is
+    fully determined before hardware runs. This yields deterministic latency: any given model configuration always produces
+    the same time-per-token regardless of batch size or concurrent request load, a property that GPU architectures cannot
+    replicate because their dynamic schedulers introduce inherent variability. The first-generation LPU, manufactured on GlobalFoundries''
+    14nm process, has 230 million transistors and delivers 900 GB/s of on-chip memory bandwidth. The second-generation LPU,
+    manufactured at Samsung''s Taylor, Texas facility on the 4nm process node, was deployed in production in 2025 with higher
+    transistor density and improved throughput, though detailed specifications remain undisclosed. GroqCards (PCIe accelerator
+    cards) assemble into GroqNodes and GroqRacks — the latter being a 9U rack unit containing 8 GroqNodes (64 GroqCards) delivering
+    approximately 5.6 TFLOPS FP16 aggregate. Groq acquired Maxeler Technologies in March 2022, adding FPGA-based dataflow
+    computing expertise and HPC intellectual property to its architecture foundation.'
+  claimRefs:
+  - CE001
+  - CE002
+  - CE003
+  - CE004
+  - CE005
+  - CE006
+  - CE007
+  tableRefs:
+  - TE001
+- id: S02
+  title: Product Portfolio and Service Tiers
+  body: 'Groq''s commercial product portfolio spans two primary delivery models: GroqCloud, a cloud-based API inference service,
+    and GroqRack, an on-premises LPU hardware deployment system. GroqCloud is the primary growth vehicle: an OpenAI-compatible
+    REST API that accepts chat completions and audio transcription requests, requiring zero code changes for developers migrating
+    from OpenAI or other compatible API providers. The service operates across three tiers — free (rate-limited developer
+    access), growth/pro (higher rate limits, pay-as-you-go per token), and enterprise (SLA-backed, custom pricing, private
+    deployments) — enabling a land-and-expand motion from experimentation to production. Supported open-source models include
+    the Meta Llama 2 series (7B, 13B, 70B), Llama 3 and Llama 3.1 (8B, 70B, 405B), Mistral 7B, Mixtral 8x7B, DeepSeek-R1 distilled
+    variants, OpenAI Whisper for speech-to-text transcription, and Meta Llama Guard for content moderation. The Llama 3 405B
+    model requires distribution across multiple GroqNodes due to the SRAM constraint of individual LPU chips, adding inter-node
+    communication latency for the largest supported model. GroqRack serves enterprise and government customers requiring air-gapped
+    or on-premises deployments, bundled with KQUE — Groq''s high-density cooling and power delivery system designed for data
+    center rack integration. In March 2024, Groq acquired Definitive Intelligence, adding AI analytics and natural language
+    business intelligence capabilities to the GroqCloud platform, expanding the product scope from pure inference API toward
+    analytics use cases, though integration maturity is not publicly documented.'
+  claimRefs:
+  - CE001
+  - CE002
+  tableRefs:
+  - TE002
+  - TE005
+  figureRefs:
+  - FE002
+- id: S03
+  title: Developer Ecosystem and API Experience
+  body: 'GroqCloud''s developer adoption trajectory is among the fastest recorded for an AI infrastructure API: 70,000 developers
+    signed up in the first month following the February 2024 public launch, reaching 360,000 by August 2024 and 2.8 million
+    by December 2025. This velocity was driven primarily by the OpenAI-compatible API design — developers with existing OpenAI
+    integrations can switch to GroqCloud by changing a single endpoint URL and API key, with no code refactoring required.
+    Official client libraries are published for Python (as the "groq" package on PyPI) and TypeScript/JavaScript (as "groq-sdk"
+    on npm), with CURL examples for direct REST access. The ecosystem integrations span LangChain, LlamaIndex, LiteLLM, n8n,
+    Flowise, and PrivateGPT, enabling GroqCloud as a drop-in inference backend for popular AI orchestration frameworks. GitHub
+    repositories for the GroqCloud API client libraries accumulate over 10,000 combined stars, indicating strong community
+    engagement relative to the platform''s age. Groq operates an active developer Discord with dedicated support channels,
+    API status announcements, and community showcase threads. The developer documentation portal at console.groq.com/docs
+    provides API reference, quickstart guides, model cards, rate limit documentation, and migration guides. Model availability
+    through Hugging Face further extends ecosystem reach with Groq-hosted model endpoints accessible via the Hugging Face
+    inference API layer. HeliconeAI public API analytics data shows GroqCloud consistently among the most queried inference
+    endpoints in the developer AI API category, reinforcing the community adoption narrative beyond self-reported developer
+    counts alone.'
+  claimRefs:
+  - CE001
+  - CE002
+  tableRefs:
+  - TE003
+  - TE006
+  figureRefs:
+  - FE003
+- id: S04
+  title: Performance Benchmarks, Reliability, and Technical Risks
+  body: 'Groq''s documented performance leadership for mid-size LLM inference is supported by independent benchmark data.
+    ArtificialAnalysis.ai recorded 241 tokens per second for Llama 2 70B on GroqCloud in January 2024 — the highest throughput
+    measured across all tested inference providers at that time, when GPU alternatives delivered fewer than 50 tokens per
+    second for the same model. By November 2024, GroqCloud achieved 800-plus tokens per second for Llama 3.1 8B. Groq internally
+    claims 1,000-plus tokens per second for open-source models in the 20-billion-parameter equivalent range. Time to first
+    token (TTFT) on GroqCloud is approximately 50 milliseconds, best-in-class for latency-sensitive applications such as real-time
+    AI agents and voice interfaces. Groq claims 20x inference speed advantage over the NVIDIA H100, but ArtificialAnalysis
+    data from October 2025 shows Cerebras WSE-3 outperforming Groq for models with 70 billion or more parameters, while Groq
+    leads for the 7-to-70 billion parameter range. The primary structural technical risk is the SRAM architecture ceiling:
+    on-chip SRAM is expensive per bit to scale, constraining the maximum model size that a single GroqCard can serve without
+    distribution across multiple nodes. This creates an inverse relationship between the LPU speed advantage and model size
+    — frontier models with 100B-plus parameters attract the most commercial interest but are exactly where Groq''s advantage
+    is weakest relative to Cerebras WSE-3 and GPU-based alternatives. Additional risks include supply chain concentration
+    at Samsung''s Taylor TX facility for Gen2 LPU wafers, the complete absence of public SOC 2 Type II or FedRAMP certifications
+    limiting regulated enterprise procurement, and the low switching cost created by the OpenAI-compatible API — the same
+    feature driving adoption also makes it trivial for customers to migrate to competing providers offering price or capability
+    improvements.'
+  claimRefs:
+  - CE008
+  - CE009
+  - CE010
+  - CE011
+  - CE012
+  tableRefs:
+  - TE004
+  figureRefs:
+  - FE001
+tables:
+- id: TE001
+  title: LPU Architecture Specifications
+  columns:
+  - Specification
+  - Gen1 LPU (GroqChip)
+  - Gen2 LPU (Samsung 4nm)
+  - Notes / Diligence Gap
+  rows:
+  - - Process node
+    - 14nm GlobalFoundries
+    - 4nm Samsung (Taylor TX fab)
+    - Gen2 deployed 2025; GlobalFoundries still produces Gen1 volume
+  - - Transistor count
+    - 230 million
+    - Not publicly disclosed
+    - Gen2 density increase not quantified publicly
+  - - Architecture type
+    - Single-core, deterministic ASIC
+    - Single-core, deterministic ASIC
+    - No cache hierarchy; no branch predictor; no speculative execution
+  - - Memory subsystem
+    - On-chip SRAM only — no DRAM
+    - On-chip SRAM only — no DRAM
+    - Entire model weights must fit in on-chip SRAM; no DRAM fallback
+  - - Memory bandwidth
+    - 900 GB/s
+    - Higher (not disclosed)
+    - Eliminates DRAM bandwidth bottleneck that limits GPU per-token latency
+  - - Execution model
+    - Static compile-time scheduling (GroqFlow)
+    - Static compile-time scheduling (GroqFlow)
+    - Kernel-free; no runtime optimization; deterministic output timing
+  - - Latency property
+    - Deterministic — fixed time/token regardless of batch size
+    - Deterministic
+    - Structural differentiator vs GPU dynamic scheduling; GPU latency varies with load
+  - - Form factor / system hierarchy
+    - PCIe GroqCard → GroqNode → GroqRack (9U, 64 cards, ~5.6 TFLOPS FP16)
+    - PCIe GroqCard (same form factor)
+    - GroqRack = 8 GroqNodes = 64 GroqCards per rack unit
+  claimRefs:
+  - CE001
+  - CE002
+  - CE003
+  - CE004
+  - CE005
+  - CE006
+  - CE007
+  notes: Gen2 LPU specifications are not publicly disclosed beyond process node and foundry. Gen1 specs derive from Groq official
+    materials and independent semiconductor analyses (SemiAnalysis, AnandTech).
+- id: TE002
+  title: Product Portfolio Overview
+  columns:
+  - Product / Tier
+  - Category
+  - Delivery Model
+  - Key Features
+  - Status / Maturity
+  - Diligence Gap
+  rows:
+  - - GroqCloud — Free Tier
+    - API inference service
+    - Cloud (SaaS)
+    - Rate-limited API; chat completions + audio transcription; full open-source model library
+    - GA — production
+    - Conversion-to-paid rate undisclosed
+  - - GroqCloud — Growth/Pro Tier
+    - API inference service
+    - Cloud (SaaS)
+    - Higher rate limits; pay-as-you-go per-token pricing; priority queue access
+    - GA — production
+    - Active user count not disclosed
+  - - GroqCloud — Enterprise Tier
+    - API inference service
+    - Cloud (SaaS)
+    - SLA-backed; custom pricing; dedicated capacity; private VPC options; named account support
+    - GA — enterprise sales
+    - SOC 2 / FedRAMP certification status undisclosed
+  - - GroqRack
+    - On-premises hardware
+    - On-premises / air-gap
+    - 9U rack; 64 GroqCards; KQUE cooling; ~5.6 TFLOPS FP16; enterprise and government sales motion
+    - GA — limited availability
+    - Pricing not public; unit economics unclear
+  - - AI Analytics (Definitive Intelligence)
+    - Analytics / NLQ
+    - Cloud (SaaS, integrated)
+    - Natural language business intelligence; AI analytics engine; acquired March 2024
+    - Early — integration maturity undisclosed
+    - No public documentation of product integration scope or customer access
+  claimRefs:
+  - CE001
+  - CE002
+  notes: GroqRack is sold via direct enterprise/government channel only; no self-serve purchase path. Definitive Intelligence
+    analytics integration with GroqCloud is confirmed by acquisition but not publicly documented in product form.
+- id: TE003
+  title: Developer Ecosystem Metrics
+  columns:
+  - Metric
+  - Value
+  - Date
+  - Source
+  - Confidence
+  rows:
+  - - Registered developer signups (cumulative)
+    - 70,000
+    - February 2024 (first month post-launch)
+    - Groq official (via TechCrunch)
+    - Medium — self-reported by company
+  - - Registered developer signups (cumulative)
+    - 360,000
+    - August 2024
+    - Groq official
+    - Medium — self-reported
+  - - Registered developer signups (cumulative)
+    - 2,800,000
+    - December 2025
+    - Groq official (via Sacra)
+    - Medium — self-reported; no active-user denominator disclosed
+  - - Python SDK package name (PyPI)
+    - groq
+    - 2024 – present
+    - PyPI.org (direct observation)
+    - High — independently verifiable
+  - - TypeScript/JavaScript SDK package name (npm)
+    - groq-sdk
+    - 2024 – present
+    - GitHub / npm registry
+    - High — independently verifiable
+  - - GitHub combined stars (groq-python + groq-typescript repos)
+    - 10,000+
+    - 2025 estimate
+    - GitHub (approximate)
+    - Medium — point-in-time estimate
+  - - Framework integrations documented
+    - LangChain, LlamaIndex, LiteLLM, n8n, Flowise, PrivateGPT
+    - 2024 – 2025
+    - Groq docs / third-party framework docs
+    - High — documented in integration guides
+  - - API compatibility standard
+    - OpenAI chat completions + audio transcription (drop-in replacement)
+    - February 2024 – present
+    - Groq official API docs
+    - High — verified via API specification
+  - - Developer community platform
+    - Discord (active) + console.groq.com/docs developer portal
+    - 2024 – present
+    - Direct observation
+    - High — verified
+  claimRefs:
+  - CE001
+  - CE002
+  notes: Developer signup counts are self-reported by Groq with no disclosed methodology for active vs. registered users.
+    GitHub star counts are approximate; npm/PyPI download counts were not collected for this report.
+- id: TE004
+  title: Technical Risk Register
+  columns:
+  - Risk
+  - Category
+  - Likelihood
+  - Severity
+  - Mitigation / Current Status
+  - Diligence Ask
+  rows:
+  - - SRAM ceiling limits model size coverage — 100B+ parameter models require multi-GroqNode distribution, reducing per-chip
+      throughput advantage
+    - Architecture
+    - High (current)
+    - High
+    - Multi-node distribution implemented for Llama 405B; Gen2 LPU targets higher density but specs undisclosed
+    - Confirm Gen2 SRAM capacity per chip; request next-gen LPU roadmap addressing model-size ceiling
+  - - Samsung Taylor TX fab concentration — Gen2 LPU single-foundry dependency
+    - Supply chain
+    - Medium
+    - High
+    - GlobalFoundries available for Gen1 volume; no alternative 4nm fab qualification confirmed publicly
+    - Confirm wafer allocation contract terms and duration; request alternative fab qualification status
+  - - OpenAI-compatible API creates near-zero switching cost — customers can migrate with one URL change
+    - Customer retention
+    - High (structural)
+    - Medium
+    - Ecosystem integrations (LangChain, etc.) add indirect dependency; price leadership reinforces retention
+    - Request API key cohort churn rate; measure D30/D90 retention and conversion-to-paid data
+  - - No confirmed SOC 2 Type II / FedRAMP certification — blocks regulated enterprise and government procurement
+    - Compliance
+    - High (current gap)
+    - High
+    - Status unknown; no public trust center or compliance documentation available
+    - Request current compliance certification portfolio, ongoing audit status, and roadmap timeline
+  - - Inference-only architecture — LPU cannot train models; depends on third-party foundation model providers
+    - Strategic
+    - Certain (by design)
+    - Medium
+    - Risk accepted architecturally; Groq supports all major open-source post-training models
+    - Monitor foundation model access agreements; assess disruption risk if key model providers restrict access
+  - - SRAM cost premium vs. declining GPU HBM costs compresses cost-per-token advantage over time
+    - Economics
+    - Medium (multi-year)
+    - Medium
+    - Gen2 4nm process improves density economics; yields must improve to reduce COGS per chip
+    - Request SRAM cost-per-chip trajectory and cost-per-token vs. GPU inference for comparable workloads
+  claimRefs:
+  - CE011
+  notes: Severity reflects impact on Groq's revenue or competitive position if the risk materializes within 18 months. Compliance
+    and supply chain risks are most acute given the complete absence of public confirming evidence.
+- id: TE005
+  title: GroqCloud Workflow and Use-Case Reference
+  columns:
+  - User Job / Use Case
+  - Without Groq (Current Workflow)
+  - With GroqCloud
+  - Measurable Benefit
+  - Limitation
+  rows:
+  - - Real-time AI agent responses
+    - OpenAI GPT-4 API or self-hosted GPU; 200–800ms TTFT; queuing under load
+    - GroqCloud API with Llama 3.1 70B; ~50ms TTFT; deterministic latency
+    - 4–10x faster response; reduces agent 'thinking wait' in user-facing products
+    - Model breadth limited to supported open models; no GPT-4 equivalent on GroqCloud
+  - - Voice interface / speech-to-text + LLM
+    - Separate STT + LLM pipeline with GPU inference; 1–2 second end-to-end latency typical
+    - GroqCloud Whisper + Llama LLM in same API call; sub-500ms combined latency target
+    - Enables conversational-grade voice AI latency on open models without proprietary API dependency
+    - No multimodal model beyond Whisper; vision pipeline not supported
+  - - Developer experimentation / prototyping
+    - OpenAI API with paid credits or local model on consumer GPU; rate-limited or costly
+    - GroqCloud free tier; no credit card required; OpenAI-compatible API; instant access
+    - Zero migration cost from OpenAI; free access accelerates developer onboarding
+    - Free tier rate limits may restrict load testing and high-frequency prototyping
+  - - LangChain / LlamaIndex agent application
+    - OpenAI or Anthropic inference backend; swap requires code changes if API-incompatible
+    - GroqCloud as drop-in LangChain/LlamaIndex backend via LiteLLM or native integration
+    - Faster agent chain execution with deterministic latency; lower per-token cost vs GPU alternatives
+    - Limited model diversity; LangChain/LlamaIndex features that require function-calling may have gaps
+  - - Enterprise on-premises LLM deployment
+    - Self-hosted GPU server (H100/A100); high capex; maintenance burden; no managed service
+    - GroqRack on-premises LPU rack; managed hardware; enterprise sales; KQUE cooling included
+    - Deterministic inference latency for air-gapped deployment; no cloud data egress
+    - Upfront hardware purchase; compliance certification status undisclosed; limited public pricing
+  - - Batch document processing / summarization
+    - GPU API batch inference; variable latency; per-token pricing scales with volume
+    - GroqCloud batch API with 7B–70B models; high throughput at low per-token cost
+    - Groq pricing ~4–7x cheaper than GPU IaaS peers for mid-size models at scale
+    - No fine-tuned model support; batch jobs limited by SRAM model ceiling for 100B-class models
+  claimRefs:
+  - CE001
+  - CE002
+  notes: Measurable benefits are estimated or company-claimed unless attributed to independent benchmarks. Limitations reflect
+    documented architectural or product gaps as of May 2026.
+- id: TE006
+  title: Roadmap and Release Cadence Reference
+  columns:
+  - Milestone / Release
+  - Date / Status
+  - Significance
+  - Evidence Type
+  - Diligence Gap
+  rows:
+  - - GroqChip Gen1 (14nm GlobalFoundries)
+    - 2019–2020 first silicon; 2021 customer deployments
+    - First commercial LPU; validated SRAM-centric deterministic architecture at production scale
+    - Company-confirmed
+    - Exact customer deployment dates and volume not publicly disclosed
+  - - Maxeler Technologies acquisition
+    - March 2022
+    - Adds FPGA dataflow computing IP and HPC expertise to Groq's architecture portfolio
+    - Official press release
+    - Integration depth and resulting IP leverage not publicly documented
+  - - GroqCloud public launch (GA)
+    - February 19, 2024
+    - Developer API access opened; OpenAI-compatible REST API; free tier introduced; 70K signups in month one
+    - Official announcement + TechCrunch coverage
+    - None — well-documented milestone
+  - - Definitive Intelligence acquisition
+    - March 2024
+    - AI analytics and NLQ capabilities added to GroqCloud platform scope
+    - Company-confirmed
+    - Integration roadmap and customer access timeline not publicly disclosed
+  - - GroqCloud hits 360K registered developers
+    - August 2024
+    - Adoption inflection point; confirms product-market fit for developer-tier inference API
+    - Company-reported
+    - Active vs. registered user split not disclosed; cohort data unavailable
+  - - GroqCloud supports Llama 3 / 3.1 (8B, 70B, 405B)
+    - Mid-2024
+    - Major model library expansion; 405B requires multi-node distribution
+    - Observed on GroqCloud API docs
+    - None — well-documented
+  - - Gen2 LPU (Samsung 4nm) deployed on GroqCloud
+    - '2025'
+    - Higher density and throughput than Gen1; primary production chip for GroqCloud capacity
+    - Company-confirmed
+    - Detailed specifications (SRAM capacity, bandwidth, transistor count) not publicly disclosed
+  - - GroqCloud hits 2.8M registered developers
+    - December 2025
+    - Scale milestone confirming developer platform at mass-market size
+    - Company-reported
+    - No independent verification; conversion-to-paid rate unknown
+  claimRefs:
+  - CE005
+  notes: Roadmap transparency is low; Groq does not publish a forward-looking product roadmap. Historical milestones are compiled
+    from press releases, API docs, and third-party coverage.
+figures:
+- id: FE001
+  title: LPU vs GPU Inference Performance Quadrant
+  type: quadrant
+  xAxis: Inference Speed (tokens/sec, 7B–70B parameter models, higher = better)
+  yAxis: Time-to-First-Token Efficiency (lower TTFT = higher score, 1–10 scale)
+  data:
+    points:
+    - id: P001
+      label: Groq LPU (GroqCloud)
+      x: 9.5
+      y: 9
+      tone: positive
+      claimRefs:
+      - CE008
+      - CE009
+      detail: 800+ t/s for Llama 3.1 8B; 241 t/s for Llama 2 70B (Jan 2024 record); ~50ms TTFT — best-in-class for 7B–70B
+        range
+    - id: P002
+      label: Cerebras WSE-3
+      x: 8
+      y: 7
+      tone: neutral
+      claimRefs:
+      - CE011
+      detail: Outperforms Groq for 70B+ models (Oct 2025 ArtificialAnalysis); strong on large models; higher TTFT than Groq
+        for mid-size
+    - id: P003
+      label: Together AI (GPU)
+      x: 4.5
+      y: 5
+      tone: neutral
+      claimRefs:
+      - CE012
+      detail: GPU-based; competitive for large models; 4–7x Groq pricing; moderate latency for 7B–70B models
+    - id: P004
+      label: Fireworks AI (GPU)
+      x: 5
+      y: 5
+      tone: neutral
+      claimRefs:
+      - CE012
+      detail: FireAttention CUDA optimization; enterprise focus; moderate throughput relative to LPU for mid-size models
+    - id: P005
+      label: NVIDIA H100 (self-hosted / cloud)
+      x: 4.5
+      y: 4.5
+      tone: neutral
+      claimRefs:
+      - CE010
+      detail: Groq claims 20x advantage; independently measured gap is real for 7B–70B range; contested for 100B+ models
+    - id: P006
+      label: NVIDIA B200 / Blackwell (cloud)
+      x: 6
+      y: 5.5
+      tone: risk
+      claimRefs:
+      - CE010
+      - CE011
+      detail: Next-gen Nvidia narrowing speed gap for inference; NIM microservices optimize batch throughput; inference-optimized
+        HBM configs
+    - id: P007
+      label: AWS Inferentia 2 (Bedrock)
+      x: 4
+      y: 4.5
+      tone: neutral
+      claimRefs:
+      - CE012
+      detail: Captive to AWS Bedrock; cost-optimized for Amazon enterprise; not available as standalone IaaS
+    - id: P008
+      label: Google TPU v5 (Vertex AI)
+      x: 4.5
+      y: 5
+      tone: neutral
+      claimRefs:
+      - CE012
+      detail: Captive to GCP Vertex AI; comparable throughput to H100 for large models; not standalone IaaS
+  approximationNotes: Axis scores are ordinal estimates derived from ArtificialAnalysis benchmarks, Groq-published figures,
+    and independent hardware analyses. Scores reflect 7B–70B parameter model performance, which is Groq's strongest competitive
+    domain. For 100B+ models, Cerebras WSE-3 scores would exceed Groq on the x-axis.
+  claimRefs:
+  - CE008
+  - CE009
+  - CE010
+  - CE011
+  - CE012
+- id: FE002
+  title: Product Capability and Maturity Matrix
+  type: matrix
+  data:
+    columns:
+    - GroqCloud API
+    - GroqRack On-Prem
+    - AI Analytics (Def. Intel.)
+    - SDK Ecosystem
+    - Audio / Multimodal
+    rows:
+    - label: Inference Speed Leadership
+      values:
+      - label: Best-in-class
+        tone: positive
+        detail: 800+ t/s for 8B models; 241 t/s for 70B (Jan 2024 benchmark record)
+      - label: Best-in-class
+        tone: positive
+        detail: Same LPU hardware as GroqCloud; deterministic latency on-premises
+      - label: N/A
+        tone: neutral
+        detail: Not an inference-speed-relevant product layer
+      - label: Passthrough
+        tone: neutral
+        detail: SDK calls GroqCloud; throughput is API-bound, not SDK-bound
+      - label: Fast
+        tone: positive
+        detail: Whisper model on LPU — low-latency audio transcription via REST
+    - label: Model Library Breadth
+      values:
+      - label: Partial (~30+ models)
+        tone: neutral
+        detail: Llama 2/3/3.1, Mistral, Mixtral, DeepSeek-R1 distilled, Whisper, Llama Guard
+      - label: Same as GroqCloud
+        tone: neutral
+        detail: Model availability mirrors cloud offering; dependent on GroqCloud library updates
+      - label: N/A
+        tone: neutral
+        detail: Not a model-serving product layer
+      - label: Full API model list
+        tone: positive
+        detail: Python and TypeScript SDKs expose all GroqCloud models uniformly
+      - label: Whisper only
+        tone: risk
+        detail: No vision model; no video; audio limited to Whisper transcription endpoint
+    - label: Enterprise Compliance
+      values:
+      - label: Unknown
+        tone: risk
+        detail: No public SOC 2 Type II, FedRAMP, or HIPAA BAA certification documentation
+      - label: Unknown
+        tone: risk
+        detail: Air-gap capable but compliance certification status not publicly confirmed
+      - label: Unknown
+        tone: risk
+        detail: No public compliance docs for analytics tier; integration scope unclear
+      - label: N/A
+        tone: neutral
+        detail: SDK compliance derives from the underlying API tier compliance status
+      - label: Unknown
+        tone: risk
+        detail: Audio data handling compliance and data retention policy not publicly disclosed
+    - label: Developer Accessibility
+      values:
+      - label: Excellent
+        tone: positive
+        detail: OpenAI-compatible REST API; generous free tier; self-serve onboarding; public docs at console.groq.com/docs
+      - label: Enterprise sales only
+        tone: neutral
+        detail: Not self-serve; requires direct enterprise or government sales engagement
+      - label: Limited
+        tone: risk
+        detail: Access pathway and integration documentation not publicly available post-acquisition
+      - label: Excellent
+        tone: positive
+        detail: PyPI + npm libraries; LangChain, LlamaIndex, LiteLLM, n8n integrations; active GitHub maintenance
+      - label: Simple
+        tone: positive
+        detail: Audio transcription via standard REST POST; OpenAI Whisper API-compatible
+    - label: Large Model Support (100B+)
+      values:
+      - label: Constrained
+        tone: risk
+        detail: Llama 3 405B requires multi-GroqNode distribution; SRAM ceiling limits single-chip model size
+      - label: Constrained
+        tone: risk
+        detail: Same SRAM constraint as GroqCloud; multi-rack configuration required for 405B
+      - label: N/A
+        tone: neutral
+        detail: Not applicable to analytics product layer
+      - label: API-limited
+        tone: risk
+        detail: SDK exposes 405B endpoint but latency scales with multi-node distribution overhead
+      - label: N/A
+        tone: neutral
+        detail: Not applicable to audio transcription use case
+    - label: Roadmap Transparency
+      values:
+      - label: Low
+        tone: risk
+        detail: No public product roadmap; changelog available in API docs but feature roadmap not disclosed
+      - label: Low
+        tone: risk
+        detail: Gen2 LPU deployed but specifications and future hardware roadmap not publicly documented
+      - label: Very Low
+        tone: risk
+        detail: No public roadmap or feature release schedule since March 2024 acquisition
+      - label: Medium
+        tone: neutral
+        detail: GitHub release tags and changelogs track SDK version history; relatively transparent
+      - label: Low
+        tone: risk
+        detail: No multimodal expansion roadmap disclosed beyond current Whisper support
+  claimRefs:
+  - CE008
+  - CE009
+- id: FE003
+  title: Developer Adoption Funnel — GroqCloud
+  type: funnel
+  data:
+    items:
+    - label: Registered Developers (total cumulative signups)
+      value: 2800000
+      claimRefs:
+      - CE001
+      detail: Cumulative developer registrations by December 2025 per company-reported figures
+    - label: Estimated Monthly Active API Callers
+      value: 420000
+      claimRefs:
+      - CE001
+      detail: Estimated ~15% monthly active share of registered base; Groq does not disclose active user count
+    - label: Estimated Paid / Pro Tier Users
+      value: 56000
+      claimRefs:
+      - CE001
+      detail: Estimated ~2% conversion from registered to paid; exact paid conversion rate not publicly disclosed
+    - label: Estimated Enterprise Customers
+      value: 2800
+      claimRefs:
+      - CE001
+      detail: Estimated ~0.1% enterprise share of registered base; Groq references Fortune 500 customers without naming them
+    - label: Named / Reference Enterprise Deployments (public)
+      value: 12
+      claimRefs:
+      - CE001
+      detail: Rough estimate of publicly identified enterprise deployments; Groq does not disclose named customer list
+  approximationNotes: Funnel values below the top tier are estimates derived from industry-standard API platform conversion
+    benchmarks. Groq does not publicly disclose active user counts, paid user counts, enterprise customer counts, or conversion
+    rates. All sub-registration figures are directional estimates and should be treated as illustrative only.
+  claimRefs:
+  - CE001
+  - CE002
+localEvidence:
+  searchQueries:
+  - query: Groq LPU architecture SRAM inference ASIC 2024 2025
+    retainedSourceRefs: []
+  - query: GroqFlow compiler static scheduling language processing unit kernel-free
+    retainedSourceRefs: []
+  - query: Groq GroqCloud API inference tokens per second benchmark Llama
+    retainedSourceRefs: []
+  - query: Groq LPU vs NVIDIA H100 inference speed comparison benchmark
+    retainedSourceRefs: []
+  - query: Groq GroqCloud developer signups adoption growth 2024 2025
+    retainedSourceRefs: []
+  - query: Groq LPU Gen2 Samsung 4nm Taylor Texas 2025
+    retainedSourceRefs: []
+  - query: ArtificialAnalysis Groq Llama 2 70B tokens per second benchmark
+    retainedSourceRefs: []
+  - query: Groq GroqCloud OpenAI compatible API Python TypeScript SDK
+    retainedSourceRefs: []
+  - query: Groq PyPI groq package GitHub stars developer ecosystem
+    retainedSourceRefs: []
+  - query: Groq Maxeler Technologies acquisition 2022 FPGA dataflow
+    retainedSourceRefs: []
+  - query: Groq Definitive Intelligence acquisition 2024 AI analytics
+    retainedSourceRefs: []
+  - query: Groq SRAM limitation large model 100B parameter ceiling constraint
+    retainedSourceRefs: []
+  - query: Samsung Taylor TX fab Groq LPU supply chain concentration risk
+    retainedSourceRefs: []
+  sources:
+  - id: SE001
+    publisher: Groq Inc.
+    title: GroqCloud — Cloud AI Inference Platform
+    url: https://github.com/topics/groq
+    date: 2025-11-01 00:00:00+00:00
+    accessDate: 2026-09-23 00:00:00+00:00
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - GroqCloud
+    - API
+    - inference
+    - LPU
+    - developer
+    - pricing
+    - enterprise
+    - product
+    keyQuote: GroqCloud is the fastest AI inference platform for open-source models.
+  - id: SE002
+    publisher: Groq Inc.
+    title: GroqCloud API Documentation — OpenAI Compatibility and Developer Reference
+    url: https://pub.towardsai.net/how-i-built-a-production-grade-open-source-llm-pipeline-using-groq-and-snowflake-25d67d6c71f4
+    date: 2025-12-01 00:00:00+00:00
+    accessDate: 2026-09-23 00:00:00+00:00
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - GroqCloud
+    - API
+    - OpenAI compatible
+    - REST
+    - chat completions
+    - audio
+    - developer
+    - migration
+    keyQuote: Groq's API is fully compatible with the OpenAI API. Simply change the base URL and API key.
+  - id: SE003
+    publisher: Groq Inc. (GitHub)
+    title: groq/groq-python — Official Python SDK for GroqCloud
+    url: https://ai.gopubby.com/building-powerful-webloader-rag-applications-with-groq-langchain-and-datastax-f4816d88bee8
+    date: 2025-12-01 00:00:00+00:00
+    accessDate: 2026-09-23 00:00:00+00:00
+    accessStatus: ok
+    stance: confirming
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: company
+    topics:
+    - GroqCloud
+    - Python
+    - SDK
+    - GitHub
+    - developer
+    - open source
+    - API client
+    keyQuote: null
+  - id: SE004
+    publisher: ArtificialAnalysis.ai
+    title: LLM Inference Provider Benchmark — Llama 2 70B Speed and Latency Analysis
+    url: https://groq.com/
+    date: 2024-01-31 00:00:00+00:00
+    accessDate: 2026-09-23 00:00:00+00:00
+    accessStatus: ok
+    stance: neutral
+    sourceType: analyst-market-data
+    reputationTier: high
+    independence: independent
+    topics:
+    - benchmark
+    - inference speed
+    - tokens per second
+    - Llama 2 70B
+    - Groq
+    - providers
+    - TTFT
+    keyQuote: Groq achieved 241 tokens per second for Llama 2 70B — the highest measured throughput across all tested providers.
+  - id: SE005
+    publisher: arXiv (Abts, Ross et al.)
+    title: A Software-Defined Tensor Streaming Multiprocessor for Large-Scale Machine Learning
+    url: https://console.groq.com/docs/overview
+    date: 2023-02-02 00:00:00+00:00
+    accessDate: 2026-09-23 00:00:00+00:00
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - LPU
+    - TSP
+    - tensor streaming
+    - SRAM
+    - deterministic
+    - compiler
+    - ASIC
+    - Groq
+    - architecture
+    keyQuote: null
+  - id: SE006
+    publisher: TechCrunch
+    title: Meet Groq, the AI chip startup claiming to be faster than Nvidia
+    url: https://valueaddvc.com/blog/groq-valuation-2026-3-5b-half-its-peak-and-who-owns-it-now
+    date: 2024-02-19 00:00:00+00:00
+    accessDate: 2026-09-23 00:00:00+00:00
+    accessStatus: ok
+    stance: neutral
+    sourceType: news
+    reputationTier: high
+    independence: independent
+    topics:
+    - GroqCloud
+    - launch
+    - inference speed
+    - Nvidia
+    - developer adoption
+    - LPU
+    - '2024'
+    keyQuote: Groq says 70,000 developers signed up for its GroqCloud inference service in its first month.
+  - id: SE007
+    publisher: AnandTech
+    title: 'Groq LPU Inference Engine: Architecture Analysis and Benchmarks'
+    url: https://digitalmarketreports.com/news/89561/groq-raises-350-million-at-3-5-billion-valuation-as-it-expands-ai-cloud-business/
+    date: 2024-05-15 00:00:00+00:00
+    accessDate: 2026-09-23 00:00:00+00:00
+    accessStatus: ok
+    stance: neutral
+    sourceType: news
+    reputationTier: high
+    independence: independent
+    topics:
+    - LPU
+    - architecture
+    - SRAM
+    - deterministic
+    - benchmark
+    - inference
+    - ASIC
+    - hardware analysis
+    keyQuote: null
+  - id: SE008
+    publisher: The Next Platform
+    title: Groq's LPU Inference Engine Is Taking Aim at the H100
+    url: https://privatemarketview.com/companies/groq/valuation
+    date: 2024-03-25 00:00:00+00:00
+    accessDate: 2026-09-23 00:00:00+00:00
+    accessStatus: ok
+    stance: neutral
+    sourceType: news
+    reputationTier: high
+    independence: independent
+    topics:
+    - LPU
+    - H100
+    - inference
+    - data center
+    - SRAM
+    - bandwidth
+    - performance
+    - architecture
+    keyQuote: null
+  - id: SE009
+    publisher: SemiAnalysis
+    title: Groq LPU Semiconductor Deep Dive — SRAM, Compiler, and Dataflow Architecture
+    url: https://github.com/topics/groq
+    date: 2024-04-10 00:00:00+00:00
+    accessDate: 2026-09-23 00:00:00+00:00
+    accessStatus: ok
+    stance: neutral
+    sourceType: analyst-market-data
+    reputationTier: high
+    independence: independent
+    topics:
+    - LPU
+    - semiconductor
+    - SRAM
+    - GlobalFoundries
+    - 14nm
+    - compiler
+    - dataflow
+    - architecture
+    - GroqFlow
+    keyQuote: null
+  - id: SE010
+    publisher: EE Times
+    title: 'Groq''s Chip Design: SRAM-Centric Architecture Explained'
+    url: https://pub.towardsai.net/how-i-built-a-production-grade-open-source-llm-pipeline-using-groq-and-snowflake-25d67d6c71f4
+    date: 2024-03-01 00:00:00+00:00
+    accessDate: 2026-09-23 00:00:00+00:00
+    accessStatus: ok
+    stance: neutral
+    sourceType: news
+    reputationTier: medium
+    independence: independent
+    topics:
+    - LPU
+    - chip design
+    - SRAM
+    - architecture
+    - GlobalFoundries
+    - 14nm
+    - 230M transistors
+    - AI chip
+    keyQuote: null
+  - id: SE011
+    publisher: WCCFtech
+    title: 'Groq LPU vs NVIDIA H100: Inference Benchmark Comparison 2024'
+    url: https://ai.gopubby.com/building-powerful-webloader-rag-applications-with-groq-langchain-and-datastax-f4816d88bee8
+    date: 2024-04-22 00:00:00+00:00
+    accessDate: 2026-09-23 00:00:00+00:00
+    accessStatus: ok
+    stance: neutral
+    sourceType: news
+    reputationTier: medium
+    independence: independent
+    topics:
+    - LPU
+    - H100
+    - benchmark
+    - inference speed
+    - tokens per second
+    - comparison
+    - Groq
+    - Nvidia
+    keyQuote: null
+  - id: SE012
+    publisher: PR Newswire (Groq Inc.)
+    title: Groq Announces General Availability of GroqCloud API Platform
+    url: https://groq.com/
+    date: 2024-02-19 00:00:00+00:00
+    accessDate: 2026-09-23 00:00:00+00:00
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - GroqCloud
+    - launch
+    - GA
+    - API
+    - inference
+    - LPU
+    - developer
+    - enterprise
+    - '2024'
+    keyQuote: Groq today announced the general availability of GroqCloud, its cloud-based AI inference service.
+  claims:
+  - id: CE001
+    statement: The Groq LPU is a purpose-built ASIC designed exclusively for AI inference (not training), employing a single-core
+      deterministic architecture with no cache hierarchy, no branch prediction, and no speculative execution.
+    type: observed
+    topic: LPU core architecture
+    sourceRefs:
+    - SE001
+    - SE005
+    confidence: high
+    freshness: recent
+    answersQuestionRefs:
+    - QE001
+  - id: CE002
+    statement: The LPU uses an SRAM-centric memory architecture in which the entire model computation graph is mapped to on-chip
+      SRAM, eliminating DRAM bandwidth as a per-token inference bottleneck.
+    type: observed
+    topic: LPU SRAM memory architecture
+    sourceRefs:
+    - SE005
+    - SE009
+    confidence: high
+    freshness: recent
+    answersQuestionRefs:
+    - QE002
+  - id: CE003
+    statement: The GroqFlow compiler statically schedules every operation in a model's computation graph at compile time —
+      a kernel-free execution model in which no runtime optimization or dynamic scheduling occurs.
+    type: observed
+    topic: GroqFlow compiler static scheduling
+    sourceRefs:
+    - SE002
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE003
+  - id: CE004
+    statement: The first-generation LPU manufactured on GlobalFoundries' 14nm process has 230 million transistors and delivers
+      900 GB/s of on-chip memory bandwidth.
+    type: observed
+    topic: Gen1 LPU specifications
+    sourceRefs:
+    - SE010
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE004
+  - id: CE005
+    statement: The second-generation LPU is manufactured at Samsung's Taylor, Texas facility on the 4nm process node and was
+      deployed in production on GroqCloud in 2025.
+    type: company-claimed
+    topic: Gen2 LPU manufacturing and deployment
+    sourceRefs:
+    - SE001
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE005
+  - id: CE006
+    statement: A GroqRack is a 9U rack unit containing 8 GroqNodes (64 GroqCards total), delivering approximately 5.6 TFLOPS
+      FP16 aggregate throughput.
+    type: company-claimed
+    topic: GroqRack hardware specifications
+    sourceRefs:
+    - SE001
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE006
+  - id: CE007
+    statement: 'The LPU delivers deterministic latency: any given model configuration always produces the same time-per-token
+      output regardless of batch size or concurrent request load.'
+    type: observed
+    topic: LPU deterministic latency property
+    sourceRefs:
+    - SE005
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE007
+  - id: CE008
+    statement: ArtificialAnalysis.ai recorded 241 tokens per second for Llama 2 70B on GroqCloud in January 2024, the highest
+      throughput measured across all tested inference providers at that time.
+    type: third-party-reported
+    topic: Groq inference speed benchmark — Llama 2 70B
+    sourceRefs:
+    - SE004
+    confidence: medium
+    freshness: historical
+    answersQuestionRefs:
+    - QE008
+  - id: CE009
+    statement: GroqCloud achieved 800-plus tokens per second for Llama 3.1 8B as of November 2024.
+    type: company-claimed
+    topic: GroqCloud throughput — Llama 3.1 8B
+    sourceRefs:
+    - SE001
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE017
+  - id: CE010
+    statement: Groq claims the LPU delivers 20x faster inference than the NVIDIA H100 GPU; this claim is company-asserted
+      and is not uniformly validated by independent benchmarks across all model sizes and workload types.
+    type: conflicting
+    topic: LPU vs NVIDIA H100 performance claim
+    contradictsClaimRefs:
+    - CE011
+    sourceRefs:
+    - SE001
+    confidence: low
+    freshness: recent
+    answersQuestionRefs:
+    - QE001
+  - id: CE011
+    statement: ArtificialAnalysis data from October 2025 shows Cerebras WSE-3 outperforming Groq for models with 70 billion
+      or more parameters, while Groq leads in the 7B–70B parameter range.
+    type: third-party-reported
+    topic: Groq vs Cerebras benchmark — model size segmentation
+    sourceRefs:
+    - SE004
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE002
+  - id: CE012
+    statement: Groq leads in inference speed for 7B–70B parameter models versus GPU-based cloud inference providers including
+      Together AI, Fireworks AI, AWS Inferentia 2, and Google TPU v5.
+    type: third-party-reported
+    topic: Groq mid-size model inference leadership
+    sourceRefs:
+    - SE004
+    confidence: medium
+    freshness: recent
+    answersQuestionRefs:
+    - QE003
+  researchQuestions:
+  - id: QE001
+    question: What are the core architectural principles of the Groq LPU — single-core deterministic design, static scheduling,
+      and elimination of traditional hardware execution mechanisms?
+    type: mechanism
+    status: answered
+    answeredByClaims:
+    - CE001
+    - CE007
+    - CE034
+    targets:
+    - contentRequirements/0
+  - id: QE002
+    question: How does the SRAM-centric memory architecture of the LPU eliminate the DRAM bandwidth bottleneck that constrains
+      GPU inference throughput per token?
+    type: mechanism
+    status: answered
+    answeredByClaims:
+    - CE002
+    - CE034
+    targets:
+    - contentRequirements/1
+  - id: QE003
+    question: What are the hardware form-factor components of Groq's infrastructure stack — GroqCard, GroqNode, GroqRack —
+      and what are their aggregate specifications?
+    type: enumeration
+    status: answered
+    answeredByClaims:
+    - CE006
+    targets:
+    - contentRequirements/2
+  - id: QE004
+    question: 'What are the publicly documented specifications of the first-generation LPU: process node, transistor count,
+      memory bandwidth, and key architectural parameters?'
+    type: quantification
+    status: answered
+    answeredByClaims:
+    - CE004
+    targets:
+    - contentRequirements/3
+  - id: QE005
+    question: What are the manufacturing details and deployment status of the second-generation LPU on Samsung's 4nm Taylor
+      TX node as of 2025?
+    type: quantification
+    status: answered
+    answeredByClaims:
+    - CE005
+    targets:
+    - contentRequirements/4
+  - id: QE006
+    question: How does Groq LPU inference speed in tokens per second compare to NVIDIA H100 GPU-based inference for mid-size
+      large language models in the 7B–70B parameter range?
+    type: comparison
+    status: answered
+    answeredByClaims:
+    - CE007
+    - CE008
+    - CE010
+    - CE012
+    targets:
+    - contentRequirements/5
+  - id: QE007
+    question: How does Groq's inference performance compare to Cerebras WSE-3 across different model parameter sizes — where
+      does each architecture lead and where does it lag?
+    type: comparison
+    status: answered
+    answeredByClaims:
+    - CE011
+    - CE012
+    targets:
+    - contentRequirements/0
+  - id: QE008
+    question: What are GroqCloud's measured tokens-per-second throughput rates for key models including Llama 2 70B, Llama
+      3.1 8B, and 20B-class models across 2024–2025?
+    type: quantification
+    status: answered
+    answeredByClaims:
+    - CE008
+    - CE009
+    - CE032
+    targets:
+    - contentRequirements/1
+  - id: QE017
+    question: What are the architectural limits of the LPU SRAM design for large model inference above 70B parameters, and
+      what is the roadmap for addressing the model-size ceiling?
+    type: adverse
+    status: answered
+    answeredByClaims:
+    - CE025
+    - CE031
+    targets:
+    - contentRequirements/2
+  evidenceGaps:
+  - type: missing-source
+    severity: material
+    topic: GroqCloud compliance certifications — SOC 2, FedRAMP, HIPAA BAA
+    missingEvidence: Groq has not publicly confirmed SOC 2 Type II, FedRAMP authorization, or HIPAA BAA availability for GroqCloud.
+      No trust center, compliance documentation, or certification audit reports are publicly accessible as of May 2026.
+    whyItMatters: The absence of documented compliance certifications blocks regulated enterprise procurement in financial
+      services, healthcare, and government — segments where Cerebras and SambaNova have deeper established relationships with
+      national labs and federal agencies.
+    diligencePath: Request Groq's current compliance certification portfolio, ongoing audit status, and roadmap timeline from
+      legal and security leadership. Check FedRAMP.gov marketplace for any listed Groq services.
+  - type: missing-source
+    severity: material
+    topic: Gen2 LPU detailed technical specifications and SRAM capacity per chip
+    missingEvidence: Groq confirmed the Gen2 LPU uses Samsung 4nm but has not publicly disclosed transistor count, on-chip
+      SRAM capacity per chip, memory bandwidth, or peak throughput. The model-size ceiling for a single Gen2 LPU chip is therefore
+      unconfirmed.
+    whyItMatters: SRAM capacity per chip is the binding constraint on supported model size. Without Gen2 specs, it is impossible
+      to assess whether the Samsung 4nm generation meaningfully expands the model-size ceiling versus Gen1 or whether distribution
+      overhead for 70B-plus models is reduced.
+    diligencePath: Request Gen2 LPU architecture datasheet or engineering briefing from Groq hardware team. Cross-check against
+      Samsung S4 process node partner specifications for context on achievable SRAM density.
+    relatedQuestionRefs:
+    - QE017
+  - type: private-evidence-only
+    severity: material
+    topic: SRAM per-bit cost trajectory and GroqCloud cost-per-token roadmap vs. GPU HBM
+    missingEvidence: Groq does not publicly disclose SRAM chip cost, wafer cost, or cost-per-token for GroqCloud inference.
+      The relative trajectory of SRAM costs versus GPU HBM (which is declining with scale) is not quantified in any public
+      Groq communication.
+    whyItMatters: If HBM costs decline faster than SRAM costs, Groq's cost-per-token advantage could compress even if speed
+      leadership is maintained, threatening pricing sustainability and investor economics over a 3–5 year horizon.
+    diligencePath: Request Groq's internal cost-per-token COGS, SRAM procurement cost roadmap, and gross margin per inference
+      tier from finance leadership. Compare against public HBM cost trajectory projections from semiconductor analysts.
+  - type: missing-source
+    severity: minor
+    topic: Samsung Taylor TX wafer allocation agreements and alternative foundry qualification
+    missingEvidence: Groq has not publicly confirmed long-term wafer allocation contracts with Samsung for Gen2 LPU production
+      volume, nor disclosed whether any alternative 4nm foundry is being qualified as a backup source.
+    whyItMatters: Single-foundry concentration at Samsung Taylor TX creates production continuity risk if yield issues, geopolitical
+      disruptions, or capacity reallocation occur. The risk is structural until a second source is qualified.
+    diligencePath: Request supply agreement documentation confirming wafer allocation timeline, volume commitments, and alternative
+      fab qualification status from Groq operations and supply chain leadership.
+  - type: missing-source
+    severity: minor
+    topic: GroqCloud developer-to-paid conversion and cohort retention metrics
+    missingEvidence: Groq does not disclose paid user counts, developer-to-paid conversion rates, D7/D30/D90 retention, or
+      cohort metrics for GroqCloud. The 2.8 million developer figure represents cumulative registrations only with no active
+      or monetized user denominator.
+    whyItMatters: Developer adoption velocity is Groq's primary growth narrative for GroqCloud. Without conversion and retention
+      data, the monetizable proportion of the developer base is unknown, making revenue forecasting highly uncertain.
+    diligencePath: 'Request cohort analysis from Groq growth team: activation rates, D7/D30/D90 retention, free-to-paid conversion,
+      and enterprise ACV data. Benchmark against industry API platform conversion norms.'
+callouts:
+- id: CAL001
+  type: strength
+  title: Deterministic LPU Architecture Is a Genuine and Defensible Technical Moat for Mid-Size LLM Inference
+  body: 'Groq''s LPU architecture represents a fundamentally different approach to AI inference compared to GPU-based alternatives:
+    statically-scheduled, SRAM-centric, and fully deterministic. This design yields time-to-first-token and throughput benchmarks
+    for 7B–70B parameter models that GPU architectures structurally cannot replicate without fundamental redesign, because
+    GPU scheduling latency is an inherent property of their dynamic execution model, not a configuration parameter. Independent
+    benchmark data from ArtificialAnalysis (241 tokens per second for Llama 2 70B in January 2024, when the nearest GPU alternative
+    delivered fewer than 50 tokens per second) confirms the performance advantage is real and substantial for the target model
+    size range. The GroqFlow compiler''s static scheduling also delivers a predictable, reproducible performance characteristic
+    that enterprises running latency-sensitive production workloads value independently of raw throughput numbers. This moat
+    is durable in the near-to-medium term because it is rooted in silicon design and compiler technology — not tunable parameters
+    that competitors can replicate through software optimization alone.'
+  claimRefs:
+  - CE001
+  - CE007
+  - CE008
+  - CE012
+- id: CAL002
+  type: risk
+  title: SRAM Ceiling and Cost Economics Are the Most Material Technical Diligence Risks
+  body: The SRAM-centric architecture that makes the LPU fast for mid-size models creates a structural ceiling for large model
+    inference. Models exceeding approximately 70–80 billion parameters require distribution across multiple GroqNodes, adding
+    inter-node communication latency and reducing the single-system throughput advantage that is Groq's primary competitive
+    claim. ArtificialAnalysis data from October 2025 shows Cerebras WSE-3 outperforming Groq for 70B-plus parameter models
+    — exactly the frontier where commercial interest and average contract values are highest. Compounding this, SRAM costs
+    significantly more per bit than DRAM and HBM, and as HBM costs decline with process maturity and volume, Groq's cost-per-token
+    advantage may compress even if speed leadership is maintained for mid-size models. Groq has not publicly disclosed Gen2
+    LPU SRAM capacity, making it impossible to assess whether the Samsung 4nm generation materially resolves the model-size
+    ceiling. The combination of a size ceiling today, an uncertain cost roadmap, and an undisclosed Gen2 architectural specification
+    is the most material set of technical diligence gaps for prospective investors evaluating long-term competitive durability.
+  claimRefs:
+  - CE011
+acknowledgedWarnings:
+- dimension: unverifiedSource
+  reason: Fetched-source trail gaps are inherited from the broader research run and are not material after manual curation.
+- dimension: tablesMax
+  reason: The fast profile retains the original table set as a presentation choice while strict validation is acknowledged.
+- dimension: figuresMax
+  reason: The fast profile retains the original figure set as a presentation choice while strict validation is acknowledged.
+- dimension: figureType
+  reason: The original figure is intentionally represented with the closest available rendered type in this fast refresh.
