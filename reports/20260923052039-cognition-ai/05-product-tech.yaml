@@ -1,0 +1,868 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: cognition-ai
+runDate: '2026-09-23'
+company:
+  name: Cognition AI
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: "Cognition AI delivers Devin, a cloud-hosted autonomous AI software engineer, and Windsurf, an agentic IDE acquired\
+    \ in July 2025. Devin's agent runtime executes multi-step software tasks\u2014planning, coding, testing, and deploying\u2014\
+    inside isolated sandbox environments, metered in Agent Compute Units. The original Devin scored 13.86% on SWE-bench (2024),\
+    \ far above the 1.96% prior state-of-the-art; Devin 2.0 (April 2025) improved per-ACU task efficiency by 83%. The platform\
+    \ integrates with GitHub, Jira, Slack, and MCP-connected tooling, and offers VPC deployment for enterprise. A live-streamed\
+    \ security vulnerability in late 2024 exposed gaps in prompt-injection defenses that were subsequently patched. No public\
+    \ SOC 2 certification has been disclosed.\n"
+sections:
+- id: SE-product-definition
+  title: Product Definition and Customer Workflow
+  body: "Cognition AI offers two core products: Devin, a cloud-hosted autonomous AI software engineer, and Windsurf, an agentic\
+    \ IDE for local and cloud-assisted development. Devin accepts natural-language task descriptions\u2014submitted via the\
+    \ web dashboard, Slack, Linear, or Jira\u2014and executes full end-to-end software engineering tasks autonomously: planning\
+    \ the approach, writing and modifying code, running tests, iterating on failures, and opening pull requests with reviewable\
+    \ diffs and confidence indicators. Unlike code-completion tools (GitHub Copilot, Cursor), Devin takes ownership of entire\
+    \ tasks rather than assisting a human in writing individual lines.\nIn a typical enterprise workflow, a developer or engineering\
+    \ manager assigns a Jira ticket or Slack message to Devin. Devin reads the ticket, explores the repository context using\
+    \ its DeepWiki server, sets up the necessary environment, writes the implementation, runs the test suite, and reports\
+    \ back with a pull request. The PR includes Devin's internal trace of decisions for human review. The Devin 2.0 release\
+    \ added a confidence meter that quantifies the probability of task success before committing, allowing teams to triage\
+    \ tasks efficiently. Devin can handle tasks concurrently across multiple sessions, enabling teams to delegate entire sprint\
+    \ backlogs rather than individual tickets.\nWindsurf IDE complements Devin by providing a local development environment\
+    \ with AI Cascade agent integration. Developers can start a coding session locally in Windsurf and hand off complex, compute-intensive\
+    \ work to Devin in the cloud mid-session, with state preserved across the transition. The \"Devin in Windsurf\" feature\
+    \ announced in April 2026 formalizes this local-to-cloud handoff workflow. Together, the two products target the full\
+    \ developer lifecycle: Windsurf for daily coding assistance and Devin for delegated autonomous task execution.\n"
+  tableRefs:
+  - TE001
+  figureRefs:
+  - FE001
+  claimRefs:
+  - CE001
+- id: SE-product-map
+  title: Product and Technology Map
+  body: "Cognition AI's product portfolio as of May 2026 comprises four distinct product units: (1) Devin Core/Pro/Max/Enterprise\u2014\
+    cloud agent plans for individual, team, and enterprise customers; (2) Windsurf IDE\u2014the agentic desktop IDE with Cascade\
+    \ AI agent, acquired from Codeium in July 2025; (3) the Devin API\u2014a RESTful API for programmatic session creation\
+    \ and CI/CD pipeline automation; and (4) Windsurf Enterprise\u2014the enterprise tier of the IDE with SSO, centralized\
+    \ billing, and advanced admin controls. A fifth element, Windsurf Codemaps, is an AI-annotated structured codebase map\
+    \ powered by SWE-1.5 and Claude Sonnet 4.5, enabling rapid onboarding and debugging by grounding navigation to exact lines\
+    \ and visual node graphs.\nThe April 2026 plan revision retired the original Core and Team plans, replacing them with\
+    \ a five-tier structure: Free (limited ACUs), Pro, Max, Teams, and Enterprise. This signals a land-and-expand strategy:\
+    \ the Free tier provides entry-level exposure for individual developers and bootcamp students, while Pro and Max serve\
+    \ power users, and Teams/Enterprise capture organizational deployment. SWE-Check, introduced in collaboration with Applied\
+    \ Compute in April 2026, is a specialized bug detection model trained via reinforcement learning that matches Opus 4.6\
+    \ on internal evals while running approximately 10x faster\u2014positioned as a cost-efficient quality gate within the\
+    \ Devin agent loop.\nThe company's in-house model, SWE-1.5, powers both SWE-Check and Windsurf Codemaps, representing\
+    \ Cognition's first proprietary model release beyond the Devin runtime ensemble. All products are delivered cloud-first,\
+    \ with VPC deployment available for enterprise customers requiring on-premise or isolated cloud infrastructure. The Devin\
+    \ for Terminal feature, released in 2026, enables developers to start agent sessions from their local terminal and escalate\
+    \ to the cloud when the task outgrows local resources, bridging the CLI and cloud deployment modes.\n"
+  tableRefs:
+  - TE002
+  claimRefs:
+  - CE001
+- id: SE-architecture
+  title: Technical Architecture and Agent Runtime
+  body: "Devin's core technical architecture centers on an agent runtime that manages long-horizon planning and multi-step\
+    \ execution within a sandboxed cloud environment. The agent receives a natural-language task specification and decomposes\
+    \ it into an ordered sequence of sub-steps: repository exploration, environment setup, implementation, test execution,\
+    \ and pull request creation. At each step, the agent calls specialized tools\u2014a code editor, a Unix shell, and a headless\
+    \ browser\u2014 within an isolated compute container that prevents lateral access to other sessions or customer data.\
+    \ This sandboxed design separates Devin's execution context from the customer's production environment, with code changes\
+    \ surfaced only through pull requests that require human approval before merge.\nThe DeepWiki server enables large-codebase\
+    \ comprehension by building vectorized project graphs that represent relationships between files, functions, and modules.\
+    \ This graph-based representation allows Devin to navigate million-line codebases more effectively than purely token-based\
+    \ context windows. BlockDiff snapshotting records incremental state checkpoints during task execution, enabling rapid\
+    \ rollback when a test fails or an approach is abandoned. These two features\u2014DeepWiki and BlockDiff\u2014are among\
+    \ Cognition's most differentiating technical capabilities, as they address the two primary failure modes of LLM-based\
+    \ coding agents: context loss in large repositories and unrecoverable error cascades.\nThe proprietary SWE-1.5 model,\
+    \ released in 2025-2026, underlies SWE-Check and Windsurf Codemaps. It was trained via reinforcement learning specifically\
+    \ for software engineering tasks, contrasting with the general-purpose LLMs used as base layers in most competitor products.\
+    \ The agent runtime also supports Model Context Protocol (MCP), allowing Devin to connect to external tooling including\
+    \ Sentry, Datadog, PostgreSQL, MongoDB, Notion, and hundreds of other services through an extensible plugin marketplace.\
+    \ ACUs (Agent Compute Units) are the metered token of computation consumed per task, priced at approximately $2.25 per\
+    \ ACU with plan-included allocations varying by tier.\n"
+  tableRefs:
+  - TE003
+  claimRefs:
+  - CE001
+- id: SE-deployment-integration
+  title: Deployment, Integration, and Reliability
+  body: 'Devin supports two primary deployment modes: cloud-hosted (the default, operating in Cognition-managed infrastructure)
+    and VPC deployment for enterprise customers requiring data residency, network isolation, or regulatory compliance. VPC
+    mode allows Devin to operate within the customer''s AWS, GCP, or Azure environment, eliminating the need to transmit source
+    code to Cognition''s servers. Custom-trained Devin instances are available at the enterprise tier, allowing customers
+    to fine-tune the agent on their proprietary codebases and internal conventions.
+
+    The platform integrates natively with GitHub, GitLab, and Bitbucket for source control (PR creation, code review automation,
+    branch management); with Jira and Linear for ticket assignment and status tracking; and with Slack and Microsoft Teams
+    for communication-channel session initiation and progress reporting. The REST API enables programmatic session management
+    for CI/CD pipelines, allowing engineering organizations to trigger Devin sessions automatically on specific events (e.g.,
+    failing test suite, customer bug report). The MCP Marketplace extends integration to monitoring platforms (Sentry, Datadog,
+    PagerDuty), databases (PostgreSQL, MySQL, MongoDB), and documentation tools (Notion, Confluence). The Windsurf IDE integrates
+    Cascade AI agent locally and the "Devin in Windsurf" handoff for cloud-based tasks.
+
+    Reliability is not formally disclosed through uptime SLAs or status page data in Cognition''s public materials. Task execution
+    time is bounded by a 45-minute maximum runtime per session, though tasks can be broken into sequential sub-sessions for
+    longer projects. The confidence meter in Devin 2.0 provides a pre-execution estimate of task success probability, enabling
+    teams to filter out low-probability tasks before consuming ACUs. These quality controls reduce waste but also signal that
+    Devin''s reliability on complex tasks remains probabilistic rather than guaranteed.
+
+    '
+  claimRefs:
+  - CE001
+- id: SE-differentiation
+  title: Technology Differentiation and Competitive Moats
+  body: 'Cognition AI''s primary technical differentiator is the end-to-end autonomous task ownership model: Devin does not
+    suggest code for a human to accept or reject, but independently plans, executes, and delivers a complete task artifact.
+    This positions Devin against code-completion tools (GitHub Copilot, Cursor, Claude Code) rather than as a marginal improvement
+    over them. The SWE-bench Full score of 13.86% set a new state-of-the-art for unassisted autonomous agents in March 2024,
+    exceeding the prior best of 1.96% by 7x and exceeding the prior assisted SOTA of 4.80% by 3x. Devin''s PR acceptance rate
+    showed a consistent positive trend of +0.77% per week over 32 weeks, the only agent in a comparative 7,156-PR study to
+    exhibit sustained improvement (Arxiv, 2026).
+
+    The in-house SWE-1.5 model and SWE-Check tool represent Cognition''s nascent vertical integration in model training. Most
+    competitor AI coding agents (GitHub Copilot, Cursor, Windsurf pre-acquisition) are built on top of third-party foundation
+    models (GPT-4, Claude, Gemini), giving those providers structural leverage over tool vendors. By training SWE-1.5 for
+    software engineering tasks specifically, Cognition is building a model layer that is not dependent on API pricing from
+    OpenAI or Anthropic for its most specialized use cases. The Windsurf acquisition added significant IP: the Cascade agentic
+    workflow engine, the Windsurf IDE user base, and 350+ enterprise accounts, accelerating the product suite without requiring
+    multi-year IDE development.
+
+    Data flywheel advantages are present but not publicly quantified. Each Devin task generates execution traces that can
+    be used to fine-tune future model versions. As enterprise customers use custom-trained Devin instances on their proprietary
+    codebases, Cognition accumulates task-specific performance data that competitors without the same enterprise relationship
+    cannot easily replicate. The DeepWiki codebase graph representation and BlockDiff snapshotting are proprietary engineering
+    innovations that provide functional advantages in large-codebase contexts where pure-attention LLMs lose coherence.
+
+    '
+  claimRefs:
+  - CE001
+- id: SE-trust-safety
+  title: Trust, Safety, Security, and Compliance
+  body: "Devin's primary security architecture relies on sandboxed compute isolation: each session runs in an ephemeral container\
+    \ with no access to other sessions or the customer's production environment unless explicitly granted through integration\
+    \ credentials. Code changes are surfaced as pull requests requiring human approval, and the Devin execution trace provides\
+    \ an auditable log of every shell command, file edit, and API call made during the session. VPC deployment adds an additional\
+    \ isolation layer by keeping source code within the customer's own cloud perimeter.\nA significant security incident emerged\
+    \ in late 2024 when a live-streamed demonstration exposed a major vulnerability in Devin's system prompt handling\u2014\
+    effectively allowing prompt-injection attacks to manipulate Devin's behavior. Cognition acknowledged the issue and patched\
+    \ it rapidly, but the incident highlighted the inherent risks of deploying autonomous agents that can execute shell commands\
+    \ based on text inputs. Hacker News commentary characterized the failure as \"amateurish given the severity,\" noting\
+    \ that prompt-injection defenses should have been a first-priority security control for an agent with shell execution\
+    \ capabilities.\nCognition has not publicly disclosed SOC 2 Type II certification, ISO 27001, or equivalent enterprise\
+    \ security certifications as of May 2026. The trust.devin.ai subdomain exists but returned limited public information\
+    \ at time of research. Enterprise customers relying on VPC deployment and custom-trained models are likely subject to\
+    \ separate security agreements, but these are not publicly auditable. Data privacy and retention policies for code executed\
+    \ in Devin sessions are not fully disclosed in Cognition's public-facing documentation, representing a material compliance\
+    \ gap for financial-services and regulated-industry customers. The Mercedes-Benz and Goldman Sachs partnerships suggest\
+    \ compliance barriers have been addressed in custom agreements, but without public disclosure, independent assessment\
+    \ is not possible.\n"
+  claimRefs:
+  - CE001
+tables:
+- id: TE001
+  title: Product/SKU map table
+  columns:
+  - Product
+  - Delivery Mode
+  - Target User
+  - Key Features
+  - Pricing Tier
+  - Launched
+  rows:
+  - - Devin Free
+    - Cloud agent
+    - Individual dev
+    - Limited ACUs, web dashboard, basic integrations
+    - Free
+    - Apr 2026
+  - - Devin Pro
+    - Cloud agent
+    - Individual dev
+    - More ACUs, API access, confidence meter
+    - Paid ($20/mo base)
+    - Apr 2025
+  - - Devin Max
+    - Cloud agent
+    - Power user
+    - High ACU pool, priority queue
+    - Paid (custom)
+    - Apr 2026
+  - - Devin Teams
+    - Cloud agent
+    - Dev teams
+    - Shared ACU pool, team management, Slack/Jira integration
+    - Team pricing
+    - '2025'
+  - - Devin Enterprise
+    - Cloud or VPC
+    - Enterprise org
+    - VPC deploy, custom-trained Devin, dedicated support
+    - Custom contract
+    - '2024'
+  - - Windsurf IDE (Free/Pro)
+    - Desktop IDE
+    - Individual dev
+    - Cascade AI agent, in-editor completions, Codemaps
+    - Free/$15/mo
+    - '2024'
+  - - Windsurf Enterprise
+    - Desktop IDE + cloud
+    - Enterprise org
+    - SSO, centralized billing, enterprise support
+    - Custom contract
+    - '2024'
+  - - Devin API
+    - REST API
+    - DevOps/CI
+    - Programmatic session management, CI/CD integration
+    - Included in paid plans
+    - '2025'
+  claimRefs:
+  - CE001
+  - CE008
+  - CE009
+  sourceRefs:
+  - SE001
+  - SE004
+  - SE013
+  - SE024
+  notes: Plan structure as of May 2026 research date; April 2026 plan refresh replaced legacy Core/Team plans with Free/Pro/Max/Teams/Enterprise
+    structure.
+- id: TE002
+  title: Integration ecosystem table
+  columns:
+  - Category
+  - Platform
+  - Integration Type
+  - Capability
+  - Status
+  rows:
+  - - Source control
+    - GitHub
+    - Native
+    - PR creation, repo access, issue tracking
+    - GA
+  - - Source control
+    - GitLab
+    - Native
+    - Branch management, MR creation
+    - GA
+  - - Source control
+    - Bitbucket
+    - Native
+    - PR creation, code contribution
+    - GA
+  - - Project management
+    - Jira
+    - Native
+    - Ticket assignment, status sync
+    - GA
+  - - Project management
+    - Linear
+    - Native
+    - Issue tracking, sprint delegation
+    - GA
+  - - Communication
+    - Slack
+    - Native
+    - Session initiation, progress updates
+    - GA
+  - - Communication
+    - Microsoft Teams
+    - Native
+    - Session initiation, notifications
+    - GA
+  - - Monitoring
+    - Sentry / Datadog / PagerDuty
+    - MCP
+    - Alert-triggered sessions, log context
+    - MCP marketplace
+  - - Databases
+    - PostgreSQL / MySQL / MongoDB
+    - MCP
+    - Read/write access for data tasks
+    - MCP marketplace
+  - - Documentation
+    - Notion / Confluence
+    - MCP
+    - Context retrieval for tasks
+    - MCP marketplace
+  claimRefs:
+  - CE005
+  - CE006
+  - CE007
+  sourceRefs:
+  - SE007
+  - SE001
+  - SE004
+  notes: MCP Marketplace integrations are third-party configured; availability depends on customer configuration. Native integrations
+    are Cognition-maintained.
+- id: TE003
+  title: SWE-bench performance comparison table
+  columns:
+  - Agent / Model
+  - Benchmark Version
+  - Score (% Resolved)
+  - Evaluation Mode
+  - Date
+  - Source
+  rows:
+  - - Devin (Cognition AI)
+    - Full (25% subset)
+    - 13.86%
+    - Unassisted
+    - Mar 2024
+    - Cognition AI blog
+  - - Prior SOTA (best LLM)
+    - Full
+    - 1.96%
+    - Unassisted
+    - Mar 2024
+    - SWE-bench leaderboard
+  - - Best assisted LLM
+    - Full
+    - 4.80%
+    - Assisted (files given)
+    - Mar 2024
+    - SWE-bench leaderboard
+  - - SWE-agent (open source)
+    - Lite
+    - 12.47%
+    - Unassisted
+    - Mar 2024
+    - SWE-bench / Princeton
+  - - Claude Code (Opus 4)
+    - Verified (500)
+    - 72.5%
+    - Unassisted
+    - '2025'
+    - Anthropic
+  - - mini-SWE-agent
+    - Verified (500)
+    - 65%
+    - Unassisted
+    - Jul 2025
+    - SWE-bench update
+  - - Devin PR acceptance trend
+    - AIDev dataset (7,156 PRs)
+    - +0.77%/week
+    - Real-world PRs
+    - 32 weeks
+    - Arxiv 2026
+  claimRefs:
+  - CE002
+  sourceRefs:
+  - SE003
+  - SE006
+  - SE010
+  - SE011
+  - SE020
+  notes: Different benchmark versions (Full vs. Verified vs. Lite) are not directly comparable. Cognition's 13.86% used a
+    25% random subset of the Full benchmark. Claude Code's 72.5% uses the 500-instance Verified subset.
+figures:
+- id: FE001
+  title: Devin and Windsurf product architecture stack
+  type: stack
+  claimRefs:
+  - CE003
+  - CE010
+  sourceRefs:
+  - SE001
+  - SE002
+  data:
+    layers:
+    - label: User surfaces
+      detail: Web dashboard, Slack, Jira, Linear, GitHub, and Windsurf IDE entry points for task initiation and coding workflows
+    - label: Agent orchestration
+      detail: Planning, decomposition, confidence scoring, and multi-session coordination inside Devin runtime
+    - label: Execution substrate
+      detail: Sandboxed code execution, test runs, browser access, and PR generation with execution trace
+    - label: Knowledge + tooling
+      detail: DeepWiki repository graph, BlockDiff rollback, MCP integrations, and API automation
+    - label: Deployment modes
+      detail: Cloud-hosted default plus enterprise VPC deployment and custom-trained instances
+    - label: Safety and controls
+      detail: Prompt-injection mitigations, human approval gates, and auditable change logs
+  summary: Layered stack showing Cognition AI's product surfaces, orchestration, tooling, deployment, and security controls.
+localEvidence:
+  searchQueries:
+  - query: "\"Cognition AI\" Net Revenue Retention (NRR) by cohort: undisclosed; the single most critical metric for validating\
+      \ ARR quality at $10.2B valuation; must be \u2265110% to justify premium 2026"
+    engine: search-web
+    hits: null
+    retainedSourceRefs:
+    - SE001
+    - SE002
+    - SE003
+  - query: '"Cognition AI" architecture libSQL SQLite benchmarks documentation'
+    engine: search-web
+    hits: null
+    retainedSourceRefs:
+    - SE001
+    - SE002
+    - SE003
+  - query: '"Cognition AI" open source GitHub database technical design'
+    engine: search-web
+    hits: null
+    retainedSourceRefs:
+    - SE001
+    - SE002
+    - SE003
+  sources:
+  - id: SE001
+    publisher: Devin (Official Documentation)
+    title: Introducing Devin, the first AI software engineer
+    url: https://cognition.com/blog/introducing-devin
+    accessDate: '2026-09-23'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - product
+    - architecture
+    - integrations
+    - deployment
+  - id: SE002
+    publisher: Cognition AI (Official)
+    title: 'URL Source: https://www.reddit.com/r/singularity/comments/1bcyqup/cognition_labs_today_were_excited_to_introduce/'
+    url: https://www.reddit.com/r/singularity/comments/1bcyqup/cognition_labs_today_were_excited_to_introduce/
+    accessDate: '2026-09-23'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - product-launch
+    - capabilities
+    - architecture
+    - SWE-bench
+  - id: SE003
+    publisher: Cognition AI (Official)
+    title: What is Cognition Labs' Devin? Explore 5 More AI Tools That Disrupt Industries
+    url: https://boardmix.com/reviews/cognition-labs-devin/
+    accessDate: '2026-09-23'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - benchmark
+    - SWE-bench
+    - evaluation
+    - methodology
+  - id: SE004
+    publisher: Devin (Official)
+    title: Introducing Devin, the first AI software engineer
+    url: https://www.cognition.ai/blog/introducing-devin
+    accessDate: '2026-09-23'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - product
+    - capabilities
+    - pricing
+    - enterprise
+  - id: SE005
+    publisher: Cognition AI (GitHub)
+    title: Vercel Security Checkpoint
+    url: https://exa.ai/websets/directory/cognition-funding
+    accessDate: '2026-09-23'
+    accessStatus: ok
+    stance: confirming
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: company
+    topics:
+    - benchmark
+    - open-source
+    - SWE-bench
+    - developer-signal
+  - id: SE006
+    publisher: SWE-bench (Princeton / CMU)
+    title: About | Cognition
+    url: https://cognition.ai/about
+    accessDate: '2026-09-23'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: independent
+    topics:
+    - benchmark
+    - leaderboard
+    - evaluation
+    - methodology
+  - id: SE007
+    publisher: Devin (Official Documentation)
+    title: Devin | The AI Software Engineer
+    url: https://www.cognition.ai/devin
+    accessDate: '2026-09-23'
+    accessStatus: ok
+    stance: confirming
+    sourceType: technical-docs
+    reputationTier: high
+    independence: company
+    topics:
+    - integrations
+    - GitHub
+    - Jira
+    - Slack
+    - MCP
+    - API
+  - id: SE008
+    publisher: imseankim.com (Developer Blog)
+    title: Funding, growth, and the next frontier of AI coding agents
+    url: https://cognition.ai/blog/funding-growth-and-the-next-frontier-of-ai-coding-agents
+    accessDate: '2026-09-23'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics:
+    - product-review
+    - Devin-2
+    - pricing
+    - benchmark
+    - developer-experience
+  - id: SE009
+    publisher: Hacker News (Y Combinator)
+    title: Introducing Devin, the first AI software engineer
+    url: https://cognition.com/blog/introducing-devin
+    accessDate: '2026-09-23'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics:
+    - developer-sentiment
+    - product-evaluation
+    - capabilities
+    - limitations
+  - id: SE010
+    publisher: Benched.ai
+    title: 'URL Source: https://www.reddit.com/r/singularity/comments/1bcyqup/cognition_labs_today_were_excited_to_introduce/'
+    url: https://www.reddit.com/r/singularity/comments/1bcyqup/cognition_labs_today_were_excited_to_introduce/
+    accessDate: '2026-09-23'
+    accessStatus: ok
+    stance: neutral
+    sourceType: analyst-market-data
+    reputationTier: medium
+    independence: independent
+    topics:
+    - benchmark
+    - comparison
+    - coding-agents
+    - market-analysis
+  - id: SE011
+    publisher: arxiv.org / MSR 2026
+    title: What is Cognition Labs' Devin? Explore 5 More AI Tools That Disrupt Industries
+    url: https://boardmix.com/reviews/cognition-labs-devin/
+    accessDate: '2026-09-23'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: high
+    independence: independent
+    topics:
+    - benchmark
+    - PR-acceptance
+    - agent-comparison
+    - empirical-study
+  - id: SE012
+    publisher: Artificial Analysis
+    title: Introducing Devin, the first AI software engineer
+    url: https://www.cognition.ai/blog/introducing-devin
+    accessDate: '2026-09-23'
+    accessStatus: ok
+    stance: adverse
+    sourceType: analyst-market-data
+    reputationTier: high
+    independence: independent
+    topics:
+    - benchmark
+    - comparison
+    - coding-agents
+    - evaluation
+  claims:
+  - id: CE001
+    statement: "Devin is a cloud-hosted autonomous AI software engineer that accepts natural-language task specifications\
+      \ and executes complete software engineering tasks\u2014planning, coding, testing, and deploying\u2014without human\
+      \ intervention during execution."
+    type: company-claimed
+    topic: product-definition
+    sourceRefs:
+    - SE002
+    - SE004
+    confidence: medium
+    freshness: current
+  - id: CE002
+    statement: "In the original SWE-bench evaluation (March 2024), Devin resolved 13.86% of issues unassisted\u2014far exceeding\
+      \ the prior state-of-the-art of 1.96% for unassisted agents and 4.80% for assisted LLMs."
+    type: company-claimed
+    topic: benchmark
+    sourceRefs:
+    - SE003
+    - SE006
+    confidence: medium
+    freshness: historical
+  - id: CE003
+    statement: "Devin's agent runtime executes tasks within a sandboxed cloud environment equipped with a code editor, Unix\
+      \ shell, and headless browser\u2014isolated from other sessions and the customer's production environment."
+    type: company-claimed
+    topic: architecture
+    sourceRefs:
+    - SE002
+    - SE001
+    confidence: medium
+    freshness: current
+  - id: CE004
+    statement: Each Devin session is bounded by a maximum runtime of 45 minutes; longer tasks must be broken into sequential
+      sub-sessions.
+    type: company-claimed
+    topic: technical-spec
+    sourceRefs:
+    - SE003
+    - SE001
+    confidence: medium
+    freshness: current
+  - id: CE005
+    statement: Devin integrates natively with GitHub, GitLab, and Bitbucket for source control, enabling automated PR creation,
+      branch management, and code contributions.
+    type: company-claimed
+    topic: integrations
+    sourceRefs:
+    - SE007
+    - SE001
+    confidence: medium
+    freshness: current
+  - id: CE006
+    statement: Devin integrates natively with Jira and Linear for project management ticket assignment and sprint delegation.
+    type: company-claimed
+    topic: integrations
+    sourceRefs:
+    - SE007
+    - SE001
+    confidence: medium
+    freshness: current
+  - id: CE007
+    statement: Devin integrates natively with Slack and Microsoft Teams for session initiation via chat messages and progress
+      reporting.
+    type: company-claimed
+    topic: integrations
+    sourceRefs:
+    - SE007
+    - SE001
+    confidence: medium
+    freshness: current
+  - id: CE008
+    statement: Agent Compute Units (ACUs) are the proprietary metered compute token consumed per Devin task, priced at approximately
+      $2.25 per ACU with plan-included allocations varying by tier.
+    type: company-claimed
+    topic: product-definition
+    sourceRefs:
+    - SE004
+    - SE008
+    confidence: medium
+    freshness: current
+  - id: CE009
+    statement: Devin Enterprise tier offers VPC deployment allowing the agent to operate within customer-controlled cloud
+      infrastructure, and custom-trained Devin instances tuned to proprietary codebases.
+    type: company-claimed
+    topic: deployment
+    sourceRefs:
+    - SE001
+    - SE004
+    confidence: medium
+    freshness: current
+  - id: CE010
+    statement: "Devin accepts task inputs from multiple channels: web dashboard, Slack messages, Jira tickets, and Linear\
+      \ issues\u2014translating natural-language instructions into executable multi-step plans."
+    type: company-claimed
+    topic: product-definition
+    sourceRefs:
+    - SE001
+    - SE002
+    confidence: medium
+    freshness: current
+  - id: CE011
+    statement: Nubank achieved 12x engineering efficiency improvement and 20x cost savings using Devin to migrate a 6-million-line
+      ETL monolith; Data, Collections, and Risk business units completed migrations in weeks instead of months.
+    type: third-party-reported
+    topic: enterprise-use-case
+    sourceRefs:
+    - SE001
+    - SE002
+    confidence: medium
+    freshness: historical
+  - id: CE012
+    statement: SWE-Check, released April 2026 in collaboration with Applied Compute, is a reinforcement-learning-trained bug
+      detection model that matches Anthropic Opus 4.6 performance while running approximately 10x faster.
+    type: company-claimed
+    topic: product-feature
+    sourceRefs:
+    - SE002
+    confidence: medium
+    freshness: current
+  - id: CE013
+    statement: The DeepWiki server builds vectorized project graphs of entire codebases, enabling Devin to navigate and reason
+      about multi-million-line repositories beyond standard LLM context window limits.
+    type: company-claimed
+    topic: architecture
+    sourceRefs:
+    - SE001
+    - SE002
+    confidence: medium
+    freshness: current
+  - id: CE014
+    statement: The Windsurf acquisition (July 2025) added 350+ enterprise customers, 250,000+ daily active users, and the
+      Windsurf IDE product including its Cascade agentic workflow engine.
+    type: third-party-reported
+    topic: product-map
+    sourceRefs:
+    - SE001
+    - SE002
+    confidence: medium
+    freshness: historical
+  - id: CE015
+    statement: In late 2024, a live-streamed demonstration publicly exposed a major security vulnerability in Devin's system
+      prompt handling, potentially enabling prompt-injection attacks. Cognition acknowledged and patched the issue.
+    type: third-party-reported
+    topic: security
+    sourceRefs:
+    - SE009
+    confidence: medium
+    freshness: historical
+  - id: CE016
+    statement: Devin 2.0 (April 2025) achieved 83% more tasks completed per ACU compared to Devin v1.x, representing a significant
+      efficiency improvement for existing subscribers.
+    type: company-claimed
+    topic: product-improvement
+    sourceRefs:
+    - SE008
+    confidence: medium
+    freshness: historical
+  researchQuestions:
+  - id: QE001
+    question: What are all integration categories and specific tools that Devin supports natively and via MCP?
+    type: enumeration
+    targets:
+    - contentRequirements/3
+    status: answered
+    answerSummary: 'Native: GitHub, GitLab, Bitbucket, Jira, Linear, Slack, Teams. MCP Marketplace: Sentry, Datadog, PostgreSQL,
+      MySQL, MongoDB, Notion, Confluence + hundreds more.'
+  - id: QE002
+    question: What is Devin's SWE-bench resolution rate on the full benchmark versus competitors?
+    type: quantification
+    targets:
+    - contentRequirements/4
+    status: answered
+    answerSummary: 'Devin: 13.86% (2024, Full 25% subset unassisted). Prior SOTA: 1.96%. Claude Code Opus 4: 72.5% (SWE-bench
+      Verified 2025). mini-SWE-agent: 65% (Verified 2025). Note: different benchmark versions.'
+  - id: QE003
+    question: How does the Devin agent execution loop work end-to-end from task input to pull request output?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    status: answered
+    answerSummary: "Task input \u2192 agent planning \u2192 DeepWiki codebase exploration \u2192 sandboxed execution (code+test+iterate)\
+      \ \u2192 BlockDiff snapshot \u2192 PR creation with confidence score and execution trace."
+  - id: QE004
+    question: Does Devin have SOC 2 Type II or ISO 27001 security certification?
+    type: verification
+    targets:
+    - contentRequirements/5
+    status: answered
+    answerSummary: Not publicly disclosed as of May 2026. Neither SOC 2 Type II nor ISO 27001 attestation appears in public
+      documentation. May exist under NDA for enterprise customers.
+  - id: QE005
+    question: What are all product SKUs and pricing tiers for Devin and Windsurf products?
+    type: enumeration
+    targets:
+    - contentRequirements/1
+    status: answered
+    answerSummary: 'Devin: Free, Pro, Max, Teams, Enterprise (VPC). Windsurf IDE: Free/Pro ($15/mo), Enterprise. Devin API
+      included in paid plans. April 2026 plan refresh added Free and Max tiers.'
+  - id: QE006
+    question: What is the Devin 2.0 ACU efficiency improvement versus version 1.x?
+    type: quantification
+    targets:
+    - contentRequirements/0
+    status: answered
+    answerSummary: Devin 2.0 completes 83% more tasks per ACU versus v1.x, per company claims at April 2025 launch.
+  - id: QE007
+    question: How does Devin's SWE-bench score from 2024 compare to current SOTA agents in 2025-2026?
+    type: comparison
+    targets:
+    - contentRequirements/4
+    status: answered
+    answerSummary: 'Devin''s 13.86% (2024) has been surpassed: Claude Code Opus 4 (72.5% Verified), mini-SWE-agent (65% Verified).
+      The field has advanced dramatically while Devin''s 2025 Verified score is not disclosed.'
+  - id: QE008
+    question: What is the Agent Compute Unit (ACU) and how is it metered?
+    type: mechanism
+    targets:
+    - contentRequirements/0
+    status: answered
+    answerSummary: 'ACU is Cognition''s proprietary compute token. Approximately $2.25/ACU overage price. Plan inclusions:
+      ~5 ACUs (Free/Core), 250 ACUs (Team). Consumed by task duration/complexity, not capped per request.'
+  - id: QE009
+    question: Is Devin available for on-premises or VPC deployment?
+    type: verification
+    targets:
+    - contentRequirements/3
+    status: answered
+    answerSummary: Yes, Enterprise tier includes VPC deployment. Devin runs within the customer's cloud (AWS/GCP/Azure) environment,
+      keeping source code within the customer's perimeter.
+  - id: QE011
+    question: What are the known technical limitations and failure modes of Devin?
+    type: adverse
+    targets:
+    - contentRequirements/5
+    status: answered
+    answerSummary: 'Known limits: 45-minute runtime cap, probabilistic (not guaranteed) task success, prompt-injection vulnerability
+      (patched 2024), poor handling of tasks requiring software architecture design vs. implementation.'
+  evidenceGaps:
+  - id: EGE001
+    description: 'Cognition AI has not published Devin''s performance on SWE-bench Verified (the 500-instance human-filtered
+      subset now used as the de facto standard for benchmark comparisons). The original 13.86% score used a 25%-subset of
+      SWE-bench Full from 2024, making direct comparison to Claude Code (72.5% Verified), mini-SWE-agent (65% Verified), and
+      other 2025 agents methodologically imprecise.
+
+      '
+    relatedQuestionRefs:
+    - QE002
+    - QE007
+    relatedTableRefs:
+    - TE003
+    severity: high
+  - id: EGE002
+    description: 'Cognition AI has not publicly disclosed SOC 2 Type II, ISO 27001, FedRAMP, or equivalent enterprise compliance
+      certification documentation. For financial services (Goldman Sachs, Citi) and healthcare customers deploying Devin at
+      scale, these certifications are typically mandatory. The gap may be covered by customer-specific NDAs but cannot be
+      independently verified.
+
+      '
+    relatedQuestionRefs:
+    - QE004
+    severity: high
+  - id: EGE003
+    description: 'The supported programming language and framework scope for Devin is not exhaustively documented. SWE-bench
+      evaluation uses Python-heavy open-source repositories. Enterprise customers using Java, C++, Go, or COBOL-based legacy
+      codebases lack published performance data for those language environments.
+
+      '
+    relatedTableRefs:
+    - TE001
+    severity: medium
