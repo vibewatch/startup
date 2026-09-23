@@ -37,6 +37,10 @@ import {
 } from './utils.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
+const syncPreservedFieldsScript = resolve(
+  here,
+  '../../translate-zh/scripts/sync-preserved-fields.mjs',
+);
 
 function usage() {
   console.error('Usage: node .agents/skills/startup-research/scripts/link-refresh.mjs <new-report-folder> [--refresh-reason <text>] [--prepare-current]');
@@ -250,6 +254,7 @@ console.log(`[refresh] previous report ${oldRunId} supersededByRunId=${newRunId}
 if (oldChanged || !oldArtifactsAreInSync(oldRunId, newRunId)) {
   const oldFolder = join(reportsDir, oldRunId);
   runScript('build-report.mjs', [oldFolder]);
+  runScript(syncPreservedFieldsScript, [oldFolder]);
   runScript('check-report.mjs', [oldFolder]);
 }
 console.log(`[refresh] ✓ linked ${oldRunId} -> ${newRunId}`);

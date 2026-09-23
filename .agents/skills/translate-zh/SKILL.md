@@ -97,6 +97,13 @@ them; run:
 npm run translate:zh -- verify "$REPORT"
 ```
 
+When a finalized English report is superseded by a refresh,
+`link-refresh.mjs` automatically runs `sync-preserved-fields.mjs` on the
+previous report. The synchronizer copies the current English shape and every
+non-translatable leaf into existing zh overlays while retaining whitelisted
+Chinese text. Use `npm run sync:translations-zh` only to repair historical
+overlay drift across the corpus.
+
 `run-translation.mjs` owns preflight, cache paths, sparse export,
 splitting, part linting, merge/import/apply/check, and successful cache
 cleanup. Final deliverables are only `reports/$RUN_ID/summary-card.zh.yaml` and
