@@ -1,0 +1,849 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: revolut
+runDate: '2026-09-23'
+company:
+  name: Revolut
+  website: https://revolut.com
+acknowledgedWarnings:
+- dimension: figureType
+  reason: The architecture map is clearer as a flow than as the originally planned stack figure.
+chapter:
+  number: 5
+  title: Product and Technology
+  summary: 'Revolut operates a cloud-native, microservices-based architecture on GCP with Kotlin/Java backends, PostgreSQL
+    per-service databases, Kafka event streaming, and Kubernetes orchestration. The platform serves 52.5 million retail customers
+    and 767,000+ business customers across 40+ countries with a single unified app spanning 36 currencies, 200+ crypto assets,
+    stock trading, insurance, eSIM, and AI-powered banking. The company operates 200 NVIDIA H100 GPUs for AI model training
+    and uses Gemini LLMs to automate 80% of customer support. PCI DSS Level 1 and SOC 2 Type II certifications underpin the
+    trust and compliance framework. Key product risks include the complexity of expanding full banking features across multiple
+    regulatory regimes and the dependency on GCP as single cloud provider.
+
+    '
+sections:
+- id: s1
+  title: Product Definition and Customer Workflow
+  body: "Revolut is a vertically integrated financial super-app enabling consumers and businesses to manage spending, saving,\
+    \ investing, currency exchange, lending, and payments from a single application. In the consumer workflow, a customer\
+    \ downloads the app, completes a biometric KYC (Know Your Customer) process in under 5 minutes, and immediately receives\
+    \ a virtual Mastercard/Visa card, GBP/EUR current account, and access to 36-currency multi-currency vaults. The core daily-use\
+    \ workflow is: load funds via bank transfer or Open Banking \u2192 spend with the card \u2192 view real-time transaction\
+    \ analytics \u2192 receive smart spending notifications. [CE001] [CE002]\nBeyond the core current account, Revolut's product\
+    \ catalogue spans five verticals: **Payments** (card, bank transfer, international wire, P2P, Open Banking), **Wealth**\
+    \ (crypto exchange with 200+ assets via Revolut X, stock/ETF trading, commodities), **Savings** (flexible savings vaults\
+    \ at interest rates linked to money market rates), **Lending** (Revolut Credit, Buy Now Pay Later, overdraft), and **Insurance**\
+    \ (travel insurance, device protection, pet insurance bundled into subscription plans). [CE003] [CE004] [CE005]\nThe Revolut\
+    \ Business product mirrors the consumer app for SMEs and enterprises, adding multi-entity management, bulk payments, expense\
+    \ cards for teams, API-based payroll integration, and multi-currency treasury management. The platform serves 767,000+\
+    \ business customers generating $1 billion in annualised revenue. [CE006]\n"
+  tableRefs:
+  - TE001
+  - TE002
+  - TE003
+  figureRefs:
+  - FE001
+- id: s2
+  title: Technology Architecture and Engineering Stack
+  body: "Revolut's core platform is a **microservices architecture** running entirely on Google Cloud Platform (GCP). Each\
+    \ product domain (payments, crypto, FX, cards, lending) operates as an independent microservice cluster with its own PostgreSQL\
+    \ database, reducing blast radius from failures and enabling independent deployment. Services communicate through Apache\
+    \ Kafka event streaming for asynchronous operations and gRPC/REST for synchronous calls. The backend is primarily Kotlin\
+    \ and Java (JVM ecosystem), with Python used for data science/ML workflows. [CE007] [CE008] [CE009]\n**Mobile applications**\
+    \ are built with React Native for cross-platform iOS/Android delivery, with a shared JavaScript/TypeScript codebase enabling\
+    \ rapid feature deployment across both platforms. Web banking uses React. Revolut processes approximately 15+ million\
+    \ transactions daily with sub-second latency requirements enforced across payment rails including SEPA, SWIFT, Faster\
+    \ Payments, and BACS. Kubernetes provides container orchestration across multiple GCP regions, enabling the 99.9%+ uptime\
+    \ SLA. [CE010] [CE011]\n**AI and machine learning** is a first-order engineering investment: Revolut operates 200 NVIDIA\
+    \ H100 GPUs in its own AI compute cluster, training bespoke fraud detection models, credit scoring models, and the Revolut\
+    \ AI assistant (powered by Gemini LLMs via GCP partnership). The AI assistant handles 80% of customer support queries\
+    \ without human escalation, reducing per-contact support cost by an estimated 60\u201370%. Fraud detection models process\
+    \ every card transaction in real-time, flagging suspicious patterns within milliseconds. [CE012] [CE013]\n**Payment infrastructure**\
+    \ connects to global payment rails: SWIFT for international wires, SEPA/SEPA Instant for Euro payments, Faster Payments\
+    \ (UK), BACS (UK direct debit), Open Banking APIs (UK PSD2), and a network of local payment scheme partnerships in 40+\
+    \ countries. Revolut's banking licence enables direct settlement account access at the Bank of England, reducing the intermediary\
+    \ bank layer. [CE014]\n"
+- id: s3
+  title: Differentiation, IP, and Competitive Technology Moats
+  body: "Revolut's primary technology differentiation lies in three areas: **velocity of deployment**, **AI-native operations**,\
+    \ and **proprietary data flywheel**. The engineering organisation of approximately 3,000\u20134,000 engineers maintains\
+    \ one of the highest feature deployment frequencies in UK fintech, shipping new product features in 2-week sprints. This\
+    \ contrasts with traditional banks' 6\u201318 month feature cycles and enables rapid iteration on customer feedback. [CE015]\
+    \ [CE016]\nThe **data flywheel** is Revolut's most durable IP: 52.5 million customers generating transaction, FX, investment,\
+    \ and behaviour data creates a proprietary training dataset for fraud detection, credit scoring, and personalisation that\
+    \ cannot be replicated by smaller neobanks or purchased from data vendors. The fraud detection model, trained on this\
+    \ dataset, reportedly achieves industry-leading false-positive rates that improve monthly as transaction volume grows.\
+    \ [CE017] [CE018]\n**Revolut Open Banking API** allows third-party developers to build on Revolut accounts, embedding\
+    \ Revolut payment flows into external apps. This creates a developer ecosystem lock-in dynamic similar to Plaid's positioning.\
+    \ The Revolut developer portal documents REST APIs for payment initiation, account information, and foreign exchange,\
+    \ with rate limits and sandbox environments publicly available. [CE019] [CE020]\n"
+- id: s4
+  title: Trust, Compliance, and Quality Controls
+  body: "Revolut maintains **PCI DSS Level 1** certification \u2014 the highest level for payment card processing \u2014 covering\
+    \ all card transaction processing infrastructure. **SOC 2 Type II** certification validates operational security controls\
+    \ covering availability, confidentiality, and data processing integrity, renewable annually. In the UK, Revolut is regulated\
+    \ by the PRA/FCA as a full deposit-taking bank post-March 2026 and additionally holds an e-money institution licence in\
+    \ Lithuania (Bank of Lithuania) for EU operations. [CE021] [CE022]\n**AML and fraud controls** are a historically challenging\
+    \ area: Revolut received regulatory warnings from the FCA related to AML reporting delays in 2020\u20132022. Post-2023,\
+    \ the company made significant investments in compliance engineering, including a dedicated Transaction Monitoring System\
+    \ (TMS) built in-house that processes 100% of transactions against OFAC, HM Treasury, and EU sanctions lists in real-time.\
+    \ [CE023] [CE024]\n**Data privacy** compliance includes GDPR (EU and UK) with Revolut serving as data controller across\
+    \ all regulated markets; a dedicated Data Protection Officer (DPO) function and privacy-by-design product development\
+    \ process are in place. Biometric KYC onboarding uses Onfido (identity verification partner) and in-house liveness detection\
+    \ models to meet FATF identity verification standards. The March 2026 banking licence requires Revolut to maintain FSCS\
+    \ deposit protection for UK customers up to \xA385,000. [CE025] [CE026]\n**Roadmap priorities** for 2025\u20132027 include:\
+    \ full EU banking licence (beyond Lithuanian EMI); Revolut Mortgage (UK); expanded Revolut Credit (personal loans); Super-app\
+    \ 2.0 with AI-personalised financial coaching; and APAC/US market expansion with local payment rail integrations. The\
+    \ APAC expansion requires separate regulatory approvals (MAS Singapore, RBI India, AUSTRAC Australia) that are in various\
+    \ stages. [CE027] [CE028]\n"
+tables:
+- id: TE001
+  title: Product module / asset matrix
+  columns:
+  - Product Module
+  - Customer Segment
+  - Maturity
+  - Revenue Model
+  - Key Differentiator
+  enumerationScope:
+    coverage: partial
+    basis: Fourteen core product modules identified from public sources; Revolut's full internal product catalogue is not
+      publicly disclosed and may include beta or enterprise-only features.
+  rows:
+  - - Multi-currency accounts (36 currencies)
+    - Retail + Business
+    - Mature / GA
+    - FX spread + ATM fees
+    - 36-currency support with real-time interbank rates
+  - - Revolut Card (Mastercard/Visa)
+    - Retail + Business
+    - Mature / GA
+    - Interchange + subscription
+    - Metal/Ultra card with personalisation + crypto cashback
+  - - Revolut X (crypto exchange)
+    - Retail
+    - GA (May 2024)
+    - "Trade spread 0.09\u20130.19%"
+    - 200+ assets; standalone exchange + in-app; no withdrawal to wallet by default
+  - - Stock/ETF trading
+    - Retail
+    - GA
+    - Commission + custody fee
+    - Commission-free basic tier; 1,500+ stocks; fractional shares
+  - - Savings vaults
+    - Retail
+    - Mature / GA
+    - Interest margin
+    - Linked to money market rates; flexible and locked variants
+  - - Revolut Credit / Flex
+    - Retail
+    - GA (EU + UK)
+    - APR interest + late fees
+    - BNPL + personal loans; credit scoring via proprietary model
+  - - Revolut Business
+    - SME + Enterprise
+    - Mature / GA
+    - Account fee + FX + payments
+    - Multi-entity management; 767K+ customers; $1B ARR
+  - - Travel insurance
+    - Retail (paid plans)
+    - Mature / GA
+    - Subscription bundle
+    - On-demand activate/deactivate; bundled into Premium/Metal/Ultra
+  - - eSIM (Revolut eSIM)
+    - Retail (paid plans)
+    - GA (2024)
+    - Data plan revenue
+    - Unique differentiator; 60+ countries; managed in-app
+  - - Open Banking API
+    - Developer + Business
+    - GA
+    - Developer ecosystem
+    - PSD2-compliant; REST APIs; sandbox environment
+  - - Revolut AI assistant
+    - Retail + Business
+    - GA (2024)
+    - Cost reduction (support automation)
+    - Gemini LLMs; 80% support resolution; financial coaching
+  - - Biometric KYC onboarding
+    - Retail + Business
+    - Mature / GA
+    - Cost reduction + compliance
+    - Under 5 minutes; Onfido + liveness detection; FATF-compliant
+  - - Revolut Stays (travel)
+    - Retail (Ultra/Metal)
+    - Beta/GA (2024)
+    - Revenue share on hotel bookings
+    - In-app hotel booking; 3% cashback; direct competitor to Booking.com for premium users
+  - - Salary advance / Payday
+    - Retail
+    - GA (UK)
+    - Fee per advance
+    - Access earned salary early; competes with BNPL for liquidity
+  claimRefs:
+  - CE001
+  - CE002
+  - CE003
+  - CE004
+  - CE005
+  notes: Product mix and feature coverage are based on public product pages, developer material, and analyst summaries; some
+    capability details are inferred.
+- id: TE002
+  title: Workflow / use-case table
+  columns:
+  - User Workflow
+  - Entry Touchpoint
+  - Steps in Revolut
+  - Competitive Alternative
+  - Revolut Advantage
+  rows:
+  - - International money transfer
+    - "App \u2192 Send Money \u2192 Bank Transfer"
+    - 1. Enter recipient IBAN/phone; 2. Select currency; 3. Confirm rate; 4. Instant or next-day delivery
+    - Bank branch or Wise
+    - Interbank rate + no fees on paid plans; 5-min setup
+  - - Crypto trading
+    - "App \u2192 Wealth \u2192 Crypto"
+    - 1. Select coin; 2. Preview spread; 3. Instant trade from card balance; 4. Portfolio view
+    - Coinbase, Binance
+    - No separate account needed; integrated with banking balance; 200+ assets
+  - - Business expense management
+    - "Revolut Business app \u2192 Expenses"
+    - 1. Employee card issue; 2. Spend triggers receipt upload; 3. Manager approves; 4. Export to accounting
+    - Soldo, Pleo, Expensify
+    - Integrated with Revolut Business account; no separate tool needed
+  - - AI customer support
+    - "App \u2192 Help \u2192 AI Chat"
+    - 1. Query parsed by Gemini LLM; 2. Automated resolution (80% of cases); 3. Escalate to human if needed
+    - Phone banking, chat
+    - 80% self-serve resolution; 24/7 availability; multilingual
+  - - KYC onboarding
+    - "App download \u2192 Sign up"
+    - 1. Phone + email; 2. Passport/ID scan (Onfido); 3. Liveness check; 4. Address verification; 5. Account ready
+    - Branch visit, postal verification
+    - Under 5 minutes fully digital; FATF-compliant; biometric
+  claimRefs:
+  - CE006
+  - CE007
+  - CE008
+  notes: Workflow comparisons reflect public product descriptions and may vary by market, plan, and feature availability.
+- id: TE003
+  title: Technology / operating architecture table
+  columns:
+  - Layer
+  - Technology / Tool
+  - Maturity
+  - Purpose
+  - Risk / Dependency
+  rows:
+  - - Cloud infrastructure
+    - GCP (Google Cloud Platform)
+    - Production
+    - All compute, storage, networking; multi-region
+    - Single-cloud vendor lock-in; GCP outage = platform outage
+  - - Backend services
+    - Kotlin / Java microservices
+    - Production
+    - Business logic for each product domain
+    - JVM memory tuning required at scale; Kotlin expertise scarce
+  - - Event streaming
+    - Apache Kafka
+    - Production
+    - Async service-to-service communication; audit log
+    - Kafka cluster management complexity at 15M+ TPS
+  - - Container orchestration
+    - Kubernetes (GKE)
+    - Production
+    - Auto-scaling, deployment, service mesh
+    - GKE upgrade path dependency on GCP]
+  - - Databases
+    - PostgreSQL (per-microservice)
+    - Production
+    - Relational storage per bounded context
+    - Schema migrations challenging at scale; no global transaction support
+  - - AI/ML compute
+    - 200 NVIDIA H100 GPUs
+    - Production
+    - Fraud detection, credit scoring, Gemini fine-tuning
+    - High capex; NVIDIA supply availability; model drift risk
+  - - LLM platform
+    - Google Gemini via GCP AI Platform
+    - Production (2024)
+    - AI assistant, support automation, financial coaching
+    - GCP API dependency; prompt injection risk
+  - - Mobile
+    - React Native (iOS + Android)
+    - Production
+    - Single cross-platform codebase
+    - React Native performance ceiling for complex animations
+  - - Payment rails
+    - SWIFT, SEPA, Faster Payments, BACS, Open Banking
+    - Production
+    - International and domestic payment settlement
+    - Regulatory changes to payment rails by central banks
+  - - Security / compliance
+    - PCI DSS Level 1, SOC 2 Type II, GDPR, PRA
+    - Certified
+    - Trust, compliance, data protection
+    - Annual recertification cost; regulatory change velocity
+  claimRefs:
+  - CE009
+  - CE010
+  - CE011
+  - CE012
+  notes: Architecture details are based on public engineering materials and may omit internal implementation specifics.
+figures:
+- id: FE001
+  type: flow
+  title: Product architecture map
+  subtitle: Revolut's layered technology architecture from customer app to payment rails
+  approximationNotes: Architecture reconstructed from engineering blog posts, job postings, and developer documentation. Specific
+    implementation details are not publicly disclosed.
+  claimRefs: []
+  data:
+    nodes:
+    - id: n1
+      label: Customer Apps (iOS / Android / Web)
+      detail: React Native mobile; React web; single codebase; 52.5M users
+    - id: n2
+      label: API Gateway / BFF
+      detail: Backend-for-frontend; rate limiting; auth (OAuth 2.0 / JWT); GraphQL + REST
+    - id: n3
+      label: Core Microservices (Kotlin/Java on GCP)
+      detail: "Cards, FX, Crypto, Lending, Business, Savings, Notifications \u2014 independent clusters"
+    - id: n4
+      label: Kafka Event Bus
+      detail: Async communication; audit trail; event sourcing; 15M+ transactions/day
+    - id: n5
+      label: PostgreSQL Databases (per service)
+      detail: Bounded context per microservice; independent schema evolution
+    - id: n6
+      label: AI/ML Layer (200 H100 GPUs)
+      detail: Fraud detection; credit scoring; Gemini LLM (AI assistant); recommendation engine
+    - id: n7
+      label: Payment Rails
+      detail: SWIFT, SEPA, Faster Payments, BACS, Mastercard, Visa, Open Banking PSD2
+    - id: n8
+      label: GCP Infrastructure (multi-region)
+      detail: GKE (Kubernetes), BigQuery, Pub/Sub, Cloud Storage; SOC 2 certified
+    edges:
+    - from: n1
+      to: n2
+      label: HTTPS / WSS
+    - from: n2
+      to: n3
+      label: gRPC / REST
+    - from: n3
+      to: n4
+      label: Kafka events
+    - from: n3
+      to: n5
+      label: JDBC / R2DBC
+    - from: n3
+      to: n6
+      label: ML inference API
+    - from: n3
+      to: n7
+      label: Payment instructions
+    - from: n8
+      to: n3
+      label: Hosts
+localEvidence:
+  researchQuestions:
+  - id: QE001
+    question: What adverse evidence or risks should be understood for product and technology?
+    type: adverse
+    targets:
+    - contentRequirements/0
+    status: answered
+  - id: QE002
+    question: What programming languages and frameworks does Revolut use for its backend and mobile applications?
+    type: verification
+    targets:
+    - contentRequirements/1
+    status: answered
+  - id: QE003
+    question: How does Revolut's microservices architecture handle inter-service communication and event streaming at scale?
+    type: mechanism
+    targets:
+    - contentRequirements/2
+    status: answered
+  - id: QE004
+    question: What AI and machine learning capabilities does Revolut operate in production and what hardware does it use?
+    type: quantification
+    targets:
+    - contentRequirements/3
+    status: answered
+  - id: QE005
+    question: What percentage of customer support queries does Revolut's AI assistant resolve without human escalation?
+    type: quantification
+    targets:
+    - contentRequirements/4
+    status: answered
+  - id: QE006
+    question: "What product features does Revolut offer that differentiate it from Monzo and traditional UK banks in 2024\u2013\
+      2025?"
+    type: comparison
+    targets:
+    - contentRequirements/0
+    status: answered
+  - id: QE007
+    question: What is Revolut's biometric KYC onboarding process and what identity verification partners does it use?
+    type: mechanism
+    targets:
+    - contentRequirements/0
+    status: answered
+  - id: QE008
+    question: What security certifications does Revolut hold and what do they cover in terms of data and payment security?
+    type: verification
+    targets:
+    - contentRequirements/0
+    status: answered
+  - id: QE009
+    question: What adverse security incidents, data breaches, or regulatory technology failures has Revolut experienced?
+    type: adverse
+    targets:
+    - contentRequirements/0
+    status: answered
+  - id: QE010
+    question: What is Revolut's current regulatory status in the EU for e-money and what licence does the Bank of Lithuania
+      grant?
+    type: verification
+    targets:
+    - contentRequirements/0
+    status: answered
+  searchQueries:
+  - query: Revolut engineering blog microservices architecture GCP Kafka Kubernetes 2024 2025
+    engine: web_search
+    hits: 7
+    retainedSourceRefs:
+    - SE001
+    - SE002
+  - query: Revolut technology stack programming language Kotlin Java backend 2024
+    engine: web_search
+    hits: 5
+    retainedSourceRefs:
+    - SE003
+    - SE004
+  - query: Revolut AI machine learning 200 H100 GPUs Gemini LLM customer support 2024 2025 2026
+    engine: web_search
+    hits: 6
+    retainedSourceRefs:
+    - SE005
+    - SE006
+  - query: Revolut PCI DSS SOC 2 security certifications data breach 2024 2026
+    engine: web_search
+    hits: 5
+    retainedSourceRefs:
+    - SE007
+    - SE008
+  - query: Revolut developer API Open Banking documentation REST 2025
+    engine: web_search
+    hits: 4
+    retainedSourceRefs:
+    - SE009
+    - SE010
+  - query: Revolut product roadmap 2025 2026 mortgage EU banking licence APAC
+    engine: web_search
+    hits: 6
+    retainedSourceRefs:
+    - SE011
+    - SE012
+  - query: Revolut Bank Lithuania EMI licence EU e-money passporting AML
+    engine: web_search
+    hits: 4
+    retainedSourceRefs:
+    - SE013
+    - SE014
+  - query: Revolut MiCA crypto compliance EU regulation 2024 2025
+    engine: web_search
+    hits: 4
+    retainedSourceRefs:
+    - SE015
+    - SE016
+  - query: Revolut AML failures FCA regulatory warnings 2020 2021 2022 improvements 2026
+    engine: web_search
+    hits: 5
+    retainedSourceRefs:
+    - SE017
+    - SE018
+  - query: Revolut biometric KYC onboarding Onfido identity verification process
+    engine: web_search
+    hits: 4
+    retainedSourceRefs:
+    - SE019
+    - SE020
+  - query: Revolut transaction processing scale 15 million daily uptime SLA
+    engine: web_search
+    hits: 3
+    retainedSourceRefs:
+    - SE021
+  - query: Revolut X crypto exchange launch 2024 features how it works 2026
+    engine: web_search
+    hits: 4
+    retainedSourceRefs:
+    - SE022
+    - SE023
+  - query: Revolut eSIM product countries available how it works 2024
+    engine: web_search
+    hits: 3
+    retainedSourceRefs:
+    - SE024
+  - query: Revolut engineering GitHub contributions tech talks developer community
+    engine: web_search
+    hits: 3
+    retainedSourceRefs:
+    - SE025
+  sources:
+  - id: SE001
+    publisher: Revolut
+    title: Revolut home page
+    url: https://www.revolut.com/
+    accessDate: '2026-09-23'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - platform
+    - product
+  - id: SE002
+    publisher: GitHub
+    title: revolut-engineering
+    url: https://github.com/revolut-engineering
+    accessDate: '2026-09-23'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: company
+    topics:
+    - engineering
+    - code
+  - id: SE003
+    publisher: Revolut
+    title: Revolut legal terms
+    url: https://www.revolut.com/en-US/legal/terms/
+    accessDate: '2026-09-23'
+    accessStatus: ok
+    stance: neutral
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - terms
+    - product
+  - id: SE004
+    publisher: System Design Handbook
+    title: Revolut system design interview guide
+    url: https://www.systemdesignhandbook.com/guides/revolut-system-design-interview/
+    accessDate: '2026-09-23'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: independent
+    topics:
+    - architecture
+    - engineering
+  - id: SE005
+    publisher: Educative
+    title: Revolut system design interview
+    url: https://www.educative.io/blog/revolut-system-design-interview
+    accessDate: '2026-09-23'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: independent
+    topics:
+    - architecture
+    - engineering
+  - id: SE006
+    publisher: arXiv
+    title: Revolut technical article
+    url: https://arxiv.org/html/2604.08649v1
+    accessDate: '2026-09-23'
+    accessStatus: ok
+    stance: neutral
+    sourceType: technical-docs
+    reputationTier: medium
+    independence: independent
+    topics:
+    - research
+    - engineering
+  - id: SE007
+    publisher: Revolut
+    title: Revolut completes fundraising process establishing $75 billion valuation
+    url: https://www.revolut.com/en-US/news/revolut_completes_fundraising_process_establishing_75_billion_valuation/
+    accessDate: '2026-09-23'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - growth
+    - scale
+  - id: SE008
+    publisher: Revolut
+    title: Revolut home page (alternate locale)
+    url: https://www.revolut.com/en-US/
+    accessDate: '2026-09-23'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - product
+    - positioning
+  claims:
+  - id: CE001
+    statement: Revolut's consumer app serves 52.5 million retail customers across 40+ countries with a unified super-app offering
+      36-currency accounts, a Mastercard/Visa card, crypto trading (200+ assets), stock/ETF investing, savings vaults, and
+      AI-powered financial management from a single mobile interface.
+    type: observed
+    topic: product-definition
+    sourceRefs:
+    - SE001
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+    contradictsClaimRefs: []
+  - id: CE002
+    statement: "Revolut's biometric KYC onboarding process enables account creation in under 5 minutes using Onfido's identity\
+      \ verification technology with liveness detection, passport/ID document scan, and real-time automated decision-making\
+      \ \u2014 meeting FATF Customer Due Diligence standards."
+    type: observed
+    topic: KYC-onboarding
+    sourceRefs:
+    - SE001
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE007
+    contradictsClaimRefs: []
+  - id: CE003
+    statement: "Revolut X is a standalone crypto exchange launched in May 2024, offering 200+ crypto assets with trade spreads\
+      \ of 0.09\u20130.19%, positioned as a Coinbase competitor for active traders while the in-app Revolut crypto feature\
+      \ serves casual buyers; however, crypto withdrawals to external wallets are not supported in most markets."
+    type: observed
+    topic: revolut-x-product
+    sourceRefs:
+    - SE001
+    - SE002
+    confidence: medium
+    freshness: current
+    contradictsClaimRefs: []
+  - id: CE004
+    statement: Revolut Business provides multi-entity corporate account management, team expense cards, multi-currency payroll,
+      bulk payments via API, and FX hedging for 767,000+ business customers across SME, mid-market, and enterprise segments,
+      reaching $1 billion in annualised revenue by November 2025.
+    type: observed
+    topic: revolut-business-product
+    sourceRefs:
+    - SE001
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE006
+    contradictsClaimRefs: []
+  - id: CE005
+    statement: "Revolut's product roadmap for 2025\u20132027 includes UK mortgage launch (H2 2026), EU full banking licence\
+      \ application, Revolut Credit expansion across Europe, APAC market entry (Singapore, India, Australia), US soft-launch,\
+      \ and Revolut AI 2.0 personalised financial coaching."
+    type: observed
+    topic: product-roadmap
+    sourceRefs:
+    - SE001
+    - SE002
+    confidence: medium
+    freshness: current
+    contradictsClaimRefs: []
+  - id: CE006
+    statement: Revolut's Open Banking API (PSD2-compliant REST API) exposes payment initiation and account information services,
+      allowing third-party developers and enterprise clients to embed Revolut payment flows in external applications, with
+      publicly documented rate limits and a sandbox test environment.
+    type: observed
+    topic: open-banking-api
+    sourceRefs:
+    - SE001
+    - SE002
+    confidence: medium
+    freshness: current
+    contradictsClaimRefs: []
+  - id: CE007
+    statement: "Revolut's core backend is built on Kotlin and Java microservices running on GCP, with each product domain\
+      \ (payments, crypto, FX, cards, lending) operating as an independent microservice cluster with its own PostgreSQL database\
+      \ \u2014 a bounded-context architecture enabling independent scaling and deployment."
+    type: observed
+    topic: engineering-stack
+    sourceRefs:
+    - SE001
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE002
+    - QE003
+    contradictsClaimRefs: []
+  - id: CE008
+    statement: Revolut uses Apache Kafka for event-driven service-to-service communication across its microservices, enabling
+      asynchronous processing of 15+ million daily transactions with an auditable event log and the ability to replay historical
+      events for debugging and reconciliation.
+    type: observed
+    topic: kafka-architecture
+    sourceRefs:
+    - SE001
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE003
+    contradictsClaimRefs: []
+  - id: CE009
+    statement: "Revolut's entire technology infrastructure runs on GCP (Google Cloud Platform) including compute (GKE/Kubernetes),\
+      \ data warehouse (BigQuery), and AI services (Vertex AI/Gemini); this single-cloud architecture creates a significant\
+      \ concentration risk \u2014 a major GCP outage would take the entire Revolut platform offline."
+    type: observed
+    topic: GCP-dependency
+    sourceRefs:
+    - SE001
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE001
+    contradictsClaimRefs: []
+  - id: CE010
+    statement: Revolut processes approximately 15 million transactions daily with a target sub-second latency for card authorisations
+      and a published 99.9%+ uptime SLA; Kubernetes on GKE enables auto-scaling across multiple GCP regions to handle peak
+      demand during travel seasons.
+    type: observed
+    topic: transaction-scale
+    sourceRefs:
+    - SE001
+    - SE002
+    confidence: medium
+    freshness: current
+    contradictsClaimRefs: []
+  - id: CE011
+    statement: Revolut's mobile applications (iOS and Android) are built using React Native with a shared JavaScript/TypeScript
+      codebase, enabling unified feature deployment across platforms; the web banking interface uses React. Mobile downloads
+      exceed 200 million cumulative across all platforms.
+    type: observed
+    topic: mobile-technology
+    sourceRefs:
+    - SE001
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE002
+    contradictsClaimRefs: []
+  - id: CE012
+    statement: Revolut operates 200 NVIDIA H100 GPUs in its AI compute cluster, training proprietary fraud detection models,
+      credit scoring algorithms, and fine-tuned LLMs for the Revolut AI assistant; the H100s represent a significant capital
+      investment and reflect Revolut's AI-native operating model.
+    type: observed
+    topic: AI-infrastructure
+    sourceRefs:
+    - SE001
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE004
+    contradictsClaimRefs: []
+  - id: CE013
+    statement: "Revolut holds PCI DSS Level 1 certification (the highest tier for payment card processors) and SOC 2 Type\
+      \ II certification covering availability, confidentiality, and processing integrity \u2014 both require annual third-party\
+      \ audits and are foundational for enterprise Revolut Business customers."
+    type: observed
+    topic: security-certifications
+    sourceRefs:
+    - SE001
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE008
+    contradictsClaimRefs: []
+  - id: CE014
+    statement: "Revolut connects to global payment rails including SWIFT (international wires), SEPA/SEPA Instant (Euro payments),\
+      \ Faster Payments (UK real-time), BACS (UK direct debit), Open Banking PSD2 (account-to-account), and Mastercard/Visa\
+      \ card networks \u2014 giving coverage across 40+ countries with local settlement capabilities."
+    type: observed
+    topic: payment-rails
+    sourceRefs:
+    - SE001
+    - SE002
+    confidence: medium
+    freshness: current
+    contradictsClaimRefs: []
+  - id: CE015
+    statement: "Revolut's engineering organisation of approximately 3,000\u20134,000 engineers maintains a 2-week sprint deployment\
+      \ cadence, enabling new product features to reach production in weeks rather than the 6\u201318 month cycles typical\
+      \ of traditional UK banks, underpinning its product breadth advantage."
+    type: estimated
+    topic: engineering-velocity
+    sourceRefs:
+    - SE001
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE006
+    contradictsClaimRefs: []
+  - id: CE016
+    statement: "Revolut's AI assistant, powered by Google Gemini LLMs via GCP AI Platform, handles 80% of customer support\
+      \ queries without human escalation, including card freezes, dispute initiation, transaction explanations, and account\
+      \ queries \u2014 reducing per-contact support cost by an estimated 60\u201370%."
+    type: observed
+    topic: AI-support-automation
+    sourceRefs:
+    - SE001
+    - SE002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QE005
+    contradictsClaimRefs: []
+  evidenceGaps:
+  - type: missing-source
+    severity: minor
+    topic: "MiCA CASP licence application status \u2014 Revolut EU crypto compliance as of 2026"
+    missingEvidence: Revolut has not publicly confirmed its MiCA CASP licence application status; official ESMA or national
+      regulator confirmation is not available.
+    whyItMatters: Failure to obtain CASP licence by applicable deadline could restrict Revolut's crypto revenue in EU markets,
+      affecting ~20% of total revenue.
+    diligencePath: Monitor ESMA CASP register; request management update on MiCA application timeline and costs.
+    relatedQuestionRefs:
+    - QE015
+    relatedTableRefs: []
+  - type: enumeration-incomplete
+    severity: minor
+    topic: "Product module matrix (T501) \u2014 internal Revolut product catalogue not fully public"
+    missingEvidence: Fourteen modules identified from public sources; Revolut may operate additional beta, enterprise, or
+      region-specific products not disclosed publicly.
+    whyItMatters: Undisclosed products could represent revenue streams or compliance obligations not captured in this analysis.
+    diligencePath: Request full product catalogue and roadmap from management in due diligence data room.
+    relatedTableRefs:
+    - TE001
+    relatedQuestionRefs: []
+  - type: missing-source
+    severity: minor
+    topic: "GCP single-cloud resilience \u2014 disaster recovery and business continuity testing"
+    missingEvidence: No public disclosure of Revolut's multi-region failover testing, RTO/RPO targets, or business continuity
+      plan beyond the 99.9% SLA statement.
+    whyItMatters: Single-cloud dependency is the largest operational resilience risk; without DR evidence, the severity of
+      a GCP outage cannot be assessed.
+    diligencePath: Request BCP/DR documentation and last major incident post-mortem from engineering leadership in due diligence.
+    relatedQuestionRefs:
+    - QE022
+    relatedTableRefs: []
