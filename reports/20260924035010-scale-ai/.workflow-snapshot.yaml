@@ -1,0 +1,762 @@
+schemaVersion: workflow-config-v1
+reportSchemaVersion: report-v2
+workflow:
+  inputs:
+    companyName:
+      type: string
+      required: true
+      description: Company name to research and use when creating the report run.
+    companyUrl:
+      type: url
+      required: false
+      description: Optional official website or identity anchor for duplicate checks and source discovery.
+    refresh:
+      type: boolean
+      required: false
+      default: false
+      description: When true, create a fresh run linked to the current finalized report for the same company/domain.
+    refreshReason:
+      type: string
+      required: false
+      description: Human reason recorded in refresh metadata; required when refresh=true on a new create-report-run invocation.
+    refreshOfRunId:
+      type: string
+      required: false
+      description: Optional prior runId used only when refresh=true and create-report-run reports multiple current matching reports.
+  conditions:
+    - key: source-discovery-ready
+      description: The runtime has an approved web/search/source-discovery capability, or the user supplied authoritative source-pack URLs with metadata before any report folder is created.
+      checkedBy: agent preflight
+    - key: report-run-created
+      description: create-report-run.mjs returned a report folder path or --resume reopened the matching in-progress folder.
+      checkedBy: create-report-run.mjs
+    - key: runtime-contract-loaded
+      description: load-chapter-runtime-context.mjs returned the chapter list (--list) or chapter delta (--order <n>); the static frame (agent policy, gates, ID system, validator dimensions, renderer contracts) lives in references/rules.md.
+      checkedBy: load-chapter-runtime-context.mjs
+    - key: all-chapters-exist
+      description: Every file in workflow.allowedReportFiles.chapterArtifacts exists under the report folder.
+      checkedBy: shell filesystem check
+    - key: all-chapters-pass-gate
+      description: Every configured chapter file passes check-chapter.mjs after the final on-disk edit.
+      checkedBy: check-chapter.mjs
+    - key: report-meta-authored
+      description: report-meta.yaml exists and passes check-report-meta.mjs shape and enum checks.
+      checkedBy: check-report-meta.mjs
+    - key: final-artifacts-generated
+      description: evidence.yaml, full-report.yaml, and summary-card.yaml exist and pass check-report.mjs.
+      checkedBy: finalize-report.mjs
+  phases:
+    - key: setup
+      title: Setup runtime contract
+      objective: Resolve inputs, confirm source discovery is possible, create or resume the report folder, and load the workflow/runtime contract before writing artifacts.
+      entryConditions: []
+      exitConditions: [source-discovery-ready, report-run-created, runtime-contract-loaded]
+      steps:
+        - key: preflight-source-discovery
+          title: Confirm source discovery capability
+          command: null
+          requires: [companyName]
+          produces: [source-discovery-ready]
+          gate: agent preflight
+          notes:
+            - Run this before create-report-run.mjs. fetch-url reviews direct URLs but does not discover sources.
+            - If no source-discovery/search capability is available, stop before creating a report folder. In interactive mode request authoritative URLs; in non-interactive/no-ask automation print source-discovery-unavailable to stderr and surface the abort to the orchestrator using whatever signal the host runtime uses for an intentional skip. No script runs at this stage, so no script exit code applies; do not reuse exit codes 1–4 reserved by create-report-run.mjs (1=failure, 2=duplicate finalized, 3=in-progress, 4=not-found). Do not invent sources.
+            - If the user supplies staged HTML/PDF/text files instead of URLs, require originalUrl/publisher/title/date metadata and cite the original URL.
+        - key: load-runtime
+          title: List configured chapters
+          command: load-chapter-runtime-context.mjs --list
+          requires: []
+          produces: [runtimeContext.chapters]
+          gate: runtimeContext list schema
+          notes:
+            - The static frame (agent policy, gates, ID system, validator dimensions, renderer contracts) is generated into references/rules.md; read it once at session start instead of reloading per chapter.
+            - Treat loader JSON as the per-chapter delta; do not hardcode chapter names or gates from prose.
+        - key: create-run
+          title: Create or resume report run
+          command: create-report-run.mjs
+          requires: [companyName, source-discovery-ready]
+          produces: [reportFolder]
+          gate: create-report-run exit code
+          notes:
+            - Pass companyUrl when provided via the --website CLI flag.
+            - For explicit refresh runs, pass both --refresh and --refresh-reason <text>. If create-run reports multiple current matching reports, rerun with --refresh-of <priorRunId> before any folder is created; --resume reuses the cached reason from the original create-run invocation.
+            - run.runDate is not printed by create-report-run; the per-chapter loader derives and emits it from the report folder runId when --report-folder is supplied.
+            - On exit 3, rerun with --resume; if stderr lists multiple in-progress candidates, add --resume-run <runId>. Do not create suffixed duplicate folders.
+    - key: chapter-generation
+      title: Generate configured chapters
+      objective: Author each configured chapter from its runtime context, collect audited evidence, and clear check-chapter.
+      entryConditions: [report-run-created, runtime-contract-loaded]
+      exitConditions: [all-chapters-exist, all-chapters-pass-gate]
+      steps:
+        - key: load-chapter-context
+          title: Load chapter context
+          command: load-chapter-runtime-context.mjs --order <n> --report-folder <reportFolder> [--include-context]
+          requires: [report-run-created, runtime-contract-loaded]
+          produces: [runtimeContext.chapter]
+          gate: runtimeContext schema
+          notes:
+            - Omit --include-context when drafting chapters in parallel (it would project a stale rollup of unfinished sibling chapters). In sequential mode, omit it on chapter 1 and pass it on later chapters only after prior siblings have landed on disk.
+            - Always pass --report-folder so runtimeContext.run.runDate is emitted; copy runDate into every chapter doc head and derive any source-discovery query date tokens from it before searching.
+        - key: author-chapter
+          title: Author chapter YAML
+          command: null
+          requires: [runtimeContext.chapter, rules.md, contracts.md]
+          produces: [chapter.yaml]
+          gate: report artifact schema
+          notes:
+            - Use runtimeContext.chapter.gate as the binding floor; use the Validator dimensions table in references/rules.md for retry triage.
+            - Use fetch-url for every retained URL and record search queries, sources, claims, questions, and evidence gaps in localEvidence.
+        - key: check-chapter
+          title: Validate chapter gate
+          command: check-chapter.mjs <reportFolder> <chapter.file> --format json
+          requires: [chapter.yaml]
+          produces: [validationResult]
+          gate: check-chapter exit code
+          notes:
+            - Fix retryOrder dimensions first; use issues[].fix and objectFailures[].fixes rather than guessing.
+        - key: check-chapter-strict
+          title: Strict pre-finalization sweep
+          command: check-chapter.mjs <reportFolder> <chapter.file> --strict --format json
+          requires: [chapter.yaml]
+          produces: [validationResult]
+          gate: check-chapter --strict exit code
+          notes:
+            - Run after the normal pass clears; --strict promotes warnings (e.g. unverifiedSource, tableNotes) to failures.
+            - For genuinely non-actionable warnings, opt out via top-level acknowledgedWarnings[{dimension, reason>=30 chars}] (warning-class dimensions only).
+            - finalize-report.mjs reruns this strict sweep automatically, so resolving it here avoids late finalize aborts.
+            - After parallel drafting, rerun this step (and check-chapter) once on every chapter so netNewSources / crossChapterRefLeak see the final on-disk siblings.
+    - key: finalization
+      title: Finalize report artifacts
+      objective: Validate report-meta, consolidate evidence, assemble final artifacts, and run publishability checks.
+      entryConditions: [all-chapters-exist, all-chapters-pass-gate]
+      exitConditions: [report-meta-authored, final-artifacts-generated]
+      steps:
+        - key: author-report-meta
+          title: Author report-meta.yaml
+          command: null
+          requires: [all-chapters-pass-gate]
+          produces: [report-meta.yaml]
+          gate: report-meta schema
+          notes:
+            - report-meta owns recommendation, profile, cover facts, and summary-card judgment fields.
+        - key: check-report-meta
+          title: Validate report-meta shape
+          command: check-report-meta.mjs <reportFolder> --format json
+          requires: [report-meta.yaml]
+          produces: [validationResult]
+          gate: check-report-meta exit code
+          notes:
+            - Fix all returned shape and enum issues before finalization.
+        - key: finalize-report
+          title: Build final report artifacts
+          command: finalize-report.mjs <reportFolder>
+          requires: [report-meta-authored, all-chapters-pass-gate]
+          produces: [evidence.yaml, full-report.yaml, summary-card.yaml]
+          gate: finalize-report exit code
+          notes:
+            - Pass --refresh for explicit refresh runs. --refresh-reason on finalize-report is optional; it defaults to the value cached in .research-cache/<runId>/refresh-context.yaml by create-report-run.mjs. Re-pass it only as audit redundancy; the value must match the cache exactly (finalize-report exits with a mismatch error otherwise).
+            - --rebuild is no longer required after chapter edits. finalize-report auto-rebuilds the ledger when any chapter file's mtime is newer than evidence.yaml; pass --rebuild only to force a fresh consolidation regardless of mtimes.
+            - finalize-report internally runs check-chapter --strict on every chapter as the first step; resolve those warnings via the chapter-generation strict sweep to avoid late aborts.
+
+# Tables cite their backing claims via the table-level `claimRefs` field, never
+# as a column whose cells hold raw `Cxxx` ids. Avoid columns whose only purpose
+# is citation (`evidence`, `evidence quality`, `claim refs`, etc.). Columns
+# named `source` / `publisher` / `attribution` are reserved for the *origin
+# institution or document* (e.g. "Gartner", "SEC 10-K"), not for claim ids.
+
+# === agent-facing workflow policy ===
+# Surfaced verbatim into references/rules.md by build-rules-doc.mjs.
+# Keep here the skill execution rules that are workflow policy, not executable
+# schema or renderer logic. SKILL.md should point agents to rules.md
+# instead of re-declaring these literals in prose.
+agentPolicy:
+  volatileFacts:
+    - funding
+    - valuation
+    - headcount
+    - customer count
+    - pricing
+    - legal/regulatory status
+    - outages
+    - partnerships
+    - product launches
+  # Tokens that mark a `localEvidence.searchQueries[].query` as targeting a
+  # volatile fact. The `searchQueryFreshness` validator requires any query
+  # whose lowercased text contains one of these substrings to include the year derived from the chapter's
+  # `runDate`. The prior year may also appear for a trailing window, but it
+  # does not replace the runDate year. Edit this
+  # list (and rerun `npm run build:rules`) when adding a new volatile-fact
+  # vocabulary; the validator reads from agentPolicy at runtime.
+  volatileFactQueryTokens:
+    - raise
+    - raised
+    - round
+    - series
+    - seed
+    - venture
+    - valuation
+    - valued
+    - arr
+    - revenue
+    - growth
+    - burn
+    - runway
+    - margin
+    - headcount
+    - hiring
+    - layoff
+    - layoffs
+    - customer
+    - customers
+    - client
+    - clients
+    - partner
+    - partnership
+    - channel
+    - reseller
+    - distributor
+    - pricing
+    - launch
+    - launches
+    - released
+    - roadmap
+    - announce
+    - announced
+    - ipo
+    - s-1
+    - prospectus
+    - lawsuit
+    - litigation
+    - regulator
+    - regulatory
+    - sanction
+    - enforcement
+    - breach
+    - outage
+    - incident
+    - leadership
+    - ceo
+    - cfo
+    - coo
+    - cto
+    - executive
+    - acquisition
+    - acquired
+    - merger
+  retryPolicy:
+    maxChapterRetries: 3
+    requireMonotonicFailureDecrease: true
+  researchRules:
+    - "Review direct URLs with fetch-url before retaining them as evidence; do not cite generic search-result pages."
+    - "Prefer primary, official, independent, customer, regulatory, legal, and adverse sources over summary pages."
+    - "Record reviewed sources, atomic claims, search queries, typed research questions, and typed evidence gaps in localEvidence."
+    - "Re-fetch volatile facts every run; refresh context and earlier chapters are background only for those facts."
+    - "Treat runtimeContext.run.runDate as the ONLY source of truth for \"today\"; the model's training cutoff is unreliable and may be years stale. Before issuing source-discovery searches, derive any date tokens from runDate (for example its year, Month YYYY for very recent coverage, or the prior year only for explicit trailing-window queries), and never use a year you remember from training as the freshness anchor."
+    - "Anchor volatile-fact source discovery to runDate before searching: every localEvidence.searchQueries[].query whose text matches a volatileFactQueryTokens substring (funding/ARR/headcount/customers/leadership/regulatory/launches/etc.) MUST contain the runDate year as a literal 4-digit token. For explicit trailing-window queries, it may also contain the prior year, but the prior year never replaces the runDate year. Freshness words such as latest, updated, or announced may supplement, but not replace, literal runDate-derived date tokens. localEvidence.searchQueries[] is the provenance/audit trail for queries already issued, not the search executor; the searchQueryFreshness validator audits this log after the fact as a hard gate that cannot be acknowledged away. If a lookup is genuinely historical, rephrase it so it no longer matches a volatile-fact token instead of adding a fake freshness year."
+  chapterAuthoringRules:
+    - "Use runtimeContext.chapter as the chapter brief and runtimeContext.chapter.gate as the binding per-chapter gate."
+    - "Use the *Validator dimensions* section below for dimension precedence/suppressors and the inline allowed enum values in references/contracts.md for each field; trust the per-issue `fix` in check-chapter JSON output (`issues[].fix`) for concrete repair."
+    - "Use the *Renderer contracts* section below before writing figures; substitute a table when the evidence does not fit the figure contract."
+    - "Cite tables through table-level claimRefs, never through evidence-only columns that hold raw claim ids."
+    - "Populate tables[].notes whenever the table contains estimates, partial coverage, computed/derived cells, or any caveat the reader needs (data-source convention, units, vintage, what null means). Leave notes null only for pure factual snapshot tables where every cell is a primary-source fact with no qualifier."
+  hardRules:
+    - "Set slug to the company slug only: the report folder basename with the leading timestamp removed."
+    - "Do not hand-write evidence.yaml, full-report.yaml, or summary-card.yaml; let finalization scripts assemble them."
+    - "Do not invent facts, metrics, customers, funding, valuation, or dates."
+    - "Do not edit another chapter artifact while working on the current chapter."
+    - "Keep scratch files under .research-cache/<runId>/, never under reports/<runId>/."
+    - "Only chapter YAMLs, report-meta.yaml, and assembled final artifacts belong under reports/<runId>/."
+    - "Do not run any git command (git add, git commit, git push, git stash, git checkout, etc.) at any point in the workflow — including after finalize-report exits 0. Leave every generated and modified file unstaged in the working tree; the caller owns commit decisions. The only exception is when the invocation prompt explicitly instructs the agent to commit."
+  finalResponseFields:
+    - report folder
+    - generated files
+    - source count
+    - claim count
+    - recommendation
+    - confidence
+    - risks
+    - valuation stance
+    - table count
+    - figure count
+    - finalize result
+    - main gaps
+
+# === per-chapter gates ===
+# `defaultGate` applies to every chapter; per-chapter `gate:` blocks override
+# specific keys. Each chapter's gate is what `check-chapter` enforces against
+# that one chapter's YAML.
+defaultGate:
+  minSections: 3
+  maxSections: 8
+  # Tables and figures share one combined floor; agents may swap a planned
+  # figure for an extra table when the data shape does not fit the figure type.
+  minArtifacts: 6
+  maxTables: 8
+  maxFigures: 6
+  minResearchQuestions: 25
+  minLocalSources: 25
+  minLocalClaims: 35
+  # Question quality (P1): each chapter's researchQuestions[] must cover
+  # multiple intents, include adverse-evidence searches, and resolve most
+  # questions to claims; unresolved/partial must surface in evidenceGaps.
+  minQuestionTypeSpread: 4         # distinct `type` values across researchQuestions[]
+  minAdverseQuestions: 1           # at least N `type: adverse` questions
+  minQuestionAnswerRate: 0.8       # share of researchQuestions whose status is `answered`
+  minContentRequirementCoverage: 0.8  # share of contentRequirements[] referenced by at least one question's targets[]
+  # Source diversity (P2): each chapter must pull from multiple domains, source
+  # types, and contribute new sources beyond what earlier chapters already saw.
+  minSourceDomains: 10             # distinct registrable domains across localEvidence.sources[].url
+  minNetNewSources: 8              # canonical URLs not present in any earlier-order chapter's localEvidence.sources[]
+  minSourceTypeSpread: 4           # distinct sourceType values across localEvidence.sources[]
+  requiredSourceTypes: []          # chapter must include >=1 source of each listed sourceType (per-chapter override)
+  minHighConfidenceCorroboration: 2 # claims with confidence=high require >= N sourceRefs (>=1 must be primary tier)
+  # Enumeration tables (P3): plannedTables marked `enumeration: true` must
+  # carry an enumerationScope (coverage + basis); per-row corroboration must
+  # come from at least N distinct registrable domains.
+  minSourcesPerEnumerationRow: 2
+  depthFloor:
+    minSectionBodyWords: 100
+    minSectionWordsTotal: 600
+    minTableRowsTotal: 16
+    minFigureDataPointsTotal: 12
+# === report-level gates ===
+# Hard floors evaluated AFTER finalization across all chapters consolidated
+# into the evidence ledger. See check-report.mjs checkReportLevelDiversity().
+reportGate:
+  minDistinctDomains: 30          # distinct registrable domains across all sources in evidence.yaml
+  requireAdverseSource: true      # at least one stance:adverse source must be present
+  maxPaywallPercent: 0.3          # fail if >30% of sources are paywall/broken/rate-limited
+  # Cross-chapter tolerances (used by check-cross-chapter.mjs for drift detection).
+  # Metric drift: relative tolerance for numeric values across chapters (e.g., 0.1 = 10%).
+  # Key-fact overlap: Jaccard threshold for matching identity facts across chapters (≥ threshold = match).
+  # Duplicate overlap: Jaccard threshold for table/figure title+structure across chapters (both must meet threshold).
+  crossChapterTolerances:
+    metricDrift: 0.1              # 10% relative tolerance on metric values
+    keyFactOverlap: 0.7           # 70% token overlap triggers key-fact drift check
+    duplicateOverlap: 0.7         # 70% title+structure overlap flags cross-chapter duplicate
+# Report-level adverse-evidence distribution. Per-chapter gates already enforce
+# adverse *questions*; this gate keeps adverse *sources* from collecting in
+# only one chapter (typically risks). Each listed chapter must contribute at
+# least one adverse-stance source. A warning fires when the number of chapters
+# carrying any adverse source falls at or below the threshold.
+# (Logically part of `reportGate` above; kept top-level only because the loader
+# injects gate.minAdverseSources into per-chapter gates from this list.)
+adverseDistribution:
+  requireAtLeastOneAdverseSource:
+    - company-overview
+    - financials
+    - customers
+    - valuation
+  warnIfChaptersWithAdverseSourceAtMost: 2
+# === chapters ===
+# Chapter identity is the (key, order) pair. The loader derives the file name
+# as "<order:02>-<key>.yaml". optionalContext entries are chapter keys.
+#
+# Each chapter MUST declare a `letter:` (single uppercase A-Z, not in the
+# reserved type letters S/C/T/F/Q). Every id generated inside the chapter is
+# `<Type><ChapterLetter><Seq3>` (e.g. SO001 = source #1 in the company-overview
+# chapter whose letter is `O`). Letters must be unique across chapters.
+#
+# Per-chapter `gate:` overrides merge with `defaultGate` above; a separate
+# floor `gate.minAdverseSources` is INJECTED at config-load time from
+# `adverseDistribution.requireAtLeastOneAdverseSource[]` below — so chapters
+# listed there require at least one stance:adverse source.
+chapters:
+  - key: company-overview
+    order: 1
+    letter: O
+    title: Company Overview
+    mission: Establish identity, leadership, funding, scale, and milestones that every later chapter can reuse as ground truth.
+    optionalContext: []
+    contentRequirements:
+      - Identity, headquarters, founding date, current stage, and one-line product/business model.
+      - Founders, leadership, board/governance, key-person dependence, and material leadership changes.
+      - Funding history, valuation, total raised, investors, secondaries, debt/credit when supportable.
+      - Cover metrics (valuation, raised, revenue/run-rate, customers, headcount, locations) with explicit gaps for unsupported numbers.
+      - Milestones across founding, financing, product, scale, regulatory, partnerships, and adverse events.
+    plannedTables:
+      - name: Snapshot KPI table
+        requirement: metric, value/status, date, confidence, gap.
+      - name: Leadership and founder table
+        enumeration: true
+        expectedMinRows: 2
+        requirement: person, role, background, founder-market fit or functional coverage, key-person dependency.
+      - name: Stakeholder or investor map
+        enumeration: true
+        expectedMinRows: 5
+        requirement: stakeholder, role, control or economic importance, diligence ask.
+      - name: Milestone table
+        enumeration: true
+        expectedMinRows: 8
+        requirement: dated entries covering founding, financing, product, scale, regulatory, partnership, governance, and adverse events; columns date, event, type (founding|financing|product|scale|regulatory|partnership|governance|adverse), amount/valuation/status, participants, implication; this is the single chronology of record.
+    plannedFigures:
+      - name: Company milestone timeline
+        acceptedTypes: [timeline]
+        requirement: Dated milestone items with labels, details, tone, claim refs.
+      - name: Company snapshot logic
+        acceptedTypes: [flow]
+        requirement: Show how identity, product, customers, capital, and dependencies connect.
+      - name: Snapshot KPIs
+        acceptedTypes: [kpi]
+        requirement: Summarize maturity, traction, risk, or investability when supportable.
+    evidenceStrategy:
+      - Official identity surfaces — homepage, about, leadership, newsroom, careers, product, trust, filings, legal.
+      - Funding/valuation — company and investor announcements, tier-one finance/tech reporting, filings, credible databases.
+      - Adverse checks — lawsuits, leadership churn, sanctions, recalls, layoffs, stale claims, conflicting scale numbers.
+    qualityBar:
+      - Separate verified facts, company claims, conflicting reports, and unavailable private metrics.
+      - Later chapters can reuse this identity without guessing.
+      - Milestone timeline has at least 8 dated entries or evidenceGaps explain why not.
+      - Unsupported cover metrics use null plus a concrete diligence path.
+  - key: market-analysis
+    order: 2
+    letter: M
+    title: Market Analysis
+    mission: Define the market, buyer, sizing, drivers, and constraints that govern adoption and valuation.
+    optionalContext: []
+    contentRequirements:
+      - Market boundary, included/excluded spend, adjacencies, and status-quo substitutes.
+      - TAM/SAM/SOM or evidence-constrained sizing using multiple lenses, not one broad estimate.
+      - Buyer/user/payer segmentation with budget ownership and adoption path.
+      - Growth drivers and adoption constraints (regulation, switching cost, ROI, trust, capital intensity).
+      - Sizing/adoption diligence gaps and contradictory estimates preserved.
+    plannedTables:
+      - name: Market definition table
+        requirement: segment/category, included spend, excluded spend, buyer/payer, relevance.
+      - name: TAM/SAM/SOM or sizing lens table
+        requirement: publisher, year, geography, value, CAGR, methodology, confidence, limitation.
+      - name: Segment / buyer map
+        requirement: segment, buyer, user, payer, workflow, budget owner, adoption trigger.
+      - name: Growth drivers and constraints table
+        requirement: driver/constraint, direction, timing, implication, diligence ask.
+    plannedFigures:
+      - name: Market sizing lens
+        acceptedTypes: [pyramid]
+        requirement: TAM/SAM/SOM or constrained sizing layers with numeric values when supported.
+      - name: Market estimate range
+        acceptedTypes: [range]
+        requirement: Low/base/high estimates of one market quantity (e.g. TAM, SAM, penetration, growth forecast) with source-backed bounds and one consistent unit. Do not mix incompatible units (percent vs $B vs index) across rows.
+      - name: Buyer / segment map
+        acceptedTypes: [matrix, journey-map, flow]
+        requirement: Buyer-user-payer relationships and adoption path.
+      - name: Adoption funnel or value-chain map
+        acceptedTypes: [funnel, flow]
+        requirement: Purchase/deployment steps or value-chain actors.
+    evidenceStrategy:
+      - Market data from analyst reports, government/industry statistics, filings, trade associations, public-company disclosures.
+      - Buyer/budget evidence from procurement pages, customer case studies, public budgets, job postings, reimbursement data.
+      - Disconfirming evidence from slowdown reports, failed pilots, regulatory bottlenecks, saturation, contrary estimates.
+    qualityBar:
+      - Define the market boundary before sizing it.
+      - Tie drivers and constraints to adoption timing, budget owner, and valuation relevance.
+      - Do not rely on one generic TAM estimate or call the market large without boundary logic.
+      - If SAM/SOM cannot be isolated, preserve failed sizing paths and diligence asks.
+      - Major chart numbers must match source-backed table numbers or state transformations in approximationNotes.
+  - key: competitors
+    order: 3
+    letter: P
+    title: Competitors
+    mission: Identify direct, incumbent, adjacent, substitute, and status-quo alternatives, and assess differentiation durability.
+    optionalContext: [market-analysis]
+    contentRequirements:
+      - Landscape covering direct peers, incumbents, adjacents, substitutes, status quo, internal build, and likely entrants.
+      - Competitor profiles with scale, funding, target customer, product scope, pricing, and strategic direction.
+      - Comparisons on capability, pricing, GTM/distribution, and trust/regulatory posture.
+      - Switching cost, lock-in, multi-homing, distribution power, and supply/partner access.
+      - Moat durability, commoditization or displacement risk, and adverse competitor evidence.
+    plannedTables:
+      - name: Competitor profile table
+        requirement: competitor, category, scale/funding, target segment, differentiation, limitation.
+      - name: Feature / capability matrix
+        requirement: buying criteria, company, competitors, unsupported cells marked clearly.
+      - name: Pricing / packaging comparison
+        requirement: price/unit/contract model, included capabilities, discount or unknowns, implication.
+      - name: Moat durability / competitive risk register
+        requirement: moat claim, threat, severity, mitigation/diligence ask.
+    plannedFigures:
+      - name: Competitive positioning map
+        acceptedTypes: [quadrant]
+        requirement: Numeric axes only when source-backed; otherwise evidence-backed ordinal scoring with rationale.
+      - name: Feature breadth / capability map
+        acceptedTypes: [matrix]
+        requirement: Capability coverage and strength by competitor.
+      - name: Moat / readiness KPIs
+        acceptedTypes: [kpi]
+        requirement: Compact competitive durability summary.
+    evidenceStrategy:
+      - Competitor official surfaces — product, pricing, docs, case studies, security/compliance, integrations, channel pages, changelog.
+      - Independent proof — benchmarks, reviews, filings, market reports, customer references, procurement pages, adverse reporting.
+      - Never treat vendor-authored comparison pages as independent proof.
+    qualityBar:
+      - Compare every material way the buyer can solve the same job, including status quo and internal build.
+      - Mark unsupported matrix cells as unknown or evidence gaps; never guess.
+      - Include adverse/disconfirming evidence on displacement, commoditization, channel power, or incumbent response.
+      - Query by competitor class; do not build the matrix from one generic comparison source.
+  - key: financials
+    order: 4
+    letter: I
+    title: Financials
+    mission: Explain revenue model, unit economics, capital needs, and which financial inputs are insufficient for underwriting.
+    optionalContext: [market-analysis, competitors]
+    gate:
+      requiredSourceTypes: [official, filing]
+    contentRequirements:
+      - Revenue streams, pricing model, revenue mix, and recognition issues where supportable.
+      - GTM motion and sales efficiency proxies (cycle, CAC/payback or proxy, channel economics).
+      - Cost structure, gross margin drivers, working capital, capex, and service-delivery costs.
+      - Public traction (revenue, ARR, GMV, units, locations, utilization, active users) versus private-metric gaps.
+      - Capital adequacy and financing dependency — cash on hand, burn, runway, planned use of funds, next-round trigger, and debt/project-finance obligations. Historical round-by-round chronology lives in Company Overview; refer to that chronology in prose, but do not copy Company Overview claim ids; if Financials needs a funding fact, mint a local Financials claim with its own sourceRefs.
+      - Financial verdict on revenue quality, margin path, capital intensity, and diligence blockers.
+    plannedTables:
+      - name: Revenue streams table
+        requirement: stream, mechanism, unit, current value/status, quality, diligence ask.
+      - name: Pricing / monetization table
+        requirement: price/unit/contract, list vs realized pricing, discounts/unknowns, source.
+      - name: Unit economics table
+        requirement: metric, value/null, confidence, why it matters, diligence ask.
+      - name: Capital adequacy table
+        requirement: cash on hand, monthly burn, runway months, planned use of funds, next-round trigger, debt/project-finance obligations; refer to the Company Overview funding chronology without copying its claim ids, and mint local Financials claims only for financing facts needed in this table.
+      - name: Public financial gaps table
+        requirement: missing private metrics, impact, exact diligence path.
+    plannedFigures:
+      - name: Revenue model bridge
+        acceptedTypes: [flow, waterfall]
+        requirement: How customer activity converts into revenue and gross profit.
+      - name: Unit economics bridge
+        acceptedTypes: [flow]
+        requirement: Use inputs when available; otherwise qualitative nodes with approximationNotes.
+      - name: Financial estimate range
+        acceptedTypes: [range]
+        requirement: Revenue, burn, runway, margin, or valuation-input ranges with source-backed bounds.
+      - name: Capital intensity / cash-flow map
+        acceptedTypes: [flow, matrix, waterfall]
+        requirement: Capex, inventory, project finance, manufacturing scale-up, or credit exposure.
+    evidenceStrategy:
+      - Revenue/pricing from official pricing, customer contracts/examples, filings, investor announcements, channel data.
+      - Capital adequacy from latest reported cash position, burn signals, hiring/layoffs, debt/credit facilities, and credible investor coverage. Use Company Overview as background for the funding chronology, but do not copy its claim ids across chapters.
+      - Unit economics from public-company comps, customer case studies, cost benchmarks, partner terms, channel fees.
+      - Adverse checks for burn, margin compression, pricing pressure, defaults, inventory issues, customer concentration.
+    qualityBar:
+      - Separate list pricing, company-claimed traction, corroborated metrics, estimates, and unavailable private data.
+      - Do not force SaaS, marketplace, or hardware metrics unless the revenue mechanism supports them.
+      - Do not restate the historical funding chronology; reference it from Company Overview and focus on forward capital adequacy.
+      - Official pricing is list pricing, not realized revenue or margin.
+      - Every null unit-economics field needs a specific diligence request.
+      - Scenario inputs must be labeled public, estimated, or unavailable.
+  - key: product-tech
+    order: 5
+    letter: E
+    title: Product & Technology
+    mission: Explain what is delivered, how it works, maturity, dependencies, and product/technical risks.
+    optionalContext: [market-analysis, competitors, financials]
+    gate:
+      requiredSourceTypes: [official, technical-docs, developer-signal]
+    contentRequirements:
+      - Product/service definition in customer workflow terms.
+      - Module, SKU, asset, pipeline, facility, or product-line map.
+      - Architecture or operating model — software stack, hardware design, manufacturing, clinical mechanism, logistics, or service workflow.
+      - Deployment, integration, reliability, support, and roadmap.
+      - Differentiation — technology, IP, data, manufacturing know-how, supply access, brand, regulatory approvals, or operations.
+      - Trust, safety, security, privacy, compliance, and quality controls.
+    plannedTables:
+      - name: Product module / asset matrix
+        requirement: module/asset/product line, user, status/maturity, differentiation, diligence gap.
+      - name: Workflow / use-case table
+        requirement: user job, current workflow, company solution, measurable benefit, limitation.
+      - name: Technology / operating architecture table
+        requirement: layer/process/component, role, dependency, risk.
+      - name: Trust / quality / compliance table
+        requirement: control/certification/quality metric, status, scope, gap.
+      - name: Roadmap / release / development-stage table
+        requirement: date/stage, feature/milestone, status, implication, source.
+    plannedFigures:
+      - name: Product architecture map
+        acceptedTypes: [stack]
+        requirement: Layers/modules/components with details.
+      - name: Customer workflow / operating flow
+        acceptedTypes: [flow]
+        requirement: How the product/service is used or delivered.
+      - name: Critical dependency map
+        acceptedTypes: [dag]
+        requirement: Suppliers, platforms, data rights, regulators, facilities, or key partners.
+      - name: Product maturity / capability map
+        acceptedTypes: [matrix]
+        requirement: Maturity or strength across modules/capabilities.
+    evidenceStrategy:
+      - Official-surface mining is mandatory when a company URL exists — homepage, sitemap, product/docs/API, changelog, integrations, pricing, trust/security, status, certifications, customer stories.
+      - Technical proof from patents, papers, clinical/trial records, certifications, regulatory databases, benchmarks, status pages.
+      - External proof from reviews, customer deployments, partner announcements, regulator filings, recalls/incidents.
+      - Developer-signal (sourceType `developer-signal`) is required — GitHub repo activity (stars, releases, contributors), Hacker News threads, Stack Overflow tag traffic, public Discord/Slack metrics, package registry downloads, npm/PyPI/HuggingFace hub stats, API forums.
+      - For companies without a public developer surface (hardware, manufacturing, clinical, regulated industries), satisfy `developer-signal` via the closest practitioner-community proxy — industry forums, professional-society discussions, integration partner posts, public engineer recruiting / talks, or a documented note in `evidenceGaps[]` explaining why no proxy exists.
+      - Do not infer architecture, approvals, certifications, throughput, or safety from vague marketing copy.
+    qualityBar:
+      - Distinguish verified maturity, roadmap claims, integrations, and certifications from marketing.
+      - Make architecture and workflow figures specific, not generic boxes.
+      - Surface product, security, reliability, regulatory, supply, or implementation gaps.
+      - Each module row states maturity/status, buyer/user, differentiation, and diligence gap.
+      - Unsupported architecture, certifications, integrations, performance, or roadmap claims become evidenceGaps.
+      - Figures use structured YAML fields, not Mermaid or prose diagrams.
+  - key: customers
+    order: 6
+    letter: U
+    title: Customers
+    mission: Identify who pays/uses the product, the proof of real adoption, durability, expansion, and concentration risks.
+    optionalContext: [financials, product-tech]
+    gate:
+      requiredSourceTypes: [customer-proof]
+    contentRequirements:
+      - Customer base segmentation by buyer/user/payer, geography, vertical, size, channel, use case, or revenue band.
+      - Adoption trajectory (active usage, repeat purchase, deployment, accounts, locations, utilization) where supportable.
+      - Named customer proof — production vs pilot, outcomes, reference quality, evidence freshness.
+      - Retention/durability — NRR, GRR, churn, renewal, contract length, cohorts, satisfaction, or gaps.
+      - Expansion and concentration — land-and-expand, top-customer risk, channel/partner dependence, procurement friction.
+    plannedTables:
+      - name: Customer segmentation table
+        requirement: segment, buyer/user/payer, use case, scale, revenue/strategic value, gap.
+      - name: Customer growth / adoption trajectory table
+        requirement: metric, value, date, source, confidence, implication, missing denominator.
+      - name: Named customer proof table
+        enumeration: true
+        expectedMinRows: 3
+        requirement: customer, segment, deployment/use case, production vs pilot, outcome, limitation.
+      - name: Retention / repeat usage / satisfaction table
+        requirement: metric, value/null, segment, confidence, diligence ask.
+      - name: Expansion and concentration risk table
+        requirement: expansion driver, concentration risk, impact, diligence path.
+    plannedFigures:
+      - name: Customer journey map
+        acceptedTypes: [journey-map]
+        requirement: Customer segments, adoption surfaces, and expansion loops.
+      - name: Adoption / deployment funnel
+        acceptedTypes: [funnel, flow]
+        requirement: Discovery-to-purchase-to-deployment-to-expansion path.
+      - name: Customer proof matrix
+        acceptedTypes: [matrix]
+        requirement: Evidence quality, outcome specificity, retention visibility, or production maturity.
+      - name: Retention / repeat cohort
+        acceptedTypes: [cohort]
+        requirement: Time-series retention only — columns are time buckets (e.g. month-1/3/6 or year-1/2) and cell values are retention percentages 0–100.
+    evidenceStrategy:
+      - Official customer evidence — customer pages, case studies, testimonials, partner stories, marketplaces; logos only when tied to use.
+      - Independent evidence — procurement/tender records, reviews, marketplace ratings, public customer announcements, filings, analyst reports.
+      - Adverse evidence — churn/complaints, poor reviews, failed deployments, outages, procurement blockers, lawsuits, concentration warnings.
+      - Customer-proof (sourceType `customer-proof`) is required — G2/Capterra/Gartner Peer Insights reviews, named case studies, customer-quoted press releases, LinkedIn testimonials, conference talks by named users, government procurement records.
+      - Separate broad customer-count claims from named deployments and retention proof.
+    qualityBar:
+      - Distinguish logos, named deployments, active use, outcomes, retention, and expansion.
+      - Tie customer evidence to buyer/user/payer segments and revenue or strategic value.
+      - Convert unsupported retention, customer count, satisfaction, or concentration claims into null plus exact diligence asks.
+      - Include adverse searches for churn, complaints, blocked deployments, concentration, failed pilots.
+      - Logos alone do not prove retention or production deployment.
+  - key: risks
+    order: 7
+    letter: R
+    title: Risks
+    mission: Rank legal, regulatory, operational, technical, financial, partner, customer, and execution risks with mitigations and kill criteria.
+    optionalContext: [financials, product-tech, customers]
+    # Risks demands the broadest adverse-evidence sweep; raise research/source/claim floors above the chapter default.
+    gate:
+      minResearchQuestions: 30
+      minLocalSources: 30
+      minLocalClaims: 40
+      minAdverseQuestions: 3
+      requiredSourceTypes: [regulatory, legal]
+    contentRequirements:
+      - Severity-ranked risks with likelihood, impact, mitigation maturity, residual exposure, and investment implication.
+      - Regulatory/legal risk — licenses, approvals, litigation, enforcement, IP, privacy, environmental/safety.
+      - Operational risk — supply chain, manufacturing, logistics, reliability, outages, recalls, safety, facilities, labor.
+      - Partner/dependency risk — supplier, distributor, cloud/platform, capital provider, regulator, key customer concentration.
+      - Financial/model risk — burn, capital intensity, credit/loss exposure, fraud, working capital, margin compression.
+      - Mitigations, monitoring indicators, thesis-break triggers, and diligence asks.
+    plannedTables:
+      - name: Regulatory / legal risk register
+        enumeration: true
+        expectedMinRows: 3
+        requirement: rule/license/case, jurisdiction, status, likelihood, severity, mitigation, residual exposure, diligence path; rows ordered by severity.
+      - name: Operational / quality / security risk register
+        requirement: failure mode, likelihood, severity, mitigation maturity, residual exposure, unresolved gap; rows ordered by severity.
+      - name: Partner / dependency risk register
+        requirement: dependency, counterparty, role, concentration, failure scenario, severity, mitigation, residual exposure; rows ordered by severity.
+      - name: People / execution risk register
+        requirement: role/function, dependency or gap, likelihood, severity, mitigation, diligence path; rows ordered by severity.
+      - name: Mitigation and kill criteria table
+        requirement: risk, monitorable trigger, threshold/event, action implication.
+    plannedFigures:
+      - name: Risk heatmap
+        acceptedTypes: [matrix]
+        requirement: Impact, likelihood, mitigation maturity, or residual severity.
+      - name: Risk transmission map
+        acceptedTypes: [dag]
+        requirement: How risks flow into revenue, customers, margin, financing, operations, and valuation.
+      - name: Dependency map
+        acceptedTypes: [dag]
+        requirement: Critical partners, suppliers, platforms, regulators, facilities, or financing dependencies.
+    evidenceStrategy:
+      - Adverse/disconfirming research is mandatory.
+      - Official — trust/security/privacy/terms/DPA/compliance/status/incident pages, certifications, recall and safety pages.
+      - Primary sources — regulators, court records, clinical/regulatory databases, patent/IP offices, environmental agencies, sanctions/export-control sources.
+      - Independent — adverse reporting, security incident coverage, customer complaints, analyst risk notes, comparable risk factors.
+    qualityBar:
+      - Cite evidence and mitigation for every top risk; never assign severity from intuition.
+      - Define monitorable kill criteria or diligence paths for unresolved risks.
+      - When litigation, regulatory posture, certifications, incidents, safety, or concentration cannot be confirmed, record exact diligence path.
+      - Include thesis-break triggers tied to measurable operating, regulatory, customer, financial, or management events.
+  - key: valuation
+    order: 8
+    letter: V
+    title: Valuation
+    mission: Convert evidence into recommendation, confidence, risk rating, valuation stance, scenarios, and diligence asks.
+    optionalContext: [market-analysis, competitors, financials, product-tech, customers, risks]
+    # Valuation must reconcile every prior chapter; raise the source/claim floor.
+    gate:
+      minResearchQuestions: 30
+      minLocalSources: 30
+      minLocalClaims: 40
+      minAdverseQuestions: 2
+      requiredSourceTypes: [analyst-market-data, filing]
+    contentRequirements:
+      - Investment thesis and anti-thesis tied to market, product, customers, financials, competition, and risks.
+      - Recommendation, confidence, risk rating, valuation stance, and target return/hold/exit where supportable.
+      - Current financing/valuation context, entry discipline, dilution/preference overhang, and whether public evidence supports the price.
+      - Bull/base/bear cases with explicit assumptions, valuation ranges, probability signals, and downside triggers.
+      - Comparable set — public companies, private rounds, M&A, milestone or model-appropriate references.
+      - Exit readiness and final diligence asks plus thesis-break triggers.
+    plannedTables:
+      - name: Recommendation summary table
+        requirement: recommendation, confidence, risk rating, valuation stance, decision implication.
+      - name: Thesis / anti-thesis table
+        requirement: argument, what would change the view.
+      - name: Bull / base / bear scenario table
+        requirement: assumptions, valuation/return logic, key risks, probability signal.
+      - name: Comparable valuation table
+        enumeration: true
+        expectedMinRows: 4
+        requirement: comparable, metric, multiple/valuation/status, relevance, limitation.
+      - name: Thesis-break and kill triggers table
+        requirement: trigger, threshold, transmission to thesis, action implication.
+      - name: Final diligence asks table
+        requirement: topic, missing evidence, why it matters, owner or diligence path.
+    plannedFigures:
+      - name: Recommendation logic
+        acceptedTypes: [flow]
+        requirement: Chain from scale/proof/risks/valuation to recommendation.
+      - name: Valuation sensitivity
+        acceptedTypes: [bar]
+        requirement: Sensitivity to revenue, margin, multiple, milestone probability, utilization, or other driver.
+      - name: Valuation / return range
+        acceptedTypes: [range]
+        requirement: Low/base/high valuation, exit, dilution, or return outcomes with explicit assumptions.
+      - name: Investment KPIs
+        acceptedTypes: [kpi]
+        requirement: IC-ready scoring across market, proof, moat, economics, risk, valuation, and evidence quality.
+    evidenceStrategy:
+      - Use prior chapter evidence first, then gather recommendation-critical financing/valuation/comp data directly.
+      - Valuation/financing — latest rounds, valuation marks, cap-table/preference clues, debt/project finance, public/private comps, M&A, secondary marks.
+      - Scenario drivers — growth, margin, retention, unit economics, approvals, milestones, loss rates, multiples, exit window.
+      - Adverse/downside — overvaluation, down-round risk, multiple compression, regulatory blockers, customer concentration, failed commercialization.
+    qualityBar:
+      - Recommendation is price-sensitive and evidence-sensitive, not a generic company-quality score.
+      - Use a valuation method matching business model and stage; show what diligence or price change would move the call.
+      - Do not issue buy unless thesis and anti-thesis are evidence-supported and valuation has sufficient support.
+      - If valuation inputs are missing, prefer research-more or track over false precision.
+      - Include adverse searches on overvaluation, down-round risk, governance, liquidity, or commercialization failure.
