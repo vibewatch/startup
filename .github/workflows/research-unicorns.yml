@@ -52,14 +52,6 @@ on:
         options:
           - fast
           - deep
-      model:
-        description: "Model."
-        required: false
-        default: "gpt-6-luna"
-        type: choice
-        options:
-          - gpt-6-luna
-          - gpt-5.4-mini
 permissions:
   contents: write
   pull-requests: write
@@ -134,14 +126,12 @@ jobs:
           RAW_INDUSTRY: ${{ inputs.industry }}
           RAW_COUNT: ${{ inputs.unicornCount }}
           RAW_PROFILE: ${{ inputs.profile }}
-          RAW_MODEL: ${{ inputs.model }}
         run: |
           set -euo pipefail
           trim() { printf '%s' "${1//$'\n'/ }" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'; }
           INDUSTRY="$(trim "$RAW_INDUSTRY")"
           COUNT="$(trim "$RAW_COUNT")"
           PROFILE="$(trim "$RAW_PROFILE")"
-          MODEL="$(trim "$RAW_MODEL")"
           CUTOFF_DATE="$(date -u -d '2 years ago' +%F)"
           if [ -z "$INDUSTRY" ]; then
             INDUSTRY="Any"
@@ -165,24 +155,6 @@ jobs:
             "") PROFILE="fast" ;;
             *) echo "Unsupported profile: $PROFILE" >&2; exit 1 ;;
           esac
-          case "$MODEL" in
-            gpt-6-luna|gpt-5.4-mini) ;;
-            claude-sonnet-4.6|claude-opus-4.6|gpt-5.5|gpt-5.4)
-              echo "::warning::Legacy model $MODEL was replaced with lower-cost gpt-6-luna."
-              MODEL="gpt-6-luna"
-              ;;
-            "") MODEL="gpt-6-luna" ;;
-            *)
-              echo "Unsupported model: $MODEL (allowed: gpt-6-luna, gpt-5.4-mini)" >&2
-              exit 1
-              ;;
-          esac
-          case "$MODEL" in
-            gpt-6-luna) EFFORT="" ;;
-            gpt-5.4-mini)
-              if [ "$PROFILE" = "fast" ]; then EFFORT="medium"; else EFFORT="high"; fi
-              ;;
-          esac
           if [ "$INDUSTRY" = "Any" ]; then
             LABEL="recent-unicorns"
             INDUSTRY_RULE="Choose across different sectors, preferring underrepresented sectors/geographies."
@@ -200,8 +172,6 @@ jobs:
             echo "industryRule=$INDUSTRY_RULE"
             echo "label=$LABEL"
             echo "safeLabel=$SAFE_LABEL"
-            echo "model=$MODEL"
-            echo "effort=$EFFORT"
             echo "profile=$PROFILE"
             echo "cutoffDate=$CUTOFF_DATE"
           } >> "$GITHUB_OUTPUT"
@@ -210,8 +180,7 @@ jobs:
         env:
           COUNT: ${{ steps.inputs.outputs.count }}
           INDUSTRY: ${{ steps.inputs.outputs.industry }}
-          MODEL: ${{ steps.inputs.outputs.model }}
-          EFFORT: ${{ steps.inputs.outputs.effort }}
+          MODEL: gpt-6-luna
           PROFILE: ${{ steps.inputs.outputs.profile }}
           CUTOFF_DATE: ${{ steps.inputs.outputs.cutoffDate }}
           LABEL: ${{ steps.inputs.outputs.label }}
@@ -224,7 +193,6 @@ jobs:
             echo "| Max reports | ${COUNT:-unknown} |"
             echo "| Industry | ${INDUSTRY:-unknown} |"
             echo "| Model | ${MODEL:-unknown} |"
-            echo "| Effort | ${EFFORT:-unknown} |"
             echo "| Profile | ${PROFILE:-fast} |"
             echo "| Unicorn cutoff | ${CUTOFF_DATE:-unknown} |"
             echo "| Label | ${LABEL:-unknown} |"
@@ -324,8 +292,7 @@ jobs:
           COPILOT_TASK_WAIT_TIMEOUT_SECONDS: 5400
           COUNT: ${{ steps.inputs.outputs.count }}
           INDUSTRY_RULE: ${{ steps.inputs.outputs.industryRule }}
-          MODEL: ${{ steps.inputs.outputs.model }}
-          EFFORT: ${{ steps.inputs.outputs.effort }}
+          MODEL: gpt-6-luna
           PROFILE: ${{ steps.inputs.outputs.profile }}
           CUTOFF_DATE: ${{ steps.inputs.outputs.cutoffDate }}
           COVERAGE_HINT: ${{ steps.coverage.outputs.coverageHint }}
@@ -376,9 +343,6 @@ jobs:
           chmod +x "$GIT_GUARD_DIR/git"
           started_at=$(date +%s)
           copilot_args=(--yolo --autopilot --excluded-tools "web_fetch" --model "$MODEL")
-          if [ -n "$EFFORT" ]; then
-            copilot_args+=(--effort "$EFFORT")
-          fi
           run_copilot() {
             local prompt="$1"
             local log="$2"
@@ -415,7 +379,7 @@ jobs:
           {
             echo
             echo "### Copilot run stats"
-            echo "- profile/model/effort: $PROFILE / $MODEL / $EFFORT"
+            echo "- profile/model: $PROFILE / $MODEL"
             echo "- wall seconds: $wall_seconds"
             if [ -s "$COPILOT_LOG" ]; then
               tail -n 20 "$COPILOT_LOG" | grep -iE '^(changes?|requests?|tokens?|ai credits?)\b' | sed 's/^/- /' || echo "- (no stats line emitted)"
@@ -526,9 +490,10 @@ jobs:
               node --input-type=module - "$worker_results" >> "$GITHUB_STEP_SUMMARY" <<'NODE'
           import fs from 'node:fs';
           const r = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
-          const credits = r.workers.reduce((sum, worker) => sum + (worker.aiCredits ?? 0), 0);
-          const slowest = [...r.workers].sort((a, b) => b.durationSeconds - a.durationSeconds)[0];
-          console.log(`- Worker fan-out: wall=${r.durationSeconds}s, credits=${credits.toFixed(2)}, slowest=${slowest?.chapter ?? 'n/a'} (${slowest?.durationSeconds ?? 0}s), failures=${r.workers.filter((worker) => worker.status !== 'completed').length}`);
+          const runs = [...r.workers, ...(r.escalations ?? [])];
+          const credits = runs.reduce((sum, worker) => sum + (worker.aiCredits ?? 0), 0);
+          const slowest = [...runs].sort((a, b) => b.durationSeconds - a.durationSeconds)[0];
+          console.log(`- Worker fan-out: wall=${r.durationSeconds}s, credits=${credits.toFixed(2)}, escalations=${(r.escalations ?? []).length}, slowest=${slowest?.chapter ?? 'n/a'} (${slowest?.durationSeconds ?? 0}s), failures=${r.validations.filter((validation) => !validation.ok).length}`);
           NODE
             fi
             finalizer_result=".research-cache/$run_id/finalizer-result.json"

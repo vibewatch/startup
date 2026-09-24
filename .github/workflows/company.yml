@@ -33,17 +33,6 @@ on:
         options:
           - fast
           - deep
-      model:
-        description: "Model."
-        required: false
-        default: "gpt-5.4-mini"
-        type: choice
-        options:
-          - gpt-5.4-mini
-          - gpt-5.5
-          - gpt-5.4
-          - claude-sonnet-4.6
-          - claude-opus-4.6
 permissions:
   contents: write
   pull-requests: write
@@ -118,14 +107,12 @@ jobs:
           RAW_COMPANY: ${{ inputs.companyName }}
           RAW_URL: ${{ inputs.companyUrl }}
           RAW_PROFILE: ${{ inputs.profile }}
-          RAW_MODEL: ${{ inputs.model }}
         run: |
           set -euo pipefail
           trim() { printf '%s' "${1//$'\n'/ }" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'; }
           COMPANY="$(trim "$RAW_COMPANY")"
           URL="$(trim "$RAW_URL")"
           PROFILE="$(trim "$RAW_PROFILE")"
-          MODEL="$(trim "$RAW_MODEL")"
           if [ -z "$COMPANY" ]; then
             echo "companyName is required" >&2
             exit 1
@@ -135,21 +122,6 @@ jobs:
             "") PROFILE="fast" ;;
             *) echo "Unsupported profile: $PROFILE" >&2; exit 1 ;;
           esac
-          case "$MODEL" in
-            gpt-5.4-mini|claude-sonnet-4.6|claude-opus-4.6|gpt-5.5|gpt-5.4) ;;
-            "") MODEL="gpt-5.4-mini" ;;
-            *)
-              echo "Unsupported model: $MODEL (allowed: claude-sonnet-4.6, claude-opus-4.6, gpt-5.5, gpt-5.4)" >&2
-              exit 1
-              ;;
-          esac
-          case "$MODEL" in
-            gpt-5.5|gpt-5.4) EFFORT="xhigh" ;;
-            gpt-5.4-mini)
-              if [ "$PROFILE" = "fast" ]; then EFFORT="medium"; else EFFORT="high"; fi
-              ;;
-            claude-sonnet-4.6|claude-opus-4.6) EFFORT="high" ;;
-          esac
           LABEL="$COMPANY"
           SAFE_LABEL="$(printf '%s' "$LABEL" | tr -c '[:alnum:]' '-' | tr '[:upper:]' '[:lower:]' | sed 's/-\+/-/g; s/^-//; s/-$//' | cut -c1-60)"
           if [ -z "$SAFE_LABEL" ]; then
@@ -158,8 +130,6 @@ jobs:
           {
             echo "label=$LABEL"
             echo "safeLabel=$SAFE_LABEL"
-            echo "model=$MODEL"
-            echo "effort=$EFFORT"
             echo "profile=$PROFILE"
             echo "company<<EOF"
             echo "$COMPANY"
@@ -173,8 +143,6 @@ jobs:
         env:
           COMPANY: ${{ steps.inputs.outputs.company }}
           COMPANY_URL: ${{ steps.inputs.outputs.url }}
-          MODEL: ${{ steps.inputs.outputs.model }}
-          EFFORT: ${{ steps.inputs.outputs.effort }}
           PROFILE: ${{ steps.inputs.outputs.profile }}
         run: |
           {
@@ -184,8 +152,6 @@ jobs:
             echo "| --- | --- |"
             echo "| Company | ${COMPANY:-unknown} |"
             echo "| URL | ${COMPANY_URL:-unknown} |"
-            echo "| Model | ${MODEL:-unknown} |"
-            echo "| Effort | ${EFFORT:-unknown} |"
             echo "| Profile | ${PROFILE:-fast} |"
           } >> "$GITHUB_STEP_SUMMARY"
 
@@ -312,9 +278,10 @@ jobs:
               node --input-type=module - "$worker_results" >> "$GITHUB_STEP_SUMMARY" <<'NODE'
           import fs from 'node:fs';
           const r = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
-          const credits = r.workers.reduce((sum, worker) => sum + (worker.aiCredits ?? 0), 0);
-          const slowest = [...r.workers].sort((a, b) => b.durationSeconds - a.durationSeconds)[0];
-          console.log(`- Worker fan-out: wall=${r.durationSeconds}s, credits=${credits.toFixed(2)}, slowest=${slowest?.chapter ?? 'n/a'} (${slowest?.durationSeconds ?? 0}s), failures=${r.workers.filter((worker) => worker.status !== 'completed').length}`);
+          const runs = [...r.workers, ...(r.escalations ?? [])];
+          const credits = runs.reduce((sum, worker) => sum + (worker.aiCredits ?? 0), 0);
+          const slowest = [...runs].sort((a, b) => b.durationSeconds - a.durationSeconds)[0];
+          console.log(`- Worker fan-out: wall=${r.durationSeconds}s, credits=${credits.toFixed(2)}, escalations=${(r.escalations ?? []).length}, slowest=${slowest?.chapter ?? 'n/a'} (${slowest?.durationSeconds ?? 0}s), failures=${r.validations.filter((validation) => !validation.ok).length}`);
           NODE
             fi
             finalizer_result=".research-cache/$run_id/finalizer-result.json"

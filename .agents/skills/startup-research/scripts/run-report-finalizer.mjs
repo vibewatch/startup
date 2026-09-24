@@ -151,14 +151,17 @@ const startedAt = new Date();
 if (args.format === 'text') {
   console.log(`[run-report-finalizer] starting (${route.model}/${route.reasoningEffort}, timeout=${args.timeoutSeconds}s)`);
 }
-const child = spawn(args.copilotBin, [
+const copilotArgs = [
   '--yolo',
   '--autopilot',
   '--excluded-tools', 'web_fetch',
   '--model', route.model,
-  '--effort', route.reasoningEffort,
   '-p', finalizerPrompt({ reportFolder, runId, resultsPath, fetchLogPath }),
-], {
+];
+if (route.reasoningEffort !== 'default') {
+  copilotArgs.splice(copilotArgs.indexOf('-p'), 0, '--effort', route.reasoningEffort);
+}
+const child = spawn(args.copilotBin, copilotArgs, {
   cwd: repoRoot,
   detached: process.platform !== 'win32',
   env: {

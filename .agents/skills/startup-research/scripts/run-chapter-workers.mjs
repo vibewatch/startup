@@ -121,27 +121,31 @@ function terminate(child) {
   }, 5000).unref();
 }
 
-function runWorker(task, args, fetchLogPath, logsDir) {
+function runWorker(task, args, fetchLogPath, logsDir, routeOverride = null) {
   return new Promise((resolveWorker) => {
     const startedAt = new Date();
-    const logPath = join(logsDir, `${String(task.context.chapter.order).padStart(2, '0')}-${safeName(task.context.chapter.key)}.log`);
+    const route = routeOverride ?? task.context.policy.workerRouting;
+    const routeSuffix = routeOverride ? '-escalation' : '';
+    const logPath = join(logsDir, `${String(task.context.chapter.order).padStart(2, '0')}-${safeName(task.context.chapter.key)}${routeSuffix}.log`);
     const log = createWriteStream(logPath, { flags: 'w' });
     let tail = '';
     let timedOut = false;
-    const route = task.context.policy.workerRouting;
-    const child = spawn(args.copilotBin, [
+    const copilotArgs = [
       '--yolo',
       '--autopilot',
       '--excluded-tools', 'web_fetch',
       '--model', route.model,
-      '--effort', route.reasoningEffort,
       '-p', workerPrompt({
         reportFolder: task.reportFolder,
         contextPath: task.contextPath,
         poolPath: task.poolPath,
         fetchLogPath,
       }),
-    ], {
+    ];
+    if (route.reasoningEffort !== 'default') {
+      copilotArgs.splice(copilotArgs.indexOf('-p'), 0, '--effort', route.reasoningEffort);
+    }
+    const child = spawn(args.copilotBin, copilotArgs, {
       cwd: repoRoot,
       detached: process.platform !== 'win32',
       env: {
@@ -329,6 +333,7 @@ const plan = {
     file: task.context.chapter.file,
     model: task.context.policy.workerRouting.model,
     reasoningEffort: task.context.policy.workerRouting.reasoningEffort,
+    escalateTo: task.context.policy.workerRouting.escalateTo,
     contextPath: task.contextPath,
     poolPath: task.poolPath,
   })),
@@ -357,7 +362,33 @@ const workers = await runPool(tasks, args.concurrency, async (task) => {
   }
   return result;
 });
-const validations = validateChapters(tasks, reportFolder, fetchLogPath);
+let validations = validateChapters(tasks, reportFolder, fetchLogPath);
+const escalationTasks = tasks.filter((task) => {
+  const validation = validations.find((entry) => entry.chapter === task.context.chapter.key);
+  const route = task.context.policy.workerRouting;
+  return validation?.ok === false && route.escalateTo && route.escalateTo !== route.model;
+});
+let escalations = [];
+if (escalationTasks.length > 0) {
+  if (args.format === 'text') {
+    console.log(`[run-chapter-workers] escalating ${escalationTasks.length} failed chapter(s)`);
+  }
+  escalations = await runPool(escalationTasks, args.concurrency, async (task) => {
+    const route = {
+      model: task.context.policy.workerRouting.escalateTo,
+      reasoningEffort: 'xhigh',
+    };
+    if (args.format === 'text') {
+      console.log(`[run-chapter-workers] -> ${task.context.chapter.key} escalation (${route.model}/${route.reasoningEffort})`);
+    }
+    const result = await runWorker(task, args, fetchLogPath, logsDir, route);
+    if (args.format === 'text') {
+      console.log(`[run-chapter-workers] <- ${result.chapter} escalation: ${result.status} in ${result.durationSeconds}s`);
+    }
+    return result;
+  });
+  validations = validateChapters(tasks, reportFolder, fetchLogPath);
+}
 const completedAt = new Date();
 const output = {
   ...plan,
@@ -366,9 +397,9 @@ const output = {
   completedAt: completedAt.toISOString(),
   durationSeconds: Number(((completedAt - startedAt) / 1000).toFixed(2)),
   workers,
+  escalations,
   validations,
-  ok: workers.every((worker) => worker.status === 'completed')
-    && validations.every((validation) => validation.ok),
+  ok: validations.every((validation) => validation.ok),
 };
 const resultPath = join(cacheDir, 'worker-results.json');
 writeFileSync(resultPath, `${JSON.stringify(output, null, 2)}\n`);

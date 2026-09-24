@@ -45,17 +45,6 @@ on:
         options:
           - fast
           - deep
-      model:
-        description: "Model."
-        required: false
-        default: "gpt-5.4-mini"
-        type: choice
-        options:
-          - gpt-5.4-mini
-          - gpt-5.5
-          - gpt-5.4
-          - claude-sonnet-4.6
-          - claude-opus-4.6
   workflow_call:
     inputs:
       companyName:
@@ -76,10 +65,6 @@ on:
       profile:
         required: false
         default: "fast"
-        type: string
-      model:
-        required: false
-        default: "gpt-5.4-mini"
         type: string
 permissions:
   contents: write
@@ -155,7 +140,6 @@ jobs:
           RAW_REFRESH_REASON: ${{ inputs.refreshReason }}
           RAW_REFRESH_OF: ${{ inputs.refreshOfRunId }}
           RAW_PROFILE: ${{ inputs.profile }}
-          RAW_MODEL: ${{ inputs.model }}
         run: |
           set -euo pipefail
           trim() { printf '%s' "${1//$'\n'/ }" | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'; }
@@ -164,7 +148,6 @@ jobs:
           REFRESH_REASON="$(trim "$RAW_REFRESH_REASON")"
           REFRESH_OF="$(trim "$RAW_REFRESH_OF")"
           PROFILE="$(trim "$RAW_PROFILE")"
-          MODEL="$(trim "$RAW_MODEL")"
           if [ -z "$COMPANY" ]; then
             echo "companyName is required" >&2
             exit 1
@@ -177,21 +160,6 @@ jobs:
               exit 1
               ;;
           esac
-          case "$MODEL" in
-            gpt-5.4-mini|claude-sonnet-4.6|claude-opus-4.6|gpt-5.5|gpt-5.4) ;;
-            "") MODEL="gpt-5.4-mini" ;;
-            *)
-              echo "Unsupported model: $MODEL" >&2
-              exit 1
-              ;;
-          esac
-          case "$MODEL" in
-            gpt-5.5|gpt-5.4) EFFORT="xhigh" ;;
-            gpt-5.4-mini)
-              if [ "$PROFILE" = "fast" ]; then EFFORT="medium"; else EFFORT="high"; fi
-              ;;
-            claude-sonnet-4.6|claude-opus-4.6) EFFORT="high" ;;
-          esac
           if [ -z "$REFRESH_REASON" ]; then
             REFRESH_REASON="Manual refresh requested by workflow dispatch."
           fi
@@ -203,8 +171,6 @@ jobs:
           {
             echo "label=$LABEL"
             echo "safeLabel=$SAFE_LABEL"
-            echo "model=$MODEL"
-            echo "effort=$EFFORT"
             echo "profile=$PROFILE"
             echo "refreshOf=$REFRESH_OF"
             echo "refreshReason<<EOF"
@@ -225,8 +191,6 @@ jobs:
           REFRESH_REASON: ${{ steps.inputs.outputs.refreshReason }}
           REFRESH_OF: ${{ steps.inputs.outputs.refreshOf }}
           PROFILE: ${{ steps.inputs.outputs.profile }}
-          MODEL: ${{ steps.inputs.outputs.model }}
-          EFFORT: ${{ steps.inputs.outputs.effort }}
         run: |
           {
             echo "## Startup company refresh run"
@@ -238,8 +202,7 @@ jobs:
             echo "| Refresh reason | ${REFRESH_REASON:-unknown} |"
             echo "| Refresh of | ${REFRESH_OF:-auto-resolve} |"
             echo "| Profile | ${PROFILE:-fast} |"
-            echo "| Model | ${MODEL:-unknown} |"
-            echo "| Effort | ${EFFORT:-unknown} |"
+            echo "| Model | gpt-6-luna |"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Snapshot reports before refresh
@@ -255,8 +218,6 @@ jobs:
           REFRESH_REASON: ${{ steps.inputs.outputs.refreshReason }}
           REFRESH_OF: ${{ steps.inputs.outputs.refreshOf }}
           PROFILE: ${{ steps.inputs.outputs.profile }}
-          MODEL: ${{ steps.inputs.outputs.model }}
-          EFFORT: ${{ steps.inputs.outputs.effort }}
           # fetch-url appends one JSON line per call here when set; chapter
           # checks can use the trail to surface unverifiedSource warnings.
           STARTUP_FETCH_LOG_PATH: ${{ github.workspace }}/.research-cache/_fetch-log.jsonl
@@ -286,14 +247,14 @@ jobs:
           COPILOT_LOG="$RUNNER_TEMP/copilot-logs/run.log"
           started_at=$(date +%s)
           set +e
-          copilot --yolo --autopilot --excluded-tools "web_fetch" --model "$MODEL" --effort "$EFFORT" -p "$PROMPT" 2>&1 | tee "$COPILOT_LOG"
+          copilot --yolo --autopilot --excluded-tools "web_fetch" --model gpt-6-luna -p "$PROMPT" 2>&1 | tee "$COPILOT_LOG"
           status=${PIPESTATUS[0]}
           set -e
           wall_seconds=$(( $(date +%s) - started_at ))
           {
             echo
             echo "### Copilot run stats"
-            echo "- profile/model/effort: $PROFILE / $MODEL / $EFFORT"
+            echo "- profile/model: $PROFILE / gpt-6-luna"
             echo "- wall seconds: $wall_seconds"
             if [ -s "$COPILOT_LOG" ]; then
               tail -n 20 "$COPILOT_LOG" | grep -iE '^(changes?|requests?|tokens?|ai credits?)\b' | sed 's/^/- /' || echo "- (no stats line emitted)"
@@ -395,9 +356,10 @@ jobs:
               node --input-type=module - "$worker_results" >> "$GITHUB_STEP_SUMMARY" <<'NODE'
           import fs from 'node:fs';
           const r = JSON.parse(fs.readFileSync(process.argv[2], 'utf8'));
-          const credits = r.workers.reduce((sum, worker) => sum + (worker.aiCredits ?? 0), 0);
-          const slowest = [...r.workers].sort((a, b) => b.durationSeconds - a.durationSeconds)[0];
-          console.log(`- Worker fan-out: wall=${r.durationSeconds}s, credits=${credits.toFixed(2)}, slowest=${slowest?.chapter ?? 'n/a'} (${slowest?.durationSeconds ?? 0}s), failures=${r.workers.filter((worker) => worker.status !== 'completed').length}`);
+          const runs = [...r.workers, ...(r.escalations ?? [])];
+          const credits = runs.reduce((sum, worker) => sum + (worker.aiCredits ?? 0), 0);
+          const slowest = [...runs].sort((a, b) => b.durationSeconds - a.durationSeconds)[0];
+          console.log(`- Worker fan-out: wall=${r.durationSeconds}s, credits=${credits.toFixed(2)}, escalations=${(r.escalations ?? []).length}, slowest=${slowest?.chapter ?? 'n/a'} (${slowest?.durationSeconds ?? 0}s), failures=${r.validations.filter((validation) => !validation.ok).length}`);
           NODE
             fi
             finalizer_result=".research-cache/$run_id/finalizer-result.json"

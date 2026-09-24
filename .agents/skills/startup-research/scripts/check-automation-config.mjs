@@ -101,10 +101,12 @@ const workflowModelChecks = [
   {
     path: '.github/workflows/research-unicorns.yml',
     profile: 'workflow-orchestration',
+    marker: (model) => `MODEL: ${model}`,
   },
   {
     path: '.github/workflows/translate-reports-zh.yml',
     profile: 'translation-draft',
+    marker: (model) => `default: "${model}"`,
   },
 ];
 if (models.success) {
@@ -113,7 +115,7 @@ if (models.success) {
     const model = models.data.profiles[check.profile]?.defaultCopilotModel;
     if (!model) {
       issues.push(`model-routing.yaml profiles.${check.profile}: missing required workflow route`);
-    } else if (!text.includes(`default: "${model}"`)) {
+    } else if (!text.includes(check.marker(model))) {
       issues.push(`${check.path}: default model must match model-routing profile ${check.profile} (${model})`);
     }
   }

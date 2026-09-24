@@ -132,7 +132,7 @@ counts against the repair baseline. Process only one report at a time so each
 quality change remains attributable and reversible.
 
 For low-cost model routing, use `gemini-3.8-flash` for summary and long-form
-full-report drafts, then use `gpt-5.4-mini` for compact table/figure leaves
+full-report drafts, then use `gpt-6-luna` for compact table/figure leaves
 where brevity matters. Run deterministic QA after translation and route only
 meaning-sensitive or still-awkward leaves to `gpt-5.6-luna`; reserve
 `gpt-5.6-sol-fast` for unresolved semantic conflicts. Keep
