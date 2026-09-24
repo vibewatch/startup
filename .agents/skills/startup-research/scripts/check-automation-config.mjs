@@ -130,6 +130,8 @@ if (!translationWorkflow.includes('cron: "17 */2 * * *"')) {
   issues.push('.github/workflows/translate-zh.yml: missing native two-hour recovery schedule');
 }
 for (const required of [
+  'if [ "$EVENT_NAME" = "schedule" ]; then',
+  'COUNT=1',
   'name: Prepare source-anchored editorial pass',
   'name: Edit validated Chinese drafts',
   'name: Validate or roll back editorial pass',

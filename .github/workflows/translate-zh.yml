@@ -70,6 +70,7 @@ jobs:
       - name: Normalize translation inputs
         id: inputs
         env:
+          EVENT_NAME: ${{ github.event_name }}
           RAW_COUNT: ${{ github.event.inputs.reportCount }}
           RAW_MODEL: ${{ github.event.inputs.model }}
         run: |
@@ -78,7 +79,11 @@ jobs:
           COUNT="$(trim "$RAW_COUNT")"
           MODEL="$(trim "$RAW_MODEL")"
           if ! [[ "$COUNT" =~ ^[0-9]+$ ]] || [ "$COUNT" -lt 1 ]; then
-            COUNT=5
+            if [ "$EVENT_NAME" = "schedule" ]; then
+              COUNT=1
+            else
+              COUNT=5
+            fi
           fi
           if [ "$COUNT" -gt 5 ]; then
             COUNT=5
@@ -214,23 +219,40 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Prepare source-anchored editorial pass
+        id: editorial_targets
         if: steps.targets.outputs.count != '0'
         env:
           REPORT_IDS: ${{ steps.targets.outputs.reportIds }}
         run: |
           set -euo pipefail
+          editorial_reports=()
           while IFS= read -r report; do
             [ -z "$report" ] && continue
-            npm run translate:zh -- editor-init "$report" --force
+            if [ ! -f "reports/$report/summary-card.zh.yaml" ] || [ ! -f "reports/$report/full-report.zh.yaml" ]; then
+              echo "::warning::Skipping editorial pass for incomplete draft $report."
+              continue
+            fi
+            if npm run translate:zh -- editor-init "$report" --force; then
+              editorial_reports+=("$report")
+            else
+              echo "::warning::Skipping editorial pass because the validated checkpoint could not be prepared for $report."
+              npm run translate:zh -- cleanup "$report" || true
+            fi
           done <<< "$REPORT_IDS"
+          {
+            echo "count=${#editorial_reports[@]}"
+            echo "reportIds<<REPORTS"
+            printf '%s\n' "${editorial_reports[@]}"
+            echo "REPORTS"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Edit validated Chinese drafts
         id: editor
-        if: steps.targets.outputs.count != '0'
+        if: steps.editorial_targets.outputs.count != '0'
         continue-on-error: true
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
-          REPORT_IDS: ${{ steps.targets.outputs.reportIds }}
+          REPORT_IDS: ${{ steps.editorial_targets.outputs.reportIds }}
         run: |
           set -euo pipefail
           PROMPT=$(cat <<EOF
@@ -252,10 +274,10 @@ jobs:
           copilot --yolo --autopilot --model gpt-6-luna -p "$PROMPT" 2>&1 | tee "$COPILOT_LOG"
 
       - name: Validate or roll back editorial pass
-        if: always() && steps.targets.outputs.count != '0'
+        if: always() && steps.editorial_targets.outputs.count != '0'
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
-          REPORT_IDS: ${{ steps.targets.outputs.reportIds }}
+          REPORT_IDS: ${{ steps.editorial_targets.outputs.reportIds }}
         run: |
           set -euo pipefail
           accepted=0

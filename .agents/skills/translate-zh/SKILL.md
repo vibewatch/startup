@@ -86,6 +86,12 @@ restore the safe draft instead of publishing a regression:
 npm run translate:zh -- editor-restore "$REPORT"
 ```
 
+Scheduled recovery translates one report per two-hour run. This keeps each draft
+and editorial context bounded while still clearing a monthly backlog comfortably.
+Editorial preparation skips any selected report that did not produce both final
+overlays; downstream verification still fails the batch rather than publishing a
+partial report.
+
 During editing, audit the semantic head of each metric (accuracy, approval
 rate, conversion, cost share, time, and count are not interchangeable), both
 sides of conjunctions, and operators such as `only`, `at least`, `at most`,
