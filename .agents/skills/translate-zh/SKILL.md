@@ -77,8 +77,10 @@ the sparse cache. `editor-accept` enforces metric-token fidelity, uncertainty,
 attribution, and the wider translationese soundcheck with zero hard errors.
 Advisory glossary/descriptor/punctuation findings must either reach zero or
 strictly decrease from the validated draft; equal or higher counts are rejected.
-If the editor output cannot demonstrate that monotonic improvement, restore the
-safe draft instead of publishing a regression:
+If the first strict check reports exact failing paths, automation performs one
+bounded source-anchored repair of only those cached leaves and validates again.
+If that retry still cannot demonstrate semantic safety and monotonic improvement,
+restore the safe draft instead of publishing a regression:
 
 ```sh
 npm run translate:zh -- editor-restore "$REPORT"

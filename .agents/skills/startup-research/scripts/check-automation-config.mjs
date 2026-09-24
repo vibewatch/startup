@@ -137,6 +137,7 @@ for (const required of [
   'npm run translate:zh -- editor-accept',
   'npm run translate:zh -- editor-restore',
   'copilot --yolo --autopilot --model gpt-6-luna',
+  'attempting one targeted repair',
 ]) {
   if (!translationWorkflow.includes(required)) {
     issues.push(`.github/workflows/translate-zh.yml: missing editorial pipeline contract: ${required}`);

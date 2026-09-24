@@ -254,22 +254,47 @@ jobs:
       - name: Validate or roll back editorial pass
         if: always() && steps.targets.outputs.count != '0'
         env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
           REPORT_IDS: ${{ steps.targets.outputs.reportIds }}
         run: |
           set -euo pipefail
           accepted=0
+          repaired=0
           restored=0
-          while IFS= read -r report; do
-            [ -z "$report" ] && continue
-            if npm run translate:zh -- lint-parts "$report" \
+          validate_editor() {
+            local report="$1"
+            npm run translate:zh -- lint-parts "$report" \
               && npm run translate:zh -- finalize-summary "$report" \
               && npm run translate:zh -- finalize-full "$report" --keep-cache \
-              && npm run translate:zh -- editor-accept "$report"; then
+              && npm run translate:zh -- editor-accept "$report"
+          }
+          while IFS= read -r report; do
+            [ -z "$report" ] && continue
+            if validate_editor "$report"; then
               accepted=$((accepted + 1))
             else
-              echo "::warning::Editorial pass failed strict validation for $report; restoring the validated draft."
-              npm run translate:zh -- editor-restore "$report"
-              restored=$((restored + 1))
+              echo "::warning::Editorial pass failed strict validation for $report; attempting one targeted repair."
+              REPAIR_PROMPT=$(cat <<EOF
+              Strict editorial validation failed for report $report.
+
+              Perform one bounded source-anchored repair:
+              - Run check-translation-quality.mjs with --strict-editor against the report's English and current Chinese summary/full files to obtain the exact failing paths.
+              - Read each failing English source leaf, its current Chinese final leaf, and the corresponding cached leaf under .translate-cache/$report.
+              - Edit only .translate-cache/$report/summary-card.translate.yaml and existing .translate-cache/$report/parts/part.NNN.yaml files.
+              - Repair every reported semantic or strict-style failure. Preserve exact numbers, metric identity, dates, proper nouns, uncertainty, attribution, conditions, polarity, and causal direction.
+              - Do not edit reports/$report/*.zh.yaml directly. Do not run editor-accept, editor-restore, cleanup, or any git command. The workflow will finalize and validate once more.
+          EOF
+              )
+              REPAIR_LOG="$RUNNER_TEMP/copilot-logs/translate-zh-editor-repair-$report.log"
+              if copilot --yolo --autopilot --model gpt-6-luna -p "$REPAIR_PROMPT" 2>&1 | tee "$REPAIR_LOG" \
+                && validate_editor "$report"; then
+                accepted=$((accepted + 1))
+                repaired=$((repaired + 1))
+              else
+                echo "::warning::Editorial repair failed strict validation for $report; restoring the validated draft."
+                npm run translate:zh -- editor-restore "$report"
+                restored=$((restored + 1))
+              fi
             fi
           done <<< "$REPORT_IDS"
           {
@@ -277,6 +302,7 @@ jobs:
             echo "### Source-anchored editorial pass"
             echo "- Editor model: gpt-6-luna"
             echo "- Accepted: $accepted"
+            echo "- Accepted after targeted repair: $repaired"
             echo "- Rolled back safely: $restored"
           } >> "$GITHUB_STEP_SUMMARY"
 
