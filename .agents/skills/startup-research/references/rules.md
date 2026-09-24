@@ -108,7 +108,7 @@ fast:
     minLocalSources: 8
     minLocalClaims: 12
     minSourceDomains: 4
-    minNetNewSources: 3
+    minNetNewSources: 2
     minSourceTypeSpread: 3
     maxResearchQuestions: 10
     maxLocalSources: 12

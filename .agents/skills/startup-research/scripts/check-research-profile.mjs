@@ -38,7 +38,7 @@ try {
     [context.chapter.gate.maxResearchQuestions === 10, 'fast profile question cap is not 10'],
     [context.chapter.gate.maxLocalSources === 12, 'fast profile source cap is not 12'],
     [context.chapter.gate.maxLocalClaims === 16, 'fast profile claim cap is not 16'],
-    [context.chapter.gate.minNetNewSources === 3, 'fast profile net-new source floor is not 3'],
+    [context.chapter.gate.minNetNewSources === 2, 'fast profile net-new source floor is not 2'],
     [context.policy?.workerRouting?.profile === 'chapter-synthesis-fast', 'fast profile did not select the fast worker route'],
     [context.policy?.workerRouting?.model === 'gpt-5.4-mini', 'fast worker model is not gpt-5.4-mini'],
     [context.policy?.workerRouting?.reasoningEffort === 'medium', 'fast worker reasoning effort is not medium'],
