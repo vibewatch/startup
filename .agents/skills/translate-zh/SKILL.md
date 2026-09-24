@@ -55,6 +55,40 @@ npm run translate:zh -- finalize-full "$REPORT"
 
 Finalization runs a conservative quality gate after the structural check. It fails when a translatable leaf drops year/date anchors or explicit uncertainty qualifiers, or retains a high-confidence translationese pattern from the soundcheck. It emits advisory findings for glossary drift, untranslated ordinary descriptors, half-width Chinese punctuation, and dense `的` chains. Repair only the flagged cached leaf or part and rerun the narrow finalize command.
 
+## Mandatory editorial pass
+
+Automated publication uses a second, source-anchored editorial pass after the
+draft has finalized. The editor must be a separate Copilot invocation from the
+draft translator. It rereads the complete English source and validated Chinese
+draft, rewrites Chinese from the underlying proposition rather than the English
+syntax, and is accepted only if the stricter editor gate passes.
+
+```sh
+npm run translate:zh -- editor-init "$REPORT"
+# Edit summary-card.translate.yaml and every actual parts/part.NNN.yaml in place.
+npm run translate:zh -- lint-parts "$REPORT"
+npm run translate:zh -- finalize-summary "$REPORT"
+npm run translate:zh -- finalize-full "$REPORT" --keep-cache
+npm run translate:zh -- editor-accept "$REPORT"
+```
+
+`editor-init` checkpoints the already validated final overlays before seeding
+the sparse cache. `editor-accept` enforces metric-token fidelity, uncertainty
+and attribution, zero glossary/descriptor/punctuation advisories, and a wider
+translationese soundcheck. If the editor output cannot pass, restore the safe
+draft instead of publishing a regression:
+
+```sh
+npm run translate:zh -- editor-restore "$REPORT"
+```
+
+During editing, audit the semantic head of each metric (accuracy, approval
+rate, conversion, cost share, time, and count are not interchangeable), both
+sides of conjunctions, and operators such as `only`, `at least`, `at most`,
+`not yet`, `unproven`, and `no public evidence`. Attach dates and thresholds
+to the event they modify. Never replace a detailed source claim with a generic
+Chinese summary.
+
 Use `npm run audit:translations-zh -- --limit 20` for a non-blocking corpus sample. The audit reports hard semantic/style errors separately from advisory glossary drift, untranslated ordinary descriptors, half-width Chinese punctuation, and dense `的` chains. Use the report to target only weak leaves; do not rewrite clean overlays.
 
 To repair existing overlays one report at a time, seed the cache from the

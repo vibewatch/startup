@@ -1,6 +1,6 @@
 # Scheduled/manual Chinese translation run.
 #
-# Every hour, selects up to 5 finalized report folders under reports/
+# Every two hours, selects up to 5 finalized report folders under reports/
 # that do not yet have both Chinese overlays, asks Copilot to translate them
 # with the translate-zh skill, validates the result, and commits the overlays.
 #
@@ -11,6 +11,8 @@
 name: Translate reports to Chinese
 
 on:
+  schedule:
+    - cron: "17 */2 * * *"
   workflow_dispatch:
     inputs:
       reportCount:
@@ -209,6 +211,73 @@ jobs:
             else
               echo "- (no Copilot output captured)"
             fi
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Prepare source-anchored editorial pass
+        if: steps.targets.outputs.count != '0'
+        env:
+          REPORT_IDS: ${{ steps.targets.outputs.reportIds }}
+        run: |
+          set -euo pipefail
+          while IFS= read -r report; do
+            [ -z "$report" ] && continue
+            npm run translate:zh -- editor-init "$report" --force
+          done <<< "$REPORT_IDS"
+
+      - name: Edit validated Chinese drafts
+        id: editor
+        if: steps.targets.outputs.count != '0'
+        continue-on-error: true
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
+          REPORT_IDS: ${{ steps.targets.outputs.reportIds }}
+        run: |
+          set -euo pipefail
+          PROMPT=$(cat <<EOF
+          Perform the mandatory source-anchored Chinese editorial pass for these reports:
+          $REPORT_IDS
+
+          For each report:
+          - Follow the translate-zh skill's Mandatory editorial pass and translation philosophy.
+          - Read the complete English summary-card.yaml and full-report.yaml plus the complete validated Chinese cache created by editor-init.
+          - Enumerate the actual cached part files. Edit only .translate-cache/<runId>/summary-card.translate.yaml and its existing parts/part.NNN.yaml files.
+          - Compare every reader-facing Chinese leaf with its corresponding English source. Rewrite awkward or generic Chinese from the factual proposition, not English clause order.
+          - Preserve exact schema, numbers, metric identity, dates, proper nouns, hedges, attribution, conditions, polarity, causal direction, and boundaries.
+          - Do not run translation scripts and do not edit final files under reports/. The workflow will lint, finalize, strictly validate, and either accept or roll back your edits.
+          - Do not run any git command.
+          EOF
+          )
+          mkdir -p "$RUNNER_TEMP/copilot-logs"
+          COPILOT_LOG="$RUNNER_TEMP/copilot-logs/translate-zh-editor.log"
+          copilot --yolo --autopilot --model gpt-6-luna -p "$PROMPT" 2>&1 | tee "$COPILOT_LOG"
+
+      - name: Validate or roll back editorial pass
+        if: always() && steps.targets.outputs.count != '0'
+        env:
+          REPORT_IDS: ${{ steps.targets.outputs.reportIds }}
+        run: |
+          set -euo pipefail
+          accepted=0
+          restored=0
+          while IFS= read -r report; do
+            [ -z "$report" ] && continue
+            if npm run translate:zh -- lint-parts "$report" \
+              && npm run translate:zh -- finalize-summary "$report" \
+              && npm run translate:zh -- finalize-full "$report" --keep-cache \
+              && npm run translate:zh -- editor-accept "$report"; then
+              accepted=$((accepted + 1))
+            else
+              echo "::warning::Editorial pass failed strict validation for $report; restoring the validated draft."
+              npm run translate:zh -- editor-restore "$report"
+              restored=$((restored + 1))
+            fi
+          done <<< "$REPORT_IDS"
+          {
+            echo
+            echo "### Source-anchored editorial pass"
+            echo "- Editor model: gpt-6-luna"
+            echo "- Accepted: $accepted"
+            echo "- Rolled back safely: $restored"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Stage new translated files artifact

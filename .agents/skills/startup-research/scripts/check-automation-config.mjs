@@ -119,11 +119,28 @@ if (models.success) {
   }
 }
 const unicornWorkflow = readFileSync(resolve('.github/workflows/unicorns.yml'), 'utf8');
+const translationWorkflow = readFileSync(resolve('.github/workflows/translate-zh.yml'), 'utf8');
 if (!unicornWorkflow.includes('name: Run authenticated research workers and finalizers')) {
   issues.push('.github/workflows/unicorns.yml: missing workflow-owned authenticated worker/finalizer step');
 }
 if (!unicornWorkflow.includes('COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}')) {
   issues.push('.github/workflows/unicorns.yml: authenticated worker/finalizer step must receive COPILOT_PAT');
+}
+if (!translationWorkflow.includes('cron: "17 */2 * * *"')) {
+  issues.push('.github/workflows/translate-zh.yml: missing native two-hour recovery schedule');
+}
+for (const required of [
+  'name: Prepare source-anchored editorial pass',
+  'name: Edit validated Chinese drafts',
+  'name: Validate or roll back editorial pass',
+  'npm run translate:zh -- editor-init',
+  'npm run translate:zh -- editor-accept',
+  'npm run translate:zh -- editor-restore',
+  'copilot --yolo --autopilot --model gpt-6-luna',
+]) {
+  if (!translationWorkflow.includes(required)) {
+    issues.push(`.github/workflows/translate-zh.yml: missing editorial pipeline contract: ${required}`);
+  }
 }
 for (const path of ['.github/workflows/unicorns.yml', '.github/workflows/refresh-company.yml']) {
   const text = readFileSync(resolve(path), 'utf8');

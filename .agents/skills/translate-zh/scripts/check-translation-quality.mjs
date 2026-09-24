@@ -4,11 +4,12 @@ import yaml from 'js-yaml';
 import { isTranslatableLeaf, whitelistFor } from './whitelist.mjs';
 
 function usage(code = 0) {
-  console.error('Usage: check-translation-quality.mjs <english.yaml> <chinese.zh.yaml> [--format text|json]');
+  console.error('Usage: check-translation-quality.mjs <english.yaml> <chinese.zh.yaml> [--strict-editor] [--format text|json]');
   process.exit(code);
 }
 
 const invariantToken = /\b(?:19|20)\d{2}\b|\b\d{4}-\d{2}-\d{2}\b/g;
+const metricToken = /(?:[$€£¥₦]\s*)?\d+(?:[.,]\d+)*(?:\s?(?:%|bps|[KMBT]|x|×|ARR|MRR|GMV|TPV|NPL|IRR))?/gi;
 const stylePatterns = [
   /对于[^。！？；]{1,24}而言/u,
   /在[^。！？；]{1,20}方面/u,
@@ -23,11 +24,33 @@ const stylePatterns = [
   /产生影响/u,
   /实现增长/u,
 ];
+const strictEditorStylePatterns = [
+  /对[^。！？；]{1,24}来说/u,
+  /进行(?:验证|分析|评估|测试)/u,
+  /形成(?:机制|优势|闭环)/u,
+  /实现(?:提升|改善)/u,
+  /这意味着/u,
+  /这表明/u,
+  /呈现[^。！？；]{1,16}特征/u,
+  /围绕[^。！？；]{1,16}展开/u,
+  /在[^。！？；]{1,16}层面/u,
+  /体现了/u,
+  /这构成了/u,
+  /最(?:晚|迟)截至/u,
+  /未达到至少/u,
+];
 const hedgeRules = [
   { en: /\b(?:approximately|roughly)\b/i, zh: /约|大约|大致|近似/u },
   { en: /\b(?:reportedly|according to reports)\b/i, zh: /据报道|据报|据称|报道称/u },
   { en: /\bestimated\b|\b(?:we|analysts?|reports?) estimate\b/i, zh: /估计|估算|预计|测算/u },
-  { en: /\bat least\b/i, zh: /至少/u },
+  { en: /\bat least\b/i, zh: /至少|不低于/u },
+  { en: /\bat most\b/i, zh: /至多|最多|不超过/u },
+  { en: /\b(?:likely|probably)\b/i, zh: /可能|很可能|大概率|多半/u },
+  { en: /\breportedly\b/i, zh: /据报道|据称/u },
+  { en: /\bclaims?\b/i, zh: /声称|称|说法|主张/u },
+  { en: /\bnot yet\b/i, zh: /尚未|还未|仍未|目前没有|尚无/u },
+  { en: /\b(?:unproven|not proven)\b/i, zh: /未经证实|未获证实|尚未证明|无法证明/u },
+  { en: /\bno public\b/i, zh: /没有公开|无公开|尚无公开|未见公开/u },
 ];
 const descriptorWords = new Set([
   'business',
@@ -63,6 +86,13 @@ function normalizedTokens(value) {
   return (value.match(invariantToken) ?? []).map((token) => token.replace(/\s+/g, '').toLowerCase());
 }
 
+function normalizedMetricTokens(value) {
+  return (value.match(metricToken) ?? [])
+    .map((token) => token.replace(/\s+/g, '').replace(/,/g, '').toLowerCase())
+    .filter((token) => /[$€£¥₦%]|bps|[kmbt]$|arr|mrr|gmv|tpv|npl|irr|x$|×$|\d{4}/i.test(token))
+    .sort();
+}
+
 function pushIssue(issues, issue) {
   issues.push({ severity: 'error', ...issue });
 }
@@ -76,13 +106,13 @@ function isLongProse(path, value) {
   return value.length >= 60 && !['label', 'title'].includes(leaf) && !path.includes('columns');
 }
 
-function walk(en, zh, path, whitelist, issues) {
+function walk(en, zh, path, whitelist, issues, options) {
   if (Array.isArray(en)) {
-    for (let i = 0; i < en.length; i += 1) walk(en[i], zh?.[i], [...path, i], whitelist, issues);
+    for (let i = 0; i < en.length; i += 1) walk(en[i], zh?.[i], [...path, i], whitelist, issues, options);
     return;
   }
   if (en && typeof en === 'object') {
-    for (const [key, value] of Object.entries(en)) walk(value, zh?.[key], [...path, key], whitelist, issues);
+    for (const [key, value] of Object.entries(en)) walk(value, zh?.[key], [...path, key], whitelist, issues, options);
     return;
   }
   if (typeof en !== 'string' || typeof zh !== 'string' || !isTranslatableLeaf(path, whitelist)) return;
@@ -95,6 +125,18 @@ function walk(en, zh, path, whitelist, issues) {
       code: 'year-preservation',
       message: `missing year/date token(s): ${[...new Set(missingNumbers)].join(', ')}`,
     });
+  }
+  if (options.strictEditor) {
+    const sourceMetrics = normalizedMetricTokens(en);
+    const targetMetrics = normalizedMetricTokens(zh);
+    if (JSON.stringify(sourceMetrics) !== JSON.stringify(targetMetrics)) {
+      pushIssue(issues, {
+        path: path.join('/'),
+        kind: 'semantic',
+        code: 'metric-preservation',
+        message: `metric tokens changed from [${sourceMetrics.join(', ')}] to [${targetMetrics.join(', ')}]`,
+      });
+    }
   }
   if (isLongProse(path, en)) {
     for (const rule of hedgeRules) {
@@ -116,6 +158,18 @@ function walk(en, zh, path, whitelist, issues) {
         code: 'translationese',
         message: `translationese pattern: ${pattern}`,
       });
+    }
+    if (options.strictEditor) {
+      for (const pattern of strictEditorStylePatterns) {
+        if (pattern.test(zh)) {
+          pushIssue(issues, {
+            path: path.join('/'),
+            kind: 'style',
+            code: 'editor-translationese',
+            message: `strict editorial rewrite required: ${pattern}`,
+          });
+        }
+      }
     }
   }
   if (/[\u4e00-\u9fff][,;:][\u4e00-\u9fff]/u.test(zh)) {
@@ -162,15 +216,23 @@ function walk(en, zh, path, whitelist, issues) {
   }
 }
 
-export function checkPairQuality(en, zh) {
+export function checkPairQuality(en, zh, options = {}) {
   const issues = [];
-  walk(en, zh, [], whitelistFor(en), issues);
+  walk(en, zh, [], whitelistFor(en), issues, { strictEditor: options.strictEditor === true });
+  if (options.strictEditor) {
+    for (const issue of issues) {
+      if (issue.severity === 'warning') issue.severity = 'error';
+    }
+  }
   return issues;
 }
 
 function runCli() {
   const argv = process.argv.slice(2);
   let format = 'text';
+  const strictEditorIndex = argv.indexOf('--strict-editor');
+  const strictEditor = strictEditorIndex !== -1;
+  if (strictEditor) argv.splice(strictEditorIndex, 1);
   const formatIndex = argv.indexOf('--format');
   if (formatIndex !== -1) {
     format = argv[formatIndex + 1] ?? '';
@@ -180,7 +242,7 @@ function runCli() {
   if (!enPath || !zhPath || extra || !['text', 'json'].includes(format)) usage(1);
   const en = load(enPath);
   const zh = load(zhPath);
-  const issues = checkPairQuality(en, zh);
+  const issues = checkPairQuality(en, zh, { strictEditor });
   const errors = issues.filter((issue) => issue.severity === 'error');
   const warnings = issues.filter((issue) => issue.severity === 'warning');
   if (format === 'json') {

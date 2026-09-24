@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
@@ -19,6 +19,9 @@ function usage(code = 0) {
   console.error('  preflight         Validate repo, dependency, report, and cache paths');
   console.error('  init              Export summary/full bundles and split full-report into parts');
   console.error('  repair-init       Seed bundles from existing zh overlays and record baseline quality');
+  console.error('  editor-init       Checkpoint validated overlays and seed a full source-anchored editorial pass');
+  console.error('  editor-accept     Strictly validate and accept the editorial pass');
+  console.error('  editor-restore    Restore the validated draft after an editorial regression');
   console.error('  lint-parts        Validate translated full-report parts without writing outputs');
   console.error('  finalize-summary  Import/apply/check summary-card.zh.yaml');
   console.error('  finalize-full     Merge parts when present, import/apply/check full-report.zh.yaml');
@@ -124,6 +127,9 @@ function pathsFor(input) {
     fullJson: join(cacheDir, 'full-report.zh.json'),
     qualityBefore: join(cacheDir, 'quality.before.json'),
     qualityAfter: join(cacheDir, 'quality.after.json'),
+    checkpointDir: join(cacheDir, 'validated-draft'),
+    summaryCheckpoint: join(cacheDir, 'validated-draft', 'summary-card.zh.yaml'),
+    fullCheckpoint: join(cacheDir, 'validated-draft', 'full-report.zh.yaml'),
     summaryOut: join(reportDir, 'summary-card.zh.yaml'),
     fullOut: join(reportDir, 'full-report.zh.yaml'),
   };
@@ -238,6 +244,50 @@ function repairInit(runId, options = {}) {
   console.log(`[translate-zh] edit only targeted leaves in full-report parts under: ${relative(repoRoot, paths.partsDir)}`);
 }
 
+function editorInit(runId, options = {}) {
+  const paths = ensurePreflight(runId);
+  if (!existsSync(paths.summaryOut) || !existsSync(paths.fullOut)) {
+    fail(`existing zh overlays are required for editing: reports/${paths.runId}`);
+  }
+  runNodeScript('check-translation.mjs', [paths.reportDir, '--strict', '--require-final']);
+  runNodeScript('check-translation-quality.mjs', [paths.summarySource, paths.summaryOut]);
+  runNodeScript('check-translation-quality.mjs', [paths.fullSource, paths.fullOut]);
+  repairInit(runId, options);
+  ensureDir(paths.checkpointDir);
+  copyFileSync(paths.summaryOut, paths.summaryCheckpoint);
+  copyFileSync(paths.fullOut, paths.fullCheckpoint);
+  console.log(`[translate-zh] validated draft checkpoint: ${relative(repoRoot, paths.checkpointDir)}`);
+  console.log('[translate-zh] editorial scope: compare every cached Chinese leaf with its English source and rewrite awkward prose source-first');
+}
+
+function editorAccept(runId) {
+  const paths = ensurePreflight(runId);
+  if (!existsSync(paths.summaryCheckpoint) || !existsSync(paths.fullCheckpoint)) {
+    fail(`validated draft checkpoint is missing: ${relative(repoRoot, paths.checkpointDir)}`);
+  }
+  runNodeScript('check-translation.mjs', [paths.reportDir, '--strict', '--require-final']);
+  runNodeScript('check-translation-quality.mjs', [paths.summarySource, paths.summaryOut, '--strict-editor']);
+  runNodeScript('check-translation-quality.mjs', [paths.fullSource, paths.fullOut, '--strict-editor']);
+  const quality = qualityFor(paths);
+  writeQuality(paths.qualityAfter, quality);
+  cleanup(runId);
+  console.log('[translate-zh] editorial pass accepted');
+}
+
+function editorRestore(runId) {
+  const paths = ensurePreflight(runId);
+  if (!existsSync(paths.summaryCheckpoint) || !existsSync(paths.fullCheckpoint)) {
+    fail(`validated draft checkpoint is missing: ${relative(repoRoot, paths.checkpointDir)}`);
+  }
+  copyFileSync(paths.summaryCheckpoint, paths.summaryOut);
+  copyFileSync(paths.fullCheckpoint, paths.fullOut);
+  runNodeScript('check-translation.mjs', [paths.reportDir, '--strict', '--require-final']);
+  runNodeScript('check-translation-quality.mjs', [paths.summarySource, paths.summaryOut]);
+  runNodeScript('check-translation-quality.mjs', [paths.fullSource, paths.fullOut]);
+  cleanup(runId);
+  console.log('[translate-zh] editorial pass rolled back to the validated draft');
+}
+
 function lintParts(runId) {
   const paths = ensurePreflight(runId);
   if (!existsSync(paths.partsDir)) {
@@ -325,6 +375,15 @@ switch (args.command) {
     break;
   case 'repair-init':
     repairInit(args.runId, { force: args.force });
+    break;
+  case 'editor-init':
+    editorInit(args.runId, { force: args.force });
+    break;
+  case 'editor-accept':
+    editorAccept(args.runId);
+    break;
+  case 'editor-restore':
+    editorRestore(args.runId);
     break;
   case 'lint-parts':
     lintParts(args.runId);
