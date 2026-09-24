@@ -219,12 +219,12 @@ function walk(en, zh, path, whitelist, issues, options) {
 export function checkPairQuality(en, zh, options = {}) {
   const issues = [];
   walk(en, zh, [], whitelistFor(en), issues, { strictEditor: options.strictEditor === true });
-  if (options.strictEditor) {
-    for (const issue of issues) {
-      if (issue.severity === 'warning') issue.severity = 'error';
-    }
-  }
   return issues;
+}
+
+export function editorialQualityImproved(before, after) {
+  if (after.errorCount !== 0) return false;
+  return after.warningCount === 0 || after.warningCount < before.warningCount;
 }
 
 function runCli() {

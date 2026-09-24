@@ -4,7 +4,7 @@ import { basename, dirname, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import yaml from 'js-yaml';
-import { checkPairQuality } from './check-translation-quality.mjs';
+import { checkPairQuality, editorialQualityImproved } from './check-translation-quality.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '..', '..', '..', '..');
@@ -139,14 +139,14 @@ function loadYaml(path) {
   return yaml.load(readFileSync(path, 'utf8')) ?? {};
 }
 
-function qualityFor(paths) {
+function qualityFor(paths, options = {}) {
   const findings = [];
   for (const [artifact, sourcePath, targetPath] of [
     ['summary-card', paths.summarySource, paths.summaryOut],
     ['full-report', paths.fullSource, paths.fullOut],
   ]) {
     if (!existsSync(targetPath)) continue;
-    for (const issue of checkPairQuality(loadYaml(sourcePath), loadYaml(targetPath))) {
+    for (const issue of checkPairQuality(loadYaml(sourcePath), loadYaml(targetPath), options)) {
       findings.push({ artifact, ...issue });
     }
   }
@@ -268,8 +268,17 @@ function editorAccept(runId) {
   runNodeScript('check-translation.mjs', [paths.reportDir, '--strict', '--require-final']);
   runNodeScript('check-translation-quality.mjs', [paths.summarySource, paths.summaryOut, '--strict-editor']);
   runNodeScript('check-translation-quality.mjs', [paths.fullSource, paths.fullOut, '--strict-editor']);
+  const strictQuality = qualityFor(paths, { strictEditor: true });
+  if (strictQuality.errorCount !== 0) {
+    fail(`editorial pass has ${strictQuality.errorCount} strict error(s)`);
+  }
+  const baseline = JSON.parse(readFileSync(paths.qualityBefore, 'utf8'));
   const quality = qualityFor(paths);
   writeQuality(paths.qualityAfter, quality);
+  if (!editorialQualityImproved(baseline, quality)) {
+    fail(`editorial advisories did not improve: ${baseline.warningCount} -> ${quality.warningCount}`);
+  }
+  console.log(`[translate-zh] editorial advisories ${baseline.warningCount} -> ${quality.warningCount}`);
   cleanup(runId);
   console.log('[translate-zh] editorial pass accepted');
 }

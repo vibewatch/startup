@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { checkPairQuality } from './check-translation-quality.mjs';
+import { checkPairQuality, editorialQualityImproved } from './check-translation-quality.mjs';
 import { untranslatedMessage } from './check-translation.mjs';
 
 function fullReport(subtitle) {
@@ -42,6 +42,23 @@ const checks = [
   [
     untranslatedMessage('Global retail sample', 'Global retail sample') === 'translation is identical to the English source',
     'strict structural check accepted untranslated ordinary descriptors',
+  ],
+  [
+    editorialQualityImproved(
+      { errorCount: 0, warningCount: 10 },
+      { errorCount: 0, warningCount: 2 },
+    ),
+    'editor rejected a strict advisory reduction',
+  ],
+  [
+    !editorialQualityImproved(
+      { errorCount: 0, warningCount: 2 },
+      { errorCount: 0, warningCount: 2 },
+    ) && !editorialQualityImproved(
+      { errorCount: 0, warningCount: 2 },
+      { errorCount: 1, warningCount: 0 },
+    ),
+    'editor accepted a non-improving or semantically unsafe revision',
   ],
 ];
 

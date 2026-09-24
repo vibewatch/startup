@@ -73,10 +73,12 @@ npm run translate:zh -- editor-accept "$REPORT"
 ```
 
 `editor-init` checkpoints the already validated final overlays before seeding
-the sparse cache. `editor-accept` enforces metric-token fidelity, uncertainty
-and attribution, zero glossary/descriptor/punctuation advisories, and a wider
-translationese soundcheck. If the editor output cannot pass, restore the safe
-draft instead of publishing a regression:
+the sparse cache. `editor-accept` enforces metric-token fidelity, uncertainty,
+attribution, and the wider translationese soundcheck with zero hard errors.
+Advisory glossary/descriptor/punctuation findings must either reach zero or
+strictly decrease from the validated draft; equal or higher counts are rejected.
+If the editor output cannot demonstrate that monotonic improvement, restore the
+safe draft instead of publishing a regression:
 
 ```sh
 npm run translate:zh -- editor-restore "$REPORT"
