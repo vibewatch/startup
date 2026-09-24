@@ -79,6 +79,9 @@ Advisory glossary/descriptor/punctuation findings must either reach zero or
 strictly decrease from the validated draft; equal or higher counts are rejected.
 If the first strict check reports exact failing paths, automation performs one
 bounded source-anchored repair of only those cached leaves and validates again.
+`editor-accept` writes the complete cross-artifact issue set to
+`.translate-cache/<runId>/editor-findings.json`; the repair must address every
+listed error rather than stopping at the first failing artifact.
 If that retry still cannot demonstrate semantic safety and monotonic improvement,
 restore the safe draft instead of publishing a regression:
 

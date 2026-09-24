@@ -127,6 +127,7 @@ function pathsFor(input) {
     fullJson: join(cacheDir, 'full-report.zh.json'),
     qualityBefore: join(cacheDir, 'quality.before.json'),
     qualityAfter: join(cacheDir, 'quality.after.json'),
+    editorFindings: join(cacheDir, 'editor-findings.json'),
     checkpointDir: join(cacheDir, 'validated-draft'),
     summaryCheckpoint: join(cacheDir, 'validated-draft', 'summary-card.zh.yaml'),
     fullCheckpoint: join(cacheDir, 'validated-draft', 'full-report.zh.yaml'),
@@ -266,10 +267,13 @@ function editorAccept(runId) {
     fail(`validated draft checkpoint is missing: ${relative(repoRoot, paths.checkpointDir)}`);
   }
   runNodeScript('check-translation.mjs', [paths.reportDir, '--strict', '--require-final']);
-  runNodeScript('check-translation-quality.mjs', [paths.summarySource, paths.summaryOut, '--strict-editor']);
-  runNodeScript('check-translation-quality.mjs', [paths.fullSource, paths.fullOut, '--strict-editor']);
   const strictQuality = qualityFor(paths, { strictEditor: true });
+  writeQuality(paths.editorFindings, strictQuality);
   if (strictQuality.errorCount !== 0) {
+    for (const finding of strictQuality.findings.filter((finding) => finding.severity === 'error')) {
+      console.error(`[translate-zh] strict ${finding.artifact}:${finding.path} (${finding.code}): ${finding.message}`);
+    }
+    console.error(`[translate-zh] complete strict findings: ${relative(repoRoot, paths.editorFindings)}`);
     fail(`editorial pass has ${strictQuality.errorCount} strict error(s)`);
   }
   const baseline = JSON.parse(readFileSync(paths.qualityBefore, 'utf8'));
