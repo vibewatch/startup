@@ -36,10 +36,11 @@ function usage(code = 0) {
 }
 
 function parseArgs(argv) {
-  const args = { command: null, runId: null, keepCache: false, force: false };
+  const args = { command: null, runId: null, keepCache: false, force: false, skipQuality: false };
   for (const arg of argv) {
     if (arg === '--keep-cache') args.keepCache = true;
     else if (arg === '--force') args.force = true;
+    else if (arg === '--skip-quality') args.skipQuality = true;
     else if (arg === '-h' || arg === '--help') usage(0);
     else if (!args.command) args.command = arg;
     else if (!args.runId) args.runId = arg;
@@ -266,9 +267,9 @@ function editorAccept(runId) {
   if (!existsSync(paths.summaryCheckpoint) || !existsSync(paths.fullCheckpoint)) {
     fail(`validated draft checkpoint is missing: ${relative(repoRoot, paths.checkpointDir)}`);
   }
-  runNodeScript('check-translation.mjs', [paths.reportDir, '--strict', '--require-final']);
   const strictQuality = qualityFor(paths, { strictEditor: true });
   writeQuality(paths.editorFindings, strictQuality);
+  runNodeScript('check-translation.mjs', [paths.reportDir, '--strict', '--require-final']);
   if (strictQuality.errorCount !== 0) {
     for (const finding of strictQuality.findings.filter((finding) => finding.severity === 'error')) {
       console.error(`[translate-zh] strict ${finding.artifact}:${finding.path} (${finding.code}): ${finding.message}`);
@@ -310,19 +311,19 @@ function lintParts(runId) {
   console.log('[translate-zh] full-report parts linted');
 }
 
-function finalizeSummary(runId) {
+function finalizeSummary(runId, { skipQuality = false } = {}) {
   const paths = ensurePreflight(runId);
   if (!existsSync(paths.summaryBundle)) {
     fail(`summary bundle not found: ${relative(repoRoot, paths.summaryBundle)}; run init first`);
   }
   runNodeScript('bundle-translatable.mjs', ['import', paths.summarySource, paths.summaryBundle, '--out', paths.summaryJson]);
   runNodeScript('apply-translation.mjs', [paths.summarySource, paths.summaryJson, '--out', paths.summaryOut]);
-  runNodeScript('check-translation.mjs', [paths.reportDir, '--strict']);
-  runNodeScript('check-translation-quality.mjs', [paths.summarySource, paths.summaryOut]);
+  runNodeScript('check-translation.mjs', [paths.reportDir, ...(skipQuality ? [] : ['--strict'])]);
+  if (!skipQuality) runNodeScript('check-translation-quality.mjs', [paths.summarySource, paths.summaryOut]);
   console.log('[translate-zh] summary finalized');
 }
 
-function finalizeFull(runId, keepCache) {
+function finalizeFull(runId, { keepCache = false, skipQuality = false } = {}) {
   const paths = ensurePreflight(runId);
   if (isNonEmptyDir(paths.partsDir)) {
     runNodeScript('check-part-leaf-counts.mjs', [paths.partsDir]);
@@ -338,9 +339,11 @@ function finalizeFull(runId, keepCache) {
   }
   runNodeScript('bundle-translatable.mjs', ['import', paths.fullSource, paths.fullBundle, '--out', paths.fullJson]);
   runNodeScript('apply-translation.mjs', [paths.fullSource, paths.fullJson, '--out', paths.fullOut]);
-  runNodeScript('check-translation.mjs', [paths.reportDir, '--strict', '--require-final']);
-  runNodeScript('check-translation-quality.mjs', [paths.summarySource, paths.summaryOut]);
-  runNodeScript('check-translation-quality.mjs', [paths.fullSource, paths.fullOut]);
+  runNodeScript('check-translation.mjs', [paths.reportDir, ...(skipQuality ? [] : ['--strict']), '--require-final']);
+  if (!skipQuality) {
+    runNodeScript('check-translation-quality.mjs', [paths.summarySource, paths.summaryOut]);
+    runNodeScript('check-translation-quality.mjs', [paths.fullSource, paths.fullOut]);
+  }
   if (!keepCache) cleanup(runId);
   console.log('[translate-zh] full report finalized');
 }
@@ -402,10 +405,10 @@ switch (args.command) {
     lintParts(args.runId);
     break;
   case 'finalize-summary':
-    finalizeSummary(args.runId);
+    finalizeSummary(args.runId, { skipQuality: args.skipQuality });
     break;
   case 'finalize-full':
-    finalizeFull(args.runId, args.keepCache);
+    finalizeFull(args.runId, { keepCache: args.keepCache, skipQuality: args.skipQuality });
     break;
   case 'measure':
     measure(args.runId);

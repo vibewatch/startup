@@ -67,8 +67,8 @@ syntax, and is accepted only if the stricter editor gate passes.
 npm run translate:zh -- editor-init "$REPORT"
 # Edit summary-card.translate.yaml and every actual parts/part.NNN.yaml in place.
 npm run translate:zh -- lint-parts "$REPORT"
-npm run translate:zh -- finalize-summary "$REPORT"
-npm run translate:zh -- finalize-full "$REPORT" --keep-cache
+npm run translate:zh -- finalize-summary "$REPORT" --skip-quality
+npm run translate:zh -- finalize-full "$REPORT" --keep-cache --skip-quality
 npm run translate:zh -- editor-accept "$REPORT"
 ```
 
@@ -81,7 +81,10 @@ If the first strict check reports exact failing paths, automation performs one
 bounded source-anchored repair of only those cached leaves and validates again.
 `editor-accept` writes the complete cross-artifact issue set to
 `.translate-cache/<runId>/editor-findings.json`; the repair must address every
-listed error rather than stopping at the first failing artifact.
+listed error rather than stopping at the first failing artifact. `--skip-quality`
+is only for this intermediate materialization step: it still enforces YAML shape
+and preserved fields, while publication quality remains exclusively gated by
+`editor-accept`.
 If that retry still cannot demonstrate semantic safety and monotonic improvement,
 restore the safe draft instead of publishing a regression:
 
