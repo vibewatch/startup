@@ -51,7 +51,7 @@ function valueExcerpt(value) {
 }
 
 function latinWords(value) {
-  return value.match(/[A-Za-z][A-Za-z0-9'+-]*/g) ?? [];
+  return value.match(/[\p{L}][\p{L}\p{N}'+-]*/gu) ?? [];
 }
 
 const DESCRIPTOR_WORDS = new Set([
@@ -76,7 +76,7 @@ function isProperNounPhrase(value) {
   const words = latinWords(value);
   return words.length > 0
     && words.length <= 4
-    && words.every((word) => /^[A-Z0-9][A-Za-z0-9.+-]*$/.test(word))
+    && words.every((word) => /^\p{Lu}[\p{L}\p{N}.+-]*$/u.test(word) || /^(?=.*\d)[a-z][a-z0-9.+-]*$/i.test(word))
     && !words.some((word) => DESCRIPTOR_WORDS.has(word.toLowerCase()));
 }
 
@@ -216,7 +216,7 @@ function checkFolder(folder, options) {
 }
 
 // Exposed for check-translations.mjs (the batch-mode wrapper).
-export { checkFolder, valueExcerpt };
+export { checkFolder, untranslatedMessage, valueExcerpt };
 
 // Only run the CLI when this file is executed directly (not when imported
 // by check-translations.mjs).

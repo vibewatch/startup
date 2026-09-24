@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { checkPairQuality } from './check-translation-quality.mjs';
+import { untranslatedMessage } from './check-translation.mjs';
 
 function fullReport(subtitle) {
   return {
@@ -28,6 +29,15 @@ const checks = [
     checkPairQuality(source, translationese, { strictEditor: true })
       .some((issue) => issue.code === 'translationese'),
     'strict editor did not reject translationese',
+  ],
+  [
+    untranslatedMessage('Tobi Lütke', 'Tobi Lütke') === null
+      && untranslatedMessage('Andreessen Horowitz (a16z)', 'Andreessen Horowitz (a16z)') === null,
+    'strict structural check rejected a Latin proper noun',
+  ],
+  [
+    untranslatedMessage('Global retail sample', 'Global retail sample') === 'translation is identical to the English source',
+    'strict structural check accepted untranslated ordinary descriptors',
   ],
 ];
 
