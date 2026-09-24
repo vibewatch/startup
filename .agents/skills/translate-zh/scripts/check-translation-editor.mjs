@@ -14,6 +14,9 @@ const source = fullReport('Approximately $10M revenue in 2025 is not yet audited
 const clean = fullReport('2025 年收入约 $10M，尚未经审计。');
 const changedMetric = fullReport('2025 年收入约 $11M，尚未经审计。');
 const translationese = fullReport('对于投资者而言，2025 年收入约 $10M，尚未经审计。');
+const strictTranslationese = fullReport('2025 年收入约 $10M，这表明公司尚未经审计。');
+const suffixBoundarySource = fullReport('Founded in 2016, the baseline includes 170M members.');
+const suffixBoundaryClean = fullReport('公司成立于 2016 年，基准口径覆盖 170M 名会员。');
 
 const checks = [
   [
@@ -29,6 +32,15 @@ const checks = [
     checkPairQuality(source, translationese, { strictEditor: true })
       .some((issue) => issue.code === 'translationese'),
     'strict editor did not reject translationese',
+  ],
+  [
+    checkPairQuality(source, strictTranslationese, { strictEditor: true })
+      .filter((issue) => issue.code === 'editor-translationese').length === 1,
+    'strict editor duplicated one translationese finding',
+  ],
+  [
+    checkPairQuality(suffixBoundarySource, suffixBoundaryClean, { strictEditor: true }).length === 0,
+    'metric matcher consumed the first letter of a following word as a scale suffix',
   ],
   [
     untranslatedMessage('Tobi Lütke', 'Tobi Lütke') === null

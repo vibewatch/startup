@@ -9,7 +9,7 @@ function usage(code = 0) {
 }
 
 const invariantToken = /\b(?:19|20)\d{2}\b|\b\d{4}-\d{2}-\d{2}\b/g;
-const metricToken = /(?:[$€£¥₦]\s*)?\d+(?:[.,]\d+)*(?:\s?(?:%|bps|[KMBT]|x|×|ARR|MRR|GMV|TPV|NPL|IRR))?/gi;
+const metricToken = /(?:[$€£¥₦]\s*)?\d+(?:[.,]\d+)*(?:(?:[KMBT]|x|×)|\s?(?:%|bps|ARR|MRR|GMV|TPV|NPL|IRR))?/gi;
 const stylePatterns = [
   /对于[^。！？；]{1,24}而言/u,
   /在[^。！？；]{1,20}方面/u,
@@ -89,7 +89,7 @@ function normalizedTokens(value) {
 function normalizedMetricTokens(value) {
   return (value.match(metricToken) ?? [])
     .map((token) => token.replace(/\s+/g, '').replace(/,/g, '').toLowerCase())
-    .filter((token) => /[$€£¥₦%]|bps|[kmbt]$|arr|mrr|gmv|tpv|npl|irr|x$|×$|\d{4}/i.test(token))
+    .filter((token) => /[$€£¥₦%]|bps|[kmbt]$|arr|mrr|gmv|tpv|npl|irr|x$|×$/i.test(token) || /^(?:19|20)\d{2}$/.test(token))
     .sort();
 }
 
@@ -159,16 +159,16 @@ function walk(en, zh, path, whitelist, issues, options) {
         message: `translationese pattern: ${pattern}`,
       });
     }
-    if (options.strictEditor) {
-      for (const pattern of strictEditorStylePatterns) {
-        if (pattern.test(zh)) {
-          pushIssue(issues, {
-            path: path.join('/'),
-            kind: 'style',
-            code: 'editor-translationese',
-            message: `strict editorial rewrite required: ${pattern}`,
-          });
-        }
+  }
+  if (options.strictEditor) {
+    for (const pattern of strictEditorStylePatterns) {
+      if (pattern.test(zh)) {
+        pushIssue(issues, {
+          path: path.join('/'),
+          kind: 'style',
+          code: 'editor-translationese',
+          message: `strict editorial rewrite required: ${pattern}`,
+        });
       }
     }
   }
