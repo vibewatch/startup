@@ -11,18 +11,17 @@ interface Props {
 
 const { figure, claims = [], sources = [] } = Astro.props;
 const type = figure?.type ?? 'flow';
-const layout = figure?.layout ?? 'standard';
 const data = figure?.data ?? {};
 const chartTypes = new Set(RENDERED_FIGURE_TYPES);
 const usesD3Chart = chartTypes.has(type);
 const chartId = `chart-${String(figure?.id ?? 'figure').replace(/[^a-z0-9_-]/gi, '-')}-${Math.random().toString(36).slice(2, 9)}`;
-const chartPayload = usesD3Chart ? { id: chartId, type, ...(layout === 'wide' ? { layout } : {}), data } : null;
+const chartPayload = usesD3Chart ? { id: chartId, type, data } : null;
 const chartPayloadJson = chartPayload
   ? JSON.stringify(chartPayload).replace(/[<>&\u2028\u2029]/g, (char) => ({ '<': '\\u003c', '>': '\\u003e', '&': '\\u0026', '\u2028': '\\u2028', '\u2029': '\\u2029' }[char] ?? char))
   : null;
 ---
 
-<figure class:list={['native-figure', `figure-${type}`, `layout-${layout}`]}>
+<figure class:list={['native-figure', `figure-${type}`]}>
   <figcaption>{figure.id}: {figure.title}</figcaption>
 
   {figure.summary && <p class="figure-summary">{figure.summary}</p>}
@@ -2155,18 +2154,6 @@ const chartPayloadJson = chartPayload
    * .chart-kpi rules below for the canonical pattern.
    */
   .native-figure { --figure-width: 880px; --chart-fs-kicker: clamp(0.76rem, 0.1vw + 0.72rem, 0.84rem); --chart-fs-caption: clamp(0.8rem, 0.12vw + 0.76rem, 0.9rem); --chart-fs-body: clamp(0.94rem, 0.14vw + 0.88rem, 1.02rem); --chart-fs-note: clamp(0.9rem, 0.12vw + 0.86rem, 0.98rem); --chart-fw-body: 650; --chart-fw-strong: 800; --chart-fw-label: 900; --chart-tracking-subtle: 0.04em; --chart-leading-caption: 1.35; --chart-leading-body: 1.55; width: min(100%, var(--figure-width)); margin: var(--space-6) auto; padding: var(--space-4); background: var(--surface-paper); border: var(--report-rule); border-top: 2px solid var(--claret); }
-  /* All figures share one canonical width regardless of layout/type so the
-   * report has a consistent figure column. The legacy compact/standard/wide
-   * and matrix/range overrides are intentionally collapsed into a single
-  * width — keep the classes for non-width styling that may rely on
-   * them, but neutralize their --figure-width overrides. */
-  .layout-compact,
-  .layout-standard,
-  .layout-wide,
-  .figure-matrix.layout-standard,
-  .figure-matrix.layout-wide,
-  .figure-range.layout-standard,
-  .figure-range.layout-wide { --figure-width: 880px; }
   figcaption { margin-bottom: var(--space-3); font-family: var(--font-sans); font-variant-caps: all-small-caps; font-size: var(--chart-fs-kicker); font-weight: var(--chart-fw-body); letter-spacing: var(--chart-tracking-subtle); line-height: var(--chart-leading-caption); color: var(--claret); }
   .figure-summary, .figure-note { margin: 0 0 var(--space-3); color: var(--caption-gray); font-family: var(--font-sans); font-size: var(--chart-fs-note); line-height: var(--chart-leading-body); }
   .figure-note { margin-top: var(--space-3); }

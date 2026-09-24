@@ -51,6 +51,10 @@ function valueExcerpt(value) {
 }
 
 function latinWords(value) {
+  return value.match(/[A-Za-z][A-Za-z0-9'+-]*/g) ?? [];
+}
+
+function properNounWords(value) {
   return value.match(/[\p{L}][\p{L}\p{N}'+-]*/gu) ?? [];
 }
 
@@ -73,10 +77,10 @@ function isTokenLike(value) {
 }
 
 function isProperNounPhrase(value) {
-  const words = latinWords(value);
+  const words = properNounWords(value);
   return words.length > 0
-    && words.length <= 4
-    && words.every((word) => /^\p{Lu}[\p{L}\p{N}.+-]*$/u.test(word) || /^(?=.*\d)[a-z][a-z0-9.+-]*$/i.test(word))
+    && words.length <= 8
+    && words.every((word) => !/[A-Za-z]/.test(word) || /^\p{Lu}[\p{L}\p{N}.+-]*$/u.test(word) || /^(?=.*\d)[a-z][a-z0-9.+-]*$/i.test(word))
     && !words.some((word) => DESCRIPTOR_WORDS.has(word.toLowerCase()));
 }
 
@@ -98,6 +102,7 @@ function untranslatedMessage(en, zh) {
   // bundle-translatable.mjs skips it, and an empty ZH here is a faithful mirror.
   if (!source) return null;
   if (!target) return 'empty translation leaf; renderer would fall back to English';
+  if (source === target && /[\u3400-\u9fff]/u.test(target)) return null;
   if (!/[A-Za-z]/.test(target)) return null;
   if (isTokenLike(target) || isProperNounPhrase(target) || isModelVersionList(target)) return null;
 

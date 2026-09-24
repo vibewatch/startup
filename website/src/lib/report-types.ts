@@ -40,7 +40,6 @@ export interface ReportFigure extends ReportRecord {
   id?: string;
   title?: string;
   type?: string;
-  layout?: string;
   summary?: string;
   approximationNotes?: string;
   data?: unknown;

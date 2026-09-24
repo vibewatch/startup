@@ -211,7 +211,6 @@ export const FigureSchema = z.object({
   id: z.string().optional().describe('F<ChapterLetter>### (e.g. FO003)'),
   title: nonEmptyString,
   type: nonEmptyString.describe('one of the figure types listed in references/rules.md → Renderer contracts → Allowed figure types'),
-  layout: nonEmptyString.optional().describe('compact|standard|wide'),
   summary: nonEmptyString.optional().describe('1-sentence figure caption'),
   data: z.record(z.string(), z.any()).describe('shape depends on figure type — see references/rules.md for required field combinations and allowed populated fields per type'),
   approximationNotes: nullableString.optional().describe('note any rounding, smoothing, or estimation'),

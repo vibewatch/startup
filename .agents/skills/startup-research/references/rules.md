@@ -337,14 +337,6 @@ Every figure must satisfy the contract for its `type`. The renderer ignores extr
 - other
 ```
 
-#### Allowed `layout` values (figures and tables)
-
-```yaml
-- compact
-- standard
-- wide
-```
-
 #### Allowed `data.*` field names (across all figure types)
 
 ```yaml

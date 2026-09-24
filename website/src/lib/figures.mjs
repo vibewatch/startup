@@ -16,8 +16,6 @@ export const FIGURE_TYPES = [
   'other',
 ];
 
-export const FIGURE_LAYOUTS = ['compact', 'standard', 'wide'];
-
 export const FIGURE_DATA_FIELDS = ['items', 'nodes', 'edges', 'points', 'columns', 'rows', 'series', 'layers', 'xAxis', 'yAxis'];
 
 export const FIGURE_ARRAY_FIELDS = ['items', 'nodes', 'edges', 'points', 'columns', 'rows', 'series', 'layers'];
@@ -112,4 +110,3 @@ export function validateFigureShape(figure) {
   }
   return { errors };
 }
-

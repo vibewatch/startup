@@ -59,7 +59,6 @@ figures:
   - id?: string  # F<ChapterLetter>### (e.g. FO003)
     title: string
     type: string  # one of the figure types listed in references/rules.md → Renderer contracts → Allowed figure types
-    layout?: string  # compact|standard|wide
     summary?: string  # 1-sentence figure caption
     data: {...}  # shape depends on figure type — see references/rules.md for required field combinations and allowed populated fields per type
     approximationNotes?: string|null  # note any rounding, smoothing, or estimation

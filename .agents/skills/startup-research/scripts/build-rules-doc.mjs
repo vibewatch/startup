@@ -32,7 +32,6 @@ import {
   FIGURE_ALLOWED_POPULATED_FIELDS,
   FIGURE_CONTRACTS,
   FIGURE_DATA_FIELDS,
-  FIGURE_LAYOUTS,
   FIGURE_TYPES,
 } from '../../../../website/src/lib/figures.mjs';
 
@@ -200,10 +199,6 @@ function rendererContractsSection() {
   lines.push('#### Allowed figure types');
   lines.push('');
   lines.push(yamlBlock(FIGURE_TYPES));
-  lines.push('');
-  lines.push('#### Allowed `layout` values (figures and tables)');
-  lines.push('');
-  lines.push(yamlBlock(FIGURE_LAYOUTS));
   lines.push('');
   lines.push('#### Allowed `data.*` field names (across all figure types)');
   lines.push('');

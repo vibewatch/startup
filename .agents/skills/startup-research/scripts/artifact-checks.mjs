@@ -15,7 +15,6 @@ import {
   FIGURE_ARRAY_FIELDS,
   FIGURE_CONTRACTS,
   FIGURE_DATA_FIELDS,
-  FIGURE_LAYOUTS,
   FIGURE_TYPES,
 } from '../../../../website/src/lib/figures.mjs';
 import { hasText } from './utils.mjs';
@@ -30,7 +29,6 @@ import {
 import { TONE_VALUES, formatEnumChoices } from './validation-catalog.mjs';
 
 const FIGURE_TYPE_SET = new Set(FIGURE_TYPES);
-const FIGURE_LAYOUT_SET = new Set(FIGURE_LAYOUTS);
 const FIGURE_DATA_FIELD_SET = new Set(FIGURE_DATA_FIELDS);
 const FIGURE_CONTRACT_MAP = new Map(Object.entries(FIGURE_CONTRACTS));
 const FIGURE_ALLOWED_POPULATED_MAP = new Map(
@@ -148,8 +146,8 @@ export function checkFigureDeep(figure, { path }) {
   if (!FIGURE_TYPE_SET.has(figure?.type)) {
     c.fail(`${figurePath} has invalid type ${figure?.type}`, { figureId: id, actual: figure?.type });
   }
-  if (figure?.layout !== undefined && !FIGURE_LAYOUT_SET.has(figure.layout)) {
-    c.fail(`${figurePath} has invalid layout ${figure.layout}`, { figureId: id, actual: figure.layout });
+  if (figure?.layout !== undefined) {
+    c.fail(`${figurePath} uses obsolete layout; all figures now use the canonical report width`, { figureId: id, actual: figure.layout });
   }
   if (!figure?.data || typeof figure.data !== 'object' || Array.isArray(figure.data)) {
     c.fail(`${figurePath} missing structured data object`, { figureId: id });

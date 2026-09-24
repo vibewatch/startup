@@ -149,23 +149,6 @@ export const ResearchProfileSchema = z.object({
   clearRequiredSourceTypes: z.boolean().default(false),
 }).strict();
 
-const LEGACY_RESEARCH_PROFILES = {
-  deep: {
-    description: 'Legacy full-depth workflow snapshot.',
-    defaultGate: {},
-    reportGate: {},
-    capChapterGateOverrides: false,
-    clearRequiredSourceTypes: false,
-  },
-  fast: {
-    description: 'Fast profile unavailable in this legacy workflow snapshot.',
-    defaultGate: {},
-    reportGate: {},
-    capChapterGateOverrides: false,
-    clearRequiredSourceTypes: false,
-  },
-};
-
 export const PlannedTableSchema = z.object({
   name: nonEmptyString,
   requirement: nonEmptyString,
@@ -197,8 +180,8 @@ export const ChapterConfigSchema = z.object({
 export const WorkflowConfigSchema = z.object({
   schemaVersion: z.literal('workflow-config-v1'),
   reportSchemaVersion: z.literal('report-v2'),
-  activeResearchProfile: kebabKey.default('deep'),
-  researchProfiles: z.record(kebabKey, ResearchProfileSchema).default(LEGACY_RESEARCH_PROFILES),
+  activeResearchProfile: kebabKey,
+  researchProfiles: z.record(kebabKey, ResearchProfileSchema),
   workflow: WorkflowRuntimeSchema,
   agentPolicy: AgentPolicySchema,
   defaultGate: CompleteGateSchema,

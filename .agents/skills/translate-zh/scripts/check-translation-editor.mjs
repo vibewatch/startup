@@ -32,7 +32,11 @@ const checks = [
   ],
   [
     untranslatedMessage('Tobi Lütke', 'Tobi Lütke') === null
-      && untranslatedMessage('Andreessen Horowitz (a16z)', 'Andreessen Horowitz (a16z)') === null,
+      && untranslatedMessage('Andreessen Horowitz (a16z)', 'Andreessen Horowitz (a16z)') === null
+      && untranslatedMessage('Gao Jiyang (高继扬)', 'Gao Jiyang (高继扬)') === null
+      && untranslatedMessage('Physical Intelligence (π0)', 'Physical Intelligence (π0)') === null
+      && untranslatedMessage('Lee Seung-gun (SG Lee / 이승건)', 'Lee Seung-gun（SG Lee / 이승건）') === null
+      && untranslatedMessage('16λ DWDM, 112G PAM4', '16λ DWDM、112G PAM4') === null,
     'strict structural check rejected a Latin proper noun',
   ],
   [
