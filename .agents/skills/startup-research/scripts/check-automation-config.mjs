@@ -133,6 +133,9 @@ for (const required of [
   'EVENT_NAME: ${{ github.event_name }}',
   'if [ "$EVENT_NAME" = "schedule" ]; then',
   'COUNT=1',
+  'existing-report-identities.tsv',
+  'The first discovery pass created no report; retrying once',
+  'Discovery completed without creating a new report after the bounded retry',
 ]) {
   if (!unicornWorkflow.includes(required)) {
     issues.push(`.github/workflows/research-unicorns.yml: missing scheduled single-report contract: ${required}`);

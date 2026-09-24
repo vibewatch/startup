@@ -257,6 +257,7 @@ jobs:
                 const company = card.company ?? {};
                 finalized.push({
                   companyName: company.name ?? null,
+                  website: company.website ?? null,
                   sector: company.sector ?? null,
                   stage: company.stage ?? null,
                 });
@@ -296,6 +297,10 @@ jobs:
           const inFlightLine = inFlight.length === 0
             ? 'In-flight runs: 0.'
             : `In-flight runs: ${inFlight.length} (${inFlight.slice(0, 10).join(', ')}${inFlight.length > 10 ? ', ...' : ''}); avoid picking these companies.`;
+          const identities = finalized
+            .map((report) => `${report.companyName ?? ''}\t${report.website ?? ''}`)
+            .sort((left, right) => left.localeCompare(right));
+          fs.writeFileSync(path.join(process.env.RUNNER_TEMP, 'existing-report-identities.tsv'), `${identities.join('\n')}\n`);
           console.log(`Existing reports: ${finalized.length}. Underrepresented sectors: ${under}. More covered sectors: ${covered}. ${inFlightLine}`);
           NODE
           {
@@ -324,6 +329,7 @@ jobs:
           PROFILE: ${{ steps.inputs.outputs.profile }}
           CUTOFF_DATE: ${{ steps.inputs.outputs.cutoffDate }}
           COVERAGE_HINT: ${{ steps.coverage.outputs.coverageHint }}
+          EXISTING_IDENTITIES: ${{ runner.temp }}/existing-report-identities.tsv
           # fetch-url's main() appends one JSON line per call to this file
           # whenever the env var is set. check-chapter cross-references each
           # cited URL against the trail and surfaces unverifiedSource warnings
@@ -342,7 +348,7 @@ jobs:
           Do not use a workflow-provided report run date. For each selected company, after create-report-run.mjs use runtimeContext.run.runDate from load-chapter-runtime-context.mjs as the canonical research date, YAML runDate, and source-discovery freshness anchor. A company only qualifies as recent if its unicorn-confirming valuation or financing evidence is dated on or after $CUTOFF_DATE; use that cutoff only for candidate screening.
           $INDUSTRY_RULE
           Pick only companies with credible public evidence of a \$1B+ private valuation or unicorn-confirming financing in that window. Use this portfolio hint: $COVERAGE_HINT
-          Skip duplicates already in reports/ (each finalized run lives in reports/<runId>/summary-card.yaml; the create-report-run.mjs duplicate guard checks the same set) unless there is materially new evidence. If fewer than $COUNT qualify, research only the actual qualifying companies. If none qualify, do not create report folders; print a short no-candidates note and exit successfully.
+          Before selecting candidates, read $EXISTING_IDENTITIES in full. It is the authoritative complete list of existing company names and websites; do not rely on glob output because large result sets are truncated. Never select a company whose normalized name or website domain is already listed. If one search has no qualifying candidate, broaden sectors and geographies and run at least two more independent searches before concluding none qualify.
           For each selected company, prepare one report run for the deterministic workflow. Create the report folder, run npm run research:profile -- --report-folder <folder> --profile ${PROFILE:-fast}, then run npm run research:bootstrap -- --report-folder <folder> --company "<company>" --website "<url>" --profile ${PROFILE:-fast}. Stop after bootstrap: do not run research:workers, research:finalize, chapter subagents, or manual chapter/report repairs. The workflow runs authenticated chapter workers and finalization after this Copilot session returns.
           Treat completion as an on-disk contract: every selected company must either have a report folder with .workflow-snapshot.yaml and a successful .research-cache/<runId>/search-bundle.json, or be skipped before creating a folder. Never delete a report folder after creating it; leave failed bootstrap artifacts for the workflow to preserve and diagnose.
 
@@ -369,14 +375,38 @@ jobs:
           SH
           chmod +x "$GIT_GUARD_DIR/git"
           started_at=$(date +%s)
-          set +e
           copilot_args=(--yolo --autopilot --excluded-tools "web_fetch" --model "$MODEL")
           if [ -n "$EFFORT" ]; then
             copilot_args+=(--effort "$EFFORT")
           fi
-          PATH="$GIT_GUARD_DIR:$PATH" copilot "${copilot_args[@]}" -p "$PROMPT" 2>&1 | tee "$COPILOT_LOG"
-          status=${PIPESTATUS[0]}
-          set -e
+          run_copilot() {
+            local prompt="$1"
+            local log="$2"
+            set +e
+            PATH="$GIT_GUARD_DIR:$PATH" copilot "${copilot_args[@]}" -p "$prompt" 2>&1 | tee "$log"
+            local exit_status=${PIPESTATUS[0]}
+            set -e
+            return "$exit_status"
+          }
+          status=0
+          run_copilot "$PROMPT" "$COPILOT_LOG" || status=$?
+          if [ "$status" -eq 0 ]; then
+            find reports -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort > "$RUNNER_TEMP/reports-after-discovery.txt"
+            if ! comm -13 "$RUNNER_TEMP/reports-before.txt" "$RUNNER_TEMP/reports-after-discovery.txt" | grep -q .; then
+              echo "::warning::The first discovery pass created no report; retrying once with the complete identity index."
+              RETRY_PROMPT="$PROMPT
+
+          The previous discovery pass created no report folder. This is not a successful outcome. Read $EXISTING_IDENTITIES in full, exclude every listed company and domain, choose a different verified candidate, and create exactly one bootstrapped report run. Do not repeat a previously rejected duplicate."
+              RETRY_LOG="$RUNNER_TEMP/copilot-logs/retry.log"
+              run_copilot "$RETRY_PROMPT" "$RETRY_LOG" || status=$?
+              cat "$RETRY_LOG" >> "$COPILOT_LOG"
+            fi
+          fi
+          find reports -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort > "$RUNNER_TEMP/reports-after-discovery.txt"
+          if [ "$status" -eq 0 ] && ! comm -13 "$RUNNER_TEMP/reports-before.txt" "$RUNNER_TEMP/reports-after-discovery.txt" | grep -q .; then
+            echo "::error::Discovery completed without creating a new report after the bounded retry."
+            status=1
+          fi
           wall_seconds=$(( $(date +%s) - started_at ))
           # Per-step stats summary (best-effort: copilot CLI prints these on
           # the last few lines of its output). Also report fetch-url trail
