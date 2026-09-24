@@ -130,6 +130,8 @@ const plan = {
   timeoutSeconds: args.timeoutSeconds,
   model: route.model,
   reasoningEffort: route.reasoningEffort,
+  escalateTo: route.escalateTo,
+  escalationReasoningEffort: 'xhigh',
   resultsPath,
   bundlePath,
   fetchLogPath,
@@ -146,65 +148,96 @@ if (!existsSync(fetchLogPath)) {
 const logPath = join(cacheDir, 'finalizer.log');
 const log = createWriteStream(logPath, { flags: 'w' });
 let tail = '';
-let timedOut = false;
 const startedAt = new Date();
 if (args.format === 'text') {
   console.log(`[run-report-finalizer] starting (${route.model}/${route.reasoningEffort}, timeout=${args.timeoutSeconds}s)`);
 }
-const copilotArgs = [
-  '--yolo',
-  '--autopilot',
-  '--excluded-tools', 'web_fetch',
-  '--model', route.model,
-  '-p', finalizerPrompt({ reportFolder, runId, resultsPath, fetchLogPath }),
-];
-if (route.reasoningEffort !== 'default') {
-  copilotArgs.splice(copilotArgs.indexOf('-p'), 0, '--effort', route.reasoningEffort);
-}
-const child = spawn(args.copilotBin, copilotArgs, {
-  cwd: repoRoot,
-  detached: process.platform !== 'win32',
-  env: {
-    ...process.env,
-    STARTUP_FETCH_LOG_PATH: fetchLogPath,
-    COPILOT_TASK_WAIT_TIMEOUT_SECONDS: String(args.timeoutSeconds),
-  },
-  stdio: ['ignore', 'pipe', 'pipe'],
-});
 const capture = (chunk) => {
   log.write(chunk);
   tail = `${tail}${chunk}`.slice(-32768);
 };
-child.stdout.on('data', capture);
-child.stderr.on('data', capture);
-child.on('error', (error) => capture(`\n[run-report-finalizer] spawn error: ${error.message}\n`));
+let activeChild = null;
 for (const signal of ['SIGINT', 'SIGTERM']) {
   process.once(signal, () => {
-    terminate(child);
+    if (activeChild) terminate(activeChild);
     setTimeout(() => process.exit(signal === 'SIGINT' ? 130 : 143), 6000).unref();
   });
 }
-const timer = setTimeout(() => {
-  timedOut = true;
-  capture(`\n[run-report-finalizer] timeout after ${args.timeoutSeconds}s\n`);
-  terminate(child);
-}, args.timeoutSeconds * 1000);
 
-const processResult = await new Promise((resolveResult) => {
-  child.on('close', (code, signal) => resolveResult({ code, signal }));
-});
-clearTimeout(timer);
-log.end();
-const completedAt = new Date();
+async function runAttempt(attemptRoute, attemptNumber) {
+  const attemptStartedAt = new Date();
+  let attemptTail = '';
+  let timedOut = false;
+  capture(`\n[run-report-finalizer] attempt ${attemptNumber}: ${attemptRoute.model}/${attemptRoute.reasoningEffort}\n`);
+  const copilotArgs = [
+    '--yolo',
+    '--autopilot',
+    '--excluded-tools', 'web_fetch',
+    '--model', attemptRoute.model,
+    '-p', finalizerPrompt({ reportFolder, runId, resultsPath, fetchLogPath }),
+  ];
+  if (attemptRoute.reasoningEffort !== 'default') {
+    copilotArgs.splice(copilotArgs.indexOf('-p'), 0, '--effort', attemptRoute.reasoningEffort);
+  }
+  const child = spawn(args.copilotBin, copilotArgs, {
+    cwd: repoRoot,
+    detached: process.platform !== 'win32',
+    env: {
+      ...process.env,
+      STARTUP_FETCH_LOG_PATH: fetchLogPath,
+      COPILOT_TASK_WAIT_TIMEOUT_SECONDS: String(args.timeoutSeconds),
+    },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  activeChild = child;
+  const captureAttempt = (chunk) => {
+    capture(chunk);
+    attemptTail = `${attemptTail}${chunk}`.slice(-32768);
+  };
+  child.stdout.on('data', captureAttempt);
+  child.stderr.on('data', captureAttempt);
+  child.on('error', (error) => captureAttempt(`\n[run-report-finalizer] spawn error: ${error.message}\n`));
+  const timer = setTimeout(() => {
+    timedOut = true;
+    captureAttempt(`\n[run-report-finalizer] timeout after ${args.timeoutSeconds}s\n`);
+    terminate(child);
+  }, args.timeoutSeconds * 1000);
+  const processResult = await new Promise((resolveResult) => {
+    child.on('close', (code, signal) => resolveResult({ code, signal }));
+  });
+  clearTimeout(timer);
+  activeChild = null;
+  const completedAt = new Date();
+  return {
+    model: attemptRoute.model,
+    reasoningEffort: attemptRoute.reasoningEffort,
+    exitCode: processResult.code,
+    signal: processResult.signal,
+    timedOut,
+    startedAt: attemptStartedAt.toISOString(),
+    completedAt: completedAt.toISOString(),
+    durationSeconds: Number(((completedAt - attemptStartedAt) / 1000).toFixed(2)),
+    aiCredits: Number(attemptTail.match(/AI Credits\s+([\d.]+)/i)?.[1] ?? 0) || null,
+    tokenLine: attemptTail.match(/^Tokens\s+.+$/im)?.[0] ?? null,
+  };
+}
+
+const attempts = [await runAttempt(route, 1)];
+let processResult = attempts[0];
 const requiredFiles = [
   REPORT_META_FILE,
   FINAL_ARTIFACTS.evidence.file,
   FINAL_ARTIFACTS.fullReport.file,
   FINAL_ARTIFACTS.summaryCard.file,
 ];
-const missingFiles = requiredFiles.filter((file) => !existsSync(join(reportFolder, file)));
-let reportCheck = { ok: false, exitCode: null, error: '' };
-if (missingFiles.length === 0) {
+function inspectFinalReport() {
+  const missingFiles = requiredFiles.filter((file) => !existsSync(join(reportFolder, file)));
+  if (missingFiles.length > 0) {
+    return {
+      missingFiles,
+      reportCheck: { ok: false, exitCode: null, error: '' },
+    };
+  }
   const check = spawnSync(process.execPath, [
     checkReportScript,
     reportFolder,
@@ -214,26 +247,48 @@ if (missingFiles.length === 0) {
     encoding: 'utf8',
     env: { ...process.env, STARTUP_FETCH_LOG_PATH: fetchLogPath },
   });
-  reportCheck = {
-    ok: check.status === 0,
-    exitCode: check.status,
-    error: check.status === 0 ? '' : (check.stderr || check.stdout),
+  return {
+    missingFiles,
+    reportCheck: {
+      ok: check.status === 0,
+      exitCode: check.status,
+      error: check.status === 0 ? '' : (check.stderr || check.stdout),
+    },
   };
 }
+
+let finalReport = inspectFinalReport();
+if ((processResult.timedOut || processResult.exitCode !== 0
+      || finalReport.missingFiles.length > 0 || !finalReport.reportCheck.ok)
+    && route.escalateTo && route.escalateTo !== route.model) {
+  if (args.format === 'text') {
+    console.log(`[run-report-finalizer] escalating failed finalizer to ${route.escalateTo}/xhigh`);
+  }
+  attempts.push(await runAttempt({
+    model: route.escalateTo,
+    reasoningEffort: 'xhigh',
+  }, 2));
+  processResult = attempts[1];
+  finalReport = inspectFinalReport();
+}
+log.end();
+const completedAt = new Date();
+const { missingFiles, reportCheck } = finalReport;
 const output = {
   ...plan,
   dryRun: false,
-  status: !timedOut && processResult.code === 0 && missingFiles.length === 0 && reportCheck.ok
+  status: !processResult.timedOut && processResult.exitCode === 0 && missingFiles.length === 0 && reportCheck.ok
     ? 'completed'
     : 'failed',
-  exitCode: processResult.code,
+  exitCode: processResult.exitCode,
   signal: processResult.signal,
-  timedOut,
+  timedOut: processResult.timedOut,
   startedAt: startedAt.toISOString(),
   completedAt: completedAt.toISOString(),
   durationSeconds: Number(((completedAt - startedAt) / 1000).toFixed(2)),
-  aiCredits: Number(tail.match(/AI Credits\s+([\d.]+)/i)?.[1] ?? 0) || null,
-  tokenLine: tail.match(/^Tokens\s+.+$/im)?.[0] ?? null,
+  aiCredits: attempts.reduce((total, attempt) => total + (attempt.aiCredits || 0), 0) || null,
+  tokenLine: attempts.at(-1)?.tokenLine ?? null,
+  attempts,
   missingFiles,
   reportCheck,
   logPath,

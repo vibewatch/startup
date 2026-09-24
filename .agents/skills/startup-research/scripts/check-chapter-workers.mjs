@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import { spawnSync } from 'node:child_process';
 import {
+  chmodSync,
   mkdirSync,
   readFileSync,
   rmSync,
@@ -59,6 +60,33 @@ try {
     '--dry-run',
     '--format', 'json',
   ]));
+  const fakeCopilotPath = join(folder, 'fake-copilot.mjs');
+  const fakeCopilotLogPath = join(folder, 'fake-copilot.log');
+  writeFileSync(join(folder, '_fetch-log.jsonl'), '{}\n');
+  writeFileSync(fakeCopilotPath, `#!/usr/bin/env node
+import { appendFileSync } from 'node:fs';
+appendFileSync(process.env.FAKE_COPILOT_LOG, \`\${JSON.stringify(process.argv.slice(2))}\\n\`);
+process.exit(1);
+`);
+  chmodSync(fakeCopilotPath, 0o755);
+  const fallbackProbe = spawnSync(process.execPath, [
+    join(here, 'run-report-finalizer.mjs'),
+    '--report-folder', folder,
+    '--timeout-seconds', '60',
+    '--copilot-bin', fakeCopilotPath,
+    '--format', 'json',
+  ], {
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      FAKE_COPILOT_LOG: fakeCopilotLogPath,
+      STARTUP_FETCH_LOG_PATH: join(folder, '_fetch-log.jsonl'),
+    },
+  });
+  const fallbackInvocations = readFileSync(fakeCopilotLogPath, 'utf8')
+    .trim()
+    .split('\n')
+    .map((line) => JSON.parse(line));
   const companyWorkflow = readFileSync(resolve('.github/workflows/company.yml'), 'utf8');
   const checks = [
     [plan.runId === basename(folder), 'runner emitted the wrong runId'],
@@ -70,7 +98,13 @@ try {
     [plan.workers.every((worker) => worker.escalateTo === 'gpt-5.6-sol-fast'), 'runner did not retain the Sol Fast quality fallback'],
     [finalizer.model === 'gpt-6-luna', 'finalizer did not use Luna'],
     [finalizer.reasoningEffort === 'default', 'finalizer did not use Luna default effort'],
+    [finalizer.escalateTo === 'gpt-5.6-sol-fast', 'finalizer did not retain the Sol Fast quality fallback'],
+    [finalizer.escalationReasoningEffort === 'xhigh', 'finalizer escalation effort is not xhigh'],
     [finalizer.timeoutSeconds === 900, 'finalizer default timeout is not 900 seconds'],
+    [fallbackProbe.status === 1, 'synthetic finalizer failure did not remain a failure'],
+    [fallbackInvocations.length === 2, 'finalizer did not make exactly one bounded fallback attempt'],
+    [fallbackInvocations[0]?.includes('gpt-6-luna'), 'finalizer primary attempt did not use Luna'],
+    [fallbackInvocations[1]?.includes('gpt-5.6-sol-fast') && fallbackInvocations[1]?.includes('xhigh'), 'finalizer fallback did not use Sol Fast/xhigh'],
     [companyWorkflow.includes('create-report-run.mjs "$COMPANY"'), 'company workflow does not create reports deterministically'],
     [companyWorkflow.includes('npm run research:workers -- --report-folder "$REPORT_FOLDER"'), 'company workflow does not invoke the bounded worker runner directly'],
     [companyWorkflow.includes('npm run research:finalize -- --report-folder "$REPORT_FOLDER"'), 'company workflow does not invoke the bounded finalizer directly'],
