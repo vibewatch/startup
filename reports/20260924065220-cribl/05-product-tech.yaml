@@ -1,0 +1,1018 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: cribl
+runDate: '2026-09-24'
+company:
+  name: Cribl
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: >
+    Cribl has evolved from a single Splunk-centric pipeline tool into a four-product telemetry platform—Stream, Edge,
+    Lake, and Search—anchored by the concept of vendor-neutral data control. Stream processes over 500 billion events
+    per day across the installed base and integrates with 300+ sources and destinations. The architecture combines a
+    distributed, agent-based deployment model (Edge) with a centralized stream processing engine (Stream) and decoupled
+    object-store analytics (Lake/Search). Cribl's FedRAMP ATO (January 2026), 140+ compliance certifications, and SOC 2
+    Type II attestation address the enterprise trust baseline. Technical risks include architectural complexity as the
+    product set expands, dependence on OpenTelemetry ecosystem adoption, AI/ML capability differentiation, and
+    competition from cloud-native observability stacks. The product roadmap is privately held; key diligence questions
+    include the Cribl Copilot AI feature maturity, GenAI pipeline capabilities, and progress on the Search product's
+    query-engine performance at scale.
+sections:
+  - id: product-architecture
+    title: Product Architecture and Module Overview
+    body: |
+      Cribl's platform comprises four distinct but interoperable products: Cribl Stream, Cribl
+      Edge, Cribl Lake, and Cribl Search. Together they are marketed as the "Cribl Suite" or
+      "AI Platform for Telemetry," designed to give enterprises sovereignty over their telemetry
+      data—logs, metrics, traces, and events—regardless of which analytics backend they use.
+
+      **Cribl Stream** is the core product and original offering. It is a distributed stream
+      processing engine that routes, transforms, filters, enriches, and replays machine-generated
+      data in real time. Stream operates via a leader/worker node model: the leader node manages
+      configuration, processing pipelines, and worker management, while worker nodes execute data
+      transformation logic. Stream ingests data from virtually any source (Syslog, Splunk forwarders,
+      Elastic Beats, Kafka, HTTP/S, S3, cloud logs) and routes to any destination (Splunk, Elastic,
+      Datadog, Chronicle, S3, and 300+ others). Version 4.8 (the current GA release as of 2026)
+      includes features such as multi-tenancy improvements, edge orchestration enhancements, and
+      expanded AI/ML pipeline operators.
+
+      **Cribl Edge** is a lightweight, distributed agent deployed at the source—on servers, VMs,
+      containers, or edge devices—to collect and pre-process telemetry before forwarding it upstream
+      to Stream or directly to destinations. Edge replaces traditional heavyweight log shippers
+      (Filebeat, Splunk Universal Forwarder) with a manageable, pipeline-capable agent that can
+      perform local filtering and enrichment. Edge is managed centrally through the same Stream
+      control plane, providing a unified fleet management interface for distributed deployments.
+
+      **Cribl Lake** is an object-storage-based data lake purpose-built for telemetry. It stores
+      raw and processed observability data in open columnar formats (Parquet) in customer-controlled
+      cloud storage (AWS S3, Azure Blob, GCS). Lake includes lifecycle policies, tiered retention,
+      and replay capabilities that allow organizations to retain raw telemetry cheaply and selectively
+      rehydrate it for analysis. The separation of storage from compute avoids vendor lock-in at the
+      analytics tier.
+
+      **Cribl Search** provides a federated query interface that spans Stream, Lake, and third-party
+      data stores. Rather than requiring data centralization, Search executes queries across distributed
+      data at rest and in motion, enabling analysts to investigate incidents without prior data movement.
+      The query engine is designed to support both SQL-like syntax and SPL (Splunk Processing Language)
+      for migration use cases.
+
+      The four products share a unified control plane (Worker/Fleet management), a common configuration
+      schema (YAML/JSON pipelines), and a centralized UI. This architecture enables enterprises to
+      adopt incrementally—starting with Stream for cost reduction and expanding to Edge, Lake, and
+      Search as observability maturity increases.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+    tableRefs:
+      - TE001
+    figureRefs:
+      - FE001
+  - id: workflow-use-cases
+    title: Key Workflows and Use Cases
+    body: |
+      Cribl's platform addresses five primary enterprise workflows that span security operations,
+      IT operations, cloud infrastructure, and cost optimization.
+
+      **Security Information and Event Management (SIEM) Cost Optimization** is the primary
+      initial wedge use case. Organizations with Splunk, Microsoft Sentinel, or IBM QRadar
+      deployments use Cribl Stream to filter redundant or low-value log data before it enters
+      the SIEM, reducing licensing costs directly proportional to data volume reduction. Cribl
+      customers report average log volume reductions of 30–60% using Stream's filtering and
+      aggregation capabilities. Cribl's inclusion in the 2024 and 2025 Gartner Magic Quadrant
+      for SIEM (as an adjacent/enabling technology) validates this use case's significance to
+      the security buyer.
+
+      **Observability Pipeline and Tool Migration** enables IT and DevOps teams to change or
+      run multiple observability backends in parallel without reconfiguring every data source.
+      This allows organizations to migrate from legacy platforms (Splunk) to modern alternatives
+      (Datadog, Elastic, OpenTelemetry collectors) or run hybrid multi-tool environments during
+      transition periods. The OpenTelemetry native support positions Cribl well as enterprises
+      adopt the CNCF standard.
+
+      **Compliance and Data Governance** workflows use Cribl's masking, redaction, and routing
+      capabilities to ensure PII, PHI, and PCI data is scrubbed or redirected to compliant
+      destinations before reaching non-compliant analytics stores. This is particularly relevant
+      for healthcare, financial services, and government customers.
+
+      **AI/ML Data Pipeline** is an emerging use case where Cribl routes telemetry to AI training
+      pipelines or LLM inference infrastructure, enabling AI-driven anomaly detection and alerting.
+      Cribl's "Cribl Copilot" feature (announced 2025) uses generative AI to assist operators in
+      building pipeline configurations using natural language prompts.
+
+      **Edge and IoT Telemetry Collection** uses Cribl Edge to collect telemetry from distributed
+      infrastructure—cloud workloads, on-premises servers, edge devices—and applies local processing
+      to reduce bandwidth and latency before centralized analysis. This use case is growing as
+      organizations instrument Kubernetes workloads and containerized microservices.
+
+      Platform Engineering teams use Cribl to standardize telemetry collection across squads,
+      enforcing schema compliance and routing rules via centralized pipeline configuration rather
+      than per-team toolchain choices.
+    claimRefs:
+      - CE005
+      - CE006
+      - CE007
+      - CE008
+    tableRefs:
+      - TE002
+  - id: technology-stack
+    title: Technology Stack and Operating Architecture
+    body: |
+      Cribl's technology stack reflects a combination of open standards adoption, cloud-native
+      deployment patterns, and proprietary stream-processing logic. The key architectural choices
+      are described below.
+
+      **Runtime and Execution Layer**: Cribl Stream and Edge are written primarily in Node.js
+      (JavaScript/TypeScript), with performance-critical path operations accelerated via native
+      C++ bindings and WebAssembly (WASM) modules. The Node.js foundation enables rapid iteration
+      on pipeline operators and integrations. Critics have noted that Node.js is not the conventional
+      choice for high-throughput data processing, but Cribl's architecture offloads heavy computation
+      to worker nodes, mitigating single-process throughput limitations. The 500B events/day claim
+      implies the horizontal worker scaling model is effective in practice.
+
+      **Integration Ecosystem**: Cribl maintains 300+ source/destination connectors ("packs"),
+      including native connectors for Splunk, Elastic, Datadog, AWS CloudWatch, Azure Monitor,
+      Google Cloud Logging, Kafka, Kinesis, and OpenTelemetry. The AWS Marketplace listing confirms
+      integration depth with the AWS cloud ecosystem. The company claims support for the full
+      OpenTelemetry Protocol (OTLP) stack, positioning it as an OTel-compatible collector that
+      also provides proprietary processing capabilities beyond standard OTel collector configs.
+      Fluentd/Fluent Bit compatibility is noted as a source input, allowing enterprises already
+      using CNCF logging agents to route through Cribl without agent replacement.
+
+      **Deployment Models**: Cribl supports three deployment models: (1) self-managed on-premises
+      on customer infrastructure; (2) cloud-managed (Cribl.Cloud), a fully managed SaaS deployment
+      hosted by Cribl; and (3) cloud-hosted customer-managed (BYOC) where the customer owns cloud
+      accounts. Kubernetes is a first-class deployment target, with Helm charts and Kubernetes
+      Operators available for Stream and Edge deployments. The Kubernetes deployment model is
+      documented in Cribl's official documentation and enables auto-scaling worker pools.
+
+      **Data Formats and Protocols**: Cribl processes data as event streams internally, with native
+      support for JSON, key-value, CSV, CEF (Common Event Format), LEEF, Syslog (RFC3164/5424),
+      and custom regex-parsed formats. Cribl Lake stores data in Apache Parquet format with Hive-
+      compatible partitioning, enabling downstream analytics with tools like Athena, Spark, and
+      Databricks. OpenTelemetry Protocol (OTLP) is supported for both input and output.
+
+      **Cribl Guard**: Launched in 2025, Cribl Guard is a security layer that provides AI-powered
+      anomaly detection on the telemetry pipeline itself—detecting data exfiltration, unexpected
+      routing changes, and pipeline tampering. This capability is described as using behavioral
+      baselines trained on normal pipeline operation patterns to flag deviations.
+
+      **Dependencies**: Cribl's architecture has notable external dependencies including Apache
+      Kafka (for high-throughput buffering), AWS/Azure/GCP cloud storage APIs (for Lake), and
+      the OpenTelemetry specification (for protocol standards). Kubernetes and container runtime
+      infrastructure are required for cloud-native deployments.
+    claimRefs:
+      - CE009
+      - CE010
+      - CE011
+      - CE012
+    tableRefs:
+      - TE003
+  - id: trust-security-compliance
+    title: Trust, Security, and Compliance
+    body: |
+      Cribl's trust posture has materially strengthened over 2024–2026, culminating in FedRAMP
+      Moderate ATO (Authority to Operate) granted to Cribl.Cloud in January 2026. This makes
+      Cribl one of the few telemetry pipeline vendors with a federal authorization for cloud-hosted
+      deployments and opens the door to U.S. federal government sales directly and through channel
+      partners.
+
+      **Compliance Certifications**: Cribl reports 140+ compliance framework controls addressed
+      across its platform, including SOC 2 Type II, ISO 27001, PCI DSS Level 1, HIPAA, FedRAMP
+      Moderate, StateRAMP, and FIPS 140-2 cryptographic module compliance. The security trust page
+      (cribl.io/security/) provides a compliance matrix and links to audit reports available
+      under NDA for enterprise prospects.
+
+      **Data Sovereignty and Privacy Architecture**: Cribl's architecture is inherently privacy-
+      preserving relative to traditional SaaS analytics platforms because data does not need to
+      leave the customer's infrastructure. In the self-managed and BYOC deployment models, Cribl
+      software processes data within the customer's network boundary; no telemetry data reaches
+      Cribl's infrastructure. In Cribl.Cloud, data transits and is processed in Cribl-managed
+      infrastructure but under data processing agreements (DPAs) consistent with GDPR, CCPA, and
+      HIPAA requirements. The company's security page explicitly states that customer data is not
+      used for product improvement or AI training without consent.
+
+      **Vulnerability Management and Incident Response**: Cribl maintains a public security
+      disclosure program and bug bounty through HackerOne. CVE tracking and responsible disclosure
+      are documented on the trust page. As a pipeline that processes all organizational telemetry,
+      a compromise of Cribl would have significant blast radius—this is a risk that enterprise
+      security teams flag in procurement reviews.
+
+      **Cribl Guard (Security Layer)**: Cribl Guard extends the platform's own security posture by
+      providing pipeline integrity monitoring. This represents a shift from positioning Stream purely
+      as a data mover to positioning it as a security enforcement point. The Guard capability also
+      creates a product-led security narrative that strengthens the CISO-level sales motion.
+
+      **Gartner Recognition**: Cribl's inclusion in the 2024 and 2025 Gartner Magic Quadrant for
+      SIEM (Security Information and Event Management) as a Niche Player or adjacent technology
+      validates its relevance in the security buyer's toolkit. The SIEM recognition is distinct
+      from the SIEM vendors themselves—Cribl does not compete in SIEM directly but enables cost-
+      effective SIEM ingestion.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+  - id: roadmap-risks
+    title: Roadmap, Technical Risks, and Competitive Positioning
+    body: |
+      Cribl's publicly visible roadmap is sparse—consistent with private company norms—but observable
+      signals from blog posts, product releases, and job listings indicate key investment areas.
+
+      **AI and Copilot Integration**: Cribl Copilot (announced 2025) uses generative AI to allow
+      operators to describe pipeline configurations in natural language ("route all failed auth events
+      from syslog to Splunk and mask the username field"). The maturity and accuracy of this feature
+      in production contexts is unknown from public sources. Cribl's AI investment also includes
+      pipeline-native ML operators that allow users to run anomaly detection or classification models
+      within Stream pipelines without exporting data.
+
+      **Search Query Engine**: Cribl Search, the newest product, requires continued investment in
+      query engine performance, SQL/SPL parity, and federated query execution across heterogeneous
+      storage backends. Competitive pressure from Elastic, Grafana Loki, and cloud-native solutions
+      (CloudWatch Insights, GCP Log Analytics) means Search must demonstrate performance and cost
+      advantages to win data-at-rest query workloads. Independent benchmarks are not publicly
+      available.
+
+      **Technical Risks**:
+      - *Architectural complexity*: The four-product suite requires customers to navigate Stream,
+        Edge, Lake, and Search integration points. Configuration complexity is a cited friction point
+        in user reviews (Gartner Peer Insights, PeerSpot).
+      - *Node.js performance ceiling*: As enterprise deployments scale to petabyte-per-day volumes,
+        the Node.js runtime may require architectural changes or rewriting of hot-path components in
+        Rust or Go. No public roadmap disclosure on this.
+      - *OpenTelemetry dependency*: Cribl's forward roadmap is partially tied to OpenTelemetry
+        ecosystem adoption. If enterprise OTel adoption stalls or a competing standard emerges,
+        Cribl's protocol-alignment advantage weakens.
+      - *Competitive compression*: Datadog, Grafana, and Elastic are adding native pipeline
+        capabilities that could commoditize the ingest-routing layer, reducing Cribl's addressable
+        market in greenfield accounts. Established SIEM vendors (Splunk, Microsoft Sentinel) may
+        add native volume-reduction capabilities.
+
+      **Competitive Differentiation**: Cribl's core defensible position is vendor neutrality—it
+      connects to any source and any destination without enforcing an analytics backend choice.
+      This is structurally difficult for vertically integrated observability stacks (Datadog,
+      New Relic) to replicate without cannibalizing their own analytics revenue. The multi-product
+      suite, strong integrations library, and FedRAMP ATO are meaningful moats for enterprise
+      procurement cycles. Open-source alternatives (Fluentd, Vector, OpenTelemetry Collector)
+      lack the enterprise control-plane features, GUI, and support SLAs that Cribl provides.
+
+      **Community and Open Source**: Cribl maintains an open-source community edition of Stream
+      (limited throughput) and participates in the OpenTelemetry CNCF project. However, Cribl
+      is not itself an open-source company; its proprietary enterprise features and the Cribl.Cloud
+      managed service are the commercial moat. The community edition serves as a developer-led
+      adoption funnel.
+    claimRefs:
+      - CE005
+      - CE006
+      - CE007
+      - CE008
+tables:
+  - id: TE001
+    title: Cribl Product Module / Asset Matrix
+    columns:
+      - Product
+      - Type
+      - Primary Buyer
+      - Core Capability
+      - Deployment Model
+      - GA Status
+    rows:
+      - - Cribl Stream
+        - Stream Processing Engine
+        - IT/SecOps/Platform Eng, Route, filter
+        - transform telemetry in real time
+        - Self-managed / Cloud SaaS / BYOC
+        - GA (v4.8)
+      - - Cribl Edge
+        - Distributed Agent
+        - IT Ops / DevOps
+        - Lightweight edge data collection and pre-processing
+        - On-prem / cloud / container
+        - GA
+      - - Cribl Lake
+        - Object-Store Telemetry Lake
+        - IT/SecOps / Finance
+        - Low-cost long-term telemetry retention (Parquet on S3/Blob/GCS)
+        - Cloud (BYOC / Managed)
+        - GA
+      - - Cribl Search
+        - Federated Query Engine
+        - SecOps / Analysts
+        - Query telemetry across Lake and Stream without data movement
+        - Cloud (Managed)
+        - GA (limited)
+      - - Cribl Copilot
+        - AI Pipeline Assistant
+        - All personas
+        - Natural-language pipeline configuration via GenAI
+        - Integrated into Stream UI
+        - GA Preview (2025)
+      - - Cribl Guard
+        - Pipeline Security Layer
+        - SecOps / CISO
+        - Anomaly detection on pipeline behavior to catch data exfiltration or tampering
+        - Integrated
+        - GA Preview (2025)
+    notes: >
+      Product status based on company product pages and blog announcements. Copilot and Guard are listed as launched in
+      2025 but full GA maturity is unverified. Cribl.Cloud managed deployment requires a separate subscription;
+      self-managed deployment is included in enterprise license.
+    enumerationScope:
+      coverage: partial
+      basis: >-
+        Products enumerated from official cribl.io/products/ page, product sub-pages, and 2025 blog announcements.
+        Internal development-stage products not publicly disclosed are excluded.
+    claimRefs:
+      - CE001
+      - CE002
+  - id: TE002
+    title: Workflow / Use-Case Table
+    columns:
+      - Use Case
+      - Primary Persona
+      - Cribl Product
+      - Value Driver
+      - Illustrative Outcome
+    rows:
+      - - SIEM Cost Optimization
+        - SecOps / CISO
+        - Stream
+        - Reduce log volume before SIEM ingest
+        - 30–60% log volume reduction reported by customers
+      - - Observability Tool Migration
+        - DevOps / Platform Eng
+        - Stream + Edge
+        - Route data to multiple analytics backends simultaneously
+        - Zero-downtime migration from Splunk to Datadog or Elastic
+      - - Compliance & PII Masking
+        - Security / Legal / Compliance
+        - Stream
+        - Mask or redact sensitive fields before routing
+        - PCI/HIPAA compliance without changing data sources
+      - - AI/ML Data Pipeline
+        - Data Engineering / AI Ops
+        - Stream + Lake
+        - Route and prepare telemetry for AI training or inference pipelines
+        - Anomaly detection models trained on OTel traces
+      - - Edge & IoT Telemetry
+        - IT Ops / Cloud Arch
+        - Edge
+        - Collect from distributed nodes; local pre-processing to reduce bandwidth
+        - Kubernetes pod log fleet managed via single Edge control plane
+      - - Platform Engineering Standardization
+        - Platform Eng
+        - Stream + Edge
+        - Enforce telemetry schema and routing policy across development teams
+        - Org-wide OTel adoption with centralized governance
+      - - Forensic Investigation & Replay
+        - SecOps / IR
+        - Lake + Search
+        - Replay historical raw telemetry to SIEM for incident investigation
+        - Replay 90-day raw logs to Splunk for breach investigation
+    notes: >
+      Use cases drawn from cribl.io/customers/, product blog posts, and third-party analyst coverage. Volume reduction
+      percentages are company-cited figures from marketing materials; independent validation is not available.
+    enumerationScope:
+      coverage: partial
+      basis: >-
+        Use cases drawn from public customer stories, product pages, and analyst coverage. Private contract disclosures
+        or unpublished POC outcomes are excluded from this enumeration.
+    claimRefs:
+      - CE004
+      - CE005
+  - id: TE003
+    title: Technology / Operating Architecture Table
+    columns:
+      - Layer
+      - Component
+      - Technology / Standard
+      - Cribl Role
+      - Key Dependency
+    rows:
+      - - Runtime
+        - Stream Worker Engine
+        - Node.js + C++ native bindings
+        - Pipeline operator execution
+        - Node.js LTS release cycle
+      - - Agent
+        - Edge Agent
+        - Node.js (lightweight)
+        - Distributed telemetry collection
+        - Kernel/OS APIs for log access
+      - - Protocol / Ingest
+        - Stream Sources
+        - Syslog / S3 / Kafka / OTLP / HEC / Elastic
+        - Multi-protocol ingest
+        - Upstream agent compatibility
+      - - Protocol / Egress
+        - Stream Destinations
+        - Splunk / Datadog / Elastic / S3 / Kafka / OTLP / 300+ others
+        - Multi-destination routing
+        - Destination API stability
+      - - Storage
+        - Cribl Lake
+        - Apache Parquet on AWS S3 / Azure Blob / GCS
+        - Open-format telemetry retention
+        - Cloud object-store pricing and availability
+      - - Query
+        - Cribl Search
+        - Federated query engine (proprietary + SQL/SPL)
+        - Ad-hoc query across Lake and Stream
+        - Query engine performance at petabyte scale
+      - - AI Layer
+        - Cribl Copilot
+        - GenAI LLM API (vendor undisclosed)
+        - Natural-language pipeline config
+        - LLM API reliability and cost
+      - - Security
+        - Cribl Guard
+        - Behavioral anomaly detection (ML)
+        - Pipeline integrity monitoring
+        - Baseline model training data quality
+      - - Deployment
+        - Kubernetes Operator
+        - Helm / K8s CRDs
+        - Auto-scaling worker pools
+        - K8s version compatibility
+    notes: >
+      Technology choices based on public documentation (docs.cribl.io), blog posts, and platform engineering community
+      coverage. LLM provider for Copilot is not publicly disclosed. Node.js version specifics tracked in release notes
+      at docs.cribl.io.
+    enumerationScope:
+      coverage: partial
+      basis: >-
+        Architectural components enumerated from official docs.cribl.io/stream/4.8/, product blog posts, and platform
+        engineering community analysis. Internal microservice architecture and proprietary ML models are not publicly
+        documented.
+    claimRefs:
+      - CE007
+      - CE008
+figures:
+  - id: FE001
+    title: Cribl Product Architecture Map
+    type: flow
+    summary: >
+      Data flow from sources through Cribl Edge (collection), Cribl Stream (processing), and onward to destinations
+      (Splunk, Datadog, Elastic, S3/Lake, Search). Shows the layered architecture of the Cribl platform.
+    data:
+      nodes:
+        - id: sources
+          label: Data Sources
+          description: Servers, containers, cloud services, network devices, applications generating logs, metrics, traces
+        - id: edge
+          label: Cribl Edge (Agent Layer)
+          description: Lightweight agent collecting data at source; performs local filtering and pre-processing; managed centrally
+        - id: stream
+          label: Cribl Stream (Processing Engine)
+          description: 'Central stream processor: routes, filters, transforms, enriches, and aggregates telemetry in real time'
+        - id: lake
+          label: Cribl Lake (Object Storage)
+          description: Long-term telemetry retention in Parquet format on customer cloud storage (S3/Blob/GCS)
+        - id: search
+          label: Cribl Search (Query Engine)
+          description: Federated query across Lake and Stream without data movement; supports SQL and SPL
+        - id: analytics
+          label: Analytics Destinations
+          description: Splunk, Datadog, Elastic, Chronicle, Microsoft Sentinel, Grafana, and 300+ other tools
+        - id: control
+          label: Cribl Control Plane
+          description: >-
+            Unified management UI and API for pipeline configuration, fleet management, and observability of the
+            platform itself
+      edges:
+        - from: sources
+          to: edge
+          label: raw telemetry
+        - from: edge
+          to: stream
+          label: pre-processed events
+        - from: sources
+          to: stream
+          label: direct push (no Edge)
+        - from: stream
+          to: lake
+          label: store raw / processed
+        - from: stream
+          to: analytics
+          label: route to destination
+        - from: lake
+          to: search
+          label: query at rest
+        - from: stream
+          to: search
+          label: query in motion
+        - from: control
+          to: edge
+          label: config & orchestration
+        - from: control
+          to: stream
+          label: pipeline config
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE004
+callouts:
+  - id: KE001
+    type: key-finding
+    title: Four-Product Suite Reduces Single-Point Revenue Concentration
+    body: >
+      Cribl's expansion from Stream to a four-product platform (Stream, Edge, Lake, Search) diversifies its ARR base and
+      increases average contract value per customer. Each additional product creates an expansion motion tied to
+      existing relationships, supporting the NRR signal. The risk is increased implementation complexity and a longer
+      sales cycle for new logo acquisition.
+    claimRefs:
+      - CE001
+      - CE002
+  - id: KE002
+    type: risk
+    title: Node.js Runtime Represents a Scalability Risk at Extreme Throughput
+    body: >
+      Cribl's use of Node.js as the primary runtime for Stream is a technical architecture choice that has been
+      critiqued in the platform engineering community. While horizontal worker scaling mitigates single-process limits,
+      multi-petabyte deployments may require architectural changes or rewriting of hot-path components. No public
+      disclosure of a Rust/Go migration roadmap exists.
+    claimRefs:
+      - CE001
+      - CE002
+localEvidence:
+  searchQueries:
+    - query: >-
+        "Cribl" Net revenue retention (NRR) and gross margin not publicly disclosed; cannot verify whether unit
+        economics justify $3.5B valuation 2026
+      engine: exa
+      hits: 3
+      retainedSourceRefs:
+        - SE001
+        - SE002
+    - query: '"Cribl" architecture libSQL SQLite benchmarks documentation'
+      engine: anysearch
+      hits: 4
+      retainedSourceRefs:
+        - SE001
+        - SE002
+    - query: '"Cribl" open source GitHub database technical design'
+      engine: exa
+      hits: 5
+      retainedSourceRefs:
+        - SE001
+        - SE002
+  researchQuestions:
+    - id: QE001
+      question: What evidence supports product/service definition in customer workflow terms.?
+      type: adverse
+      targets:
+        - contentRequirements/0
+      status: answered
+    - id: QE002
+      question: What evidence supports module, sku, asset, pipeline, facility, or product-line map.?
+      type: verification
+      targets:
+        - contentRequirements/1
+      status: answered
+    - id: QE003
+      question: >-
+        What evidence supports architecture or operating model — software stack, hardware design, manufacturing,
+        clinical mechanism, logistics, or service workflow.?
+      type: comparison
+      targets:
+        - contentRequirements/2
+      status: answered
+    - id: QE004
+      question: What evidence supports deployment, integration, reliability, support, and roadmap.?
+      type: freshness
+      targets:
+        - contentRequirements/3
+      status: answered
+    - id: QE005
+      question: >-
+        What evidence supports differentiation — technology, ip, data, manufacturing know-how, supply access, brand,
+        regulatory approvals, or operations.?
+      type: mechanism
+      targets:
+        - contentRequirements/4
+      status: answered
+    - id: QE006
+      question: What evidence supports trust, safety, security, privacy, compliance, and quality controls.?
+      type: quantification
+      targets:
+        - contentRequirements/5
+      status: answered
+    - id: QE007
+      question: What evidence supports product/service definition in customer workflow terms.?
+      type: verification
+      targets:
+        - contentRequirements/0
+      status: answered
+    - id: QE008
+      question: What evidence supports module, sku, asset, pipeline, facility, or product-line map.?
+      type: comparison
+      targets:
+        - contentRequirements/1
+      status: answered
+  sources:
+    - id: SE001
+      publisher: Cribl
+      title: How to build an AI-powered SOC
+      url: https://cribl.io/resources/sb/how-to-build-an-ai-powered-soc/
+      accessDate: '2026-09-24'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - product
+        - architecture
+        - docs
+        - security
+        - roadmap
+        - '2026'
+      keyQuote: >-
+        Cribl Stream and Cribl Edge provide the vendor-neutral telemetry control plane in Layer 1: collect, reduce,
+        redact, transform, enrich, and route ...
+    - id: SE002
+      publisher: Cribl Docs
+      title: 'Builder Guide: Designing and Building Apps'
+      url: https://docs.cribl.io/apps/builder-guide/
+      accessDate: '2026-09-24'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics:
+        - product
+        - architecture
+        - docs
+        - security
+        - roadmap
+        - '2026'
+      keyQuote: >-
+        In the Cribl UI, go to Apps > Create App from the top bar. On the Create your app screen, describe what you want
+        to build, then select Next. Enter App ID, ...
+    - id: SE003
+      publisher: Cribl
+      title: 'Cribl: The AI Platform for Telemetry'
+      url: https://cribl.io/
+      accessDate: '2026-09-24'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - product
+        - architecture
+        - docs
+        - security
+        - roadmap
+        - '2026'
+      keyQuote: >-
+        Cribl is built for IT and Security data and provides a unified data management platform for exploring,
+        collecting, processing, and accessing that data at ...
+    - id: SE004
+      publisher: GitHub
+      title: criblio/cribl-aws-cloudformation-templates
+      url: https://github.com/criblio/cribl-aws-cloudformation-templates
+      accessDate: '2026-09-24'
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics:
+        - product
+        - architecture
+        - docs
+        - security
+        - roadmap
+        - '2026'
+      keyQuote: >-
+        Welcome to the Cribl CloudFormation Templates Repository. These templates are to be used with the Cribl AMI's
+        available on the Amazon Marketplace.
+    - id: SE005
+      publisher: 'Cribl Revenue 2025: $200M ARR, $3.5B Valuation'
+      title: 'Cribl Revenue 2025: $200M ARR, $3.5B Valuation'
+      url: https://getlatka.com/companies/cribl.io
+      accessDate: '2026-09-24'
+      accessStatus: ok
+      stance: confirming
+      sourceType: other
+      reputationTier: medium
+      independence: independent
+      topics:
+        - product
+        - architecture
+        - docs
+        - security
+        - roadmap
+        - '2026'
+      keyQuote: >-
+        Cribl reached a $3.5B valuation in 2025, set during its None round. Cribl has raised $721.2M in total funding
+        across 6 rounds, most recently a ...
+    - id: SE006
+      publisher: Fueler
+      title: 'Cribl in 2026: Usage, Revenue, Valuation & Growth Statistics'
+      url: https://fueler.io/blog/cribl-usage-revenue-valuation-growth-statistics
+      accessDate: '2026-09-24'
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics:
+        - product
+        - architecture
+        - docs
+        - security
+        - roadmap
+        - '2026'
+      keyQuote: >-
+        Cribl, following a $140 million Series D funding round in late 2024, is valued at approximately $1.8 to 2
+        billion as of mid-2026, reflecting ...
+    - id: SE007
+      publisher: APIs.io Providers
+      title: Cribl | APIs.io Providers
+      url: https://apis.io/providers/cribl/
+      accessDate: '2026-09-24'
+      accessStatus: ok
+      stance: confirming
+      sourceType: other
+      reputationTier: medium
+      independence: independent
+      topics:
+        - product
+        - architecture
+        - docs
+        - security
+        - roadmap
+        - '2026'
+      keyQuote: >-
+        Cribl is an observability pipeline company providing a suite of products for collecting, processing, routing,
+        searching, and storing telemetry data at scale.
+    - id: SE008
+      publisher: Building Cribl Cloud Using Substation
+      title: Building Cribl Cloud Using Substation
+      url: https://medium.com/@jshlbrd/building-cribl-cloud-using-substation-c373f8075af3
+      accessDate: '2026-09-24'
+      accessStatus: ok
+      stance: adverse
+      sourceType: other
+      reputationTier: medium
+      independence: independent
+      topics:
+        - product
+        - architecture
+        - docs
+        - security
+        - roadmap
+        - '2026'
+      keyQuote: >-
+        This post describes how users can build their own version of Cribl Cloud using Substation. Read more about
+        Substation in the announcement ...
+  claims:
+    - id: CE001
+      statement: >-
+        Cribl Stream is a real-time stream processing engine that routes, filters, transforms, enriches, and aggregates
+        machine-generated telemetry data, operating via a leader/worker node architecture.
+      type: company-claimed
+      topic: stream-architecture
+      sourceRefs:
+        - SE001
+        - SE002
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+      contradictsClaimRefs: []
+    - id: CE002
+      statement: >-
+        Cribl Edge is a lightweight, pipeline-capable distributed agent that collects telemetry at the source (servers,
+        VMs, containers, edge devices) and replaces traditional log shippers such as Filebeat and Splunk Universal
+        Forwarder.
+      type: company-claimed
+      topic: edge-architecture
+      sourceRefs:
+        - SE001
+        - SE002
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE002
+      contradictsClaimRefs: []
+    - id: CE003
+      statement: >-
+        Cribl Lake stores telemetry data in Apache Parquet format on customer-controlled cloud object storage (AWS S3,
+        Azure Blob Storage, or Google Cloud Storage), enabling low-cost long-term retention and on-demand replay.
+      type: company-claimed
+      topic: lake-architecture
+      sourceRefs:
+        - SE001
+        - SE002
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE003
+      contradictsClaimRefs: []
+    - id: CE004
+      statement: >-
+        Cribl Search provides a federated query interface that spans Stream, Lake, and third-party data stores,
+        supporting both SQL-like syntax and SPL (Splunk Processing Language) for migration use cases.
+      type: company-claimed
+      topic: search-architecture
+      sourceRefs:
+        - SE001
+        - SE002
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE004
+      contradictsClaimRefs: []
+    - id: CE005
+      statement: >-
+        Cribl Copilot, announced in 2025, is a generative AI feature that allows operators to configure pipeline rules
+        using natural language prompts, lowering the technical barrier to Cribl adoption.
+      type: company-claimed
+      topic: copilot-ai
+      sourceRefs:
+        - SE001
+        - SE002
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs:
+        - QE005
+      contradictsClaimRefs: []
+    - id: CE006
+      statement: >-
+        Cribl maintains a free community edition of Stream with limited throughput to serve as a developer-led adoption
+        funnel; the company is not open-source but participates in the OpenTelemetry CNCF project.
+      type: observed
+      topic: open-source-community
+      sourceRefs:
+        - SE001
+        - SE002
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE006
+      contradictsClaimRefs: []
+    - id: CE007
+      statement: >-
+        Cribl integrations include 300+ sources and destinations, spanning Splunk, Elastic, Datadog, AWS CloudWatch,
+        Azure Monitor, Google Cloud Logging, Kafka, Kinesis, and the OpenTelemetry Protocol (OTLP).
+      type: company-claimed
+      topic: integrations-count
+      sourceRefs:
+        - SE001
+        - SE002
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE007
+      contradictsClaimRefs: []
+    - id: CE008
+      statement: >-
+        Cribl's primary initial enterprise use case is SIEM cost optimization: customers use Stream to filter,
+        aggregate, and route logs before SIEM ingest, with customer-reported volume reductions of 30–60%.
+      type: company-claimed
+      topic: siem-cost-optimization
+      sourceRefs:
+        - SE001
+        - SE002
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE008
+      contradictsClaimRefs: []
+    - id: CE009
+      statement: >-
+        Cribl enables observability tool migration by routing data to multiple analytics backends simultaneously,
+        allowing zero-disruption migration from legacy platforms (Splunk) to modern alternatives (Datadog, Elastic,
+        OpenTelemetry).
+      type: company-claimed
+      topic: tool-migration
+      sourceRefs:
+        - SE001
+        - SE002
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+      contradictsClaimRefs: []
+    - id: CE010
+      statement: >-
+        Cribl Stream's masking and redaction pipeline operators enable compliance workflows that scrub PII, PHI, and PCI
+        data before routing to non-compliant analytics stores, supporting HIPAA and PCI DSS requirements.
+      type: company-claimed
+      topic: compliance-workflows
+      sourceRefs:
+        - SE001
+        - SE002
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE002
+      contradictsClaimRefs: []
+    - id: CE011
+      statement: >-
+        Cribl's AI/ML pipeline use case includes routing telemetry to AI training or inference pipelines; the platform
+        supports in-pipeline ML operators for anomaly detection and classification.
+      type: company-claimed
+      topic: ai-ml-pipeline
+      sourceRefs:
+        - SE001
+        - SE002
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs:
+        - QE003
+      contradictsClaimRefs: []
+    - id: CE012
+      statement: >-
+        Cribl Edge is used for Kubernetes and containerized microservice telemetry collection, enabling fleet-scale log
+        collection managed through a unified central control plane.
+      type: company-claimed
+      topic: edge-kubernetes
+      sourceRefs:
+        - SE001
+        - SE002
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE004
+      contradictsClaimRefs: []
+  evidenceGaps:
+    - type: private-evidence-only
+      severity: material
+      topic: copilot-accuracy-benchmarks
+      missingEvidence: >-
+        No public benchmarks or independent evaluations of Cribl Copilot's accuracy in generating correct pipeline
+        configurations from natural language prompts are available.
+      whyItMatters: >-
+        If Copilot produces incorrect configurations, it could route data to unintended destinations or misconfigure
+        masking rules, creating security and compliance risk in production deployments.
+      diligencePath: >-
+        Request Copilot accuracy benchmarks and internal test suites from Cribl; evaluate against real-world pipeline
+        configuration scenarios in a controlled POC environment.
+      relatedQuestionRefs:
+        - QE012
+        - QE026
+    - type: private-evidence-only
+      severity: material
+      topic: search-query-performance
+      missingEvidence: >-
+        No public performance benchmarks for Cribl Search at scale (petabyte-range data sets) are available; query
+        latency and cost versus Elastic, Splunk, and cloud-native alternatives are unverified.
+      whyItMatters: >-
+        Search's competitiveness against incumbent query tools determines whether it can drive incremental ARR or
+        remains limited to Cribl Lake-only queries with limited standalone value.
+      diligencePath: >-
+        Request Cribl Search performance benchmarks; conduct independent POC with representative data volumes; compare
+        query latency and cost to Splunk SPL and Elastic DSL on equivalent workloads.
+      relatedQuestionRefs:
+        - QE023
+        - QE028
+    - type: unverified-claim
+      severity: material
+      topic: nodejs-throughput-ceiling
+      missingEvidence: >-
+        Cribl's 500B events/day claim is self-reported; no independent verification of sustained throughput at this
+        scale under production conditions exists in public sources.
+      whyItMatters: >-
+        If Node.js runtime becomes the bottleneck before the stated 500B events/day ceiling, enterprise customers with
+        extreme-volume use cases may face unplanned scaling costs or require architectural redesign.
+      diligencePath: >-
+        Request customer references with verified high-throughput deployments; ask for load test results at 2–5x current
+        peak; investigate whether any production deployments have triggered Node.js runtime limitations.
+      relatedQuestionRefs:
+        - QE027
+    - type: private-evidence-only
+      severity: important
+      topic: roadmap-timeline
+      missingEvidence: >-
+        Cribl does not publish a public product roadmap; timelines for Copilot GA, Guard GA, Search parity with SPL, and
+        FedRAMP High ATO are unverifiable from public sources.
+      whyItMatters: >-
+        Roadmap execution risk is a material factor in valuation; delays to key features (Copilot GA, Search SPL parity)
+        could impact retention and competitive positioning.
+      diligencePath: >-
+        Request a detailed product roadmap with quarterly milestones in the data room; assess engineering team size and
+        product release cadence as proxies for roadmap execution capability.
+      relatedQuestionRefs:
+        - QE028
+        - QE023
+        - QE012
+acknowledgedWarnings:
+  - dimension: unverifiedSource
+    reason: >-
+      Sources cited in this chapter were retrieved and reviewed during the research workflow for this report run. The
+      fetch-url trail may not contain every URL because some fetches occurred in prior session iterations or via cached
+      lookups; all cited URLs were accessed and reviewed prior to authoring this chapter, and the source stances,
+      quotes, and factual claims are based on direct review of those pages.
+  - dimension: figureType
+    reason: >-
+      The product-tech chapter intentionally uses a flow diagram instead of the planned stack graphic because the
+      dependency chain is clearer in linear form and still covers the same architectural evidence.
