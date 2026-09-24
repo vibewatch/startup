@@ -338,8 +338,8 @@ jobs:
           $INDUSTRY_RULE
           Pick only companies with credible public evidence of a \$1B+ private valuation or unicorn-confirming financing in that window. Use this portfolio hint: $COVERAGE_HINT
           Skip duplicates already in reports/ (each finalized run lives in reports/<runId>/summary-card.yaml; the create-report-run.mjs duplicate guard checks the same set) unless there is materially new evidence. If fewer than $COUNT qualify, research only the actual qualifying companies. If none qualify, do not create report folders; print a short no-candidates note and exit successfully.
-          For each selected company, generate and finalize a complete startup diligence research report. Immediately after creating each report folder, run npm run research:profile -- --report-folder <folder> --profile ${PROFILE:-fast}, then run npm run research:bootstrap -- --report-folder <folder> --company "<company>" --website "<url>" --profile ${PROFILE:-fast}. After bootstrap, run npm run research:workers -- --report-folder <folder> --concurrency 4 --timeout-seconds 900, then npm run research:finalize -- --report-folder <folder> --timeout-seconds 900 even when workers report convergence-only failures. These commands own fan-out, convergence, metadata, and finalization; do not launch chapter subagents, rerun passing workers, or perform a parent repair loop. Treat a nonzero finalizer exit as a real failure before moving to the next company. Fast chapters may cite only successful prefetched URLs already present in search-bundle.json.fetchedSources; never fetch, add, or manually log a new URL. Pass runtime-context JSON or scratch only under .research-cache/<runId>/; never write scratch/context files into reports/<runId>/.
-          Treat completion as an on-disk contract: every selected company must either have a finalized report folder with all required chapter, metadata, and generated artifacts, or be skipped before creating a folder. If you fan out work, join every company/chapter task, inspect failures, and never exit successfully with partial report folders.
+          For each selected company, prepare one report run for the deterministic workflow. Create the report folder, run npm run research:profile -- --report-folder <folder> --profile ${PROFILE:-fast}, then run npm run research:bootstrap -- --report-folder <folder> --company "<company>" --website "<url>" --profile ${PROFILE:-fast}. Stop after bootstrap: do not run research:workers, research:finalize, chapter subagents, or manual chapter/report repairs. The workflow runs authenticated chapter workers and finalization after this Copilot session returns.
+          Treat completion as an on-disk contract: every selected company must either have a report folder with .workflow-snapshot.yaml and a successful .research-cache/<runId>/search-bundle.json, or be skipped before creating a folder. Never delete a report folder after creating it; leave failed bootstrap artifacts for the workflow to preserve and diagnose.
 
           Follow the startup-research skill's source-verification rules; this workflow provides STARTUP_FETCH_LOG_PATH so fetch-url calls are auditable. Use the host search/source-discovery capability before fetch-url; if no source-discovery capability is available, stop before creating report folders, print a clear source-discovery-unavailable note, and do not invent sources. Do not run any git command (git add, git commit, git push, git stash, git checkout, etc.) at any point in the workflow — leave every generated and modified file unstaged in the working tree; the workflow itself owns commit/push decisions.
           EOF
@@ -397,6 +397,40 @@ jobs:
             fi
           } >> "$GITHUB_STEP_SUMMARY"
           exit "$status"
+
+      - name: Run authenticated research workers and finalizers
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
+          COPILOT_TASK_WAIT_TIMEOUT_SECONDS: 1800
+          STARTUP_FETCH_LOG_PATH: ${{ github.workspace }}/.research-cache/_fetch-log.jsonl
+        run: |
+          set -euo pipefail
+          current="$RUNNER_TEMP/reports-ready-for-workers.txt"
+          find reports -mindepth 1 -maxdepth 1 -type d -printf '%f\n' | sort > "$current"
+          mapfile -t new_runs < <(comm -13 "$RUNNER_TEMP/reports-before.txt" "$current")
+          for run_id in "${new_runs[@]}"; do
+            [ -n "$run_id" ] || continue
+            folder="reports/$run_id"
+            [ -f "$folder/summary-card.yaml" ] && continue
+            if [ ! -f ".research-cache/$run_id/search-bundle.json" ]; then
+              echo "::warning::$folder has no successful search bundle; leaving it for artifact preservation and pruning."
+              continue
+            fi
+            echo "::group::Running research pipeline for $folder"
+            set +e
+            npm run research:workers -- --report-folder "$folder" --concurrency 4 --timeout-seconds 900
+            worker_status=$?
+            set -e
+            if [ "$worker_status" -ne 0 ]; then
+              echo "::warning::Workers exited $worker_status for $folder; the bounded finalizer will repair convergence-only failures."
+            fi
+            if npm run research:finalize -- --report-folder "$folder" --timeout-seconds 900; then
+              echo "Research pipeline succeeded for $folder"
+            else
+              echo "::warning::Research pipeline failed for $folder; the folder will be preserved as an artifact and pruned."
+            fi
+            echo "::endgroup::"
+          done
 
       - name: Finalize complete generated report folders
         # Safety net for the multi-company mode: if Copilot wrote every chapter
