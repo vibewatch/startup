@@ -351,9 +351,22 @@ const chapterPools = plan.chapters.map((chapter) => {
     if (selected.size >= chapter.evidenceTarget.minSources) break;
     if (!selected.has(candidate.url)) selected.set(candidate.url, candidate);
   }
-  const reserve = reserveFill
-    .filter((candidate) => !selected.has(candidate.url))
-    .slice(0, 4);
+  const reserveCandidates = reserveFill
+    .filter((candidate) => !selected.has(candidate.url));
+  const reserve = [];
+  const reserveDomains = new Set(selectedDomains);
+  for (const candidate of reserveCandidates) {
+    const domain = normalizeDomain(candidate.url);
+    if (!domain || reserveDomains.has(domain)) continue;
+    reserve.push(candidate);
+    reserveDomains.add(domain);
+    if (reserve.length >= 6) break;
+  }
+  for (const candidate of reserveCandidates) {
+    if (reserve.length >= 6) break;
+    if (reserve.some((entry) => entry.url === candidate.url)) continue;
+    reserve.push(candidate);
+  }
   return {
     key: chapter.key,
     evidenceTarget: chapter.evidenceTarget,
@@ -512,13 +525,18 @@ if (args.prefetch) {
   const fetchedByUrl = new Map(fetchedSources.map((entry) => [entry.url, entry]));
   const recoveryByUrl = new Map();
   for (const pool of chapterPools) {
-    const successful = pool.recommended.filter(
+    const successfulCandidates = pool.recommended.filter(
       (candidate) => fetchedByUrl.get(candidate.url)?.ok,
-    ).length;
-    const recoveryLimit = Math.max(0, pool.evidenceTarget.minSources - successful + 1);
-    for (const candidate of pool.reserve
-      .filter((entry) => entry.sourceQuality?.tier !== 'low')
-      .slice(0, recoveryLimit)) {
+    );
+    const successfulDomains = new Set(
+      successfulCandidates.map((candidate) => normalizeDomain(candidate.url)).filter(Boolean),
+    );
+    const needsRecovery = (
+      successfulCandidates.length < pool.evidenceTarget.minSources
+      || successfulDomains.size < pool.evidenceTarget.minDomains
+    );
+    if (!needsRecovery) continue;
+    for (const candidate of pool.reserve.filter((entry) => entry.sourceQuality?.tier !== 'low')) {
       if (!recoveryByUrl.has(candidate.url)) {
         recoveryByUrl.set(candidate.url, { candidate, chapters: [] });
       }
@@ -538,14 +556,31 @@ if (args.prefetch) {
     let successful = pool.recommended.filter(
       (candidate) => fetchedByUrl.get(candidate.url)?.ok,
     ).length;
+    const successfulDomains = new Set(
+      pool.recommended
+        .filter((candidate) => fetchedByUrl.get(candidate.url)?.ok)
+        .map((candidate) => normalizeDomain(candidate.url))
+        .filter(Boolean),
+    );
     for (const candidate of pool.reserve) {
-      if (successful >= pool.evidenceTarget.minSources) break;
+      if (
+        successful >= pool.evidenceTarget.minSources
+        && successfulDomains.size >= pool.evidenceTarget.minDomains
+      ) break;
       if (!fetchedByUrl.get(candidate.url)?.ok) continue;
+      const domain = normalizeDomain(candidate.url);
+      const addsNeededDomain = (
+        successfulDomains.size < pool.evidenceTarget.minDomains
+        && domain
+        && !successfulDomains.has(domain)
+      );
+      if (successful >= pool.evidenceTarget.minSources && !addsNeededDomain) continue;
       promoted.push({
         ...candidate,
         allocation: 'reserve-recovery',
       });
       successful += 1;
+      if (domain) successfulDomains.add(domain);
     }
     const promotedUrls = new Set(promoted.map((candidate) => candidate.url));
     pool.reserve = pool.reserve.filter((candidate) => !promotedUrls.has(candidate.url));
@@ -553,6 +588,12 @@ if (args.prefetch) {
     pool.fetchedOk = pool.recommended.filter(
       (candidate) => fetchedByUrl.get(candidate.url)?.ok,
     ).length;
+    pool.fetchedDomains = new Set(
+      pool.recommended
+        .filter((candidate) => fetchedByUrl.get(candidate.url)?.ok)
+        .map((candidate) => normalizeDomain(candidate.url))
+        .filter(Boolean),
+    ).size;
     pool.recommended = pool.recommended.map((candidate) => ({
       ...candidate,
       fetch: fetchedByUrl.get(candidate.url) ?? null,
@@ -614,14 +655,20 @@ const globalFailure = bundle.failures.some((failure) => failure.scope === 'globa
 const minimumSuccess = Math.ceil(queries.length * 0.8);
 const insufficientPools = args.prefetch
   ? bundle.chapterPools.filter(
-    (pool) => pool.fetchedOk < pool.evidenceTarget.minSources,
+    (pool) => (
+      pool.fetchedOk < pool.evidenceTarget.minSources
+      || pool.fetchedDomains < pool.evidenceTarget.minDomains
+    ),
   )
   : [];
 if (insufficientPools.length > 0) {
   console.error(
     `[execute-search-plan] insufficient fetched evidence: ${
       insufficientPools
-        .map((pool) => `${pool.key} ${pool.fetchedOk}/${pool.evidenceTarget.minSources}`)
+        .map((pool) => (
+          `${pool.key} sources=${pool.fetchedOk}/${pool.evidenceTarget.minSources}`
+          + ` domains=${pool.fetchedDomains}/${pool.evidenceTarget.minDomains}`
+        ))
         .join(', ')
     }; inspect ${out}`,
   );
