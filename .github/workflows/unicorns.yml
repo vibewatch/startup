@@ -55,14 +55,11 @@ on:
       model:
         description: "Model."
         required: false
-        default: "gpt-5.4-mini"
+        default: "gpt-6-luna"
         type: choice
         options:
+          - gpt-6-luna
           - gpt-5.4-mini
-          - gpt-5.5
-          - gpt-5.4
-          - claude-sonnet-4.6
-          - claude-opus-4.6
 permissions:
   contents: write
   pull-requests: write
@@ -164,19 +161,22 @@ jobs:
             *) echo "Unsupported profile: $PROFILE" >&2; exit 1 ;;
           esac
           case "$MODEL" in
-            gpt-5.4-mini|claude-sonnet-4.6|claude-opus-4.6|gpt-5.5|gpt-5.4) ;;
-            "") MODEL="gpt-5.4-mini" ;;
+            gpt-6-luna|gpt-5.4-mini) ;;
+            claude-sonnet-4.6|claude-opus-4.6|gpt-5.5|gpt-5.4)
+              echo "::warning::Legacy model $MODEL was replaced with lower-cost gpt-6-luna."
+              MODEL="gpt-6-luna"
+              ;;
+            "") MODEL="gpt-6-luna" ;;
             *)
-              echo "Unsupported model: $MODEL (allowed: claude-sonnet-4.6, claude-opus-4.6, gpt-5.5, gpt-5.4)" >&2
+              echo "Unsupported model: $MODEL (allowed: gpt-6-luna, gpt-5.4-mini)" >&2
               exit 1
               ;;
           esac
           case "$MODEL" in
-            gpt-5.5|gpt-5.4) EFFORT="xhigh" ;;
+            gpt-6-luna) EFFORT="" ;;
             gpt-5.4-mini)
               if [ "$PROFILE" = "fast" ]; then EFFORT="medium"; else EFFORT="high"; fi
               ;;
-            claude-sonnet-4.6|claude-opus-4.6) EFFORT="high" ;;
           esac
           if [ "$INDUSTRY" = "Any" ]; then
             LABEL="recent-unicorns"
@@ -338,7 +338,7 @@ jobs:
           $INDUSTRY_RULE
           Pick only companies with credible public evidence of a \$1B+ private valuation or unicorn-confirming financing in that window. Use this portfolio hint: $COVERAGE_HINT
           Skip duplicates already in reports/ (each finalized run lives in reports/<runId>/summary-card.yaml; the create-report-run.mjs duplicate guard checks the same set) unless there is materially new evidence. If fewer than $COUNT qualify, research only the actual qualifying companies. If none qualify, do not create report folders; print a short no-candidates note and exit successfully.
-          For each selected company, generate and finalize a complete startup diligence research report. Immediately after creating each report folder, run npm run research:profile -- --report-folder <folder> --profile ${PROFILE:-fast}, then run npm run research:bootstrap -- --report-folder <folder> --company "<company>" --website "<url>" --profile ${PROFILE:-fast}. After bootstrap, run `npm run research:workers -- --report-folder <folder> --concurrency 4 --timeout-seconds 900`, then `npm run research:finalize -- --report-folder <folder> --timeout-seconds 900` even when workers report convergence-only failures. These commands own fan-out, convergence, metadata, and finalization; do not launch chapter subagents, rerun passing workers, or perform a parent repair loop. Treat a nonzero finalizer exit as a real failure before moving to the next company. Fast chapters may cite only successful prefetched URLs already present in search-bundle.json.fetchedSources; never fetch, add, or manually log a new URL. Pass runtime-context JSON or scratch only under .research-cache/<runId>/; never write scratch/context files into reports/<runId>/.
+          For each selected company, generate and finalize a complete startup diligence research report. Immediately after creating each report folder, run npm run research:profile -- --report-folder <folder> --profile ${PROFILE:-fast}, then run npm run research:bootstrap -- --report-folder <folder> --company "<company>" --website "<url>" --profile ${PROFILE:-fast}. After bootstrap, run npm run research:workers -- --report-folder <folder> --concurrency 4 --timeout-seconds 900, then npm run research:finalize -- --report-folder <folder> --timeout-seconds 900 even when workers report convergence-only failures. These commands own fan-out, convergence, metadata, and finalization; do not launch chapter subagents, rerun passing workers, or perform a parent repair loop. Treat a nonzero finalizer exit as a real failure before moving to the next company. Fast chapters may cite only successful prefetched URLs already present in search-bundle.json.fetchedSources; never fetch, add, or manually log a new URL. Pass runtime-context JSON or scratch only under .research-cache/<runId>/; never write scratch/context files into reports/<runId>/.
           Treat completion as an on-disk contract: every selected company must either have a finalized report folder with all required chapter, metadata, and generated artifacts, or be skipped before creating a folder. If you fan out work, join every company/chapter task, inspect failures, and never exit successfully with partial report folders.
 
           Follow the startup-research skill's source-verification rules; this workflow provides STARTUP_FETCH_LOG_PATH so fetch-url calls are auditable. Use the host search/source-discovery capability before fetch-url; if no source-discovery capability is available, stop before creating report folders, print a clear source-discovery-unavailable note, and do not invent sources. Do not run any git command (git add, git commit, git push, git stash, git checkout, etc.) at any point in the workflow — leave every generated and modified file unstaged in the working tree; the workflow itself owns commit/push decisions.
@@ -365,7 +365,11 @@ jobs:
           chmod +x "$GIT_GUARD_DIR/git"
           started_at=$(date +%s)
           set +e
-          PATH="$GIT_GUARD_DIR:$PATH" copilot --yolo --autopilot --excluded-tools "web_fetch" --model "$MODEL" --effort "$EFFORT" -p "$PROMPT" 2>&1 | tee "$COPILOT_LOG"
+          copilot_args=(--yolo --autopilot --excluded-tools "web_fetch" --model "$MODEL")
+          if [ -n "$EFFORT" ]; then
+            copilot_args+=(--effort "$EFFORT")
+          fi
+          PATH="$GIT_GUARD_DIR:$PATH" copilot "${copilot_args[@]}" -p "$PROMPT" 2>&1 | tee "$COPILOT_LOG"
           status=${PIPESTATUS[0]}
           set -e
           wall_seconds=$(( $(date +%s) - started_at ))

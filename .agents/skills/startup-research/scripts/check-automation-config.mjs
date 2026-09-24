@@ -97,6 +97,34 @@ if (search.success) {
     }
   }
 }
+const workflowModelChecks = [
+  {
+    path: '.github/workflows/unicorns.yml',
+    profile: 'workflow-orchestration',
+  },
+  {
+    path: '.github/workflows/translate-zh.yml',
+    profile: 'translation-draft',
+  },
+];
+if (models.success) {
+  for (const check of workflowModelChecks) {
+    const text = readFileSync(resolve(check.path), 'utf8');
+    const model = models.data.profiles[check.profile]?.defaultCopilotModel;
+    if (!model) {
+      issues.push(`model-routing.yaml profiles.${check.profile}: missing required workflow route`);
+    } else if (!text.includes(`default: "${model}"`)) {
+      issues.push(`${check.path}: default model must match model-routing profile ${check.profile} (${model})`);
+    }
+  }
+}
+for (const path of ['.github/workflows/unicorns.yml', '.github/workflows/refresh-company.yml']) {
+  const text = readFileSync(resolve(path), 'utf8');
+  const prompt = text.match(/PROMPT=\$\(cat <<EOF\n([\s\S]*?)\n\s*EOF\n\s*\)/)?.[1] ?? '';
+  if (prompt.includes('`')) {
+    issues.push(`${path}: unquoted PROMPT heredoc contains backticks that execute as shell command substitutions`);
+  }
+}
 if (issues.length) {
   console.error('[check-automation-config] failures');
   for (const issue of issues) console.error(`  - ${issue}`);
