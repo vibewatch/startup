@@ -19,8 +19,8 @@ env:
   CURL_IMPERSONATE_SHA256: "b60344f63b9ed8806f0e9f7fd357d9f6c9a82aca279ed1e9e257d544885dcbde"
 
 on:
-  # schedule:  # Disabled: Cloudflare Worker handles scheduling.
-  #   - cron: "30 */4 * * *"
+  schedule:
+    - cron: "7 */6 * * *"
   workflow_dispatch:
     inputs:
       industry:
@@ -130,6 +130,7 @@ jobs:
       - name: Normalize unicorn discovery inputs
         id: inputs
         env:
+          EVENT_NAME: ${{ github.event_name }}
           RAW_INDUSTRY: ${{ inputs.industry }}
           RAW_COUNT: ${{ inputs.unicornCount }}
           RAW_PROFILE: ${{ inputs.profile }}
@@ -153,7 +154,11 @@ jobs:
               ;;
           esac
           if ! [[ "$COUNT" =~ ^[0-9]+$ ]] || [ "$COUNT" -lt 1 ]; then
-            COUNT=3
+            if [ "$EVENT_NAME" = "schedule" ]; then
+              COUNT=1
+            else
+              COUNT=3
+            fi
           fi
           case "$PROFILE" in
             fast|deep) ;;

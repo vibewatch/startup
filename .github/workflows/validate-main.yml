@@ -8,15 +8,18 @@ on:
       - "reports/**"
       - "website/**"
       - ".agents/skills/**"
+      - ".github/workflows/validate-main.yml"
       - "package.json"
       - "package-lock.json"
   workflow_dispatch:
 
 permissions:
   contents: read
+  pages: write
+  id-token: write
 
 concurrency:
-  group: validate-main-${{ github.ref }}
+  group: validate-and-deploy-main-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -44,3 +47,23 @@ jobs:
 
       - name: Run full validation
         run: npm run validate
+
+      - name: Configure GitHub Pages publishing
+        uses: actions/configure-pages@v6
+
+      - name: Upload validated site artifact
+        uses: actions/upload-pages-artifact@v5
+        with:
+          path: website/dist
+
+  deploy:
+    name: Publish validated site to GitHub Pages
+    needs: validate
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy validated site artifact
+        id: deployment
+        uses: actions/deploy-pages@v5

@@ -99,11 +99,11 @@ if (search.success) {
 }
 const workflowModelChecks = [
   {
-    path: '.github/workflows/unicorns.yml',
+    path: '.github/workflows/research-unicorns.yml',
     profile: 'workflow-orchestration',
   },
   {
-    path: '.github/workflows/translate-zh.yml',
+    path: '.github/workflows/translate-reports-zh.yml',
     profile: 'translation-draft',
   },
 ];
@@ -118,16 +118,28 @@ if (models.success) {
     }
   }
 }
-const unicornWorkflow = readFileSync(resolve('.github/workflows/unicorns.yml'), 'utf8');
-const translationWorkflow = readFileSync(resolve('.github/workflows/translate-zh.yml'), 'utf8');
+const unicornWorkflow = readFileSync(resolve('.github/workflows/research-unicorns.yml'), 'utf8');
+const translationWorkflow = readFileSync(resolve('.github/workflows/translate-reports-zh.yml'), 'utf8');
 if (!unicornWorkflow.includes('name: Run authenticated research workers and finalizers')) {
-  issues.push('.github/workflows/unicorns.yml: missing workflow-owned authenticated worker/finalizer step');
+  issues.push('.github/workflows/research-unicorns.yml: missing workflow-owned authenticated worker/finalizer step');
 }
 if (!unicornWorkflow.includes('COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}')) {
-  issues.push('.github/workflows/unicorns.yml: authenticated worker/finalizer step must receive COPILOT_PAT');
+  issues.push('.github/workflows/research-unicorns.yml: authenticated worker/finalizer step must receive COPILOT_PAT');
+}
+if (!unicornWorkflow.includes('cron: "7 */6 * * *"')) {
+  issues.push('.github/workflows/research-unicorns.yml: missing native six-hour new-report schedule');
+}
+for (const required of [
+  'EVENT_NAME: ${{ github.event_name }}',
+  'if [ "$EVENT_NAME" = "schedule" ]; then',
+  'COUNT=1',
+]) {
+  if (!unicornWorkflow.includes(required)) {
+    issues.push(`.github/workflows/research-unicorns.yml: missing scheduled single-report contract: ${required}`);
+  }
 }
 if (!translationWorkflow.includes('cron: "17 */2 * * *"')) {
-  issues.push('.github/workflows/translate-zh.yml: missing native two-hour recovery schedule');
+  issues.push('.github/workflows/translate-reports-zh.yml: missing native two-hour recovery schedule');
 }
 for (const required of [
   'if [ "$EVENT_NAME" = "schedule" ]; then',
@@ -142,10 +154,10 @@ for (const required of [
   'attempting one targeted repair',
 ]) {
   if (!translationWorkflow.includes(required)) {
-    issues.push(`.github/workflows/translate-zh.yml: missing editorial pipeline contract: ${required}`);
+    issues.push(`.github/workflows/translate-reports-zh.yml: missing editorial pipeline contract: ${required}`);
   }
 }
-for (const path of ['.github/workflows/unicorns.yml', '.github/workflows/refresh-company.yml']) {
+for (const path of ['.github/workflows/research-unicorns.yml', '.github/workflows/refresh-company.yml']) {
   const text = readFileSync(resolve(path), 'utf8');
   const prompt = text.match(/PROMPT=\$\(cat <<EOF\n([\s\S]*?)\n\s*EOF\n\s*\)/)?.[1] ?? '';
   if (prompt.includes('`')) {

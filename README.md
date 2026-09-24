@@ -17,7 +17,6 @@ Startup is a diligence report generator for startup companies. It produces evide
 .agents/skills/translate-zh/      # Simplified Chinese overlay workflow skill
 reports/                          # generated report runs (one folder per finalized run)
 website/                          # Astro static site and website-owned validation
-cloudflare/                       # Cloudflare Worker scheduler for GitHub Actions
 ```
 
 Important files:
@@ -29,7 +28,6 @@ Important files:
 - `.agents/skills/startup-research/scripts/` — skill-owned workflow scripts (chapter loader, gate checks, ledger consolidation, report assembly, validators).
 - `.agents/skills/translate-zh/SKILL.md` — Simplified Chinese sparse-overlay workflow for finalized reports.
 - `website/src/lib/` — rendering contracts shared between the renderer and the chapter/report validators.
-- `cloudflare/worker.js` — Cloudflare Worker scheduler that dispatches due GitHub Actions workflows.
 - `AGENTS.md` — repo-development conventions (working rules, core philosophy). Read before touching skills, scripts, or schemas.
 - `.agents/skills/README.md` — skills index and skill-folder conventions.
 
@@ -54,26 +52,16 @@ Start the website locally:
 npm --prefix website run dev
 ```
 
-## Cloudflare scheduler
+## Automation
 
-GitHub Actions cron schedules are disabled in favor of the Worker in `cloudflare/`. Cloudflare has a small cron-trigger limit, so Wrangler config uses a single every-30-minutes trigger and `worker.js` decides which GitHub Actions workflows are due from the UTC timestamp:
+GitHub Actions owns all recurring automation so schedules and failures remain
+visible in one place:
 
-- Every hour at `:00` UTC, dispatch `translate-zh.yml` on `main` with `reportCount=5` and `model=gpt-5.5`.
-- Every four hours at `:30` UTC, dispatch `unicorns.yml` on `main` with `industry=Any`, `unicornCount=3`, and `model=claude-sonnet-4.6`.
-- Other half-hour wakeups exit without dispatching a workflow.
-
-Set the required Worker secrets from `cloudflare/`:
-
-```bash
-npx wrangler secret put GITHUB_TOKEN
-npx wrangler secret put GITHUB_REPO
-```
-
-`GITHUB_TOKEN` needs Actions read/write permission on the target repository. `GITHUB_REPO` should be `vibewatch/startup`. Deploy the scheduler with:
-
-```bash
-npx wrangler deploy
-```
+- `research-unicorns.yml` discovers and generates one new report every six hours.
+- `refresh-portfolio.yml` refreshes the existing report portfolio daily.
+- `translate-reports-zh.yml` translates one report every two hours.
+- `validate-main.yml` validates each relevant push and deploys only the validated
+  site artifact.
 
 ## Generate a report
 
