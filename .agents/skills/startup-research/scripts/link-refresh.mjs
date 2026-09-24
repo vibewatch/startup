@@ -5,8 +5,8 @@
 //   --prepare-current  Update only the new report's report-meta.yaml revision
 //                      before the rest of the per-report finalize-report pipeline runs.
 //   default            Ensure the new report is marked current/refresh-of, then
-//                      mark the old report superseded and reassemble/check the
-//                      old report. Intended to run inside finalize-report after the
+//                      mark the old report superseded and update only its assembled
+//                      revision metadata. Intended to run inside finalize-report after the
 //                      new report already passed its publishable gate.
 //
 // The previous report is resolved from the new report's revision.refreshOfRunId
@@ -207,8 +207,9 @@ function setOldRevision({ oldRunId, newRunId, refreshReason }) {
   const oldFolder = join(reportsDir, oldRunId);
   const { path: oldMetaPath, doc: oldMeta } = readReportMeta(oldFolder);
   const existing = normalizeRevision(oldMeta.revision);
-  if (existing.status === 'superseded' && existing.supersededByRunId === newRunId) return false;
-  if (existing.status === 'superseded') abort(`${oldRunId} is already superseded by ${existing.supersededByRunId}; refusing to relink.`, EXIT.alreadyExists);
+  if (existing.status === 'superseded' && existing.supersededByRunId !== newRunId) {
+    abort(`${oldRunId} is already superseded by ${existing.supersededByRunId}; refusing to relink.`, EXIT.alreadyExists);
+  }
   const nextRevision = {
     status: 'superseded',
     refreshOfRunId: existing.refreshOfRunId,
@@ -223,11 +224,22 @@ function setOldRevision({ oldRunId, newRunId, refreshReason }) {
 // finalize-report --refresh would skip reassemble (because setOldRevision returns
 // false when meta is already up to date) and leave the inconsistency for
 // check-revision-graph to discover.
-function oldArtifactsAreInSync(oldRunId, newRunId) {
+function oldArtifactsAreInSync(oldRunId, expectedRevision) {
   const card = readSummaryCard(oldRunId);
   if (!card) return false;
   const cardRevision = normalizeRevision(card?.revision);
-  return cardRevision.status === 'superseded' && cardRevision.supersededByRunId === newRunId;
+  return JSON.stringify(cardRevision) === JSON.stringify(expectedRevision);
+}
+
+function updateOldArtifactRevisions(oldRunId, revision) {
+  const oldFolder = join(reportsDir, oldRunId);
+  for (const file of [SUMMARY_CARD_FILE, 'full-report.yaml']) {
+    const path = join(oldFolder, file);
+    if (!existsSync(path)) abort(`missing ${file} in finalized previous report ${oldRunId}`, EXIT.notFound);
+    const doc = readYaml(path);
+    doc.revision = revision;
+    writeYaml(path, doc);
+  }
 }
 
 const args = parseArgs(process.argv.slice(2));
@@ -235,8 +247,9 @@ const { folder: newFolder, runId: newRunId } = resolveReportFolder(args.folder);
 const { doc: newMeta } = readReportMeta(newFolder);
 const oldRunId = resolvePreviousRunId({ newRunId, newMeta });
 if (oldRunId === newRunId) abort('new report cannot refresh itself', EXIT.failure);
+const refreshReason = args.refreshReason || normalizeRevision(newMeta.revision).refreshReason || '';
 
-const currentChanged = setCurrentRevision({ newFolder, newRunId, oldRunId, refreshReason: args.refreshReason });
+const currentChanged = setCurrentRevision({ newFolder, newRunId, oldRunId, refreshReason });
 console.log(`[refresh] current report ${newRunId} refreshOfRunId=${oldRunId}${currentChanged ? ' (updated)' : ' (already set)'}`);
 
 if (args.prepareCurrent) {
@@ -249,11 +262,13 @@ if (currentChanged) {
 }
 
 assertFinalizedRun(newRunId, 'new refresh report');
-const oldChanged = setOldRevision({ oldRunId, newRunId, refreshReason: args.refreshReason });
+const oldChanged = setOldRevision({ oldRunId, newRunId, refreshReason });
 console.log(`[refresh] previous report ${oldRunId} supersededByRunId=${newRunId}${oldChanged ? ' (updated)' : ' (already set)'}`);
-if (oldChanged || !oldArtifactsAreInSync(oldRunId, newRunId)) {
+const { doc: oldMetaAfterLink } = readReportMeta(join(reportsDir, oldRunId));
+const oldRevision = normalizeRevision(oldMetaAfterLink.revision);
+if (oldChanged || !oldArtifactsAreInSync(oldRunId, oldRevision)) {
   const oldFolder = join(reportsDir, oldRunId);
-  runScript('build-report.mjs', [oldFolder]);
+  updateOldArtifactRevisions(oldRunId, oldRevision);
   runScript(syncPreservedFieldsScript, [oldFolder]);
   runScript('check-report.mjs', [oldFolder]);
 }

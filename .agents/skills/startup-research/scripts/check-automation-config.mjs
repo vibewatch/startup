@@ -132,6 +132,13 @@ for (const path of ['.github/workflows/unicorns.yml', '.github/workflows/refresh
     issues.push(`${path}: unquoted PROMPT heredoc contains backticks that execute as shell command substitutions`);
   }
 }
+const linkRefresh = readFileSync(resolve('.agents/skills/startup-research/scripts/link-refresh.mjs'), 'utf8');
+if (!linkRefresh.includes('updateOldArtifactRevisions(oldRunId, oldRevision)')) {
+  issues.push('link-refresh.mjs: previous reports must receive revision-only assembled artifact updates');
+}
+if (linkRefresh.includes("runScript('build-report.mjs', [oldFolder])")) {
+  issues.push('link-refresh.mjs: previous reports must not be rebuilt with the current assembler');
+}
 if (issues.length) {
   console.error('[check-automation-config] failures');
   for (const issue of issues) console.error(`  - ${issue}`);
