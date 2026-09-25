@@ -68,6 +68,14 @@ try {
     '--dry-run',
     '--format', 'json',
   ]));
+  const benchmarkFinalizer = JSON.parse(run('run-report-finalizer.mjs', [
+    '--report-folder', folder,
+    '--model-override', 'gemini-3.8-flash',
+    '--effort-override', 'default',
+    '--disable-escalation',
+    '--dry-run',
+    '--format', 'json',
+  ]));
   const fakeCopilotPath = join(folder, 'fake-copilot.mjs');
   const fakeCopilotLogPath = join(folder, 'fake-copilot.log');
   writeFileSync(join(folder, '_fetch-log.jsonl'), '{}\n');
@@ -113,6 +121,10 @@ process.exit(1);
     [finalizer.escalateTo === 'gpt-5.6-sol-fast', 'finalizer did not retain the Sol Fast quality fallback'],
     [finalizer.escalationReasoningEffort === 'xhigh', 'finalizer escalation effort is not xhigh'],
     [finalizer.timeoutSeconds === 900, 'finalizer default timeout is not 900 seconds'],
+    [benchmarkFinalizer.model === 'gemini-3.8-flash', 'benchmark finalizer model override was ignored'],
+    [benchmarkFinalizer.reasoningEffort === 'default', 'benchmark finalizer effort override was ignored'],
+    [benchmarkFinalizer.escalateTo === null, 'benchmark finalizer retained a hidden escalation'],
+    [benchmarkFinalizer.escalationEnabled === false, 'benchmark finalizer did not disable escalation'],
     [fallbackProbe.status === 1, 'synthetic finalizer failure did not remain a failure'],
     [fallbackInvocations.length === 2, 'finalizer did not make exactly one bounded fallback attempt'],
     [fallbackInvocations[0]?.includes('gpt-5.4-mini') && fallbackInvocations[0]?.includes('medium'), 'finalizer primary attempt did not use Mini/medium'],

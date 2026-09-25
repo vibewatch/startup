@@ -22,7 +22,7 @@ const contextScript = join(scriptDir, 'load-chapter-runtime-context.mjs');
 const checkReportScript = join(scriptDir, 'check-report.mjs');
 
 function usage(code = EXIT.ok) {
-  console.error('Usage: run-report-finalizer.mjs --report-folder <path> [--timeout-seconds <60-3600>] [--copilot-bin <path>] [--dry-run] [--format json|text]');
+  console.error('Usage: run-report-finalizer.mjs --report-folder <path> [--timeout-seconds <60-3600>] [--copilot-bin <path>] [--model-override <model> --effort-override <effort>] [--disable-escalation] [--dry-run] [--format json|text]');
   process.exit(code);
 }
 
@@ -31,6 +31,9 @@ function parseArgs(argv) {
     reportFolder: '',
     timeoutSeconds: 900,
     copilotBin: process.env.COPILOT_BIN || 'copilot',
+    modelOverride: '',
+    effortOverride: '',
+    disableEscalation: false,
     dryRun: false,
     format: 'text',
   };
@@ -39,6 +42,9 @@ function parseArgs(argv) {
     if (arg === '--report-folder') args.reportFolder = argv[++index] ?? '';
     else if (arg === '--timeout-seconds') args.timeoutSeconds = Number(argv[++index] ?? 0);
     else if (arg === '--copilot-bin') args.copilotBin = argv[++index] ?? '';
+    else if (arg === '--model-override') args.modelOverride = argv[++index] ?? '';
+    else if (arg === '--effort-override') args.effortOverride = argv[++index] ?? '';
+    else if (arg === '--disable-escalation') args.disableEscalation = true;
     else if (arg === '--dry-run') args.dryRun = true;
     else if (arg === '--format') args.format = argv[++index] ?? '';
     else if (arg === '--help' || arg === '-h') usage();
@@ -47,6 +53,7 @@ function parseArgs(argv) {
   if (!args.reportFolder
       || !Number.isInteger(args.timeoutSeconds) || args.timeoutSeconds < 60 || args.timeoutSeconds > 3600
       || !args.copilotBin
+      || Boolean(args.modelOverride) !== Boolean(args.effortOverride)
       || !['json', 'text'].includes(args.format)) {
     usage(EXIT.failure);
   }
@@ -119,7 +126,14 @@ if (!existsSync(resultsPath) || !existsSync(bundlePath)) {
   process.exit(EXIT.notFound);
 }
 const context = runJson(contextScript, ['--order', '1', '--report-folder', reportFolder]);
-const route = context.policy.workerRouting;
+const route = args.modelOverride
+  ? {
+      ...context.policy.workerRouting,
+      model: args.modelOverride,
+      reasoningEffort: args.effortOverride,
+      escalateTo: null,
+    }
+  : context.policy.workerRouting;
 const fetchLogPath = resolve(
   process.env.STARTUP_FETCH_LOG_PATH || join(cacheDir, '_fetch-log.jsonl'),
 );
@@ -128,6 +142,9 @@ const plan = {
   reportFolder,
   runId,
   timeoutSeconds: args.timeoutSeconds,
+  modelOverride: args.modelOverride || null,
+  effortOverride: args.effortOverride || null,
+  escalationEnabled: !args.disableEscalation,
   model: route.model,
   reasoningEffort: route.reasoningEffort,
   escalateTo: route.escalateTo,
@@ -260,6 +277,7 @@ function inspectFinalReport() {
 let finalReport = inspectFinalReport();
 if ((processResult.timedOut || processResult.exitCode !== 0
       || finalReport.missingFiles.length > 0 || !finalReport.reportCheck.ok)
+    && !args.disableEscalation
     && route.escalateTo && route.escalateTo !== route.model) {
   if (args.format === 'text') {
     console.log(`[run-report-finalizer] escalating failed finalizer to ${route.escalateTo}/xhigh`);

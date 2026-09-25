@@ -18,6 +18,11 @@ on:
         required: true
         default: "https://www.ivo.ai"
         type: string
+      includeGrok:
+        description: "Include the expensive Grok 4.7 comparison."
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -91,6 +96,7 @@ jobs:
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
           REPORT_FOLDER: ${{ steps.bootstrap.outputs.reportFolder }}
+          INCLUDE_GROK: ${{ inputs.includeGrok }}
         run: |
           set -euo pipefail
           BENCHMARK_DIR="$RUNNER_TEMP/synthesis-model-benchmark"
@@ -148,7 +154,14 @@ jobs:
 
           run_model mini gpt-5.4-mini medium
           run_model gemini gemini-3.8-flash default
-          run_model grok grok-4.7 default
+          if [ "$INCLUDE_GROK" = "true" ]; then
+            run_model grok grok-4.7 default
+          else
+            {
+              echo "### grok"
+              echo "- skipped: already rejected by the Ivo benchmark on cost and latency"
+            } >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Upload benchmark evidence
         if: always()
