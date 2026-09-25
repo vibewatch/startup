@@ -60,6 +60,69 @@ const checks = [
     ],
   ])),
   ...[
+    '款项通过专用管道对账：汇总来自配送代理的现金。',
+    '通过核对来自配送代理的记录对账。',
+    '记录已通过审核，款项来自配送代理。',
+    '记录已通过审核：款项来自配送代理。',
+    '通过专用管道核对记录，之后再确认款项来源。',
+  ].flatMap((zh) => [false, true].map((strictEditor) => [
+    checkPairQuality(
+      fullReport('A dedicated pipeline reconciles payments and aggregates cash received from delivery agents.'),
+      fullReport(zh),
+      { strictEditor },
+    ).length === 0,
+    `native 来自 and separate clauses must not be mistaken for 通过...来 purpose wording (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
+    '款项通过专用管道来完成对账。',
+    '通过来自配送代理的记录来核对款项。',
+    '通过专用管道来核对记录，款项来自配送代理。',
+  ].flatMap((zh) => [false, true].map((strictEditor) => [
+    checkPairQuality(
+      fullReport('A dedicated pipeline reconciles payments and aggregates cash received from delivery agents.'),
+      fullReport(zh),
+      { strictEditor },
+    ).filter((issue) => issue.code === 'translationese').length === 1,
+    `a native 来自 elsewhere must not hide actual 通过...来 purpose wording (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
+    ['RMB 450M in H1 2025', '2025H1 为 RMB 450M'],
+    ['Q1 2026 R&D (annualized)', '2026Q1 R&D（年化）'],
+    ['Pre-Phase 3 (Ph3 H1 2027)', 'Phase 3 前（Ph3 2027H1）'],
+    ['FY2026Q1 ARR was $10M.', 'FY2026 Q1 ARR 为 $10M。'],
+    ['FY2026EH1 ARR was $10M.', 'FY2026E H1 ARR 为 $10M。'],
+    ['H1 ARR was $10M.', '上半年 ARR 为 $10M。'],
+    ['H2 ARR was $10M.', '下半年 ARR 为 $10M。'],
+    ['ARR Pool\\n(>$100M 2023;\\n~$200M 2026 est.)', 'ARR 池\\n（2023 年 >$100M；\\n2026 年估算 ~$200M）'],
+    ['Funding\\r\\n2026: $10M.', '2026 年融资 $10M。'],
+  ].flatMap(([en, zh]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor }).length === 0,
+    `period spacing and escaped line breaks must retain year anchors without inventing metrics (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
+    ['RMB 450M in H1 2025', '2026H1 为 RMB 450M'],
+    ['Q1 2026 R&D (annualized)', 'Q1 R&D（年化）'],
+    ['FY2026Q1 ARR was $10M.', 'FY2027Q1 ARR 为 $10M。'],
+    ['Funding\\n2026: $10M.', '融资 $10M。'],
+    ['Recorded on 2026-09-24.', '记录于\\n2026-09-25。'],
+    ['$14B+ (May 2026)', '$14B+'],
+    ['Orders delivered (FY2024)', '已配送订单'],
+  ].flatMap(([en, zh]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor })
+      .some((issue) => issue.code === 'year-preservation'),
+    `calendar normalization must still reject changed or missing year/date anchors (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
+    ['H1 2026 ARR was $10M.', '2026H1 ARR 为 $11M。'],
+    ['H2 2026 ARR was $10M.', '2026H2 ARR 为 $10B。'],
+    ['Q1 2026 ARR was $10M.', '2026Q1 ARR 为 €10M。'],
+    ['ARR was $2026.', 'ARR 为 2026H1。'],
+  ].map(([en, zh]) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor: true })
+      .some((issue) => issue.code === 'metric-preservation'),
+    `period normalization must preserve amounts, scales and currencies: ${zh}`,
+  ]),
+  ...[
     ['Private deployments are 85 percent of revenue, with 70–80 percent margins.', '私有部署占收入 85%，毛利率为 70–80%。'],
     ['Revenue grew 12.5 per cent.', '收入增长 12.5%。'],
     ['Revenue grew 13 percent.', '收入增长百分之十三。'],

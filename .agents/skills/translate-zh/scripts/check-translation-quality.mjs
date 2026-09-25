@@ -14,7 +14,7 @@ const metricToken = /(?:[$€£¥₦]\s*)?\d+(?:[.,]\d+)*(?:[KMBT](?![a-z])|\s?(
 const stylePatterns = [
   /对于[^。！？；]{1,24}而言/u,
   /在[^。！？；]{1,20}方面/u,
-  /通过[^。！？；]{1,24}来/u,
+  /通过[^。！？；，：]{1,24}来(?!自)/u,
   /在[^。！？；]{1,24}的过程中/u,
   /被设计为/u,
   /被要求/u,
@@ -123,8 +123,15 @@ function normalizeWrittenPercentages(value) {
   );
 }
 
+function normalizeCalendarSpacing(value) {
+  return value.replace(/\\[nr]/g, ' ').replace(
+    /\b((?:FY\s*)?(?:19|20)\d{2}E?)(Q[1-4]|H[12])\b/gi,
+    '$1 $2',
+  );
+}
+
 function normalizedTokens(value) {
-  const normalized = normalizeQuantityWords(value);
+  const normalized = normalizeQuantityWords(normalizeCalendarSpacing(value));
   const years = (normalized.match(invariantToken) ?? [])
     .map((token) => token.replace(/^FY\s*/i, '').replace(/E$/i, '').replace(/\s+/g, ''));
   const dates = [...normalized.matchAll(calendarDateToken)].map((match) => (
@@ -135,9 +142,9 @@ function normalizedTokens(value) {
 
 function normalizedMetricTokens(value) {
   // Calendar labels are not ARR/GMV quantities, even when they precede the metric.
-  const separated = normalizeQuantityWords(value)
+  const separated = normalizeQuantityWords(normalizeCalendarSpacing(value))
     .replace(/\bFY\s*((?:19|20)\d{2})E?\b/gi, '$1;')
-    .replace(/\bQ[1-4]\b/gi, ';');
+    .replace(/\b(?:Q[1-4]|H[12])\b/gi, ';');
   // Retention-relative phrases imply percentages, unlike nearby customer/cohort counts.
   const retention = separated.replace(
     /\b((?:NRR|GRR|NDR)\s+(?:(?:is|in|the|low|mid|high|teens|trends?)\b[\s-]*)*(?:above|below|towards?|around|near|of|at)\s+(?:(?:low|mid|high)[ -]+)?)(\d{2,3}(?:\.\d+)?)(s)?(?=\s*(?:[,.;]|$))/gi,

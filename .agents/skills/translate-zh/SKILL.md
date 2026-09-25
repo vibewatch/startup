@@ -55,7 +55,14 @@ npm run translate:zh -- finalize-full "$REPORT"
 
 Finalization runs a conservative quality gate after the structural check. It fails when a translatable leaf drops year/date anchors or explicit uncertainty qualifiers, or retains a high-confidence translationese pattern from the soundcheck. It emits advisory findings for glossary drift, untranslated ordinary descriptors, half-width Chinese punctuation, and dense `的` chains. Repair only the flagged cached leaf or part and rerun the narrow finalize command.
 
-Calendar-date checks preserve ISO month/day anchors as well as years, accepting equivalent Chinese dates such as `2026-09-25` and `2026 年 9 月 25 日`. Fiscal-year prefixes and forecast suffixes (`FY2024`, `2024E`) normalize to the same year without allowing a changed year. A quarter label in `Q2 ARR` is not an ARR amount. The metric tokenizer separates the label from the metric; it does not establish quarter fidelity or interpret relative periods such as `the first two quarters after IPO`. These token checks do not establish complete numeric or semantic fidelity; verify the source proposition and metric meaning as well.
+Calendar-date checks preserve ISO month/day anchors as well as years, accepting equivalent Chinese dates such as `2026-09-25` and `2026 年 9 月 25 日`. Fiscal-year prefixes and forecast suffixes (`FY2024`, `2024E`) normalize to the same year without allowing a changed year.
+Attached labels such as `2026Q1` and `2026H1`, and escaped line breaks in chart
+labels, also retain their year anchors. Quarter and half-year labels in
+`Q2 ARR` or `H1 ARR` are not ARR amounts. The metric tokenizer separates these
+labels from the metric; it does not establish quarter/half-year fidelity or
+interpret relative periods such as `the first two quarters after IPO`.
+These token checks do not establish complete numeric or semantic fidelity;
+verify the source proposition and metric meaning as well.
 
 The uncertainty check accepts `未披露公开里程碑` as a faithful rendering of
 `no public milestone disclosed`. Reported attribution accepts `据报道`, `据报`,
@@ -152,6 +159,8 @@ are not translation omissions or assertions. In medical-data lists such as
 `the company claims` in the same leaf still requires attribution. Correct a
 demonstrated checker false positive with regression coverage rather than adding
 unrelated attribution or changing preserved URLs merely to satisfy a pattern.
+The `通过…来` soundcheck stays within one clause and does not treat `来自` as a
+purpose marker; a separate genuine `通过…来` construction still needs rewriting.
 
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json
