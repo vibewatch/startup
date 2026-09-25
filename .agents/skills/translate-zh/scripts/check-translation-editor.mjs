@@ -49,6 +49,50 @@ const noPublicIpAndMilestoneSource = `${noPublicIpSource} The IPO timeline has n
 
 const checks = [
   ...[
+    ['Estimated from FCA cumulative revenue of £1.119bn over the disclosed period.', '根据 FCA 披露期间的累计收入 £1.119bn 推算。'],
+    ['No public financing round, investor identity, or valuation disclosure was found in retained sources.', '留存来源没有找到公开融资轮次、投资人身份或估值披露。'],
+    ['No public attestation found; significant gap for enterprise and government buyers.', '未找到公开鉴证；对企业和政府买方都是重大缺口。'],
+    ['No public lawsuit against Flex was found in the retained evidence base.', '留存证据中未发现针对 Flex 的公开诉讼。'],
+    ['Requires benign losses and a durable moat; no public evidence confirms either yet.', '需要损失保持良性、护城河守得住；公开证据尚未证实任何一点。'],
+    ['The B2B licensing model is strategically valuable but unproven at scale.', 'B2B 授权模式具有战略价值，但尚未在规模上得到验证。'],
+    ['No independent verification of coverage claims; refresh cadence undisclosed.', '覆盖声明缺少独立验证；刷新节奏未披露。'],
+    ['The independent customer-scale data point corroborates company claims.', '这一独立客户规模数据点印证公司口径。'],
+    ['The documented incident is indicative of friction in fraud claim handling.', '所记录的事件显示，欺诈索赔处理存在摩擦。'],
+    ['Filed accounts; credit risk note; BBL BEIS government guarantee claim status.', '申报账目；信用风险附注；BBL BEIS 政府担保索赔状态。'],
+  ].flatMap(([en, zh]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor }).length === 0,
+    `reviewed Chinese wording and financial claims nouns must remain faithful (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
+    ['Estimated from FCA cumulative revenue of £1.119bn over the disclosed period.', 'FCA 披露期间的累计收入为 £1.119bn。'],
+    ['No public attestation found; significant gap for enterprise and government buyers.', '已找到公开鉴证，覆盖企业和政府买方。'],
+    ['No public lawsuit against Flex was found in the retained evidence base.', '留存证据中已发现针对 Flex 的公开诉讼。'],
+    ['No public lawsuit against Flex was found in the retained evidence base.', '未发现问题；针对 Flex 的公开诉讼已经确认。'],
+    ['Requires benign losses and a durable moat; no public evidence confirms either yet.', '损失保持良性、护城河守得住；公开证据已经证实两点。'],
+    ['The B2B licensing model is strategically valuable but unproven at scale.', 'B2B 授权模式具有战略价值，且已在规模上得到验证。'],
+    ['The B2B licensing model is strategically valuable but unproven at scale.', 'B2B 授权模式尚未商业化，但在规模上已经得到验证。'],
+    ['No independent verification of coverage claims; refresh cadence undisclosed.', '覆盖已经得到独立验证；刷新节奏未披露。'],
+    ['The independent customer-scale data point corroborates company claims.', '这一独立客户规模数据点很有价值。'],
+    ['The company claims its new system resolves friction in fraud claim handling.', '新系统解决了欺诈索赔处理中的摩擦。'],
+    ['The company claims its service tracks government guarantee claim status.', '这项服务跟踪政府担保索赔状态。'],
+  ].flatMap(([en, zh]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor })
+      .some((issue) => issue.code === 'hedge-preservation'),
+    `wording aliases must not hide reversed uncertainty or a separate assertion (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
+    ['Managers are consolidating on fewer platforms.', '管理公司正在向更少、更大的 PMS 平台集中。'],
+    ['The company is expanding, while the team remains focused.', '公司正在扩张，团队集中精力。'],
+  ].map(([en, zh]) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor: true }).length === 0,
+    `progressive style check must not mistake 集中 or cross-clause text for a redundant 中: ${zh}`,
+  ]),
+  [
+    checkPairQuality(fullReport('The company is testing the system.'), fullReport('公司正在系统测试中。'))
+      .some((issue) => issue.code === 'translationese'),
+    'genuine 正在…中 translationese must remain flagged',
+  ],
+  ...[
     [noPublicIpSource, '架构文档称，这些数仓没有公共 IP 地址。'],
     [noPublicIpSource, '架构文档称，这些数仓无公网 IP 地址。'],
     [noPublicIpSource, '架构文档称，这些数仓不设公有 IP 地址。'],
@@ -642,6 +686,132 @@ try {
   assert.equal(repaired.tables[0].rows.length, 2);
   assert.deepEqual(repaired.tables[1].rows[1], ['新增项目', '新增说明']);
   assert.equal(readFileSync(join(repairDir, 'full-report.yaml'), 'utf8'), JSON.stringify(repairSource));
+
+  const batchSource = fullReport('Approximately $10M revenue in 2025 is not yet audited by an independent auditor.');
+  const batchTranslation = fullReport('对于投资者而言，2025 年收入约 $10M，尚未经独立审计。');
+  const batchClean = fullReport('2025 年收入约 $10M，尚未经独立审计。');
+  const batchInputs = {
+    'full-report.yaml': batchSource,
+    'full-report.zh.yaml': batchTranslation,
+    'summary-card.yaml': repairSummary,
+    'summary-card.zh.yaml': repairSummaryZh,
+    'evidence.yaml': { sources: [{ id: 'S001', url: 'https://example.com/original' }] },
+  };
+  const createBatchFixture = (runId, overrides = {}) => {
+    const folder = join(fixtureRoot, 'reports', runId);
+    mkdirSync(folder);
+    for (const [file, doc] of Object.entries({ ...batchInputs, ...overrides })) {
+      writeFileSync(join(folder, file), JSON.stringify(doc));
+    }
+    return {
+      runId,
+      changes: [{
+        artifact: 'full-report', path: 'subtitle', english: batchSource.subtitle,
+        before: batchTranslation.subtitle, after: batchClean.subtitle,
+      }],
+    };
+  };
+  const batchPath = join(fixtureRoot, 'reviewed-fixes.json');
+  const runBatch = (reports, apply = false) => {
+    writeFileSync(batchPath, JSON.stringify({ reports }));
+    const child = spawnSync(process.execPath, [
+      join(scripts, 'run-translation.mjs'), 'repair-batch', batchPath, ...(apply ? ['--apply'] : []),
+    ], { cwd: fixtureRoot, encoding: 'utf8' });
+    return { child, result: child.stdout.trim() ? JSON.parse(child.stdout) : null };
+  };
+  const first = createBatchFixture('batch-first');
+  first.changes.push({
+    artifact: 'summary-card', path: 'summary/headline',
+    english: repairSummary.summary.headline, before: repairSummaryZh.summary.headline, after: '既有结论',
+  });
+  const second = createBatchFixture('batch-second');
+  const preview = runBatch([first, second]);
+  assert.equal(preview.child.status, 0, preview.child.stderr);
+  assert.deepEqual(preview.result.reports.map((r) => r.status), ['ready', 'ready']);
+  for (const target of [first, second]) {
+    for (const [file, doc] of Object.entries(batchInputs)) {
+      assert.equal(readFileSync(join(fixtureRoot, 'reports', target.runId, file), 'utf8'), JSON.stringify(doc));
+    }
+  }
+  const applied = runBatch([first, second], true);
+  assert.equal(applied.child.status, 0, applied.child.stderr);
+  assert.deepEqual(applied.result.reports.map((r) => r.status), ['applied', 'applied']);
+  for (const target of [first, second]) {
+    const folder = join(fixtureRoot, 'reports', target.runId);
+    assert.deepEqual(yaml.load(readFileSync(join(folder, 'full-report.zh.yaml'), 'utf8')), batchClean);
+    for (const [file, doc] of Object.entries(batchInputs)) {
+      if (target === first && file === 'summary-card.zh.yaml') {
+        assert.deepEqual(yaml.load(readFileSync(join(folder, file), 'utf8')),
+          { ...repairSummaryZh, summary: { headline: '既有结论' } });
+        continue;
+      }
+      if (file !== 'full-report.zh.yaml') assert.equal(readFileSync(join(folder, file), 'utf8'), JSON.stringify(doc));
+    }
+  }
+  for (const [name, edit] of [
+    ['english', { english: 'Stale English' }],
+    ['chinese', { before: '过时译文' }],
+    ['metric', { after: changedMetric.subtitle }],
+    ['hedge', { after: '2025 年收入为 $10M，已经审计。' }],
+    ['preserved', { path: 'artifact', english: 'full-report', before: 'full-report', after: '完整报告' }],
+  ]) {
+    const target = createBatchFixture(`batch-${name}`);
+    Object.assign(target.changes[0], edit);
+    const blocked = runBatch([target], true);
+    assert.equal(blocked.child.status, 1, blocked.child.stdout);
+    assert.equal(blocked.result.reports[0].status, 'blocked');
+    for (const [file, doc] of Object.entries(batchInputs)) {
+      assert.equal(readFileSync(join(fixtureRoot, 'reports', target.runId, file), 'utf8'), JSON.stringify(doc));
+    }
+  }
+  const rollback = createBatchFixture('batch-rollback', {
+    'full-report.yaml': { ...batchSource, slug: 'stable' },
+    'full-report.zh.yaml': { ...batchTranslation, slug: 'preserve-existing-drift' },
+  });
+  const third = createBatchFixture('batch-third');
+  const partial = runBatch([rollback, third], true);
+  assert.equal(partial.child.status, 1, partial.child.stderr);
+  assert.deepEqual(partial.result.reports.map((r) => r.status), ['blocked', 'applied']);
+  assert.equal(readFileSync(join(fixtureRoot, 'reports', rollback.runId, 'full-report.zh.yaml'), 'utf8'),
+    JSON.stringify({ ...batchTranslation, slug: 'preserve-existing-drift' }));
+  const active = createBatchFixture('batch-active');
+  mkdirSync(join(fixtureRoot, '.translate-cache', active.runId));
+  const refused = runBatch([active], true);
+  assert.equal(refused.child.status, 1);
+  assert.match(refused.result.reports[0].error, /existing cache/);
+  const duplicate = runBatch([third, third]);
+  assert.notEqual(duplicate.child.status, 0);
+  assert.match(duplicate.child.stderr, /only once/);
+  const nestedDoc = (body) => ({
+    artifact: 'full-report',
+    chapters: [{ sections: [{ blocks: [{ body }] }] }],
+  });
+  const nested = createBatchFixture('batch-nested', {
+    'full-report.yaml': nestedDoc(batchSource.subtitle),
+    'full-report.zh.yaml': nestedDoc(batchTranslation.subtitle),
+  });
+  nested.changes[0].path = 'chapters/0/sections/0/blocks/0/body';
+  nested.changes[0].after += '\n';
+  const nestedResult = runBatch([nested], true);
+  assert.equal(nestedResult.child.status, 0, nestedResult.child.stderr);
+  assert.deepEqual(yaml.load(readFileSync(join(fixtureRoot, 'reports', nested.runId, 'full-report.zh.yaml'), 'utf8')),
+    nestedDoc(`${batchClean.subtitle}\n`));
+  const mechanicalDoc = (cell) => ({ artifact: 'full-report', tables: [{ rows: [[cell]] }] });
+  const mechanical = createBatchFixture('batch-mechanical', {
+    'full-report.yaml': mechanicalDoc('unknown'),
+    'full-report.zh.yaml': mechanicalDoc('未知'),
+  });
+  mechanical.changes = [{
+    artifact: 'full-report', path: 'tables/0/rows/0/0', english: 'unknown', before: '未知', after: '尚不明确',
+  }];
+  const mechanicalPreview = runBatch([mechanical]);
+  assert.equal(mechanicalPreview.child.status, 1);
+  assert.match(mechanicalPreview.result.reports[0].error, /not an editable sparse leaf/);
+  const mechanicalResult = runBatch([mechanical], true);
+  assert.equal(mechanicalResult.child.status, 1);
+  assert.match(mechanicalResult.result.reports[0].error, /not an editable sparse leaf/);
+  assert.equal(readFileSync(join(fixtureRoot, 'reports', mechanical.runId, 'full-report.zh.yaml'), 'utf8'),
+    JSON.stringify(mechanicalDoc('未知')));
 } finally {
   rmSync(fixtureRoot, { recursive: true, force: true });
 }

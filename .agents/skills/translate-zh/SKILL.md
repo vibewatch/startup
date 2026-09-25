@@ -169,6 +169,14 @@ demonstrated checker false positive with regression coverage rather than adding
 unrelated attribution or changing preserved URLs merely to satisfy a pattern.
 The `通过…来` soundcheck stays within one clause and does not treat `来自` as a
 purpose marker; a separate genuine `通过…来` construction still needs rewriting.
+Likewise, `正在…集中` is not the redundant `正在…中` construction, and that
+soundcheck must not cross a clause boundary. `推算` preserves an estimate;
+`尚未在规模上得到验证` preserves an unproven-at-scale qualifier. Missing-public-
+evidence wording includes `未找到公开`, `没有找到公开`, `未发现针对…的公开`, and
+`公开证据尚未…`; positive disclosures must still fail. `fraud claim handling` and
+`government guarantee claim status` are financial claims nouns, not assertions.
+`声明` and `公司口径` can preserve an assertion, but a separate company assertion
+beside a financial claims noun still needs attribution.
 
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json
@@ -198,6 +206,38 @@ before and after editing; a standard `0 -> 0` does not measure strict improvemen
 The measurement is saved as `quality.after.json` and reports error/warning
 counts against the repair baseline. Process only one report at a time so each
 quality change remains attributable and reversible.
+
+### Batching reviewed repairs
+
+For multiple existing reports, the runner can apply source-reviewed patches
+sequentially, retaining per-report checks and results:
+
+```sh
+npm run translate:zh -- repair-batch reviewed-fixes.json
+npm run translate:zh -- repair-batch reviewed-fixes.json --apply
+```
+
+The JSON has `reports: [{ runId, changes: [{ artifact, path, english, before,
+after }] }]`. `artifact` is `summary-card` or `full-report`; `path` is the
+slash-separated whitelisted leaf path. `english` and `before` must exactly match
+the current English and Chinese strings. `after` is a reviewed translation,
+not an instruction to a model. The command does not invent fixes or verify the
+underlying English facts.
+
+Preview writes nothing. Apply refuses existing caches, seeds sparse bundles,
+edits only the listed leaves, and runs the existing lint/finalize/verify/measure
+commands without skipping quality gates. Standard hard errors must reach zero,
+and strict findings must not increase or move to new paths. Baseline strict
+findings can remain; an applied patch is not a whole-report quality certificate.
+Final parsed overlays must exactly match the approved changes, and all other
+report YAML stays byte-identical. A failed report restores only outputs written
+by that attempt, does not overwrite detected later edits, retains its cache
+for inspection, and does not prevent the next report from running. Any blocked
+report makes the batch exit nonzero.
+
+Review `.translate-cache/<runId>/batch-result.json` and `batch.log`, then run
+one integrated `npm run validate` for the accepted batch before publication.
+Archive the per-report evidence before using the runner's `cleanup` command.
 
 For low-cost model routing, use `gemini-3.8-flash` for summary and long-form
 full-report drafts, then use `gpt-6-luna` for compact table/figure leaves

@@ -14,6 +14,7 @@
 //   node bundle-translatable.mjs merge <part.yaml...> --out <bundle.yaml>
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import yaml from 'js-yaml';
 import { isTranslatableLeaf, whitelistFor } from './whitelist.mjs';
 
@@ -130,7 +131,7 @@ function isMechanicalValue(path, value) {
   return numberish.test(s);
 }
 
-function shouldExportLeaf(path, value, whitelist, options) {
+export function shouldExportLeaf(path, value, whitelist, options = {}) {
   if (typeof value !== 'string') return false;
   if (!value.trim()) return false;
   if (!isTranslatableLeaf(path, whitelist)) return false;
@@ -420,9 +421,11 @@ function mergeBundles(argv) {
   process.stderr.write(`[bundle] merged ${args.inputs.length} part(s) into ${args.out}\n`);
 }
 
-const [command, ...rest] = process.argv.slice(2);
-if (command === 'export') exportBundle(rest);
-else if (command === 'import') importBundle(rest);
-else if (command === 'split') splitBundle(rest);
-else if (command === 'merge') mergeBundles(rest);
-else usage(command === '-h' || command === '--help' ? 0 : 1);
+if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
+  const [command, ...rest] = process.argv.slice(2);
+  if (command === 'export') exportBundle(rest);
+  else if (command === 'import') importBundle(rest);
+  else if (command === 'split') splitBundle(rest);
+  else if (command === 'merge') mergeBundles(rest);
+  else usage(command === '-h' || command === '--help' ? 0 : 1);
+}

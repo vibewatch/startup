@@ -134,6 +134,19 @@ npm run check:translations-zh
 
 The root `npm run validate` command includes this translation check.
 
+Existing translations can be repaired in batches from reviewed, source-anchored
+patches, without rewriting whole reports:
+
+```bash
+npm run translate:zh -- repair-batch reviewed-fixes.json          # preview only
+npm run translate:zh -- repair-batch reviewed-fixes.json --apply
+```
+
+The [translation skill](.agents/skills/translate-zh/SKILL.md#batching-reviewed-repairs)
+documents the patch format and per-report rollback/checks. This applies approved
+Chinese fixes; it does not generate factual corrections or bypass quality gates.
+Run `npm run validate` once for the accepted batch before publishing.
+
 ## Validation commands
 
 From the repository root:

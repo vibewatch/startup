@@ -14,11 +14,13 @@ const FULL_SPLIT_MAX_ITEMS = '300';
 
 function usage(code = 0) {
   console.error('Usage: run-translation.mjs <command> <runId-or-company-name> [--keep-cache] [--force]');
+  console.error('       run-translation.mjs repair-batch <reviewed-fixes.json> [--apply]');
   console.error('');
   console.error('Commands:');
   console.error('  preflight         Validate repo, dependency, report, and cache paths');
   console.error('  init              Export summary/full bundles and split full-report into parts');
   console.error('  repair-init       Seed bundles from existing zh overlays and record baseline quality');
+  console.error('  repair-batch      Preview a reviewed-fixes JSON batch; --apply materializes accepted repairs');
   console.error('  editor-init       Checkpoint validated overlays and seed a full source-anchored editorial pass');
   console.error('  editor-accept     Strictly validate and accept the editorial pass');
   console.error('  editor-restore    Restore the validated draft after an editorial regression');
@@ -32,21 +34,25 @@ function usage(code = 0) {
   console.error('Examples:');
   console.error('  node .agents/skills/translate-zh/scripts/run-translation.mjs init 20260504115542-thinking-machines');
   console.error('  node .agents/skills/translate-zh/scripts/run-translation.mjs finalize-full 20260504115542-thinking-machines');
+  console.error('  node .agents/skills/translate-zh/scripts/run-translation.mjs repair-batch reviewed-fixes.json --apply');
   process.exit(code);
 }
 
 function parseArgs(argv) {
-  const args = { command: null, runId: null, keepCache: false, force: false, skipQuality: false };
+  const args = { command: null, runId: null, keepCache: false, force: false, skipQuality: false, apply: false };
   for (const arg of argv) {
     if (arg === '--keep-cache') args.keepCache = true;
     else if (arg === '--force') args.force = true;
     else if (arg === '--skip-quality') args.skipQuality = true;
+    else if (arg === '--apply') args.apply = true;
     else if (arg === '-h' || arg === '--help') usage(0);
     else if (!args.command) args.command = arg;
     else if (!args.runId) args.runId = arg;
     else usage(1);
   }
   if (!args.command || !args.runId) usage(1);
+  if (args.apply && args.command !== 'repair-batch') usage(1);
+  if (args.command === 'repair-batch' && (args.force || args.skipQuality || args.keepCache)) usage(1);
   return args;
 }
 
@@ -413,6 +419,11 @@ switch (args.command) {
   case 'repair-init':
     repairInit(args.runId, { force: args.force });
     break;
+  case 'repair-batch': {
+    const { repairBatch } = await import('./repair-batch.mjs');
+    process.exitCode = repairBatch(args.runId, { repoRoot, apply: args.apply });
+    break;
+  }
   case 'editor-init':
     editorInit(args.runId, { force: args.force });
     break;
