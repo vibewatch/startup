@@ -266,7 +266,7 @@ Dimensions are grouped by class. Only the **chapter-warning** class is acknowled
 | 44 | `chapter-warning` | `sectionsMax` | Reduce or merge sections; the chapter looks over-fragmented. | `yamlParse` |
 | 46 | `chapter-warning` | `tablesMax` | Reduce or merge tables; the chapter looks over-fragmented. | `yamlParse` |
 | 47 | `chapter-warning` | `figuresMax` | Reduce or merge figures; the chapter looks over-fragmented. | `yamlParse` |
-| 54 | `chapter-warning` | `unverifiedSource` | One or more cited sources never went through fetch-url during this run; re-pull them so accessStatus, sourceType, and stance are based on the actual page rather than a guess. | — |
+| 54 | `chapter-warning` | `unverifiedSource` | One or more cited sources have no successful fetch-url retrieval recorded for this run; retrieve usable content so accessStatus, sourceType, and stance are based on the actual page rather than a failed attempt or a guess. | — |
 | 55 | `chapter-warning` | `fetchTrailMissing` | Set STARTUP_FETCH_LOG_PATH=.research-cache/<runId>/_fetch-log.jsonl in your shell BEFORE running fetch-url so check-chapter can audit cited URLs against actual retrievals; the default gate warns and --strict fails when the trail is missing. | — |
 | — | `chapter-warning` | `tableNotes` | Write tables[].notes (one line: data source / estimation / partial coverage / what null means), or acknowledge dimension "tableNotes" for pure factual snapshot tables. | — |
 

@@ -57,7 +57,7 @@ Workflow narrative: what to run, in what order, with which flags. Two generated 
    ```
    - **CI exception:** if `STARTUP_FETCH_LOG_PATH` is already exported (e.g. a workflow-wide trail), keep that value — do **not** source the snippet. (`create-report-run.mjs` detects this and prints a confirming note instead of the source-the-snippet hint.)
    - **Subagent caveat:** when fanning work out to subagents that don't inherit env vars, pass the resolved value explicitly. Use the absolute path `"$PWD/.research-cache/${RUN_ID}/_fetch-log.jsonl"` if any subagent may chdir away from the repo root.
-   - `check-chapter` emits `unverifiedSource` (warning; failure under `--strict`) for each cited URL absent from the trail, and a single `fetchTrailMissing` warning when the trail is missing entirely.
+   - `check-chapter` emits `unverifiedSource` (warning; failure under `--strict`) for each cited URL without an explicitly successful 2xx retrieval in the trail, and a single `fetchTrailMissing` warning when the trail is missing entirely. Failed attempts, HTTP-200 access-error pages marked `ok: false`, and incomplete records do not verify a citation. A successful retry or an earlier successful retrieval still counts; this does not establish factual support for the cited claim.
 
 ## Chapter generation
 

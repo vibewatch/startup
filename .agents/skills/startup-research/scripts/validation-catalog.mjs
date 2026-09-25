@@ -400,8 +400,8 @@ export const FIX_HINTS = {
   figuresMax: 'Reduce or merge figures; the chapter looks over-fragmented.',
   unverifiedSource: ({ id, url } = {}) =>
     id || url
-      ? `Source ${id ?? ''}${url ? ` (${url})` : ''} was cited but never went through fetch-url during this run; pull the URL with .agents/skills/fetch-url/scripts/fetch.mjs (or remove the citation if the source cannot be retrieved).`
-      : 'One or more cited sources never went through fetch-url during this run; re-pull them so accessStatus, sourceType, and stance are based on the actual page rather than a guess.',
+      ? `Source ${id ?? ''}${url ? ` (${url})` : ''} has no successful fetch-url retrieval recorded for this run; retrieve usable content with .agents/skills/fetch-url/scripts/fetch.mjs (or remove the citation if the source cannot be retrieved).`
+      : 'One or more cited sources have no successful fetch-url retrieval recorded for this run; retrieve usable content so accessStatus, sourceType, and stance are based on the actual page rather than a failed attempt or a guess.',
   fetchTrailMissing: 'Set STARTUP_FETCH_LOG_PATH=.research-cache/<runId>/_fetch-log.jsonl in your shell BEFORE running fetch-url so check-chapter can audit cited URLs against actual retrievals; the default gate warns and --strict fails when the trail is missing.',
   displayCompleteness: 'Populate the report-meta field that drives the display surface (companyProfile.<field>, coverFacts items, claimRefs); when a field is genuinely unavailable, leave it null only for fields that document a null path. check-report-meta emits this only as a warning and has no acknowledgedWarnings opt-out.',
   metricDrift: ({ metric } = {}) =>

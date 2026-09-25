@@ -293,12 +293,9 @@ function loadEarlierChapterUrls(reportFolder, currentSpec, allSpecs) {
   return urls;
 }
 
-// Build a Set of canonical URLs that fetch-url actually retrieved during this
-// run. The fetch trail is written by .agents/skills/fetch-url/scripts/fetch.mjs
-// when env STARTUP_FETCH_LOG_PATH is set (the workflow points it at
-// `.research-cache/_fetch-log.jsonl`). Returns null when the log file is
-// absent so checkSourceFetchTrail() can skip silently for older reports or
-// interactive runs that did not enable the trail.
+// Failed attempts belong in the audit trail, but do not verify a citation.
+// Return null for a missing trail so the caller can distinguish it from a
+// trail that contains no successful retrievals.
 function loadFetchTrailUrls(reportFolder) {
   const candidates = [];
   if (process.env.STARTUP_FETCH_LOG_PATH) candidates.push(resolve(process.env.STARTUP_FETCH_LOG_PATH));
@@ -316,6 +313,8 @@ function loadFetchTrailUrls(reportFolder) {
       let entry;
       try { entry = JSON.parse(line); }
       catch { continue; }
+      if (entry?.ok !== true || !Number.isInteger(entry.status)
+          || entry.status < 200 || entry.status >= 300 || entry.error) continue;
       const u1 = canonicalSourceUrl(entry?.url);
       if (u1) urls.add(u1);
       const u2 = canonicalSourceUrl(entry?.finalUrl);
@@ -953,7 +952,7 @@ if (doc) {
   // Cross-check cited URLs against the fetch-url trail file. The trail is
   // written by the fetch-url skill when STARTUP_FETCH_LOG_PATH is set; see
   // loadFetchTrailUrls() above. We emit two warning-class signals:
-  //   - unverifiedSource: trail exists but a cited URL never appeared in it.
+  //   - unverifiedSource: no successful retrieval of a cited URL is recorded.
   //   - fetchTrailMissing: chapter cites sources but no trail file was found
   //     anywhere check-chapter looked. Without it source verification is
   //     silently disabled, which is the most dangerous failure mode for
@@ -968,7 +967,7 @@ if (doc) {
       if (!trail.urls.has(canonical)) {
         warn(
           'unverifiedSource',
-          `${spec.file}: source ${source?.id ?? '?'} cites ${source?.url ?? '(missing url)'} but that URL was not found in the fetch-url trail (${trail.path}); the citation cannot be verified against an actual retrieval.`,
+          `${spec.file}: source ${source?.id ?? '?'} cites ${source?.url ?? '(missing url)'} but no successful retrieval of that URL was found in the fetch-url trail (${trail.path}); failed or incomplete fetch records do not verify the citation.`,
           { id: source?.id, url: source?.url ?? null },
         );
       }

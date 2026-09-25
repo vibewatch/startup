@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { basename, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import yaml from 'js-yaml';
 import { canonicalCacheKey, cleanExtractedText, htmlToText, isAccessErrorResponse, looksLikeBotChallenge, readerUrl } from '../../fetch-url/scripts/fetch.mjs';
@@ -184,6 +184,81 @@ test('fetch CLI recovers an access-error page through a valid reader response', 
   const output = JSON.parse(result.stdout);
   assert.equal(output.ok, true);
   assert.equal(output.retrievalSource, 'reader');
+});
+
+test('chapter fetch provenance requires an explicitly successful retrieval', () => {
+  const root = mkdtempSync(join(tmpdir(), 'source-trail-check-'));
+  const folder = join(root, '20260925000000-fetch-trail');
+  const cases = [
+    { name: 'success', records: [{ ok: true, status: 200 }], verified: true },
+    { name: 'challenge', records: [{ ok: false, status: 200, error: 'Access-error page' }] },
+    { name: 'network', records: [{ ok: false, status: 0, error: 'fetch failed' }] },
+    { name: 'forbidden', records: [{ ok: false, status: 403 }] },
+    { name: 'missing-ok', records: [{ status: 200 }] },
+    { name: 'missing-status', records: [{ ok: true }] },
+    { name: 'error-status', records: [{ ok: true, status: 503 }] },
+    { name: 'explicit-error', records: [{ ok: true, status: 200, error: 'Unusable content' }] },
+    { name: 'string-status', records: [{ ok: true, status: '200' }] },
+    { name: 'truthy-ok', records: [{ ok: 'true', status: 200 }] },
+    { name: 'unlogged', records: [] },
+    { name: 'retry', records: [{ ok: false, status: 403 }, { ok: true, status: 200 }], verified: true },
+    { name: 'later-failure', records: [{ ok: true, status: 200 }, { ok: false, status: 0 }], verified: true },
+    {
+      name: 'redirected', verified: true,
+      records: [{ url: 'https://example.com/old-location', finalUrl: 'https://example.com/redirected', ok: true, status: 200 }],
+    },
+    {
+      name: 'failed-redirect',
+      records: [{ url: 'https://example.com/blocked-location', finalUrl: 'https://example.com/failed-redirect', ok: false, status: 422 }],
+    },
+    {
+      name: 'canonical', verified: true, sourceUrl: 'https://www.example.com/canonical/?utm_source=fixture#section',
+      records: [{ ok: true, status: 200 }],
+    },
+    {
+      name: 'reader', verified: true,
+      records: [{ finalUrl: 'https://r.jina.ai/https://example.com/reader', source: 'reader', ok: true, status: 200 }],
+    },
+  ];
+  const sources = cases.map((item, index) => ({
+    id: `SO${String(index + 1).padStart(3, '0')}`,
+    url: item.sourceUrl ?? `https://example.com/${item.name}`,
+    publisher: 'Fixture publisher', title: `Source ${item.name}`,
+    date: '2026-09-25', accessDate: '2026-09-25', accessStatus: 'ok',
+    sourceType: 'official', reputationTier: 'high', independence: 'company',
+    stance: 'confirming', topics: ['fixture'],
+  }));
+  const trailPath = join(folder, 'fetch.jsonl');
+  const trail = cases.flatMap((item) => item.records.map((record) => ({
+    url: `https://example.com/${item.name}`, ...record,
+  })));
+  try {
+    mkdirSync(folder);
+    writeFileSync(trailPath, ['{malformed', 'null', '', ...trail.map((entry) => JSON.stringify(entry))].join('\n'));
+    writeFileSync(join(folder, '01-company-overview.yaml'), yaml.dump({
+      schemaVersion: 'report-v2', artifact: 'company-overview',
+      slug: basename(folder).slice(15), runDate: '2026-09-25',
+      company: { name: 'Fetch trail fixture' },
+      chapter: { number: 1, title: 'Company Overview', summary: 'Isolated source-provenance fixture.' },
+      sections: [], tables: [], figures: [],
+      localEvidence: { sources, claims: [], searchQueries: [], researchQuestions: [], gaps: [] },
+    }));
+    const result = spawnSync(process.execPath, [
+      '.agents/skills/startup-research/scripts/check-chapter.mjs',
+      folder, '01-company-overview.yaml', '--format', 'json',
+    ], { encoding: 'utf8', env: { ...process.env, STARTUP_FETCH_LOG_PATH: trailPath } });
+    assert.equal(result.status, 1, result.stderr); // The small fixture intentionally misses content floors.
+    assert.ok(result.stdout.trim(), result.stderr);
+    const output = JSON.parse(result.stdout);
+    const unverified = output.warnings.filter((issue) => issue.code === 'unverifiedSource');
+    assert.deepEqual(unverified.map((issue) => issue.id),
+      sources.filter((_, index) => !cases[index].verified).map((source) => source.id));
+    assert.ok(unverified.every((issue) => issue.message.includes('successful')));
+    assert.ok(unverified.every((issue) => issue.fix.includes('successful')));
+    assert.equal(output.warnings.some((issue) => issue.code === 'fetchTrailMissing'), false);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
 });
 
 test('source quotes allow typography, whitespace, and ordered omissions', () => {
