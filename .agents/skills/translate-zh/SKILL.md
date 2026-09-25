@@ -119,7 +119,10 @@ not a clean bill of health. Missing overlays retain the website's English
 fallback and are not quality-gate errors. Independent factual accuracy still
 requires source review.
 The metric check treats `x`, `×`, and `倍` as equivalent multipliers and
-compares both endpoints of multiplier ranges. Other unit or currency
+compares both endpoints of multiplier and percentage ranges. Conventional
+retention-relative phrases such as `NRR above 100` or `NRR trends toward low 100s`
+allow an explicit `%` in Chinese; nearby customer and cohort counts do not.
+Other unit or currency
 conversions still require source comparison; do not remove faithful units
 merely to make token-level checks pass.
 

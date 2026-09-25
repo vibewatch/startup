@@ -100,10 +100,15 @@ function normalizedTokens(value) {
 function normalizedMetricTokens(value) {
   // A fiscal year is not an ARR/GMV value, even when its label precedes the metric.
   const separated = value.replace(/\bFY\s*((?:19|20)\d{2})E?\b/gi, '$1;');
-  // A trailing multiplier applies to both endpoints of a range.
-  const expanded = separated.replace(
-    /(\d+(?:[.,]\d+)*)\s*([-–—])\s*(\d+(?:[.,]\d+)*)\s*(?:x|×|倍)/gi,
-    '$1x$2$3x',
+  // Retention-relative phrases imply percentages, unlike nearby customer/cohort counts.
+  const retention = separated.replace(
+    /\b((?:NRR|GRR|NDR)\s+(?:(?:is|in|the|low|mid|high|teens|trends?)\b[\s-]*)*(?:above|below|towards?|around|near|of|at)\s+(?:(?:low|mid|high)[ -]+)?)(\d{2,3}(?:\.\d+)?)(s)?(?=\s*(?:[,.;]|$))/gi,
+    '$1$2%$3',
+  );
+  // A trailing multiplier or percentage applies to both endpoints of a range.
+  const expanded = retention.replace(
+    /(\d+(?:[.,]\d+)*)\s*([-–—])\s*(\d+(?:[.,]\d+)*)\s*(x|×|倍|%)/gi,
+    '$1$4$2$3$4',
   );
   return (expanded.match(metricToken) ?? [])
     .map((token) => token.replace(/\s+/g, '').replace(/,/g, '').replace(/[×倍]$/u, 'x').toLowerCase())

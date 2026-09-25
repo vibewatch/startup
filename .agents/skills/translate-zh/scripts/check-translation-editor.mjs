@@ -95,6 +95,27 @@ const checks = [
       .some((issue) => issue.code === 'metric-preservation'),
     `multiplier comparison missed a changed endpoint, unit, or omitted range: ${zh}`,
   ]),
+  ...[
+    ['30–40% growth, NRR in the mid-teens above 100', '30–40% 增长，NRR 高于 100%，增量在十几个点的中段'],
+    ['Growth falls below ~25%, NRR trends toward low 100s', '增长跌破约 25%，NRR 向 100% 出头滑落'],
+    ['GRR is around 90.', 'GRR 约为 90%。'],
+  ].map(([en, zh]) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor: true }).length === 0,
+    `faithful percentage ranges and conventional retention units must pass: ${zh}`,
+  ]),
+  ...[
+    ['Growth is 30-40%.', '增长为 35–40%。'],
+    ['Growth is 30-40%.', '增长为 30–45%。'],
+    ['Growth is 30-40%.', '增长为 40%。'],
+    ['NRR trends toward low 100s.', 'NRR 向 120% 出头滑落。'],
+    ['NRR is above 110.', 'NRR 高于 100%。'],
+    ['NRR for 100 customers.', 'NRR 覆盖 100% 的客户。'],
+    ['NRR measured across 100 cohorts.', 'NRR 覆盖 100% 的批次。'],
+  ].map(([en, zh]) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor: true })
+      .some((issue) => issue.code === 'metric-preservation'),
+    `percentage normalization must retain endpoints and must not turn counts into rates: ${zh}`,
+  ]),
   [
     checkPairQuality(fiscalYearSource, fullReport('累计收入里程碑须在 FY2029 财年底前完成。')).length === 0
       && checkPairQuality(fiscalYearSource, fullReport('累计收入里程碑须在 FY2030 财年底前完成。'))
