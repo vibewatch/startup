@@ -9,7 +9,7 @@ function usage(code = 0) {
 }
 
 const invariantToken = /\b(?:FY\s*)?(?:19|20)\d{2}\b|\b\d{4}-\d{2}-\d{2}\b/gi;
-const metricToken = /(?:[$€£¥₦]\s*)?\d+(?:[.,]\d+)*(?:(?:[KMBT]|x|×)|\s?(?:%|bps|ARR|MRR|GMV|TPV|NPL|IRR))?/gi;
+const metricToken = /(?:[$€£¥₦]\s*)?\d+(?:[.,]\d+)*(?:[KMBT]|\s?(?:x|×|倍|%|bps|ARR|MRR|GMV|TPV|NPL|IRR))?/gi;
 const stylePatterns = [
   /对于[^。！？；]{1,24}而言/u,
   /在[^。！？；]{1,20}方面/u,
@@ -49,12 +49,12 @@ const hedgeRules = [
   { en: /\breportedly\b/i, zh: /据报道|据称/u },
   {
     en: /\bclaims?\b/i,
-    zh: /声称|称|说法|主张/u,
-    exclude: /\b(?:for|in|of|on)\s+claims?\s+(?:modeling|modelling|processing|handling|management|adjudication|submission|settlement)\b/gi,
+    zh: /声称|称|说法|主张|表述/u,
+    exclude: /\b(?:(?:for|in|of|on)\s+claims?\s+(?:modeling|modelling|processing|handling|management|adjudication|submission|settlement)|patent\s+claims?\s+(?:drafting|construction|interpretation|scope))\b/gi,
   },
-  { en: /\bnot yet\b/i, zh: /尚未|还未|仍未|还没有|目前没有|尚无/u },
-  { en: /\b(?:unproven|not proven)\b/i, zh: /未经证实|未获证实|尚未证明|无法证明|尚未验证|未经验证|未获验证/u },
-  { en: /\bno public\b/i, zh: /没有公开|无公开|尚无公开|未见公开|未发现公开/u },
+  { en: /\bnot yet\b/i, zh: /尚未|还未|仍未|还没|目前没有|尚无|尚不|还不|仍不/u },
+  { en: /\b(?:unproven|not proven)\b/i, zh: /未经证实|未获证实|未(?:被)?(?:证明|验证|证实)|无法证明|未经验证|未获验证/u },
+  { en: /\bno public\b/i, zh: /没有公开|无公开|尚无公开|未见公开|未发现公开|未公开|公开(?:资料|信息|记录|文件|数据)(?:中)?(?:未|尚未|没有|尚无)/u },
 ];
 const urlToken = /(?:https?:\/\/|www\.)[^\s<>()（）「」，。；：！？]+|\b(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s<>()（）「」，。；：！？]*)?/gi;
 const descriptorWords = new Set([
@@ -92,8 +92,13 @@ function normalizedTokens(value) {
 }
 
 function normalizedMetricTokens(value) {
-  return (value.match(metricToken) ?? [])
-    .map((token) => token.replace(/\s+/g, '').replace(/,/g, '').toLowerCase())
+  // A trailing multiplier applies to both endpoints of a range.
+  const expanded = value.replace(
+    /(\d+(?:[.,]\d+)*)\s*([-–—])\s*(\d+(?:[.,]\d+)*)\s*(?:x|×|倍)/gi,
+    '$1x$2$3x',
+  );
+  return (expanded.match(metricToken) ?? [])
+    .map((token) => token.replace(/\s+/g, '').replace(/,/g, '').replace(/[×倍]$/u, 'x').toLowerCase())
     .filter((token) => /[$€£¥₦%]|bps|[kmbt]$|arr|mrr|gmv|tpv|npl|irr|x$|×$/i.test(token) || /^(?:19|20)\d{2}$/.test(token))
     .sort();
 }

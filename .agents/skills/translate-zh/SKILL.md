@@ -107,6 +107,20 @@ Chinese summary.
 
 Use `npm run audit:translations-zh -- --limit 20` for a non-blocking corpus sample. The audit reports hard semantic/style errors separately from advisory glossary drift, untranslated ordinary descriptors, half-width Chinese punctuation, and dense `的` chains. Use the report to target only weak leaves; do not rewrite clean overlays.
 
+Add `--strict-editor` to include metric fidelity and the wider editorial
+soundcheck. Omit `--limit` to audit the entire corpus. JSON output records
+`strictEditor` so before/after counts cannot be confused across gate modes.
+The audit is non-blocking in either mode: inspect `errorCount`, not just its
+exit status. It checks existing overlay pairs and reports absent translations
+separately as `missingOverlayPairs`; an unassessed report has `null` pass rates,
+not a clean bill of health. Missing overlays retain the website's English
+fallback and are not quality-gate errors. Independent factual accuracy still
+requires source review.
+The metric check treats `x`, `×`, and `倍` as equivalent multipliers and
+compares both endpoints of multiplier ranges. Other unit or currency
+conversions still require source comparison; do not remove faithful units
+merely to make token-level checks pass.
+
 To repair existing overlays one report at a time, seed the cache from the
 current Chinese files instead of retranslating from English:
 
@@ -132,6 +146,10 @@ npm run translate:zh -- finalize-full <run-id> --keep-cache
 npm run translate:zh -- measure <run-id>
 npm run translate:zh -- cleanup <run-id>
 ```
+
+`repair-init` and `measure` use the standard gate. For a strict-quality repair,
+also save `audit:translations-zh -- --report <run-id> --strict-editor --format json`
+before and after editing; a standard `0 -> 0` does not measure strict improvements.
 
 The measurement is saved as `quality.after.json` and reports error/warning
 counts against the repair baseline. Process only one report at a time so each

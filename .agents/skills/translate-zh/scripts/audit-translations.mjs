@@ -7,16 +7,17 @@ import { checkPairQuality } from './check-translation-quality.mjs';
 const reportsDir = resolve('reports');
 
 function usage(code = 0) {
-  console.error('Usage: audit-translations.mjs [--limit <count>] [--report <run-id>] [--format text|json]');
+  console.error('Usage: audit-translations.mjs [--limit <count>] [--report <run-id>] [--strict-editor] [--format text|json]');
   process.exit(code);
 }
 
 function parseArgs(argv) {
-  const args = { limit: 0, report: null, format: 'text' };
+  const args = { limit: 0, report: null, strictEditor: false, format: 'text' };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--limit') args.limit = Number(argv[++i]);
     else if (arg === '--report') args.report = argv[++i] ?? '';
+    else if (arg === '--strict-editor') args.strictEditor = true;
     else if (arg === '--format') args.format = argv[++i] ?? '';
     else if (arg === '-h' || arg === '--help') usage();
     else usage(1);
@@ -54,12 +55,14 @@ if (args.limit) folders = folders.slice(-args.limit);
 const findings = [];
 const reports = [];
 let checkedPairs = 0;
+let missingOverlayPairs = 0;
 let cleanPairs = 0;
 let hardPassPairs = 0;
 for (const folder of folders) {
   const report = {
     runId: folder.split('/').pop(),
     checkedPairs: 0,
+    missingOverlayPairs: 0,
     cleanPairs: 0,
     hardPassPairs: 0,
     errorCount: 0,
@@ -68,10 +71,15 @@ for (const folder of folders) {
   for (const basename of ['summary-card', 'full-report']) {
     const enPath = join(folder, `${basename}.yaml`);
     const zhPath = join(folder, `${basename}.zh.yaml`);
-    if (!existsSync(enPath) || !existsSync(zhPath)) continue;
+    if (!existsSync(enPath)) continue;
+    if (!existsSync(zhPath)) {
+      missingOverlayPairs += 1;
+      report.missingOverlayPairs += 1;
+      continue;
+    }
     checkedPairs += 1;
     report.checkedPairs += 1;
-    const issues = checkPairQuality(load(enPath), load(zhPath));
+    const issues = checkPairQuality(load(enPath), load(zhPath), { strictEditor: args.strictEditor });
     if (!issues.length) {
       cleanPairs += 1;
       report.cleanPairs += 1;
@@ -92,10 +100,10 @@ for (const folder of folders) {
   }
   report.hardPassRatePct = report.checkedPairs
     ? Number(((report.hardPassPairs / report.checkedPairs) * 100).toFixed(1))
-    : 100;
+    : null;
   report.cleanRatePct = report.checkedPairs
     ? Number(((report.cleanPairs / report.checkedPairs) * 100).toFixed(1))
-    : 100;
+    : null;
   reports.push(report);
 }
 
@@ -105,12 +113,14 @@ for (const finding of findings) {
 }
 const result = {
   schemaVersion: 'translation-quality-audit-v1',
+  strictEditor: args.strictEditor,
   folders: folders.length,
   checkedPairs,
+  missingOverlayPairs,
   cleanPairs,
   hardPassPairs,
-  hardPassRatePct: checkedPairs ? Number(((hardPassPairs / checkedPairs) * 100).toFixed(1)) : 100,
-  cleanRatePct: checkedPairs ? Number(((cleanPairs / checkedPairs) * 100).toFixed(1)) : 100,
+  hardPassRatePct: checkedPairs ? Number(((hardPassPairs / checkedPairs) * 100).toFixed(1)) : null,
+  cleanRatePct: checkedPairs ? Number(((cleanPairs / checkedPairs) * 100).toFixed(1)) : null,
   errorCount: findings.filter((finding) => finding.severity === 'error').length,
   warningCount: findings.filter((finding) => finding.severity === 'warning').length,
   byCode: Object.fromEntries(Object.entries(byCode).sort((a, b) => b[1] - a[1])),
@@ -121,6 +131,7 @@ const result = {
 if (args.format === 'json') {
   console.log(JSON.stringify(result, null, 2));
 } else {
-  console.log(`[audit-translations] ${checkedPairs} pair(s), hard-pass ${result.hardPassRatePct}%, fully clean ${result.cleanRatePct}%, ${result.errorCount} error(s), ${result.warningCount} warning(s).`);
+  const rates = checkedPairs ? `hard-pass ${result.hardPassRatePct}%, fully clean ${result.cleanRatePct}%` : 'no overlay pairs checked';
+  console.log(`[audit-translations] ${args.strictEditor ? 'strict editor' : 'standard'}: ${checkedPairs} pair(s), ${rates}, ${result.errorCount} error(s), ${result.warningCount} warning(s), ${missingOverlayPairs} missing overlay pair(s).`);
   for (const [code, count] of Object.entries(result.byCode)) console.log(`  ${code}: ${count}`);
 }
