@@ -169,6 +169,26 @@ const checks = [
       && checkPairQuality(assertionSource, fullReport('公司称新系统改善了理赔建模的运营基准。')).length === 0,
     'nominal claims exclusion hid an actual company assertion',
   ],
+  ...[
+    ['The platform normalizes clinical, claims, and operational data for hospitals.', '平台将临床、理赔和运营数据标准化，供医院使用。'],
+    ['The platform connects fragmented clinical, claims, and operational systems for healthcare teams.', '平台为医疗团队连接分散的临床、理赔和运营系统。'],
+    ['The platform normalizes clinical, claims and operational data for hospitals.', '平台将临床、理赔和运营数据标准化，供医院使用。'],
+    ['Unified data reduces manual coordination between EHRs, claims systems, and staff.', '统一数据减少 EHR、理赔系统与员工之间的手工协调。'],
+  ].flatMap(([en, zh]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor }).length === 0,
+    `coordinated medical claims nouns must not require attribution (strict=${strictEditor}): ${en}`,
+  ])),
+  ...[
+    ['The company claims systems integration reduces administrative work.', '系统集成减少行政工作。'],
+    ['The company claims strong results from clinical, claims, and operational data.', '临床、理赔和运营数据带来显著成果。'],
+    ['It unifies clinical, claims, and operational data, and the company claims strong results.', '它统一临床、理赔和运营数据，并取得显著成果。'],
+    ['The company claims it reduces manual coordination between EHRs, claims systems, and staff.', '它减少 EHR、理赔系统与员工之间的手工协调。'],
+  ].flatMap(([en, zh]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor })
+      .some((issue) => issue.code === 'hedge-preservation')
+      && checkPairQuality(fullReport(en), fullReport(`公司称，${zh}`), { strictEditor }).length === 0,
+    `medical noun exclusions must retain a separate company assertion (strict=${strictEditor}): ${en}`,
+  ])),
   [
     checkPairQuality(patentSource, fullReport('商标检索分析、专利权利要求起草、自由实施检索')).length === 0
       && checkPairQuality(patentAssertionSource, fullReport('新产品改善了专利权利要求起草。'))

@@ -145,9 +145,12 @@ current Chinese files instead of retranslating from English:
 
 Review audit findings against the source before editing. Fiscal-year prefixes
 (`FY2029`), URL paths, and nominal insurance terms such as `for claims modeling`
-are not translation omissions or assertions. Correct a demonstrated checker
-false positive with regression coverage rather than adding unrelated attribution
-or changing preserved URLs merely to satisfy a pattern.
+are not translation omissions or assertions. In medical-data lists such as
+`clinical, claims, and operational data` or `EHRs, claims systems, and staff`,
+`claims` means insurance claims, not an attributed assertion. A separate
+`the company claims` in the same leaf still requires attribution. Correct a
+demonstrated checker false positive with regression coverage rather than adding
+unrelated attribution or changing preserved URLs merely to satisfy a pattern.
 
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json

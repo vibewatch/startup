@@ -51,7 +51,7 @@ const hedgeRules = [
   {
     en: /\bclaims?\b/i,
     zh: /声称|称|说法|主张|表述|断言/u,
-    exclude: /\b(?:(?:for|in|of|on)\s+claims?\s+(?:modeling|modelling|processing|handling|management|adjudication|submission|settlement)|patent\s+claims?\s+(?:drafting|construction|interpretation|scope)|small[- ]claims?\s+(?:processing|courts?))\b/gi,
+    exclude: /\b(?:(?:for|in|of|on)\s+claims?\s+(?:modeling|modelling|processing|handling|management|adjudication|submission|settlement)|patent\s+claims?\s+(?:drafting|construction|interpretation|scope)|small[- ]claims?\s+(?:processing|courts?)|clinical\s*,\s*claims?\s*,?\s+and\s+operational\s+(?:data|systems)|EHRs?\s*,\s*claims?\s+systems)\b/gi,
   },
   { en: /\bnot yet\b/i, zh: /尚未|还未|仍未|还没|目前没有|尚无|尚不|还不|仍不/u },
   { en: /\b(?:unproven|not proven)\b/i, zh: /未经证实|未获证实|未(?:被)?(?:证明|验证|证实)|无法证明|未经验证|未获验证/u },
