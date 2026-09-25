@@ -104,6 +104,38 @@ const checks = [
     'fiscal-year matching must accept FY prefixes without hiding changed or missing years',
   ],
   [
+    checkPairQuality(fullReport('BNPL Market GTV (est. 2024)'), fullReport('BNPL 市场 GTV（2024E）'), { strictEditor: true }).length === 0
+      && checkPairQuality(fullReport('BNPL Market GTV (est. 2024)'), fullReport('BNPL 市场 GTV（2025E）'), { strictEditor: true })
+        .some((issue) => issue.code === 'year-preservation'),
+    'forecast suffixes must preserve the year without hiding a changed estimate year',
+  ],
+  [
+    checkPairQuality(fullReport('ARR exceeded $4B in FY2024.'), fullReport('FY2024 ARR 超过 $4B。'), { strictEditor: true }).length === 0
+      && checkPairQuality(fullReport('ARR exceeded $4B in FY2024.'), fullReport('FY2024 ARR 超过 $5B。'), { strictEditor: true })
+        .some((issue) => issue.code === 'metric-preservation')
+      && checkPairQuality(fullReport('The multiple is 2024x.'), fullReport('倍数为 2025x。'), { strictEditor: true })
+        .some((issue) => issue.code === 'metric-preservation'),
+    'fiscal years must not absorb an adjacent metric label or hide changed metric values',
+  ],
+  ...[
+    ['Filed on 2026-09-25.', '2026 年 9 月 25 日提交。'],
+    ['Filed on 2026-9-5.', '2026-09-05 提交。'],
+    ['Filed on 2026-09-25; amended on 2026-09-26.', '2026 年 9 月 25 日提交；2026 年 9 月 26 日修订。'],
+  ].map(([en, zh]) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor: true }).length === 0,
+    `faithful localized calendar dates must pass: ${zh}`,
+  ]),
+  ...[
+    ['Filed on 2026-09-25.', '2026-09-26 提交。'],
+    ['Filed on 2026-09-25.', '2026 年 10 月 25 日提交。'],
+    ['Filed on 2026-09-25.', '2026 年提交。'],
+    ['Filed on 2026-09-25; amended on 2026-09-26.', '2026 年 9 月 25 日提交并修订。'],
+  ].map(([en, zh]) => [
+    checkPairQuality(fullReport(en), fullReport(zh))
+      .some((issue) => issue.code === 'year-preservation'),
+    `date checking must retain month/day anchors, not just the year: ${zh}`,
+  ]),
+  [
     checkPairQuality(fullReport('groq.com/pricing (official)'), fullReport('groq.com/pricing（官方定价页）')).length === 0
       && checkPairQuality(fullReport('https://example.com/revenue (official)'), fullReport('https://example.com/revenue（官方页面）')).length === 0
       && checkPairQuality(fullReport('Pricing at groq.com/pricing'), fullReport('groq.com/pricing 的 pricing'))

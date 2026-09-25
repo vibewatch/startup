@@ -6,13 +6,15 @@ import {
   readFileSync,
   writeFileSync,
 } from 'node:fs';
-import { basename, dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import {
   EXIT,
   FINAL_ARTIFACTS,
   REPORT_META_FILE,
+  getAnalysisArtifacts,
   isRunId,
+  loadWorkflowConfig,
   researchCacheDir,
 } from './utils.mjs';
 
@@ -22,13 +24,14 @@ const contextScript = join(scriptDir, 'load-chapter-runtime-context.mjs');
 const checkReportScript = join(scriptDir, 'check-report.mjs');
 
 function usage(code = EXIT.ok) {
-  console.error('Usage: run-report-finalizer.mjs --report-folder <path> [--timeout-seconds <60-3600>] [--copilot-bin <path>] [--model-override <model> --effort-override <effort>] [--disable-escalation] [--dry-run] [--format json|text]');
+  console.error('Usage: run-report-finalizer.mjs --report-folder <path> [--review-findings <run-cache-json>] [--timeout-seconds <60-3600>] [--copilot-bin <path>] [--model-override <model> --effort-override <effort>] [--disable-escalation] [--dry-run] [--format json|text]');
   process.exit(code);
 }
 
 function parseArgs(argv) {
   const args = {
     reportFolder: '',
+    reviewFindings: '',
     timeoutSeconds: 900,
     copilotBin: process.env.COPILOT_BIN || 'copilot',
     modelOverride: '',
@@ -40,6 +43,10 @@ function parseArgs(argv) {
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === '--report-folder') args.reportFolder = argv[++index] ?? '';
+    else if (arg === '--review-findings') {
+      args.reviewFindings = argv[++index] ?? '';
+      if (!args.reviewFindings) usage(EXIT.failure);
+    }
     else if (arg === '--timeout-seconds') args.timeoutSeconds = Number(argv[++index] ?? 0);
     else if (arg === '--copilot-bin') args.copilotBin = argv[++index] ?? '';
     else if (arg === '--model-override') args.modelOverride = argv[++index] ?? '';
@@ -72,7 +79,7 @@ function runJson(script, argv) {
   return JSON.parse(result.stdout);
 }
 
-function finalizerPrompt({ reportFolder, runId, resultsPath, fetchLogPath }) {
+function finalizerPrompt({ reportFolder, runId, resultsPath, fetchLogPath, reviewFindings }) {
   return `Use the startup-research skill to converge and finalize the existing report at ${reportFolder}. Work directly; do not launch subagents or background agents.
 
 Inputs:
@@ -84,10 +91,16 @@ Read references/rules.md and the report-meta section of references/contracts.md.
 
 Binding sequence:
 1. Walk chapters in configured order and run normal then strict validation.
-2. For a timed-out/failed worker or a missing chapter, complete only that chapter directly from its worker-input context and pool. For completed workers, repair only the named normal, strict, or convergence validation failures in worker-results.json; never rewrite a chapter whose validation passed. Enforce each chapter's convergence retry budget.
+2. For a timed-out/failed worker or a missing chapter, complete only that chapter directly from its worker-input context and pool. For completed workers, repair only named validator failures in worker-results.json or subsequent checks${reviewFindings ? ' and the source-review findings below' : ''}; never rewrite unrelated passing content. Enforce each chapter's convergence retry budget.
 3. Fast chapters may use only successful prefetched URLs in that chapter's worker-input pool. Never borrow a URL from a sibling pool even if it appears in search-bundle fetchedSources. Do not search, fetch, use curl, add a URL, or write to the fetch trail.
-4. Author report-meta.yaml only after every chapter passes strict, validate it, then run finalize-report.mjs.
-5. Fix only concrete validator findings with already-prefetched evidence. Do not inspect historical reports, modify repository code/config/docs, or use git.
+4. Author report-meta.yaml only after every chapter passes strict, validate it, then run finalize-report.mjs.${reviewFindings ? ' Preserve existing metadata except where a named finding or a corrected supporting claim requires an update.' : ''}
+5. Fix only concrete validator findings${reviewFindings ? ' or the supplied source-review findings' : ''} with already-prefetched evidence. Never invent a replacement source or fact to satisfy a gate. Do not inspect historical reports, modify repository code/config/docs, or use git.
+${reviewFindings ? `
+Source-review findings (human/agent review, not automated validator output):
+${JSON.stringify(reviewFindings, null, 2)}
+
+Resolve every listed issue against the original fetched text, including its linked claims, tables, figures, cover facts, and metadata. Preserve date, unit, metric denominator, and attribution. If the available evidence does not support a metric, remove the unsupported precision and document the gap; do not invent a midpoint or relabel an assumption as reported. Preserve valid historical comparisons by dating them explicitly. Do not edit the review-findings input. In your final response, account for every finding and state any unresolved blocker. A schema pass alone does not establish factual accuracy.
+` : ''}
 
 Do not report success unless summary-card.yaml, evidence.yaml, full-report.yaml, and report-meta.yaml exist and finalize-report prints its pipeline-complete line.`;
 }
@@ -119,6 +132,31 @@ if (!existsSync(reportFolder) || !isRunId(runId)) {
   process.exit(EXIT.notFound);
 }
 const cacheDir = researchCacheDir(runId);
+let reviewFindings = null;
+const reviewFindingsPath = args.reviewFindings ? resolve(args.reviewFindings) : null;
+if (reviewFindingsPath) {
+  try {
+    if (!reviewFindingsPath.startsWith(`${cacheDir}${sep}`)) {
+      throw new Error(`review findings must live under ${cacheDir}`);
+    }
+    reviewFindings = JSON.parse(readFileSync(reviewFindingsPath, 'utf8'));
+    const authoredFiles = new Set([
+      REPORT_META_FILE,
+      ...getAnalysisArtifacts(loadWorkflowConfig({ reportFolder })).map((chapter) => chapter.file),
+    ]);
+    if (reviewFindings?.runId !== runId
+        || !Array.isArray(reviewFindings.issues) || reviewFindings.issues.length === 0
+        || reviewFindings.issues.some((issue) => (
+          !issue || !['path', 'message', 'fix'].every((key) => typeof issue[key] === 'string' && issue[key].trim())
+          || !authoredFiles.has(issue.path.split(':')[0])
+        ))) {
+      throw new Error('expected this runId and nonempty issues with authored-file path, message, and fix');
+    }
+  } catch (error) {
+    console.error(`[run-report-finalizer] invalid review findings: ${error.message}`);
+    process.exit(EXIT.failure);
+  }
+}
 const resultsPath = join(cacheDir, 'worker-results.json');
 const bundlePath = join(cacheDir, 'search-bundle.json');
 if (!existsSync(resultsPath) || !existsSync(bundlePath)) {
@@ -152,6 +190,8 @@ const plan = {
   resultsPath,
   bundlePath,
   fetchLogPath,
+  reviewFindingsPath,
+  reviewFindingCount: reviewFindings?.issues.length ?? 0,
 };
 if (args.dryRun) {
   console.log(JSON.stringify(plan, null, 2));
@@ -191,7 +231,7 @@ async function runAttempt(attemptRoute, attemptNumber) {
     '--autopilot',
     '--excluded-tools', 'web_fetch',
     '--model', attemptRoute.model,
-    '-p', finalizerPrompt({ reportFolder, runId, resultsPath, fetchLogPath }),
+    '-p', finalizerPrompt({ reportFolder, runId, resultsPath, fetchLogPath, reviewFindings }),
   ];
   if (attemptRoute.reasoningEffort !== 'default') {
     copilotArgs.splice(copilotArgs.indexOf('-p'), 0, '--effort', attemptRoute.reasoningEffort);

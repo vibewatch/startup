@@ -8,7 +8,8 @@ function usage(code = 0) {
   process.exit(code);
 }
 
-const invariantToken = /\b(?:FY\s*)?(?:19|20)\d{2}\b|\b\d{4}-\d{2}-\d{2}\b/gi;
+const invariantToken = /\b(?:FY\s*)?(?:19|20)\d{2}E?\b/gi;
+const calendarDateToken = /\b((?:19|20)\d{2})(?:-(\d{1,2})-(\d{1,2})\b|\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日)/gu;
 const metricToken = /(?:[$€£¥₦]\s*)?\d+(?:[.,]\d+)*(?:[KMBT]|\s?(?:x|×|倍|%|bps|ARR|MRR|GMV|TPV|NPL|IRR))?/gi;
 const stylePatterns = [
   /对于[^。！？；]{1,24}而言/u,
@@ -88,12 +89,19 @@ function load(path) {
 }
 
 function normalizedTokens(value) {
-  return (value.match(invariantToken) ?? []).map((token) => token.replace(/^FY\s*/i, '').replace(/\s+/g, '').toLowerCase());
+  const years = (value.match(invariantToken) ?? [])
+    .map((token) => token.replace(/^FY\s*/i, '').replace(/E$/i, '').replace(/\s+/g, ''));
+  const dates = [...value.matchAll(calendarDateToken)].map((match) => (
+    `${match[1]}-${(match[2] ?? match[4]).padStart(2, '0')}-${(match[3] ?? match[5]).padStart(2, '0')}`
+  ));
+  return [...years, ...dates];
 }
 
 function normalizedMetricTokens(value) {
+  // A fiscal year is not an ARR/GMV value, even when its label precedes the metric.
+  const separated = value.replace(/\bFY\s*((?:19|20)\d{2})E?\b/gi, '$1;');
   // A trailing multiplier applies to both endpoints of a range.
-  const expanded = value.replace(
+  const expanded = separated.replace(
     /(\d+(?:[.,]\d+)*)\s*([-–—])\s*(\d+(?:[.,]\d+)*)\s*(?:x|×|倍)/gi,
     '$1x$2$3x',
   );

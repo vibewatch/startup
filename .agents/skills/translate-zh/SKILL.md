@@ -55,6 +55,8 @@ npm run translate:zh -- finalize-full "$REPORT"
 
 Finalization runs a conservative quality gate after the structural check. It fails when a translatable leaf drops year/date anchors or explicit uncertainty qualifiers, or retains a high-confidence translationese pattern from the soundcheck. It emits advisory findings for glossary drift, untranslated ordinary descriptors, half-width Chinese punctuation, and dense `的` chains. Repair only the flagged cached leaf or part and rerun the narrow finalize command.
 
+Calendar-date checks preserve ISO month/day anchors as well as years, accepting equivalent Chinese dates such as `2026-09-25` and `2026 年 9 月 25 日`. Fiscal-year prefixes and forecast suffixes (`FY2024`, `2024E`) normalize to the same year without allowing a changed year. These token checks do not establish complete numeric or semantic fidelity; verify the source proposition and metric meaning as well.
+
 ## Mandatory editorial pass
 
 Automated publication uses a second, source-anchored editorial pass after the

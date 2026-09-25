@@ -1,4 +1,5 @@
 #!/usr/bin/env node
+import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import {
   chmodSync,
@@ -86,6 +87,42 @@ try {
   ]));
   const fakeCopilotPath = join(folder, 'fake-copilot.mjs');
   const fakeCopilotLogPath = join(folder, 'fake-copilot.log');
+  const reviewFindingsPath = join(folder, 'source-review.json');
+  const reviewFindings = {
+    runId,
+    issues: [{
+      path: 'report-meta.yaml:summary.keyMetrics.revenueGrowthYoYPct',
+      message: 'Half-year growth is not year-over-year growth.',
+      fix: 'Use null unless the fetched evidence supplies a year-over-year comparison.',
+    }],
+  };
+  const reviewArgs = [
+    '--report-folder', folder, '--review-findings', reviewFindingsPath, '--dry-run', '--format', 'json',
+  ];
+  for (const invalid of [
+    { ...reviewFindings, runId: '20990101000000-another-report' },
+    { runId, issues: [] },
+    { runId, issues: [{ ...reviewFindings.issues[0], path: 'full-report.yaml' }] },
+    { runId, issues: [{ ...reviewFindings.issues[0], path: '../other/report-meta.yaml' }] },
+    { runId, issues: [{ ...reviewFindings.issues[0], fix: '' }] },
+    { runId, issues: [null] },
+  ]) {
+    writeFileSync(reviewFindingsPath, JSON.stringify(invalid));
+    const result = spawnSync(process.execPath, [join(here, 'run-report-finalizer.mjs'), ...reviewArgs], { encoding: 'utf8' });
+    assert.equal(result.status, 1, 'invalid review findings were accepted');
+    assert.match(result.stderr, /invalid review findings/);
+  }
+  writeFileSync(reviewFindingsPath, JSON.stringify(reviewFindings));
+  const reviewPlan = JSON.parse(run('run-report-finalizer.mjs', reviewArgs));
+  assert.equal(reviewPlan.reviewFindingsPath, reviewFindingsPath);
+  assert.equal(reviewPlan.reviewFindingCount, 1);
+  assert.equal(finalizer.reviewFindingCount, 0);
+  const outsideReview = spawnSync(process.execPath, [
+    join(here, 'run-report-finalizer.mjs'), '--report-folder', folder,
+    '--review-findings', join(folder, '..', 'another-run', 'source-review.json'), '--dry-run',
+  ], { encoding: 'utf8' });
+  assert.equal(outsideReview.status, 1);
+  assert.match(outsideReview.stderr, /review findings must live under/);
   writeFileSync(join(folder, '_fetch-log.jsonl'), '{}\n');
   writeFileSync(fakeCopilotPath, `#!/usr/bin/env node
 import { appendFileSync } from 'node:fs';
@@ -96,6 +133,7 @@ process.exit(1);
   const fallbackProbe = spawnSync(process.execPath, [
     join(here, 'run-report-finalizer.mjs'),
     '--report-folder', folder,
+    '--review-findings', reviewFindingsPath,
     '--timeout-seconds', '60',
     '--copilot-bin', fakeCopilotPath,
     '--format', 'json',
@@ -111,6 +149,13 @@ process.exit(1);
     .trim()
     .split('\n')
     .map((line) => JSON.parse(line));
+  for (const invocation of fallbackInvocations) {
+    const prompt = invocation[invocation.indexOf('-p') + 1];
+    assert(prompt.includes(reviewFindings.issues[0].message));
+    assert(prompt.includes(reviewFindings.issues[0].fix));
+    assert(prompt.includes('never rewrite unrelated passing content'));
+    assert(prompt.includes('A schema pass alone does not establish factual accuracy'));
+  }
   const companyWorkflow = readFileSync(resolve('.github/workflows/company.yml'), 'utf8');
   const checks = [
     [plan.runId === basename(folder), 'runner emitted the wrong runId'],
