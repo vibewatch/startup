@@ -1,0 +1,166 @@
+name: Benchmark synthesis models
+
+env:
+  CURL_IMPERSONATE_VERSION: "1.5.6"
+  CURL_IMPERSONATE_TARBALL: "curl-impersonate-v1.5.6.x86_64-linux-gnu.tar.gz"
+  CURL_IMPERSONATE_SHA256: "b60344f63b9ed8806f0e9f7fd357d9f6c9a82aca279ed1e9e257d544885dcbde"
+
+on:
+  workflow_dispatch:
+    inputs:
+      companyName:
+        description: "Unreported company used to build one shared evidence bundle."
+        required: true
+        default: "Ivo"
+        type: string
+      companyUrl:
+        description: "Company URL."
+        required: true
+        default: "https://www.ivo.ai"
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: startup-synthesis-model-benchmark
+  cancel-in-progress: false
+
+jobs:
+  benchmark:
+    name: Compare synthesis models on identical evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      STARTUP_FETCH_LOG_PATH: ${{ github.workspace }}/.research-cache/_fetch-log.jsonl
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js with npm cache
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: |
+            package-lock.json
+            website/package-lock.json
+
+      - name: Install dependencies and Copilot CLI
+        run: |
+          npm ci || npm install --no-audit --no-fund
+          npm install -g @github/copilot
+
+      - name: Restore curl-impersonate cache
+        uses: actions/cache@v5
+        with:
+          path: ~/.local/share/curl-impersonate
+          key: curl-impersonate-${{ runner.os }}-${{ env.CURL_IMPERSONATE_VERSION }}-${{ env.CURL_IMPERSONATE_SHA256 }}
+
+      - name: Install browser-impersonating fetch client
+        run: |
+          set -euo pipefail
+          INSTALL_DIR="$HOME/.local/share/curl-impersonate"
+          if [ ! -x "$INSTALL_DIR/curl_chrome120" ]; then
+            rm -rf "$INSTALL_DIR"
+            mkdir -p "$INSTALL_DIR"
+            cd "$INSTALL_DIR"
+            URL="https://github.com/lexiforest/curl-impersonate/releases/download/v${CURL_IMPERSONATE_VERSION}/${CURL_IMPERSONATE_TARBALL}"
+            curl -sSL --retry 3 --retry-delay 5 -o "$CURL_IMPERSONATE_TARBALL" "$URL"
+            echo "${CURL_IMPERSONATE_SHA256}  ${CURL_IMPERSONATE_TARBALL}" | sha256sum -c -
+            tar -xzf "$CURL_IMPERSONATE_TARBALL"
+            rm -f "$CURL_IMPERSONATE_TARBALL"
+          fi
+          echo "CURL_IMPERSONATE_DIR=$INSTALL_DIR" >> "$GITHUB_ENV"
+
+      - name: Build shared evidence bundle
+        id: bootstrap
+        env:
+          COMPANY: ${{ inputs.companyName }}
+          COMPANY_URL: ${{ inputs.companyUrl }}
+        run: |
+          set -euo pipefail
+          mkdir -p "$(dirname "$STARTUP_FETCH_LOG_PATH")"
+          : > "$STARTUP_FETCH_LOG_PATH"
+          REPORT_FOLDER=$(node .agents/skills/startup-research/scripts/create-report-run.mjs "$COMPANY" --website "$COMPANY_URL")
+          echo "reportFolder=$REPORT_FOLDER" >> "$GITHUB_OUTPUT"
+          npm run research:profile -- --report-folder "$REPORT_FOLDER" --profile fast
+          npm run research:bootstrap -- --report-folder "$REPORT_FOLDER" --company "$COMPANY" --website "$COMPANY_URL" --profile fast
+
+      - name: Benchmark Mini, Gemini, and Grok
+        env:
+          COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
+          REPORT_FOLDER: ${{ steps.bootstrap.outputs.reportFolder }}
+        run: |
+          set -euo pipefail
+          BENCHMARK_DIR="$RUNNER_TEMP/synthesis-model-benchmark"
+          mkdir -p "$BENCHMARK_DIR"
+          RUN_ID=$(basename "$REPORT_FOLDER")
+          mkdir -p "$BENCHMARK_DIR/shared"
+          cp ".research-cache/$RUN_ID/search-bundle.json" "$BENCHMARK_DIR/shared/search-bundle.json"
+          cp "$STARTUP_FETCH_LOG_PATH" "$BENCHMARK_DIR/shared/fetch-log.jsonl"
+          cp "$REPORT_FOLDER/.workflow-snapshot.yaml" "$BENCHMARK_DIR/shared/workflow-snapshot.yaml"
+          mapfile -t CHAPTER_FILES < <(
+            node .agents/skills/startup-research/scripts/load-chapter-runtime-context.mjs --list |
+              node --input-type=module -e 'import fs from "node:fs"; const x=JSON.parse(fs.readFileSync(0,"utf8")); for (const chapter of x.chapters) console.log(chapter.file);'
+          )
+
+          run_model() {
+            local label="$1"
+            local model="$2"
+            local effort="$3"
+            local output_dir="$BENCHMARK_DIR/$label"
+            mkdir -p "$output_dir"
+            for file in "${CHAPTER_FILES[@]}"; do
+              rm -f "$REPORT_FOLDER/$file"
+            done
+            rm -f "$REPORT_FOLDER/report-meta.yaml" "$REPORT_FOLDER/evidence.yaml" "$REPORT_FOLDER/full-report.yaml" "$REPORT_FOLDER/summary-card.yaml"
+            local started_at
+            started_at=$(date +%s)
+            set +e
+            npm run research:workers -- \
+              --report-folder "$REPORT_FOLDER" \
+              --concurrency 8 \
+              --timeout-seconds 900 \
+              --model-override "$model" \
+              --effort-override "$effort" \
+              --disable-escalation
+            local status=$?
+            set -e
+            local wall_seconds=$(( $(date +%s) - started_at ))
+            for file in "${CHAPTER_FILES[@]}"; do
+              if [ -f "$REPORT_FOLDER/$file" ]; then
+                cp "$REPORT_FOLDER/$file" "$output_dir/$file"
+              fi
+            done
+            cp ".research-cache/$RUN_ID/worker-results.json" "$output_dir/worker-results.json"
+            cp -R ".research-cache/$RUN_ID/worker-inputs" "$output_dir/worker-inputs"
+            cp -R ".research-cache/$RUN_ID/worker-logs" "$output_dir/worker-logs"
+            node --input-type=module - "$output_dir/worker-results.json" "$label" "$model" "$effort" "$status" "$wall_seconds" <<'NODE' | tee "$output_dir/summary.txt" >> "$GITHUB_STEP_SUMMARY"
+            import fs from 'node:fs';
+            const [path, label, model, effort, processStatus, wallSeconds] = process.argv.slice(2);
+            const result = JSON.parse(fs.readFileSync(path, 'utf8'));
+            const runs = result.workers ?? [];
+            const credits = runs.reduce((sum, run) => sum + (run.aiCredits ?? 0), 0);
+            const failures = result.validations.filter((validation) => !validation.ok);
+            console.log(`### ${label}`);
+            console.log(`- route: ${model}/${effort}`);
+            console.log(`- process status: ${processStatus}`);
+            console.log(`- wall seconds: ${wallSeconds}`);
+            console.log(`- AI credits: ${credits.toFixed(2)}`);
+            console.log(`- strict passes: ${result.validations.length - failures.length}/${result.validations.length}`);
+            console.log(`- failed dimensions: ${[...new Set(failures.flatMap((failure) => [...(failure.failedDimensions ?? []), ...(failure.unackedWarningDimensions ?? [])]))].join(', ') || 'none'}`);
+            NODE
+          }
+
+          run_model mini gpt-5.4-mini medium
+          run_model gemini gemini-3.8-flash default
+          run_model grok grok-4.7 default
+
+      - name: Upload benchmark evidence
+        if: always()
+        uses: actions/upload-artifact@v6
+        with:
+          name: synthesis-model-benchmark
+          path: ${{ runner.temp }}/synthesis-model-benchmark
+          retention-days: 7

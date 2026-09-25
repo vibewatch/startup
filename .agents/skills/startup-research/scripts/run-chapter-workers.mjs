@@ -24,7 +24,7 @@ const checkChapterScript = join(scriptDir, 'check-chapter.mjs');
 const activeChildren = new Set();
 
 function usage(code = EXIT.ok) {
-  console.error('Usage: run-chapter-workers.mjs --report-folder <path> [--concurrency <1-8>] [--timeout-seconds <60-3600>] [--copilot-bin <path>] [--dry-run] [--format json|text]');
+  console.error('Usage: run-chapter-workers.mjs --report-folder <path> [--concurrency <1-8>] [--timeout-seconds <60-3600>] [--copilot-bin <path>] [--model-override <model> --effort-override <effort>] [--disable-escalation] [--dry-run] [--format json|text]');
   process.exit(code);
 }
 
@@ -34,6 +34,9 @@ function parseArgs(argv) {
     concurrency: 8,
     timeoutSeconds: 900,
     copilotBin: process.env.COPILOT_BIN || 'copilot',
+    modelOverride: '',
+    effortOverride: '',
+    disableEscalation: false,
     dryRun: false,
     format: 'text',
   };
@@ -43,6 +46,9 @@ function parseArgs(argv) {
     else if (arg === '--concurrency') args.concurrency = Number(argv[++index] ?? 0);
     else if (arg === '--timeout-seconds') args.timeoutSeconds = Number(argv[++index] ?? 0);
     else if (arg === '--copilot-bin') args.copilotBin = argv[++index] ?? '';
+    else if (arg === '--model-override') args.modelOverride = argv[++index] ?? '';
+    else if (arg === '--effort-override') args.effortOverride = argv[++index] ?? '';
+    else if (arg === '--disable-escalation') args.disableEscalation = true;
     else if (arg === '--dry-run') args.dryRun = true;
     else if (arg === '--format') args.format = argv[++index] ?? '';
     else if (arg === '--help' || arg === '-h') usage();
@@ -52,6 +58,7 @@ function parseArgs(argv) {
       || !Number.isInteger(args.concurrency) || args.concurrency < 1 || args.concurrency > 8
       || !Number.isInteger(args.timeoutSeconds) || args.timeoutSeconds < 60 || args.timeoutSeconds > 3600
       || !args.copilotBin
+      || Boolean(args.modelOverride) !== Boolean(args.effortOverride)
       || !['json', 'text'].includes(args.format)) {
     usage(EXIT.failure);
   }
@@ -312,6 +319,14 @@ const tasks = roster.chapters.map((chapter) => {
     '--order', String(chapter.order),
     '--report-folder', reportFolder,
   ]);
+  if (args.modelOverride) {
+    context.policy.workerRouting = {
+      ...context.policy.workerRouting,
+      model: args.modelOverride,
+      reasoningEffort: args.effortOverride,
+      escalateTo: null,
+    };
+  }
   const pool = poolByKey.get(chapter.key);
   if (!pool) throw new Error(`search bundle is missing chapter pool ${chapter.key}`);
   const contextPath = join(inputsDir, `${String(chapter.order).padStart(2, '0')}-${chapter.key}-context.json`);
@@ -327,6 +342,9 @@ const plan = {
   runId,
   concurrency: args.concurrency,
   timeoutSeconds: args.timeoutSeconds,
+  modelOverride: args.modelOverride || null,
+  effortOverride: args.effortOverride || null,
+  escalationEnabled: !args.disableEscalation,
   fetchLogPath,
   workers: tasks.map((task) => ({
     chapter: task.context.chapter.key,
@@ -366,7 +384,10 @@ let validations = validateChapters(tasks, reportFolder, fetchLogPath);
 const escalationTasks = tasks.filter((task) => {
   const validation = validations.find((entry) => entry.chapter === task.context.chapter.key);
   const route = task.context.policy.workerRouting;
-  return validation?.ok === false && route.escalateTo && route.escalateTo !== route.model;
+  return !args.disableEscalation
+    && validation?.ok === false
+    && route.escalateTo
+    && route.escalateTo !== route.model;
 });
 let escalations = [];
 if (escalationTasks.length > 0) {

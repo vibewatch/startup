@@ -49,6 +49,14 @@ try {
     '--dry-run',
     '--format', 'json',
   ]));
+  const benchmarkPlan = JSON.parse(run('run-chapter-workers.mjs', [
+    '--report-folder', folder,
+    '--model-override', 'gemini-3.8-flash',
+    '--effort-override', 'default',
+    '--disable-escalation',
+    '--dry-run',
+    '--format', 'json',
+  ]));
   writeFileSync(join(folder, 'worker-results.json'), `${JSON.stringify({
     schemaVersion: 'chapter-worker-run-v1',
     workers: [],
@@ -96,6 +104,10 @@ process.exit(1);
     [plan.workers.every((worker) => worker.model === 'gpt-5.4-mini'), 'runner did not use Mini'],
     [plan.workers.every((worker) => worker.reasoningEffort === 'medium'), 'runner did not use Mini medium effort'],
     [plan.workers.every((worker) => worker.escalateTo === 'gpt-5.6-sol-fast'), 'runner did not retain the Sol Fast quality fallback'],
+    [benchmarkPlan.workers.every((worker) => worker.model === 'gemini-3.8-flash'), 'benchmark model override did not reach every worker'],
+    [benchmarkPlan.workers.every((worker) => worker.reasoningEffort === 'default'), 'benchmark effort override did not reach every worker'],
+    [benchmarkPlan.workers.every((worker) => worker.escalateTo === null), 'benchmark override retained a hidden escalation'],
+    [benchmarkPlan.escalationEnabled === false, 'benchmark plan did not disable escalation'],
     [finalizer.model === 'gpt-5.4-mini', 'finalizer did not use Mini'],
     [finalizer.reasoningEffort === 'medium', 'finalizer did not use Mini medium effort'],
     [finalizer.escalateTo === 'gpt-5.6-sol-fast', 'finalizer did not retain the Sol Fast quality fallback'],
