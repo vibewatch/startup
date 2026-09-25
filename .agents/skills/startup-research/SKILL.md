@@ -67,6 +67,23 @@ Workflow narrative: what to run, in what order, with which flags. Two generated 
 
 **Source-review corrections:** a later factual review may find defects that structural gates cannot detect. Record verified findings under `.research-cache/<runId>/` as JSON with `runId` and nonempty `issues[]`; each issue needs `path` (`<authored-chapter-file>:<field>` or `report-meta.yaml:<field>`), `message`, and a source-anchored `fix`. Pass that file to `research:finalize -- --report-folder <reportFolder> --review-findings <path>`. This uses the same bounded finalizer and retry limits, permits only named corrections and their dependent surfaces, and does not authorize new fetches, circular sources, weaker gates, or unrelated rewrites. Keep these review findings separate from machine-generated worker results. The caller must verify the corrected facts against original fetched text before publication; a successful finalizer exit is not semantic acceptance.
 
+Complete, **current deep reports** can enter explicit source review without worker
+results or a shared search bundle: older sequential runs may never have produced
+those files. The plan identifies this as `published-deep-review` and reports
+missing inputs as `null`; it never creates substitute execution records.
+A genuine fetch trail is still required for execution, and normal/strict chapter
+checks, report gates, retry limits and caller source verification still apply.
+Use authentic source text from the review when original text is unavailable,
+without attributing later retrievals to the original run. Missing evidence remains
+a blocker. Preserve existing source URLs, search logs, workflow snapshots and
+warning acknowledgements; do not backfill provenance or weaken gates.
+An already-retained report URL can support a named correction in another deep
+chapter, with a local source ID and verified supporting text, but no new report
+URLs or invented retrieval dates are allowed.
+Fast reports still require their original worker inputs and search bundle.
+Incomplete or superseded reports cannot use this review path; never rebuild
+superseded content with the current assembler.
+
 **Quotation fidelity:** `keyQuote` means a verbatim excerpt, not a summary or an analyst correction. The worker runner checks quotations against assigned prefetched text; fast finalization checks authored chapters and the assembled ledger before refresh linking, including reused evidence. The bounded finalizer independently checks both authored chapters and assembled evidence, so a successful model exit cannot skip this gate. `sourceQuoteMismatch` rejects changed wording, changed numbers, and reordered excerpts; `sourceQuoteTextMissing` requires restoration of the original fetched text. Whitespace and equivalent typography may differ, and ellipses may omit text without reordering it. Keep source files read-only. Copy an excerpt that actually supports the associated claim; do not delete quotations or choose irrelevant text just to clear the check. These checks establish literal provenance, not contextual fairness or factual support for every claim.
 
 **Unusable fetched content:** `sourceContentBlocked` rejects recognized access-error pages, including old prefetched entries incorrectly marked `ok: true`. Empty or unreadable fetched text also fails. Omitting `keyQuote` does not bypass these source checks. Replace unusable citations and dependent claims with relevant evidence already eligible in the chapter's pool, or surface an evidence blocker; never present a security checkpoint or login error as supporting evidence.

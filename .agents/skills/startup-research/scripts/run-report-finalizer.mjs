@@ -82,28 +82,36 @@ function runJson(script, argv) {
   return JSON.parse(result.stdout);
 }
 
-function finalizerPrompt({ reportFolder, runId, resultsPath, fetchLogPath, reviewFindings }) {
+function finalizerPrompt({ reportFolder, resultsPath, bundlePath, fetchLogPath, reviewFindings, publishedDeepReview }) {
   return `Use the startup-research skill to converge and finalize the existing report at ${reportFolder}. Work directly; do not launch subagents or background agents.
 
 Inputs:
-- worker results: ${resultsPath}
-- shared search bundle: ${join(researchCacheDir(runId), 'search-bundle.json')}
+- worker results: ${resultsPath ?? 'not available for this published deep report'}
+- shared search bundle: ${bundlePath ?? 'not available for this published deep report'}
 - fetch trail: ${fetchLogPath}
 
-Read references/rules.md and the report-meta section of references/contracts.md. Inspect worker-results.json. Every worker process has already finished, so never rerun a passing worker or the whole worker command.
+Read references/rules.md and the report-meta section of references/contracts.md. ${publishedDeepReview
+    ? 'This is a source review of a complete, current deep report, not worker convergence. Use the existing authored chapters and authentic source text supplied by the review. Missing evidence is a blocker: never manufacture worker results, a search bundle, or historical execution records.'
+    : 'Inspect worker-results.json. Every worker process has already finished, so never rerun a passing worker or the whole worker command.'}
 
 Binding sequence:
 1. Walk chapters in configured order and run normal then strict validation.
-2. For a timed-out/failed worker or a missing chapter, complete only that chapter directly from its worker-input context and pool. For completed workers, repair only named validator failures in worker-results.json or subsequent checks${reviewFindings ? ' and the source-review findings below' : ''}; never rewrite unrelated passing content. Enforce each chapter's convergence retry budget.
-3. Fast chapters may use only successful prefetched URLs in that chapter's worker-input pool. Never borrow a URL from a sibling pool even if it appears in search-bundle fetchedSources. Do not search, fetch, use curl, add a URL, or write to the fetch trail. Keep fetched text read-only; keyQuote must contain literal, ordered excerpts, not paraphrases or reviewer commentary.
-   Search logs must match actual search-bundle.json searches: literal query, response.provider, and response.results.length. retainedSourceRefs may name only chapter source URLs returned by that execution. Repair fabricated logs from the immutable execution records, not by changing the bundle or inventing new searches.
+2. ${publishedDeepReview
+    ? 'Repair only the named source-review findings and their dependent surfaces, or concrete validator failures in the existing chapters. Do not create replacement chapters, change the workflow snapshot or warning acknowledgements, or reconstruct missing worker inputs'
+    : `For a timed-out/failed worker or a missing chapter, complete only that chapter directly from its worker-input context and pool. For completed workers, repair only named validator failures in worker-results.json or subsequent checks${reviewFindings ? ' and the source-review findings below' : ''}`}; never rewrite unrelated passing content. Enforce each chapter's convergence retry budget.
+3. ${publishedDeepReview
+    ? 'Use authentic source text for URLs already retained in this report. An existing report URL may be reused in another deep chapter for a named correction, with a local source ID and supported claim; do not introduce new report URLs or invent retrieval dates.'
+    : "Fast chapters may use only successful prefetched URLs in that chapter's worker-input pool. Never borrow a URL from a sibling pool even if it appears in search-bundle fetchedSources. Do not add a URL."} Do not search, fetch, use curl, or write to the fetch trail. Keep fetched text read-only; keyQuote must contain literal, ordered excerpts, not paraphrases or reviewer commentary.
+   ${publishedDeepReview
+    ? 'Preserve existing search logs and source URLs. A later review fetch is not an original search execution; do not backfill or rewrite provenance. If a correction needs unavailable source evidence, report the blocker instead.'
+    : 'Search logs must match actual search-bundle.json searches: literal query, response.provider, and response.results.length. retainedSourceRefs may name only chapter source URLs returned by that execution. Repair fabricated logs from the immutable execution records, not by changing the bundle or inventing new searches.'}
 4. Author report-meta.yaml only after every chapter passes strict, validate it, then run finalize-report.mjs.${reviewFindings ? ' Preserve existing metadata except where a named finding or a corrected supporting claim requires an update.' : ''}
 5. Fix only concrete validator findings${reviewFindings ? ' or the supplied source-review findings' : ''} with already-prefetched evidence. Never invent a replacement source or fact to satisfy a gate. Do not inspect historical reports, modify repository code/config/docs, or use git.
 ${reviewFindings ? `
 Source-review findings (human/agent review, not automated validator output):
 ${JSON.stringify(reviewFindings, null, 2)}
 
-Resolve every listed issue against the original fetched text, including its linked claims, tables, figures, cover facts, and metadata. Preserve date, unit, metric denominator, and attribution. If the available evidence does not support a metric, remove the unsupported precision and document the gap; do not invent a midpoint or relabel an assumption as reported. Preserve valid historical comparisons by dating them explicitly. Do not edit the review-findings input. In your final response, account for every finding and state any unresolved blocker. A schema pass alone does not establish factual accuracy.
+Resolve every listed issue against ${publishedDeepReview ? 'the available authentic source text, without claiming it was fetched in the original run' : 'the original fetched text'}, including its linked claims, tables, figures, cover facts, and metadata. Preserve date, unit, metric denominator, and attribution. If the available evidence does not support a metric, remove the unsupported precision and document the gap; do not invent a midpoint or relabel an assumption as reported. Preserve valid historical comparisons by dating them explicitly. Do not edit the review-findings input. In your final response, account for every finding and state any unresolved blocker. A schema pass alone does not establish factual accuracy.
 ` : ''}
 
 Do not report success unless summary-card.yaml, evidence.yaml, full-report.yaml, and report-meta.yaml exist and finalize-report prints its pipeline-complete line.`;
@@ -162,10 +170,22 @@ if (reviewFindingsPath) {
     process.exit(EXIT.failure);
   }
 }
-const resultsPath = join(cacheDir, 'worker-results.json');
-const bundlePath = join(cacheDir, 'search-bundle.json');
-if (!existsSync(resultsPath) || !existsSync(bundlePath)) {
-  console.error(`[run-report-finalizer] missing worker results or search bundle under ${cacheDir}`);
+const requiredFiles = [
+  REPORT_META_FILE,
+  FINAL_ARTIFACTS.evidence.file,
+  FINAL_ARTIFACTS.fullReport.file,
+  FINAL_ARTIFACTS.summaryCard.file,
+];
+const resultsPath = existsSync(join(cacheDir, 'worker-results.json')) ? join(cacheDir, 'worker-results.json') : null;
+const bundlePath = existsSync(join(cacheDir, 'search-bundle.json')) ? join(cacheDir, 'search-bundle.json') : null;
+const missingWorkerInputs = !resultsPath || !bundlePath;
+const publishedDeepReview = Boolean(missingWorkerInputs && reviewFindings
+  && config.activeResearchProfile === 'deep'
+  && [...requiredFiles, ...getAnalysisArtifacts(config).map((chapter) => chapter.file)]
+    .every((file) => existsSync(join(reportFolder, file)))
+  && readYaml(join(reportFolder, REPORT_META_FILE))?.revision?.status === 'current');
+if (missingWorkerInputs && !publishedDeepReview) {
+  console.error(`[run-report-finalizer] missing worker results or search bundle under ${cacheDir}; only an explicit source review of a complete, current deep report can proceed without worker inputs`);
   process.exit(EXIT.notFound);
 }
 const context = runJson(contextScript, ['--order', '1', '--report-folder', reportFolder]);
@@ -182,6 +202,7 @@ const fetchLogPath = resolve(
 );
 const plan = {
   schemaVersion: 'report-finalizer-run-v1',
+  inputMode: publishedDeepReview ? 'published-deep-review' : 'worker-convergence',
   reportFolder,
   runId,
   timeoutSeconds: args.timeoutSeconds,
@@ -236,7 +257,7 @@ async function runAttempt(attemptRoute, attemptNumber) {
     '--autopilot',
     '--excluded-tools', 'web_fetch',
     '--model', attemptRoute.model,
-    '-p', finalizerPrompt({ reportFolder, runId, resultsPath, fetchLogPath, reviewFindings }),
+    '-p', finalizerPrompt({ reportFolder, resultsPath, bundlePath, fetchLogPath, reviewFindings, publishedDeepReview }),
   ];
   if (attemptRoute.reasoningEffort !== 'default') {
     copilotArgs.splice(copilotArgs.indexOf('-p'), 0, '--effort', attemptRoute.reasoningEffort);
@@ -286,12 +307,6 @@ async function runAttempt(attemptRoute, attemptNumber) {
 
 const attempts = [await runAttempt(route, 1)];
 let processResult = attempts[0];
-const requiredFiles = [
-  REPORT_META_FILE,
-  FINAL_ARTIFACTS.evidence.file,
-  FINAL_ARTIFACTS.fullReport.file,
-  FINAL_ARTIFACTS.summaryCard.file,
-];
 function inspectFinalReport() {
   const missingFiles = requiredFiles.filter((file) => !existsSync(join(reportFolder, file)));
   if (missingFiles.length > 0) {

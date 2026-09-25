@@ -3,6 +3,7 @@ import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import {
   chmodSync,
+  existsSync,
   mkdirSync,
   readFileSync,
   rmSync,
@@ -200,6 +201,82 @@ process.exit(Number(process.env.FAKE_COPILOT_EXIT ?? 1));
     assert(prompt.includes(reviewFindings.issues[0].fix));
     assert(prompt.includes('never rewrite unrelated passing content'));
     assert(prompt.includes('A schema pass alone does not establish factual accuracy'));
+  }
+  const publishedFiles = [
+    ...roster.chapters.map((chapter) => chapter.file),
+    'report-meta.yaml', 'evidence.yaml', 'full-report.yaml', 'summary-card.yaml',
+  ];
+  const snapshotPath = join(folder, '.workflow-snapshot.yaml');
+  const savedInputs = [snapshotPath, bundlePath, join(folder, 'worker-results.json')]
+    .map((path) => [path, readFileSync(path, 'utf8')]);
+  try {
+    for (const file of publishedFiles) {
+      assert(!existsSync(join(folder, file)), `unexpected fixture artifact: ${file}`);
+      writeFileSync(join(folder, file), '{}\n');
+    }
+    writeFileSync(join(folder, 'report-meta.yaml'), '{"revision":{"status":"current"}}\n');
+    rmSync(bundlePath);
+    rmSync(join(folder, 'worker-results.json'));
+    const probe = (argv = reviewArgs, env = process.env) => spawnSync(
+      process.execPath, [join(here, 'run-report-finalizer.mjs'), ...argv], { encoding: 'utf8', env },
+    );
+    assert.equal(probe().status, 4, 'fast review accepted missing worker provenance');
+    writeFileSync(bundlePath, savedInputs[1][1]);
+    assert.equal(probe().status, 4, 'fast review accepted missing worker results');
+    rmSync(bundlePath);
+    writeFileSync(join(folder, 'worker-results.json'), savedInputs[2][1]);
+    assert.equal(probe().status, 4, 'fast review accepted a missing search bundle');
+    rmSync(join(folder, 'worker-results.json'));
+    writeFileSync(snapshotPath, savedInputs[0][1].replace('activeResearchProfile: fast', 'activeResearchProfile: deep'));
+    assert.equal(probe(['--report-folder', folder, '--dry-run']).status, 4,
+      'deep generation without an explicit review accepted missing worker inputs');
+    const legacy = probe();
+    assert.equal(legacy.status, 0, legacy.stderr);
+    const legacyPlan = JSON.parse(legacy.stdout);
+    assert.equal(legacyPlan.inputMode, 'published-deep-review');
+    assert.equal(legacyPlan.resultsPath, null);
+    assert.equal(legacyPlan.bundlePath, null);
+    assert(!existsSync(bundlePath));
+    assert(!existsSync(join(folder, 'worker-results.json')));
+    for (const file of [roster.chapters[0].file, 'evidence.yaml', 'full-report.yaml', 'summary-card.yaml']) {
+      rmSync(join(folder, file));
+      assert.equal(probe().status, 4, `incomplete deep review accepted missing ${file}`);
+      writeFileSync(join(folder, file), '{}\n');
+    }
+    writeFileSync(join(folder, 'report-meta.yaml'), '{"revision":{"status":"superseded"}}\n');
+    assert.equal(probe().status, 4, 'superseded report entered the published deep review path');
+    writeFileSync(join(folder, 'report-meta.yaml'), '{"revision":{"status":"current"}}\n');
+    const executionArgs = [
+      '--report-folder', folder, '--review-findings', reviewFindingsPath,
+      '--copilot-bin', fakeCopilotPath, '--disable-escalation', '--format', 'json',
+    ];
+    const missingTrail = probe(executionArgs, {
+      ...process.env, STARTUP_FETCH_LOG_PATH: join(folder, 'missing-review-trail.jsonl'),
+    });
+    assert.equal(missingTrail.status, 4);
+    assert.match(missingTrail.stderr, /fetch trail does not exist/);
+    const legacyLog = join(folder, 'legacy-review.log');
+    const rejectedReview = probe(executionArgs, {
+      ...process.env,
+      STARTUP_FETCH_LOG_PATH: join(folder, '_fetch-log.jsonl'),
+      FAKE_COPILOT_LOG: legacyLog,
+      FAKE_COPILOT_EXIT: '0',
+    });
+    assert.equal(rejectedReview.status, 1, 'invalid published artifacts passed after a success-shaped review exit');
+    assert.equal(JSON.parse(rejectedReview.stdout).reportCheck.ok, false);
+    const legacyInvocation = JSON.parse(readFileSync(legacyLog, 'utf8').trim());
+    const legacyPrompt = legacyInvocation[legacyInvocation.indexOf('-p') + 1];
+    assert(legacyPrompt.includes('not worker convergence'));
+    assert(legacyPrompt.includes('never manufacture worker results'));
+    assert(legacyPrompt.includes('Preserve existing search logs and source URLs'));
+    assert(legacyPrompt.includes('do not introduce new report URLs or invent retrieval dates'));
+    assert(legacyPrompt.includes('workflow snapshot or warning acknowledgements'));
+    assert(legacyPrompt.includes('normal then strict validation'));
+    assert(!existsSync(bundlePath));
+    assert(!existsSync(join(folder, 'worker-results.json')));
+  } finally {
+    for (const file of publishedFiles) rmSync(join(folder, file), { force: true });
+    for (const [path, contents] of savedInputs) writeFileSync(path, contents);
   }
   const quoteTextPath = join(folder, 'quote-source.txt');
   writeFileSync(quoteTextPath, 'The original source text.\n');
