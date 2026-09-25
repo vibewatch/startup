@@ -173,6 +173,11 @@ export function normalizeDomain(value) {
   }
 }
 
+export function isSelfPublishedReportUrl(value) {
+  const domain = normalizeDomain(canonicalSourceUrl(value)).replace(/\.$/, '');
+  return domain === 'startup.genisisiq.com' || domain.endsWith('.startup.genisisiq.com');
+}
+
 export function reportIdentityKey(company) {
   const name = normalizeCompanyName(company?.name);
   const domain = normalizeDomain(company?.website);

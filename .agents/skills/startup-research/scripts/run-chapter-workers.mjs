@@ -13,6 +13,7 @@ import {
   EXIT,
   canonicalSourceUrl,
   isRunId,
+  isSelfPublishedReportUrl,
   researchCacheDir,
   tryReadYaml,
 } from './utils.mjs';
@@ -304,6 +305,9 @@ if (!existsSync(bundlePath)) {
   process.exit(EXIT.notFound);
 }
 const bundle = JSON.parse(readFileSync(bundlePath, 'utf8'));
+const selfPublishedFetches = new Set((bundle.fetchedSources ?? [])
+  .filter((entry) => isSelfPublishedReportUrl(entry.url) || isSelfPublishedReportUrl(entry.finalUrl))
+  .map((entry) => canonicalSourceUrl(entry.url)));
 const poolByKey = new Map((bundle.chapterPools ?? []).map((pool) => [pool.key, pool]));
 const roster = runJson(contextScript, ['--list', '--report-folder', reportFolder]);
 const inputsDir = join(cacheDir, 'worker-inputs');
@@ -315,6 +319,15 @@ const fetchLogPath = resolve(
   process.env.STARTUP_FETCH_LOG_PATH || join(cacheDir, '_fetch-log.jsonl'),
 );
 function successfulWorkerPool(pool) {
+  const circular = [...(pool.recommended ?? []), ...(pool.reserve ?? [])]
+    .filter((candidate) => candidate.fetch?.ok && (
+      isSelfPublishedReportUrl(candidate.url)
+      || isSelfPublishedReportUrl(candidate.fetch.finalUrl)
+      || selfPublishedFetches.has(canonicalSourceUrl(candidate.url))
+    ));
+  if (circular.length) {
+    throw new Error(`chapter ${pool.key} has self-published report evidence in its cached pool: ${circular.map((entry) => entry.url).join(', ')}; rerun research:bootstrap before starting workers`);
+  }
   return {
     ...pool,
     recommended: (pool.recommended ?? []).filter((candidate) => candidate.fetch?.ok),

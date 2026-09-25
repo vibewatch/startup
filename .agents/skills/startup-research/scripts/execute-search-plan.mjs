@@ -10,7 +10,7 @@ import {
   promoteReserveEvidence,
   successfulPoolMetrics,
 } from './search-pool-recovery.mjs';
-import { canonicalSourceUrl, normalizeDomain } from './utils.mjs';
+import { canonicalSourceUrl, isSelfPublishedReportUrl, normalizeDomain } from './utils.mjs';
 
 const execFileAsync = promisify(execFile);
 const scriptDir = dirname(fileURLToPath(import.meta.url));
@@ -214,8 +214,15 @@ const searches = await runPool(queries, plan.strategy.concurrency, async (query)
 
 const candidates = new Map();
 let rejectedIrrelevantCount = 0;
+let rejectedSelfPublishedCount = searches.reduce((total, search) => (
+  total + (search.response?.excludedResults ?? []).filter((entry) => entry.reason === 'self-published-report').length
+), 0);
 for (const search of searches) {
   for (const result of search.response?.results ?? []) {
+    if (isSelfPublishedReportUrl(result.url)) {
+      rejectedSelfPublishedCount += 1;
+      continue;
+    }
     if (!companyRelevant(result, plan.company)) {
       rejectedIrrelevantCount += 1;
       continue;
@@ -234,6 +241,7 @@ function uniqueResults(searchList) {
     for (const result of search.response?.results ?? []) {
       if (!companyRelevant(result, plan.company)) continue;
       const key = canonicalSourceUrl(result.url);
+      if (!candidates.has(key)) continue;
       if (seen.has(key)) continue;
       seen.add(key);
       results.push(candidates.get(key));
@@ -521,10 +529,12 @@ if (args.prefetch) {
           maxBuffer: 10 * 1024 * 1024,
         });
         const response = JSON.parse(result.stdout);
+        const selfPublished = isSelfPublishedReportUrl(response.finalUrl);
         return {
           url: candidate.url,
           chapters,
-          ok: response.ok === true,
+          ok: response.ok === true && !selfPublished,
+          ...(selfPublished ? { error: `self-published report redirect: ${response.finalUrl}` } : {}),
           status: response.status,
           finalUrl: response.finalUrl,
           title: response.title,
@@ -608,6 +618,7 @@ const bundle = {
     successfulQueryCount: searches.filter((search) => search.response).length,
     failedQueryCount: searches.filter((search) => !search.response).length,
     rejectedIrrelevantCount,
+    rejectedSelfPublishedCount,
     uniqueUrlCount: candidates.size,
     cacheHits: searches.filter((search) => search.response?.cache?.hit).length,
     aggregateSearchDurationMs: searches.reduce((total, search) => total + search.durationMs, 0),

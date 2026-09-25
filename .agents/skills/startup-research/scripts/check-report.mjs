@@ -31,6 +31,7 @@ import {
   hasText,
   isFinalizedReportFolder,
   isRunId,
+  isSelfPublishedReportUrl,
   loadWorkflowConfig,
   REVISION_STATUSES,
   runDateFromRunId,
@@ -296,6 +297,16 @@ function checkLedgerCrossReferences(run, ledger, parsed, { contentGates }) {
 }
 
 function checkReportLevelDiversity(run, ledger) {
+  for (const source of ledger.sources ?? []) {
+    if (!isSelfPublishedReportUrl(source?.url)) continue;
+    const path = `${run}/${EVIDENCE_FILE}: source ${source.id}`;
+    fail(`${path} cites this site's own published report as evidence: ${source.url}`, {
+      path,
+      dimension: 'sourceIndependence',
+      code: 'circularReportSource',
+      fix: 'Remove the self-published source from its chapter and re-check every dependent claim against original external evidence; rebuild the ledger. Do not relabel circular evidence as independent.',
+    });
+  }
   const gate = WORKFLOW_CONFIG.reportGate ?? {
     minDistinctDomains: 30,
     requireAdverseSource: true,

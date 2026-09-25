@@ -6,6 +6,7 @@ import yaml from 'js-yaml';
 import {
   EXIT,
   isRunId,
+  isSelfPublishedReportUrl,
   researchCacheDir,
 } from './utils.mjs';
 
@@ -39,6 +40,18 @@ function parseArgs(argv) {
 
 const highReputationDomains = new Set(strategy.quality.highReputationDomains);
 const lowSignalDomains = new Set(strategy.quality.lowSignalDomains);
+
+function excludeSelfPublishedReports(response) {
+  const excluded = response.results.filter((result) => isSelfPublishedReportUrl(result.url));
+  return {
+    ...response,
+    results: response.results.filter((result) => !isSelfPublishedReportUrl(result.url)),
+    excludedResults: [
+      ...(response.excludedResults ?? []),
+      ...excluded.map((result) => ({ url: result.url, reason: 'self-published-report' })),
+    ],
+  };
+}
 
 function hostname(value) {
   try { return new URL(value).hostname.toLowerCase().replace(/^www\./, ''); }
@@ -256,7 +269,7 @@ if (!args.noCache && existsSync(cachePath)) {
   const cached = JSON.parse(readFileSync(cachePath, 'utf8'));
   const ageMs = Date.now() - Date.parse(cached.fetchedAt);
   if (ageMs < strategy.budgets.cacheTtlHours * 3_600_000) {
-    console.log(JSON.stringify({ ...cached, cache: 'hit' }, null, 2));
+    console.log(JSON.stringify({ ...excludeSelfPublishedReports(cached), cache: 'hit' }, null, 2));
     process.exit(EXIT.ok);
   }
 }
@@ -268,7 +281,7 @@ const searchers = {
 };
 try {
   const startedAt = Date.now();
-  const response = await searchers[provider](args);
+  const response = excludeSelfPublishedReports(await searchers[provider](args));
   const rankedResults = response.results
     .map((result) => ({ ...result, sourceQuality: sourceQuality(result, args) }))
     .sort((a, b) => b.sourceQuality.score - a.sourceQuality.score);
@@ -281,6 +294,7 @@ try {
     elapsedMs: Date.now() - startedAt,
     requestId: response.requestId,
     results: rankedResults,
+    excludedResults: response.excludedResults,
     metadata: response.metadata,
     cache: 'miss',
     evidenceRule: 'Fetch retained URLs with fetch-url before adding them to localEvidence.sources.',

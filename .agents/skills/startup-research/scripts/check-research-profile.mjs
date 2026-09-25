@@ -65,23 +65,32 @@ try {
   const reserve = 'https://example.com/reserve';
   const sibling = 'https://example.com/sibling';
   const failed = 'https://example.com/failed';
+  const selfPublished = 'https://startup.genisisiq.com/acme/';
+  const redirected = 'https://example.com/redirected';
+  const poolRedirected = 'https://example.com/pool-redirected';
   writeFileSync(join(folder, 'search-bundle.json'), JSON.stringify({
     fetchedSources: [
       { url: assigned, ok: true },
       { url: reserve, ok: true },
       { url: sibling, ok: true },
       { url: failed, ok: false },
+      { url: selfPublished, ok: true },
+      { url: redirected, finalUrl: selfPublished, ok: true },
+      { url: poolRedirected, ok: true },
     ],
     chapterPools: [{
       key: context.chapter.key,
       recommended: [
         { url: assigned, fetch: { ok: true } },
         { url: failed, fetch: { ok: false } },
+        { url: selfPublished, fetch: { ok: true } },
+        { url: redirected, fetch: { ok: true } },
+        { url: poolRedirected, fetch: { ok: true, finalUrl: selfPublished } },
       ],
       reserve: [{ url: reserve, fetch: { ok: true } }],
     }],
   }));
-  for (const url of ['https://example.com/unfetched', failed, sibling, assigned, reserve]) {
+  for (const url of ['https://example.com/unfetched', failed, sibling, assigned, reserve, selfPublished, redirected, poolRedirected]) {
     writeFileSync(join(folder, context.chapter.file), JSON.stringify({
       localEvidence: { sources: [{ id: 'SO001', url }] },
     }));
@@ -93,7 +102,7 @@ try {
     } else {
       assert.match(result.stderr, /not successfully prefetched/);
       assert.ok(result.stderr.includes(url));
-      if (url === sibling) assert.match(result.stderr, /assigned to another chapter/);
+      if (url === sibling) assert.match(result.stderr, /not eligible in this chapter's assigned pool/);
     }
   }
   console.log(`[check-research-profile] ✓ fast snapshot and preassembled-report source provenance verified (${basename(folder)})`);

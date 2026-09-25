@@ -1,21 +1,25 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
 import childProcess from 'node:child_process';
-import { readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { syncBuiltinESMExports } from 'node:module';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 import { promoteReserveEvidence, successfulPoolMetrics } from './search-pool-recovery.mjs';
-import { canonicalSourceUrl } from './utils.mjs';
+import { canonicalSourceUrl, getCoreArtifacts, isSelfPublishedReportUrl } from './utils.mjs';
+import { checkRun } from './check-report.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const urls = (entries) => new Set(entries.map((entry) => canonicalSourceUrl(entry.url)));
 
-async function bootstrapFixture(name, { chapters = 1, sources = 12, failed = [], aliases = false }, verify) {
+async function bootstrapFixture(name, { chapters = 1, sources = 12, failed = [], aliases = false, selfPublished = [], redirects = [] }, verify) {
   const folder = resolve('.research-cache', `20990101000000-pool-check-${name}-${process.pid}`);
   const results = Array.from({ length: sources }, (_, index) => ({
-    url: `https://publisher${index + 1}.example/acme`,
+    url: selfPublished.includes(index)
+      ? `https://startup.genisisiq.com/acme-${index}/`
+      : `https://publisher${index + 1}.example/acme`,
     title: `Acme evidence ${index + 1}`,
     sourceQuality: { tier: 'high', score: 100 - index, reasons: [] },
   }));
@@ -70,6 +74,9 @@ async function bootstrapFixture(name, { chapters = 1, sources = 12, failed = [],
       response = {
         ok,
         status: ok ? 200 : 503,
+        finalUrl: redirects.some((index) => results[index].url === args[1])
+          ? 'https://startup.genisisiq.com/acme/'
+          : args[1],
         outputFile: { path: args[args.indexOf('--out') + 1] },
       };
     } else throw new Error(`Unexpected fixture subprocess: ${script}`);
@@ -106,7 +113,7 @@ async function bootstrapFixture(name, { chapters = 1, sources = 12, failed = [],
         }
       }
     }
-    await verify({ folder, bundle, exitCode, diagnostics });
+    await verify({ folder, bundle, exitCode, diagnostics, fetchCalls });
   } finally {
     childProcess.execFile = original.execFile;
     syncBuiltinESMExports();
@@ -136,6 +143,112 @@ function runJson(script, args) {
 }
 
 const tests = [
+  ['self-published URL matching preserves external sources', () => {
+    for (const url of [
+      'https://startup.genisisiq.com/acme/',
+      'HTTPS://WWW.STARTUP.GENISISIQ.COM./zh/acme/?utm_source=search',
+      'https://preview.startup.genisisiq.com/acme/',
+    ]) assert.equal(isSelfPublishedReportUrl(url), true, url);
+    for (const url of [
+      'https://genisisiq.com/acme/',
+      'https://startup.genisisiq.com.external.example/acme/',
+      'https://external.example/startup.genisisiq.com/',
+      'https://external.example/?url=https://startup.genisisiq.com/acme/',
+    ]) assert.equal(isSelfPublishedReportUrl(url), false, url);
+  }],
+  ['report content gate rejects circular evidence without re-scoring historical contracts', () => {
+    const runId = `20990101000000-pool-check-self-report-${process.pid}`;
+    const folder = resolve('reports', runId);
+    mkdirSync(folder);
+    try {
+      for (const artifact of getCoreArtifacts()) writeFileSync(join(folder, artifact.file), '{}\n');
+      writeFileSync(join(folder, 'evidence.yaml'), JSON.stringify({
+        sources: [{ id: 'SO001', url: 'https://startup.genisisiq.com/acme/' }],
+      }));
+      const full = checkRun(runId);
+      assert.equal(full.checked, true);
+      assert.equal(full.failures.filter((entry) => entry.code === 'circularReportSource').length, 1);
+      const contract = checkRun(runId, { contentGates: false });
+      assert.equal(contract.checked, true);
+      assert(!contract.failures.some((entry) => entry.code === 'circularReportSource'));
+    } finally {
+      rmSync(folder, { recursive: true, force: true });
+    }
+  }],
+  ['self-published reports never enter evidence pools', () => bootstrapFixture(
+    'self-published', { selfPublished: [0] }, (result) => {
+      assertFloors(result);
+      assert(result.bundle.candidates.every((entry) => !entry.url.includes('startup.genisisiq.com')),
+        'bootstrap admitted its own published report as evidence');
+      assert(result.fetchCalls.every((url) => !url.includes('startup.genisisiq.com')));
+      assert(result.bundle.stats.rejectedSelfPublishedCount > 0);
+    },
+  )],
+  ['self-published redirects trigger reserve recovery', () => bootstrapFixture(
+    'self-redirect', { redirects: [0] }, (result) => {
+      assertFloors(result);
+      const redirected = result.bundle.fetchedSources.find((entry) => entry.url === 'https://publisher1.example/acme');
+      assert.equal(redirected.ok, false, 'redirect to this site counted as independent fetched evidence');
+      assert.match(redirected.error, /self-published/);
+      assert(result.bundle.stats.recoveryPrefetchCount > 0);
+    },
+  )],
+  ['cached search results exclude self-published reports', () => {
+    const runId = `20990101000000-pool-check-self-cache-${process.pid}`;
+    const folder = resolve('.research-cache', runId);
+    const cacheDir = join(folder, 'search-results');
+    const query = 'Acme funding 2099';
+    const cacheKey = createHash('sha256').update(JSON.stringify({
+      provider: 'anysearch', query, intent: 'broad', officialDomain: '', maxResults: 10, freshness: '',
+    })).digest('hex').slice(0, 20);
+    try {
+      mkdirSync(cacheDir, { recursive: true });
+      writeFileSync(join(cacheDir, `${cacheKey}.json`), JSON.stringify({
+        fetchedAt: new Date().toISOString(),
+        results: [
+          { url: 'https://startup.genisisiq.com/acme/', title: 'Acme diligence' },
+          { url: 'https://publisher.example/acme', title: 'Acme funding' },
+        ],
+      }));
+      const result = runJson('search-web.mjs', ['--report-folder', folder, '--query', query]);
+      assert.equal(result.cache, 'hit');
+      assert.deepEqual(result.results.map((entry) => entry.url), ['https://publisher.example/acme']);
+      assert.deepEqual(result.excludedResults, [{
+        url: 'https://startup.genisisiq.com/acme/', reason: 'self-published-report',
+      }]);
+    } finally {
+      rmSync(folder, { recursive: true, force: true });
+    }
+  }],
+  ['fresh search excludes circular evidence before caching', () => {
+    const folder = resolve('.research-cache', `20990101000000-pool-check-self-fresh-${process.pid}`);
+    const script = join(here, 'search-web.mjs');
+    const results = [
+      { url: 'https://startup.genisisiq.com/acme/', title: 'Acme diligence' },
+      { url: 'https://publisher.example/acme', title: 'Acme funding' },
+    ];
+    try {
+      const result = childProcess.spawnSync(process.execPath, ['--input-type=module', '-e', `
+        globalThis.fetch = async () => ({
+          ok: true,
+          text: async () => JSON.stringify({ data: { results: ${JSON.stringify(results)} } }),
+        });
+        process.argv = ${JSON.stringify([process.execPath, script, '--report-folder', folder, '--query', 'Acme funding 2099'])};
+        await import(${JSON.stringify(pathToFileURL(script).href)});
+      `], { encoding: 'utf8' });
+      assert.equal(result.status, 0, result.stderr);
+      const fresh = JSON.parse(result.stdout);
+      assert.equal(fresh.cache, 'miss');
+      assert.deepEqual(fresh.results.map((entry) => entry.url), ['https://publisher.example/acme']);
+      assert.equal(fresh.excludedResults[0].reason, 'self-published-report');
+      const cached = runJson('search-web.mjs', ['--report-folder', folder, '--query', 'Acme funding 2099']);
+      assert.equal(cached.cache, 'hit');
+      assert.deepEqual(cached.results, fresh.results);
+      assert.deepEqual(cached.excludedResults, fresh.excludedResults);
+    } finally {
+      rmSync(folder, { recursive: true, force: true });
+    }
+  }],
   ['unique recovery metrics', () => {
     const first = { url: 'https://one.example/acme', allocation: 'net-new' };
     const alias = { url: 'https://www.one.example/acme/?utm_source=test', allocation: 'net-new' };
@@ -206,6 +319,34 @@ const tests = [
     assert.deepEqual(urls(input.reserve), urls(successfulReserves), 'worker lost successful reserve evidence');
     assert([...input.recommended, ...input.reserve].every((entry) => entry.fetch?.ok));
   })],
+  ['workers reject circular evidence in old successful bundles', () => bootstrapFixture(
+    'self-worker', {}, ({ bundle, folder }) => {
+      const roster = runJson('load-chapter-runtime-context.mjs', ['--list', '--report-folder', folder]);
+      const pool = bundle.chapterPools[0];
+      const self = 'https://startup.genisisiq.com/acme/';
+      for (const [url, fetchFinalUrl, globalFinalUrl] of [
+        [self, null, null],
+        ['https://redirect.example/acme', self, null],
+        ['https://redirect.example/acme', null, self],
+      ]) {
+        const candidate = { url, fetch: { ok: true, finalUrl: fetchFinalUrl } };
+        const contaminated = {
+          ...bundle,
+          fetchedSources: [...bundle.fetchedSources, { url, ok: true, finalUrl: globalFinalUrl }],
+          chapterPools: roster.chapters.map((chapter) => ({
+            ...pool, key: chapter.key, reserve: [...pool.reserve, candidate],
+          })),
+        };
+        writeFileSync(join(folder, 'search-bundle.json'), JSON.stringify(contaminated));
+        const result = childProcess.spawnSync(process.execPath, [
+          join(here, 'run-chapter-workers.mjs'), '--report-folder', folder, '--dry-run', '--format', 'json',
+        ], { encoding: 'utf8' });
+        assert.notEqual(result.status, 0, 'worker received circular evidence from a stale bundle');
+        assert.match(result.stderr, /self-published report evidence/);
+        assert.match(result.stderr, /rerun research:bootstrap/);
+      }
+    },
+  )],
   ['mandatory floors precede backups', () => bootstrapFixture(
     'scarce', { chapters: 8, sources: 24 }, assertFloors,
   )],

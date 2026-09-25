@@ -35,6 +35,7 @@ import {
   canonicalSourceUrl,
   getAnalysisArtifacts,
   isRunId,
+  isSelfPublishedReportUrl,
   loadWorkflowConfig,
   researchCacheDir,
   tryReadYaml,
@@ -143,7 +144,7 @@ function enforceFastPrefetchedSources() {
   }
   const approved = new Set(
     (bundle.fetchedSources ?? [])
-      .filter((entry) => entry?.ok)
+      .filter((entry) => entry?.ok && !isSelfPublishedReportUrl(entry.url) && !isSelfPublishedReportUrl(entry.finalUrl))
       .map((entry) => canonicalSourceUrl(entry.url))
       .filter(Boolean),
   );
@@ -152,7 +153,8 @@ function enforceFastPrefetchedSources() {
       pool.key,
       new Set(
         [...(pool.recommended ?? []), ...(pool.reserve ?? [])]
-          .filter((candidate) => candidate.fetch?.ok)
+          .filter((candidate) => candidate.fetch?.ok
+            && !isSelfPublishedReportUrl(candidate.url) && !isSelfPublishedReportUrl(candidate.fetch.finalUrl))
           .map((candidate) => canonicalSourceUrl(candidate.url))
           .filter(Boolean),
       ),
@@ -166,12 +168,12 @@ function enforceFastPrefetchedSources() {
     for (const source of chapter.value?.localEvidence?.sources ?? []) {
       const canonical = canonicalSourceUrl(source?.url);
       if (canonical && (!approved.has(canonical) || !assigned.has(canonical))) {
-        unapproved.push(`${spec.file}:${source?.id ?? '?'} ${source.url}${approved.has(canonical) ? ' (assigned to another chapter)' : ''}`);
+        unapproved.push(`${spec.file}:${source?.id ?? '?'} ${source.url}${approved.has(canonical) ? ' (not eligible in this chapter\'s assigned pool)' : ''}`);
       }
     }
   }
   if (unapproved.length === 0) return;
-  console.error('[finalize-report] fast report cites URL(s) that were not successfully prefetched by research:bootstrap:');
+  console.error('[finalize-report] fast report cites URL(s) that were not successfully prefetched by research:bootstrap or resolve to self-published reports:');
   for (const entry of unapproved) console.error(`  - ${entry}`);
   console.error('[finalize-report] replace them with relevant successful entries from that chapter’s assigned pool; do not borrow sibling URLs or add fetch-trail lines manually.');
   process.exit(EXIT.failure);
