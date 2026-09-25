@@ -10,7 +10,7 @@ function usage(code = 0) {
 
 const invariantToken = /\b(?:FY\s*)?(?:19|20)\d{2}E?\b/gi;
 const calendarDateToken = /\b((?:19|20)\d{2})(?:-(\d{1,2})-(\d{1,2})\b|\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日)/gu;
-const metricToken = /(?:[$€£¥₦]\s*)?\d+(?:[.,]\d+)*(?:[KMBT]|\s?(?:x|×|倍|%|bps|ARR|MRR|GMV|TPV|NPL|IRR))?/gi;
+const metricToken = /(?:[$€£¥₦]\s*)?\d+(?:[.,]\d+)*(?:[KMBT](?![a-z])|\s?(?:x|×|倍|%|bps|ARR|MRR|GMV|TPV|NPL|IRR))?/gi;
 const stylePatterns = [
   /对于[^。！？；]{1,24}而言/u,
   /在[^。！？；]{1,20}方面/u,
@@ -50,8 +50,8 @@ const hedgeRules = [
   { en: /\breportedly\b/i, zh: /据报道|据称/u },
   {
     en: /\bclaims?\b/i,
-    zh: /声称|称|说法|主张|表述/u,
-    exclude: /\b(?:(?:for|in|of|on)\s+claims?\s+(?:modeling|modelling|processing|handling|management|adjudication|submission|settlement)|patent\s+claims?\s+(?:drafting|construction|interpretation|scope))\b/gi,
+    zh: /声称|称|说法|主张|表述|断言/u,
+    exclude: /\b(?:(?:for|in|of|on)\s+claims?\s+(?:modeling|modelling|processing|handling|management|adjudication|submission|settlement)|patent\s+claims?\s+(?:drafting|construction|interpretation|scope)|small[- ]claims?\s+(?:processing|courts?))\b/gi,
   },
   { en: /\bnot yet\b/i, zh: /尚未|还未|仍未|还没|目前没有|尚无|尚不|还不|仍不/u },
   { en: /\b(?:unproven|not proven)\b/i, zh: /未经证实|未获证实|未(?:被)?(?:证明|验证|证实)|无法证明|未经验证|未获验证/u },
@@ -88,10 +88,19 @@ function load(path) {
   return yaml.load(readFileSync(path, 'utf8')) ?? {};
 }
 
+function normalizeScaleWords(value) {
+  const units = { thousand: 'K', million: 'M', billion: 'B', trillion: 'T' };
+  return value.replace(
+    /\b(\d+(?:[.,]\d+)*)\s*(thousand|million|billion|trillion)\b/gi,
+    (_, number, unit) => `${number}${units[unit.toLowerCase()]}`,
+  );
+}
+
 function normalizedTokens(value) {
-  const years = (value.match(invariantToken) ?? [])
+  const normalized = normalizeScaleWords(value);
+  const years = (normalized.match(invariantToken) ?? [])
     .map((token) => token.replace(/^FY\s*/i, '').replace(/E$/i, '').replace(/\s+/g, ''));
-  const dates = [...value.matchAll(calendarDateToken)].map((match) => (
+  const dates = [...normalized.matchAll(calendarDateToken)].map((match) => (
     `${match[1]}-${(match[2] ?? match[4]).padStart(2, '0')}-${(match[3] ?? match[5]).padStart(2, '0')}`
   ));
   return [...years, ...dates];
@@ -99,7 +108,7 @@ function normalizedTokens(value) {
 
 function normalizedMetricTokens(value) {
   // A fiscal year is not an ARR/GMV value, even when its label precedes the metric.
-  const separated = value.replace(/\bFY\s*((?:19|20)\d{2})E?\b/gi, '$1;');
+  const separated = normalizeScaleWords(value).replace(/\bFY\s*((?:19|20)\d{2})E?\b/gi, '$1;');
   // Retention-relative phrases imply percentages, unlike nearby customer/cohort counts.
   const retention = separated.replace(
     /\b((?:NRR|GRR|NDR)\s+(?:(?:is|in|the|low|mid|high|teens|trends?)\b[\s-]*)*(?:above|below|towards?|around|near|of|at)\s+(?:(?:low|mid|high)[ -]+)?)(\d{2,3}(?:\.\d+)?)(s)?(?=\s*(?:[,.;]|$))/gi,

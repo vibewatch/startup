@@ -122,9 +122,10 @@ The metric check treats `x`, `×`, and `倍` as equivalent multipliers and
 compares both endpoints of multiplier and percentage ranges. Conventional
 retention-relative phrases such as `NRR above 100` or `NRR trends toward low 100s`
 allow an explicit `%` in Chinese; nearby customer and cohort counts do not.
-Other unit or currency
-conversions still require source comparison; do not remove faithful units
-merely to make token-level checks pass.
+English scale words (`thousand`, `million`, `billion`, `trillion`) match
+`K`, `M`, `B`, `T` without changing the quantity or currency; `bps` remains
+distinct from `B`. Other unit or currency conversions still require source
+comparison; do not remove faithful units merely to make token-level checks pass.
 
 To repair existing overlays one report at a time, seed the cache from the
 current Chinese files instead of retranslating from English:

@@ -80,6 +80,53 @@ const checks = [
     'patent terminology must not require attribution or hide a separate assertion',
   ],
   [
+    checkPairQuality(
+      fullReport('Consumer form generation, pro se filings, and volume small-claims processing'),
+      fullReport('消费者表单生成、自行诉讼文书及批量小额诉讼处理'),
+    ).length === 0
+      && checkPairQuality(
+        fullReport('The company claims its new workflow automates small-claims processing.'),
+        fullReport('新工作流自动处理小额诉讼。'),
+      ).some((issue) => issue.code === 'hedge-preservation'),
+    'small-claims court terminology must not require attribution or hide a company assertion',
+  ],
+  [
+    checkPairQuality(
+      fullReport('Obtain audited COGS schedules and vendor contracts before making any company-specific margin claim.'),
+      fullReport('先取得经审计的 COGS 明细及供应商合同，再对公司的毛利率作出断言。'),
+    ).length === 0,
+    'a faithful analytical assertion must accept 断言 as a rendering of claim',
+  ],
+  ...[
+    ['Revenue is $190 million and funding is $1.2 billion.', '收入为 $190M，融资为 $1.2B。'],
+    ['The scope is 0.94 million documents and €2 thousand in fees.', '范围包括 0.94M 份文档，费用为 €2K。'],
+    ['The market is $1.2 trillion.', '市场规模为 $1.2T。'],
+    ['Revenue is $2024 million.', '收入为 $2024M。'],
+    ['The spread is 25bps.', '利差为 25 bps。'],
+  ].map(([en, zh]) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor: true }).length === 0,
+    `equivalent scale words and symbols must preserve quantity, not create a false year: ${zh}`,
+  ]),
+  ...[
+    ['Revenue is $190 million.', '收入为 $190。'],
+    ['Revenue is $190 million.', '收入为 $190B。'],
+    ['Revenue is $190 million.', '收入为 €190M。'],
+    ['The spread is 25bps.', '利差为 25B。'],
+    ['The sample has 25buyers.', '样本有 25B 名买家。'],
+  ].map(([en, zh]) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor: true })
+      .some((issue) => issue.code === 'metric-preservation'),
+    `metric comparison must reject missing scale, changed scale/currency and bps-versus-billion confusion: ${zh}`,
+  ]),
+  [
+    checkPairQuality(
+      fullReport('Revenue in 2024 was $190 million.'),
+      fullReport('2025 年收入为 $190M。'),
+      { strictEditor: true },
+    ).some((issue) => issue.code === 'year-preservation'),
+    'scale-word normalization must not hide a changed calendar year beside an amount',
+  ],
+  [
     checkPairQuality(multiplierSource, fullReport('Harvey 定价是 Spellbook 的 5-10 倍、CoCounsel 的 2–5 倍。'), { strictEditor: true }).length === 0
       && checkPairQuality(fullReport('Revenue is 4× the prior year.'), fullReport('收入是上年的 4 倍。'), { strictEditor: true }).length === 0
       && checkPairQuality(fullReport('The valuation is 15xARR.'), fullReport('估值为 15x ARR。'), { strictEditor: true }).length === 0,
