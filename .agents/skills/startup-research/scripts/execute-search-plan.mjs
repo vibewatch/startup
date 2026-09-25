@@ -5,6 +5,11 @@ import { mkdir, writeFile } from 'node:fs/promises';
 import { basename, dirname, join, resolve } from 'node:path';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
+import {
+  netNewAllocationTarget,
+  promoteReserveEvidence,
+  successfulPoolMetrics,
+} from './search-pool-recovery.mjs';
 import { normalizeDomain } from './utils.mjs';
 
 const execFileAsync = promisify(execFile);
@@ -259,16 +264,17 @@ for (const chapter of plan.chapters) {
   const netNew = [];
   const localNetNew = new Set();
   const netNewCandidates = [...preferredCandidates, ...direct, ...allCandidates];
+  const allocationTarget = netNewAllocationTarget(chapter.evidenceTarget.minNetNewSources);
   for (const candidate of netNewCandidates) {
     if (allocatedNetNewOwner.has(candidate.url) || localNetNew.has(candidate.url)) continue;
     const domain = normalizeDomain(candidate.url);
     if (!domain || allocatedNetNewDomains.has(domain)) continue;
     netNew.push(candidate);
     localNetNew.add(candidate.url);
-    if (netNew.length >= chapter.evidenceTarget.minNetNewSources) break;
+    if (netNew.length >= allocationTarget) break;
   }
   for (const candidate of netNewCandidates) {
-    if (netNew.length >= chapter.evidenceTarget.minNetNewSources) break;
+    if (netNew.length >= allocationTarget) break;
     if (allocatedNetNewOwner.has(candidate.url) || localNetNew.has(candidate.url)) continue;
     netNew.push(candidate);
     localNetNew.add(candidate.url);
@@ -289,8 +295,13 @@ const chapterPools = plan.chapters.map((chapter) => {
     return !owner || owner === chapter.key;
   };
   const selected = new Map(
-    netNew.map((candidate) => [candidate.url, { ...candidate, allocation: 'net-new' }]),
+    netNew
+      .slice(0, chapter.evidenceTarget.minNetNewSources)
+      .map((candidate) => [candidate.url, { ...candidate, allocation: 'net-new' }]),
   );
+  const netNewReserve = netNew
+    .slice(chapter.evidenceTarget.minNetNewSources)
+    .map((candidate) => ({ ...candidate, allocation: 'net-new-reserve' }));
   const directFill = direct
     .filter((candidate) => candidate.sourceQuality?.tier !== 'low' && availableToChapter(candidate))
     .map((candidate) => ({ ...candidate, allocation: 'chapter' }));
@@ -352,9 +363,16 @@ const chapterPools = plan.chapters.map((chapter) => {
     if (!selected.has(candidate.url)) selected.set(candidate.url, candidate);
   }
   const reserveCandidates = reserveFill
-    .filter((candidate) => !selected.has(candidate.url));
-  const reserve = [];
+    .filter((candidate) => (
+      !selected.has(candidate.url)
+      && !netNewReserve.some((entry) => entry.url === candidate.url)
+    ));
+  const reserve = [...netNewReserve];
   const reserveDomains = new Set(selectedDomains);
+  for (const candidate of netNewReserve) {
+    const domain = normalizeDomain(candidate.url);
+    if (domain) reserveDomains.add(domain);
+  }
   for (const candidate of reserveCandidates) {
     const domain = normalizeDomain(candidate.url);
     if (!domain || reserveDomains.has(domain)) continue;
@@ -525,15 +543,11 @@ if (args.prefetch) {
   const fetchedByUrl = new Map(fetchedSources.map((entry) => [entry.url, entry]));
   const recoveryByUrl = new Map();
   for (const pool of chapterPools) {
-    const successfulCandidates = pool.recommended.filter(
-      (candidate) => fetchedByUrl.get(candidate.url)?.ok,
-    );
-    const successfulDomains = new Set(
-      successfulCandidates.map((candidate) => normalizeDomain(candidate.url)).filter(Boolean),
-    );
+    const metrics = successfulPoolMetrics(pool, fetchedByUrl);
     const needsRecovery = (
-      successfulCandidates.length < pool.evidenceTarget.minSources
-      || successfulDomains.size < pool.evidenceTarget.minDomains
+      metrics.successful < pool.evidenceTarget.minSources
+      || metrics.successfulDomains.size < pool.evidenceTarget.minDomains
+      || metrics.successfulNetNew < pool.evidenceTarget.minNetNewSources
     );
     if (!needsRecovery) continue;
     for (const candidate of pool.reserve.filter((entry) => entry.sourceQuality?.tier !== 'low')) {
@@ -552,42 +566,13 @@ if (args.prefetch) {
     for (const entry of recoveryFetched) fetchedByUrl.set(entry.url, entry);
   }
   for (const pool of chapterPools) {
-    const promoted = [];
-    let successful = pool.recommended.filter(
-      (candidate) => fetchedByUrl.get(candidate.url)?.ok,
-    ).length;
-    const successfulDomains = new Set(
-      pool.recommended
-        .filter((candidate) => fetchedByUrl.get(candidate.url)?.ok)
-        .map((candidate) => normalizeDomain(candidate.url))
-        .filter(Boolean),
-    );
-    for (const candidate of pool.reserve) {
-      if (
-        successful >= pool.evidenceTarget.minSources
-        && successfulDomains.size >= pool.evidenceTarget.minDomains
-      ) break;
-      if (!fetchedByUrl.get(candidate.url)?.ok) continue;
-      const domain = normalizeDomain(candidate.url);
-      const addsNeededDomain = (
-        successfulDomains.size < pool.evidenceTarget.minDomains
-        && domain
-        && !successfulDomains.has(domain)
-      );
-      if (successful >= pool.evidenceTarget.minSources && !addsNeededDomain) continue;
-      promoted.push({
-        ...candidate,
-        allocation: 'reserve-recovery',
-      });
-      successful += 1;
-      if (domain) successfulDomains.add(domain);
-    }
-    const promotedUrls = new Set(promoted.map((candidate) => candidate.url));
-    pool.reserve = pool.reserve.filter((candidate) => !promotedUrls.has(candidate.url));
-    pool.recommended.push(...promoted);
+    const recovery = promoteReserveEvidence(pool, fetchedByUrl);
+    pool.reserve = recovery.reserve;
+    pool.recommended.push(...recovery.promoted);
     pool.fetchedOk = pool.recommended.filter(
       (candidate) => fetchedByUrl.get(candidate.url)?.ok,
     ).length;
+    pool.fetchedNetNew = recovery.successfulNetNew;
     pool.fetchedDomains = new Set(
       pool.recommended
         .filter((candidate) => fetchedByUrl.get(candidate.url)?.ok)
@@ -658,6 +643,7 @@ const insufficientPools = args.prefetch
     (pool) => (
       pool.fetchedOk < pool.evidenceTarget.minSources
       || pool.fetchedDomains < pool.evidenceTarget.minDomains
+      || pool.fetchedNetNew < pool.evidenceTarget.minNetNewSources
     ),
   )
   : [];
@@ -668,6 +654,7 @@ if (insufficientPools.length > 0) {
         .map((pool) => (
           `${pool.key} sources=${pool.fetchedOk}/${pool.evidenceTarget.minSources}`
           + ` domains=${pool.fetchedDomains}/${pool.evidenceTarget.minDomains}`
+          + ` net-new=${pool.fetchedNetNew}/${pool.evidenceTarget.minNetNewSources}`
         ))
         .join(', ')
     }; inspect ${out}`,

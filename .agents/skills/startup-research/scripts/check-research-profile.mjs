@@ -3,6 +3,10 @@ import { spawnSync } from 'node:child_process';
 import { mkdirSync, rmSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import {
+  netNewAllocationTarget,
+  promoteReserveEvidence,
+} from './search-pool-recovery.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const runId = `20990101000000-profile-check-${process.pid}`;
@@ -48,6 +52,34 @@ try {
     [context.policy?.finalizerRouting?.reasoningEffort === 'medium', 'finalizer reasoning effort is not medium'],
     [context.policy?.finalizerRouting?.escalateTo === 'gpt-5.6-sol-fast', 'finalizer escalation is not gpt-5.6-sol-fast'],
   ];
+  const recovery = promoteReserveEvidence({
+    evidenceTarget: {
+      minSources: 2,
+      minDomains: 2,
+      minNetNewSources: 2,
+    },
+    recommended: [
+      { url: 'https://one.example/a', allocation: 'net-new' },
+      { url: 'https://two.example/b', allocation: 'net-new' },
+      { url: 'https://three.example/c', allocation: 'chapter' },
+    ],
+    reserve: [
+      { url: 'https://four.example/d', allocation: 'net-new-reserve' },
+      { url: 'https://five.example/e', allocation: 'reserve' },
+    ],
+  }, new Map([
+    ['https://one.example/a', { ok: true }],
+    ['https://two.example/b', { ok: false }],
+    ['https://three.example/c', { ok: true }],
+    ['https://four.example/d', { ok: true }],
+    ['https://five.example/e', { ok: true }],
+  ]));
+  checks.push(
+    [netNewAllocationTarget(2) === 4, 'search bootstrap does not reserve two net-new fallbacks'],
+    [recovery.successfulNetNew === 2, 'search bootstrap did not recover the net-new source floor'],
+    [recovery.promoted.length === 1, 'search bootstrap promoted unnecessary ordinary reserves'],
+    [recovery.promoted[0]?.allocation === 'net-new', 'net-new reserve was not promoted as net-new evidence'],
+  );
   const failures = checks.filter(([ok]) => !ok).map(([, message]) => message);
   if (failures.length) throw new Error(failures.join('; '));
   console.log(`[check-research-profile] ✓ fast snapshot loaded by runtime context (${basename(folder)})`);
