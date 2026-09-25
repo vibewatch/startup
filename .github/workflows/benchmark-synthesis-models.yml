@@ -136,21 +136,14 @@ jobs:
             cp ".research-cache/$RUN_ID/worker-results.json" "$output_dir/worker-results.json"
             cp -R ".research-cache/$RUN_ID/worker-inputs" "$output_dir/worker-inputs"
             cp -R ".research-cache/$RUN_ID/worker-logs" "$output_dir/worker-logs"
-            node --input-type=module - "$output_dir/worker-results.json" "$label" "$model" "$effort" "$status" "$wall_seconds" <<'NODE' | tee "$output_dir/summary.txt" >> "$GITHUB_STEP_SUMMARY"
-            import fs from 'node:fs';
-            const [path, label, model, effort, processStatus, wallSeconds] = process.argv.slice(2);
-            const result = JSON.parse(fs.readFileSync(path, 'utf8'));
-            const runs = result.workers ?? [];
-            const credits = runs.reduce((sum, run) => sum + (run.aiCredits ?? 0), 0);
-            const failures = result.validations.filter((validation) => !validation.ok);
-            console.log(`### ${label}`);
-            console.log(`- route: ${model}/${effort}`);
-            console.log(`- process status: ${processStatus}`);
-            console.log(`- wall seconds: ${wallSeconds}`);
-            console.log(`- AI credits: ${credits.toFixed(2)}`);
-            console.log(`- strict passes: ${result.validations.length - failures.length}/${result.validations.length}`);
-            console.log(`- failed dimensions: ${[...new Set(failures.flatMap((failure) => [...(failure.failedDimensions ?? []), ...(failure.unackedWarningDimensions ?? [])]))].join(', ') || 'none'}`);
-            NODE
+            node .agents/skills/startup-research/scripts/summarize-worker-benchmark.mjs \
+              "$output_dir/worker-results.json" \
+              "$label" \
+              "$model" \
+              "$effort" \
+              "$status" \
+              "$wall_seconds" |
+              tee "$output_dir/summary.txt" >> "$GITHUB_STEP_SUMMARY"
           }
 
           run_model mini gpt-5.4-mini medium
