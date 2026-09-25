@@ -47,7 +47,6 @@ const hedgeRules = [
   { en: /\bat least\b/i, zh: /至少|不低于/u },
   { en: /\bat most\b/i, zh: /至多|最多|不超过/u },
   { en: /\b(?:likely|probably)\b/i, zh: /可能|很可能|大概率|多半/u },
-  { en: /\breportedly\b/i, zh: /据报道|据称/u },
   {
     en: /\bclaims?\b/i,
     zh: /声称|称|说法|主张|表述|断言/u,

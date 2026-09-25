@@ -58,7 +58,8 @@ Finalization runs a conservative quality gate after the structural check. It fai
 Calendar-date checks preserve ISO month/day anchors as well as years, accepting equivalent Chinese dates such as `2026-09-25` and `2026 年 9 月 25 日`. Fiscal-year prefixes and forecast suffixes (`FY2024`, `2024E`) normalize to the same year without allowing a changed year. A quarter label in `Q2 ARR` is not an ARR amount. The metric tokenizer separates the label from the metric; it does not establish quarter fidelity or interpret relative periods such as `the first two quarters after IPO`. These token checks do not establish complete numeric or semantic fidelity; verify the source proposition and metric meaning as well.
 
 The uncertainty check accepts `未披露公开里程碑` as a faithful rendering of
-`no public milestone disclosed`. A prohibition such as `no public cloud LLM API
+`no public milestone disclosed`. Reported attribution accepts `据报道`, `据报`,
+`据称`, or `报道称`; omitting it still fails. A prohibition such as `no public cloud LLM API
 allowed` is checked separately from missing public disclosures: Chinese must
 preserve the restriction, not add an unrelated evidence gap.
 

@@ -46,6 +46,20 @@ const patentAssertionSource = fullReport('The company claims its new product imp
 
 const checks = [
   ...[
+    'The company is reportedly preparing an initial public offering for its next financing stage.',
+    'According to reports, the company is preparing an initial public offering for its next financing stage.',
+  ].flatMap((en) => [false, true].flatMap((strictEditor) => [
+    ...['据报道', '据报', '据称', '报道称'].map((prefix) => [
+      checkPairQuality(fullReport(en), fullReport(`${prefix}，公司正为下一融资阶段筹备首次公开募股。`), { strictEditor }).length === 0,
+      `faithful reported attribution must pass without a conflicting duplicate rule (strict=${strictEditor}): ${prefix}`,
+    ]),
+    [
+      checkPairQuality(fullReport(en), fullReport('公司正为下一融资阶段筹备首次公开募股。'), { strictEditor })
+        .filter((issue) => issue.code === 'hedge-preservation').length === 1,
+      `omitted reported attribution must yield exactly one error (strict=${strictEditor}): ${en}`,
+    ],
+  ])),
+  ...[
     ['Private deployments are 85 percent of revenue, with 70–80 percent margins.', '私有部署占收入 85%，毛利率为 70–80%。'],
     ['Revenue grew 12.5 per cent.', '收入增长 12.5%。'],
     ['Revenue grew 13 percent.', '收入增长百分之十三。'],
