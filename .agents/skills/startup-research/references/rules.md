@@ -441,3 +441,5 @@ kpi:
   - nodes
 other: []
 ```
+
+For `journey-map`, `data.items[].touchpoints` or `data.nodes[].touchpoints`, when present, must be text or arrays of strings. Quote text containing `: ` or use a YAML block scalar; mappings are rejected rather than repaired at load time.

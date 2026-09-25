@@ -9,7 +9,7 @@ const SCHEMA_VERSION = 'report-v2' as const;
 // Bump when the loader's parsing surface (loadReportCard / parseData inputs /
 // Zod schema in content.config.ts) changes so cached digests in
 // .astro/data-store.json invalidate everywhere.
-const LOADER_VERSION = '1' as const;
+const LOADER_VERSION = '2' as const;
 
 export type YamlRecord = Record<string, unknown>;
 
@@ -194,7 +194,7 @@ function readYamlCacheEntry(path: string): YamlCacheEntry | null {
 function parseYamlFile(path: string): YamlRecord | null {
   try {
     const raw: unknown = yaml.load(readFileSync(path, 'utf8'));
-    const normalized = normalizeDates(repairCollapsedKey(raw));
+    const normalized = normalizeDates(raw);
     if (!isRecord(normalized)) {
       console.warn(`[reports-loader] YAML root is not an object for ${path}`);
       return null;
@@ -239,28 +239,8 @@ function normalizeRevision(raw: YamlRecord): ReportCardData['revision'] {
 }
 
 // ---------------------------------------------------------------------------
-// YAML reading with two defensive normalizers
+// YAML date normalization
 // ---------------------------------------------------------------------------
-
-// Repair `{ "Some Title": "value" }` shaped objects that come from manual edits
-// where a `Title: value` line was indented one level too deep and parsed as a
-// single-key object instead of a string.
-function repairCollapsedKey(value: unknown): unknown {
-  if (Array.isArray(value)) return value.map(repairCollapsedKey);
-  if (!value || typeof value !== 'object') return value;
-  if (Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null) return value;
-  const obj = value as Record<string, unknown>;
-  const keys = Object.keys(obj);
-  if (keys.length === 1 && /\s/.test(keys[0]!)) {
-    const onlyKey = keys[0]!;
-    const child = obj[onlyKey];
-    if (typeof child === 'string') return `${onlyKey}: ${child}`;
-    if (child == null) return onlyKey;
-  }
-  const out: Record<string, unknown> = {};
-  for (const key of keys) out[key] = repairCollapsedKey(obj[key]);
-  return out;
-}
 
 function normalizeDates(value: unknown): unknown {
   if (value instanceof Date && !Number.isNaN(value.valueOf())) return value.toISOString().slice(0, 10);

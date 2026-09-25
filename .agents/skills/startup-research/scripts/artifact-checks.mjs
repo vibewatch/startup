@@ -185,6 +185,10 @@ export function checkFigureDeep(figure, { path }) {
   for (const [field, singular] of [['items', 'item'], ['nodes', 'node'], ['points', 'point']]) {
     for (const [index, entry] of (figure.data[field] ?? []).entries()) {
       if (!hasText(entry?.label)) c.fail(`${figurePath} ${singular} ${index + 1} requires label`, { figureId: id });
+      if (figure.type === 'journey-map' && entry?.touchpoints !== undefined && typeof entry.touchpoints !== 'string'
+        && (!Array.isArray(entry.touchpoints) || entry.touchpoints.some((point) => typeof point !== 'string'))) {
+        c.fail(`${figurePath} data.${field}[${index}].touchpoints must be text or an array of strings; quote text containing ": " or use a YAML block scalar`, { figureId: id });
+      }
     }
   }
   for (const [index, layer] of (figure.data.layers ?? []).entries()) {

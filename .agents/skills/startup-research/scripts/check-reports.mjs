@@ -30,7 +30,7 @@ const REPO_ROOT = resolve(REPORTS_DIR, '..');
 const CACHE_FILE = join(REPO_ROOT, '.cache', 'check-reports.json');
 // Bump when check-report's validation rules change so cached digests
 // invalidate everywhere.
-const CHECK_VERSION = '1';
+const CHECK_VERSION = '2';
 const USE_CACHE = process.env.CHECK_REPORT_NO_CACHE !== '1';
 const SUMMARY_CARD_FILE = FINAL_ARTIFACTS.summaryCard.file;
 

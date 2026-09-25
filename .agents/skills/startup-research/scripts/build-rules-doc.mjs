@@ -215,6 +215,8 @@ function rendererContractsSection() {
   lines.push('Populating a field outside this list for the given type is a `figureShape` failure. `other` allows none — use it only when the data does not fit any rendered type.');
   lines.push('');
   lines.push(yamlBlock(FIGURE_ALLOWED_POPULATED_FIELDS));
+  lines.push('');
+  lines.push('For `journey-map`, `data.items[].touchpoints` or `data.nodes[].touchpoints`, when present, must be text or arrays of strings. Quote text containing `: ` or use a YAML block scalar; mappings are rejected rather than repaired at load time.');
   return lines.join('\n');
 }
 
