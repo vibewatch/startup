@@ -110,6 +110,12 @@ Use `npm run audit:translations-zh -- --limit 20` for a non-blocking corpus samp
 To repair existing overlays one report at a time, seed the cache from the
 current Chinese files instead of retranslating from English:
 
+Review audit findings against the source before editing. Fiscal-year prefixes
+(`FY2029`), URL paths, and nominal insurance terms such as `for claims modeling`
+are not translation omissions or assertions. Correct a demonstrated checker
+false positive with regression coverage rather than adding unrelated attribution
+or changing preserved URLs merely to satisfy a pattern.
+
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json
 npm run translate:zh -- repair-init <run-id>

@@ -8,7 +8,7 @@ function usage(code = 0) {
   process.exit(code);
 }
 
-const invariantToken = /\b(?:19|20)\d{2}\b|\b\d{4}-\d{2}-\d{2}\b/g;
+const invariantToken = /\b(?:FY\s*)?(?:19|20)\d{2}\b|\b\d{4}-\d{2}-\d{2}\b/gi;
 const metricToken = /(?:[$€£¥₦]\s*)?\d+(?:[.,]\d+)*(?:(?:[KMBT]|x|×)|\s?(?:%|bps|ARR|MRR|GMV|TPV|NPL|IRR))?/gi;
 const stylePatterns = [
   /对于[^。！？；]{1,24}而言/u,
@@ -47,11 +47,16 @@ const hedgeRules = [
   { en: /\bat most\b/i, zh: /至多|最多|不超过/u },
   { en: /\b(?:likely|probably)\b/i, zh: /可能|很可能|大概率|多半/u },
   { en: /\breportedly\b/i, zh: /据报道|据称/u },
-  { en: /\bclaims?\b/i, zh: /声称|称|说法|主张/u },
-  { en: /\bnot yet\b/i, zh: /尚未|还未|仍未|目前没有|尚无/u },
-  { en: /\b(?:unproven|not proven)\b/i, zh: /未经证实|未获证实|尚未证明|无法证明/u },
-  { en: /\bno public\b/i, zh: /没有公开|无公开|尚无公开|未见公开/u },
+  {
+    en: /\bclaims?\b/i,
+    zh: /声称|称|说法|主张/u,
+    exclude: /\b(?:for|in|of|on)\s+claims?\s+(?:modeling|modelling|processing|handling|management|adjudication|submission|settlement)\b/gi,
+  },
+  { en: /\bnot yet\b/i, zh: /尚未|还未|仍未|还没有|目前没有|尚无/u },
+  { en: /\b(?:unproven|not proven)\b/i, zh: /未经证实|未获证实|尚未证明|无法证明|尚未验证|未经验证|未获验证/u },
+  { en: /\bno public\b/i, zh: /没有公开|无公开|尚无公开|未见公开|未发现公开/u },
 ];
+const urlToken = /(?:https?:\/\/|www\.)[^\s<>()（）「」，。；：！？]+|\b(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s<>()（）「」，。；：！？]*)?/gi;
 const descriptorWords = new Set([
   'business',
   'company',
@@ -83,7 +88,7 @@ function load(path) {
 }
 
 function normalizedTokens(value) {
-  return (value.match(invariantToken) ?? []).map((token) => token.replace(/\s+/g, '').toLowerCase());
+  return (value.match(invariantToken) ?? []).map((token) => token.replace(/^FY\s*/i, '').replace(/\s+/g, '').toLowerCase());
 }
 
 function normalizedMetricTokens(value) {
@@ -140,7 +145,8 @@ function walk(en, zh, path, whitelist, issues, options) {
   }
   if (isLongProse(path, en)) {
     for (const rule of hedgeRules) {
-      if (rule.en.test(en) && !rule.zh.test(zh) && !rule.en.test(zh)) {
+      const sourceText = rule.exclude ? en.replace(rule.exclude, '') : en;
+      if (rule.en.test(sourceText) && !rule.zh.test(zh) && !rule.en.test(zh)) {
         pushIssue(issues, {
           path: path.join('/'),
           kind: 'semantic',
@@ -189,7 +195,7 @@ function walk(en, zh, path, whitelist, issues, options) {
     });
   }
   if (/[\u4e00-\u9fff]/u.test(zh)) {
-    const leaked = (zh.match(/\b[a-z][a-z-]{3,}\b/g) ?? [])
+    const leaked = (zh.replace(urlToken, '').match(/\b[a-z][a-z-]{3,}\b/g) ?? [])
       .map((word) => word.toLowerCase())
       .filter((word) => descriptorWords.has(word));
     if (leaked.length) {
