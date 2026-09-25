@@ -159,10 +159,12 @@ try {
 } catch {}
 const mode = refreshContext ? 'refresh' : 'fresh';
 const gaps = previousGaps(refreshContext);
+const runDate = runDateFromRunId(runId);
+const year = runDate.slice(0, 4);
 const output = {
   schemaVersion: 'startup-search-plan-v1',
   runId,
-  runDate: runDateFromRunId(runId),
+  runDate,
   mode,
   profile: args.profile,
   company: { name: company, website: website || null, domain: domain || null },
@@ -179,7 +181,7 @@ const output = {
   globalQueries: sharedQueries({
     company,
     domain,
-    year: runId.slice(0, 4),
+    year,
     strategy,
     budget,
   }),
@@ -194,7 +196,7 @@ const output = {
     },
     queries: chapterQueries({
       company,
-      year: runId.slice(0, 4),
+      year,
       chapter,
       mode,
       strategy,
@@ -203,6 +205,16 @@ const output = {
     }),
   })),
 };
+const volatileTokens = (config.agentPolicy?.volatileFactQueryTokens ?? [])
+  .map((token) => String(token).toLowerCase())
+  .filter(Boolean);
+const runYearPattern = new RegExp(`\\b${year}\\b`);
+for (const query of [...output.globalQueries, ...output.chapters.flatMap((chapter) => chapter.queries)]) {
+  if (volatileTokens.some((token) => query.query.toLowerCase().includes(token))
+      && !runYearPattern.test(query.query)) {
+    query.query = `${query.query} ${year}`;
+  }
+}
 const rendered = args.format === 'yaml'
   ? yaml.dump(output, { lineWidth: 120, noRefs: true, sortKeys: false })
   : `${JSON.stringify(output, null, 2)}\n`;

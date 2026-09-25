@@ -44,6 +44,12 @@ Workflow narrative: what to run, in what order, with which flags. Two generated 
 6. **Bootstrap source discovery once for the run:**
    `npm run research:bootstrap -- --report-folder <reportFolder> --company "<companyName>" [--website "<companyUrl>"] --profile fast|deep`
    Refresh runs infer company identity and prior gaps from `.research-cache/<runId>/refresh-context.yaml`. The bootstrap searches concurrently with provider fallback, allocates a mix of chapter-specific and shared high/medium-quality candidates, prefetches each allocated URL once with bounded concurrency, and promotes prefetched reserve candidates only when fetch failures would leave a chapter below its source, domain, or net-new evidence target. It allocates every chapter's mandatory evidence before reserving up to two exclusive net-new backups from surplus URLs; optional backups never remove recommended evidence from another chapter. Recommended and reserve pools stay disjoint, recovery counts canonical URLs once, and both pools retain fetch results so successful leftover reserves remain available for repair. It writes `.research-cache/<runId>/search-bundle.json` plus `.research-cache/<runId>/fetched/*.txt`. Reuse those files across every chapter; do not rerun bootstrap or refetch a shared URL inside workers. The orchestrator should not serially read every fetched file—hand each chapter pool directly to its worker. Use `--no-prefetch` only for diagnostics.
+   Shared chapter-focus terms are industry-neutral; they must not inject one
+   company's products, technology stack, or competitors into every report.
+   The planner applies the snapshot's volatile-fact vocabulary and adds the
+   canonical run year before searches execute, including global and refresh
+   queries. Keep the actual executed query in the chapter log; never append
+   a year only to the recorded log to conceal an undated search.
 7. **Export `STARTUP_FETCH_LOG_PATH` before any `fetch-url` invocation:**
    ```sh
    RUN_ID=$(basename "$REPORT_FOLDER")

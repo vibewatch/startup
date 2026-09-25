@@ -8,7 +8,7 @@ import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 import { promoteReserveEvidence, successfulPoolMetrics } from './search-pool-recovery.mjs';
-import { canonicalSourceUrl, getCoreArtifacts, isSelfPublishedReportUrl } from './utils.mjs';
+import { canonicalSourceUrl, getCoreArtifacts, isSelfPublishedReportUrl, loadWorkflowConfig } from './utils.mjs';
 import { checkRun } from './check-report.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -143,6 +143,58 @@ function runJson(script, args) {
 }
 
 const tests = [
+  ...[
+    ['Tines', 'fast', false],
+    ['Acme Pharma', 'deep', false],
+    ['Acme Logistics', 'fast', true],
+    ['Harri', 'deep', true],
+    ['Turso', 'fast', false],
+  ].map(([company, profile, refresh], index) => [
+    `company-neutral, dated discovery for ${company} (${profile}, ${refresh ? 'refresh' : 'fresh'})`,
+    () => {
+      const folder = resolve('.research-cache', `20990401000000-plan-check-${index}-${process.pid}`);
+      try {
+        mkdirSync(folder, { recursive: true });
+        runJson('apply-research-profile.mjs', ['--report-folder', folder, '--profile', profile]);
+        const website = `https://company${index}.example`;
+        if (refresh) {
+          const summaryCardPath = join(folder, 'previous-summary.yaml');
+          writeFileSync(summaryCardPath, JSON.stringify({
+            summary: { unresolvedGaps: ['Unverified 2020 revenue and current customer concentration'] },
+          }));
+          writeFileSync(join(folder, 'refresh-context.yaml'), JSON.stringify({
+            previousReport: { company: { name: company, website }, summaryCardPath },
+          }));
+        }
+        const plan = runJson('build-search-plan.mjs', [
+          '--report-folder', folder, '--profile', profile,
+          ...(refresh ? [] : ['--company', company, '--website', website]),
+        ]);
+        assert.equal(plan.runDate, '2099-04-01');
+        assert.equal(plan.mode, refresh ? 'refresh' : 'fresh');
+        assert.equal(plan.company.name, company);
+        assert.equal(plan.chapters.length, 8);
+        const policy = loadWorkflowConfig({ reportFolder: folder }).agentPolicy;
+        const queries = [...plan.globalQueries, ...plan.chapters.flatMap((chapter) => chapter.queries)];
+        for (const query of queries) {
+          assert(query.query.includes(`"${company}"`), 'query lost the company identity');
+          assert.doesNotMatch(query.query, /\b(?:SQLite|libSQL|database|serverless|Cloudflare D1|PlanetScale|Neon|Supabase)\b/i,
+            'shared research terms assume an unrelated database industry or competitor set');
+          const volatile = policy.volatileFactQueryTokens.some((token) => query.query.toLowerCase().includes(token.toLowerCase()));
+          if (volatile) assert.match(query.query, /\b2099\b/, `undated volatile query: ${query.query}`);
+          assert.equal((query.query.match(/\b2099\b/g) ?? []).length, volatile ? 1 : 0,
+            'query year was duplicated or added to a static lookup');
+        }
+        if (refresh) assert(queries.some((query) => /\b2020\b/.test(query.query)), 'refresh lost its prior evidence gap');
+        for (const chapter of plan.chapters) {
+          assert.equal(chapter.evidenceTarget.minSources >= (profile === 'fast' ? 8 : 25), true);
+          assert.equal(chapter.evidenceTarget.minNetNewSources >= (profile === 'fast' ? 2 : 8), true);
+        }
+      } finally {
+        rmSync(folder, { recursive: true, force: true });
+      }
+    },
+  ]),
   ['self-published URL matching preserves external sources', () => {
     for (const url of [
       'https://startup.genisisiq.com/acme/',
