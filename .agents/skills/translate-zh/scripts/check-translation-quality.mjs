@@ -115,13 +115,22 @@ function normalizedMetricTokens(value) {
     '$1$2%$3',
   );
   // A trailing multiplier or percentage applies to both endpoints of a range.
-  const expanded = retention.replace(
+  const expanded = retention.replace(/\b(\d+(?:[.,]\d+)*)[\s-]*fold\b/gi, '$1x').replace(
     /(\d+(?:[.,]\d+)*)\s*([-–—])\s*(\d+(?:[.,]\d+)*)\s*(x|×|倍|%)/gi,
     '$1$4$2$3$4',
   );
+  const years = new Set();
   return (expanded.match(metricToken) ?? [])
     .map((token) => token.replace(/\s+/g, '').replace(/,/g, '').replace(/[×倍]$/u, 'x').toLowerCase())
+    // "2026 ARR" labels a year; a currency-prefixed amount is not a calendar label.
+    .map((token) => token.replace(/^((?:19|20)\d{2})(?:arr|mrr|gmv|tpv|npl|irr)$/, '$1'))
     .filter((token) => /[$€£¥₦%]|bps|[kmbt]$|arr|mrr|gmv|tpv|npl|irr|x$|×$/i.test(token) || /^(?:19|20)\d{2}$/.test(token))
+    .filter((token) => {
+      if (!/^(?:19|20)\d{2}$/.test(token)) return true;
+      if (years.has(token)) return false;
+      years.add(token);
+      return true;
+    })
     .sort();
 }
 

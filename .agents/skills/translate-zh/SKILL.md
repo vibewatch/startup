@@ -124,7 +124,11 @@ retention-relative phrases such as `NRR above 100` or `NRR trends toward low 100
 allow an explicit `%` in Chinese; nearby customer and cohort counts do not.
 English scale words (`thousand`, `million`, `billion`, `trillion`) match
 `K`, `M`, `B`, `T` without changing the quantity or currency; `bps` remains
-distinct from `B`. Other unit or currency conversions still require source
+distinct from `B`. `26-fold` and `26 倍` retain the same multiplier. A bare
+calendar year followed by `ARR` or another metric label remains a year;
+repeating that year does not create another quantitative claim. Repeated
+amounts and rates still retain their occurrence counts.
+Other unit or currency conversions still require source
 comparison; do not remove faithful units merely to make token-level checks pass.
 
 To repair existing overlays one report at a time, seed the cache from the

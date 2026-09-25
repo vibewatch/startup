@@ -40,6 +40,26 @@ const patentSource = fullReport('Trademark search analysis, patent claim draftin
 const patentAssertionSource = fullReport('The company claims its new product improves patent claim drafting.');
 
 const checks = [
+  ...[
+    ['The January 2026 ARR estimate was $190M.', '2026 年 1 月 ARR 估计为 $190M。'],
+    ['End-2024 ARR was $50M.', '2024 年底 ARR 为 $50M。'],
+    ['In 2025, funding rose in June 2025 and December 2025.', '2025 年融资在 6 月和同年 12 月增加。'],
+    ['Processing volume increased 26-fold.', '处理量增至原来的 26 倍。'],
+  ].map(([en, zh]) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor: true }).length === 0,
+    `calendar labels, repeated year references, and fold notation must retain their meaning: ${zh}`,
+  ]),
+  ...[
+    ['The January 2026 ARR estimate was $190M.', '2027 年 1 月 ARR 估计为 $190M。'],
+    ['Funding increased in 2025.', '融资在 2025 年和 2026 年增加。'],
+    ['ARR was $2026 ARR.', 'ARR 为 $2026。'],
+    ['Processing volume increased 26-fold.', '处理量增至原来的 27 倍。'],
+    ['Revenue is $10M and expense is $10M.', '收入为 $10M。'],
+  ].map(([en, zh]) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor: true })
+      .some((issue) => issue.code === 'metric-preservation'),
+    `normalization must not hide changed years, quantities, currency-prefixed values, or repeated amounts: ${zh}`,
+  ]),
   [
     checkPairQuality(source, clean, { strictEditor: true }).length === 0,
     'strict editor rejected a faithful native translation',
