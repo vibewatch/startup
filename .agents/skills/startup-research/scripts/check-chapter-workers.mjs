@@ -39,8 +39,13 @@ try {
     schemaVersion: 'search-bundle-v1',
     chapterPools: roster.chapters.map((chapter) => ({
       key: chapter.key,
-      recommended: [],
-      reserve: [],
+      recommended: [
+        { url: `https://${chapter.key}.example/success`, fetch: { ok: true } },
+        { url: `https://${chapter.key}.example/failure`, fetch: { ok: false } },
+      ],
+      reserve: [
+        { url: `https://${chapter.key}.example/unfetched` },
+      ],
     })),
     fetchedSources: [],
   }, null, 2)}\n`);
@@ -57,6 +62,9 @@ try {
     '--dry-run',
     '--format', 'json',
   ]));
+  const workerPools = plan.workers.map((worker) => (
+    JSON.parse(readFileSync(worker.poolPath, 'utf8'))
+  ));
   writeFileSync(join(folder, 'worker-results.json'), `${JSON.stringify({
     schemaVersion: 'chapter-worker-run-v1',
     workers: [],
@@ -112,6 +120,8 @@ process.exit(1);
     [plan.workers.every((worker) => worker.model === 'gemini-3.8-flash'), 'runner did not use Gemini'],
     [plan.workers.every((worker) => worker.reasoningEffort === 'default'), 'runner did not use Gemini default effort'],
     [plan.workers.every((worker) => worker.escalateTo === 'gpt-5.6-sol-fast'), 'runner did not retain the Sol Fast quality fallback'],
+    [workerPools.every((pool) => pool.recommended.length === 1), 'worker pool retained an unsuccessful recommended source'],
+    [workerPools.every((pool) => pool.reserve.length === 0), 'worker pool retained an unfetched reserve source'],
     [benchmarkPlan.workers.every((worker) => worker.model === 'gemini-3.8-flash'), 'benchmark model override did not reach every worker'],
     [benchmarkPlan.workers.every((worker) => worker.reasoningEffort === 'default'), 'benchmark effort override did not reach every worker'],
     [benchmarkPlan.workers.every((worker) => worker.escalateTo === null), 'benchmark override retained a hidden escalation'],

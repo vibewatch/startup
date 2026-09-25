@@ -314,6 +314,14 @@ mkdirSync(logsDir, { recursive: true });
 const fetchLogPath = resolve(
   process.env.STARTUP_FETCH_LOG_PATH || join(cacheDir, '_fetch-log.jsonl'),
 );
+function successfulWorkerPool(pool) {
+  return {
+    ...pool,
+    recommended: (pool.recommended ?? []).filter((candidate) => candidate.fetch?.ok),
+    reserve: (pool.reserve ?? []).filter((candidate) => candidate.fetch?.ok),
+  };
+}
+
 const tasks = roster.chapters.map((chapter) => {
   const context = runJson(contextScript, [
     '--order', String(chapter.order),
@@ -327,8 +335,9 @@ const tasks = roster.chapters.map((chapter) => {
       escalateTo: null,
     };
   }
-  const pool = poolByKey.get(chapter.key);
-  if (!pool) throw new Error(`search bundle is missing chapter pool ${chapter.key}`);
+  const sourcePool = poolByKey.get(chapter.key);
+  if (!sourcePool) throw new Error(`search bundle is missing chapter pool ${chapter.key}`);
+  const pool = successfulWorkerPool(sourcePool);
   const contextPath = join(inputsDir, `${String(chapter.order).padStart(2, '0')}-${chapter.key}-context.json`);
   const poolPath = join(inputsDir, `${String(chapter.order).padStart(2, '0')}-${chapter.key}-pool.json`);
   writeFileSync(contextPath, `${JSON.stringify(context, null, 2)}\n`);
