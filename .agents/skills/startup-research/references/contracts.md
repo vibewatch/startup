@@ -288,6 +288,11 @@ policy?:
     model: string
     reasoningEffort: string
     escalateTo: string|null
+  finalizerRouting:  # Binding model and reasoning effort for report-level convergence and finalization. This route is intentionally independent from chapter synthesis.
+    profile: "report-finalization"
+    model: string
+    reasoningEffort: string
+    escalateTo: string|null
 ```
 
 The list-mode projection (`--list`) emits the chapter roster only:

@@ -128,12 +128,12 @@ if (!existsSync(resultsPath) || !existsSync(bundlePath)) {
 const context = runJson(contextScript, ['--order', '1', '--report-folder', reportFolder]);
 const route = args.modelOverride
   ? {
-      ...context.policy.workerRouting,
+      ...context.policy.finalizerRouting,
       model: args.modelOverride,
       reasoningEffort: args.effortOverride,
       escalateTo: null,
     }
-  : context.policy.workerRouting;
+  : context.policy.finalizerRouting;
 const fetchLogPath = resolve(
   process.env.STARTUP_FETCH_LOG_PATH || join(cacheDir, '_fetch-log.jsonl'),
 );

@@ -91,6 +91,12 @@ export const ChapterRuntimeContextSchema = z.object({
       reasoningEffort: nonEmptyString,
       escalateTo: nullableString,
     }).strict().describe('Binding model and reasoning effort for the chapter worker. The orchestrator must pass both values when spawning the worker; top-level CLI settings do not reliably propagate to subagents.'),
+    finalizerRouting: z.object({
+      profile: z.literal('report-finalization'),
+      model: nonEmptyString,
+      reasoningEffort: nonEmptyString,
+      escalateTo: nullableString,
+    }).strict().describe('Binding model and reasoning effort for report-level convergence and finalization. This route is intentionally independent from chapter synthesis.'),
   }).strict().optional(),
 }).strict();
 

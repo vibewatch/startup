@@ -245,9 +245,14 @@ function buildRuntimeContext(config, chapter, generatedFrom = workflowConfigPath
   const workerProfile = config.activeResearchProfile === 'fast'
     ? 'chapter-synthesis-fast'
     : 'chapter-synthesis';
-  const workerRoute = readYaml(modelRoutingPath).profiles?.[workerProfile];
+  const modelProfiles = readYaml(modelRoutingPath).profiles;
+  const workerRoute = modelProfiles?.[workerProfile];
   if (!workerRoute?.defaultCopilotModel || !workerRoute?.reasoningEffort) {
     throw new Error(`[chapter] missing model route for ${workerProfile}`);
+  }
+  const finalizerRoute = modelProfiles?.['report-finalization'];
+  if (!finalizerRoute?.defaultCopilotModel || !finalizerRoute?.reasoningEffort) {
+    throw new Error('[chapter] missing model route for report-finalization');
   }
   out.policy = {
     retryPolicy: {
@@ -259,6 +264,12 @@ function buildRuntimeContext(config, chapter, generatedFrom = workflowConfigPath
       model: workerRoute.defaultCopilotModel,
       reasoningEffort: workerRoute.reasoningEffort,
       escalateTo: workerRoute.escalateTo ?? null,
+    },
+    finalizerRouting: {
+      profile: 'report-finalization',
+      model: finalizerRoute.defaultCopilotModel,
+      reasoningEffort: finalizerRoute.reasoningEffort,
+      escalateTo: finalizerRoute.escalateTo ?? null,
     },
   };
   return out;
