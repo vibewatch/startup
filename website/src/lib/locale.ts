@@ -4,8 +4,6 @@
 // segments so callers never assemble strings by hand.
 export type Locale = 'en' | 'zh';
 
-export const LOCALES: readonly Locale[] = ['en', 'zh'] as const;
-
 export const HTML_LANG: Record<Locale, string> = {
   en: 'en',
   zh: 'zh-CN',

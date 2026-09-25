@@ -155,6 +155,10 @@ npm run check:reports-contract
 
 For normal report generation, prefer the full startup-research workflow and `finalize-report.mjs`; use `build-report.mjs` only when maintaining existing finalized reports and the chapter/evidence ledger is already current.
 
+The historical YAML migration is complete. Current schema and renderer checks
+reject unsupported snapshot fields and figure layouts; validation no longer runs
+the retired one-off migration utility.
+
 ### Incremental builds
 
 Both `--all` validators and the website loader are digest-keyed, so unchanged report folders are skipped on rebuild:

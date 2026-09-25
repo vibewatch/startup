@@ -309,24 +309,20 @@ const chapterPools = plan.chapters.map((chapter) => {
   const otherFill = allCandidates
     .filter((candidate) => candidate.sourceQuality?.tier !== 'low' && availableToChapter(candidate))
     .map((candidate) => ({ ...candidate, allocation: 'reserve' }));
-  const lowSignalFill = [];
   const domainFill = [
     ...directFill,
     ...sharedFill,
     ...otherFill,
-    ...lowSignalFill,
   ];
   const sourceFill = [
     ...sharedFill,
     ...directFill,
     ...otherFill,
-    ...lowSignalFill,
   ];
   const reserveFill = [
     ...directFill,
     ...sharedFill,
     ...otherFill,
-    ...lowSignalFill,
   ];
   const selectedDomains = new Set(
     [...selected.values()].map((candidate) => normalizeDomain(candidate.url)).filter(Boolean),

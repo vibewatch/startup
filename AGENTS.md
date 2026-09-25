@@ -14,8 +14,6 @@ This repository generates startup diligence reports as structured YAML and rende
 - Install website dependencies: `npm --prefix website install`
 - Run full validation: `npm run validate`
 - Run historical report contract checks only: `npm run check:reports-contract`
-- Check that historical YAML uses only current contracts: `npm run check:report-yaml-current`
-- Migrate historical YAML to current contracts: `npm run reports:migrate-yaml`
 - Run Simplified Chinese overlay checks only: `npm run check:translations-zh`
 - Run website locally: `npm --prefix website run dev`
 
