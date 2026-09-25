@@ -141,6 +141,21 @@ function loadYaml(path) {
   return yaml.load(readFileSync(path, 'utf8')) ?? {};
 }
 
+function seedExistingText(bundle, translated) {
+  if (typeof bundle === 'string') {
+    return typeof translated === 'string' && translated.trim() ? translated : bundle;
+  }
+  if (Array.isArray(bundle)) {
+    return bundle.map((value, index) => seedExistingText(value, translated?.[index]));
+  }
+  if (bundle && typeof bundle === 'object') {
+    return Object.fromEntries(Object.entries(bundle).map(([key, value]) => [
+      key, seedExistingText(value, translated?.[key]),
+    ]));
+  }
+  return bundle;
+}
+
 function qualityFor(paths, options = {}) {
   const findings = [];
   for (const [artifact, sourcePath, targetPath] of [
@@ -232,8 +247,14 @@ function repairInit(runId, options = {}) {
   }
   ensureDir(paths.cacheDir);
   ensureDir(paths.partsDir);
-  runNodeScript('bundle-translatable.mjs', ['export', paths.summaryOut, '--out', paths.summaryBundle]);
-  runNodeScript('bundle-translatable.mjs', ['export', paths.fullOut, '--out', paths.fullBundle]);
+  for (const [source, translated, bundle] of [
+    [paths.summarySource, paths.summaryOut, paths.summaryBundle],
+    [paths.fullSource, paths.fullOut, paths.fullBundle],
+  ]) {
+    runNodeScript('bundle-translatable.mjs', ['export', source, '--out', bundle]);
+    const seeded = seedExistingText(loadYaml(bundle), loadYaml(translated));
+    writeFileSync(bundle, yaml.dump(seeded, { lineWidth: 120, noRefs: true, sortKeys: false }), 'utf8');
+  }
   runNodeScript('bundle-translatable.mjs', ['split', paths.fullBundle, '--out-dir', paths.partsDir, '--max-chars', FULL_SPLIT_MAX_CHARS, '--max-items', FULL_SPLIT_MAX_ITEMS]);
   const baseline = qualityFor(paths);
   writeQuality(paths.qualityBefore, baseline);

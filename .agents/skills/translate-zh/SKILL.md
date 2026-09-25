@@ -69,6 +69,10 @@ The uncertainty check accepts `未披露公开里程碑` as a faithful rendering
 `据称`, or `报道称`; omitting it still fails. A prohibition such as `no public cloud LLM API
 allowed` is checked separately from missing public disclosures: Chinese must
 preserve the restriction, not add an unrelated evidence gap.
+Likewise, a warehouse that `has no public IP address` or warehouses that
+`have no public IP addresses` lack public IP addresses; this is not a claim
+that their addresses were merely undisclosed. A separate public-disclosure
+gap in the same leaf must still be preserved.
 
 ## Mandatory editorial pass
 
@@ -172,7 +176,11 @@ npm run translate:zh -- repair-init <run-id>
 ```
 
 `repair-init` writes `quality.before.json`, prints the blocking target paths,
-and fills the sparse cache with the existing Chinese text. Edit only the
+and builds the sparse cache from the current English shape, seeding matching
+paths with existing Chinese text. New prose leaves remain editable even when
+their older Chinese value was numeric-only; current mechanical cells instead
+come from English during application. Newly added prose without an existing
+translation starts in English and must be translated. Edit only the
 flagged leaves, then finalize with `--keep-cache` and measure the delta:
 
 ```sh

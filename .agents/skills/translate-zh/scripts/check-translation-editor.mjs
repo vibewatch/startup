@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
+import yaml from 'js-yaml';
 import { checkPairQuality, editorialQualityImproved } from './check-translation-quality.mjs';
 import { untranslatedMessage } from './check-translation.mjs';
 
@@ -43,8 +44,39 @@ const negativeExamples = [
 const multiplierSource = fullReport('Harvey pricing is 5-10x Spellbook and 2-5x CoCounsel.');
 const patentSource = fullReport('Trademark search analysis, patent claim drafting, freedom-to-operate research');
 const patentAssertionSource = fullReport('The company claims its new product improves patent claim drafting.');
+const noPublicIpSource = 'The architecture documentation says these warehouses have no public IP addresses.';
+const noPublicIpAndMilestoneSource = `${noPublicIpSource} The IPO timeline has no public milestone disclosed.`;
 
 const checks = [
+  ...[
+    [noPublicIpSource, '架构文档称，这些数仓没有公共 IP 地址。'],
+    [noPublicIpSource, '架构文档称，这些数仓无公网 IP 地址。'],
+    [noPublicIpSource, '架构文档称，这些数仓不设公有 IP 地址。'],
+    [noPublicIpSource, '架构文档称，这些数仓不具备任何公网 IP 地址。'],
+    ['The architecture documentation says each warehouse has no public IP address.', '架构文档称，每个数仓都没有公网 IP 地址。'],
+    ['The warehouses have no public IP addresses; the traffic stays on private networks.', '数仓没有公网 IP 地址，流量留在私有网络。'],
+    ['The documentation has no public IP addresses listed for these serverless warehouses.', '文档中未公开列出这些无服务器数仓的 IP 地址。'],
+    ['No public IP addresses are disclosed in the documentation for these warehouses.', '这些数仓的文档未公开 IP 地址。'],
+    [noPublicIpAndMilestoneSource, '这些数仓没有公网 IP 地址；未见公开 IPO 时间表里程碑。'],
+  ].flatMap(([en, zh]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor }).length === 0,
+    `public IP absence and missing disclosure must retain distinct meanings (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
+    [noPublicIpSource, '架构文档称，这些数仓拥有公网 IP 地址。'],
+    [noPublicIpSource, '这些数仓的 IP 地址未公开。'],
+    [noPublicIpSource, '这些数仓未披露公网 IP 地址。'],
+    [noPublicIpSource, '这些数仓无需公网 IP 地址。'],
+    [noPublicIpSource, '这些数仓并非没有公网 IP 地址。'],
+    [noPublicIpSource, '这些数仓不是不具备公网 IP 地址。'],
+    [noPublicIpSource, '这些数仓没有公网 IPv6 地址。'],
+    [noPublicIpAndMilestoneSource, '这些数仓没有公网 IP 地址。'],
+    [noPublicIpAndMilestoneSource, '这些数仓拥有公网 IP 地址；未见公开 IPO 时间表里程碑。'],
+  ].flatMap(([en, zh]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor })
+      .some((issue) => issue.code === 'hedge-preservation'),
+    `public IP absence must not become presence, nondisclosure, or a narrower protocol claim (strict=${strictEditor}): ${zh}`,
+  ])),
   ...[
     ['$500+ million of funding.', '融资超过 $500M。'],
     ['A €580-million investment.', '投资金额为 €580M。'],
@@ -543,6 +575,73 @@ try {
   assert.equal(unassessed.cleanRatePct, null);
   assert.equal(unassessed.reports[0].hardPassRatePct, null);
   assert.equal(unassessed.reports[0].cleanRatePct, null);
+
+  const scripts = join(fixtureRoot, '.agents/skills/translate-zh/scripts');
+  cpSync(new URL('./', import.meta.url), scripts, { recursive: true });
+  const references = join(fixtureRoot, '.agents/skills/translate-zh/references');
+  mkdirSync(references);
+  cpSync(new URL('../references/glossary.zh.yaml', import.meta.url), join(references, 'glossary.zh.yaml'));
+  symlinkSync(fileURLToPath(new URL('../../../../node_modules', import.meta.url)), join(fixtureRoot, 'node_modules'), 'dir');
+  writeFileSync(join(fixtureRoot, 'package.json'), '{"type":"module"}');
+  const repairDir = join(fixtureRoot, 'reports', 'repair-fixture');
+  mkdirSync(repairDir);
+  const repairSource = {
+    ...fullReport('Existing narrative'),
+    coverageNotes: 'New context after correction',
+    tables: [
+      { title: 'Valuation', columns: ['Metric', 'Value'], rows: [['Valuation', '~27.1x current-entry proxy'], ['Entry price', '$190B']] },
+      { title: 'Additional context', rows: [['Existing label', 'Existing detail'], ['New label', 'New detail']] },
+    ],
+  };
+  const repairTranslation = {
+    ...fullReport('原有说明'),
+    coverageNotes: ' ',
+    tables: [
+      { title: '估值', columns: ['项目', '数值'], rows: [['估值', '~24.8x-27.9x'], ['入场价', '旧金额说明'], ['删除行', '旧数据']] },
+      { title: '补充背景', rows: [['原有项目', '原有说明']] },
+    ],
+  };
+  const repairSummary = { artifact: 'summary-card', summary: { headline: 'Existing conclusion' } };
+  const repairSummaryZh = { artifact: 'summary-card', summary: { headline: '原有结论' } };
+  const repairInputs = {
+    'full-report.yaml': repairSource, 'full-report.zh.yaml': repairTranslation,
+    'summary-card.yaml': repairSummary, 'summary-card.zh.yaml': repairSummaryZh,
+  };
+  for (const [file, doc] of Object.entries(repairInputs)) writeFileSync(join(repairDir, file), JSON.stringify(doc));
+  const runRepair = (command, ...args) => {
+    const child = spawnSync(process.execPath, [
+      join(scripts, 'run-translation.mjs'), command, 'repair-fixture', ...args,
+    ], { cwd: fixtureRoot, encoding: 'utf8' });
+    assert.equal(child.status, 0, `${child.stdout}\n${child.stderr}`);
+  };
+  runRepair('repair-init');
+  const repairCache = join(fixtureRoot, '.translate-cache/repair-fixture');
+  const seeded = yaml.load(readFileSync(join(repairCache, 'full-report.translate.yaml'), 'utf8'));
+  assert.equal(seeded.subtitle, '原有说明');
+  assert.equal(seeded.coverageNotes, repairSource.coverageNotes, 'empty old translations must remain editable from English');
+  assert.equal(seeded.tables[0].rows[0][1], '~24.8x-27.9x', 'newly descriptive source must expose its old mechanical translation');
+  assert.equal(seeded.tables[0].rows[1][1], null, 'new mechanical source must not inherit stale translated prose');
+  assert.equal(seeded.tables[0].rows.length, 2, 'removed source rows must not enter the cache');
+  assert.deepEqual(seeded.tables[1].rows[1], ['New label', 'New detail'], 'new source rows must remain editable');
+  assert.equal(yaml.load(readFileSync(join(repairCache, 'summary-card.translate.yaml'), 'utf8')).summary.headline, '原有结论');
+  for (const [file, doc] of Object.entries(repairInputs)) assert.equal(readFileSync(join(repairDir, file), 'utf8'), JSON.stringify(doc));
+  runRepair('lint-parts');
+  const manifest = JSON.parse(readFileSync(join(repairCache, 'parts/manifest.json'), 'utf8'));
+  assert.equal(manifest.parts.length, 1);
+  const partPath = join(repairCache, 'parts', manifest.parts[0].file);
+  const part = yaml.load(readFileSync(partPath, 'utf8'));
+  part.coverageNotes = '修正后补充的背景';
+  part.tables[0].rows[0][1] = '当前入场价口径约 27.1x';
+  part.tables[1].rows[1] = ['新增项目', '新增说明'];
+  writeFileSync(partPath, yaml.dump(part));
+  runRepair('lint-parts');
+  runRepair('finalize-full', '--keep-cache');
+  const repaired = yaml.load(readFileSync(join(repairDir, 'full-report.zh.yaml'), 'utf8'));
+  assert.equal(repaired.tables[0].rows[0][1], '当前入场价口径约 27.1x');
+  assert.equal(repaired.tables[0].rows[1][1], '$190B');
+  assert.equal(repaired.tables[0].rows.length, 2);
+  assert.deepEqual(repaired.tables[1].rows[1], ['新增项目', '新增说明']);
+  assert.equal(readFileSync(join(repairDir, 'full-report.yaml'), 'utf8'), JSON.stringify(repairSource));
 } finally {
   rmSync(fixtureRoot, { recursive: true, force: true });
 }

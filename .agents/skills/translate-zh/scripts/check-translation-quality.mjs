@@ -57,11 +57,15 @@ const hedgeRules = [
   {
     en: /\bno public\b/i,
     zh: /没有公开|无公开|尚无公开|未见公开|未发现公开|未公开|(?:未|尚未|没有)(?:披露|发布)公开|公开(?:资料|信息|记录|文件|数据)(?:中)?(?:未|尚未|没有|尚无)/u,
-    exclude: /\bno public[- ]cloud(?:\s+LLM)?\s+APIs?\s+(?:are\s+)?allowed\b/gi,
+    exclude: /\bno public[- ]cloud(?:\s+LLM)?\s+APIs?\s+(?:are\s+)?allowed\b|\b(?:has|have)\s+no public\s+IP\s+address(?:es)?(?=\s*(?:[.;,]|$))/gi,
   },
   {
     en: /\bno public[- ]cloud(?:\s+LLM)?\s+APIs?\s+(?:are\s+)?allowed\b/i,
     zh: /(?:不允许|禁止|不得|不能|禁用)\s*(?:使用|接入|调用)?\s*(?:公有云|公共云)|(?:公有云|公共云)[^。！？；，]{0,24}(?:不允许|禁止|不得|不能)(?:使用|接入|调用)/u,
+  },
+  {
+    en: /\b(?:has|have)\s+no public\s+IP\s+address(?:es)?(?=\s*(?:[.;,]|$))/i,
+    zh: /(?<!并非|不是|非)(?:没有|无|不设|不具备)\s*(?:任何\s*)?(?:公共|公网|公有)\s*IP\b(?:\s*地址)?/u,
   },
 ];
 const urlToken = /(?:https?:\/\/|www\.)[^\s<>()（）「」，。；：！？]+|\b(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s<>()（）「」，。；：！？]*)?/gi;
