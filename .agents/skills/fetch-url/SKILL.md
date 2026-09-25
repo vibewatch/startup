@@ -27,6 +27,14 @@ When this skill is used inside the `startup-research` workflow, preserve the `ST
 - `--full-text` / `--no-main-content`: use only when the default output looks suspiciously short or misses important page sections. This keeps more page chrome and is useful for product/home pages, pricing pages, feature grids, docs tables, customer logos, or navigation context. It is not a cleaner mode.
 - `--raw` / `--raw-html`: use only for diagnostics or archival when you need original HTML or raw PDF bytes. For PDFs, pair it with `--out`, e.g. `--raw --out report.pdf`.
 
+Readable extraction preserves repeated non-boilerplate lines: repeated table
+headers, dates, amounts, currencies, signs, and qualifiers can carry distinct
+meaning. Known cookie/navigation boilerplate is still removed; short lines are
+not deduplicated. Cached HTML bodies are re-extracted with the current code, but
+previously saved text files do not change automatically. Re-extract affected
+sources into new review files, retain their provenance, and review the original
+table context before correcting a report.
+
 ## PDF scenarios
 
 - Normal PDF review: `node .agents/skills/fetch-url/scripts/fetch.mjs <pdf-url>`

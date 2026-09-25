@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
 import yaml from 'js-yaml';
-import { canonicalCacheKey, isAccessErrorResponse, looksLikeBotChallenge, readerUrl } from '../../fetch-url/scripts/fetch.mjs';
+import { canonicalCacheKey, cleanExtractedText, htmlToText, isAccessErrorResponse, looksLikeBotChallenge, readerUrl } from '../../fetch-url/scripts/fetch.mjs';
 import { checkFigureDeep } from './artifact-checks.mjs';
 import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
 
@@ -14,6 +14,89 @@ const accessErrorBodies = [
   "Title:\n\nURL Source: https://example.com/thread\n\nWarning: Target URL returned error 403: Forbidden\n\nMarkdown Content:\nYou've been blocked by network security.",
   'Title: Vercel Security Checkpoint\n\nURL Source: https://example.com/page\n\nWarning: Target URL returned error 429: Too Many Requests\n\nMarkdown Content:\nVercel Security Checkpoint',
 ];
+
+const financialTables = '<table><tr><th>Metric</th><th>2026</th><th>2025</th></tr>'
+  + '<tr><td>Revenue</td><td>$100</td><td>$100</td></tr>'
+  + '<tr><td>Costs</td><td>$10</td><td>-$10</td></tr></table>'
+  + '<table><tr><th>Metric</th><th>2026</th><th>2025</th></tr>'
+  + '<tr><td>Revenue</td><td>€100</td><td>€100</td></tr></table>';
+
+test('text cleaning preserves repeated evidence, table headings, currencies and signs', () => {
+  for (const text of [
+    htmlToText(financialTables),
+    'ARR\n\nRevenue\n\nARR\n\nRevenue',
+    'Not audited.\nNot audited.\nNOT AUDITED.',
+    '10%\n10\n-10\n10%\n10x\n10x\n0\n0',
+  ]) {
+    assert.deepEqual(cleanExtractedText(text), { text, removedLines: 0, dedupedLines: 0 });
+  }
+});
+
+test('text cleaning still removes known boilerplate without removing repeated evidence', () => {
+  assert.deepEqual(cleanExtractedText('Accept all cookies\nRevenue\nMenu\nRevenue\nAccept all cookies'), {
+    text: 'Revenue\nRevenue', removedLines: 3, dedupedLines: 0,
+  });
+});
+
+test('fetch CLI preserves financial tables in main, full, cached and reader text', () => {
+  const folder = mkdtempSync(join(tmpdir(), 'source-table-check-'));
+  const tableText = htmlToText(financialTables);
+  const html = '<html><head><title>Annual financial results</title></head><body><main><article>'
+    + '<h1>Annual financial results</h1><p>These comparative financial statements report annual revenue and costs '
+    + 'for both periods. Each column must retain its own reporting year, currency, amount and sign. '
+    + 'The second table reports a different currency, not another copy of the first table.</p>'
+    + '<p>The comparative presentation intentionally repeats the reporting years and revenue label. '
+    + 'Equal revenue amounts in separate periods are separate observations. A negative cost amount must not '
+    + 'be treated as equivalent to a positive cost amount, even when the absolute values are identical.</p>'
+    + '<p>The currency symbols distinguish the two statements. Preserving each occurrence keeps the rows '
+    + 'aligned with their columns and avoids changing the interpretation of the source financial statements.</p>'
+    + financialTables + '</article></main></body></html>';
+  const url = 'https://example.com/financials';
+  try {
+    for (const mode of ['main', 'full', 'cache', 'reader']) {
+      const body = mode === 'reader'
+        ? `Title: Annual financial results\n\nMarkdown Content:\n\n${tableText}` : html;
+      if (mode === 'cache') {
+        writeFileSync(join(folder, `${canonicalCacheKey(url)}.json`), JSON.stringify({
+          requestedUrl: url, finalUrl: url, status: 200, ok: true,
+          contentType: 'text/html', body: Buffer.from(html).toString('base64'),
+          source: 'origin', fetchedAt: new Date().toISOString(),
+        }));
+      }
+      const flags = [
+        url, '--json', '--no-host-map', '--no-throttle', '--no-retry-profiles', '--no-wayback',
+        ...(mode === 'cache' ? ['--cache-dir', folder] : ['--no-cache']),
+        ...(mode === 'full' ? ['--full-text'] : []),
+        ...(mode === 'reader' ? ['--via-reader'] : ['--no-reader']),
+      ];
+      const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
+        import assert from 'node:assert/strict';
+        import { main } from './.agents/skills/fetch-url/scripts/fetch.mjs';
+        let requests = 0;
+        globalThis.fetch = async (requestUrl) => {
+          requests += 1;
+          const response = new Response(${JSON.stringify(body)}, {
+            status: 200, headers: { 'content-type': ${JSON.stringify(mode === 'reader' ? 'text/plain' : 'text/html')} },
+          });
+          Object.defineProperty(response, 'url', { value: String(requestUrl) });
+          return response;
+        };
+        await main(${JSON.stringify(flags)});
+        assert.equal(requests, ${mode === 'cache' ? 0 : 1});
+      `], { encoding: 'utf8', env: { ...process.env, STARTUP_FETCH_LOG_PATH: '' } });
+      assert.equal(result.status, 0, `${mode}: ${result.stderr}`);
+      const output = JSON.parse(result.stdout);
+      assert.equal(output.ok, true, mode);
+      assert.equal(output.output.includes(tableText), true, `${mode}: ${output.output}`);
+      assert.equal(output.extraction.cleaning.dedupedLines, 0, mode);
+      assert.equal(output.cache.hit, mode === 'cache', mode);
+      assert.equal(output.extraction.method, ['main', 'cache'].includes(mode) ? 'readability' : 'full-text', mode);
+      assert.equal(output.retrievalSource, mode === 'reader' ? 'reader' : 'origin', mode);
+    }
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
+});
 
 test('HTTP-200 challenge pages are not successful source retrievals', () => {
   for (const body of accessErrorBodies) {

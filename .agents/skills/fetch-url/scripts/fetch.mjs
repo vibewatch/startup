@@ -677,18 +677,12 @@ function isBoilerplateLine(line) {
   return false;
 }
 
-function canonicalShortLine(line) {
-  return line.toLowerCase().replace(/[^\p{L}\p{N}]+/gu, ' ').trim();
-}
-
 export function cleanExtractedText(text) {
   const normalized = normalizePlainText(text);
   if (!normalized) return { text: '', removedLines: 0, dedupedLines: 0 };
 
   const out = [];
-  const seenShortLines = new Set();
   let removedLines = 0;
-  let dedupedLines = 0;
   for (const rawLine of normalized.split('\n')) {
     const line = rawLine.trim();
     if (!line) {
@@ -700,22 +694,13 @@ export function cleanExtractedText(text) {
       continue;
     }
 
-    const key = canonicalShortLine(line);
-    const wordCount = key ? key.split(/\s+/).length : 0;
-    if (key && line.length <= 80 && wordCount <= 10) {
-      if (seenShortLines.has(key)) {
-        dedupedLines += 1;
-        continue;
-      }
-      seenShortLines.add(key);
-    }
     out.push(line);
   }
 
   return {
     text: normalizePlainText(out.join('\n')),
     removedLines,
-    dedupedLines,
+    dedupedLines: 0,
   };
 }
 
