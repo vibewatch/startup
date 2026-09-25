@@ -6,11 +6,11 @@ import { basename, dirname, join, resolve } from 'node:path';
 import { promisify } from 'node:util';
 import { fileURLToPath } from 'node:url';
 import {
-  netNewAllocationTarget,
+  NET_NEW_RESERVE_COUNT,
   promoteReserveEvidence,
   successfulPoolMetrics,
 } from './search-pool-recovery.mjs';
-import { normalizeDomain } from './utils.mjs';
+import { canonicalSourceUrl, normalizeDomain } from './utils.mjs';
 
 const execFileAsync = promisify(execFile);
 const scriptDir = dirname(fileURLToPath(import.meta.url));
@@ -220,9 +220,10 @@ for (const search of searches) {
       rejectedIrrelevantCount += 1;
       continue;
     }
-    const existing = candidates.get(result.url);
+    const key = canonicalSourceUrl(result.url);
+    const existing = candidates.get(key);
     if (existing) existing.discoveredBy.push(search.id);
-    else candidates.set(result.url, { ...result, discoveredBy: [search.id] });
+    else candidates.set(key, { ...result, discoveredBy: [search.id] });
   }
 }
 
@@ -232,9 +233,10 @@ function uniqueResults(searchList) {
   for (const search of searchList) {
     for (const result of search.response?.results ?? []) {
       if (!companyRelevant(result, plan.company)) continue;
-      if (seen.has(result.url)) continue;
-      seen.add(result.url);
-      results.push(result);
+      const key = canonicalSourceUrl(result.url);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      results.push(candidates.get(key));
     }
   }
   return results.sort((left, right) => (
@@ -264,8 +266,9 @@ for (const chapter of plan.chapters) {
   const netNew = [];
   const localNetNew = new Set();
   const netNewCandidates = [...preferredCandidates, ...direct, ...allCandidates];
-  const allocationTarget = netNewAllocationTarget(chapter.evidenceTarget.minNetNewSources);
+  const allocationTarget = chapter.evidenceTarget.minNetNewSources;
   for (const candidate of netNewCandidates) {
+    if (netNew.length >= allocationTarget) break;
     if (allocatedNetNewOwner.has(candidate.url) || localNetNew.has(candidate.url)) continue;
     const domain = normalizeDomain(candidate.url);
     if (!domain || allocatedNetNewDomains.has(domain)) continue;
@@ -295,13 +298,8 @@ const chapterPools = plan.chapters.map((chapter) => {
     return !owner || owner === chapter.key;
   };
   const selected = new Map(
-    netNew
-      .slice(0, chapter.evidenceTarget.minNetNewSources)
-      .map((candidate) => [candidate.url, { ...candidate, allocation: 'net-new' }]),
+    netNew.map((candidate) => [candidate.url, { ...candidate, allocation: 'net-new' }]),
   );
-  const netNewReserve = netNew
-    .slice(chapter.evidenceTarget.minNetNewSources)
-    .map((candidate) => ({ ...candidate, allocation: 'net-new-reserve' }));
   const directFill = direct
     .filter((candidate) => candidate.sourceQuality?.tier !== 'low' && availableToChapter(candidate))
     .map((candidate) => ({ ...candidate, allocation: 'chapter' }));
@@ -363,16 +361,9 @@ const chapterPools = plan.chapters.map((chapter) => {
     if (!selected.has(candidate.url)) selected.set(candidate.url, candidate);
   }
   const reserveCandidates = reserveFill
-    .filter((candidate) => (
-      !selected.has(candidate.url)
-      && !netNewReserve.some((entry) => entry.url === candidate.url)
-    ));
-  const reserve = [...netNewReserve];
+    .filter((candidate) => !selected.has(candidate.url));
+  const reserve = [];
   const reserveDomains = new Set(selectedDomains);
-  for (const candidate of netNewReserve) {
-    const domain = normalizeDomain(candidate.url);
-    if (domain) reserveDomains.add(domain);
-  }
   for (const candidate of reserveCandidates) {
     const domain = normalizeDomain(candidate.url);
     if (!domain || reserveDomains.has(domain)) continue;
@@ -395,15 +386,6 @@ const chapterPools = plan.chapters.map((chapter) => {
     ).size,
   };
 });
-
-for (const pool of chapterPools) {
-  for (const candidate of [...pool.recommended, ...pool.reserve]) {
-    const owner = allocatedNetNewOwner.get(candidate.url);
-    if (owner && owner !== pool.key) {
-      throw new Error(`[execute-search-plan] net-new URL reserved for ${owner} leaked into ${pool.key}: ${candidate.url}`);
-    }
-  }
-}
 
 function poolDomainCounts() {
   const counts = new Map();
@@ -464,6 +446,43 @@ for (const candidate of allCandidates
     break;
   }
   if (!replaced) continue;
+}
+
+// Reserve only surplus URLs after every chapter's recommended evidence is protected.
+const recommendedUrls = new Set(
+  chapterPools.flatMap((pool) => pool.recommended.map((candidate) => candidate.url)),
+);
+const netNewReserves = new Map(chapterPools.map((pool) => [pool.key, []]));
+for (let round = 0; round < NET_NEW_RESERVE_COUNT; round += 1) {
+  for (const pool of chapterPools) {
+    const candidate = [
+      ...pool.reserve,
+      ...(directByChapter.get(pool.key) ?? []),
+      ...allCandidates,
+    ].find((entry) => (
+      entry.sourceQuality?.tier !== 'low'
+      && !recommendedUrls.has(entry.url)
+      && !allocatedNetNewOwner.has(entry.url)
+    ));
+    if (!candidate) continue;
+    allocatedNetNewOwner.set(candidate.url, pool.key);
+    netNewReserves.get(pool.key).push({ ...candidate, allocation: 'net-new-reserve' });
+  }
+}
+for (const pool of chapterPools) {
+  const localUrls = new Set(pool.recommended.map((candidate) => candidate.url));
+  pool.reserve = [...netNewReserves.get(pool.key), ...pool.reserve].filter((candidate) => {
+    const owner = allocatedNetNewOwner.get(candidate.url);
+    if (localUrls.has(candidate.url) || (owner && owner !== pool.key)) return false;
+    localUrls.add(candidate.url);
+    return true;
+  }).slice(0, 6);
+  for (const candidate of [...pool.recommended, ...pool.reserve]) {
+    const owner = allocatedNetNewOwner.get(candidate.url);
+    if (owner && owner !== pool.key) {
+      throw new Error(`[execute-search-plan] net-new URL reserved for ${owner} leaked into ${pool.key}: ${candidate.url}`);
+    }
+  }
 }
 
 if (args.profile === 'fast') {
@@ -568,21 +587,16 @@ if (args.prefetch) {
   for (const pool of chapterPools) {
     const recovery = promoteReserveEvidence(pool, fetchedByUrl);
     pool.reserve = recovery.reserve;
-    pool.recommended.push(...recovery.promoted);
-    pool.fetchedOk = pool.recommended.filter(
-      (candidate) => fetchedByUrl.get(candidate.url)?.ok,
-    ).length;
+    pool.recommended = recovery.recommended;
+    pool.fetchedOk = recovery.successful;
     pool.fetchedNetNew = recovery.successfulNetNew;
-    pool.fetchedDomains = new Set(
-      pool.recommended
-        .filter((candidate) => fetchedByUrl.get(candidate.url)?.ok)
-        .map((candidate) => normalizeDomain(candidate.url))
-        .filter(Boolean),
-    ).size;
-    pool.recommended = pool.recommended.map((candidate) => ({
-      ...candidate,
-      fetch: fetchedByUrl.get(candidate.url) ?? null,
-    }));
+    pool.fetchedDomains = recovery.successfulDomains.size;
+    for (const field of ['recommended', 'reserve']) {
+      pool[field] = pool[field].map((candidate) => ({
+        ...candidate,
+        fetch: fetchedByUrl.get(candidate.url) ?? null,
+      }));
+    }
     pool.recommendedDomains = new Set(
       pool.recommended.map((candidate) => normalizeDomain(candidate.url)).filter(Boolean),
     ).size;
