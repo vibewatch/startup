@@ -137,7 +137,11 @@ retention-relative phrases such as `NRR above 100` or `NRR trends toward low 100
 allow an explicit `%` in Chinese; nearby customer and cohort counts do not.
 English scale words (`thousand`, `million`, `billion`, `trillion`) match
 `K`, `M`, `B`, `T` without changing the quantity or currency; `bps` remains
-distinct from `B`. `percent` and `per cent` match `%`, including both range
+distinct from `B`. Additional normalization covers amounts with an explicit
+currency symbol, such as `$20+ billion` and `€580-million`. Plus-qualified or
+hyphenated counts without a currency symbol are not expanded here; never strip
+a faithful magnitude merely to clear a token mismatch.
+`percent` and `per cent` match `%`, including both range
 endpoints. Common written percentages such as `百分之十三` and `超过八成`
 can resolve a mismatched numeric anchor only when the full metric-token sets
 then agree; this does not validate all verbal ratios. `26-fold` and `26 倍`

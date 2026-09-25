@@ -46,6 +46,46 @@ const patentAssertionSource = fullReport('The company claims its new product imp
 
 const checks = [
   ...[
+    ['$500+ million of funding.', '融资超过 $500M。'],
+    ['A €580-million investment.', '投资金额为 €580M。'],
+    ['The market could exceed $20+ billion.', '市场可能超过 $20B。'],
+    ['£530+ million annual budget.', '年度预算超过 £530M。'],
+    ['A $2.5-million financing.', '融资金额为 $2.5M。'],
+    ['A ₦1,200-thousand budget.', '预算为 ₦1,200K。'],
+    ['A ¥2-million program.', '项目规模为 ¥2M。'],
+    ['A $2024-million financing.', '融资金额为 $2024M。'],
+    ['A $1.5-trillion market.', '市场规模为 $1.5T。'],
+  ].flatMap(([en, zh]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor }).length === 0,
+    `currency-prefixed scale grammar must retain monetary quantities (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
+    ['9+ million patients.', '900+ 万名患者。'],
+    ['A 5-million-homes market.', '市场覆盖 500 万户。'],
+    ['10+ trillion security events.', '10+ 万亿起安全事件。'],
+    ['A 1.4-billion-dollar round.', '一轮 14 亿美元的融资。'],
+    ['120+ million kilometers.', '120+ 百万公里。'],
+  ].flatMap(([en, zh]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor }).length === 0,
+    `monetary grammar must not reclassify unsupported unprefixed quantities (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
+    ['$500+ million of funding.', '融资超过 $500B。'],
+    ['A €580-million investment.', '投资金额为 €570M。'],
+    ['The market could exceed $20+ billion.', '市场可能超过 $20。'],
+    ['The market could exceed $20+ billion.', '市场可能超过 €20B。'],
+    ['A $1.5-trillion market.', '市场规模为 $1.5B。'],
+    ['A $2024-million financing.', '融资金额为 $2025M。'],
+    ['A $20-millionaire membership.', '会员费为 $20M。'],
+    ['Funding is $20+ billion and revenue is $20 billion.', '融资为 $20B。'],
+    ['A $20-billion to $30-billion range.', '区间为 $21B 至 $30B。'],
+    ['A $20-billion to $30-billion range.', '区间为 $20B 至 $31B。'],
+  ].map(([en, zh]) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor: true })
+      .some((issue) => issue.code === 'metric-preservation'),
+    `scale grammar must not hide changed values, currency, missing units or repeated amounts: ${zh}`,
+  ]),
+  ...[
     'The company is reportedly preparing an initial public offering for its next financing stage.',
     'According to reports, the company is preparing an initial public offering for its next financing stage.',
   ].flatMap((en) => [false, true].flatMap((strictEditor) => [

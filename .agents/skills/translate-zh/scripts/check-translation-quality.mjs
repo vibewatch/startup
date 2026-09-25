@@ -98,6 +98,9 @@ function load(path) {
 function normalizeQuantityWords(value) {
   const units = { thousand: 'K', million: 'M', billion: 'B', trillion: 'T' };
   return value.replace(
+    /([$€£¥₦]\s*)(\d+(?:[.,]\d+)*)(?:(\+)\s*|\s*-\s*)(thousand|million|billion|trillion)\b/gi,
+    (_, currency, number, plus, unit) => `${currency}${number}${units[unit.toLowerCase()]}${plus ?? ''}`,
+  ).replace(
     /\b(\d+(?:[.,]\d+)*)\s*(thousand|million|billion|trillion)\b/gi,
     (_, number, unit) => `${number}${units[unit.toLowerCase()]}`,
   ).replace(
