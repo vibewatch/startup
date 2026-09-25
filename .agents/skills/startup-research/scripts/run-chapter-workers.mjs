@@ -9,6 +9,7 @@ import {
 } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { checkPrefetchedSourceQuotes } from './source-quote-checks.mjs';
 import {
   EXIT,
   canonicalSourceUrl,
@@ -95,6 +96,7 @@ Read references/rules.md and only the analysis-chapter section of references/con
 
 Binding constraints:
 - Use only successful prefetched URLs in the assigned pool file. Do not open or inspect search-bundle.json, because it contains URLs reserved for sibling chapters. Do not search, fetch, use curl, add a URL, or write to the fetch trail.
+- Keep fetched source files read-only. Each keyQuote is checked against its original fetched text: copy literal excerpts in their original order, using ellipses only for omissions; never substitute a paraphrase or your own analysis.
 - Retain at least runtimeContext.chapter.gate.minNetNewSources relevant allocation:net-new sources and the relevant allocation:independent-candidate sources.
 - Obey every fast cap, the exact chapter schema, source/claim IDs, and runtimeContext.policy.retryPolicy.
 - Run check-chapter normal and strict. The initial run plus at most maxChapterRetries repair attempts is a hard limit; stop with a failure result if the budget is exhausted or failures do not strictly decrease.
@@ -258,6 +260,24 @@ function validateChapters(tasks, reportFolder, fetchLogPath) {
         unackedWarningDimensions: [],
         retryOrder: ['assignedSourcePool'],
         error: `chapter cited source(s) outside its successful assigned pool: ${outsidePool.join('; ')}`,
+      };
+    }
+    const quoteIssues = checkPrefetchedSourceQuotes(
+      chapter.value?.localEvidence?.sources ?? [],
+      [...(task.pool.recommended ?? []), ...(task.pool.reserve ?? [])]
+        .map((candidate) => ({ ...candidate.fetch, url: candidate.url })),
+      task.context.chapter.file,
+    );
+    if (quoteIssues.length > 0) {
+      return {
+        chapter: task.context.chapter.key,
+        file: task.context.chapter.file,
+        ok: false,
+        failedDimensions: ['sourceQuote'],
+        unackedWarningDimensions: [],
+        retryOrder: ['sourceQuote'],
+        issues: quoteIssues,
+        error: quoteIssues.map((issue) => `${issue.path}: ${issue.code}: ${issue.message}`).join('; '),
       };
     }
     const result = spawnSync(process.execPath, [

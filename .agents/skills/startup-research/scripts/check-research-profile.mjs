@@ -68,9 +68,11 @@ try {
   const selfPublished = 'https://startup.genisisiq.com/acme/';
   const redirected = 'https://example.com/redirected';
   const poolRedirected = 'https://example.com/pool-redirected';
+  const prefetchedText = join(folder, 'prefetched.txt');
+  writeFileSync(prefetchedText, 'Acme ARR is $10M. Growth is not audited.\n');
   writeFileSync(join(folder, 'search-bundle.json'), JSON.stringify({
     fetchedSources: [
-      { url: assigned, ok: true },
+      { url: assigned, ok: true, outputFile: prefetchedText },
       { url: reserve, ok: true },
       { url: sibling, ok: true },
       { url: failed, ok: false },
@@ -81,7 +83,7 @@ try {
     chapterPools: [{
       key: context.chapter.key,
       recommended: [
-        { url: assigned, fetch: { ok: true } },
+        { url: assigned, fetch: { ok: true, outputFile: prefetchedText } },
         { url: failed, fetch: { ok: false } },
         { url: selfPublished, fetch: { ok: true } },
         { url: redirected, fetch: { ok: true } },
@@ -105,6 +107,23 @@ try {
       if (url === sibling) assert.match(result.stderr, /not eligible in this chapter's assigned pool/);
     }
   }
+  for (const [keyQuote, valid] of [
+    ['Acme ARR is $10M.', true],
+    ['Acme ARR is $11M.', false],
+    ['Acme ARR is $10M; growth has been independently verified.', false],
+    ['Growth is not audited. ... Acme ARR is $10M.', false],
+  ]) {
+    writeFileSync(join(folder, context.chapter.file), JSON.stringify({
+      localEvidence: { sources: [{ id: 'SO001', url: assigned, keyQuote }] },
+    }));
+    const result = finalize();
+    assert.notEqual(result.status, 0);
+    if (valid) assert.match(result.stderr, /missing chapter file\(s\) before strict sweep/);
+    else assert.match(result.stderr, /sourceQuoteMismatch/);
+  }
+  rmSync(prefetchedText);
+  const missingText = finalize();
+  assert.match(missingText.stderr, /sourceQuoteTextMissing/);
   console.log(`[check-research-profile] ✓ fast snapshot and preassembled-report source provenance verified (${basename(folder)})`);
 } catch (error) {
   console.error(`[check-research-profile] ${error.message}`);

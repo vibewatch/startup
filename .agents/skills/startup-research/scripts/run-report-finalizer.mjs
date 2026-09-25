@@ -8,6 +8,7 @@ import {
 } from 'node:fs';
 import { basename, dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { checkPrefetchedSourceQuotes } from './source-quote-checks.mjs';
 import {
   EXIT,
   FINAL_ARTIFACTS,
@@ -15,6 +16,7 @@ import {
   getAnalysisArtifacts,
   isRunId,
   loadWorkflowConfig,
+  readYaml,
   researchCacheDir,
 } from './utils.mjs';
 
@@ -92,7 +94,7 @@ Read references/rules.md and the report-meta section of references/contracts.md.
 Binding sequence:
 1. Walk chapters in configured order and run normal then strict validation.
 2. For a timed-out/failed worker or a missing chapter, complete only that chapter directly from its worker-input context and pool. For completed workers, repair only named validator failures in worker-results.json or subsequent checks${reviewFindings ? ' and the source-review findings below' : ''}; never rewrite unrelated passing content. Enforce each chapter's convergence retry budget.
-3. Fast chapters may use only successful prefetched URLs in that chapter's worker-input pool. Never borrow a URL from a sibling pool even if it appears in search-bundle fetchedSources. Do not search, fetch, use curl, add a URL, or write to the fetch trail.
+3. Fast chapters may use only successful prefetched URLs in that chapter's worker-input pool. Never borrow a URL from a sibling pool even if it appears in search-bundle fetchedSources. Do not search, fetch, use curl, add a URL, or write to the fetch trail. Keep fetched text read-only; keyQuote must contain literal, ordered excerpts, not paraphrases or reviewer commentary.
 4. Author report-meta.yaml only after every chapter passes strict, validate it, then run finalize-report.mjs.${reviewFindings ? ' Preserve existing metadata except where a named finding or a corrected supporting claim requires an update.' : ''}
 5. Fix only concrete validator findings${reviewFindings ? ' or the supplied source-review findings' : ''} with already-prefetched evidence. Never invent a replacement source or fact to satisfy a gate. Do not inspect historical reports, modify repository code/config/docs, or use git.
 ${reviewFindings ? `
@@ -132,6 +134,7 @@ if (!existsSync(reportFolder) || !isRunId(runId)) {
   process.exit(EXIT.notFound);
 }
 const cacheDir = researchCacheDir(runId);
+const config = loadWorkflowConfig({ reportFolder });
 let reviewFindings = null;
 const reviewFindingsPath = args.reviewFindings ? resolve(args.reviewFindings) : null;
 if (reviewFindingsPath) {
@@ -142,7 +145,7 @@ if (reviewFindingsPath) {
     reviewFindings = JSON.parse(readFileSync(reviewFindingsPath, 'utf8'));
     const authoredFiles = new Set([
       REPORT_META_FILE,
-      ...getAnalysisArtifacts(loadWorkflowConfig({ reportFolder })).map((chapter) => chapter.file),
+      ...getAnalysisArtifacts(config).map((chapter) => chapter.file),
     ]);
     if (reviewFindings?.runId !== runId
         || !Array.isArray(reviewFindings.issues) || reviewFindings.issues.length === 0
@@ -304,12 +307,27 @@ function inspectFinalReport() {
     encoding: 'utf8',
     env: { ...process.env, STARTUP_FETCH_LOG_PATH: fetchLogPath },
   });
+  const quoteIssues = [];
+  if (check.status === 0 && config.activeResearchProfile === 'fast') {
+    const bundle = JSON.parse(readFileSync(bundlePath, 'utf8'));
+    for (const file of [...getAnalysisArtifacts(config).map((chapter) => chapter.file), FINAL_ARTIFACTS.evidence.file]) {
+      const document = readYaml(join(reportFolder, file));
+      quoteIssues.push(...checkPrefetchedSourceQuotes(
+        file === FINAL_ARTIFACTS.evidence.file ? document.sources ?? [] : document.localEvidence?.sources ?? [],
+        bundle.fetchedSources ?? [],
+        file,
+      ));
+    }
+  }
   return {
     missingFiles,
     reportCheck: {
-      ok: check.status === 0,
+      ok: check.status === 0 && quoteIssues.length === 0,
       exitCode: check.status,
-      error: check.status === 0 ? '' : (check.stderr || check.stdout),
+      error: check.status === 0
+        ? quoteIssues.map((issue) => `${issue.path}: ${issue.code}: ${issue.message}`).join('\n')
+        : (check.stderr || check.stdout),
+      quoteIssues,
     },
   };
 }

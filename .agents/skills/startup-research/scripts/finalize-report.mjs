@@ -27,6 +27,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { checkPrefetchedSourceQuotes } from './source-quote-checks.mjs';
 import {
   EXIT,
   FINAL_ARTIFACTS,
@@ -37,6 +38,7 @@ import {
   isRunId,
   isSelfPublishedReportUrl,
   loadWorkflowConfig,
+  readYaml,
   researchCacheDir,
   tryReadYaml,
   writeWorkflowSnapshot,
@@ -126,6 +128,14 @@ function rejectScratchFilesInNewReport() {
   process.exit(EXIT.notFound);
 }
 
+function rejectQuoteIssues(issues) {
+  if (issues.length === 0) return;
+  console.error('[finalize-report] source quotations failed prefetched-text verification:');
+  for (const issue of issues) console.error(`  - ${issue.path}: ${issue.code}: ${issue.message}`);
+  console.error('[finalize-report] copy literal excerpts from the original fetched text; do not present paraphrases or reviewer commentary as quotations.');
+  process.exit(EXIT.failure);
+}
+
 function enforceFastPrefetchedSources() {
   const config = loadWorkflowConfig({ reportFolder });
   if (config.activeResearchProfile !== 'fast') return;
@@ -161,6 +171,7 @@ function enforceFastPrefetchedSources() {
     ]),
   );
   const unapproved = [];
+  const quoteIssues = [];
   for (const spec of getAnalysisArtifacts(config)) {
     const chapter = tryReadYaml(join(reportFolder, spec.file));
     if (!chapter.ok) continue;
@@ -171,12 +182,22 @@ function enforceFastPrefetchedSources() {
         unapproved.push(`${spec.file}:${source?.id ?? '?'} ${source.url}${approved.has(canonical) ? ' (not eligible in this chapter\'s assigned pool)' : ''}`);
       }
     }
+    quoteIssues.push(...checkPrefetchedSourceQuotes(
+      (chapter.value?.localEvidence?.sources ?? []).filter((source) => (
+        approved.has(canonicalSourceUrl(source.url)) && assigned.has(canonicalSourceUrl(source.url))
+      )),
+      bundle.fetchedSources ?? [],
+      spec.file,
+    ));
   }
-  if (unapproved.length === 0) return;
-  console.error('[finalize-report] fast report cites URL(s) that were not successfully prefetched by research:bootstrap or resolve to self-published reports:');
-  for (const entry of unapproved) console.error(`  - ${entry}`);
-  console.error('[finalize-report] replace them with relevant successful entries from that chapter’s assigned pool; do not borrow sibling URLs or add fetch-trail lines manually.');
-  process.exit(EXIT.failure);
+  if (unapproved.length > 0) {
+    console.error('[finalize-report] fast report cites URL(s) that were not successfully prefetched by research:bootstrap or resolve to self-published reports:');
+    for (const entry of unapproved) console.error(`  - ${entry}`);
+    console.error('[finalize-report] replace them with relevant successful entries from that chapter’s assigned pool; do not borrow sibling URLs or add fetch-trail lines manually.');
+    process.exit(EXIT.failure);
+  }
+  rejectQuoteIssues(quoteIssues);
+  return bundle.fetchedSources ?? [];
 }
 
 // Pre-finalization sweep: run check-chapter --strict on every configured
@@ -269,7 +290,7 @@ if (snapshotResult.written) {
   console.log(`[finalize-report] reusing existing ${WORKFLOW_SNAPSHOT_FILE}; pass --refresh-snapshot to re-freeze from the current head config.`);
 }
 
-enforceFastPrefetchedSources();
+const prefetchedSources = enforceFastPrefetchedSources();
 strictCheckEveryChapter();
 
 // Refresh audit-trail consistency must hold before we touch report-meta.
@@ -323,5 +344,15 @@ if (refresh) {
   steps.push({ name: 'link-refresh', script: 'link-refresh.mjs', argv: refreshArgs });
 }
 
-for (const step of steps) runStep(step);
+for (const step of steps) {
+  runStep(step);
+  if (step.name === 'check-report' && prefetchedSources) {
+    const evidence = readYaml(join(reportFolder, FINAL_ARTIFACTS.evidence.file));
+    rejectQuoteIssues(checkPrefetchedSourceQuotes(
+      evidence.sources ?? [],
+      prefetchedSources,
+      FINAL_ARTIFACTS.evidence.file,
+    ));
+  }
+}
 console.log('[finalize-report] ✓ pipeline complete; report passed schema validation.');

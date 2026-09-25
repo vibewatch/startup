@@ -9,7 +9,7 @@ import {
   writeFileSync,
 } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const runId = `20990101000000-worker-check-${process.pid}`;
@@ -127,7 +127,7 @@ try {
   writeFileSync(fakeCopilotPath, `#!/usr/bin/env node
 import { appendFileSync } from 'node:fs';
 appendFileSync(process.env.FAKE_COPILOT_LOG, \`\${JSON.stringify(process.argv.slice(2))}\\n\`);
-process.exit(1);
+process.exit(Number(process.env.FAKE_COPILOT_EXIT ?? 1));
 `);
   chmodSync(fakeCopilotPath, 0o755);
   const fallbackProbe = spawnSync(process.execPath, [
@@ -155,6 +155,109 @@ process.exit(1);
     assert(prompt.includes(reviewFindings.issues[0].fix));
     assert(prompt.includes('never rewrite unrelated passing content'));
     assert(prompt.includes('A schema pass alone does not establish factual accuracy'));
+  }
+  const quoteTextPath = join(folder, 'quote-source.txt');
+  writeFileSync(quoteTextPath, 'The original source text.\n');
+  const quoteBundle = JSON.parse(readFileSync(bundlePath, 'utf8'));
+  for (const chapter of roster.chapters) {
+    const pool = quoteBundle.chapterPools.find((entry) => entry.key === chapter.key);
+    pool.recommended[0].fetch.outputFile = quoteTextPath;
+    writeFileSync(join(folder, chapter.file), JSON.stringify({
+      localEvidence: { sources: [{ id: `S${chapter.letter}001`, url: pool.recommended[0].url, keyQuote: 'Invented quotation.' }] },
+    }));
+  }
+  quoteBundle.fetchedSources = quoteBundle.chapterPools.map((pool) => ({
+    ...pool.recommended[0].fetch, url: pool.recommended[0].url,
+  }));
+  writeFileSync(bundlePath, JSON.stringify(quoteBundle));
+  const quoteProbe = spawnSync(process.execPath, [
+    join(here, 'run-chapter-workers.mjs'), '--report-folder', folder,
+    '--copilot-bin', fakeCopilotPath, '--disable-escalation', '--format', 'json',
+  ], {
+    encoding: 'utf8',
+    env: {
+      ...process.env,
+      FAKE_COPILOT_LOG: join(folder, 'fake-quote-workers.log'),
+      FAKE_COPILOT_EXIT: '0',
+      STARTUP_FETCH_LOG_PATH: join(folder, '_fetch-log.jsonl'),
+    },
+  });
+  assert.equal(quoteProbe.status, 1, quoteProbe.stderr);
+  const quoteResults = JSON.parse(quoteProbe.stdout);
+  assert.equal(quoteResults.validations.length, roster.totalChapters);
+  assert(quoteResults.validations.every((entry) => !entry.ok && entry.issues?.[0]?.code === 'sourceQuoteMismatch'),
+    'a success-shaped worker exit hid fabricated quotations');
+  for (const file of ['report-meta.yaml', 'summary-card.yaml', 'full-report.yaml', 'evidence.yaml']) {
+    writeFileSync(join(folder, file), '{}\n');
+  }
+  for (const compiledOnly of [false, true]) {
+    if (compiledOnly) {
+      for (const chapter of roster.chapters) {
+        const path = join(folder, chapter.file);
+        const document = JSON.parse(readFileSync(path, 'utf8'));
+        document.localEvidence.sources[0].keyQuote = 'The original source text.';
+        writeFileSync(path, JSON.stringify(document));
+      }
+      writeFileSync(join(folder, 'evidence.yaml'), JSON.stringify({
+        sources: [{
+          id: 'SO001', url: quoteBundle.fetchedSources[0].url, keyQuote: 'Invented compiled quotation.',
+        }],
+      }));
+    }
+    const script = join(here, 'run-report-finalizer.mjs');
+    const argv = [
+      process.execPath, script, '--report-folder', folder,
+      '--copilot-bin', fakeCopilotPath, '--disable-escalation', '--format', 'json',
+    ];
+    const finalizerQuoteProbe = spawnSync(process.execPath, ['--input-type=module', '-e', `
+      import childProcess from 'node:child_process';
+      import { syncBuiltinESMExports } from 'node:module';
+      const original = childProcess.spawnSync;
+      childProcess.spawnSync = (binary, args, options) =>
+        args[0] === ${JSON.stringify(join(here, 'check-report.mjs'))}
+          ? { status: 0, stdout: '', stderr: '' }
+          : original(binary, args, options);
+      syncBuiltinESMExports();
+      process.argv = ${JSON.stringify(argv)};
+      await import(${JSON.stringify(pathToFileURL(script).href)});
+    `], {
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        FAKE_COPILOT_LOG: join(folder, 'fake-quote-finalizer.log'),
+        FAKE_COPILOT_EXIT: '0',
+        STARTUP_FETCH_LOG_PATH: join(folder, '_fetch-log.jsonl'),
+      },
+    });
+    assert.equal(finalizerQuoteProbe.status, 1, 'a success-shaped finalizer exit hid fabricated quotations');
+    const output = JSON.parse(finalizerQuoteProbe.stdout);
+    assert.equal(output.status, 'failed');
+    assert.equal(output.reportCheck.ok, false);
+    assert(output.reportCheck.quoteIssues.every((issue) => issue.code === 'sourceQuoteMismatch'));
+    assert(output.reportCheck.quoteIssues.some((issue) => issue.path.startsWith(compiledOnly ? 'evidence.yaml:' : roster.chapters[0].file)));
+  }
+  for (const [keyQuote, valid] of [
+    ['Invented compiled quotation.', false],
+    ['The original source text.', true],
+  ]) {
+    writeFileSync(join(folder, 'evidence.yaml'), JSON.stringify({
+      sources: [{ id: 'SO001', url: quoteBundle.fetchedSources[0].url, keyQuote }],
+    }));
+    const script = join(here, 'finalize-report.mjs');
+    const directQuoteProbe = spawnSync(process.execPath, ['--input-type=module', '-e', `
+      import childProcess from 'node:child_process';
+      import { syncBuiltinESMExports } from 'node:module';
+      childProcess.spawnSync = () => ({ status: 0, stdout: '', stderr: '' });
+      syncBuiltinESMExports();
+      process.argv = ${JSON.stringify([process.execPath, script, folder])};
+      await import(${JSON.stringify(pathToFileURL(script).href)});
+    `], { encoding: 'utf8' });
+    assert.equal(directQuoteProbe.status, valid ? 0 : 1, directQuoteProbe.stderr);
+    if (valid) assert.match(directQuoteProbe.stdout, /pipeline complete/);
+    else {
+      assert.match(directQuoteProbe.stderr, /evidence\.yaml:.*sourceQuoteMismatch/);
+      assert.doesNotMatch(directQuoteProbe.stdout, /pipeline complete/);
+    }
   }
   const companyWorkflow = readFileSync(resolve('.github/workflows/company.yml'), 'utf8');
   const checks = [
