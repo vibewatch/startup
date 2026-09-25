@@ -55,7 +55,15 @@ const hedgeRules = [
   },
   { en: /\bnot yet\b/i, zh: /尚未|还未|仍未|还没|目前没有|尚无|尚不|还不|仍不/u },
   { en: /\b(?:unproven|not proven)\b/i, zh: /未经证实|未获证实|未(?:被)?(?:证明|验证|证实)|无法证明|未经验证|未获验证/u },
-  { en: /\bno public\b/i, zh: /没有公开|无公开|尚无公开|未见公开|未发现公开|未公开|公开(?:资料|信息|记录|文件|数据)(?:中)?(?:未|尚未|没有|尚无)/u },
+  {
+    en: /\bno public\b/i,
+    zh: /没有公开|无公开|尚无公开|未见公开|未发现公开|未公开|(?:未|尚未|没有)(?:披露|发布)公开|公开(?:资料|信息|记录|文件|数据)(?:中)?(?:未|尚未|没有|尚无)/u,
+    exclude: /\bno public[- ]cloud(?:\s+LLM)?\s+APIs?\s+(?:are\s+)?allowed\b/gi,
+  },
+  {
+    en: /\bno public[- ]cloud(?:\s+LLM)?\s+APIs?\s+(?:are\s+)?allowed\b/i,
+    zh: /(?:不允许|禁止|不得|不能|禁用)\s*(?:使用|接入|调用)?\s*(?:公有云|公共云)|(?:公有云|公共云)[^。！？；，]{0,24}(?:不允许|禁止|不得|不能)(?:使用|接入|调用)/u,
+  },
 ];
 const urlToken = /(?:https?:\/\/|www\.)[^\s<>()（）「」，。；：！？]+|\b(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s<>()（）「」，。；：！？]*)?/gi;
 const descriptorWords = new Set([
@@ -88,16 +96,36 @@ function load(path) {
   return yaml.load(readFileSync(path, 'utf8')) ?? {};
 }
 
-function normalizeScaleWords(value) {
+function normalizeQuantityWords(value) {
   const units = { thousand: 'K', million: 'M', billion: 'B', trillion: 'T' };
   return value.replace(
     /\b(\d+(?:[.,]\d+)*)\s*(thousand|million|billion|trillion)\b/gi,
     (_, number, unit) => `${number}${units[unit.toLowerCase()]}`,
+  ).replace(
+    /\b(\d+(?:[.,]\d+)*)\s*(?:percent|per\s+cent)\b/gi,
+    '$1%',
+  );
+}
+
+function normalizeWrittenPercentages(value) {
+  const digits = { 零: 0, 〇: 0, 一: 1, 二: 2, 三: 3, 四: 4, 五: 5, 六: 6, 七: 7, 八: 8, 九: 9 };
+  return value.replace(
+    /百分之(一百|[一二三四五六七八九]?十[一二三四五六七八九]?|[零〇一二三四五六七八九])(?:点([零〇一二三四五六七八九]+))?(?![零〇一二两三四五六七八九十百千万亿点\d])/gu,
+    (_, integer, decimal) => {
+      const [tens, ones] = integer.split('十');
+      const amount = integer === '一百' ? 100 : integer.includes('十')
+        ? (digits[tens] ?? 1) * 10 + (digits[ones] ?? 0)
+        : digits[integer];
+      return `${amount}${decimal ? `.${[...decimal].map((digit) => digits[digit]).join('')}` : ''}%`;
+    },
+  ).replace(
+    /(超过|超|约|近|至少|至多|占比|占|低于|高于|不到|不足|多达|不低于|不超过)([一二三四五六七八九十])成(?![零〇一二两三四五六七八九十半\d])/gu,
+    (_, prefix, digit) => `${prefix}${digit === '十' ? 100 : digits[digit] * 10}%`,
   );
 }
 
 function normalizedTokens(value) {
-  const normalized = normalizeScaleWords(value);
+  const normalized = normalizeQuantityWords(value);
   const years = (normalized.match(invariantToken) ?? [])
     .map((token) => token.replace(/^FY\s*/i, '').replace(/E$/i, '').replace(/\s+/g, ''));
   const dates = [...normalized.matchAll(calendarDateToken)].map((match) => (
@@ -107,8 +135,10 @@ function normalizedTokens(value) {
 }
 
 function normalizedMetricTokens(value) {
-  // A fiscal year is not an ARR/GMV value, even when its label precedes the metric.
-  const separated = normalizeScaleWords(value).replace(/\bFY\s*((?:19|20)\d{2})E?\b/gi, '$1;');
+  // Calendar labels are not ARR/GMV quantities, even when they precede the metric.
+  const separated = normalizeQuantityWords(value)
+    .replace(/\bFY\s*((?:19|20)\d{2})E?\b/gi, '$1;')
+    .replace(/\bQ[1-4]\b/gi, ';');
   // Retention-relative phrases imply percentages, unlike nearby customer/cohort counts.
   const retention = separated.replace(
     /\b((?:NRR|GRR|NDR)\s+(?:(?:is|in|the|low|mid|high|teens|trends?)\b[\s-]*)*(?:above|below|towards?|around|near|of|at)\s+(?:(?:low|mid|high)[ -]+)?)(\d{2,3}(?:\.\d+)?)(s)?(?=\s*(?:[,.;]|$))/gi,
@@ -169,7 +199,11 @@ function walk(en, zh, path, whitelist, issues, options) {
   }
   if (options.strictEditor) {
     const sourceMetrics = normalizedMetricTokens(en);
-    const targetMetrics = normalizedMetricTokens(zh);
+    let targetMetrics = normalizedMetricTokens(zh);
+    // Resolve written ratios only against an otherwise mismatched numeric anchor.
+    if (JSON.stringify(sourceMetrics) !== JSON.stringify(targetMetrics)) {
+      targetMetrics = normalizedMetricTokens(normalizeWrittenPercentages(zh));
+    }
     if (JSON.stringify(sourceMetrics) !== JSON.stringify(targetMetrics)) {
       pushIssue(issues, {
         path: path.join('/'),

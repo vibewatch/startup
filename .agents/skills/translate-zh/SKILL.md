@@ -55,7 +55,12 @@ npm run translate:zh -- finalize-full "$REPORT"
 
 Finalization runs a conservative quality gate after the structural check. It fails when a translatable leaf drops year/date anchors or explicit uncertainty qualifiers, or retains a high-confidence translationese pattern from the soundcheck. It emits advisory findings for glossary drift, untranslated ordinary descriptors, half-width Chinese punctuation, and dense `的` chains. Repair only the flagged cached leaf or part and rerun the narrow finalize command.
 
-Calendar-date checks preserve ISO month/day anchors as well as years, accepting equivalent Chinese dates such as `2026-09-25` and `2026 年 9 月 25 日`. Fiscal-year prefixes and forecast suffixes (`FY2024`, `2024E`) normalize to the same year without allowing a changed year. These token checks do not establish complete numeric or semantic fidelity; verify the source proposition and metric meaning as well.
+Calendar-date checks preserve ISO month/day anchors as well as years, accepting equivalent Chinese dates such as `2026-09-25` and `2026 年 9 月 25 日`. Fiscal-year prefixes and forecast suffixes (`FY2024`, `2024E`) normalize to the same year without allowing a changed year. A quarter label in `Q2 ARR` is not an ARR amount. The metric tokenizer separates the label from the metric; it does not establish quarter fidelity or interpret relative periods such as `the first two quarters after IPO`. These token checks do not establish complete numeric or semantic fidelity; verify the source proposition and metric meaning as well.
+
+The uncertainty check accepts `未披露公开里程碑` as a faithful rendering of
+`no public milestone disclosed`. A prohibition such as `no public cloud LLM API
+allowed` is checked separately from missing public disclosures: Chinese must
+preserve the restriction, not add an unrelated evidence gap.
 
 ## Mandatory editorial pass
 
@@ -124,7 +129,11 @@ retention-relative phrases such as `NRR above 100` or `NRR trends toward low 100
 allow an explicit `%` in Chinese; nearby customer and cohort counts do not.
 English scale words (`thousand`, `million`, `billion`, `trillion`) match
 `K`, `M`, `B`, `T` without changing the quantity or currency; `bps` remains
-distinct from `B`. `26-fold` and `26 倍` retain the same multiplier. A bare
+distinct from `B`. `percent` and `per cent` match `%`, including both range
+endpoints. Common written percentages such as `百分之十三` and `超过八成`
+can resolve a mismatched numeric anchor only when the full metric-token sets
+then agree; this does not validate all verbal ratios. `26-fold` and `26 倍`
+retain the same multiplier. A bare
 calendar year followed by `ARR` or another metric label remains a year;
 repeating that year does not create another quantitative claim. Repeated
 amounts and rates still retain their occurrence counts.
