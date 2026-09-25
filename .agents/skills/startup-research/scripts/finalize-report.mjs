@@ -18,7 +18,7 @@
 //   7. check-report.mjs -> schema/contract validation and publishability gate
 //   8. (refresh only) link-refresh.mjs
 //                       -> mark the previous report as revision.status=superseded
-//                          and reassemble it
+//                          and update its assembled revision fields only
 //
 // Re-runs after fixing report-meta.yaml or a chapter reuse the existing
 // evidence.yaml; pass --rebuild to force a full ledger consolidation (which
@@ -126,7 +126,6 @@ function rejectScratchFilesInNewReport() {
 }
 
 function enforceFastPrefetchedSources() {
-  if (existsSync(join(reportFolder, FINAL_ARTIFACTS.summaryCard.file))) return;
   const config = loadWorkflowConfig({ reportFolder });
   if (config.activeResearchProfile !== 'fast') return;
   const bundlePath = join(researchCacheDir(basename(reportFolder)), 'search-bundle.json');

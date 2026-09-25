@@ -1,6 +1,7 @@
 #!/usr/bin/env node
+import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
-import { mkdirSync, rmSync } from 'node:fs';
+import { mkdirSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -50,7 +51,52 @@ try {
   ];
   const failures = checks.filter(([ok]) => !ok).map(([, message]) => message);
   if (failures.length) throw new Error(failures.join('; '));
-  console.log(`[check-research-profile] ✓ fast snapshot loaded by runtime context (${basename(folder)})`);
+  writeFileSync(join(folder, 'report-meta.yaml'), '{}\n');
+  const finalize = () => spawnSync(process.execPath, [
+    join(here, 'finalize-report.mjs'), folder,
+  ], { encoding: 'utf8' });
+  for (const preassembled of [false, true]) {
+    if (preassembled) writeFileSync(join(folder, 'summary-card.yaml'), '{}\n');
+    const result = finalize();
+    assert.notEqual(result.status, 0);
+    assert.match(result.stderr, /fast report is missing its search bundle/);
+  }
+  const assigned = 'https://example.com/assigned';
+  const reserve = 'https://example.com/reserve';
+  const sibling = 'https://example.com/sibling';
+  const failed = 'https://example.com/failed';
+  writeFileSync(join(folder, 'search-bundle.json'), JSON.stringify({
+    fetchedSources: [
+      { url: assigned, ok: true },
+      { url: reserve, ok: true },
+      { url: sibling, ok: true },
+      { url: failed, ok: false },
+    ],
+    chapterPools: [{
+      key: context.chapter.key,
+      recommended: [
+        { url: assigned, fetch: { ok: true } },
+        { url: failed, fetch: { ok: false } },
+      ],
+      reserve: [{ url: reserve, fetch: { ok: true } }],
+    }],
+  }));
+  for (const url of ['https://example.com/unfetched', failed, sibling, assigned, reserve]) {
+    writeFileSync(join(folder, context.chapter.file), JSON.stringify({
+      localEvidence: { sources: [{ id: 'SO001', url }] },
+    }));
+    const result = finalize();
+    assert.notEqual(result.status, 0);
+    if ([assigned, reserve].includes(url)) {
+      assert.match(result.stderr, /missing chapter file\(s\) before strict sweep/);
+      assert.doesNotMatch(result.stderr, /not successfully prefetched/);
+    } else {
+      assert.match(result.stderr, /not successfully prefetched/);
+      assert.ok(result.stderr.includes(url));
+      if (url === sibling) assert.match(result.stderr, /assigned to another chapter/);
+    }
+  }
+  console.log(`[check-research-profile] ✓ fast snapshot and preassembled-report source provenance verified (${basename(folder)})`);
 } catch (error) {
   console.error(`[check-research-profile] ${error.message}`);
   process.exitCode = 1;
