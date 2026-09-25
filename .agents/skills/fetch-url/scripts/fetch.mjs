@@ -872,7 +872,7 @@ export function waybackUrl(url, year = new Date().getUTCFullYear()) {
 }
 
 export function readerUrl(url) {
-  return `https://r.jina.ai/http://${url}`;
+  return `https://r.jina.ai/${url}`;
 }
 
 // ---------------------------------------------------------------------------
@@ -965,8 +965,33 @@ const BOT_CHALLENGE_MARKERS = [
   'imperva',
 ];
 
+const ACCESS_ERROR_TITLES = new Set([
+  'client challenge',
+  'vercel security checkpoint',
+  'just a moment...',
+  'access denied',
+  'attention required! | cloudflare',
+  '403 forbidden',
+  '429 too many requests',
+]);
+
+export function isAccessErrorResponse(result) {
+  if (!result) return false;
+  if (result.status >= 400) return true;
+  if (looksLikePdfBuffer(result.body)) return false;
+  const body = Buffer.isBuffer(result.body) ? result.body.toString('utf8') : String(result.body ?? '');
+  const title = (result.title ?? extractTitle(body) ?? '').trim().toLowerCase();
+  if (ACCESS_ERROR_TITLES.has(title)) return true;
+  if (/^URL Source:\s*https?:\/\//im.test(body)
+      && /^Warning: Target URL returned error [45]\d{2}\b/im.test(body)) return true;
+  const text = htmlToText(body.replace(/<head\b[^>]*>[\s\S]*?<\/head>/gi, ''))
+    .replace(/[‘’]/gu, "'");
+  return /^(?:You've been blocked by network security\b|A required part of this site couldn't load\b)/i.test(text);
+}
+
 export function looksLikeBotChallenge(result) {
   if (!result) return false;
+  if (isAccessErrorResponse(result)) return true;
   if (BOT_CHALLENGE_STATUSES.has(result.status)) return true;
   // Bodies are always Buffers; sniff utf-8 of the first 4KB. PDF buffers
   // decode to mostly garbage and never contain HTML challenge markers.
@@ -1012,6 +1037,7 @@ function buildJsonPayload({ result, source, cacheHit, cacheAgeMinutes, cacheTtlH
   const payload = {
     status: result.status,
     ok: result.ok,
+    ...(result.error ? { error: result.error } : {}),
     requestedUrl: result.url,
     finalUrl: result.finalUrl,
     source: cacheHit ? 'cache' : source,
@@ -1163,8 +1189,9 @@ export async function main(args = argv.slice(2)) {
         body: cached.body,
       };
       source = cached.source ?? 'origin';
-      cacheHit = true;
+      cacheHit = !isAccessErrorResponse(result);
       cacheAgeMinutes = Math.round(cached._ageMs / 60_000);
+      if (!cacheHit) console.error('[fetch-url] cached access-error page is unusable; retrying retrieval.');
     }
   }
 
@@ -1260,6 +1287,11 @@ export async function main(args = argv.slice(2)) {
     }
   }
 
+  if (isAccessErrorResponse(result)) {
+    result = { ...result, ok: false, error: `Unusable access-error response (HTTP ${result.status}); source content was not retrieved.` };
+    console.error(`[fetch-url] ${result.error}`);
+  }
+
   // One log line per main() invocation (cache hit OR live fetch). Lets a
   // downstream "every cited URL was fetched at least once" gate cross-check
   // report bibliographies against the actual fetch trail without parsing
@@ -1275,6 +1307,7 @@ export async function main(args = argv.slice(2)) {
     sha256: bodySha256(result.body),
     bytes: result.contentLength ?? (result.body?.length ?? 0),
     cacheHit,
+    ...(result.error ? { error: result.error } : {}),
   });
 
   // Magic-byte sniff on the actual body is the only PDF signal: a .pdf URL

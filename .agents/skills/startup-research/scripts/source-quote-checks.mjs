@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { isAccessErrorResponse } from '../../fetch-url/scripts/fetch.mjs';
 import { canonicalSourceUrl, hasText } from './utils.mjs';
 
 function normalizeText(text) {
@@ -42,7 +43,6 @@ export function checkPrefetchedSourceQuotes(sources, fetchedSources, file) {
   const textByFile = new Map();
   const issues = [];
   for (const source of sources) {
-    if (!hasText(source?.keyQuote)) continue;
     const path = `${file}:localEvidence.sources.${source.id}.keyQuote`;
     const fetched = fetchedByUrl.get(canonicalSourceUrl(source.url));
     let text;
@@ -50,6 +50,7 @@ export function checkPrefetchedSourceQuotes(sources, fetchedSources, file) {
       if (!fetched?.ok || !hasText(fetched.outputFile)) throw new Error('no successful prefetched text file');
       if (!textByFile.has(fetched.outputFile)) textByFile.set(fetched.outputFile, readFileSync(fetched.outputFile, 'utf8'));
       text = textByFile.get(fetched.outputFile);
+      if (!hasText(text)) throw new Error('prefetched source has no readable text');
     } catch (error) {
       issues.push({
         path,
@@ -59,6 +60,16 @@ export function checkPrefetchedSourceQuotes(sources, fetchedSources, file) {
       });
       continue;
     }
+    if (isAccessErrorResponse({ ...fetched, body: text })) {
+      issues.push({
+        path: `${file}:localEvidence.sources.${source.id}`,
+        code: 'sourceContentBlocked',
+        message: `Fetched text for ${source.url} is an access-error page, not source evidence.`,
+        fix: 'Replace this citation and its dependent claims using relevant successful evidence in the assigned pool, or report an evidence blocker. Never quote an access-error message as support.',
+      });
+      continue;
+    }
+    if (!hasText(source?.keyQuote)) continue;
     if (isVerbatimSourceQuote(source.keyQuote, text)) continue;
     issues.push({
       path,

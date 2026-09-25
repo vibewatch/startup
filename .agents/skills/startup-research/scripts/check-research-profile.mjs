@@ -73,7 +73,7 @@ try {
   writeFileSync(join(folder, 'search-bundle.json'), JSON.stringify({
     fetchedSources: [
       { url: assigned, ok: true, outputFile: prefetchedText },
-      { url: reserve, ok: true },
+      { url: reserve, ok: true, outputFile: prefetchedText },
       { url: sibling, ok: true },
       { url: failed, ok: false },
       { url: selfPublished, ok: true },

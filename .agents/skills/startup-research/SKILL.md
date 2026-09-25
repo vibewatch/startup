@@ -63,6 +63,8 @@ Workflow narrative: what to run, in what order, with which flags. Two generated 
 
 **Quotation fidelity:** `keyQuote` means a verbatim excerpt, not a summary or an analyst correction. The worker runner checks quotations against assigned prefetched text; fast finalization checks authored chapters and the assembled ledger before refresh linking, including reused evidence. The bounded finalizer independently checks both authored chapters and assembled evidence, so a successful model exit cannot skip this gate. `sourceQuoteMismatch` rejects changed wording, changed numbers, and reordered excerpts; `sourceQuoteTextMissing` requires restoration of the original fetched text. Whitespace and equivalent typography may differ, and ellipses may omit text without reordering it. Keep source files read-only. Copy an excerpt that actually supports the associated claim; do not delete quotations or choose irrelevant text just to clear the check. These checks establish literal provenance, not contextual fairness or factual support for every claim.
 
+**Unusable fetched content:** `sourceContentBlocked` rejects recognized access-error pages, including old prefetched entries incorrectly marked `ok: true`. Empty or unreadable fetched text also fails. Omitting `keyQuote` does not bypass these source checks. Replace unusable citations and dependent claims with relevant evidence already eligible in the chapter's pool, or surface an evidence blocker; never present a security checkpoint or login error as supporting evidence.
+
 For each chapter from the `--list` roster:
 
 1. Load its per-chapter delta:
