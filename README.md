@@ -63,6 +63,13 @@ visible in one place:
 - `validate-main.yml` validates each relevant push and deploys only the validated
   site artifact.
 
+`cloudflare/worker.js` retains an optional dispatcher compatible with the old
+hourly Cloudflare trigger. It targets the current workflows, requests one report
+per research/translation run, and leaves model selection to workflow defaults.
+This is repository source only: no Cloudflare trigger or deployment is configured
+here. Do not enable it alongside the native GitHub schedules above.
+Run its isolated dispatch checks with `node --test cloudflare/worker.test.mjs`.
+
 ## Generate a report
 
 Ask the coding agent to run the Startup Research workflow with a company name and optional official URL, for example:
@@ -156,7 +163,7 @@ Both `--all` validators and the website loader are digest-keyed, so unchanged re
 - [.agents/skills/translate-zh/scripts/check-translations.mjs](.agents/skills/translate-zh/scripts/check-translations.mjs) hashes both `*.yaml` and `*.zh.yaml` per folder (plus `CHECK_VERSION` and the `--strict` / `--require-final` flags) and persists `.cache/check-translations.json`. Same failure / version semantics. Set `CHECK_TRANSLATION_NO_CACHE=1` to bypass.
 - [website/src/content/reports-loader.ts](website/src/content/reports-loader.ts) hashes each `summary-card.yaml` (plus `LOADER_VERSION`) and reuses Astro's persistent content store at `website/.astro/data-store.json`. Bump `LOADER_VERSION` when the loader's parsing surface or the Zod schema in [content.config.ts](website/src/content.config.ts) changes.
 
-In CI, [`deploy.yml`](.github/workflows/deploy.yml) restores `website/.astro` and `.cache/` via `actions/cache@v4`, keyed by the hash of `website/src/**`, the validator scripts, and `reports/**/*.yaml` so any source / report change re-keys the cache automatically.
+In CI, [`validate-main.yml`](.github/workflows/validate-main.yml) runs full validation, builds the site, and deploys that same validated artifact to GitHub Pages. The retired `deploy.yml` workflow is no longer used.
 
 From `website/`:
 
