@@ -325,7 +325,7 @@ export const FIX_HINTS = {
     required != null ? `Add ${Math.max(required - (actual ?? 0), 1)} more URL(s) not seen in earlier chapters (currently ${actual}, need ${required}).` : 'Run new searches to add URLs not seen in earlier chapters; reusing the global pool will not satisfy this gate.',
   paywallRisk: 'At chapter scope (warning, ack-able): swap restricted (paywall|js-only|broken|rate-limited) sources for ok ones to stay under the report-level 30% ceiling. At report scope (failure from check-report, NOT ack-able): the per-report restricted share already exceeds the 30% ceiling and must be brought back below it before finalize-report can pass.',
   researchQuestions: 'Add more researchQuestion entries until you hit the per-chapter floor.',
-  sources: 'Add more sources until you hit the per-chapter floor.',
+  sources: 'Use one source ID per canonical URL. Meet the per-chapter floor with distinct relevant sources, not duplicate IDs or tracking-URL variants.',
   claims: 'Add more claims until you hit the per-chapter floor.',
   highConfidenceCorroboration: ({ claimId, actual, required } = {}) =>
     required != null && actual != null

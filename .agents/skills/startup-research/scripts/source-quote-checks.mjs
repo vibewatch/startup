@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { isAccessErrorResponse } from '../../fetch-url/scripts/fetch.mjs';
-import { canonicalSourceUrl, hasText } from './utils.mjs';
+import { canonicalSourceUrl, FINAL_ARTIFACTS, hasText } from './utils.mjs';
 
 function normalizeText(text) {
   return text.normalize('NFC')
@@ -38,10 +38,28 @@ export function isVerbatimSourceQuote(quote, sourceText) {
   return true;
 }
 
+export function checkDistinctChapterSources(sources, file) {
+  const seen = new Map();
+  const issues = [];
+  for (const source of sources) {
+    const url = canonicalSourceUrl(source?.url);
+    if (!url) continue;
+    if (seen.has(url)) {
+      issues.push({
+        path: `${file}:localEvidence.sources.${source.id}`,
+        code: 'duplicateSourceUrl',
+        message: `Sources ${seen.get(url)} and ${source.id} cite the same canonical URL: ${url}`,
+        fix: 'Keep one source ID per canonical URL and update its claim references. Meet the source floor with distinct relevant evidence, not duplicate IDs or tracking-URL variants.',
+      });
+    } else seen.set(url, source.id);
+  }
+  return issues;
+}
+
 export function checkPrefetchedSourceQuotes(sources, fetchedSources, file) {
   const fetchedByUrl = new Map(fetchedSources.map((entry) => [canonicalSourceUrl(entry.url), entry]));
   const textByFile = new Map();
-  const issues = [];
+  const issues = file === FINAL_ARTIFACTS.evidence.file ? [] : checkDistinctChapterSources(sources, file);
   for (const source of sources) {
     const path = `${file}:localEvidence.sources.${source.id}.keyQuote`;
     const fetched = fetchedByUrl.get(canonicalSourceUrl(source.url));

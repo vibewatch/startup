@@ -54,6 +54,7 @@ import {
   resolveFixHint,
 } from './validation-catalog.mjs';
 import { validationEnvelope } from './contracts/validation-result.mjs';
+import { checkDistinctChapterSources } from './source-quote-checks.mjs';
 
 function parseArgs(argv) {
   const args = { folder: null, chapter: null, strict: false, format: 'text' };
@@ -696,14 +697,19 @@ function checkLocalEvidence(file, doc, counts, otherChapterClaimIds) {
     fail('localEvidenceMissing', `${file}: missing localEvidence before ledger consolidation`);
     return;
   }
+  const uniqueSources = new Set((doc.localEvidence.sources ?? []).map((source) => canonicalSourceUrl(source?.url)).filter(Boolean));
+  for (const issue of checkDistinctChapterSources(doc.localEvidence.sources ?? [], file)) {
+    fail('sources', issue.message, issue);
+  }
   const minimums = [
     ['researchQuestions', 'researchQuestions', 'localEvidence.researchQuestions[]', spec.gate.minResearchQuestions],
     ['sources', 'sources', 'localEvidence.sources[]', spec.gate.minLocalSources],
     ['claims', 'claims', 'localEvidence.claims[]', spec.gate.minLocalClaims],
   ];
   for (const [key, dimension, path, min] of minimums) {
-    if (counts[key] < min) {
-      fail(dimension, `${file}: ${path} has ${counts[key]}, expected at least ${min}`, { actual: counts[key], required: min });
+    const actual = key === 'sources' ? uniqueSources.size : counts[key];
+    if (actual < min) {
+      fail(dimension, `${file}: ${path} has ${actual}${key === 'sources' ? ' distinct canonical URLs' : ''}, expected at least ${min}`, { actual, required: min });
     }
   }
   const maximums = [

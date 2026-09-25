@@ -227,7 +227,7 @@ Dimensions are grouped by class. Only the **chapter-warning** class is acknowled
 | 17 | `chapter-failure` | `requiredSourceTypes` | Pull at least one source of each missing type listed in gate.requiredSourceTypes. | `yamlParse`, `localEvidenceMissing` |
 | 18 | `chapter-failure` | `netNewSources` | Run new searches to add URLs not seen in earlier chapters; reusing the global pool will not satisfy this gate. | `yamlParse`, `localEvidenceMissing` |
 | 20 | `chapter-failure` | `researchQuestions` | Add more researchQuestion entries until you hit the per-chapter floor. | `yamlParse`, `localEvidenceMissing` |
-| 21 | `chapter-failure` | `sources` | Add more sources until you hit the per-chapter floor. | `yamlParse`, `localEvidenceMissing` |
+| 21 | `chapter-failure` | `sources` | Use one source ID per canonical URL. Meet the per-chapter floor with distinct relevant sources, not duplicate IDs or tracking-URL variants. | `yamlParse`, `localEvidenceMissing` |
 | 22 | `chapter-failure` | `claims` | Add more claims until you hit the per-chapter floor. | `yamlParse`, `localEvidenceMissing` |
 | 23 | `chapter-failure` | `claimShape` | Fix the claim object: required fields (statement, type, topic, sourceRefs, confidence, freshness), valid enum values, non-empty sourceRefs unless type is open-question, and contradictsClaimRefs when type is conflicting. | `yamlParse`, `localEvidenceMissing` |
 | 24 | `chapter-failure` | `highConfidenceCorroboration` | Either downgrade confidence:high to medium, or ensure the claim has at least gate.minHighConfidenceCorroboration sourceRefs with at least one primary-tier source (filing\|regulatory\|legal\|official or reputationTier:high). | `yamlParse`, `localEvidenceMissing` |

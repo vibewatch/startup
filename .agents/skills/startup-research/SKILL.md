@@ -65,6 +65,8 @@ Workflow narrative: what to run, in what order, with which flags. Two generated 
 
 **Unusable fetched content:** `sourceContentBlocked` rejects recognized access-error pages, including old prefetched entries incorrectly marked `ok: true`. Empty or unreadable fetched text also fails. Omitting `keyQuote` does not bypass these source checks. Replace unusable citations and dependent claims with relevant evidence already eligible in the chapter's pool, or surface an evidence blocker; never present a security checkpoint or login error as supporting evidence.
 
+**Distinct chapter evidence:** source floors count distinct canonical URLs, not source IDs. A chapter cannot list the same URL twice, including tracking-parameter or fragment variants, to pad its evidence count or corroboration. Consolidate duplicate entries and their claim references. Reusing an eligible source in different chapters remains supported.
+
 For each chapter from the `--list` roster:
 
 1. Load its per-chapter delta:

@@ -124,6 +124,23 @@ try {
   rmSync(prefetchedText);
   const missingText = finalize();
   assert.match(missingText.stderr, /sourceQuoteTextMissing/);
+  const sourceRows = Array.from({ length: 8 }, (_, index) => ({
+    id: `SO${String(index + 1).padStart(3, '0')}`,
+    url: `https://example.com/source-${index}`,
+  }));
+  for (const duplicate of [true, false]) {
+    sourceRows[7].url = duplicate ? `${sourceRows[0].url}?utm_source=alias` : 'https://example.com/source-7';
+    writeFileSync(join(folder, context.chapter.file), JSON.stringify({ localEvidence: { sources: sourceRows } }));
+    const result = spawnSync(process.execPath, [
+      join(here, 'check-chapter.mjs'), folder, context.chapter.file, '--format', 'json',
+    ], { encoding: 'utf8' });
+    assert.equal(result.status, 1, result.stderr);
+    const findings = JSON.parse(result.stdout).issues.filter((issue) => issue.dimension === 'sources');
+    if (duplicate) {
+      assert(findings.some((issue) => issue.code === 'duplicateSourceUrl'));
+      assert(findings.some((issue) => issue.actual === 7 && issue.required === 8));
+    } else assert.deepEqual(findings, []);
+  }
   console.log(`[check-research-profile] ✓ fast snapshot and preassembled-report source provenance verified (${basename(folder)})`);
 } catch (error) {
   console.error(`[check-research-profile] ${error.message}`);

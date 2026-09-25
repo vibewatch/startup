@@ -7,7 +7,7 @@ import { spawnSync } from 'node:child_process';
 import yaml from 'js-yaml';
 import { canonicalCacheKey, isAccessErrorResponse, looksLikeBotChallenge, readerUrl } from '../../fetch-url/scripts/fetch.mjs';
 import { checkFigureDeep } from './artifact-checks.mjs';
-import { checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
+import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
 
 const accessErrorBodies = [
   '<html><head><title>Client Challenge</title></head><body>A required part of this site couldn’t load.</body></html>',
@@ -131,6 +131,18 @@ test('source quotes reject fabricated wording, reordered excerpts, and partial n
   ]) assert.equal(isVerbatimSourceQuote(quote, source), false, quote);
 });
 
+test('chapter source quotas cannot be padded with duplicate URL aliases', () => {
+  const sources = [
+    { id: 'SV008', url: 'https://example.com/source' },
+    { id: 'SV009', url: 'https://www.example.com/source/?utm_source=test#section' },
+  ];
+  const issues = checkDistinctChapterSources(sources, '08-valuation.yaml');
+  assert.equal(issues.length, 1);
+  assert.equal(issues[0].code, 'duplicateSourceUrl');
+  assert.match(issues[0].message, /SV008 and SV009/);
+  assert.deepEqual(checkDistinctChapterSources([sources[0], { ...sources[1], url: 'https://example.com/other' }], '08-valuation.yaml'), []);
+});
+
 test('prefetched quotation checks require readable successful source text', () => {
   const folder = mkdtempSync(join(tmpdir(), 'source-quote-check-'));
   const outputFile = join(folder, 'source.txt');
@@ -152,6 +164,11 @@ test('prefetched quotation checks require readable successful source text', () =
       [{ url, ok: true, outputFile }],
       '01-company-overview.yaml',
     ), []);
+    const duplicate = { ...source, id: 'SO003', url: `${url}?utm_source=test` };
+    const fetched = [{ url, ok: true, outputFile }];
+    assert.deepEqual(checkPrefetchedSourceQuotes([source, duplicate], fetched, '01-company-overview.yaml')
+      .map((issue) => issue.code), ['duplicateSourceUrl']);
+    assert.deepEqual(checkPrefetchedSourceQuotes([source, { ...duplicate, id: 'SM001' }], fetched, 'evidence.yaml'), []);
     for (const body of accessErrorBodies) {
       writeFileSync(outputFile, body);
       for (const keyQuote of [body, null]) {
