@@ -59,6 +59,8 @@ async function bootstrapFixture(name, { chapters = 1, sources = 12, failed = [],
       const text = args[args.indexOf('--query') + 1];
       const start = text === 'global' ? 0 : (Number(text.split('-')[1]) - 1) * 7 + 3;
       response = {
+        query: text,
+        provider: 'fixture',
         results: Array.from({ length: 10 }, (_, index) => {
           const result = results[(start + index) % results.length];
           return aliases && text !== 'global'

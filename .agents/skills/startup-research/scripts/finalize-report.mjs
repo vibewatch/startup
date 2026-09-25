@@ -28,6 +28,7 @@ import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkPrefetchedSourceQuotes } from './source-quote-checks.mjs';
+import { checkSearchQueryProvenance, executedSearchQueries } from './search-query-checks.mjs';
 import {
   EXIT,
   FINAL_ARTIFACTS,
@@ -172,10 +173,13 @@ function enforceFastPrefetchedSources() {
   );
   const unapproved = [];
   const quoteIssues = [];
+  const queries = executedSearchQueries(bundle);
+  const queryIssues = [];
   for (const spec of getAnalysisArtifacts(config)) {
     const chapter = tryReadYaml(join(reportFolder, spec.file));
     if (!chapter.ok) continue;
     const assigned = poolByKey.get(spec.key) ?? new Set();
+    queryIssues.push(...checkSearchQueryProvenance(chapter.value?.localEvidence, queries, spec.file));
     for (const source of chapter.value?.localEvidence?.sources ?? []) {
       const canonical = canonicalSourceUrl(source?.url);
       if (canonical && (!approved.has(canonical) || !assigned.has(canonical))) {
@@ -197,6 +201,12 @@ function enforceFastPrefetchedSources() {
     process.exit(EXIT.failure);
   }
   rejectQuoteIssues(quoteIssues);
+  if (queryIssues.length > 0) {
+    console.error('[finalize-report] authored search logs failed executed-query verification:');
+    for (const issue of queryIssues) console.error(`  - ${issue.path}: ${issue.code}: ${issue.message}`);
+    console.error('[finalize-report] restore literal executed records from search-bundle.json; never rewrite the bundle to match invented logs.');
+    process.exit(EXIT.failure);
+  }
   return bundle.fetchedSources ?? [];
 }
 

@@ -10,6 +10,7 @@ import {
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkPrefetchedSourceQuotes } from './source-quote-checks.mjs';
+import { checkSearchQueryProvenance, executedSearchQueries } from './search-query-checks.mjs';
 import {
   EXIT,
   canonicalSourceUrl,
@@ -96,7 +97,10 @@ Read references/rules.md and only the analysis-chapter section of references/con
 
 Binding constraints:
 - Use only successful prefetched URLs in the assigned pool file. Do not open or inspect search-bundle.json, because it contains URLs reserved for sibling chapters. Do not search, fetch, use curl, add a URL, or write to the fetch trail.
+- Copy localEvidence.searchQueries from the pool's executedSearchQueries (query, engine, hits). Map retainedSourceRefs only to your source IDs whose URLs appear in that record's resultUrls; an empty retainedSourceRefs is valid. Do not copy resultUrls into the chapter, invent query strings, substitute Google/Bing for the recorded provider, or estimate hit counts.
 - Keep fetched source files read-only. Each keyQuote is checked against its original fetched text: copy literal excerpts in their original order, using ellipses only for omissions; never substitute a paraphrase or your own analysis.
+- Classify independence by the content's issuer and relationship, not its hosting domain: syndicated company releases, supplier listings, and company job reposts are still company-issued; competitor comparisons are not independent benchmarks.
+- Preserve source attribution, metric names, periods, denominators and uncertainty in every claim and exhibit. Revenue is not ARR, accounting loss is not cash burn, funding raised is not cash available, and absence of a recorded incident is not proof of absence. Mark unsupported quantities as gaps rather than inventing precise values.
 - Retain at least runtimeContext.chapter.gate.minNetNewSources relevant allocation:net-new sources and the relevant allocation:independent-candidate sources.
 - Obey every fast cap, the exact chapter schema, source/claim IDs, and runtimeContext.policy.retryPolicy.
 - Run check-chapter normal and strict. The initial run plus at most maxChapterRetries repair attempts is a hard limit; stop with a failure result if the budget is exhausted or failures do not strictly decrease.
@@ -280,6 +284,21 @@ function validateChapters(tasks, reportFolder, fetchLogPath) {
         error: quoteIssues.map((issue) => `${issue.path}: ${issue.code}: ${issue.message}`).join('; '),
       };
     }
+    const queryIssues = checkSearchQueryProvenance(
+      chapter.value?.localEvidence, task.pool.executedSearchQueries, task.context.chapter.file,
+    );
+    if (queryIssues.length > 0) {
+      return {
+        chapter: task.context.chapter.key,
+        file: task.context.chapter.file,
+        ok: false,
+        failedDimensions: ['searchQueryProvenance'],
+        unackedWarningDimensions: [],
+        retryOrder: ['searchQueryProvenance'],
+        issues: queryIssues,
+        error: queryIssues.map((issue) => `${issue.path}: ${issue.code}: ${issue.message}`).join('; '),
+      };
+    }
     const result = spawnSync(process.execPath, [
       checkChapterScript,
       reportFolder,
@@ -350,6 +369,7 @@ function successfulWorkerPool(pool) {
   }
   return {
     ...pool,
+    executedSearchQueries: executedSearchQueries(bundle, pool),
     recommended: (pool.recommended ?? []).filter((candidate) => candidate.fetch?.ok),
     reserve: (pool.reserve ?? []).filter((candidate) => candidate.fetch?.ok),
   };
@@ -371,6 +391,9 @@ const tasks = roster.chapters.map((chapter) => {
   const sourcePool = poolByKey.get(chapter.key);
   if (!sourcePool) throw new Error(`search bundle is missing chapter pool ${chapter.key}`);
   const pool = successfulWorkerPool(sourcePool);
+  if (pool.executedSearchQueries.length === 0) {
+    throw new Error(`search bundle has no successful executed queries for chapter ${chapter.key}; restore the original discovery records before starting workers`);
+  }
   const contextPath = join(inputsDir, `${String(chapter.order).padStart(2, '0')}-${chapter.key}-context.json`);
   const poolPath = join(inputsDir, `${String(chapter.order).padStart(2, '0')}-${chapter.key}-pool.json`);
   writeFileSync(contextPath, `${JSON.stringify(context, null, 2)}\n`);

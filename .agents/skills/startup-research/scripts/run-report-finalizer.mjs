@@ -9,6 +9,7 @@ import {
 import { basename, dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkPrefetchedSourceQuotes } from './source-quote-checks.mjs';
+import { checkSearchQueryProvenance, executedSearchQueries } from './search-query-checks.mjs';
 import {
   EXIT,
   FINAL_ARTIFACTS,
@@ -95,6 +96,7 @@ Binding sequence:
 1. Walk chapters in configured order and run normal then strict validation.
 2. For a timed-out/failed worker or a missing chapter, complete only that chapter directly from its worker-input context and pool. For completed workers, repair only named validator failures in worker-results.json or subsequent checks${reviewFindings ? ' and the source-review findings below' : ''}; never rewrite unrelated passing content. Enforce each chapter's convergence retry budget.
 3. Fast chapters may use only successful prefetched URLs in that chapter's worker-input pool. Never borrow a URL from a sibling pool even if it appears in search-bundle fetchedSources. Do not search, fetch, use curl, add a URL, or write to the fetch trail. Keep fetched text read-only; keyQuote must contain literal, ordered excerpts, not paraphrases or reviewer commentary.
+   Search logs must match actual search-bundle.json searches: literal query, response.provider, and response.results.length. retainedSourceRefs may name only chapter source URLs returned by that execution. Repair fabricated logs from the immutable execution records, not by changing the bundle or inventing new searches.
 4. Author report-meta.yaml only after every chapter passes strict, validate it, then run finalize-report.mjs.${reviewFindings ? ' Preserve existing metadata except where a named finding or a corrected supporting claim requires an update.' : ''}
 5. Fix only concrete validator findings${reviewFindings ? ' or the supplied source-review findings' : ''} with already-prefetched evidence. Never invent a replacement source or fact to satisfy a gate. Do not inspect historical reports, modify repository code/config/docs, or use git.
 ${reviewFindings ? `
@@ -308,10 +310,15 @@ function inspectFinalReport() {
     env: { ...process.env, STARTUP_FETCH_LOG_PATH: fetchLogPath },
   });
   const quoteIssues = [];
+  const queryIssues = [];
   if (check.status === 0 && config.activeResearchProfile === 'fast') {
     const bundle = JSON.parse(readFileSync(bundlePath, 'utf8'));
+    const queries = executedSearchQueries(bundle);
     for (const file of [...getAnalysisArtifacts(config).map((chapter) => chapter.file), FINAL_ARTIFACTS.evidence.file]) {
       const document = readYaml(join(reportFolder, file));
+      if (file !== FINAL_ARTIFACTS.evidence.file) {
+        queryIssues.push(...checkSearchQueryProvenance(document.localEvidence, queries, file));
+      }
       quoteIssues.push(...checkPrefetchedSourceQuotes(
         file === FINAL_ARTIFACTS.evidence.file ? document.sources ?? [] : document.localEvidence?.sources ?? [],
         bundle.fetchedSources ?? [],
@@ -322,12 +329,13 @@ function inspectFinalReport() {
   return {
     missingFiles,
     reportCheck: {
-      ok: check.status === 0 && quoteIssues.length === 0,
+      ok: check.status === 0 && quoteIssues.length === 0 && queryIssues.length === 0,
       exitCode: check.status,
       error: check.status === 0
-        ? quoteIssues.map((issue) => `${issue.path}: ${issue.code}: ${issue.message}`).join('\n')
+        ? [...quoteIssues, ...queryIssues].map((issue) => `${issue.path}: ${issue.code}: ${issue.message}`).join('\n')
         : (check.stderr || check.stdout),
       quoteIssues,
+      queryIssues,
     },
   };
 }

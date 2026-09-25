@@ -69,8 +69,13 @@ try {
   const redirected = 'https://example.com/redirected';
   const poolRedirected = 'https://example.com/pool-redirected';
   const prefetchedText = join(folder, 'prefetched.txt');
+  const queryRecord = { query: 'Acme company', engine: 'anysearch', hits: 2, retainedSourceRefs: [] };
   writeFileSync(prefetchedText, 'Acme ARR is $10M. Growth is not audited.\n');
   writeFileSync(join(folder, 'search-bundle.json'), JSON.stringify({
+    searches: [{
+      query: queryRecord.query,
+      response: { query: queryRecord.query, provider: queryRecord.engine, results: [{ url: assigned }, { url: reserve }] },
+    }],
     fetchedSources: [
       { url: assigned, ok: true, outputFile: prefetchedText },
       { url: reserve, ok: true, outputFile: prefetchedText },
@@ -94,7 +99,7 @@ try {
   }));
   for (const url of ['https://example.com/unfetched', failed, sibling, assigned, reserve, selfPublished, redirected, poolRedirected]) {
     writeFileSync(join(folder, context.chapter.file), JSON.stringify({
-      localEvidence: { sources: [{ id: 'SO001', url }] },
+      localEvidence: { searchQueries: [queryRecord], sources: [{ id: 'SO001', url }] },
     }));
     const result = finalize();
     assert.notEqual(result.status, 0);
@@ -114,7 +119,7 @@ try {
     ['Growth is not audited. ... Acme ARR is $10M.', false],
   ]) {
     writeFileSync(join(folder, context.chapter.file), JSON.stringify({
-      localEvidence: { sources: [{ id: 'SO001', url: assigned, keyQuote }] },
+      localEvidence: { searchQueries: [queryRecord], sources: [{ id: 'SO001', url: assigned, keyQuote }] },
     }));
     const result = finalize();
     assert.notEqual(result.status, 0);

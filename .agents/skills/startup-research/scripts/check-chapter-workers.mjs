@@ -10,6 +10,7 @@ import {
 } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
+import { checkSearchQueryProvenance, executedSearchQueries } from './search-query-checks.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const runId = `20990101000000-worker-check-${process.pid}`;
@@ -36,8 +37,23 @@ try {
     '--list',
     '--report-folder', folder,
   ]));
+  const queryRecord = {
+    query: 'Acme company profile',
+    engine: 'anysearch',
+    hits: roster.totalChapters,
+    retainedSourceRefs: [],
+  };
   writeFileSync(bundlePath, `${JSON.stringify({
     schemaVersion: 'search-bundle-v1',
+    searches: [{
+      scope: 'global',
+      query: queryRecord.query,
+      response: {
+        query: queryRecord.query,
+        provider: queryRecord.engine,
+        results: roster.chapters.map((chapter) => ({ url: `https://${chapter.key}.example/success` })),
+      },
+    }],
     chapterPools: roster.chapters.map((chapter) => ({
       key: chapter.key,
       recommended: [
@@ -66,6 +82,35 @@ try {
   const workerPools = plan.workers.map((worker) => (
     JSON.parse(readFileSync(worker.poolPath, 'utf8'))
   ));
+  for (const pool of workerPools) {
+    assert.deepEqual(pool.executedSearchQueries, [{
+      query: queryRecord.query,
+      engine: queryRecord.engine,
+      hits: roster.totalChapters,
+      resultUrls: [pool.recommended[0].url],
+    }], 'worker query projection changed hit counts or exposed sibling URLs');
+  }
+  const records = executedSearchQueries(JSON.parse(readFileSync(bundlePath, 'utf8')));
+  const queryEvidence = {
+    searchQueries: [{ ...queryRecord, retainedSourceRefs: ['SO001'] }],
+    sources: [{ id: 'SO001', url: `${workerPools[0].recommended[0].url}?utm_source=alias` }],
+  };
+  assert.deepEqual(checkSearchQueryProvenance(queryEvidence, records, 'chapter.yaml'), []);
+  for (const [patch, code] of [
+    [{ query: 'Acme invented lookup 2099' }, 'searchQueryNotExecuted'],
+    [{ engine: 'google' }, 'searchQueryMetadataMismatch'],
+    [{ hits: 999 }, 'searchQueryMetadataMismatch'],
+    [{ retainedSourceRefs: ['SO999'] }, 'searchQuerySourceMismatch'],
+  ]) {
+    const evidence = { ...queryEvidence, searchQueries: [{ ...queryEvidence.searchQueries[0], ...patch }] };
+    assert.equal(checkSearchQueryProvenance(evidence, records, 'chapter.yaml')[0]?.code, code);
+  }
+  assert.equal(checkSearchQueryProvenance(queryEvidence, [], 'chapter.yaml')[0]?.code, 'searchQueryProvenanceMissing');
+  assert.equal(checkSearchQueryProvenance({ ...queryEvidence, searchQueries: [] }, records, 'chapter.yaml')[0]?.code, 'searchQueryProvenanceMissing');
+  assert.equal(checkSearchQueryProvenance({
+    ...queryEvidence, sources: [{ id: 'SO001', url: 'https://not-a-result.example/seeded' }],
+  }, records, 'chapter.yaml')[0]?.code, 'searchQuerySourceMismatch');
+  assert.deepEqual(executedSearchQueries({ searches: [{ query: queryRecord.query, error: 'provider failed' }] }), []);
   writeFileSync(join(folder, 'worker-results.json'), `${JSON.stringify({
     schemaVersion: 'chapter-worker-run-v1',
     workers: [],
@@ -163,7 +208,10 @@ process.exit(Number(process.env.FAKE_COPILOT_EXIT ?? 1));
     const pool = quoteBundle.chapterPools.find((entry) => entry.key === chapter.key);
     pool.recommended[0].fetch.outputFile = quoteTextPath;
     writeFileSync(join(folder, chapter.file), JSON.stringify({
-      localEvidence: { sources: [{ id: `S${chapter.letter}001`, url: pool.recommended[0].url, keyQuote: 'Invented quotation.' }] },
+      localEvidence: {
+        searchQueries: [queryRecord],
+        sources: [{ id: `S${chapter.letter}001`, url: pool.recommended[0].url, keyQuote: 'Invented quotation.' }],
+      },
     }));
   }
   quoteBundle.fetchedSources = quoteBundle.chapterPools.map((pool) => ({
@@ -258,6 +306,38 @@ process.exit(Number(process.env.FAKE_COPILOT_EXIT ?? 1));
       assert.match(directQuoteProbe.stderr, /evidence\.yaml:.*sourceQuoteMismatch/);
       assert.doesNotMatch(directQuoteProbe.stdout, /pipeline complete/);
     }
+  }
+  const queryChapterPath = join(folder, roster.chapters[0].file);
+  const queryChapter = JSON.parse(readFileSync(queryChapterPath, 'utf8'));
+  queryChapter.localEvidence.searchQueries[0].query = 'Invented query';
+  writeFileSync(queryChapterPath, JSON.stringify(queryChapter));
+  for (const scriptName of ['run-chapter-workers.mjs', 'run-report-finalizer.mjs', 'finalize-report.mjs']) {
+    const script = join(here, scriptName);
+    const argv = scriptName === 'finalize-report.mjs'
+      ? [process.execPath, script, folder]
+      : [process.execPath, script, '--report-folder', folder, '--copilot-bin', fakeCopilotPath, '--disable-escalation', '--format', 'json'];
+    const probe = spawnSync(process.execPath, ['--input-type=module', '-e', `
+      import childProcess from 'node:child_process';
+      import { syncBuiltinESMExports } from 'node:module';
+      const original = childProcess.spawnSync;
+      childProcess.spawnSync = (binary, args, options) =>
+        args[0] === ${JSON.stringify(join(here, 'check-report.mjs'))}
+          ? { status: 0, stdout: '', stderr: '' }
+          : original(binary, args, options);
+      syncBuiltinESMExports();
+      process.argv = ${JSON.stringify(argv)};
+      await import(${JSON.stringify(pathToFileURL(script).href)});
+    `], {
+      encoding: 'utf8',
+      env: {
+        ...process.env,
+        FAKE_COPILOT_LOG: join(folder, 'fake-query-provenance.log'),
+        FAKE_COPILOT_EXIT: '0',
+        STARTUP_FETCH_LOG_PATH: join(folder, '_fetch-log.jsonl'),
+      },
+    });
+    assert.equal(probe.status, 1, `${scriptName} accepted an invented query`);
+    assert.match(probe.stderr + probe.stdout, /searchQueryNotExecuted/);
   }
   const companyWorkflow = readFileSync(resolve('.github/workflows/company.yml'), 'utf8');
   const checks = [

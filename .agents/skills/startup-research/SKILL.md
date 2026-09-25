@@ -73,6 +73,18 @@ Workflow narrative: what to run, in what order, with which flags. Two generated 
 
 **Distinct chapter evidence:** source floors count distinct canonical URLs, not source IDs. A chapter cannot list the same URL twice, including tracking-parameter or fragment variants, to pad its evidence count or corroboration. Consolidate duplicate entries and their claim references. Reusing an eligible source in different chapters remains supported.
 
+**Executed search provenance:** worker pools include `executedSearchQueries` projected
+from successful shared searches, with literal query strings, actual providers,
+unfiltered result counts, and only assigned result URLs. Copy those records into
+`localEvidence.searchQueries`, mapping `retainedSourceRefs` only to sources actually
+returned by the query; an empty retained list is valid, including for queries whose
+results were not retained. Never invent searches, guess hit counts, or label a
+provider as Google/Bing when the response records another provider. Worker
+convergence and fast finalization reject unmatched queries, changed metadata, and
+false query-to-source links, including when artifacts already exist. Keep the
+original bundle immutable when repairing an authored log. Historical contract
+checks do not require the run cache or certify search provenance.
+
 For each chapter from the `--list` roster:
 
 1. Load its per-chapter delta:
