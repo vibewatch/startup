@@ -147,7 +147,7 @@ function normalizedTokens(value) {
   return [...years, ...dates];
 }
 
-function normalizedMetricTokens(value) {
+function normalizedMetricTokens(value, { includePlainNumbers = false } = {}) {
   // Calendar labels are not ARR/GMV quantities, even when they precede the metric.
   const separated = normalizeQuantityWords(normalizeCalendarSpacing(value))
     .replace(/\bFY\s*((?:19|20)\d{2})E?\b/gi, '$1;')
@@ -167,7 +167,7 @@ function normalizedMetricTokens(value) {
     .map((token) => token.replace(/\s+/g, '').replace(/,/g, '').replace(/[×倍]$/u, 'x').toLowerCase())
     // "2026 ARR" labels a year; a currency-prefixed amount is not a calendar label.
     .map((token) => token.replace(/^((?:19|20)\d{2})(?:arr|mrr|gmv|tpv|npl|irr)$/, '$1'))
-    .filter((token) => /[$€£¥₦%]|bps|[kmbt]$|arr|mrr|gmv|tpv|npl|irr|x$|×$/i.test(token) || /^(?:19|20)\d{2}$/.test(token))
+    .filter((token) => includePlainNumbers || /[$€£¥₦%]|bps|[kmbt]$|arr|mrr|gmv|tpv|npl|irr|x$|×$/i.test(token) || /^(?:19|20)\d{2}$/.test(token))
     .filter((token) => {
       if (!/^(?:19|20)\d{2}$/.test(token)) return true;
       if (years.has(token)) return false;
@@ -175,6 +175,57 @@ function normalizedMetricTokens(value) {
       return true;
     })
     .sort();
+}
+
+function normalizedCountMetrics(value, { normalizeMonths = false } = {}) {
+  const powers = { k: 3, m: 6, b: 9, t: 12, 千: 3, 万: 4, 亿: 8, 万亿: 12 };
+  const months = [
+    'january', 'february', 'march', 'april', 'may', 'june',
+    'july', 'august', 'september', 'october', 'november', 'december',
+  ];
+  const calendar = normalizeMonths ? value.replace(
+    /\b(January|February|March|April|May|June|July|August|September|October|November|December)\s+((?:19|20)\d{2})\b/gi,
+    (_, month, year) => `${year};${months.indexOf(month.toLowerCase()) + 1};`,
+  ) : value;
+  const normalized = normalizeQuantityWords(normalizeCalendarSpacing(normalizeWrittenPercentages(calendar)));
+  let converted = 0;
+  let unsupported = false;
+  const expanded = normalized.replace(
+    /(?<![\w.,])(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)(?:\s*(?:多|余)?\s*(万亿|亿|万|千)(?![十百千万亿兆])|([KMBT])(?![a-z]))/giu,
+    (match, number, chineseUnit, englishUnit, offset, text) => {
+      const before = text.slice(0, offset);
+      const after = text.slice(offset + match.length);
+      if (/(?:\p{Sc}|\b(?:USD|EUR|GBP|JPY|CNY|RMB|HKD|AUD|CAD|SGD|INR|KRW|TWD|CHF|NGN))\s*$/iu.test(before)
+          || /^\s*(?:\p{Sc}|(?:USD|EUR|GBP|JPY|CNY|RMB|HKD|AUD|CAD|SGD|INR|KRW|TWD|CHF|NGN|dollars?|euros?|pounds?|yuan|yen|rupees?|won)\b|美元|美金|元|欧元|英镑|港币|港元|日元|人民币|新台币|台币|澳元|加元|新加坡元|新币|瑞郎|卢比|卢布|韩元|奈拉)/iu.test(after)) {
+        return match;
+      }
+      if (/^\s*(?:[%％×倍]|(?:bps|x|percent)\b)/iu.test(after)) {
+        unsupported = true;
+        return match;
+      }
+      // Shared-unit ranges and signed counts need more context than a scalar conversion.
+      if (/[-−+–—]\s*$/u.test(before)
+          || /\d[\d.,]*\s*(?:to|and|or|至|到|和|或)\s*$/iu.test(before)
+          || /^\s*[-−+–—]/u.test(after)) {
+        unsupported = true;
+        return match;
+      }
+      const [integer, fraction = ''] = number.replace(/,/g, '').split('.');
+      const digits = `${integer}${fraction}`;
+      const point = integer.length + powers[(chineseUnit ?? englishUnit).toLowerCase()] - 6;
+      // Shift decimal text exactly; large counts must not lose integer precision.
+      const decimal = point <= 0 ? `0.${'0'.repeat(-point)}${digits}`
+        : point >= digits.length ? `${digits}${'0'.repeat(point - digits.length)}`
+          : `${digits.slice(0, point)}.${digits.slice(point)}`;
+      const [whole, tail = ''] = decimal.split('.');
+      const trimmed = tail.replace(/0+$/, '');
+      converted += 1;
+      return `${whole.replace(/^0+(?=\d)/, '')}${trimmed ? `.${trimmed}` : ''}M `;
+    },
+  );
+  return converted && !unsupported
+    ? normalizedMetricTokens(expanded, { includePlainNumbers: true })
+    : null;
 }
 
 function pushIssue(issues, issue) {
@@ -218,12 +269,19 @@ function walk(en, zh, path, whitelist, issues, options) {
       targetMetrics = normalizedMetricTokens(normalizeWrittenPercentages(zh));
     }
     if (JSON.stringify(sourceMetrics) !== JSON.stringify(targetMetrics)) {
-      pushIssue(issues, {
-        path: path.join('/'),
-        kind: 'semantic',
-        code: 'metric-preservation',
-        message: `metric tokens changed from [${sourceMetrics.join(', ')}] to [${targetMetrics.join(', ')}]`,
+      const equivalentCounts = [false, true].some((normalizeMonths) => {
+        const sourceCounts = normalizedCountMetrics(en, { normalizeMonths });
+        const targetCounts = normalizedCountMetrics(zh, { normalizeMonths });
+        return sourceCounts && targetCounts && JSON.stringify(sourceCounts) === JSON.stringify(targetCounts);
       });
+      if (!equivalentCounts) {
+        pushIssue(issues, {
+          path: path.join('/'),
+          kind: 'semantic',
+          code: 'metric-preservation',
+          message: `metric tokens changed from [${sourceMetrics.join(', ')}] to [${targetMetrics.join(', ')}]`,
+        });
+      }
     }
   }
   if (isLongProse(path, en)) {

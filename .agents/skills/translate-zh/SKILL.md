@@ -145,6 +145,17 @@ distinct from `B`. Additional normalization covers amounts with an explicit
 currency symbol, such as `$20+ billion` and `€580-million`. Plus-qualified or
 hyphenated counts without a currency symbol are not expanded here; never strip
 a faithful magnitude merely to clear a token mismatch.
+When ordinary metric tokens differ, a conservative fallback compares standalone
+non-currency counts across English scale words / `K`, `M`, `B`, `T` and Arabic
+numbers with `千`, `万`, `亿`, or `万亿`, including `100 多万`. It shifts decimal
+text exactly and requires the complete numeric token sets, including occurrence
+counts and nearby unscaled numbers, to agree. For example, `345 million` can
+match `3.45 亿`, and `per 1 million tokens` can match `每 100 万 tokens`.
+Within that comparison, a full English month name followed by a year retains
+both anchors: `April 2025` matches `2025 年 4 月`, but not `2025 年 5 月`.
+Shared-unit ranges, signed counts, and monetary conversions remain outside this
+fallback. It does not establish qualifier, metric-head, or physical-unit fidelity;
+source comparison is still required, and existing hedge checks remain active.
 `percent` and `per cent` match `%`, including both range
 endpoints. Common written percentages such as `百分之十三` and `超过八成`
 can resolve a mismatched numeric anchor only when the full metric-token sets
