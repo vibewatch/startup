@@ -212,9 +212,36 @@ function expandSourceFiscalYears(target, source) {
   });
 }
 
+const calendarMonths = [
+  'january', 'february', 'march', 'april', 'may', 'june',
+  'july', 'august', 'september', 'october', 'november', 'december',
+];
+const datedCountEnd = String.raw`(?=\s*(?:$|[,;.，。；、)\]）】]|and\s+(?:${calendarMonths.join('|')})\b|[和及与]\s*(?:19|20)\d{2}\s*年))`;
+const datedCountSuffix = String.raw`\s*[×x]\s*([1-9]\d*)(?!\w|\s*[.,]\s*\d)${datedCountEnd}`;
+const englishDatedCount = new RegExp(String.raw`\b((${calendarMonths.join('|')})\s+((?:19|20)\d{2}))${datedCountSuffix}`, 'giu');
+const chineseDatedCount = new RegExp(String.raw`(?<!\d)(((?:19|20)\d{2})\s*年\s*(0?[1-9]|1[0-2])\s*月)${datedCountSuffix}`, 'giu');
+
+function normalizedDatedCounts(value) {
+  if (!/[×x]\s*[1-9]/iu.test(value)) return { text: value, tokens: [] };
+  const tokens = [];
+  const record = (date, year, month, count) => {
+    tokens.push(`dated-count:${year}-${month}:${count}`);
+    return date;
+  };
+  const text = value.replace(
+    englishDatedCount,
+    (_, date, month, year, count) => record(date, year, calendarMonths.indexOf(month.toLowerCase()) + 1, count),
+  ).replace(
+    chineseDatedCount,
+    (_, date, year, month, count) => record(date, year, Number(month), count),
+  );
+  return { text, tokens };
+}
+
 function normalizedMetricTokens(value, { includePlainNumbers = false } = {}) {
+  const dated = normalizedDatedCounts(value);
   // Calendar and version-style labels are not ARR/GMV quantities.
-  const separated = normalizeQuantityWords(normalizeCalendarSpacing(value))
+  const separated = normalizeQuantityWords(normalizeCalendarSpacing(dated.text))
     .replace(/\bFY\s*((?:19|20)\d{2})E?\b/gi, '$1;')
     .replace(/\b(?:Q[1-4]|H[12])\b/gi, ';')
     .replace(/\b(v\d+)\b(?=\s+(?:ARR|MRR|GMV|TPV|NPL|IRR)\b)/gi, '$1;');
@@ -240,6 +267,7 @@ function normalizedMetricTokens(value, { includePlainNumbers = false } = {}) {
       years.add(token);
       return true;
     })
+    .concat(dated.tokens)
     .sort();
 }
 
@@ -284,15 +312,13 @@ function normalizedDollarMetrics(value) {
 }
 
 function normalizedCountMetrics(value, { normalizeMonths = false, allowUnconverted = false, normalizeGroupedCounts = false } = {}) {
-  const months = [
-    'january', 'february', 'march', 'april', 'may', 'june',
-    'july', 'august', 'september', 'october', 'november', 'december',
-  ];
+  const dated = normalizedDatedCounts(value);
+  value = dated.text;
   const monthAnchors = new Set();
   const calendar = normalizeMonths ? value.replace(
     /\b(January|February|March|April|May|June|July|August|September|October|November|December)\s+((?:19|20)\d{2})\b/gi,
     (_, month, year) => {
-      const number = months.indexOf(month.toLowerCase()) + 1;
+      const number = calendarMonths.indexOf(month.toLowerCase()) + 1;
       monthAnchors.add(`month:${year}-${number}`);
       return `${year};${number};`;
     },
@@ -345,7 +371,7 @@ function normalizedCountMetrics(value, { normalizeMonths = false, allowUnconvert
     },
   );
   return (converted || allowUnconverted) && !unsupported
-    ? [...normalizedMetricTokens(expanded, { includePlainNumbers: true }), ...monthAnchors].sort()
+    ? [...normalizedMetricTokens(expanded, { includePlainNumbers: true }), ...monthAnchors, ...dated.tokens].sort()
     : null;
 }
 

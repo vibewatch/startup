@@ -65,6 +65,38 @@ const legalClaimNounPairs = [
 
 const checks = [
   ...[
+    ['Filings: August 2015 ×2 and October 2020.', '备案：2015 年 8 月 ×2、2020 年 10 月。', true],
+    ['Filings: March 2024 x2.', '备案：2024 年 03 月 X2。', true],
+    ['Filings: August 2015 ×2; revenue was $10M.', '备案：2015 年 8 月 ×2；收入为 1000 万美元。', true],
+    ['Filings: August 2015 ×2; usage was 3.5 million.', '备案：2015 年 8 月 ×2；用量为 350 万。', true],
+    ['Revenue tripled; filings: August 2015 ×2.', '收入增至 3 倍；备案：2015 年 8 月 ×2。', true],
+    ['Filings: August 2015 ×9007199254740993.', '备案：2015 年 8 月 ×9007199254740993。', true],
+    ['Filings: August 2015 ×2.', '备案：2015 年 8 月 ×3。', false],
+    ['Filings: August 2015 ×2.', '备案：2015 年 9 月 ×2。', false],
+    ['Filings: August 2015 ×2.', '备案：2016 年 8 月 ×2。', false],
+    ['Filings: August 2015 ×2.', '备案：2015 年 8 月。', false],
+    ['Filings: August 2015 ×2, August 2015 ×2.', '备案：2015 年 8 月 ×2。', false],
+    ['Filings: August 2015 ×2, October 2020 ×3.', '备案：2015 年 8 月 ×3、2020 年 10 月 ×2。', false],
+    ['Filings: August 2015 ×2; revenue was $10M.', '备案：2015 年 8 月 ×2；收入为 1100 万美元。', false],
+    ['Filings: August 2015 ×9007199254740993.', '备案：2015 年 8 月 ×9007199254740992。', false],
+    ['The metric is 2015 ×2.', '该指标为 2015 年 ×2。', false],
+    ['Filings: August 2015 ×2.5.', '备案：2015 年 8 月 ×2。', false],
+    ['Filings: August 2015 ×2+.', '备案：2015 年 8 月 ×2。', false],
+    ['Filings: August 2015 ×2–3.', '备案：2015 年 8 月 ×2。', false],
+    ['Filings: August 2015 ×2 – 3.', '备案：2015 年 8 月 ×2。', false],
+    ['Filings: August 2015 ×2 to 3.', '备案：2015 年 8 月 ×2。', false],
+    ['Filings: August 2015 ×2 million.', '备案：2015 年 8 月 ×2。', false],
+    ['Filings: August 2015 ×2.', '备案：2015 年 8 月 ×2 万。', false],
+    ['Filings: August 2015 ×2.', '备案：2015 年 8 月 ×2 美元。', false],
+    ['Filings: August 2015 ×2.', '备案：2015 年 8 月 ×2 次以上。', false],
+    ['Filings: August 2015 ×2 or more.', '备案：2015 年 8 月 ×2。', false],
+    ['Filings: August 2015 ×2,000.', '备案：2015 年 8 月 ×2。', false],
+  ].map(([en, zh, resolved]) => [
+    !checkPairQuality(fullReport(en), fullReport(zh), { strictEditor: true })
+      .some((issue) => issue.code === 'metric-preservation') === resolved,
+    `dated occurrence counts preserve paired dates, exact counts, and other metrics: ${en} / ${zh}`,
+  ]),
+  ...[
     ['Coverage limits, exclusions, and claim procedures are not publicly disclosed.', '承保限额、除外责任和理赔流程未公开披露。'],
     ['Coverage limits, claim triggers, and exclusion list are not publicly disclosed.', '承保限额、理赔触发条件和除外责任清单未公开披露。'],
     ['Coverage terms and claims history are not public.', '承保条款和理赔历史未公开。'],

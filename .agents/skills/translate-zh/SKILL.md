@@ -197,6 +197,12 @@ retain the same multiplier. A bare
 calendar year followed by `ARR` or another metric label remains a year;
 repeating that year does not create another quantitative claim. Repeated
 amounts and rates still retain their occurrence counts.
+In a dated list, month/year notation such as `August 2015 ×2` means two
+occurrences, not a `2015x` multiplier. It can match `2015 年 8 月 ×2` while
+retaining the paired month/year, exact integer count, and repeated occurrences.
+Signed, decimal, ranged, or suffixed counts are not reinterpreted by this rule;
+neither are bare years without a month. This does not establish the underlying
+filing history or general date/count fidelity.
 Other unit or currency conversions still require source
 comparison; do not remove faithful units merely to make token-level checks pass.
 An exact fallback accepts positive dollar scalars such as `$50M` and
