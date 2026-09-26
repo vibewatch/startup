@@ -79,3 +79,10 @@ This also covers recognized soft-404 pages, including the exact Chinese title
 Articles discussing missing-page errors are not rejected merely for mentioning
 those words. The same detector protects retained prefetched source text even
 when an older cache record incorrectly says `ok: true`.
+Footer-only bot-protection responses containing `Powered and protected by` and
+`Privacy` are also unusable, including reader-wrapped text and old cached bodies.
+Wayback navigation is removed before this check so it cannot disguise a challenge
+as substantive source content.
+The same footer inside a substantive article does not trigger this check.
+Invalid origin, reader, and archive cache entries trigger fresh retrieval attempts
+rather than preventing a fallback from recovering useful content.

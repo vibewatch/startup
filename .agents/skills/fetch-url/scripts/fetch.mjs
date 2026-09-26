@@ -904,7 +904,12 @@ function readCache(dir, url, variant, ttlHours) {
     const ageMs = Date.now() - new Date(raw.fetchedAt).valueOf();
     if (!Number.isFinite(ageMs) || ageMs < 0) return null;
     if (ttlHours > 0 && ageMs > ttlHours * 3_600_000) return null;
-    return { ...raw, body: Buffer.from(raw.body, 'base64'), _cachePath: path, _ageMs: ageMs };
+    const cached = { ...raw, body: Buffer.from(raw.body, 'base64'), _cachePath: path, _ageMs: ageMs };
+    if (isAccessErrorResponse(cached)) {
+      console.error(`[fetch-url] cached access-error page is unusable (${cacheVariantName(variant)}); retrying retrieval.`);
+      return null;
+    }
+    return cached;
   } catch {
     return null;
   }
@@ -975,9 +980,11 @@ export function isAccessErrorResponse(result) {
   if (ACCESS_ERROR_TITLES.has(title)) return true;
   if (/^URL Source:\s*https?:\/\//im.test(body)
       && /^Warning: Target URL returned error [45]\d{2}\b/im.test(body)) return true;
-  const text = htmlToText(body.replace(/<head\b[^>]*>[\s\S]*?<\/head>/gi, ''))
+  const text = htmlToText(stripWaybackToolbar(body).replace(/<head\b[^>]*>[\s\S]*?<\/head>/gi, ''))
     .replace(/[‘’]/gu, "'");
   if (/^(?:404\s*[-:：]?\s*)?(?:没有找到此种页面|页面未找到|页面不存在|找不到页面|page not found|not found)[.!。]?\s*$/iu.test(text)) return true;
+  const unwrappedText = text.replace(/^Title:[^\n]*\n+URL Source:\s*https?:\/\/[^\n]+\n+(?:Published Time:[^\n]*\n+)?Markdown Content:\s*/i, '');
+  if (/^Powered and protected by\s+Privacy\s*$/i.test(unwrappedText)) return true;
   return /^(?:You've been blocked by network security\b|A required part of this site couldn't load\b)/i.test(text);
 }
 
@@ -1181,9 +1188,8 @@ export async function main(args = argv.slice(2)) {
         body: cached.body,
       };
       source = cached.source ?? 'origin';
-      cacheHit = !isAccessErrorResponse(result);
+      cacheHit = true;
       cacheAgeMinutes = Math.round(cached._ageMs / 60_000);
-      if (!cacheHit) console.error('[fetch-url] cached access-error page is unusable; retrying retrieval.');
     }
   }
 

@@ -16,6 +16,11 @@ const accessErrorBodies = [
   '<html><head><title>页面未找到</title></head><body><h1>404</h1><p>没有找到此种页面</p></body></html>',
   '404\n\n没有找到此种页面',
   '<html><title>404 - Page Not Found</title><body>This page is unavailable.</body></html>',
+  '<html><head><title></title></head><body><div>Powered and protected by</div><div>Privacy</div></body></html>',
+  '<html><body><!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-base">Wayback Machine: April 16, 2026</div><!-- END WAYBACK TOOLBAR INSERT --><div>Powered and protected by</div><div>Privacy</div></body></html>',
+  'Powered and protected by\n\nPrivacy',
+  'Title:\n\nURL Source: https://example.com/page\n\nMarkdown Content:\nPowered and protected by\n\nPrivacy',
+  'Title:\n\nURL Source: https://example.com/page\n\nPublished Time: 2026-04-16\n\nMarkdown Content:\nPowered and protected by\n\nPrivacy',
 ];
 
 const financialTables = '<table><tr><th>Metric</th><th>2026</th><th>2025</th></tr>'
@@ -117,8 +122,13 @@ test('access-error detection preserves real articles about security and PDF bodi
     '<html><title>Understanding 404 - Page Not Found</title><article>A guide to error handling.</article></html>',
     '404 documents were processed, while three links returned page not found.',
     '404\n\n没有找到此种页面\n\nThis report analyzes the error rather than serving an error page.',
+    '<html><title>Funding announcement</title><body><article>The company raised $150M.</article><div>Powered and protected by</div><div>Privacy</div></body></html>',
+    '<html><body><!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-base">Wayback Machine</div><!-- END WAYBACK TOOLBAR INSERT --><article>The company raised $150M.</article><div>Powered and protected by</div><div>Privacy</div></body></html>',
+    'Title: Funding announcement\n\nURL Source: https://example.com/page\n\nPublished Time: 2026-04-16\n\nMarkdown Content:\nThe company raised $150M.\nPowered and protected by\n\nPrivacy',
+    'Powered and protected by\n\nPrivacy\n\nThis article explains the footer rather than serving a challenge page.',
     Buffer.from('%PDF-1.7\nTitle: Vercel Security Checkpoint'),
     Buffer.from('%PDF-1.7\nTitle: 页面未找到'),
+    Buffer.from('%PDF-1.7\nPowered and protected by\n\nPrivacy'),
   ]) assert.equal(isAccessErrorResponse({ status: 200, body }), false);
 });
 
@@ -128,26 +138,29 @@ test('reader URLs preserve the original scheme without adding a second one', () 
   }
 });
 
-test('fetch CLI rejects origin, reader, and cached access-error pages with a failed fetch trail', () => {
+test('fetch CLI rejects origin, reader, archived, and cached access-error pages with a failed fetch trail', () => {
   const folder = mkdtempSync(join(tmpdir(), 'source-fetch-check-'));
   try {
     const cases = accessErrorBodies.flatMap((_, index) =>
-      ['origin', 'reader', 'cache'].map((mode) => [index, mode]));
+      ['origin', 'reader', 'archive', 'cache', 'archive-cache'].map((mode) => [index, mode]));
     for (const [index, mode] of cases) {
       const url = 'https://example.com/page';
       const log = join(folder, `${index}-${mode}.jsonl`);
       const requests = join(folder, `${index}-${mode}-requests.jsonl`);
-      if (mode === 'cache') {
-        writeFileSync(join(folder, `${canonicalCacheKey(url)}.json`), JSON.stringify({
+      const cachedMode = mode === 'cache' || mode === 'archive-cache';
+      const cacheSource = mode === 'archive-cache' ? 'wayback' : 'origin';
+      if (cachedMode) {
+        writeFileSync(join(folder, `${canonicalCacheKey(url, cacheSource)}.json`), JSON.stringify({
           requestedUrl: url, finalUrl: url, status: 200, ok: true,
           body: Buffer.from(accessErrorBodies[index]).toString('base64'),
-          source: 'origin', fetchedAt: new Date().toISOString(),
+          source: cacheSource, fetchedAt: new Date().toISOString(),
         }));
       }
       const flags = [
         url, '--json', '--no-host-map', '--no-throttle', '--no-retry-profiles', '--no-reader', '--no-wayback',
-        ...(mode === 'cache' ? ['--cache-dir', folder] : ['--no-cache']),
+        ...(cachedMode ? ['--cache-dir', folder] : ['--no-cache']),
         ...(mode === 'reader' ? ['--via-reader'] : []),
+        ...(mode === 'archive' || mode === 'archive-cache' ? ['--via-wayback'] : []),
       ];
       const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
         import { appendFileSync } from 'node:fs';
@@ -164,12 +177,13 @@ test('fetch CLI rejects origin, reader, and cached access-error pages with a fai
       const output = JSON.parse(result.stdout);
       assert.equal(output.status, 200);
       assert.equal(output.ok, false);
+      assert.equal(output.retrievalSource, mode.startsWith('archive') ? 'wayback' : mode === 'reader' ? 'reader' : 'origin');
       assert.match(output.error, /access-error/);
       const trail = JSON.parse(readFileSync(log, 'utf8').trim());
       assert.equal(trail.ok, false);
       assert.match(trail.error, /access-error/);
       assert.equal(readFileSync(requests, 'utf8').trim().split('\n').length, 1);
-      if (mode === 'cache') assert.match(result.stderr, /cached access-error page is unusable/);
+      if (cachedMode) assert.match(result.stderr, /cached access-error page is unusable/);
     }
   } finally {
     rmSync(folder, { recursive: true, force: true });
@@ -195,6 +209,49 @@ test('fetch CLI recovers an access-error page through a valid reader response', 
   const output = JSON.parse(result.stdout);
   assert.equal(output.ok, true);
   assert.equal(output.retrievalSource, 'reader');
+});
+
+test('fetch CLI refreshes blocked reader and archive fallback caches', () => {
+  const folder = mkdtempSync(join(tmpdir(), 'source-fallback-cache-check-'));
+  const url = 'https://example.com/page';
+  try {
+    for (const variant of ['reader', 'wayback']) {
+      writeFileSync(join(folder, `${canonicalCacheKey(url, variant)}.json`), JSON.stringify({
+        requestedUrl: url, finalUrl: url, status: 200, ok: true,
+        body: Buffer.from('Powered and protected by\n\nPrivacy').toString('base64'),
+        source: variant, fetchedAt: new Date().toISOString(),
+      }));
+      const flags = [
+        url, '--json', '--cache-dir', folder, '--no-host-map', '--no-throttle', '--no-retry-profiles',
+        variant === 'reader' ? '--no-wayback' : '--no-reader',
+      ];
+      const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
+        import assert from 'node:assert/strict';
+        import { main } from './.agents/skills/fetch-url/scripts/fetch.mjs';
+        const requests = [];
+        globalThis.fetch = async (requestUrl) => {
+          requests.push(String(requestUrl));
+          return new Response(String(requestUrl) === ${JSON.stringify(url)}
+            ? 'Access denied'
+            : '<html><article>Verified original evidence: revenue was $150M.</article><div>Powered and protected by</div><div>Privacy</div></html>',
+            { status: String(requestUrl) === ${JSON.stringify(url)} ? 403 : 200 });
+        };
+        await main(${JSON.stringify(flags)});
+        assert.equal(requests.length, 2);
+        assert.equal(requests[0], ${JSON.stringify(url)});
+        assert.equal(requests[1].startsWith(${JSON.stringify(variant === 'reader' ? 'https://r.jina.ai/' : 'https://web.archive.org/web/')}), true);
+      `], { encoding: 'utf8', env: { ...process.env, STARTUP_FETCH_LOG_PATH: '' } });
+      assert.equal(result.status, 0, `${variant}: ${result.stderr}`);
+      const output = JSON.parse(result.stdout);
+      assert.equal(output.ok, true, variant);
+      assert.equal(output.cache.hit, false, variant);
+      assert.equal(output.retrievalSource, variant);
+      assert.match(output.output, /Verified original evidence: revenue was \$150M/);
+      assert.match(result.stderr, /cached access-error page is unusable/);
+    }
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
 });
 
 test('chapter fetch provenance requires an explicitly successful retrieval', () => {
