@@ -378,10 +378,11 @@ export const FIX_HINTS = {
     required != null ? `Add ${Math.max(required - (actual ?? 0), 1)} more section(s) (currently ${actual}, need ${required}).` : 'Add the missing section(s) to reach minSections.',
   artifactsMin: ({ actual, required } = {}) =>
     required != null ? `Add ${Math.max(required - (actual ?? 0), 1)} more table or figure (currently ${actual}, need ${required}); a planned figure may be substituted with an extra table when data shape does not fit.` : 'Add the missing table or figure (or substitute a planned figure with an extra table when data shape does not fit).',
+  authoringInstructions: 'Replace the indicated authored prose with source-backed, company-specific analysis, then reassemble generated artifacts. Do not pad word counts with chapter missions, writing instructions, or claim-ID guidance. If evidence is unavailable, report the blocker; do not invent analysis or hand-edit assembled artifacts.',
   depthSection: ({ actual, required } = {}) =>
-    required != null ? `Expand the shortest section's body by ~${Math.max(required - (actual ?? 0), 1)} more words (currently ${actual}, need ${required} per section).` : 'Expand the prose of the shortest section(s) only; leave the others untouched.',
+    required != null ? `Expand the shortest section's body by ~${Math.max(required - (actual ?? 0), 1)} more words of source-backed, company-specific analysis (currently ${actual}, need ${required} per section); do not pad with writing instructions.` : 'Expand the prose of the shortest section(s) only with source-backed analysis; leave the others untouched.',
   depthSectionTotal: ({ actual, required } = {}) =>
-    required != null ? `Expand prose by ~${Math.max(required - (actual ?? 0), 1)} more words across short sections (currently ${actual} total, need ${required}).` : 'Expand prose across short sections to reach minSectionWordsTotal.',
+    required != null ? `Expand prose by ~${Math.max(required - (actual ?? 0), 1)} more words of source-backed, company-specific analysis across short sections (currently ${actual} total, need ${required}); do not pad with writing instructions.` : 'Expand source-backed analysis across short sections to reach minSectionWordsTotal.',
   depthTableRows: ({ actual, required } = {}) =>
     required != null ? `Add ~${Math.max(required - (actual ?? 0), 1)} more rows across existing tables (currently ${actual} total, need ${required}).` : 'Add rows to existing tables to reach minTableRowsTotal.',
   depthFigureData: ({ actual, required } = {}) =>
@@ -463,7 +464,7 @@ export const CASCADE_SUPPRESSORS = {
     'enumerationTableCorroboration',
     'contentRequirementCoverage',
     'tableShape', 'figureShape', 'duplicateIds', 'artifactRefs', 'unsectionedExhibits',
-    'calloutShape', 'duplicateAnalysis', 'figureType',
+    'calloutShape', 'duplicateAnalysis', 'figureType', 'authoringInstructions',
     'sectionsMin', 'sectionsMax', 'artifactsMin',
     'tablesMax', 'figuresMax',
     'depthSection', 'depthSectionTotal', 'depthTableRows', 'depthFigureData',
@@ -522,7 +523,7 @@ export const RETRY_PRECEDENCE = [
   'tableShape', 'figureShape', 'figureType',
   'duplicateIds', 'artifactRefs', 'unsectionedExhibits', 'duplicateAnalysis',
   'calloutShape',
-  'sectionsMin', 'sectionsMax', 'artifactsMin', 'tablesMax', 'figuresMax',
+  'authoringInstructions', 'sectionsMin', 'sectionsMax', 'artifactsMin', 'tablesMax', 'figuresMax',
   'depthSection', 'depthSectionTotal', 'depthTableRows', 'depthFigureData',
   'contentRequirementCoverage', 'searchQueryFreshness', 'unverifiedSource', 'fetchTrailMissing',
 ];

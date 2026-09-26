@@ -39,6 +39,7 @@ import {
 } from './utils.mjs';
 import {
   checkArtifactRefs,
+  checkAuthoringInstructions,
   checkCalloutSchema,
   checkClaimSchema,
   checkDocumentHeadSchema,
@@ -547,6 +548,11 @@ function checkRun(run, { contentGates = true } = {}) {
   checkRevisionConsistency(run, parsed);
   checkLedgerCrossReferences(run, ledger, parsed, { contentGates });
   if (contentGates) checkAdverseDistribution(run, parsed);
+  if (contentGates) {
+    for (const [file, doc] of parsed) {
+      for (const err of checkAuthoringInstructions(doc, { path: `${run}/${file}` }).errors) fail(err.message, err);
+    }
+  }
 
   if (reportDoc) {
     checkReportBlocks(run, reportDoc);

@@ -7,9 +7,111 @@ import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import yaml from 'js-yaml';
 import { canonicalCacheKey, cleanExtractedText, htmlToText, isAccessErrorResponse, looksLikeBotChallenge, readerUrl } from '../../fetch-url/scripts/fetch.mjs';
-import { checkFigureDeep } from './artifact-checks.mjs';
+import { checkAuthoringInstructions, checkFigureDeep } from './artifact-checks.mjs';
+import { KNOWN_DIMENSIONS, WARNING_DIMENSIONS } from './validation-catalog.mjs';
 import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
 import { figureDetail } from '../../../../website/src/lib/figures.mjs';
+
+test('authoring-instruction checks reject leaked workflow directives in public prose', () => {
+  const directives = [
+    'The first pass through the chapter should answer the mission questions directly.',
+    'The middle section should connect the claims to the tables so the reader can see the evidence.',
+    'Refer to that chronology, but do not copy Company Overview claim ids.',
+    ' \tDo not copy Company Overview claim IDs.',
+    'If Financials needs a funding fact, mint a local Financials claim with its own sourceRefs.',
+    'MINT A LOCAL COMPANY OVERVIEW CLAIM WITH ITS OWN SOURCEREFS.',
+    'The middle section\nshould connect the claims\tto the tables.',
+  ];
+  for (const body of directives) {
+    const doc = { sections: [{ body }] };
+    const before = structuredClone(doc);
+    const { errors } = checkAuthoringInstructions(doc, { path: 'chapter.yaml' });
+    assert.equal(errors.length, 1, body);
+    assert.equal(errors[0].path, 'chapter.yaml.sections[0].body');
+    assert.equal(errors[0].dimension, 'authoringInstructions');
+    assert.match(errors[0].fix, /source-backed/);
+    assert.deepEqual(doc, before);
+  }
+  assert.equal(KNOWN_DIMENSIONS.has('authoringInstructions'), true);
+  assert.equal(WARNING_DIMENSIONS.has('authoringInstructions'), false);
+});
+
+test('authoring-instruction checks cover assembled blocks, tables, figures and cover text', () => {
+  const text = 'The middle section should connect the claims to the tables.';
+  const doc = {
+    chapters: [{ sections: [{ blocks: [{ body: text }, { items: [text] }] }] }],
+    tables: [{ notes: text, rows: [[text]] }],
+    figures: [{ summary: text, data: { nodes: [{ detail: text }] } }],
+    summary: { headline: text, topRisks: [text] },
+    coverFacts: [{ label: text }],
+    companyProfile: { summary: text },
+    appendices: [{ blocks: [{ body: text }] }],
+  };
+  const { errors } = checkAuthoringInstructions(doc);
+  assert.equal(errors.length, 11);
+  assert.equal(new Set(errors.map((error) => error.path)).size, 11);
+});
+
+test('authoring-instruction checks preserve analytical prose and research provenance', () => {
+  const text = 'The first pass through the chapter should answer the mission questions directly.';
+  const doc = {
+    chapter: { summary: 'This chapter evaluates financing and customer concentration.' },
+    sections: [{ body: 'Investors should request audited revenue, claims data, and customer references. The first pass through the production line controls yield.' }],
+    tables: [
+      { notes: 'Claims in this table refer to warranty compensation, not marketing assertions.' },
+      { notes: 'Cash on hand and monthly burn rate are the most critical undisclosed financial items in this table; runway and capital adequacy cannot be independently assessed without them. The Company Overview chapter contains the round-by-round funding chronology; financing facts here are local Financials claims minted independently and do not copy Company Overview claim IDs.' },
+      { notes: 'This table refers to the capital-formation chronology documented in Chapter 1 (Company Overview) for context; all funding claims here are independently minted local Financials claims with their own sourceRefs and do not copy Company Overview claim ids. Every metric is either third-party-reported with low confidence or entirely unavailable from public sources.' },
+      { notes: 'Capital structure reconstructed from press releases, news articles, and S&P Capital IQ transaction data. No audited financial statements are available. Burn and runway figures are estimates derived from headcount data only. Refer to Company Overview chapter for full funding chronology; claims in this table mint local Financials claim IDs and do not copy Company Overview claim IDs.' },
+    ],
+    figures: [{ summary: 'The service connects insurance claims to the customer record.' }],
+    localEvidence: {
+      sources: [{ keyQuote: text }],
+      researchQuestions: [{ question: text }],
+    },
+    sources: [{ keyQuote: text }],
+    acknowledgedWarnings: [{ reason: text }],
+  };
+  assert.deepEqual(checkAuthoringInstructions(doc).errors, []);
+  assert.deepEqual(checkAuthoringInstructions(null).errors, []);
+});
+
+test('authoring-instruction chapter failures cannot be acknowledged away', () => {
+  const root = mkdtempSync(join(tmpdir(), 'authoring-instruction-check-'));
+  const folder = join(root, '20260925000000-authoring-instructions');
+  try {
+    mkdirSync(folder);
+    writeFileSync(join(folder, '01-company-overview.yaml'), yaml.dump({
+      schemaVersion: 'report-v2', artifact: 'company-overview',
+      slug: 'authoring-instructions', runDate: '2026-09-25',
+      company: { name: 'Authoring instructions fixture' },
+      chapter: { number: 1, title: 'Company Overview', summary: 'Isolated content-gate fixture.' },
+      sections: [{
+        id: 'analysis', title: 'Analysis',
+        body: 'The first pass through the chapter should answer the mission questions directly.',
+        claimRefs: [],
+      }],
+      tables: [], figures: [],
+      localEvidence: { sources: [], claims: [], searchQueries: [], researchQuestions: [], gaps: [] },
+      acknowledgedWarnings: [{
+        dimension: 'authoringInstructions',
+        reason: 'This fixture attempts to acknowledge a hard content failure.',
+      }],
+    }));
+    for (const flags of [[], ['--strict']]) {
+      const result = spawnSync(process.execPath, [
+        '.agents/skills/startup-research/scripts/check-chapter.mjs',
+        folder, '01-company-overview.yaml', '--format', 'json', ...flags,
+      ], { encoding: 'utf8' });
+      assert.equal(result.status, 1, result.stderr);
+      const output = JSON.parse(result.stdout);
+      const issues = output.issues.filter((issue) => issue.dimension === 'authoringInstructions');
+      assert.equal(issues.length, 1);
+      assert.ok(output.summary.failedDimensions.includes('authoringInstructions'));
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
 
 test('figure detail aliases preserve source text and existing precedence', () => {
   for (const [item, expected] of [

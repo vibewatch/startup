@@ -27,6 +27,7 @@ import { canonicalSourceUrl, collectClaimRefs, companySlugFromRunId, EXIT, getAn
 import { validateFigureShape } from '../../../../website/src/lib/figures.mjs';
 import {
   checkArtifactRefs,
+  checkAuthoringInstructions,
   checkCalloutSchema,
   checkClaimSchema,
   checkDocumentHeadSchema,
@@ -883,6 +884,9 @@ if (doc) {
     warn('figuresMax', `${spec.file}: ${counts.figures} figures exceeds target range maximum ${gate.maxFigures}; verify the chapter is not over-fragmented or duplicative`, { actual: counts.figures, ceiling: gate.maxFigures });
   }
 
+  for (const err of checkAuthoringInstructions(doc, { path: spec.file }).errors) {
+    fail('authoringInstructions', err.message, err);
+  }
   checkDepthFloor(spec.file, doc, gate.depthFloor);
   checkTableFigureOverlap(spec.file, doc);
 

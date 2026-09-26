@@ -95,6 +95,16 @@ superseded content with the current assembler.
 
 **Distinct chapter evidence:** source floors count distinct canonical URLs, not source IDs. A chapter cannot list the same URL twice, including tracking-parameter or fragment variants, to pad its evidence count or corroboration. Consolidate duplicate entries and their claim references. Reusing an eligible source in different chapters remains supported.
 
+**Reader-facing analysis:** chapter missions and writing instructions are not
+diligence findings. The hard `authoringInstructions` gate rejects known leaked
+directives, such as telling the author to answer mission questions or mint
+chapter-local claims, in authored and assembled reader-facing text. Replace
+them with company-specific analysis supported by eligible sources; do not
+rephrase the instructions just to avoid detection or pad a depth floor.
+Missing evidence remains a blocker. This targeted check does not establish
+general prose quality or factual accuracy. Historical `--contract` checks
+remain structural and do not certify the absence of such content defects.
+
 **Executed search provenance:** worker pools include `executedSearchQueries` projected
 from successful shared searches, with literal query strings, actual providers,
 unfiltered result counts, and only assigned result URLs. Copy those records into

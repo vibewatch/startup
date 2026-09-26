@@ -26,7 +26,7 @@ import {
   TableSchema,
   schemaErrors,
 } from './contracts/report-artifacts.schema.mjs';
-import { TONE_VALUES, formatEnumChoices } from './validation-catalog.mjs';
+import { TONE_VALUES, formatEnumChoices, resolveFixHint } from './validation-catalog.mjs';
 
 const FIGURE_TYPE_SET = new Set(FIGURE_TYPES);
 const FIGURE_DATA_FIELD_SET = new Set(FIGURE_DATA_FIELDS);
@@ -78,6 +78,39 @@ function makeCollector() {
     errors,
     fail(message, extra = {}) { errors.push({ message, ...extra }); },
   };
+}
+
+export function checkAuthoringInstructions(doc, { path = 'report' } = {}) {
+  const c = makeCollector();
+  const patterns = [
+    /\bthe first pass through the chapter should answer the mission questions\b/i,
+    /\bthe middle section should connect the claims to the tables\b/i,
+    /(?:^|[.!?;:]\s*|,\s*but\s+)do not copy company overview claim ids\b/i,
+    /\bmint a local (?:[a-z-]+ ){0,3}claim with its own sourcerefs\b/i,
+  ];
+  const visit = (value, fieldPath) => {
+    if (typeof value === 'string') {
+      const text = value.replace(/\s+/g, ' ').trim();
+      const match = patterns.map((pattern) => text.match(pattern)?.[0]).find(Boolean);
+      if (match) c.fail(`${fieldPath}: contains report-authoring instructions rather than analysis: "${match}"`, {
+        path: fieldPath,
+        dimension: 'authoringInstructions',
+        code: 'authoringInstructions',
+        fix: resolveFixHint('authoringInstructions'),
+      });
+    } else if (Array.isArray(value)) {
+      value.forEach((item, index) => visit(item, `${fieldPath}[${index}]`));
+    } else if (value && typeof value === 'object') {
+      for (const [key, child] of Object.entries(value)) {
+        if (key !== 'keyQuote') visit(child, `${fieldPath}.${key}`);
+      }
+    }
+  };
+  for (const key of [
+    'chapter', 'chapters', 'sections', 'tables', 'figures', 'company', 'companyProfile',
+    'summary', 'subtitle', 'coverageNotes', 'coverFacts', 'appendices', 'disclaimer',
+  ]) visit(doc?.[key], `${path}.${key}`);
+  return { errors: c.errors };
 }
 
 function formatSchemaErrors(schema, value, { path, dimension = 'schema' }) {

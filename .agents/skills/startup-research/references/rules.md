@@ -247,14 +247,15 @@ Dimensions are grouped by class. Only the **chapter-warning** class is acknowled
 | 39 | `chapter-failure` | `artifactRefs` | Resolve the dangling figureRef/tableRef: it must point at an id that exists in this chapter's figures[] / tables[]. | `yamlParse` |
 | 41 | `chapter-failure` | `duplicateAnalysis` | Either give the figure at least one claimRef the table does not have (a distinct slice/lens), rename it to reflect that lens, or merge it into the table. | `yamlParse` |
 | 42 | `chapter-failure` | `calloutShape` | Fix the callout: required title, body, claimRefs[], and optional calloutType in (strength\|risk\|recommendation\|insight\|assumption). | `yamlParse` |
-| 43 | `chapter-failure` | `sectionsMin` | Add the missing section(s) to reach minSections. | `yamlParse` |
-| 45 | `chapter-failure` | `artifactsMin` | Add the missing table or figure (or substitute a planned figure with an extra table when data shape does not fit). | `yamlParse` |
-| 48 | `chapter-failure` | `depthSection` | Expand the prose of the shortest section(s) only; leave the others untouched. | `yamlParse` |
-| 49 | `chapter-failure` | `depthSectionTotal` | Expand prose across short sections to reach minSectionWordsTotal. | `yamlParse` |
-| 50 | `chapter-failure` | `depthTableRows` | Add rows to existing tables to reach minTableRowsTotal. | `yamlParse` |
-| 51 | `chapter-failure` | `depthFigureData` | Add data points to existing figures to reach minFigureDataPointsTotal. | `yamlParse` |
-| 52 | `chapter-failure` | `contentRequirementCoverage` | Add researchQuestions whose targets[] cover the un-targeted contentRequirements. | `yamlParse`, `localEvidenceMissing` |
-| 53 | `chapter-failure` | `searchQueryFreshness` | For volatile-fact queries (funding/ARR/headcount/customers/leadership/regulatory/launches), plan source discovery with year/month tokens derived from runDate before searching; the runDate year is required and the prior year may only supplement explicit trailing-window searches. The searchQueryFreshness validator fails stale query logs and cannot be acknowledged away. | `yamlParse`, `localEvidenceMissing`, `documentHead`, `runDateConsistency` |
+| 43 | `chapter-failure` | `authoringInstructions` | Replace the indicated authored prose with source-backed, company-specific analysis, then reassemble generated artifacts. Do not pad word counts with chapter missions, writing instructions, or claim-ID guidance. If evidence is unavailable, report the blocker; do not invent analysis or hand-edit assembled artifacts. | `yamlParse` |
+| 44 | `chapter-failure` | `sectionsMin` | Add the missing section(s) to reach minSections. | `yamlParse` |
+| 46 | `chapter-failure` | `artifactsMin` | Add the missing table or figure (or substitute a planned figure with an extra table when data shape does not fit). | `yamlParse` |
+| 49 | `chapter-failure` | `depthSection` | Expand the prose of the shortest section(s) only with source-backed analysis; leave the others untouched. | `yamlParse` |
+| 50 | `chapter-failure` | `depthSectionTotal` | Expand source-backed analysis across short sections to reach minSectionWordsTotal. | `yamlParse` |
+| 51 | `chapter-failure` | `depthTableRows` | Add rows to existing tables to reach minTableRowsTotal. | `yamlParse` |
+| 52 | `chapter-failure` | `depthFigureData` | Add data points to existing figures to reach minFigureDataPointsTotal. | `yamlParse` |
+| 53 | `chapter-failure` | `contentRequirementCoverage` | Add researchQuestions whose targets[] cover the un-targeted contentRequirements. | `yamlParse`, `localEvidenceMissing` |
+| 54 | `chapter-failure` | `searchQueryFreshness` | For volatile-fact queries (funding/ARR/headcount/customers/leadership/regulatory/launches), plan source discovery with year/month tokens derived from runDate before searching; the runDate year is required and the prior year may only supplement explicit trailing-window searches. The searchQueryFreshness validator fails stale query logs and cannot be acknowledged away. | `yamlParse`, `localEvidenceMissing`, `documentHead`, `runDateConsistency` |
 
 #### Chapter warning-class (numeric `precedence` shared with the failure list — fills the gaps in the failure table's rank column; eligible for `acknowledgedWarnings` at chapter scope, except `tableNotes` which has no precedence rank)
 
@@ -263,11 +264,11 @@ Dimensions are grouped by class. Only the **chapter-warning** class is acknowled
 | 19 | `chapter-warning` | `paywallRisk` | At chapter scope (warning, ack-able): swap restricted (paywall\|js-only\|broken\|rate-limited) sources for ok ones to stay under the report-level 30% ceiling. At report scope (failure from check-report, NOT ack-able): the per-report restricted share already exceeds the 30% ceiling and must be brought back below it before finalize-report can pass. | `yamlParse`, `localEvidenceMissing` |
 | 37 | `chapter-warning` | `figureType` | Render at least one of the planned figure types, or add an acknowledgedWarnings entry for dimension "figureType" with a >=30-char reason when the substitution is intentional. | `yamlParse` |
 | 40 | `chapter-warning` | `unsectionedExhibits` | Add each table/figure to the section.tableRefs[] / section.figureRefs[] of the section that introduces or relies on it. The trailing Exhibits section is a fallback for cross-cutting artifacts, not the default landing place. Acknowledge dimension "unsectionedExhibits" only when an exhibit is intentionally orphaned. | `yamlParse` |
-| 44 | `chapter-warning` | `sectionsMax` | Reduce or merge sections; the chapter looks over-fragmented. | `yamlParse` |
-| 46 | `chapter-warning` | `tablesMax` | Reduce or merge tables; the chapter looks over-fragmented. | `yamlParse` |
-| 47 | `chapter-warning` | `figuresMax` | Reduce or merge figures; the chapter looks over-fragmented. | `yamlParse` |
-| 54 | `chapter-warning` | `unverifiedSource` | One or more cited sources have no successful fetch-url retrieval recorded for this run; retrieve usable content so accessStatus, sourceType, and stance are based on the actual page rather than a failed attempt or a guess. | — |
-| 55 | `chapter-warning` | `fetchTrailMissing` | Set STARTUP_FETCH_LOG_PATH=.research-cache/<runId>/_fetch-log.jsonl in your shell BEFORE running fetch-url so check-chapter can audit cited URLs against actual retrievals; the default gate warns and --strict fails when the trail is missing. | — |
+| 45 | `chapter-warning` | `sectionsMax` | Reduce or merge sections; the chapter looks over-fragmented. | `yamlParse` |
+| 47 | `chapter-warning` | `tablesMax` | Reduce or merge tables; the chapter looks over-fragmented. | `yamlParse` |
+| 48 | `chapter-warning` | `figuresMax` | Reduce or merge figures; the chapter looks over-fragmented. | `yamlParse` |
+| 55 | `chapter-warning` | `unverifiedSource` | One or more cited sources have no successful fetch-url retrieval recorded for this run; retrieve usable content so accessStatus, sourceType, and stance are based on the actual page rather than a failed attempt or a guess. | — |
+| 56 | `chapter-warning` | `fetchTrailMissing` | Set STARTUP_FETCH_LOG_PATH=.research-cache/<runId>/_fetch-log.jsonl in your shell BEFORE running fetch-url so check-chapter can audit cited URLs against actual retrievals; the default gate warns and --strict fails when the trail is missing. | — |
 | — | `chapter-warning` | `tableNotes` | Write tables[].notes (one line: data source / estimation / partial coverage / what null means), or acknowledge dimension "tableNotes" for pure factual snapshot tables. | — |
 
 #### Cross-chapter failure-class (`check-cross-chapter`, `precedence: —`, blocks `finalize-report`, NOT ack-able)
