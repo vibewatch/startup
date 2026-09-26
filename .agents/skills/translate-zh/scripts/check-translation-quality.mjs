@@ -41,7 +41,12 @@ const strictEditorStylePatterns = [
   /未达到至少/u,
 ];
 const hedgeRules = [
-  { en: /\b(?:approximately|roughly)\b/i, zh: /约|大约|大致|近似/u },
+  {
+    en: /\b(?:approximately|roughly)\b/i,
+    zh: /约|大约|大致|粗略|近似/u,
+    alternative: (source, target) => /大体/u.test(target)
+      && !/\b(?:approximately|roughly)\s*(?:[$€£¥₦+-]?\s*\d|half\b|one\b|two\b|three\b|four\b|five\b|six\b|seven\b|eight\b|nine\b|ten\b)/i.test(source),
+  },
   { en: /\b(?:reportedly|according to reports)\b/i, zh: /据报道|据报|据称|报道称/u },
   { en: /\bestimated\b|\b(?:we|analysts?|reports?) estimate\b/i, zh: /估计|估算|预计|测算|推算/u },
   { en: /\bat least\b/i, zh: /至少|不低于/u },
@@ -49,10 +54,10 @@ const hedgeRules = [
   { en: /\b(?:likely|probably)\b/i, zh: /可能|很可能|大概率|多半/u },
   {
     en: /\bclaims?\b/i,
-    zh: /声称|称|说法|主张|表述|断言|声明|公司口径|网站口径|反方观点/u,
-    exclude: /\b(?:(?:for|in|of|on)\s+claims?\s+(?:modeling|modelling|processing|handling|management|adjudication|submission|settlement)|patent\s+claims?\s+(?:drafting|construction|interpretation|scope)|small[- ]claims?\s+(?:processing|courts?)|clinical\s*,\s*claims?\s*,?\s+and\s+operational\s+(?:data|systems)|EHRs?\s*,\s*claims?\s+systems|fraud\s+claims?\s+handling|government\s+guarantee\s+claims?\s+status|insurance\s+coverage\s+limits?\s+and\s+claims\s+history)\b/gi,
+    zh: /声称|称|说法|主张|表述|断言|声明|自述|公司口径|网站口径|反方观点/u,
+    exclude: /\b(?:(?:for|in|of|on)\s+claims?\s+(?:modeling|modelling|processing|handling|management|adjudication|submission|settlement)|patent\s+claims?\s+(?:drafting|construction|interpretation|scope)|small[- ]claims?\s+(?:processing|courts?)|clinical\s*,\s*claims?\s*,?\s+and\s+operational\s+(?:data|systems)|EHRs?\s*,\s*claims?\s+systems|fraud\s+claims?\s+handling|government\s+guarantee\s+claims?\s+status|insurance\s+coverage\s+limits?\s+and\s+claims\s+history|premium\s+and\s+claims\s+expenditure|high[- ]cost\s+claims?\s+(?:concentration|categories)|million[- ]dollar[- ]plus\s+claims|highest[- ]ROI\s+claims|claims[- ]data[- ]driven|\d+(?:\.\d+)?%\s+claims\s+cost\s+reduction|real[- ]time\s+claims\s+data|claims\s+data\s+latency(?=\s*(?:[.;]|$))|do(?:es)?\s+not\s+reveal\s+claims?\s+quality\s+or\s+jurisdictions|qualitative\s+directional\s+claim)\b/gi,
   },
-  { en: /\bnot yet\b/i, zh: /尚未|还未|仍未|还没|目前没有|尚无|尚不|还不|仍不/u },
+  { en: /\bnot yet\b/i, zh: /尚未|还未|仍未|还没|目前没有|尚无|尚缺|尚不|还不|仍不/u },
   { en: /\b(?:unproven|not proven)\b/i, zh: /未经证实|未获证实|未(?:被)?(?:证明|验证|证实)|未在规模上得到验证|无法证明|未经验证|未获验证/u },
   {
     en: /\bno public\b/i,
@@ -304,7 +309,8 @@ function walk(en, zh, path, whitelist, issues, options) {
   if (isLongProse(path, en)) {
     for (const rule of hedgeRules) {
       const sourceText = rule.exclude ? en.replace(rule.exclude, '') : en;
-      if (rule.en.test(sourceText) && !rule.zh.test(zh) && !rule.en.test(zh)) {
+      if (rule.en.test(sourceText) && !rule.zh.test(zh)
+          && !rule.alternative?.(sourceText, zh) && !rule.en.test(zh)) {
         pushIssue(issues, {
           path: path.join('/'),
           kind: 'semantic',

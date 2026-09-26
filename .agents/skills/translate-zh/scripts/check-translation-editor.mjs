@@ -49,6 +49,51 @@ const noPublicIpAndMilestoneSource = `${noPublicIpSource} The IPO timeline has n
 
 const checks = [
   ...[
+    ['Asimov timing stays roughly on plan while the commercial ramp remains uncertain.', 'Asimov 时间大体按计划推进，商业化进度仍不确定。'],
+    ['The company does not yet have public retention and migration evidence to justify a premium multiple.', '公司尚缺支撑溢价倍数所需的公开留存和迁移证据。'],
+    ['Search speed claims are vendor-reported; cost and query ergonomics remain to be proved.', '搜索速度为厂商自述；成本和查询体验仍需验证。'],
+    ['The base case broadly validates the price. Weighting the paths roughly 25/50/25 leaves expected value near the current mark.', '基准情景大体验证当前价格。路径粗略按 25/50/25 加权，期望值接近当前估值。'],
+  ].flatMap(([en, zh]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor }).length === 0,
+    `faithful approximation, not-yet absence and vendor attribution must pass (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
+    ['The market covers annual premium and claims expenditure across employer plans.', '市场覆盖雇主计划每年的保费和理赔支出。'],
+    ['High-cost claim concentration increases the exposure of employer health plans.', '高额理赔集中加大了雇主健康计划的风险敞口。'],
+    ['Million-dollar-plus claims grew rapidly across the reviewed employer health plans.', '在所审查的雇主健康计划中，百万美元以上理赔快速增长。'],
+    ['Surgical COE and oncology navigation products address highest-ROI claims.', '手术 COE 和肿瘤导航产品切入 ROI 最高的理赔。'],
+    ['Claims-data-driven physician ranking relies on extensive medical records.', '医生排名由理赔数据驱动，依赖广泛的医疗记录。'],
+    ['12% claims cost reduction guarantee in year 1; incentive model is self-funding.', '保证第 1 年理赔成本降低 12%；激励模式可自我筹资。'],
+    ['The platform combines real-time claims data with member benefit plan parameters.', '平台结合实时理赔数据与会员福利计划参数。'],
+    ['API uptime and versioning across many point solution partners; claims data latency.', '多个单点方案伙伴的 API 可用性和版本管理；理赔数据延迟。'],
+    ['The review identifies high-cost claim categories including surgery and cancer.', '审查识别出手术和癌症等高成本理赔类别。'],
+    ['Crunchbase-style IP counts are directional and do not reveal claim quality or jurisdictions.', 'Crunchbase 式 IP 数量只具方向性，不能显示权利要求质量或司法辖区。'],
+    ['Qualitative directional claim; no verifiable baseline dollar figure for inference specifically.', '定性方向性判断；没有针对推理的可验证基准美元数字。'],
+  ].flatMap(([en, zh]) => [false, true].flatMap((strictEditor) => [
+    [
+      checkPairQuality(fullReport(en), fullReport(zh), { strictEditor }).length === 0,
+      `medical and IP claims nouns must not require assertion attribution (strict=${strictEditor}): ${en}`,
+    ],
+    [
+      checkPairQuality(fullReport(`The company claims its solution is superior. ${en}`), fullReport(`该方案更好。${zh}`), { strictEditor })
+        .some((issue) => issue.code === 'hedge-preservation'),
+      `a nominal claims phrase must not hide a separate company assertion (strict=${strictEditor}): ${en}`,
+    ],
+  ])),
+  ...[
+    ['Asimov timing stays roughly on plan while the commercial ramp remains uncertain.', 'Asimov 时间完全按计划推进，商业化进度仍不确定。'],
+    ['The company does not yet have public retention and migration evidence to justify a premium multiple.', '公司已有支撑溢价倍数所需的公开留存和迁移证据。'],
+    ['Search speed claims are vendor-reported; cost and query ergonomics remain to be proved.', '搜索速度已经验证；成本和查询体验仍需验证。'],
+    ['The company claims data latency is lower and the platform is more reliable.', '数据延迟更低，平台也更加可靠。'],
+    ['The company claims cost reduction across the customer base over the next five years.', '未来五年内，整个客户群的成本将下降。'],
+    ['Admin platform + navigation + analytics; claims up to 50% cost trend reduction over 5 yrs.', '管理平台 + 导航 + 分析；5 年内理赔成本趋势最高降低 50%。'],
+    ['The base case broadly validates the price. Weighting the paths roughly 25/50/25 leaves expected value near the current mark.', '基准情景大体验证当前价格。路径按 25/50/25 加权，期望值接近当前估值。'],
+  ].flatMap(([en, zh]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor })
+      .some((issue) => issue.code === 'hedge-preservation'),
+    `noun exclusions must preserve assertion and qualifier checks (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
     ['Over 1 million users.', '用户超过 100 多万。'],
     ['345 million video creations.', '已生成 3.45 亿段视频。'],
     ['$0.60 per 1 million tokens.', '每 100 万 tokens 收费 $0.60。'],

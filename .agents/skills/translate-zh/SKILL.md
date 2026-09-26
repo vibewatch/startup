@@ -181,6 +181,15 @@ are not translation omissions or assertions. In medical-data lists such as
 `the company claims` in the same leaf still requires attribution. Correct a
 demonstrated checker false positive with regression coverage rather than adding
 unrelated attribution or changing preserved URLs merely to satisfy a pattern.
+The same distinction applies to high-cost claim concentration, real-time claims
+data, claims-data-driven rankings, and percentage-qualified claims cost
+reductions. `claims up to 50% cost trend reduction` instead asserts a benefit;
+it requires attribution and must not become `理赔成本` in Chinese. Descriptions
+of IP claim quality and qualitative directional claims are not automatically
+company assertions. Faithful `大体`, `尚缺`, and `厂商自述` retain qualitative
+approximation, not-yet absence, and vendor attribution respectively. An unrelated
+`大体` cannot stand in for a numerical approximation such as `roughly 25/50/25`;
+that numeric qualifier still needs wording such as `约` or `粗略`.
 The `通过…来` soundcheck stays within one clause and does not treat `来自` as a
 purpose marker; a separate genuine `通过…来` construction still needs rewriting.
 Likewise, `正在…集中` is not the redundant `正在…中` construction, and that
