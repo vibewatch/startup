@@ -243,6 +243,14 @@ Billing-documentation claim validation and claims-denial reduction data refer
 to insurance workflows. `not marketing claims` denies a marketing assertion;
 neither phrase removes the need to attribute a separate company assertion.
 `公司披露的汇总口径` retains company attribution for aggregate figures.
+Insurance noun contexts such as `across claims intake`, `a claims platform`,
+`claim type`, and hyphenated `claims-processing` do not require invented
+attribution. Recognition is context-specific: an explicit assertion such as
+`the company claims automation improves retention` still needs attribution,
+including when the same leaf also describes insurance workflows.
+`还不足以证明` retains insufficient proof. `没有发现 G2 或 Capterra 上的公开…`
+retains a review-site evidence gap; negated wording or a gap in another clause
+must not satisfy either check.
 `预估` can retain an estimate, and `预计` can express a likely outcome or
 inferred financial condition. Negated forms do not establish preservation.
 Review the proposition: these aliases do not validate the metric, time basis,
