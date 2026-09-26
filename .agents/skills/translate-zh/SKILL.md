@@ -149,9 +149,9 @@ allow an explicit `%` in Chinese; nearby customer and cohort counts do not.
 English scale words (`thousand`, `million`, `billion`, `trillion`) match
 `K`, `M`, `B`, `T` without changing the quantity or currency; `bps` remains
 distinct from `B`. Additional normalization covers amounts with an explicit
-currency symbol, such as `$20+ billion` and `€580-million`. Plus-qualified or
-hyphenated counts without a currency symbol are not expanded here; never strip
-a faithful magnitude merely to clear a token mismatch.
+currency symbol, such as `$20+ billion` and `€580-million`. Bare-count forms such as `30+ million` and `30-million` are not expanded here;
+the scalar fallback below handles supported word-suffixed `-plus` forms.
+Never strip a faithful magnitude merely to clear a token mismatch.
 When ordinary metric tokens differ, a conservative fallback compares standalone
 non-currency counts across English scale words / `K`, `M`, `B`, `T` and Arabic
 numbers with `千`, `万`, `亿`, or `万亿`, including `100 多万`. It shifts decimal
@@ -166,6 +166,13 @@ only when the leaf has a single unambiguous year.
 Shared-unit ranges, signed counts, and monetary conversions remain outside this
 fallback. It does not establish qualifier, metric-head, or physical-unit fidelity;
 source comparison is still required, and existing hedge checks remain active.
+The same exact-value comparison accepts comma-grouped integer counts such as
+`35,000 businesses` versus `3.5 万家企业`, including beside scaled counts.
+Word-suffixed counts such as `30 million-plus` and `60,000-plus` can match
+`3000 万起以上` and `6 万起以上`; retain those bounds in the translation.
+Currency-marked amounts, accounting-style parentheses, signed values, and
+shared-unit ranges are not reinterpreted as grouped scalar counts. This fallback
+compares quantities and occurrences, not the meaning of the bounds or units.
 `percent` and `per cent` match `%`, including both range
 endpoints. Common written percentages such as `百分之十三` and `超过八成`
 can resolve a mismatched numeric anchor only when the full metric-token sets
@@ -251,6 +258,14 @@ including when the same leaf also describes insurance workflows.
 `还不足以证明` retains insufficient proof. `没有发现 G2 或 Capterra 上的公开…`
 retains a review-site evidence gap; negated wording or a gap in another clause
 must not satisfy either check.
+The `在…层面` soundcheck does not cross a comma or colon: `风险在于，公开控制仍是政策层面的`
+is not that construction. A genuine `在政策层面` in another clause still needs
+rewriting.
+Descriptor checks preserve a relative route such as `/platform` only when the
+same route appears in the English leaf. A separate untranslated `platform` or
+`product` still produces an advisory. Price denominators such as
+`$100 /enterprise/year` are not URL paths and still need translation.
+Do not translate or invent actual URL paths.
 `预估` can retain an estimate, and `预计` can express a likely outcome or
 inferred financial condition. Negated forms do not establish preservation.
 Review the proposition: these aliases do not validate the metric, time basis,

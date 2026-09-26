@@ -35,7 +35,7 @@ const strictEditorStylePatterns = [
   /这表明/u,
   /呈现[^。！？；]{1,16}特征/u,
   /围绕[^。！？；]{1,16}展开/u,
-  /在[^。！？；]{1,16}层面/u,
+  /在[^。！？；，：]{1,16}层面/u,
   /体现了/u,
   /这构成了/u,
   /最(?:晚|迟)截至/u,
@@ -97,6 +97,7 @@ const hedgeRules = [
   },
 ];
 const urlToken = /(?:https?:\/\/|www\.)[^\s<>()（）「」，。；：！？]+|\b(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s<>()（）「」，。；：！？]*)?/gi;
+const relativePathToken = /(?<![^\s("'`（“‘「，：,;；:])\/[a-z0-9][a-z0-9/_-]*/gi;
 const descriptorWords = new Set([
   'business',
   'company',
@@ -257,7 +258,7 @@ function normalizedDollarMetrics(value) {
     : null;
 }
 
-function normalizedCountMetrics(value, { normalizeMonths = false, allowUnconverted = false } = {}) {
+function normalizedCountMetrics(value, { normalizeMonths = false, allowUnconverted = false, normalizeGroupedCounts = false } = {}) {
   const months = [
     'january', 'february', 'march', 'april', 'may', 'june',
     'july', 'august', 'september', 'october', 'november', 'december',
@@ -287,12 +288,18 @@ function normalizedCountMetrics(value, { normalizeMonths = false, allowUnconvert
   let converted = 0;
   let unsupported = false;
   const expanded = normalized.replace(
-    /(?<![\w.,])(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)(?:\s*(?:多|余)?\s*(万亿|亿|万|千)(?![十百千万亿兆])|([KMBT])(?![a-z]))/giu,
+    /(?<![\w.,])(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)(?:\s*(?:多|余)?\s*(万亿|亿|万|千)(?![十百千万亿兆])|([KMBT])(?![a-z])|(?<=\d,\d{3})(?![\w.,]))/giu,
     (match, number, chineseUnit, englishUnit, offset, text) => {
       const before = text.slice(0, offset);
       const after = text.slice(offset + match.length);
+      const unit = chineseUnit ?? englishUnit;
+      if (!unit && !normalizeGroupedCounts) return match;
       if (/(?:\p{Sc}|\b(?:USD|EUR|GBP|JPY|CNY|RMB|HKD|AUD|CAD|SGD|INR|KRW|TWD|CHF|NGN))\s*$/iu.test(before)
           || /^\s*(?:\p{Sc}|(?:USD|EUR|GBP|JPY|CNY|RMB|HKD|AUD|CAD|SGD|INR|KRW|TWD|CHF|NGN|dollars?|euros?|pounds?|yuan|yen|rupees?|won)\b|美元|美金|元|欧元|英镑|港币|港元|日元|人民币|新台币|台币|澳元|加元|新加坡元|新币|瑞郎|卢比|卢布|韩元|奈拉)/iu.test(after)) {
+        return match;
+      }
+      if (!unit && (/^\s*(?:[十百千万亿兆]|[KMBT](?![a-z])|(?:ARR|MRR|GMV|TPV|NPL|IRR)\b)/iu.test(after)
+          || /[(（]\s*$/u.test(before) && /^\s*[)）]/u.test(after))) {
         return match;
       }
       if (/^\s*(?:[%％×倍]|(?:bps|x|percent)\b)/iu.test(after)) {
@@ -300,15 +307,16 @@ function normalizedCountMetrics(value, { normalizeMonths = false, allowUnconvert
         return match;
       }
       // Shared-unit ranges and signed counts need more context than a scalar conversion.
+      const afterPlusWord = after.replace(/^\s*-plus\b/i, '');
       if (/[-−+–—]\s*$/u.test(before)
           || /\d[\d.,]*\s*(?:to|and|or|至|到|和|或)\s*$/iu.test(before)
-          || /^\s*[-−+–—]/u.test(after)) {
+          || /^\s*[-−+–—]/u.test(afterPlusWord)) {
         unsupported = true;
         return match;
       }
       // Shift decimal text exactly; large counts must not lose integer precision.
       converted += 1;
-      return `${shiftDecimal(number, quantityPowers[(chineseUnit ?? englishUnit).toLowerCase()] - 6)}M `;
+      return `${shiftDecimal(number, (unit ? quantityPowers[unit.toLowerCase()] : 0) - 6)}M `;
     },
   );
   return (converted || allowUnconverted) && !unsupported
@@ -358,11 +366,11 @@ function walk(en, zh, path, whitelist, issues, options) {
       targetMetrics = normalizedMetricTokens(normalizeWrittenPercentages(numericTarget));
     }
     if (JSON.stringify(sourceMetrics) !== JSON.stringify(targetMetrics)) {
-      const equivalentCounts = [false, true].some((normalizeMonths) => {
-        const sourceCounts = normalizedCountMetrics(en, { normalizeMonths });
-        const targetCounts = normalizedCountMetrics(numericTarget, { normalizeMonths });
+      const equivalentCounts = [false, true].some((normalizeGroupedCounts) => [false, true].some((normalizeMonths) => {
+        const sourceCounts = normalizedCountMetrics(en, { normalizeMonths, normalizeGroupedCounts });
+        const targetCounts = normalizedCountMetrics(numericTarget, { normalizeMonths, normalizeGroupedCounts });
         return sourceCounts && targetCounts && JSON.stringify(sourceCounts) === JSON.stringify(targetCounts);
-      });
+      }));
       const sourceDollars = equivalentCounts ? null : normalizedDollarMetrics(en);
       const targetDollars = equivalentCounts ? null : normalizedDollarMetrics(numericTarget);
       const equivalentDollars = sourceDollars && targetDollars
@@ -431,7 +439,11 @@ function walk(en, zh, path, whitelist, issues, options) {
     });
   }
   if (/[\u4e00-\u9fff]/u.test(zh)) {
-    const leaked = (zh.replace(urlToken, '').match(/\b[a-z][a-z-]{3,}\b/g) ?? [])
+    const sourcePaths = new Set([...en.matchAll(relativePathToken)]
+      .filter((match) => !/(?:\d(?:[KMBT]|\s*(?:thousand|million|billion|trillion))?\+?|\p{Sc})\s*$/iu.test(en.slice(0, match.index)))
+      .map((match) => match[0]));
+    const descriptorText = zh.replace(urlToken, '').replace(relativePathToken, (route) => sourcePaths.has(route) ? '' : route);
+    const leaked = (descriptorText.match(/\b[a-z][a-z-]{3,}\b/g) ?? [])
       .map((word) => word.toLowerCase())
       .filter((word) => descriptorWords.has(word));
     if (leaked.length) {

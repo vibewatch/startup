@@ -65,6 +65,71 @@ const legalClaimNounPairs = [
 
 const checks = [
   ...[
+    ['The public /platform page failed during the review.', '审阅时，公开 /platform 页面出错。', false],
+    ['The public /platform/revenue page failed during the review.', '审阅时，公开 /platform/revenue 页面出错。', false],
+    ['The public /platform page failed during the review.', '审阅时，公开 platform 页面出错。', true],
+    ['The public page failed during the review.', '审阅时，公开 /platform 页面出错。', true],
+    ['The public /platform page failed during the review.', '审阅时，/pricing 页面出错。', true],
+    ['The public /platform page describes the product.', '/platform 页面介绍这款 product。', true],
+    ['Est. $100,000-$500,000+/enterprise/year; per-forest model.', '估计 $100,000-$500,000+/enterprise/year；按 AD 林计价。', true],
+    ['Subscription price: $100 /enterprise/year.', '订阅价格：$100 /enterprise/year。', true],
+    ['Subscription price: $100K /enterprise/year.', '订阅价格：$100K /enterprise/year。', true],
+  ].map(([en, zh, leaked]) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor: true })
+      .some((issue) => issue.code === 'descriptor-leak') === leaked,
+    `only source-identical relative routes are exempt from descriptor warnings: ${zh}`,
+  ]),
+  ...[
+    ['风险在于，公开控制仍是政策层面的，而不是实施证明。', false],
+    ['问题在于：这些承诺仍停留于政策层面。', false],
+    ['团队在政策层面补充了控制要求。', true],
+    ['风险在于，数据不完整；团队在政策层面补充了要求。', true],
+  ].map(([zh, flagged]) => [
+    checkPairQuality(fullReport('Public controls remain policy-level rather than implementation-level proof.'), fullReport(zh), { strictEditor: true })
+      .some((issue) => issue.code === 'editor-translationese') === flagged,
+    `the level-based soundcheck must stay within a clause: ${zh}`,
+  ]),
+  ...[
+    ['The network covers 35,000 businesses and processes 30 million-plus events, scaling to 60,000-plus events per day.', '网络覆盖 3.5 万家企业，处理超过 3000 万起事件，每天可扩展至 6 万起以上。'],
+    ['The platform processes 30 million-plus events.', '平台处理 3000 万起以上事件。'],
+    ['The network covers 35,000 businesses and 1M users.', '网络覆盖 3.5 万家企业和 100 万名用户。'],
+    ['The network covers 35,000 businesses and 1M users.', '网络覆盖 35000 家企业和 100 万名用户。'],
+    ['The network covers 35000 businesses and 1M users.', '网络覆盖 35,000 家企业和 100 万名用户。'],
+    ['The platform processes 30 million-plus events for 1,000 customers.', '平台为 1000 家客户处理 3000 万起以上事件。'],
+    ['The network covers 35,000 businesses and 1M users in April 2025.', '2025 年 4 月，网络覆盖 3.5 万家企业和 100 万名用户。'],
+    ['The sample includes 1,000 records and 1,000 records from 1M events.', '样本包含来自 100 万起事件的 0.1 万条记录和 0.1 万条记录。'],
+    ['The archive contains 9,007,199,254,740,993 records and 1M samples.', '档案包含 900719925474.0993 万条记录和 100 万个样本。'],
+    ['2,227 arrest-producing calls; 417 firearms seized.', '2,227 起带来逮捕的呼叫；缴获 417 支枪支。'],
+    ['Over 1,000 XHAND units shipped in 2025.', '2025 年 XHAND 出货超过 1,000 台。'],
+  ].map(([en, zh]) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor: true }).length === 0,
+    `grouped integer counts and word-plus counts must retain exact values: ${zh}`,
+  ]),
+  ...[
+    ['The network covers 35,000 businesses and 1M users.', '网络覆盖 3.6 万家企业和 100 万名用户。'],
+    ['The platform processes 30 million-plus events.', '平台处理 300 万起以上事件。'],
+    ['The sample includes 1,000 records and 1,000 records from 1M events.', '样本包含来自 100 万起事件的 0.1 万条记录。'],
+    ['The archive contains 9,007,199,254,740,993 records and 1M samples.', '档案包含 900719925474.0992 万条记录和 100 万个样本。'],
+    ['The network covers 35,000 businesses and 1M users in April 2025.', '2025 年 5 月，网络覆盖 3.5 万家企业和 100 万名用户。'],
+    ['The change is -35,000 events and 1M users.', '变化为 3.5 万起事件和 100 万名用户。'],
+    ['The interval covers 30,000–35,000 events and 1M users.', '区间覆盖 3–3.5 万起事件和 100 万名用户。'],
+    ['The change is -30 million-plus events.', '变化为 3000 万起以上事件。'],
+    ['The expression is 30 million-plus-2 million events.', '结果为 3000 万起事件。'],
+    ['The result is 35,000% and 1M users.', '结果为 3.5 万和 100 万名用户。'],
+    ['The result is 35,000 ARR and 1M users.', '结果为 3.5 万和 100 万名用户。'],
+    ['The result is 1,000 x the baseline.', '结果为 0.1 万。'],
+    ['The total is 35,000 M events and 1M users.', '总计 3.5 万起事件和 100 万名用户。'],
+    ['The total is 35,000 千亿条记录和 1M users.', '总计 3.5 万条记录和 100 万名用户。'],
+    ['The accounts show (35,000) and 1M users.', '账目显示 3.5 万和 100 万名用户。'],
+    ['Fees are USD 35,000 and the platform serves 1M users.', '费用为 3.5 万，平台服务 100 万名用户。'],
+    ['Fees are 35,000 dollars and the platform serves 1M users.', '费用为 3.5 万，平台服务 100 万名用户。'],
+    ['The network covers 35,000 businesses and 1M users.', '规模为 USD 3.5 万，覆盖 100 万名用户。'],
+  ].map(([en, zh]) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor: true })
+      .some((issue) => issue.code === 'metric-preservation'),
+    `grouped-count comparison must reject changed values and unsupported units, signs or ranges: ${zh}`,
+  ]),
+  ...[
     ['Official materials show product coverage across claims intake and orchestration.', '官方材料显示产品覆盖理赔受理和编排。'],
     ['The buyer wants a claims platform with integration support.', '买方需要支持集成的理赔平台。'],
     ['The workflow captures claim facts and signatures.', '工作流采集赔案事实和签名。'],
