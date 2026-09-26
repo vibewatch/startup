@@ -8,6 +8,18 @@ import yaml from 'js-yaml';
 import { canonicalCacheKey, cleanExtractedText, htmlToText, isAccessErrorResponse, looksLikeBotChallenge, readerUrl } from '../../fetch-url/scripts/fetch.mjs';
 import { checkFigureDeep } from './artifact-checks.mjs';
 import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
+import { figureDetail } from '../../../../website/src/lib/figures.mjs';
+
+test('figure detail aliases preserve source text and existing precedence', () => {
+  for (const [item, expected] of [
+    [{ detail: 'Primary detail', description: 'Description', summary: 'Summary' }, 'Primary detail'],
+    [{ description: 'Remaining manual touches become work queues.' }, 'Remaining manual touches become work queues.'],
+    [{ detail: null, description: '人工介入率', summary: 'Summary' }, '人工介入率'],
+    [{ summary: 'Do not add another visible field to flow or bar charts' }, undefined],
+    [{ detail: '', description: 'Do not override an explicit blank' }, ''],
+    [{}, undefined],
+  ]) assert.equal(figureDetail(Object.freeze(item)), expected);
+});
 
 const accessErrorBodies = [
   '<html><head><title>Client Challenge</title></head><body>A required part of this site couldn’t load.</body></html>',

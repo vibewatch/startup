@@ -57,6 +57,8 @@ export const FIGURE_ALLOWED_POPULATED_FIELDS = {
 
 export const RENDERED_FIGURE_TYPES = FIGURE_TYPES.filter((type) => type !== 'other');
 
+export const figureDetail = (item) => item.detail ?? item.description;
+
 const FIGURE_TYPE_SET = new Set(FIGURE_TYPES);
 const FIGURE_DATA_FIELD_SET = new Set(FIGURE_DATA_FIELDS);
 

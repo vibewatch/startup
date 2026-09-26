@@ -42,6 +42,7 @@ const chartPayloadJson = chartPayload
 
 <script>
   import * as d3 from 'd3';
+  import { figureDetail } from '../lib/figures.mjs';
 
   const palette = {
     claret: '#990f3d',
@@ -193,7 +194,11 @@ const chartPayloadJson = chartPayload
     .on('pointermove', (event) => {
       if (shouldShowTooltip()) tooltip.move(event);
     })
-    .on('pointerleave', function() {
+    .on('pointerleave', function(event) {
+      d3.select(this).classed('is-hovered', false);
+      if (event.pointerType !== 'touch') tooltip.hide();
+    })
+    .on('pointercancel', function() {
       d3.select(this).classed('is-hovered', false);
       tooltip.hide();
     });
@@ -1054,7 +1059,7 @@ const chartPayloadJson = chartPayload
   };
 
   const renderFlow = (element, payload) => {
-    const nodes = arr(payload.data.nodes).map((node, index) => ({ ...node, _index: index, _key: node.id ?? node.label ?? String(index + 1) }));
+    const nodes = arr(payload.data.nodes).map((node, index) => ({ ...node, detail: figureDetail(node), _index: index, _key: node.id ?? node.label ?? String(index + 1) }));
     const edges = arr(payload.data.edges);
     const edgeBetween = (source, target) => edges.find((edge) => {
       const from = edge.from ?? edge.source;
@@ -1160,10 +1165,11 @@ const chartPayloadJson = chartPayload
       });
     }
     cards.each(function(node) { addTitle(d3.select(this), `${node._index + 1}. ${node.label}${node.detail ? ` — ${node.detail}` : ''}`); });
+    withTooltip(cards, (node) => tooltipHtml(node.label, [node.detail]));
   };
 
   const firstNonEmpty = (...values) => values.find((value) => Array.isArray(value) && value.length > 0) ?? [];
-  const normalizedItems = (data) => firstNonEmpty(data.items, data.nodes, data.layers, arr(data.series)[0]?.points, data.points).map((item, index) => ({ ...item, _index: index, label: item.label ?? item.name ?? item.id ?? `Item ${index + 1}`, detail: item.detail ?? item.description ?? item.summary }));
+  const normalizedItems = (data) => firstNonEmpty(data.items, data.nodes, data.layers, arr(data.series)[0]?.points, data.points).map((item, index) => ({ ...item, _index: index, label: item.label ?? item.name ?? item.id ?? `Item ${index + 1}`, detail: figureDetail(item) ?? item.summary }));
 
   const renderTimeline = (element, payload) => {
     const items = normalizedItems(payload.data);
@@ -1489,7 +1495,8 @@ const chartPayloadJson = chartPayload
     const bars = svg.append('g').selectAll('rect').data(items).join('rect')
       .attr('x', x(0)).attr('y', (d) => y(d.label)).attr('width', (d) => Math.max(2, x(numberValue(d.value)) - x(0))).attr('height', y.bandwidth())
       .attr('rx', 4).attr('fill', (d) => colorForTone(d.tone));
-    bars.each(function(d) { addTitle(d3.select(this), `${d.label}: ${valueLabel(d)}`); });
+    bars.each(function(d) { addTitle(d3.select(this), `${d.label}: ${valueLabel(d)}${figureDetail(d) ? ` — ${figureDetail(d)}` : ''}`); });
+    withTooltip(bars, (d) => tooltipHtml(d.label, [String(valueLabel(d) ?? ''), figureDetail(d)]));
     svg.append('g').selectAll('text').data(items).join('text')
       .attr('x', (d) => Math.min(width - margin.right + 6, x(numberValue(d.value)) + 8)).attr('y', (d) => y(d.label) + y.bandwidth() / 2 + 4)
       .attr('fill', palette.ink).attr('font-size', chartFont.label).attr('font-weight', fontWeight('strong')).text((d) => labelText(valueLabel(d), 16));

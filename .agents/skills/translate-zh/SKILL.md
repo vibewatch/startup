@@ -619,6 +619,10 @@ Figures (`figures/[]`) are charts. The renderer reads everything from
 not from top-level keys, so reader-visible chart text is two layers
 deep. Translate every reader-facing string under `data/`; leave
 identifiers, enums, refs, and numerics alone.
+Publication checks must exercise the hydrated charts and their hover/tap
+tooltips in a browser. Raw `script.figure-chart-data` payloads are not proof
+that a translated field is displayed; readable-page extraction omits those
+payloads and cannot validate client-rendered chart text.
 
 - **Translate**: `title`, `subtitle`, `summary`, `description`,
   `caption`, `insight`, `basis`, `notes`, `approximationNotes`, the
