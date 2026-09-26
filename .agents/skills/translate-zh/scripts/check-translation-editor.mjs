@@ -65,6 +65,26 @@ const legalClaimNounPairs = [
 
 const checks = [
   ...[
+    ['Plant-derived compounds require careful claim drafting for patent protection.', '植物来源化合物需要谨慎撰写权利要求，才能获得专利保护。', false],
+    ['Protection depends on claim drafting strategy.', '保护范围取决于权利要求撰写策略。', false],
+    ['Composition-of-matter claims on novel analogs more defensible than isolation claims.', '新型类似物的物质组成权利要求比单纯分离权利要求更站得住。', false],
+    ['Pursue analogue-specific composition-of-matter claims; regular patent portfolio review.', '争取针对类似物的物质组成权利要求；定期复核专利组合。', false],
+    ['USPTO patent filing portfolio not fully disclosed; depth and quality of claims uncertain.', '向 USPTO 提交的专利组合未完整披露；权利要求深度和质量不确定。', false],
+    ['USPTO patent filing portfolio not fully disclosed; depth and quality of claims uncertain. The company claims superior efficacy.', '向 USPTO 提交的专利组合未完整披露；权利要求深度和质量不确定。疗效更优。', true],
+    ['USPTO patent filing portfolio not fully disclosed; depth and quality of claims uncertain. The company claims superior efficacy.', '向 USPTO 提交的专利组合未完整披露；权利要求深度和质量不确定。公司声称疗效更优。', false],
+    ['The company claims drafting strategy improves patent protection.', '撰写策略能增强专利保护。', true],
+    ['We claim drafting strategy improves patent protection.', '撰写策略能增强专利保护。', true],
+    ['The company claims isolation is guaranteed by the platform.', '平台保证隔离。', true],
+    ['Isolation claims require independent verification.', '隔离效果需要独立验证。', true],
+    ['Composition-of-matter claims are pending. The company claims protection is complete.', '物质组成权利要求尚在审查。保护已完备。', true],
+    ['Composition-of-matter claims are pending. The company claims protection is complete.', '物质组成权利要求尚在审查。公司声称保护已完备。', false],
+    ['Composition-of-matter claims are pending; no public evidence of commercial efficacy.', '物质组成权利要求尚在审查；商业疗效已经验证。', true],
+  ].flatMap(([en, zh, expected]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(`${en} This is a source-reviewed diligence observation.`), fullReport(zh), { strictEditor })
+      .some((issue) => issue.code === 'hedge-preservation') === expected,
+    `patent-rights nouns do not erase separate assertions or evidence gaps (strict=${strictEditor}): ${en} / ${zh}`,
+  ])),
+  ...[
     ['Scores are analyst judgments synthesized from the cited claims.', '评分是分析师综合所引论断作出的判断。', false],
     ['Scores are synthesized from the cited claims. The company claims accuracy is superior.', '评分综合所引论断得出。准确率更高。', true],
     ['Scores are synthesized from the cited claims. The company claims accuracy is superior.', '评分综合所引论断得出。公司声称准确率更高。', false],

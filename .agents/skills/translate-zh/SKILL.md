@@ -247,6 +247,10 @@ attribution. Ordinary verbs such as `the company claims setup takes one day`
 still do. `尚未规模化验证` retains missing scale validation, and
 `未见 OCR 错误率公开第三方审计` retains an object-specific public-audit gap;
 negated aliases and statements in a different clause must not satisfy either.
+`requires careful claim drafting` and `composition-of-matter claims` describe
+patent rights, not company assertions. Isolation claims are recognized only in
+the explicit comparison with composition-of-matter claims; a separate claim
+about product isolation or efficacy still requires attribution.
 The `通过…来` soundcheck stays within one clause and does not treat `来自` as a
 purpose marker; a separate genuine `通过…来` construction still needs rewriting.
 Likewise, `正在…集中` is not the redundant `正在…中` construction, and that
