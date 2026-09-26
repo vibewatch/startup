@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
 import yaml from 'js-yaml';
 import { checkPairQuality, editorialQualityImproved } from './check-translation-quality.mjs';
+import { isTranslatableLeaf, whitelistFor } from './whitelist.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(here, '..', '..', '..', '..');
@@ -160,6 +161,29 @@ function seedExistingText(bundle, translated) {
     ]));
   }
   return bundle;
+}
+
+function retainEmptyPlaceholders(sourcePath, translatedPath, translationsPath) {
+  if (!existsSync(translatedPath)) return;
+  const source = loadYaml(sourcePath);
+  const whitelist = whitelistFor(source);
+  const entries = JSON.parse(readFileSync(translationsPath, 'utf8'));
+  const count = entries.length;
+  function walk(current, previous, path) {
+    if (Array.isArray(current)) {
+      current.forEach((value, index) => walk(value, previous?.[index], [...path, index]));
+    } else if (current && typeof current === 'object') {
+      for (const [key, value] of Object.entries(current)) walk(value, previous?.[key], [...path, key]);
+    } else if (typeof current === 'string' && !current.trim()
+        && typeof previous === 'string' && /^[—–-]$/u.test(previous)
+        && isTranslatableLeaf(path, whitelist)) {
+      entries.push({ path: path.join('/'), source: current, target: previous });
+    }
+  }
+  walk(source, loadYaml(translatedPath), []);
+  if (entries.length === count) return;
+  writeFileSync(translationsPath, `${JSON.stringify(entries, null, 2)}\n`, 'utf8');
+  console.log(`[translate-zh] retained ${entries.length - count} existing empty-field dash placeholder(s)`);
 }
 
 function qualityFor(paths, options = {}) {
@@ -344,6 +368,7 @@ function finalizeSummary(runId, { skipQuality = false } = {}) {
     fail(`summary bundle not found: ${relative(repoRoot, paths.summaryBundle)}; run init first`);
   }
   runNodeScript('bundle-translatable.mjs', ['import', paths.summarySource, paths.summaryBundle, '--out', paths.summaryJson]);
+  retainEmptyPlaceholders(paths.summarySource, paths.summaryOut, paths.summaryJson);
   runNodeScript('apply-translation.mjs', [paths.summarySource, paths.summaryJson, '--out', paths.summaryOut]);
   runNodeScript('check-translation.mjs', [paths.reportDir, ...(skipQuality ? [] : ['--strict'])]);
   if (!skipQuality) runNodeScript('check-translation-quality.mjs', [paths.summarySource, paths.summaryOut]);
@@ -365,6 +390,7 @@ function finalizeFull(runId, { keepCache = false, skipQuality = false } = {}) {
     fail(`full bundle not found: ${relative(repoRoot, paths.fullBundle)}; run init first`);
   }
   runNodeScript('bundle-translatable.mjs', ['import', paths.fullSource, paths.fullBundle, '--out', paths.fullJson]);
+  retainEmptyPlaceholders(paths.fullSource, paths.fullOut, paths.fullJson);
   runNodeScript('apply-translation.mjs', [paths.fullSource, paths.fullJson, '--out', paths.fullOut]);
   runNodeScript('check-translation.mjs', [paths.reportDir, ...(skipQuality ? [] : ['--strict']), '--require-final']);
   if (!skipQuality) {

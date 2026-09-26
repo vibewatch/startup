@@ -63,6 +63,30 @@ const legalClaimNounPairs = [
 ].map(([en, zh]) => [`${en} This is a diligence observation.`, `${zh} 这是尽调观察。`]);
 
 const checks = [
+  ...[
+    ['The estimated revenue supports the valuation discussion.', '预估收入为估值讨论提供参考。'],
+    ['Analysts estimate revenue from the available disclosures.', '分析师根据现有披露预估收入。'],
+    ['Inferred from high retention + $72 ARPU + hardware margin; likely >3x', '由高留存率 + $72 ARPU + 硬件毛利推断；预计超 3 倍'],
+    ['Given $1B+ raised since late 2024 and stated profitability, likely substantial', '鉴于 2024 年底以来融资逾 $1B 且声称盈利，预计现金储备可观'],
+    ['The cash balance is probably substantial given recent financing.', '考虑到近期融资，预计现金储备可观。'],
+  ].flatMap(([en, zh]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(`${en} This is a diligence observation.`), fullReport(`${zh} 这是尽调观察。`), { strictEditor }).length === 0,
+    `reviewed estimate and likelihood wording must pass (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
+    ['The estimated revenue supports the valuation discussion.', '收入为估值讨论提供参考。'],
+    ['The estimated revenue supports the valuation discussion.', '收入并非预估，而是已核实的数字。'],
+    ['The estimated revenue supports the valuation discussion.', '收入未经预估，已核实数字。'],
+    ['The cash balance is likely substantial given recent financing.', '考虑到近期融资，现金储备可观。'],
+    ['The cash balance is probably substantial given recent financing.', '无需预计，现金储备可观。'],
+    ['The cash balance is likely substantial given recent financing.', '没有预计现金储备，而是已经核实。'],
+    ['The cash balance is likely substantial but not yet audited.', '预计现金储备可观，且已经审计。'],
+    ['Reportedly, the estimated revenue supports the valuation discussion.', '预估收入为估值讨论提供参考。'],
+  ].flatMap(([en, zh]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(`${en} This is a diligence observation.`), fullReport(`${zh} 这是尽调观察。`), { strictEditor })
+      .some((issue) => issue.code === 'hedge-preservation'),
+    `estimate aliases must not conceal certainty, negation or another missing qualifier (strict=${strictEditor}): ${zh}`,
+  ])),
   ...legalClaimNounPairs.flatMap(([en, zh]) => [false, true].flatMap((strictEditor) => [
     [
       checkPairQuality(fullReport(en), fullReport(zh), { strictEditor }).length === 0,
@@ -893,18 +917,22 @@ try {
   mkdirSync(repairDir);
   const repairSource = {
     ...fullReport('Existing narrative'),
+    slug: '',
     coverageNotes: 'New context after correction',
     tables: [
       { title: 'Valuation', columns: ['Metric', 'Value'], rows: [['Valuation', '~27.1x current-entry proxy'], ['Entry price', '$190B']] },
       { title: 'Additional context', rows: [['Existing label', 'Existing detail'], ['New label', 'New detail']] },
+      { title: 'Placeholder controls', rows: [['', '', null, '$10M', '—']] },
     ],
   };
   const repairTranslation = {
     ...fullReport('原有说明'),
+    slug: '—',
     coverageNotes: ' ',
     tables: [
       { title: '估值', columns: ['项目', '数值'], rows: [['估值', '~24.8x-27.9x'], ['入场价', '旧金额说明'], ['删除行', '旧数据']] },
       { title: '补充背景', rows: [['原有项目', '原有说明']] },
+      { title: '占位符对照', rows: [['—', '未经支持的旧断言', '—', '—', '未经支持的旧断言']] },
     ],
   };
   const repairSummary = { artifact: 'summary-card', summary: { headline: 'Existing conclusion' } };
@@ -947,6 +975,9 @@ try {
   assert.equal(repaired.tables[0].rows[1][1], '$190B');
   assert.equal(repaired.tables[0].rows.length, 2);
   assert.deepEqual(repaired.tables[1].rows[1], ['新增项目', '新增说明']);
+  assert.deepEqual(repaired.tables[2].rows[0], ['—', '', null, '$10M', '—'],
+    'only existing dash placeholders for blank strings may survive; stale prose, nulls and quantities follow English');
+  assert.equal(repaired.slug, '', 'non-translatable blanks must remain exactly English');
   assert.equal(readFileSync(join(repairDir, 'full-report.yaml'), 'utf8'), JSON.stringify(repairSource));
 
   const batchSource = fullReport('Approximately $10M revenue in 2025 is not yet audited by an independent auditor.');
@@ -1074,6 +1105,37 @@ try {
   assert.match(mechanicalResult.result.reports[0].error, /not an editable sparse leaf/);
   assert.equal(readFileSync(join(fixtureRoot, 'reports', mechanical.runId, 'full-report.zh.yaml'), 'utf8'),
     JSON.stringify(mechanicalDoc('未知')));
+  const placeholderSource = {
+    ...batchSource,
+    tables: [{ rows: [['', ' ', '']] }],
+    figures: [{ data: { rows: [{ values: ['', '', '', null, '$10M', '—'] }] } }],
+  };
+  const placeholderTranslation = {
+    ...batchTranslation,
+    tables: [{ rows: [['—', '–', '-']] }],
+    figures: [{ data: { rows: [{ values: ['—', '–', '-', null, '$10M', '—'] }] } }],
+  };
+  const placeholderSummary = { ...repairSummary, summary: { ...repairSummary.summary, topStrengths: [''] } };
+  const placeholderSummaryZh = { ...repairSummaryZh, summary: { ...repairSummaryZh.summary, topStrengths: ['—'] } };
+  const placeholders = createBatchFixture('batch-placeholders', {
+    'full-report.yaml': placeholderSource,
+    'full-report.zh.yaml': placeholderTranslation,
+    'summary-card.yaml': placeholderSummary,
+    'summary-card.zh.yaml': placeholderSummaryZh,
+  });
+  placeholders.changes.push({
+    artifact: 'summary-card', path: 'summary/headline',
+    english: repairSummary.summary.headline, before: repairSummaryZh.summary.headline, after: '既有结论',
+  });
+  const placeholdersResult = runBatch([placeholders], true);
+  assert.equal(placeholdersResult.child.status, 0, placeholdersResult.child.stderr);
+  const placeholdersDir = join(fixtureRoot, 'reports', placeholders.runId);
+  assert.deepEqual(yaml.load(readFileSync(join(placeholdersDir, 'full-report.zh.yaml'), 'utf8')),
+    { ...placeholderTranslation, subtitle: batchClean.subtitle });
+  assert.deepEqual(yaml.load(readFileSync(join(placeholdersDir, 'summary-card.zh.yaml'), 'utf8')),
+    { ...placeholderSummaryZh, summary: { ...placeholderSummaryZh.summary, headline: '既有结论' } });
+  assert.equal(readFileSync(join(placeholdersDir, 'full-report.yaml'), 'utf8'), JSON.stringify(placeholderSource));
+  assert.equal(readFileSync(join(placeholdersDir, 'summary-card.yaml'), 'utf8'), JSON.stringify(placeholderSummary));
 } finally {
   rmSync(fixtureRoot, { recursive: true, force: true });
 }

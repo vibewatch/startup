@@ -48,10 +48,10 @@ const hedgeRules = [
       && !/\b(?:approximately|roughly)\s*(?:[$€£¥₦+-]?\s*\d|half\b|one\b|two\b|three\b|four\b|five\b|six\b|seven\b|eight\b|nine\b|ten\b)/i.test(source),
   },
   { en: /\b(?:reportedly|according to reports)\b/i, zh: /据报道|据报|据称|报道称/u },
-  { en: /\bestimated\b|\b(?:we|analysts?|reports?) estimate\b/i, zh: /估计|估算|预计|测算|推算/u },
+  { en: /\bestimated\b|\b(?:we|analysts?|reports?) estimate\b/i, zh: /估计|估算|预计|测算|推算|(?<!并非|不是|无需|没有|未经|未|不|无)预估/u },
   { en: /\bat least\b/i, zh: /至少|不低于/u },
   { en: /\bat most\b(?!\s+recent\b)/i, zh: /至多|最多|不超过/u },
-  { en: /\b(?:likely|probably)\b/i, zh: /可能|很可能|大概率|多半/u },
+  { en: /\b(?:likely|probably)\b/i, zh: /可能|很可能|大概率|多半|(?<!并非|不是|无需|没有|未经|未|不|无)预计/u },
   {
     en: /\bclaims?\b/i,
     zh: /声称|称|说法|主张|表述|断言|声明|自述|公司口径|网站口径|反方观点/u,

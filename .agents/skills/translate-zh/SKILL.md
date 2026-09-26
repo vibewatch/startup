@@ -222,6 +222,10 @@ Do not mistake `来源` or `带来` for the purpose marker in `通过…来`, or
 locative phrase such as `正在生产环境中部署` for clause-final `正在…中`.
 Public-evidence gaps can place a Latin company name or a carrier relationship
 before `公开`; `公开材料没有…` and `公开来源无法…` can retain a negative finding.
+`预估` can retain an estimate, and `预计` can express a likely outcome or
+inferred financial condition. Negated forms do not establish preservation.
+Review the proposition: these aliases do not validate the metric, time basis,
+or a separate omitted attribution or evidence gap in the same leaf.
 
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json
@@ -235,6 +239,12 @@ their older Chinese value was numeric-only; current mechanical cells instead
 come from English during application. Newly added prose without an existing
 translation starts in English and must be translated. Edit only the
 flagged leaves, then finalize with `--keep-cache` and measure the delta:
+
+Finalization retains an existing literal `—`, `–`, or `-` at a whitelisted
+blank-string source field. These are display placeholders, not new data, and
+remain outside the editable sparse bundle. Other old text in blank fields,
+nulls, non-translatable fields, and nonblank mechanical values still follow
+the current English source.
 
 ```sh
 npm run translate:zh -- lint-parts <run-id>
