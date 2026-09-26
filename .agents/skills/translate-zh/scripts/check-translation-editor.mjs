@@ -49,6 +49,29 @@ const noPublicIpAndMilestoneSource = `${noPublicIpSource} The IPO timeline has n
 
 const checks = [
   ...[
+    ['v0 ARR is not disclosed.', 'v0 的 ARR 未披露。'],
+    ['V0 MRR is $10M.', 'V0 的 MRR 为 $10M。'],
+    ['v12 GMV is $25B.', 'v12 的 GMV 为 $25B。'],
+    ['v0 ARR is $340M, but v0 expenses are unknown.', 'v0 的 ARR 为 $340M，但 v0 的费用未知。'],
+    ['v0\\nARR is $340M.', 'v0 的 ARR 为 $340M。'],
+    ['0 ARR was recorded for v0.', 'v0 录得 0 ARR。'],
+    ['$0 ARR was recorded for v0.', 'v0 录得 $0 ARR。'],
+  ].map(([en, zh]) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor: true }).length === 0,
+    `version-style product labels must not become metric quantities: ${zh}`,
+  ]),
+  ...[
+    ['v0 ARR is $340M.', 'v0 的 ARR 为 $341M。'],
+    ['v12 GMV is $25B.', 'v12 的 GMV 为 $25M。'],
+    ['0 ARR was recorded for v0.', 'v0 的 ARR 未披露。'],
+    ['$0 ARR was recorded for v0.', 'v0 录得 $1 ARR。'],
+    ['v0 ARR is $10M and costs are $10M.', 'v0 的 ARR 为 $10M，成本未披露。'],
+  ].map(([en, zh]) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor: true })
+      .some((issue) => issue.code === 'metric-preservation'),
+    `product-label normalization must preserve actual metric values and occurrences: ${zh}`,
+  ]),
+  ...[
     ['The IPO window is unproven while public produce comparables trade below the implied premium.', 'IPO 窗口未跑通，上市农产品可比公司估值低于隐含溢价。'],
     ['Premium berry platform with an unproven path to a credible IPO multiple.', '高端浆果平台，但支撑可信 IPO 倍数的路径尚未跑通。'],
     ['Integration risk; unproven at Fruitist scale; quality consistency not yet validated.', '整合风险；尚未在 Fruitist 规模下验证；品质一致性仍未验证。'],

@@ -157,10 +157,11 @@ function normalizedTokens(value) {
 }
 
 function normalizedMetricTokens(value, { includePlainNumbers = false } = {}) {
-  // Calendar labels are not ARR/GMV quantities, even when they precede the metric.
+  // Calendar and version-style labels are not ARR/GMV quantities.
   const separated = normalizeQuantityWords(normalizeCalendarSpacing(value))
     .replace(/\bFY\s*((?:19|20)\d{2})E?\b/gi, '$1;')
-    .replace(/\b(?:Q[1-4]|H[12])\b/gi, ';');
+    .replace(/\b(?:Q[1-4]|H[12])\b/gi, ';')
+    .replace(/\b(v\d+)\b(?=\s+(?:ARR|MRR|GMV|TPV|NPL|IRR)\b)/gi, '$1;');
   // Retention-relative phrases imply percentages, unlike nearby customer/cohort counts.
   const retention = separated.replace(
     /\b((?:NRR|GRR|NDR)\s+(?:(?:is|in|the|low|mid|high|teens|trends?)\b[\s-]*)*(?:above|below|towards?|around|near|of|at)\s+(?:(?:low|mid|high)[ -]+)?)(\d{2,3}(?:\.\d+)?)(s)?(?=\s*(?:[,.;]|$))/gi,

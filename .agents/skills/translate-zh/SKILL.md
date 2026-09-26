@@ -61,6 +61,9 @@ labels, also retain their year anchors. Quarter and half-year labels in
 `Q2 ARR` or `H1 ARR` are not ARR amounts. The metric tokenizer separates these
 labels from the metric; it does not establish quarter/half-year fidelity or
 interpret relative periods such as `the first two quarters after IPO`.
+Version-style product labels are also separated: `v0 ARR` is not `0 ARR`.
+Actual zero-valued metrics still retain their numeric and currency anchors;
+this separation does not validate product-name identity.
 These token checks do not establish complete numeric or semantic fidelity;
 verify the source proposition and metric meaning as well.
 
