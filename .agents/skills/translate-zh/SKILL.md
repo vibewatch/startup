@@ -274,6 +274,19 @@ or a separate omitted attribution or evidence gap in the same leaf.
 statement does not.
 `未见任何公开` retains a scoped public-evidence gap; an unrelated absence or
 negation does not.
+Medical billing phrases such as `API-based claim creation, claim submission`
+and dollar-qualified annual claims volume describe workflows or processed
+amounts, not assertions. A separate `claims accuracy is superior`, an
+`NDR claim`, or `claimed scale` still requires attribution. A workflow-list
+exemption must not swallow an adjacent assertion.
+`未经证明` retains `unproven`, and `未发现 Candid 公开…` can retain a scoped
+public-evidence gap. `潜在进入者` can render the entrant category `likely entrants`;
+it cannot replace a separate `likely` or `probably` in the same source leaf.
+Metric definitions also need source review: a vendor's touchless metric may
+cover submission through finalization without human intervention, whereas a
+clean-claim metric may measure passing the first claim edits without manual
+intervention. Neither means payer approval or payment. Render `manual touch`
+as manual intervention, not a physical touchpoint, in these billing workflows.
 
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json

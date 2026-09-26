@@ -41,20 +41,31 @@ const strictEditorStylePatterns = [
   /最(?:晚|迟)截至/u,
   /未达到至少/u,
 ];
-const insuranceClaimHeads = '(?:intake|communications?|orchestration|automation|processing|handling|journeys?|platforms?|systems?(?:-of-record)?|workflows?|intelligence|infrastructure|organizations?|executives?|officers?|leaders?|modules?|messaging|experiences?|stack|volume|throughput|transformation|severity|types?|facts|participants|sales|enablement|audit|budgets?|cost|core|domain|pain|software|tech|operating|management|tooling|operations|scale|possibilities|AI|CX)';
-const insuranceClaimModifiers = '(?:(?:AI(?:-native)?|digital|agentic|enterprise|incumbent|legacy|modern|full|complete|cloud(?:-native)?|core|narrow|broader|automated|conversational|messy|intelligent|insurance|strong|pilot|P&C)[ -]+)*';
+const insuranceClaimHeads = '(?:intake|communications?|orchestration|automation|processing|handling|journeys?|platforms?|systems?(?:-of-record)?|workflows?|intelligence|infrastructure|organizations?|executives?|officers?|leaders?|modules?|messaging|experiences?|stack|volume|throughput|transformation|severity|types?|facts|participants|sales|enablement|audit|budgets?|cost|core|domain|pain|software|tech|operating|management|tooling|operations|scale|possibilities|AI|CX|lifecycle|submission|creation|work|quality|logic|coding|corrections?|accuracy|errors?|status|issues|datasets|context|data|rates?|preparation|production|routing|APIs?|histor(?:y|ies)|growth|visibility)';
+const insuranceClaimModifiers = '(?:(?:AI(?:-native)?|digital|agentic|enterprise|incumbent|legacy|modern|full|complete|cloud(?:-native)?|core|narrow|broader|automated|conversational|messy|intelligent|insurance|strong|pilot|P&C|annual|manual|transactional|preventable|touchless|clean|API-based|AI-driven|rules-driven|usage-based|payer-by-payer)[ -]+)*';
 const insuranceClaimNouns = new RegExp([
-  `^claims?[ -]+${insuranceClaimHeads}\\b`,
-  `\\b(?:across|around|for|in|on|as|of|with|without|within|through|from|by|into|over|whether|because|buy|sells|satisfy|captures?|supports?|shows?|adopt|request)\\s+${insuranceClaimModifiers}claims?[ -]+${insuranceClaimHeads}\\b`,
-  `\\b(?:a|an|the|its|their|all|enough|insurance|P&C)\\s+claims?[ -]+${insuranceClaimHeads}\\b`,
-  `\\b(?:broader|modern|full|complete|AI-native|cloud-native|mission-critical|legacy|messy|existing|automatable|automated|faster|better|heavier|digitally native)[ -]+${insuranceClaimModifiers}claims?[ -]+${insuranceClaimHeads}\\b`,
-  `\\bclaims?-(?:${insuranceClaimHeads}|only)\\b|\\b(?:cross|per|agentic|digital|property)-claims?\\b`,
+  `^claims?(?=[ -]+${insuranceClaimHeads}\\b)`,
+  `\\b(?:across|around|for|in|on|as|of|with|without|within|through|from|by|into|over|whether|because|where|buy|sells|satisfy|captures?|supports?|shows?|show(?:s|ed)? that|adopt|request|automates?|automating|correct|autocorrects?|influence|scale|exports?|disrupts?|causing|handle)\\s+${insuranceClaimModifiers}claims?(?=[ -]+${insuranceClaimHeads}\\b)`,
+  `\\b(?:a|an|the|its|their|all|enough|insurance|P&C)\\s+claims?(?=[ -]+${insuranceClaimHeads}\\b)`,
+  `\\b(?:broader|modern|full|complete|AI-native|cloud-native|mission-critical|legacy|messy|existing|automatable|automated|faster|better|heavier|digitally native|annual|manual|transactional|preventable|touchless|clean|API-based|AI-driven|rules-driven|usage-based|payer-by-payer|minimum|scaled|false-positive)[ -]+${insuranceClaimModifiers}claims?(?=[ -]+${insuranceClaimHeads}\\b)`,
+  `\\bclaims?(?=-(?:${insuranceClaimHeads}|only)\\b)|\\b(?:cross|per|agentic|digital|property)-claims?\\b`,
   '\\b(?:across|outside|beyond|around|and)\\s+claims(?=\\s*(?:[.,;:]|$))',
   '\\bclaims\\s+(?:is|plus)\\b',
-  `\\bto claims\\s+${insuranceClaimHeads}\\b`,
+  `\\bto claims(?=\\s+${insuranceClaimHeads}\\b)`,
   '\\b(?:start of the claim|a claim from FNOL|insurance carriers and claims organizations|signal that claims AI|carrier, claim type|chief claims officer|use cases, claims automation|tens-of-millions claim volume|no public claims list price|enterprise AI claims budgets|incumbent claims platforms and adjacent AI vendors|appraisal, or cloud claims operations)\\b',
   '^enterprise claims sales\\b',
   '^claim, photo\\b',
+  '\\$\\s*\\d+(?:[.,]\\d+)*(?:[KMBT]|\\s+(?:million|billion|trillion))\\s+(?:(?:of|in)\\s+)?(?:processed\\s+claims?\\b|(?:annual\\s+)?claims?(?=\\s+(?:volume|annually)\\b|/year\\b))',
+  '\\bclaim/remit\\b|\\bclaims/denial\\b',
+  '^claims\\s+(?:are\\s+)?submitted\\b',
+  '\\b(?:billing|eligibility|authorizations|portal)\\s*,\\s*claims(?=\\s*,)',
+  '\\b(?:encounter, claim, and financial APIs|encounter and claim APIs|automated billing and claim operations|rapid visit and claim growth|sensitive data and claims workflows|payment systems, and claims workflows|customer count, and claims volume|contract type, claim volume|capital and claim volume|contracted revenue growth, claim volume|automation to claim creation|clearinghouse and claims workflow|encounter / claim workflow|into payer-ready claims|dominates revenue or claim volume)\\b',
+  '\\b(?:resubmit claims by hand|payers adjudicate claims|scale claims quickly|claims and reimbursements|routes claims, eligibility data|automating claims, eligibility|request claims, collections)\\b',
+  '\\b(?:eligibility(?: checks| verification)?|coding|creation|configured rules)\\s*,\\s*(?:and\\s+)?claims?(?=\\s+(?:submission|workflow|context|data)\\s*(?:[,;.]|$))',
+  '\\btransaction routing, claim(?= status, remittance\\b)|\\buptime, claims(?= accuracy, (?:concentration|or incident history)\\b)',
+  '\\bcustomer case study; claims(?= submission\\b)|\\bthis matters: claims(?= automation\\b)',
+  ';\\s*claims(?= volume is approximate\\b)',
+  '\\b(?:genomics to|from policy to|propagated to|propagate data to) claims(?=\\s*(?:[.,;:]|$))',
 ].join('|'), 'gi');
 const hedgeRules = [
   {
@@ -67,9 +78,15 @@ const hedgeRules = [
   { en: /\bestimated\b|\b(?:we|analysts?|reports?) estimate\b/i, zh: /估计|估算|预计|测算|推算|(?<!并非|不是|无需|没有|未经|未|不|无)预估/u },
   { en: /\bat least\b/i, zh: /至少|不低于/u },
   { en: /\bat most\b(?!\s+recent\b)/i, zh: /至多|最多|不超过/u },
-  { en: /\b(?:likely|probably)\b/i, zh: /可能|很可能|大概率|多半|(?<!并非|不是|无需|没有|未经|未|不|无)预计/u },
   {
-    en: /\bclaims?\b/i,
+    en: /\b(?:likely|probably)\b/i,
+    zh: /可能|很可能|大概率|多半|(?<!并非|不是|无需|没有|未经|未|不|无)预计/u,
+    alternative: (source, target) => /\blikely[- ](?:entrants?|entry)\b/i.test(source)
+      && !/\b(?:likely|probably)\b/i.test(source.replace(/\blikely[- ](?:entrants?|entry)\b/gi, ''))
+      && /(?<!并非|不是|没有|不存在|不属于|非|未|不|无)潜在进入者/u.test(target),
+  },
+  {
+    en: /\bclaims?\b|\bclaimed\s+scale\b/i,
     zh: /声称|称|说法|主张|表述|断言|声明|自述|公司口径|网站口径|反方观点/u,
     alternative: (_, target) => /(?<!并非|不是)公司披露的汇总口径/u.test(target),
     excludeContext: insuranceClaimNouns,
@@ -79,12 +96,12 @@ const hedgeRules = [
   {
     en: /\b(?:unproven|not proven)\b/i,
     zh: /未经证实|未获证实|未(?:被)?(?:证明|验证|证实)|未在规模上得到验证|无法证明|未经验证|未获验证/u,
-    alternative: (_, target) => /(?<!并非|不是|非|尚)(?:尚未跑通|未跑通|尚无公开验证|未获公开验证|还不足以证明|尚?未规模化验证|尚?未(?:在|按)[^。！？；，：]{1,24}(?:得到)?(?:验证|证实|证明))/u.test(target),
+    alternative: (_, target) => /(?<!并非|不是|非|尚)(?:尚未跑通|未跑通|尚无公开验证|未获公开验证|还不足以证明|尚?未经证明|尚?未规模化验证|尚?未(?:在|按)[^。！？；，：]{1,24}(?:得到)?(?:验证|证实|证明))/u.test(target),
   },
   {
     en: /\bno public\b/i,
     zh: /没有(?:与[^。！？；，：]{1,40}的)?公开|无公开|尚无公开|未见公开|(?<!并非|不是)未见任何公开|(?:未|没有)(?:找到|发现)\s*(?:(?:针对[^。！？；，：]{1,40}|[A-Za-z][A-Za-z0-9 .&+-]{0,60})的\s*)?公开|未公开|未确认有公开|(?:未|尚未|没有)(?:披露|发布)公开|公开(?:资料|信息|记录|文件|数据|证据|材料|来源)(?:中)?(?:未|尚未|没有|尚无|无法)/u,
-    alternative: (_, target) => /(?<!并非|不是|非|尚)尚?未见[^。！？；，：]{1,24}公开(?:第三方)?审计|(?<!并非|不是)(?:没有(?:披露任何|可验证的)公开|没有发现[^。！？；，：]{1,40}上的公开|未(?:提及|披露任何)公开|公开(?:渠道|披露|层面)(?:未|没有)|公开资料不显示)/u.test(target),
+    alternative: (_, target) => /(?<!并非|不是|非|尚)尚?未见[^。！？；，：]{1,24}公开(?:第三方)?审计|(?<!并非|不是)(?:没有(?:披露任何|可验证的)公开|没有发现[^。！？；，：]{1,40}上的公开|(?:未|没有)发现\s+[A-Za-z][A-Za-z0-9 .&+-]{0,60}\s+公开|未(?:提及|披露任何)公开|公开(?:渠道|披露|层面)(?:未|没有)|公开资料不显示)/u.test(target),
     exclude: /\bno public[- ]cloud(?:\s+LLM)?\s+APIs?\s+(?:are\s+)?allowed\b|\b(?:has|have)\s+no public\s+IP\s+address(?:es)?(?=\s*(?:[.;,]|$))/gi,
   },
   {
