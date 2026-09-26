@@ -71,6 +71,11 @@ Complete, **current deep reports** can enter explicit source review without work
 results or a shared search bundle: older sequential runs may never have produced
 those files. The plan identifies this as `published-deep-review` and reports
 missing inputs as `null`; it never creates substitute execution records.
+Authored metadata may omit its revision block, use `null`, or leave its status
+at the schema default. In that case, both published artifacts must explicitly
+mark the report current. All normalized revision records must agree; malformed
+or conflicting state, a superseded status, or a supersession pointer blocks
+review. Do not hand-populate metadata merely to satisfy this check.
 A genuine fetch trail is still required for execution, and normal/strict chapter
 checks, report gates, retry limits and caller source verification still apply.
 Use authentic source text from the review when original text is unavailable,

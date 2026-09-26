@@ -238,6 +238,51 @@ process.exit(Number(process.env.FAKE_COPILOT_EXIT ?? 1));
     assert.equal(legacyPlan.bundlePath, null);
     assert(!existsSync(bundlePath));
     assert(!existsSync(join(folder, 'worker-results.json')));
+    const revisionFiles = ['report-meta.yaml', 'summary-card.yaml', 'full-report.yaml'];
+    const revisionBackups = revisionFiles.map((file) => [file, readFileSync(join(folder, file), 'utf8')]);
+    const currentRevision = {
+      status: 'current', refreshOfRunId: null, supersededByRunId: null, refreshReason: null,
+    };
+    const setRevisions = (revisions) => revisions.forEach((revision, index) => {
+      writeFileSync(join(folder, revisionFiles[index]), JSON.stringify({ revision }));
+    });
+    try {
+      for (const metaRevision of [undefined, null, {}, { status: 'current' }]) {
+        setRevisions([metaRevision, currentRevision, currentRevision]);
+        const before = revisionFiles.map((file) => readFileSync(join(folder, file), 'utf8'));
+        const compatible = probe();
+        assert.equal(compatible.status, 0, `canonical current publication rejected metadata ${JSON.stringify(metaRevision)}: ${compatible.stderr}`);
+        assert.equal(JSON.parse(compatible.stdout).inputMode, 'published-deep-review');
+        assert.deepEqual(revisionFiles.map((file) => readFileSync(join(folder, file), 'utf8')), before);
+        assert(!existsSync(bundlePath));
+        assert(!existsSync(join(folder, 'worker-results.json')));
+      }
+      for (const [label, revisions] of [
+        ['unknown published state', [undefined, undefined, undefined]],
+        ['one missing published state', [undefined, currentRevision, undefined]],
+        ['superseded metadata', [{ status: 'superseded' }, currentRevision, currentRevision]],
+        ['superseded summary', [currentRevision, { status: 'superseded' }, currentRevision]],
+        ['superseded full report', [currentRevision, currentRevision, { status: 'superseded' }]],
+        ['invalid metadata status', [{ status: 'unknown' }, currentRevision, currentRevision]],
+        ['invalid summary status', [currentRevision, { status: 'unknown' }, currentRevision]],
+        ['invalid full-report status', [currentRevision, currentRevision, { status: 'unknown' }]],
+        ['malformed metadata revision', ['current', currentRevision, currentRevision]],
+        ['metadata supersession pointer', [{ ...currentRevision, supersededByRunId: '20990101000000-next' }, currentRevision, currentRevision]],
+        ['summary supersession pointer', [currentRevision, { ...currentRevision, supersededByRunId: '20990101000000-next' }, currentRevision]],
+        ['full-report supersession pointer', [currentRevision, currentRevision, { ...currentRevision, supersededByRunId: '20990101000000-next' }]],
+        ['conflicting refresh parent', [currentRevision, { ...currentRevision, refreshOfRunId: '20980101000000-prior' }, currentRevision]],
+        ['conflicting refresh reason', [currentRevision, currentRevision, { ...currentRevision, refreshReason: 'Different history' }]],
+      ]) {
+        setRevisions(revisions);
+        assert.equal(probe().status, 4, `ambiguous or historical source review accepted: ${label}`);
+      }
+      setRevisions([undefined, currentRevision, currentRevision]);
+      writeFileSync(snapshotPath, savedInputs[0][1]);
+      assert.equal(probe().status, 4, 'omitted metadata revision bypassed fast source provenance');
+      writeFileSync(snapshotPath, savedInputs[0][1].replace('activeResearchProfile: fast', 'activeResearchProfile: deep'));
+    } finally {
+      for (const [file, contents] of revisionBackups) writeFileSync(join(folder, file), contents);
+    }
     for (const file of [roster.chapters[0].file, 'evidence.yaml', 'full-report.yaml', 'summary-card.yaml']) {
       rmSync(join(folder, file));
       assert.equal(probe().status, 4, `incomplete deep review accepted missing ${file}`);

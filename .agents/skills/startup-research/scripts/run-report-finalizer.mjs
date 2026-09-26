@@ -10,6 +10,7 @@ import { basename, dirname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkPrefetchedSourceQuotes } from './source-quote-checks.mjs';
 import { checkSearchQueryProvenance, executedSearchQueries } from './search-query-checks.mjs';
+import { RevisionSchema } from './contracts/report-artifacts.schema.mjs';
 import {
   EXIT,
   FINAL_ARTIFACTS,
@@ -17,6 +18,7 @@ import {
   getAnalysisArtifacts,
   isRunId,
   loadWorkflowConfig,
+  normalizeRevision,
   readYaml,
   researchCacheDir,
 } from './utils.mjs';
@@ -80,6 +82,24 @@ function runJson(script, argv) {
     throw new Error(result.stderr || result.stdout || `${basename(script)} exited ${result.status}`);
   }
   return JSON.parse(result.stdout);
+}
+
+function hasCurrentPublishedRevision(reportFolder) {
+  const revisions = [
+    REPORT_META_FILE, FINAL_ARTIFACTS.summaryCard.file, FINAL_ARTIFACTS.fullReport.file,
+  ].map((file) => readYaml(join(reportFolder, file))?.revision);
+  if (revisions[0]?.status !== 'current'
+      && !revisions.slice(1).every((revision) => revision?.status === 'current')) return false;
+  const normalized = revisions.map((revision) => {
+    const parsed = RevisionSchema.safeParse(revision ?? {});
+    return parsed.success ? normalizeRevision(parsed.data) : null;
+  });
+  const expected = JSON.stringify(normalized[0]);
+  return normalized.every((revision) => (
+    revision?.status === 'current'
+    && revision.supersededByRunId === null
+    && JSON.stringify(revision) === expected
+  ));
 }
 
 function finalizerPrompt({ reportFolder, resultsPath, bundlePath, fetchLogPath, reviewFindings, publishedDeepReview }) {
@@ -183,7 +203,7 @@ const publishedDeepReview = Boolean(missingWorkerInputs && reviewFindings
   && config.activeResearchProfile === 'deep'
   && [...requiredFiles, ...getAnalysisArtifacts(config).map((chapter) => chapter.file)]
     .every((file) => existsSync(join(reportFolder, file)))
-  && readYaml(join(reportFolder, REPORT_META_FILE))?.revision?.status === 'current');
+  && hasCurrentPublishedRevision(reportFolder));
 if (missingWorkerInputs && !publishedDeepReview) {
   console.error(`[run-report-finalizer] missing worker results or search bundle under ${cacheDir}; only an explicit source review of a complete, current deep report can proceed without worker inputs`);
   process.exit(EXIT.notFound);
