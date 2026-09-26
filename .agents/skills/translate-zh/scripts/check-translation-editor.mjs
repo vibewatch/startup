@@ -49,6 +49,31 @@ const noPublicIpAndMilestoneSource = `${noPublicIpSource} The IPO timeline has n
 
 const checks = [
   ...[
+    ['The IPO window is unproven while public produce comparables trade below the implied premium.', 'IPO 窗口未跑通，上市农产品可比公司估值低于隐含溢价。'],
+    ['Premium berry platform with an unproven path to a credible IPO multiple.', '高端浆果平台，但支撑可信 IPO 倍数的路径尚未跑通。'],
+    ['Integration risk; unproven at Fruitist scale; quality consistency not yet validated.', '整合风险；尚未在 Fruitist 规模下验证；品质一致性仍未验证。'],
+    ['Integration execution risk; quality consistency unproven at Fruitist standards.', '整合执行风险；品质一致性尚未按 Fruitist 标准验证。'],
+    ['The process remains unproven in the reviewed industrial production environment.', '该流程尚未在工业生产环境中得到验证。'],
+    ['Orders-to-revenue conversion is still unproven publicly; audited revenue is not disclosed.', '订单转收入尚无公开验证；审计收入未披露。'],
+  ].flatMap(([en, zh]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor }).length === 0,
+    `faithful scoped absence of proof must pass (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
+    ['The IPO window is unproven while public produce comparables trade below the implied premium.', 'IPO 窗口已经跑通，上市农产品可比公司估值低于隐含溢价。'],
+    ['The IPO window is unproven while public produce comparables trade below the implied premium.', 'IPO 窗口并非未跑通，上市农产品可比公司估值低于隐含溢价。'],
+    ['Integration risk; unproven at Fruitist scale; quality consistency matters.', '整合风险；已经在 Fruitist 规模下验证；品质一致性重要。'],
+    ['Integration execution risk; quality consistency unproven at Fruitist standards.', '整合执行风险；品质一致性已经按 Fruitist 标准验证。'],
+    ['Integration execution risk; quality consistency unproven at Fruitist standards.', '整合执行风险；尚未按期发布，但品质一致性已经验证。'],
+    ['The process remains unproven in the reviewed industrial production environment.', '该流程尚未在工业生产环境中销售，可靠性已经得到验证。'],
+    ['Orders-to-revenue conversion is still unproven publicly; audited revenue is not disclosed.', '订单转收入已获公开验证；审计收入未披露。'],
+    ['Orders-to-revenue conversion is still unproven publicly; audited revenue is not disclosed.', '订单转收入并非尚无公开验证；审计收入未披露。'],
+  ].flatMap(([en, zh]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor })
+      .some((issue) => issue.code === 'hedge-preservation'),
+    `scoped proof aliases must not hide proven status or unrelated absence (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
     ['Asimov timing stays roughly on plan while the commercial ramp remains uncertain.', 'Asimov 时间大体按计划推进，商业化进度仍不确定。'],
     ['The company does not yet have public retention and migration evidence to justify a premium multiple.', '公司尚缺支撑溢价倍数所需的公开留存和迁移证据。'],
     ['Search speed claims are vendor-reported; cost and query ergonomics remain to be proved.', '搜索速度为厂商自述；成本和查询体验仍需验证。'],

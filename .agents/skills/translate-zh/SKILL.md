@@ -190,6 +190,11 @@ company assertions. Faithful `大体`, `尚缺`, and `厂商自述` retain quali
 approximation, not-yet absence, and vendor attribution respectively. An unrelated
 `大体` cannot stand in for a numerical approximation such as `roughly 25/50/25`;
 that numeric qualifier still needs wording such as `约` or `粗略`.
+Scoped absence of proof can also read `未跑通`, `尚无公开验证`, or
+`尚未按 Fruitist 标准验证`. Those are not omissions of `unproven`. Keep the
+negative attached to validation within the same clause; `尚未按期发布，但已验证`
+does not preserve it. These phrase checks still require a source-level review
+when multiple assertions or qualifiers share a leaf.
 The `通过…来` soundcheck stays within one clause and does not treat `来自` as a
 purpose marker; a separate genuine `通过…来` construction still needs rewriting.
 Likewise, `正在…集中` is not the redundant `正在…中` construction, and that
