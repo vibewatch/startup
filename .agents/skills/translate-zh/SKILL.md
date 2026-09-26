@@ -314,6 +314,14 @@ cover submission through finalization without human intervention, whereas a
 clean-claim metric may measure passing the first claim edits without manual
 intervention. Neither means payer approval or payment. Render `manual touch`
 as manual intervention, not a physical touchpoint, in these billing workflows.
+
+`没有…的公开证据` and `未见…的公开证据` retain a single `no public evidence`
+gap within one clause. `公开证据不足以支撑` can retain `no public evidence supports`;
+it does not stand in for an unrelated missing disclosure. Negated forms,
+cross-clause matches, and additional public-evidence gaps must not be cleared
+by these alternatives. Warranty-claim histories, rates, service requests and
+compensation demands are nouns, not company assertions; a separate assertion
+about warranty coverage or product performance still requires attribution.
 `公开信息不足以` (also `公开资料`, `公开证据`, or `公开依据`) can preserve
 `no public basis`; it cannot substitute for another missing public disclosure.
 `还无法完全看清` or `仍无法完全看清` can retain `not yet fully transparent`,

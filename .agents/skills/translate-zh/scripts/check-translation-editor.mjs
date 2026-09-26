@@ -65,6 +65,63 @@ const legalClaimNounPairs = [
 
 const checks = [
   ...[
+    ['No public evidence of multi-cloud failover.', '没有多云故障切换的公开证据。', false],
+    ['No public evidence of Alibaba/Tencent-driven customer conversion.', '没有 Alibaba / Tencent 推动客户转化的公开证据。', false],
+    ['No public evidence on financial performance.', '未见财务表现的公开证据。', false],
+    ['No public evidence of research progress.', '没有提供研究进展的公开证据。', false],
+    ['No public evidence of multi-cloud failover.', '已有多云故障切换的公开证据。', true],
+    ['No public evidence of multi-cloud failover.', '并非没有多云故障切换的公开证据。', true],
+    ['No public evidence of multi-cloud failover.', '并不是 没有多云故障切换的公开证据。', true],
+    ['No public evidence of multi-cloud failover.', '不是未见多云故障切换的公开证据。', true],
+    ['No public evidence of multi-cloud failover.', '没有故障；系统有多云故障切换的公开证据。', true],
+    ['No public evidence of multi-cloud failover.', '未见问题, 这里有多云故障切换的公开证据。', true],
+    ['No public evidence of multi-cloud failover; no public pricing data.', '没有多云故障切换的公开证据；定价已公布。', true],
+    ['No public evidence of revenue; no public evidence of profit.', '没有收入的公开证据；利润已证实。', true],
+    ['No public pricing data.', '没有收入的公开证据。', true],
+    ['No public evidence supports even a rough bound.', '公开证据不足以支撑哪怕粗略区间。', false],
+    ['No public evidence supports even a rough bound.', '公开证据尚不足以支撑哪怕粗略区间。', false],
+    ['No public evidence supports even a rough bound.', '公开证据足以支撑粗略区间。', true],
+    ['No public evidence supports even a rough bound.', '并非公开证据不足以支撑粗略区间。', true],
+    ['No public evidence supports even a rough bound.', '不是 公开证据不足以支撑粗略区间。', true],
+    ['No public evidence supports even a rough bound.', '公开证据并非不足以支撑粗略区间。', true],
+    ['No public evidence supports even a rough bound.', '公开证据不足以，其他条件支撑粗略区间。', true],
+    ['No public evidence of revenue.', '公开证据不足以支撑收入预测。', true],
+    ['No public evidence supports a bound; no public cash disclosure.', '公开证据不足以支撑区间；现金已披露。', true],
+  ].flatMap(([en, zh, expected]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(`${en} This is a source-reviewed diligence observation.`), fullReport(zh), { strictEditor })
+      .some((issue) => issue.code === 'hedge-preservation') === expected,
+    `tail-position evidence gaps retain negation and separate disclosures (strict=${strictEditor}): ${en} / ${zh}`,
+  ])),
+  ...[
+    ['Warranty claims, field failures, and return rates.', '保修索赔、现场故障和退货率。'],
+    ['Request warranty claim history and payout data.', '索取保修索赔历史和赔付数据。'],
+    ['Track battery-warranty claim rates by product.', '按产品跟踪电池保修索赔率。'],
+    ['The warranty claim response target is 24 hours.', '保修索赔响应目标为 24 小时。'],
+    ['Warranty claims resolved target: 24 hours.', '保修索赔解决目标：24 小时。'],
+    ['Margin depends on warranty claims and field service.', '利润率取决于保修索赔和现场服务。'],
+  ].flatMap(([en, zh]) => [false, true].flatMap((strictEditor) => [
+    [
+      !checkPairQuality(fullReport(`${en} This is a source-reviewed diligence observation.`), fullReport(zh), { strictEditor })
+        .some((issue) => issue.code === 'hedge-preservation'),
+      `warranty claims are service or compensation nouns (strict=${strictEditor}): ${en}`,
+    ],
+    [
+      checkPairQuality(fullReport(`${en} The company claims its product is superior.`), fullReport(`${zh} 产品更好。`), { strictEditor })
+        .some((issue) => issue.code === 'hedge-preservation'),
+      `warranty nouns do not suppress separate assertions (strict=${strictEditor}): ${en}`,
+    ],
+  ])),
+  ...[
+    'The company claims warranty coverage is unlimited.',
+    'The warranty claims that every loss is covered.',
+    'The warranty claims complete protection.',
+    'Warranty claims, return rates; claims its product is superior.',
+  ].flatMap((en) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(`${en} This is a source-reviewed diligence observation.`), fullReport('保障没有限制，产品更好。'), { strictEditor })
+      .some((issue) => issue.code === 'hedge-preservation'),
+    `warranty-adjacent assertions still require attribution (strict=${strictEditor}): ${en}`,
+  ])),
+  ...[
     ['There is no public basis to calculate runway.', '公开信息不足以计算现金续航。', false],
     ['There is no public basis to assess revenue quality.', '公开资料仍不足以评估收入质量。', false],
     ['There is no public basis to assess revenue quality.', '公开证据尚不足以评估收入质量。', false],

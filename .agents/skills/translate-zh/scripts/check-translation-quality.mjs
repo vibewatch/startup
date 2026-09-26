@@ -94,7 +94,7 @@ const hedgeRules = [
     en: /\bclaims?\b|\bclaimed\s+scale\b/i,
     zh: /声称|称|说法|主张|表述|断言|声明|自述|公司口径|网站口径|反方观点/u,
     alternative: (_, target) => /(?<!并非|不是|非)公司披露的(?:汇总|增长)口径|(?<!并非|不是|非)管理层口径/u.test(target),
-    excludeContext: new RegExp(`${insuranceClaimNouns.source}|\\bpublic[- ]claims?\\s+dispersion\\b`, 'gi'),
+    excludeContext: new RegExp(`${insuranceClaimNouns.source}|\\bpublic[- ]claims?\\s+dispersion\\b|\\bwarranty\\s+claims?\\b(?=\\s*(?:[,.;:]|$)|\\s+(?:history|rates?|response|frequency|data|targets?|resolved|triggered|processing|handling|costs?|by|if|and|or)\\b)`, 'gi'),
     exclude: /\b(?:(?:for|in|of|on)\s+claims?\s+(?:modeling|modelling|processing|handling|management|adjudication|submission|settlement|opening|setup|negotiation)|patent\s+claims?\s+(?:drafting|construction|interpretation|scope)|small[- ]claims?\s+(?:processing|courts?)|clinical\s*,\s*claims?\s*,?\s+and\s+operational\s+(?:data|systems)|EHRs?\s*,\s*claims?\s+systems|fraud\s+claims?\s+handling|government\s+guarantee\s+claims?\s+status|insurance\s+coverage\s+limits?\s+and\s+claims\s+history|premium\s+and\s+claims\s+expenditure|high[- ]cost\s+claims?\s+(?:concentration|categories)|million[- ]dollar[- ]plus\s+claims|highest[- ]ROI\s+claims|claims[- ]data[- ]driven|\d+(?:\.\d+)?%\s+claims\s+cost\s+reduction|real[- ]time\s+claims\s+data|claims\s+data\s+latency(?=\s*(?:[.;]|$))|do(?:es)?\s+not\s+reveal\s+claims?\s+quality\s+or\s+jurisdictions|qualitative\s+directional\s+claim|(?:personal|bodily)[ -]injury\s+claims?|(?:anchor|inflate|weaken)\s+claims?\s+values?|claims?-inflation|InsurTech\s+claims?\s+processing|insurance\s+carriers?\s+claims?\s+automation|claims?\s+setup(?=\s*,\s*care\s+coordination\b)|per\s+claims?|open\s+claims|return(?:s|ing)?\s+claims?\s+numbers|handle\s+claims?\s+negotiation|trained\s+on\s+(?:hundreds|thousands|millions)\s+of\s+claims|malpractice\s+claims|customer\s+compensation\s+claims|billing\s+documentation\s*[;,]\s*claims?\s+validation|claims?\s+denial\s+reduction\s+data|not\s+marketing\s+claims)\b/gi,
   },
   {
@@ -119,7 +119,12 @@ const hedgeRules = [
       || (/\bno public\b[^.;!?]{0,120}\bconfirmed\b/i.test(source) && /(?<!并非|不是|非)未确认公开/u.test(target))
       || (/\bno public basis\b/i.test(source)
         && !/\bno public\b/i.test(source.replace(/\bno public basis\b/gi, ''))
-        && /(?<!并非|不是|没有|非|不|无)公开(?:信息|资料|证据|依据)(?:仍|尚)?不足以/u.test(target)),
+        && /(?<!并非|不是|没有|非|不|无)公开(?:信息|资料|证据|依据)(?:仍|尚)?不足以/u.test(target))
+      || (/\bno public evidence\b/i.test(source)
+        && !/\bno public\b/i.test(source.replace(/\bno public evidence\b/i, ''))
+        && (/(?<!并非\s*|不是\s*|非\s*|不\s*)(?:没有|未见)[^。！？；，：\n.!?;,]{1,40}的公开证据/u.test(target)
+          || (/\bno public evidence supports\b/i.test(source)
+            && /(?<!并非\s*|不是\s*|没有\s*|非\s*|不\s*|无\s*)公开证据(?:仍|尚)?不足以支撑/u.test(target)))),
     exclude: /\bno public[- ]cloud(?:\s+LLM)?\s+APIs?\s+(?:are\s+)?allowed\b|\b(?:has|have)\s+no public\s+IP\s+address(?:es)?(?=\s*(?:[.;,]|$))/gi,
   },
   {
