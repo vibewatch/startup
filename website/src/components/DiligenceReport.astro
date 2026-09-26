@@ -8,6 +8,7 @@ import { t } from '../lib/i18n';
 import type { Locale } from '../lib/locale';
 import { localePath } from '../lib/locale';
 import { splitClaimRefsText, stripTrailingClaimRefs } from '../lib/claim-refs.mjs';
+import { withRangeTones } from '../lib/figures.mjs';
 import type { ReportStageFiles, ReportStageFilesZh } from '../content/reports-loader';
 import { asArray, asRecord, claimRefs, isRecord } from '../lib/report-types';
 import type {
@@ -72,7 +73,9 @@ const supersededByHref = revision.supersededByFolderSlug
   ? (locale === 'zh' ? localePath(base, 'zh', revision.supersededByFolderSlug) : `${base}${revision.supersededByFolderSlug}/`)
   : null;
 
-const enDoc = stages.fullReport as FullReport | null;
+const sourceDoc = stages.fullReport as FullReport | null;
+// Resolve legacy English label hints before overlaying translated display text.
+const enDoc = sourceDoc ? { ...sourceDoc, figures: sourceDoc.figures?.map(withRangeTones) } : null;
 const enLedger = asRecord(stages.evidence) as EvidenceLedger;
 const doc = (locale === 'zh' && stagesZh?.fullReport ? mergeI18n(enDoc, stagesZh.fullReport) : enDoc) as FullReport | null;
 const ledger = enLedger;

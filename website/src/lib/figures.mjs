@@ -67,6 +67,23 @@ export function kpiContext(item) {
   };
 }
 
+export function withRangeTones(figure) {
+  if (figure.type !== 'range' || !Array.isArray(figure.data?.items)) return figure;
+  return {
+    ...figure,
+    data: {
+      ...figure.data,
+      items: figure.data.items.map((item) => {
+        if (item.tone) return item;
+        const label = String(item.label ?? '').toLowerCase();
+        const tone = label.includes('stress') || label.includes('bear') ? 'risk'
+          : label.includes('bull') ? 'positive' : 'neutral';
+        return { ...item, tone };
+      }),
+    },
+  };
+}
+
 const FIGURE_TYPE_SET = new Set(FIGURE_TYPES);
 const FIGURE_DATA_FIELD_SET = new Set(FIGURE_DATA_FIELDS);
 

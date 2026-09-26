@@ -10,7 +10,7 @@ import { canonicalCacheKey, cleanExtractedText, htmlToText, isAccessErrorRespons
 import { checkAuthoringInstructions, checkFigureDeep } from './artifact-checks.mjs';
 import { KNOWN_DIMENSIONS, WARNING_DIMENSIONS } from './validation-catalog.mjs';
 import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
-import { figureDetail, kpiContext } from '../../../../website/src/lib/figures.mjs';
+import { figureDetail, kpiContext, withRangeTones } from '../../../../website/src/lib/figures.mjs';
 
 for (const file of ['FigureRenderer.astro', 'DiligenceReport.astro']) {
   test(`figure caveats are not hidden by ${file} styles`, () => {
@@ -42,6 +42,41 @@ test('KPI context preserves distinct qualifications without duplicating detail o
     assert.deepEqual(item, before);
     const normalized = { ...item, detail: figureDetail(item) ?? item.summary };
     assert.deepEqual(kpiContext(Object.freeze(normalized)), { visible, tooltip });
+  }
+});
+
+test('range tones are resolved before localization without overriding authored tones', () => {
+  const cases = [
+    [{ label: 'Bear case', low: 0.4, mid: 0.5, high: 0.6 }, 'risk'],
+    [{ label: 'STRESS scenario' }, 'risk'],
+    [{ label: 'Bull case' }, 'positive'],
+    [{ label: 'Base case' }, 'neutral'],
+    [{ label: 'Current reported round' }, 'neutral'],
+    [{ label: 'Base case', tone: 'warning' }, 'warning'],
+    [{ label: 'Bear case', tone: 'neutral' }, 'neutral'],
+    [{ label: 'Bull case', tone: 'opportunity' }, 'opportunity'],
+    [{ label: 'Plant-based market', tone: 'adverse' }, 'adverse'],
+    [{ label: 'Bear case', tone: '' }, 'risk'],
+    [{ label: 'Bull case', tone: null }, 'positive'],
+    [{}, 'neutral'],
+  ];
+  const items = cases.map(([item]) => Object.freeze(item));
+  const figure = Object.freeze({ id: 'F1', type: 'range', data: Object.freeze({ items: Object.freeze(items) }) });
+  const before = structuredClone(figure);
+  const prepared = withRangeTones(figure);
+  assert.deepEqual(prepared.data.items.map((item) => item.tone), cases.map(([, tone]) => tone));
+  assert.deepEqual(figure, before);
+  prepared.data.items.forEach((item, index) => {
+    const { tone, ...rest } = item;
+    const { tone: originalTone, ...original } = items[index];
+    assert.deepEqual(rest, original);
+    if (originalTone) assert.equal(item, items[index]);
+  });
+  const translated = { ...prepared, data: { items: prepared.data.items.map((item) => ({ ...item, label: 'Translated display label' })) } };
+  assert.deepEqual(withRangeTones(translated), translated);
+  assert.deepEqual(withRangeTones(prepared), prepared);
+  for (const other of [{ type: 'bar', data: { items } }, { type: 'range' }, { type: 'range', data: { nodes: items } }]) {
+    assert.equal(withRangeTones(other), other);
   }
 });
 

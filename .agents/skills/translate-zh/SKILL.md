@@ -684,6 +684,9 @@ print; they qualify the chart data rather than serving as optional decoration.
 KPI item `context` also qualifies its value: verify it on the card and in its
 hover/tap tooltip, including when a separate detail or note is present. Preserve
 distinct qualifications without duplicating identical text.
+Range-chart colors must agree across locales. The renderer resolves legacy
+English label hints before translation and gives explicit `tone` values priority;
+translated display labels must not change those colors.
 Also verify report-level `coverageNotes`, displayed before cover facts with
 the same Chinese-leaf / English-fallback behavior as other report text.
 

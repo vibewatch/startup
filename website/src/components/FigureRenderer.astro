@@ -1738,14 +1738,6 @@ const chartPayloadJson = chartPayload
     const max = Math.max(...items.map(highOf), ...items.map(midOf), 1);
     const span = Math.max(max - min, 1e-9);
     const pct = (value) => `${((value - min) / span) * 100}%`;
-    const rangeColor = (item) => {
-      const label = String(item.label ?? '').toLowerCase();
-      if (item.tone === 'risk' || label.includes('stress') || label.includes('bear')) return palette.risk;
-      if (item.tone === 'positive' || label.includes('bull')) return palette.positive;
-      if (item.tone === 'opportunity') return palette.opportunity;
-      if (label.includes('base')) return palette.claret;
-      return colorForTone(item.tone);
-    };
     const formatNumber = (value) => {
       const n = Number(value);
       if (!Number.isFinite(n)) return String(value ?? '');
@@ -1764,7 +1756,7 @@ const chartPayloadJson = chartPayload
       const low = lowOf(item);
       const mid = midOf(item);
       const high = highOf(item);
-      const fill = rangeColor(item);
+      const fill = colorForTone(item.tone);
       const summaryText = item.displayValue ?? `${formatNumber(low)} – ${formatNumber(high)}`;
       const row = root.append('div').attr('class', 'range-row')
         .datum({ label: safeText(item), low, mid, high, summary: summaryText, detail: item.detail });
