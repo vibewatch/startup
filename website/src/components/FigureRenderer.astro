@@ -42,7 +42,7 @@ const chartPayloadJson = chartPayload
 
 <script>
   import * as d3 from 'd3';
-  import { figureDetail } from '../lib/figures.mjs';
+  import { figureDetail, kpiContext } from '../lib/figures.mjs';
 
   const palette = {
     claret: '#990f3d',
@@ -1481,7 +1481,12 @@ const chartPayloadJson = chartPayload
     labelRow.append('span').attr('class', 'kpi-card-label-text').text((d) => d.label);
     cards.append('div').attr('class', 'kpi-card-value').text((d) => String(fullValueLabel(d) ?? ''));
     cards.filter((d) => d.detail).append('div').attr('class', 'kpi-card-detail').text((d) => d.detail);
-    withTooltip(cards, (d) => tooltipHtml(d.label, [String(fullValueLabel(d) ?? ''), d.detail || d.note]));
+    cards.filter((d) => kpiContext(d).visible).append('div').attr('class', 'kpi-card-detail kpi-card-context').text((d) => kpiContext(d).visible);
+    withTooltip(cards, (d) => tooltipHtml(d.label, [
+      String(fullValueLabel(d) ?? ''),
+      d.detail || d.note,
+      kpiContext(d).tooltip,
+    ]));
   };
 
   const renderBar = (element, payload) => {

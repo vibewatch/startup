@@ -10,7 +10,7 @@ import { canonicalCacheKey, cleanExtractedText, htmlToText, isAccessErrorRespons
 import { checkAuthoringInstructions, checkFigureDeep } from './artifact-checks.mjs';
 import { KNOWN_DIMENSIONS, WARNING_DIMENSIONS } from './validation-catalog.mjs';
 import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
-import { figureDetail } from '../../../../website/src/lib/figures.mjs';
+import { figureDetail, kpiContext } from '../../../../website/src/lib/figures.mjs';
 
 for (const file of ['FigureRenderer.astro', 'DiligenceReport.astro']) {
   test(`figure caveats are not hidden by ${file} styles`, () => {
@@ -19,6 +19,31 @@ for (const file of ['FigureRenderer.astro', 'DiligenceReport.astro']) {
       `${file}: figure approximation and evidence notes must remain visible`);
   });
 }
+
+test('KPI context preserves distinct qualifications without duplicating detail or tooltip notes', () => {
+  const cases = [
+    [{ context: 'Unaudited.' }, 'Unaudited.', 'Unaudited.'],
+    [{ detail: 'Estimated.', context: 'Single geography.' }, 'Single geography.', 'Single geography.'],
+    [{ detail: 'Estimated.', context: 'Estimated.' }, null, null],
+    [{ note: 'Provisional.', context: 'Current cohort only.' }, 'Current cohort only.', 'Current cohort only.'],
+    [{ note: 'Annualized.', context: 'Annualized.' }, 'Annualized.', null],
+    [{ description: 'Estimated.', context: 'Estimated.' }, null, null],
+    [{ summary: 'Limited sample.', context: 'Limited sample.' }, null, null],
+    [{ detail: '', description: 'Known scope.', context: 'Known scope.' }, 'Known scope.', 'Known scope.'],
+    [{ detail: 'Other detail.', note: 'Known scope.', context: 'Known scope.' }, 'Known scope.', 'Known scope.'],
+    [{ detail: 'Original detail.' }, null, null],
+    [{ detail: 'Original detail.', context: '' }, null, null],
+    [{ detail: 'Original detail.', context: null }, null, null],
+    [{ context: '<b>Not markup</b> & a condition.' }, '<b>Not markup</b> & a condition.', '<b>Not markup</b> & a condition.'],
+  ];
+  for (const [item, visible, tooltip] of cases) {
+    const before = structuredClone(item);
+    assert.deepEqual(kpiContext(Object.freeze(item)), { visible, tooltip });
+    assert.deepEqual(item, before);
+    const normalized = { ...item, detail: figureDetail(item) ?? item.summary };
+    assert.deepEqual(kpiContext(Object.freeze(normalized)), { visible, tooltip });
+  }
+});
 
 test('authoring-instruction checks reject leaked workflow directives in public prose', () => {
   const directives = [

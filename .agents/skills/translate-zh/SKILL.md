@@ -681,6 +681,9 @@ that a translated field is displayed; readable-page extraction omits those
 payloads and cannot validate client-rendered chart text.
 Approximation and evidence notes must remain visible on narrow screens and in
 print; they qualify the chart data rather than serving as optional decoration.
+KPI item `context` also qualifies its value: verify it on the card and in its
+hover/tap tooltip, including when a separate detail or note is present. Preserve
+distinct qualifications without duplicating identical text.
 Also verify report-level `coverageNotes`, displayed before cover facts with
 the same Chinese-leaf / English-fallback behavior as other report text.
 
