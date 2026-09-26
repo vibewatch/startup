@@ -74,3 +74,8 @@ Do not use for broad source discovery, multi-page crawling, JavaScript login flo
 Confirm status, final URL, source/cache state, content type, bytes, elapsed time, title/PDF metadata, and whether output was truncated. For non-2xx responses, record the failure rather than inventing page content.
 
 HTTP 200 alone does not establish successful retrieval. Recognized browser/security challenge pages and reader responses reporting upstream HTTP errors trigger fallbacks; if none succeeds, the command exits nonzero and records `ok: false` with an explicit error in both JSON output and the fetch trail. Cached access-error pages are retried rather than reused as evidence. A successful fetch still requires review for relevance and factual support.
+This also covers recognized soft-404 pages, including the exact Chinese title
+`页面未找到` and the extracted error-only text `404 / 没有找到此种页面`.
+Articles discussing missing-page errors are not rejected merely for mentioning
+those words. The same detector protects retained prefetched source text even
+when an older cache record incorrectly says `ok: true`.

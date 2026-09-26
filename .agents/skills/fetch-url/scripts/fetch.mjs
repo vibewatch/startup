@@ -958,6 +958,12 @@ const ACCESS_ERROR_TITLES = new Set([
   'attention required! | cloudflare',
   '403 forbidden',
   '429 too many requests',
+  '404 not found',
+  '404 - page not found',
+  'page not found',
+  '页面未找到',
+  '页面不存在',
+  '找不到页面',
 ]);
 
 export function isAccessErrorResponse(result) {
@@ -971,6 +977,7 @@ export function isAccessErrorResponse(result) {
       && /^Warning: Target URL returned error [45]\d{2}\b/im.test(body)) return true;
   const text = htmlToText(body.replace(/<head\b[^>]*>[\s\S]*?<\/head>/gi, ''))
     .replace(/[‘’]/gu, "'");
+  if (/^(?:404\s*[-:：]?\s*)?(?:没有找到此种页面|页面未找到|页面不存在|找不到页面|page not found|not found)[.!。]?\s*$/iu.test(text)) return true;
   return /^(?:You've been blocked by network security\b|A required part of this site couldn't load\b)/i.test(text);
 }
 

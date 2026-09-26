@@ -13,6 +13,9 @@ const accessErrorBodies = [
   '<html><head><title>Client Challenge</title></head><body>A required part of this site couldn’t load.</body></html>',
   "Title:\n\nURL Source: https://example.com/thread\n\nWarning: Target URL returned error 403: Forbidden\n\nMarkdown Content:\nYou've been blocked by network security.",
   'Title: Vercel Security Checkpoint\n\nURL Source: https://example.com/page\n\nWarning: Target URL returned error 429: Too Many Requests\n\nMarkdown Content:\nVercel Security Checkpoint',
+  '<html><head><title>页面未找到</title></head><body><h1>404</h1><p>没有找到此种页面</p></body></html>',
+  '404\n\n没有找到此种页面',
+  '<html><title>404 - Page Not Found</title><body>This page is unavailable.</body></html>',
 ];
 
 const financialTables = '<table><tr><th>Metric</th><th>2026</th><th>2025</th></tr>'
@@ -102,6 +105,7 @@ test('HTTP-200 challenge pages are not successful source retrievals', () => {
   for (const body of accessErrorBodies) {
     assert.equal(looksLikeBotChallenge({ status: 200, body: Buffer.from(body) }), true, body);
   }
+  assert.equal(isAccessErrorResponse({ status: 200, title: '页面未找到', body: '' }), true);
 });
 
 test('access-error detection preserves real articles about security and PDF bodies', () => {
@@ -109,7 +113,12 @@ test('access-error detection preserves real articles about security and PDF bodi
     '<html><title>DataDome company overview</title><article>DataDome provides captcha and bot detection.</article></html>',
     '<html><title>Understanding Vercel Security Checkpoint</title><article>A technical article about browser challenges.</article></html>',
     'Security troubleshooting guide\n\nA required part of this site couldn’t load is a message that users may encounter.',
+    '<html><title>理解页面未找到错误</title><article>404 页面未找到是常见的网站错误。本文介绍如何排查。</article></html>',
+    '<html><title>Understanding 404 - Page Not Found</title><article>A guide to error handling.</article></html>',
+    '404 documents were processed, while three links returned page not found.',
+    '404\n\n没有找到此种页面\n\nThis report analyzes the error rather than serving an error page.',
     Buffer.from('%PDF-1.7\nTitle: Vercel Security Checkpoint'),
+    Buffer.from('%PDF-1.7\nTitle: 页面未找到'),
   ]) assert.equal(isAccessErrorResponse({ status: 200, body }), false);
 });
 
@@ -122,10 +131,12 @@ test('reader URLs preserve the original scheme without adding a second one', () 
 test('fetch CLI rejects origin, reader, and cached access-error pages with a failed fetch trail', () => {
   const folder = mkdtempSync(join(tmpdir(), 'source-fetch-check-'));
   try {
-    for (const [index, mode] of ['origin', 'reader', 'cache'].entries()) {
+    const cases = accessErrorBodies.flatMap((_, index) =>
+      ['origin', 'reader', 'cache'].map((mode) => [index, mode]));
+    for (const [index, mode] of cases) {
       const url = 'https://example.com/page';
-      const log = join(folder, `${mode}.jsonl`);
-      const requests = join(folder, `${mode}-requests.jsonl`);
+      const log = join(folder, `${index}-${mode}.jsonl`);
+      const requests = join(folder, `${index}-${mode}-requests.jsonl`);
       if (mode === 'cache') {
         writeFileSync(join(folder, `${canonicalCacheKey(url)}.json`), JSON.stringify({
           requestedUrl: url, finalUrl: url, status: 200, ok: true,
