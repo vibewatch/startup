@@ -65,6 +65,25 @@ const legalClaimNounPairs = [
 
 const checks = [
   ...[
+    ['Scores are analyst judgments synthesized from the cited claims.', '评分是分析师综合所引论断作出的判断。', false],
+    ['Scores are synthesized from the cited claims. The company claims accuracy is superior.', '评分综合所引论断得出。准确率更高。', true],
+    ['Scores are synthesized from the cited claims. The company claims accuracy is superior.', '评分综合所引论断得出。公司声称准确率更高。', false],
+    ['The company claims its scores are synthesized from audited data.', '评分综合审计数据得出。', true],
+    ['No public SOC 2, ISO 27001, penetration-test summary, or uptime page retained in chapter evidence.', '章节证据中未收录公开的 SOC 2、ISO 27001、渗透测试摘要或正常运行时间页面。', false],
+    ['No public security audit retained in chapter evidence.', '本章证据中未收录公开的安全审计。', false],
+    ['No public security audit retained in chapter evidence.', '章节证据中收录了公开的安全审计。', true],
+    ['No public security audit retained in chapter evidence.', '并非章节证据中未收录公开的安全审计。', true],
+    ['No public security audit retained in chapter evidence.', '不是 章节证据中未收录公开的安全审计。', true],
+    ['No public security audit retained in chapter evidence.', '章节证据中并非未收录公开的安全审计。', true],
+    ['No public security audit exists.', '章节证据中未收录公开的安全审计。', true],
+    ['No public security audit retained in chapter evidence; no public pricing.', '章节证据中未收录公开的安全审计；定价已公布。', true],
+    ['No public security audit and no public pricing retained in chapter evidence.', '章节证据中未收录公开的安全审计，定价已收录。', true],
+  ].flatMap(([en, zh, expected]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(`${en} This is a source-reviewed diligence observation.`), fullReport(zh), { strictEditor })
+      .some((issue) => issue.code === 'hedge-preservation') === expected,
+    `cited evidence and retained-source gaps preserve scope (strict=${strictEditor}): ${en} / ${zh}`,
+  ])),
+  ...[
     ['All claims in this table are minted locally for the Financials chapter.', '本表各项判断在财务章节内单独生成。', false],
     ['All claims in this table\nare minted locally. Cash balance and burn are fully private.', '本表各项判断在本章内单独生成。现金余额和烧钱速度完全未公开。', false],
     ['All claims in this table are minted locally. The company claims national coverage.', '本表各项判断均单独生成。覆盖全国。', true],

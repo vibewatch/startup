@@ -324,6 +324,10 @@ compensation demands are nouns, not company assertions; a separate assertion
 about warranty coverage or product performance still requires attribution.
 `claims in this table are minted locally` describes this report's evidence
 ledger, not a company assertion; a separate company claim still needs attribution.
+Likewise, scores `synthesized from the cited claims` refer to cited evidence,
+not a new company assertion. `章节证据中未收录公开…` retains a single
+`no public … retained in chapter evidence` gap; it does not prove that no public
+material exists. Separate assertions and disclosure gaps still need preservation.
 `公开证据缺失` can retain a single `no public evidence` gap. Negated predicates
 and additional disclosure gaps must not be cleared by that wording. These
 qualifier checks do not establish that every object or proposition was preserved.
