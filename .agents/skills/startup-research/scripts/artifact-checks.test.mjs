@@ -192,6 +192,18 @@ test('figure detail aliases preserve source text and existing precedence', () =>
   ]) assert.equal(figureDetail(Object.freeze(item)), expected);
 });
 
+const clinicalGlossaryShell = 'Show glossary\n\nSearch for terms\n\nHide glossary\n\n'
+  + 'Study record managers: refer to the Data Element Definitions if submitting registration or results information.';
+const clinicalTrialShellBodies = [
+  `<html><head><title>ClinicalTrials.gov</title></head><body>${clinicalGlossaryShell}</body></html>`,
+  '<html><head><title>ClinicalTrials.gov</title></head><body>Show glossary</body></html>',
+  'ClinicalTrials.gov\n\nShow glossary',
+  `ClinicalTrials.gov\n\n${clinicalGlossaryShell}`,
+  'Title: ClinicalTrials.gov\n\nURL Source: https://clinicaltrials.gov/study/NCT00000001\n\nMarkdown Content:\nShow glossary',
+  `Title: ClinicalTrials.gov\n\nURL Source: https://clinicaltrials.gov/study/NCT00000001\n\nPublished Time: 2026-04-16\n\nMarkdown Content:\n${clinicalGlossaryShell}`,
+  `<html><head><title>ClinicalTrials.gov</title></head><body><!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-base">Wayback Machine: April 16, 2026</div><!-- END WAYBACK TOOLBAR INSERT -->${clinicalGlossaryShell}</body></html>`,
+];
+
 const accessErrorBodies = [
   '<html><head><title>Client Challenge</title></head><body>A required part of this site couldn’t load.</body></html>',
   "Title:\n\nURL Source: https://example.com/thread\n\nWarning: Target URL returned error 403: Forbidden\n\nMarkdown Content:\nYou've been blocked by network security.",
@@ -204,6 +216,7 @@ const accessErrorBodies = [
   'Powered and protected by\n\nPrivacy',
   'Title:\n\nURL Source: https://example.com/page\n\nMarkdown Content:\nPowered and protected by\n\nPrivacy',
   'Title:\n\nURL Source: https://example.com/page\n\nPublished Time: 2026-04-16\n\nMarkdown Content:\nPowered and protected by\n\nPrivacy',
+  ...clinicalTrialShellBodies,
 ];
 
 const financialTables = '<table><tr><th>Metric</th><th>2026</th><th>2025</th></tr>'
@@ -412,6 +425,7 @@ test('HTTP-200 challenge pages are not successful source retrievals', () => {
     assert.equal(looksLikeBotChallenge({ status: 200, body: Buffer.from(body) }), true, body);
   }
   assert.equal(isAccessErrorResponse({ status: 200, title: '页面未找到', body: '' }), true);
+  assert.equal(isAccessErrorResponse({ status: 200, title: 'ClinicalTrials.gov', body: 'Show glossary' }), true);
 });
 
 test('access-error detection preserves real articles about security and PDF bodies', () => {
@@ -427,9 +441,15 @@ test('access-error detection preserves real articles about security and PDF bodi
     '<html><body><!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-base">Wayback Machine</div><!-- END WAYBACK TOOLBAR INSERT --><article>The company raised $150M.</article><div>Powered and protected by</div><div>Privacy</div></body></html>',
     'Title: Funding announcement\n\nURL Source: https://example.com/page\n\nPublished Time: 2026-04-16\n\nMarkdown Content:\nThe company raised $150M.\nPowered and protected by\n\nPrivacy',
     'Powered and protected by\n\nPrivacy\n\nThis article explains the footer rather than serving a challenge page.',
+    `<html><head><title>ClinicalTrials.gov</title></head><body>${clinicalGlossaryShell}<article>Study enrollment: 60 estimated participants.</article></body></html>`,
+    'ClinicalTrials.gov\n\nShow glossary\n\nStudy enrollment: 60 estimated participants.',
+    'Title: ClinicalTrials.gov\n\nURL Source: https://clinicaltrials.gov/study/NCT00000001\n\nMarkdown Content:\nShow glossary\n\nStudy enrollment: 60 estimated participants.',
+    'ClinicalTrials.gov\n\nShow glossary\n\nThis article describes a JavaScript shell rather than serving one.',
+    'Show glossary',
     Buffer.from('%PDF-1.7\nTitle: Vercel Security Checkpoint'),
     Buffer.from('%PDF-1.7\nTitle: 页面未找到'),
     Buffer.from('%PDF-1.7\nPowered and protected by\n\nPrivacy'),
+    Buffer.from('%PDF-1.7\nClinicalTrials.gov\n\nShow glossary'),
   ]) assert.equal(isAccessErrorResponse({ status: 200, body }), false);
 });
 
@@ -492,34 +512,38 @@ test('fetch CLI rejects origin, reader, archived, and cached access-error pages 
 });
 
 test('fetch CLI recovers an access-error page through a valid reader response', () => {
-  const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
-    import assert from 'node:assert/strict';
-    import { main } from './.agents/skills/fetch-url/scripts/fetch.mjs';
-    const requests = [];
-    globalThis.fetch = async (url) => {
-      requests.push(url);
-      return new Response(String(url).startsWith('https://r.jina.ai/')
-        ? 'Title: Original article\\n\\nReadable original evidence, not an access-error page.'
-        : ${JSON.stringify(accessErrorBodies[0])}, { status: 200 });
-    };
-    await main(['https://example.com/page', '--json', '--no-cache', '--no-host-map',
-      '--no-throttle', '--no-retry-profiles', '--no-wayback']);
-    assert.deepEqual(requests, ['https://example.com/page', 'https://r.jina.ai/https://example.com/page']);
-  `], { encoding: 'utf8', env: { ...process.env, STARTUP_FETCH_LOG_PATH: '' } });
-  assert.equal(result.status, 0, result.stderr);
-  const output = JSON.parse(result.stdout);
-  assert.equal(output.ok, true);
-  assert.equal(output.retrievalSource, 'reader');
+  for (const body of [accessErrorBodies[0], ...clinicalTrialShellBodies]) {
+    const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
+      import assert from 'node:assert/strict';
+      import { main } from './.agents/skills/fetch-url/scripts/fetch.mjs';
+      const requests = [];
+      globalThis.fetch = async (url) => {
+        requests.push(url);
+        return new Response(String(url).startsWith('https://r.jina.ai/')
+          ? 'Title: Original article\\n\\nReadable original evidence, not an access-error page.'
+          : ${JSON.stringify(body)}, { status: 200 });
+      };
+      await main(['https://example.com/page', '--json', '--no-cache', '--no-host-map',
+        '--no-throttle', '--no-retry-profiles', '--no-wayback']);
+      assert.deepEqual(requests, ['https://example.com/page', 'https://r.jina.ai/https://example.com/page']);
+    `], { encoding: 'utf8', env: { ...process.env, STARTUP_FETCH_LOG_PATH: '' } });
+    assert.equal(result.status, 0, result.stderr);
+    const output = JSON.parse(result.stdout);
+    assert.equal(output.ok, true);
+    assert.equal(output.retrievalSource, 'reader');
+  }
 });
 
 test('fetch CLI refreshes blocked reader and archive fallback caches', () => {
   const folder = mkdtempSync(join(tmpdir(), 'source-fallback-cache-check-'));
   const url = 'https://example.com/page';
   try {
-    for (const variant of ['reader', 'wayback']) {
+    const cases = ['Powered and protected by\n\nPrivacy', clinicalTrialShellBodies[0]]
+      .flatMap((body) => ['reader', 'wayback'].map((variant) => [body, variant]));
+    for (const [body, variant] of cases) {
       writeFileSync(join(folder, `${canonicalCacheKey(url, variant)}.json`), JSON.stringify({
         requestedUrl: url, finalUrl: url, status: 200, ok: true,
-        body: Buffer.from('Powered and protected by\n\nPrivacy').toString('base64'),
+        body: Buffer.from(body).toString('base64'),
         source: variant, fetchedAt: new Date().toISOString(),
       }));
       const flags = [

@@ -986,6 +986,8 @@ export function isAccessErrorResponse(result) {
   if (/^(?:404\s*[-:：]?\s*)?(?:没有找到此种页面|页面未找到|页面不存在|找不到页面|page not found|not found)[.!。]?\s*$/iu.test(text)) return true;
   const unwrappedText = text.replace(/^Title:[^\n]*\n+URL Source:\s*https?:\/\/[^\n]+\n+(?:Published Time:[^\n]*\n+)?Markdown Content:\s*/i, '');
   if (/^Powered and protected by\s+Privacy\s*$/i.test(unwrappedText)) return true;
+  if ((title === 'clinicaltrials.gov' || /^ClinicalTrials\.gov\s+/i.test(unwrappedText))
+      && /^(?:ClinicalTrials\.gov\s+)?Show glossary(?:\s+Search for terms\s+Hide glossary\s+Study record managers:\s+refer to the Data Element Definitions if submitting registration or results information\.)?\s*$/i.test(unwrappedText)) return true;
   return /^(?:You've been blocked by network security\b|A required part of this site couldn't load\b)/i.test(text);
 }
 

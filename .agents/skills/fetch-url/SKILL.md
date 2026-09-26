@@ -86,3 +86,9 @@ as substantive source content.
 The same footer inside a substantive article does not trigger this check.
 Invalid origin, reader, and archive cache entries trigger fresh retrieval attempts
 rather than preventing a fallback from recovering useful content.
+ClinicalTrials.gov responses containing only the site title and glossary controls
+are also unusable JavaScript shells; they trigger the existing fallbacks rather
+than counting as study evidence. Substantive study records remain valid.
+Reader copies can omit dynamic fields; verify any required missing fields in the registry itself.
+Check the study record's own version date: a reader's `Published Time` is not proof
+of the registry version or of the historical enrollment figures.
