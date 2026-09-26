@@ -64,6 +64,48 @@ const legalClaimNounPairs = [
 
 const checks = [
   ...[
+    ['The revenue threshold is $50M.', '收入门槛为 5,000 万美元。'],
+    ['Revenue reaches $50M.', '收入达到 5,000 万美元。'],
+    ['The valuation is $1.2 billion.', '估值为 12 亿美元。'],
+    ['The company has $50M, before any additional financing.', '公司拥有 5,000 万美元，尚未计入任何新增融资。'],
+    ['Revenue is $0.000001M.', '收入为 1 美元。'],
+    ['Revenue is $9007199254740993.', '收入为 9007199254740993 美元。'],
+    ['Revenue was $10M; the comparison also uses $10M.', '收入为 1,000 万美元；比较也使用 1,000 万美元。'],
+    ['January 2026 revenue was $50M; December 2023 revenue was $10M.', '2026 年 1 月收入为 5,000 万美元；2023 年 12 月收入为 1,000 万美元。'],
+    ['Revenue is £10M and capital is $5M.', '收入为 £10M，资本为 500 万美元。'],
+  ].map(([en, zh]) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor: true }).length === 0,
+    `exact positive dollar scalars must match without losing precision or other anchors: ${zh}`,
+  ]),
+  ...[
+    ['The revenue threshold is $50M.', '收入门槛为 500 万美元。'],
+    ['The revenue threshold is $50M.', '收入门槛为 5,000 万元。'],
+    ['The revenue threshold is AUD $50M.', '收入门槛为 5,000 万美元。'],
+    ['The revenue threshold is $50M CAD.', '收入门槛为 5,000 万美元。'],
+    ['The source labels the threshold EUR $50M.', '收入门槛为 5,000 万美元。'],
+    ['Revenue is $9007199254740993.', '收入为 9007199254740992 美元。'],
+    ['Revenue was $10M; the comparison also uses $10M.', '收入为 1,000 万美元。'],
+    ['Revenue is -$50M.', '收入为 5,000 万美元。'],
+    ['Revenue is $50M.', '收入为负 5,000 万美元。'],
+    ['Revenue ranges from $5–10M.', '收入为 5 至 10 万美元。'],
+    ['Revenue is $50M from 42 customers.', '收入为 5,000 万美元，来自 41 家客户。'],
+    ['January 2026 revenue was $50M; December 2023 revenue was $10M.', '2026 年 12 月收入为 5,000 万美元；2023 年 1 月收入为 1,000 万美元。'],
+  ].map(([en, zh]) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor: true })
+      .some((issue) => issue.code === 'metric-preservation'),
+    `dollar normalization must not accept changed amounts, currencies, counts, dates or unsupported signs/ranges: ${zh}`,
+  ]),
+  ...[
+    ['No public conformity assessment has been disclosed for this system.', '未见任何公开的系统合规评估披露。', false],
+    ['No public conformity assessment has been disclosed for this system.', '已见公开的系统合规评估披露。', true],
+    ['No public conformity assessment has been disclosed for this system.', '并非未见任何公开的系统合规评估披露。', true],
+    ['No public conformity assessment has been disclosed for this system.', '未见任何问题；系统的公开合规评估已经披露。', true],
+  ].flatMap(([en, zh, missing]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor })
+      .some((issue) => issue.code === 'hedge-preservation') === missing,
+    `any-public-evidence wording must retain the scoped absence (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
     ['Point estimate for fiscal 2026 ER&D', 'FY26 ER&D 点估计'],
     ['The FY2026 revenue estimate is $10M.', 'FY26 收入估计为 $10M。'],
     ['The fiscal year 2026 revenue estimate is $10M.', 'FY 26 收入估计为 $10M。'],

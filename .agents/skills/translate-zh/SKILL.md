@@ -176,6 +176,11 @@ repeating that year does not create another quantitative claim. Repeated
 amounts and rates still retain their occurrence counts.
 Other unit or currency conversions still require source
 comparison; do not remove faithful units merely to make token-level checks pass.
+An exact fallback accepts positive dollar scalars such as `$50M` and
+`5,000 万美元`, comparing all numeric occurrences and paired month/year anchors.
+It shifts decimal text without floating-point rounding. Shared-unit ranges,
+signed amounts, and conversion between different currencies remain outside
+this fallback; qualifiers and metric meaning still require source review.
 
 To repair existing overlays one report at a time, seed the cache from the
 current Chinese files instead of retranslating from English:
@@ -232,6 +237,8 @@ Review the proposition: these aliases do not validate the metric, time basis,
 or a separate omitted attribution or evidence gap in the same leaf.
 `还看不到证明` retains `not yet the proof`; a negated or positive-proof
 statement does not.
+`未见任何公开` retains a scoped public-evidence gap; an unrelated absence or
+negation does not.
 
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json

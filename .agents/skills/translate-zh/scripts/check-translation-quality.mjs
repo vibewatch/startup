@@ -11,6 +11,7 @@ function usage(code = 0) {
 const invariantToken = /\b(?:FY\s*)?(?:19|20)\d{2}E?\b/gi;
 const calendarDateToken = /\b((?:19|20)\d{2})(?:-(\d{1,2})-(\d{1,2})\b|\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日)/gu;
 const metricToken = /(?:[$€£¥₦]\s*)?\d+(?:[.,]\d+)*(?:[KMBT](?![a-z])|\s?(?:x|×|倍|%|bps|ARR|MRR|GMV|TPV|NPL|IRR))?/gi;
+const quantityPowers = { k: 3, m: 6, b: 9, t: 12, 千: 3, 万: 4, 亿: 8, 万亿: 12 };
 const stylePatterns = [
   /对于[^。！？；]{1,24}而言/u,
   /在[^。！？；]{1,20}方面/u,
@@ -65,7 +66,7 @@ const hedgeRules = [
   },
   {
     en: /\bno public\b/i,
-    zh: /没有(?:与[^。！？；，：]{1,40}的)?公开|无公开|尚无公开|未见公开|(?:未|没有)(?:找到|发现)\s*(?:(?:针对[^。！？；，：]{1,40}|[A-Za-z][A-Za-z0-9 .&+-]{0,60})的\s*)?公开|未公开|未确认有公开|(?:未|尚未|没有)(?:披露|发布)公开|公开(?:资料|信息|记录|文件|数据|证据|材料|来源)(?:中)?(?:未|尚未|没有|尚无|无法)/u,
+    zh: /没有(?:与[^。！？；，：]{1,40}的)?公开|无公开|尚无公开|未见公开|(?<!并非|不是)未见任何公开|(?:未|没有)(?:找到|发现)\s*(?:(?:针对[^。！？；，：]{1,40}|[A-Za-z][A-Za-z0-9 .&+-]{0,60})的\s*)?公开|未公开|未确认有公开|(?:未|尚未|没有)(?:披露|发布)公开|公开(?:资料|信息|记录|文件|数据|证据|材料|来源)(?:中)?(?:未|尚未|没有|尚无|无法)/u,
     alternative: (_, target) => /(?<!并非|不是|非|尚)尚?未见[^。！？；，：]{1,24}公开(?:第三方)?审计/u.test(target),
     exclude: /\bno public[- ]cloud(?:\s+LLM)?\s+APIs?\s+(?:are\s+)?allowed\b|\b(?:has|have)\s+no public\s+IP\s+address(?:es)?(?=\s*(?:[.;,]|$))/gi,
   },
@@ -199,8 +200,47 @@ function normalizedMetricTokens(value, { includePlainNumbers = false } = {}) {
     .sort();
 }
 
-function normalizedCountMetrics(value, { normalizeMonths = false } = {}) {
-  const powers = { k: 3, m: 6, b: 9, t: 12, 千: 3, 万: 4, 亿: 8, 万亿: 12 };
+function shiftDecimal(number, power) {
+  const [integer, fraction = ''] = number.replace(/,/g, '').split('.');
+  const digits = `${integer}${fraction}`;
+  const point = integer.length + power;
+  const decimal = point <= 0 ? `0.${'0'.repeat(-point)}${digits}`
+    : point >= digits.length ? `${digits}${'0'.repeat(point - digits.length)}`
+      : `${digits.slice(0, point)}.${digits.slice(point)}`;
+  const [whole, tail = ''] = decimal.split('.');
+  const trimmed = tail.replace(/0+$/, '');
+  return `${whole.replace(/^0+(?=\d)/, '')}${trimmed ? `.${trimmed}` : ''}`;
+}
+
+function normalizedDollarMetrics(value) {
+  let converted = 0;
+  let unsupported = false;
+  const expanded = normalizeQuantityWords(value).replace(
+    /(?<![\w.,])(?:(\$)\s*(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)\s*(万亿|亿|万|千|[KMBT])?|(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)\s*(万亿|亿|万|千)?\s*美元)(?!\w|[.,]\d)/giu,
+    (match, dollar, prefixNumber, prefixUnit, suffixNumber, suffixUnit, offset, text) => {
+      const before = text.slice(0, offset);
+      const after = text.slice(offset + match.length);
+      if (/[-−+–—负]\s*$/u.test(before) || /^\s*[-−–—]/u.test(after)
+          || /^\s*(?:[%％×倍]|(?:ARR|MRR|GMV|TPV|NPL|IRR|bps|x)\b)/iu.test(after)
+          || /\d[\d.,]*\s*(?:[KMBT]|万亿|亿|万|千)?\s*(?:美元)?\s*(?:to|至|到)\s*$/iu.test(before)
+          || /^\s*(?:to|至|到)\s*[$\d]/iu.test(after)
+          || dollar && /\b(?:EUR|GBP|JPY|CNY|RMB|HKD|AUD|CAD|SGD|INR|KRW|TWD|CHF|NGN|NZD)\s*$/i.test(before)
+          || dollar && /^\s*(?:EUR|GBP|JPY|CNY|RMB|HKD|AUD|CAD|SGD|INR|KRW|TWD|CHF|NGN|NZD)\b/i.test(after)
+          || /[(（]\s*$/u.test(before) && /^\s*[)）]/u.test(after)) {
+        unsupported = true;
+        return match;
+      }
+      const unit = prefixUnit ?? suffixUnit;
+      converted += 1;
+      return `$${shiftDecimal(prefixNumber ?? suffixNumber, (unit ? quantityPowers[unit.toLowerCase()] : 0) - 6)}M `;
+    },
+  );
+  return converted && !unsupported
+    ? normalizedCountMetrics(expanded, { normalizeMonths: true, allowUnconverted: true })
+    : null;
+}
+
+function normalizedCountMetrics(value, { normalizeMonths = false, allowUnconverted = false } = {}) {
   const months = [
     'january', 'february', 'march', 'april', 'may', 'june',
     'july', 'august', 'september', 'october', 'november', 'december',
@@ -249,20 +289,12 @@ function normalizedCountMetrics(value, { normalizeMonths = false } = {}) {
         unsupported = true;
         return match;
       }
-      const [integer, fraction = ''] = number.replace(/,/g, '').split('.');
-      const digits = `${integer}${fraction}`;
-      const point = integer.length + powers[(chineseUnit ?? englishUnit).toLowerCase()] - 6;
       // Shift decimal text exactly; large counts must not lose integer precision.
-      const decimal = point <= 0 ? `0.${'0'.repeat(-point)}${digits}`
-        : point >= digits.length ? `${digits}${'0'.repeat(point - digits.length)}`
-          : `${digits.slice(0, point)}.${digits.slice(point)}`;
-      const [whole, tail = ''] = decimal.split('.');
-      const trimmed = tail.replace(/0+$/, '');
       converted += 1;
-      return `${whole.replace(/^0+(?=\d)/, '')}${trimmed ? `.${trimmed}` : ''}M `;
+      return `${shiftDecimal(number, quantityPowers[(chineseUnit ?? englishUnit).toLowerCase()] - 6)}M `;
     },
   );
-  return converted && !unsupported
+  return (converted || allowUnconverted) && !unsupported
     ? [...normalizedMetricTokens(expanded, { includePlainNumbers: true }), ...monthAnchors].sort()
     : null;
 }
@@ -314,7 +346,11 @@ function walk(en, zh, path, whitelist, issues, options) {
         const targetCounts = normalizedCountMetrics(numericTarget, { normalizeMonths });
         return sourceCounts && targetCounts && JSON.stringify(sourceCounts) === JSON.stringify(targetCounts);
       });
-      if (!equivalentCounts) {
+      const sourceDollars = equivalentCounts ? null : normalizedDollarMetrics(en);
+      const targetDollars = equivalentCounts ? null : normalizedDollarMetrics(numericTarget);
+      const equivalentDollars = sourceDollars && targetDollars
+        && JSON.stringify(sourceDollars) === JSON.stringify(targetDollars);
+      if (!equivalentCounts && !equivalentDollars) {
         pushIssue(issues, {
           path: path.join('/'),
           kind: 'semantic',
