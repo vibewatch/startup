@@ -314,6 +314,13 @@ cover submission through finalization without human intervention, whereas a
 clean-claim metric may measure passing the first claim edits without manual
 intervention. Neither means payer approval or payment. Render `manual touch`
 as manual intervention, not a physical touchpoint, in these billing workflows.
+`公开信息不足以` (also `公开资料`, `公开证据`, or `公开依据`) can preserve
+`no public basis`; it cannot substitute for another missing public disclosure.
+`还无法完全看清` or `仍无法完全看清` can retain `not yet fully transparent`,
+but not a separate `not yet` claim. Direct negations of these aliases do not
+preserve the gap. `public-claim dispersion` describes variation among public
+statements, not an assertion by a company; a separate company assertion still
+requires attribution.
 Coverage lists containing claim procedures, claim triggers, or claims history
 refer to insurance processes, not assertions; separate company claims still
 require attribution. `公司披露的增长口径` and `管理层口径` retain attribution.

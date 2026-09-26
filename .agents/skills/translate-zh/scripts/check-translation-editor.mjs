@@ -65,6 +65,29 @@ const legalClaimNounPairs = [
 
 const checks = [
   ...[
+    ['There is no public basis to calculate runway.', '公开信息不足以计算现金续航。', false],
+    ['There is no public basis to assess revenue quality.', '公开资料仍不足以评估收入质量。', false],
+    ['There is no public basis to assess revenue quality.', '公开证据尚不足以评估收入质量。', false],
+    ['There is no public basis to calculate runway.', '公开信息足以计算现金续航。', true],
+    ['There is no public basis to calculate runway.', '并非公开信息不足以计算现金续航。', true],
+    ['There is no public basis to calculate runway.', '公开信息并非不足以计算现金续航。', true],
+    ['There is no public pricing disclosure.', '公开信息不足以评估收入质量。', true],
+    ['There is no public basis to calculate runway; no public pricing is available.', '公开信息不足以计算现金续航；定价已公布。', true],
+    ['The dependencies are not yet fully transparent from public evidence.', '公开证据还无法完全看清这些依赖。', false],
+    ['The dependencies are not yet fully transparent from public evidence.', '公开证据仍无法完全看清这些依赖。', false],
+    ['The dependencies are not yet fully transparent from public evidence.', '公开证据已能完全看清这些依赖。', true],
+    ['The dependencies are not yet fully transparent from public evidence.', '并非还无法完全看清这些依赖。', true],
+    ['The dependencies are not yet fully transparent; the company is not yet profitable.', '公开证据还无法完全看清这些依赖；公司已经盈利。', true],
+    ['The company is not yet profitable.', '公开证据还无法完全看清这些依赖；公司已经盈利。', true],
+    ['The range expresses public-claim dispersion rather than audited company market share.', '区间表达公开口径分散，而非经审计的公司市场份额。', false],
+    ['Public-claim dispersion is wide; the company claims its product is superior.', '公开口径分散；产品更好。', true],
+    ['The company claims dispersion improved after product deployment.', '产品部署后分散程度改善。', true],
+  ].flatMap(([en, zh, expected]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(`${en} This is a diligence observation.`), fullReport(zh), { strictEditor })
+      .some((issue) => issue.code === 'hedge-preservation') === expected,
+    `scoped evidence-gap and claim-noun rules preserve separate assertions (strict=${strictEditor}): ${en} / ${zh}`,
+  ])),
+  ...[
     ['据独立报道，累计融资超过 $1B。', false],
     ['据媒体报道，累计融资超过 $1B。', false],
     ['据公开报道，累计融资超过 $1B。', false],
