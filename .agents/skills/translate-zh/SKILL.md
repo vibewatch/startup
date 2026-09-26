@@ -177,6 +177,14 @@ evidence wording includes `未找到公开`, `没有找到公开`, `未发现针
 `government guarantee claim status` are financial claims nouns, not assertions.
 `声明` and `公司口径` can preserve an assertion, but a separate company assertion
 beside a financial claims noun still needs attribution.
+`网站口径` and an attributed `反方观点` can also preserve a claim. Insurance
+coverage limits and claims history refer to insurance, not assertions.
+`at most recent fiscal quarter-end` names the latest period, not an upper bound;
+a separate `at most` quantity in the same leaf still needs its upper bound.
+Do not mistake `来源` or `带来` for the purpose marker in `通过…来`, or a
+locative phrase such as `正在生产环境中部署` for clause-final `正在…中`.
+Public-evidence gaps can place a Latin company name or a carrier relationship
+before `公开`; `公开材料没有…` and `公开来源无法…` can retain a negative finding.
 
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json

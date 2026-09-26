@@ -49,6 +49,51 @@ const noPublicIpAndMilestoneSource = `${noPublicIpSource} The IPO timeline has n
 
 const checks = [
   ...[
+    ['All triggers are observable from public sources or standard diligence requests.', '所有触发项都可通过公开来源或标准尽调请求观察。'],
+    ['The previous financing remains uncorroborated in accessible public sources.', '尚无法通过公开可访问来源独立佐证前一轮融资。'],
+    ['Brands drove more than $6B in revenue through the platform in Q1 2026.', 'Q1 2026 品牌通过平台带来超过 $6B 收入。'],
+    ['Embodied AI is becoming mainstream in manufacturing and services.', '具身 AI 正在制造业和服务业中走向主流。'],
+    ['Businesses generate training data in these environments.', '企业正在这些环境中生成训练数据。'],
+    ['Data partners are not necessarily deploying the model in production.', '数据伙伴不一定正在生产环境中部署模型。'],
+    ['Confirm actual cash balance at most recent fiscal quarter-end before the investment committee.', '投资委员会审议前，确认最近一个财季末的实际现金余额。'],
+    ['Review TCPA insurance coverage limit and claims history before underwriting.', '作出投资判断前，审查 TCPA 保险保额和索赔记录。'],
+    ['The reported infrastructure covers 130 clusters and 200K GPUs (website claims).', '基础设施覆盖 130 个集群、200K 块 GPU（网站口径）。'],
+    ['This is an adversarial claim from Brad Porter, with production deployment experience.', '这项反方观点来自具备生产部署经验的 Brad Porter。'],
+    ['Unknown indicates no public documentation found for PaleBlueDot in this review.', '未知表示本次审查未找到 PaleBlueDot 的公开文档。'],
+    ['No public SLA with carriers; policy enforcement history has not been disclosed.', '没有与运营商的公开 SLA；政策执行历史未披露。'],
+    ['Penetration test summaries require a request; no public breach history confirmed.', '渗透测试摘要需申请；未确认有公开泄露历史。'],
+    ['Management continuity is a material risk with no public mitigation evidence.', '管理层连续性是重大风险，公开材料没有缓释证据。'],
+    ['No public source provides a segment-specific estimate for the addressable market.', '公开来源没有提供该可服务市场的细分估算。'],
+    ['Legal review is required under NDA. No public source resolves these gaps.', '需在 NDA 下开展法律审查，公开来源无法解决这些缺口。'],
+  ].flatMap(([en, zh]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor }).length === 0,
+    `locative phrases, latest periods, and reviewed disclosure wording must pass (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
+    ['公司通过平台来提升转化。', 'translationese'],
+    ['项目正在系统测试中，随后才会发布。', 'translationese'],
+    ['项目正在系统测试中。', 'translationese'],
+  ].map(([zh, code]) => [
+    checkPairQuality(fullReport('The company is improving its system.'), fullReport(zh))
+      .some((issue) => issue.code === code),
+    `genuine stylistic constructions must remain flagged: ${zh}`,
+  ]),
+  ...[
+    ['Confirm actual cash balance at most recent fiscal quarter-end; total exposure must be at most $10M.', '确认最近一个财季末的现金余额，总敞口为 $10M。'],
+    ['The company claims the insurance coverage limit and claims history support expansion.', '保险保额和索赔记录支持业务扩张。'],
+    ['The reported infrastructure covers 130 clusters and 200K GPUs (website claims).', '基础设施已证实覆盖 130 个集群、200K 块 GPU。'],
+    ['Unknown indicates no public documentation found for PaleBlueDot in this review.', '本次审查已找到 PaleBlueDot 的公开文档。'],
+    ['Unknown indicates no public documentation found for PaleBlueDot in this review.', '未找到问题，但 PaleBlueDot 的公开文档已确认。'],
+    ['No public SLA with carriers; policy enforcement history has not been disclosed.', '已确认与运营商的公开 SLA，政策执行历史未披露。'],
+    ['Penetration test summaries require a request; no public breach history confirmed.', '渗透测试摘要需申请，已确认有公开泄露历史。'],
+    ['Management continuity is a material risk with no public mitigation evidence.', '管理层连续性是重大风险，公开材料已有缓释证据。'],
+    ['Legal review is required under NDA. No public source resolves these gaps.', '需在 NDA 下开展法律审查，公开来源已经解决这些缺口。'],
+  ].flatMap(([en, zh]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor })
+      .some((issue) => issue.code === 'hedge-preservation'),
+    `new aliases must not hide an upper bound, separate assertion or positive disclosure (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
     ['Estimated from FCA cumulative revenue of £1.119bn over the disclosed period.', '根据 FCA 披露期间的累计收入 £1.119bn 推算。'],
     ['No public financing round, investor identity, or valuation disclosure was found in retained sources.', '留存来源没有找到公开融资轮次、投资人身份或估值披露。'],
     ['No public attestation found; significant gap for enterprise and government buyers.', '未找到公开鉴证；对企业和政府买方都是重大缺口。'],
