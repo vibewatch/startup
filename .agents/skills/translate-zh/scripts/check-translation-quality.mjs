@@ -57,7 +57,7 @@ const hedgeRules = [
     zh: /声称|称|说法|主张|表述|断言|声明|自述|公司口径|网站口径|反方观点/u,
     exclude: /\b(?:(?:for|in|of|on)\s+claims?\s+(?:modeling|modelling|processing|handling|management|adjudication|submission|settlement|opening|setup|negotiation)|patent\s+claims?\s+(?:drafting|construction|interpretation|scope)|small[- ]claims?\s+(?:processing|courts?)|clinical\s*,\s*claims?\s*,?\s+and\s+operational\s+(?:data|systems)|EHRs?\s*,\s*claims?\s+systems|fraud\s+claims?\s+handling|government\s+guarantee\s+claims?\s+status|insurance\s+coverage\s+limits?\s+and\s+claims\s+history|premium\s+and\s+claims\s+expenditure|high[- ]cost\s+claims?\s+(?:concentration|categories)|million[- ]dollar[- ]plus\s+claims|highest[- ]ROI\s+claims|claims[- ]data[- ]driven|\d+(?:\.\d+)?%\s+claims\s+cost\s+reduction|real[- ]time\s+claims\s+data|claims\s+data\s+latency(?=\s*(?:[.;]|$))|do(?:es)?\s+not\s+reveal\s+claims?\s+quality\s+or\s+jurisdictions|qualitative\s+directional\s+claim|(?:personal|bodily)[ -]injury\s+claims?|(?:anchor|inflate|weaken)\s+claims?\s+values?|claims?-inflation|InsurTech\s+claims?\s+processing|insurance\s+carriers?\s+claims?\s+automation|claims?\s+setup(?=\s*,\s*care\s+coordination\b)|per\s+claims?|open\s+claims|return(?:s|ing)?\s+claims?\s+numbers|handle\s+claims?\s+negotiation|trained\s+on\s+(?:hundreds|thousands|millions)\s+of\s+claims|malpractice\s+claims)\b/gi,
   },
-  { en: /\bnot yet\b/i, zh: /尚未|还未|仍未|还没|目前没有|尚无|尚缺|尚不|还不|仍不/u },
+  { en: /\bnot yet\b/i, zh: /尚未|还未|仍未|还没|目前没有|尚无|尚缺|尚不|还不|仍不|(?<!并非|不是)还看不到/u },
   {
     en: /\b(?:unproven|not proven)\b/i,
     zh: /未经证实|未获证实|未(?:被)?(?:证明|验证|证实)|未在规模上得到验证|无法证明|未经验证|未获验证/u,
@@ -155,6 +155,17 @@ function normalizedTokens(value) {
     `${match[1]}-${(match[2] ?? match[4]).padStart(2, '0')}-${(match[3] ?? match[5]).padStart(2, '0')}`
   ));
   return [...years, ...dates];
+}
+
+function expandSourceFiscalYears(target, source) {
+  if (!/\bFY\s*\d{2}\b/i.test(target)) return target;
+  const fiscalYears = new Set([...source.matchAll(/\b(?:FY\s*|fiscal(?:\s+year)?\s+)((?:19|20)\d{2})\b/gi)]
+    .map((match) => match[1]));
+  const years = [...new Set(normalizedTokens(source).filter((token) => /^\d{4}$/.test(token)))];
+  return target.replace(/\bFY\s*(\d{2})\b/gi, (token, suffix) => {
+    const matches = years.filter((year) => year.endsWith(suffix));
+    return matches.length === 1 && fiscalYears.has(matches[0]) ? `FY${matches[0]}` : token;
+  });
 }
 
 function normalizedMetricTokens(value, { includePlainNumbers = false } = {}) {
@@ -279,7 +290,8 @@ function walk(en, zh, path, whitelist, issues, options) {
     return;
   }
   if (typeof en !== 'string' || typeof zh !== 'string' || !isTranslatableLeaf(path, whitelist)) return;
-  const targetTokens = normalizedTokens(zh);
+  const numericTarget = expandSourceFiscalYears(zh, en);
+  const targetTokens = normalizedTokens(numericTarget);
   const missingNumbers = normalizedTokens(en).filter((token) => !targetTokens.includes(token));
   if (missingNumbers.length) {
     pushIssue(issues, {
@@ -291,15 +303,15 @@ function walk(en, zh, path, whitelist, issues, options) {
   }
   if (options.strictEditor) {
     const sourceMetrics = normalizedMetricTokens(en);
-    let targetMetrics = normalizedMetricTokens(zh);
+    let targetMetrics = normalizedMetricTokens(numericTarget);
     // Resolve written ratios only against an otherwise mismatched numeric anchor.
     if (JSON.stringify(sourceMetrics) !== JSON.stringify(targetMetrics)) {
-      targetMetrics = normalizedMetricTokens(normalizeWrittenPercentages(zh));
+      targetMetrics = normalizedMetricTokens(normalizeWrittenPercentages(numericTarget));
     }
     if (JSON.stringify(sourceMetrics) !== JSON.stringify(targetMetrics)) {
       const equivalentCounts = [false, true].some((normalizeMonths) => {
         const sourceCounts = normalizedCountMetrics(en, { normalizeMonths });
-        const targetCounts = normalizedCountMetrics(zh, { normalizeMonths });
+        const targetCounts = normalizedCountMetrics(numericTarget, { normalizeMonths });
         return sourceCounts && targetCounts && JSON.stringify(sourceCounts) === JSON.stringify(targetCounts);
       });
       if (!equivalentCounts) {

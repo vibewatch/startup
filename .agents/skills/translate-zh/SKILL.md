@@ -56,6 +56,10 @@ npm run translate:zh -- finalize-full "$REPORT"
 Finalization runs a conservative quality gate after the structural check. It fails when a translatable leaf drops year/date anchors or explicit uncertainty qualifiers, or retains a high-confidence translationese pattern from the soundcheck. It emits advisory findings for glossary drift, untranslated ordinary descriptors, half-width Chinese punctuation, and dense `的` chains. Repair only the flagged cached leaf or part and rerun the narrow finalize command.
 
 Calendar-date checks preserve ISO month/day anchors as well as years, accepting equivalent Chinese dates such as `2026-09-25` and `2026 年 9 月 25 日`. Fiscal-year prefixes and forecast suffixes (`FY2024`, `2024E`) normalize to the same year without allowing a changed year.
+Chinese fiscal shorthand such as `FY26` can match an explicit English
+`fiscal 2026` or `FY2026` only when the source leaf supplies an unambiguous
+full year. The checker does not guess a century or treat calendar years as
+fiscal years.
 Attached labels such as `2026Q1` and `2026H1`, and escaped line breaks in chart
 labels, also retain their year anchors. Quarter and half-year labels in
 `Q2 ARR` or `H1 ARR` are not ARR amounts. The metric tokenizer separates these
@@ -226,6 +230,8 @@ before `公开`; `公开材料没有…` and `公开来源无法…` can retain 
 inferred financial condition. Negated forms do not establish preservation.
 Review the proposition: these aliases do not validate the metric, time basis,
 or a separate omitted attribution or evidence gap in the same leaf.
+`还看不到证明` retains `not yet the proof`; a negated or positive-proof
+statement does not.
 
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json

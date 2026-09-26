@@ -64,6 +64,28 @@ const legalClaimNounPairs = [
 
 const checks = [
   ...[
+    ['Point estimate for fiscal 2026 ER&D', 'FY26 ER&D 点估计'],
+    ['The FY2026 revenue estimate is $10M.', 'FY26 收入估计为 $10M。'],
+    ['The fiscal year 2026 revenue estimate is $10M.', 'FY 26 收入估计为 $10M。'],
+    ['Investors can see the path, but not yet the proof. Execution still matters.', '投资人能看见路径，但还看不到证明。执行仍然重要。'],
+  ].flatMap(([en, zh]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor }).length === 0,
+    `source-anchored fiscal shorthand and missing-proof wording must pass (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
+    ['Point estimate for fiscal 2026 ER&D', 'FY27 ER&D 点估计', 'year-preservation'],
+    ['Point estimate for fiscal 2026 ER&D', 'FY1926 ER&D 点估计', 'year-preservation'],
+    ['Point estimate for fiscal 2026 ER&D', 'FY260 ER&D 点估计', 'year-preservation'],
+    ['Point estimate for calendar 2026 ER&D', 'FY26 ER&D 点估计', 'year-preservation'],
+    ['Compare fiscal 1926 with fiscal 2026 ER&D.', '比较 FY26 与 FY26 的 ER&D。', 'year-preservation'],
+    ['The FY2026 revenue estimate is $10M.', 'FY26 收入估计为 $11M。', 'metric-preservation'],
+    ['Investors can see the path, but not yet the proof. Execution still matters.', '投资人能看见路径，也看到了证明。执行仍然重要。', 'hedge-preservation'],
+    ['Investors can see the path, but not yet the proof. Execution still matters.', '并非还看不到证明；投资人已有证据。执行仍然重要。', 'hedge-preservation'],
+  ].flatMap(([en, zh, code]) => (code === 'metric-preservation' ? [true] : [false, true]).map((strictEditor) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor }).some((issue) => issue.code === code),
+    `shorthand must not infer ambiguous years, alter metrics or reverse missing proof (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
     ['The estimated revenue supports the valuation discussion.', '预估收入为估值讨论提供参考。'],
     ['Analysts estimate revenue from the available disclosures.', '分析师根据现有披露预估收入。'],
     ['Inferred from high retention + $72 ARPU + hardware margin; likely >3x', '由高留存率 + $72 ARPU + 硬件毛利推断；预计超 3 倍'],
