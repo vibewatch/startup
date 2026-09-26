@@ -183,10 +183,27 @@ function normalizedCountMetrics(value, { normalizeMonths = false } = {}) {
     'january', 'february', 'march', 'april', 'may', 'june',
     'july', 'august', 'september', 'october', 'november', 'december',
   ];
+  const monthAnchors = new Set();
   const calendar = normalizeMonths ? value.replace(
     /\b(January|February|March|April|May|June|July|August|September|October|November|December)\s+((?:19|20)\d{2})\b/gi,
-    (_, month, year) => `${year};${months.indexOf(month.toLowerCase()) + 1};`,
+    (_, month, year) => {
+      const number = months.indexOf(month.toLowerCase()) + 1;
+      monthAnchors.add(`month:${year}-${number}`);
+      return `${year};${number};`;
+    },
   ) : value;
+  if (normalizeMonths) {
+    for (const [, year, month] of value.matchAll(/(?<!\d)((?:19|20)\d{2})\s*年\s*(0?[1-9]|1[0-2])\s*月/gu)) {
+      monthAnchors.add(`month:${year}-${Number(month)}`);
+    }
+    const years = [...new Set(normalizedTokens(value).filter((token) => /^(?:19|20)\d{2}$/.test(token)))];
+    // An omitted repeated year is unambiguous only within a single-year leaf.
+    if (years.length === 1) {
+      for (const [, month] of value.matchAll(/(?<![\d.])(0?[1-9]|1[0-2])\s*月/gu)) {
+        monthAnchors.add(`month:${years[0]}-${Number(month)}`);
+      }
+    }
+  }
   const normalized = normalizeQuantityWords(normalizeCalendarSpacing(normalizeWrittenPercentages(calendar)));
   let converted = 0;
   let unsupported = false;
@@ -224,7 +241,7 @@ function normalizedCountMetrics(value, { normalizeMonths = false } = {}) {
     },
   );
   return converted && !unsupported
-    ? normalizedMetricTokens(expanded, { includePlainNumbers: true })
+    ? [...normalizedMetricTokens(expanded, { includePlainNumbers: true }), ...monthAnchors].sort()
     : null;
 }
 

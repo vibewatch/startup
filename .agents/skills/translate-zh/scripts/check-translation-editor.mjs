@@ -62,6 +62,8 @@ const checks = [
     ['Over 1 million users in April 2025.', '2025 年 4 月有 100 多万名用户。'],
     ['Over 1 million users in April 2025.', '2025 年四月有 100 多万名用户。'],
     ['1M customers by September 2025, versus 1 million users in April 2025.', '2025 年 9 月前有 100 万名客户，同年 4 月有 100 万名用户。'],
+    ['1M users in April 2025 and 2M users in September 2026.', '2025 年 4 月有 100 万名用户，2026 年 9 月有 200 万名用户。'],
+    ['In 2026, we compare 1M users in April 2025 with 2M users in September 2025.', '2026 年，我们比较 2025 年 4 月的 100 万名用户与 2025 年 9 月的 200 万名用户。'],
     ['345 million videos and $5M revenue in 2026.', '2026 年生成 3.45 亿段视频，收入为 $5M。'],
     ['1.0101 million events.', '共有 101.01 万起事件。'],
     ['9007199254740993 thousand events.', '共有 900719925474099.3 万起事件。'],
@@ -96,6 +98,8 @@ const checks = [
     ['2024 had 1 million users.', '2025 年有 100 万名用户。'],
     ['Over 1 million users in April 2025.', '2025 年 5 月有 100 多万名用户。'],
     ['1M customers by September 2025.', '2025 年 8 月前有 100 万名客户。'],
+    ['1M users in April 2025 and 2M users in September 2026.', '2025 年 9 月有 100 万名用户，2026 年 4 月有 200 万名用户。'],
+    ['In 2026, we compare 1M users in April 2025 with 2M users in September 2025.', '2025 年，我们比较 2026 年 4 月的 100 万名用户与 2025 年 9 月的 200 万名用户。'],
     ['2024 had 1 million users.', '2024 万名用户和 100 万名客户。'],
     ['1 million users and 25bps margin improvement.', '100 万名用户，毛利率提升 25B。'],
   ].map(([en, zh]) => [

@@ -153,6 +153,9 @@ counts and nearby unscaled numbers, to agree. For example, `345 million` can
 match `3.45 亿`, and `per 1 million tokens` can match `每 100 万 tokens`.
 Within that comparison, a full English month name followed by a year retains
 both anchors: `April 2025` matches `2025 年 4 月`, but not `2025 年 5 月`.
+Month and year remain paired; swapping months across two years must not pass
+merely because the same numbers remain. An omitted repeated year is inferred
+only when the leaf has a single unambiguous year.
 Shared-unit ranges, signed counts, and monetary conversions remain outside this
 fallback. It does not establish qualifier, metric-head, or physical-unit fidelity;
 source comparison is still required, and existing hedge checks remain active.
