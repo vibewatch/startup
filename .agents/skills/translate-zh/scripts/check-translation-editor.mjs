@@ -65,6 +65,66 @@ const legalClaimNounPairs = [
 
 const checks = [
   ...[
+    ['AI-driven prior authorization; billing documentation; claim validation.', 'AI 驱动的事前授权；账单文档；理赔验证。'],
+    ['Claims denial reduction data not independently verified; coders still review.', '理赔拒付减少数据未经独立核验；编码员仍需审核。'],
+    ['These are not marketing claims: the engineering posts describe the model architecture.', '这些不是营销口号：工程文章介绍了模型架构。'],
+  ].flatMap(([en, zh]) => [false, true].flatMap((strictEditor) => [
+    [
+      checkPairQuality(fullReport(`${en} This is a diligence observation.`), fullReport(`${zh} 这是尽调观察。`), { strictEditor }).length === 0,
+      `claim-validation nouns and negated marketing claims do not require invented attribution (strict=${strictEditor}): ${en}`,
+    ],
+    [
+      checkPairQuality(fullReport(`${en} The company claims it performs better.`), fullReport(`${zh} 它表现更好。`), { strictEditor })
+        .some((issue) => issue.code === 'hedge-preservation'),
+      `a separate company assertion still needs attribution (strict=${strictEditor}): ${en}`,
+    ],
+  ])),
+  ...[
+    ['Stage values are company-stated aggregate claims, not verified funnel metrics.', '阶段数值是公司披露的汇总口径，不是经验证的漏斗指标。', false],
+    ['Stage values are company-stated aggregate claims, not verified funnel metrics.', '阶段数值是汇总结果，不是经验证的漏斗指标。', true],
+    ['Stage values are company-stated aggregate claims, not verified funnel metrics.', '阶段数值并非公司披露的汇总口径，不是经验证的漏斗指标。', true],
+  ].flatMap(([en, zh, missing]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor })
+      .some((issue) => issue.code === 'hedge-preservation') === missing,
+    `aggregate figures must retain company attribution (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
+    ['No public disclosure exists for these private metrics.', '这些私有指标在公开渠道没有披露。', '这些私有指标在公开渠道已经披露。'],
+    ['No public pricing page exists as of June 2026.', '截至 2026 年 6 月，公开渠道没有定价页。', '截至 2026 年 6 月，公开渠道有定价页。'],
+    ['No public SOC 2 report is referenced on the website.', '官网未提及公开 SOC 2 报告。', '官网提及公开 SOC 2 报告。'],
+    ['No public disclosure explains consent verification.', '公开披露未说明如何验证同意。', '公开披露说明了如何验证同意。'],
+    ['No public contract terms between the two parties have been disclosed.', '双方未披露任何公开合同条款。', '双方已披露公开合同条款。'],
+    ['There is no public mechanism to verify this valuation.', '公开层面没有机制能验证这一估值。', '公开层面有机制能验证这一估值。'],
+    ['There is no public succession or deputy layer.', '公开资料不显示继任或副手层。', '公开资料显示继任或副手层。'],
+  ].flatMap(([en, zh, reversed]) => [false, true].flatMap((strictEditor) => [
+    [
+      checkPairQuality(fullReport(`${en} This is a diligence observation.`), fullReport(`${zh} 这是尽调观察。`), { strictEditor }).length === 0,
+      `scoped public-disclosure gaps must pass (strict=${strictEditor}): ${zh}`,
+    ],
+    [
+      checkPairQuality(fullReport(`${en} This is a diligence observation.`), fullReport(`${reversed} 这是尽调观察。`), { strictEditor })
+        .some((issue) => issue.code === 'hedge-preservation'),
+      `positive disclosure must not satisfy an evidence gap (strict=${strictEditor}): ${reversed}`,
+    ],
+  ])),
+  ...[
+    '并非公开渠道没有披露。',
+    '并非未提及公开报告。',
+    '并非公开披露未说明如何验证同意。',
+    '并非未披露任何公开合同条款。',
+    '并非公开层面没有机制。',
+    '并非公开资料不显示继任层。',
+    '公开渠道很广；内部没有披露。',
+    '未提及内部问题；公开报告已经发布。',
+  ].flatMap((zh) => [false, true].map((strictEditor) => [
+    checkPairQuality(
+      fullReport('No public disclosure provides the necessary evidence for verification.'),
+      fullReport(`${zh} 这是尽调观察。`),
+      { strictEditor },
+    ).some((issue) => issue.code === 'hedge-preservation'),
+    `negated or unrelated gaps must not establish absence of public evidence (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
     ['No public financing event has been disclosed.', '没有披露任何公开融资事件。', false],
     ['No public financing event has been disclosed.', '已经披露公开融资事件。', true],
     ['No public financing event has been disclosed.', '并非没有披露任何公开融资事件。', true],

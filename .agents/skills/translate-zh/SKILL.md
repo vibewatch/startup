@@ -236,6 +236,13 @@ negated wording or an absence in another clause must not satisfy them.
 `customer compensation claims` means customer compensation demands, not a
 company assertion; a separate assertion still needs attribution. The soundcheck
 does not mistake `在买方面前` for the `在…方面` construction.
+Evidence gaps also accept `公开渠道没有…`, `未提及公开…`,
+`公开披露未…`, `未披露任何公开…`, `公开层面没有…`, and
+`公开资料不显示…`; negation and clause boundaries still matter.
+Billing-documentation claim validation and claims-denial reduction data refer
+to insurance workflows. `not marketing claims` denies a marketing assertion;
+neither phrase removes the need to attribute a separate company assertion.
+`公司披露的汇总口径` retains company attribution for aggregate figures.
 `预估` can retain an estimate, and `预计` can express a likely outcome or
 inferred financial condition. Negated forms do not establish preservation.
 Review the proposition: these aliases do not validate the metric, time basis,
