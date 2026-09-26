@@ -173,6 +173,15 @@ Word-suffixed counts such as `30 million-plus` and `60,000-plus` can match
 Currency-marked amounts, accounting-style parentheses, signed values, and
 shared-unit ranges are not reinterpreted as grouped scalar counts. This fallback
 compares quantities and occurrences, not the meaning of the bounds or units.
+An otherwise mismatched metric set can recognize exact verbal tripling as
+`3x` / `3倍`, using complete numeric occurrences and paired month/year anchors.
+Existing explicit multiplier tokens that already agree are left alone.
+`triple-digit`, `triple-A`, and `tripling down` are not multipliers here.
+Signed, ranged, approximate, increment-based, and ambiguous `翻…倍` multiplier expressions
+remain outside this fallback, as do unsupported written quantities.
+Signed or accounting-style monetary amounts also keep their existing findings.
+This only resolves a quantity-token mismatch; attribution and the surrounding
+proposition still require source review.
 `percent` and `per cent` match `%`, including both range
 endpoints. Common written percentages such as `百分之十三` and `超过八成`
 can resolve a mismatched numeric anchor only when the full metric-token sets
