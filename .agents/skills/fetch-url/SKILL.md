@@ -25,7 +25,7 @@ When this skill is used inside the `startup-research` workflow, preserve the `ST
 - `--json`: use when another script/agent step needs structured fields such as status, final URL, source/cache state, title/PDF metadata, extraction mode, and output text.
 - `--out <file>` / `-o <file>`: use when the output is long, should be grepped later, or should be kept as a diagnostic artifact. By default this saves the same readable text that would be printed.
 - `--full-text` / `--no-main-content`: use only when the default output looks suspiciously short or misses important page sections. This keeps more page chrome and is useful for product/home pages, pricing pages, feature grids, docs tables, customer logos, or navigation context. It is not a cleaner mode.
-- `--raw` / `--raw-html`: use only for diagnostics or archival when you need original HTML or raw PDF bytes. For PDFs, pair it with `--out`, e.g. `--raw --out report.pdf`.
+- `--raw` / `--raw-html`: use only for diagnostics or archival. Pair with `--out` to preserve original response bytes for HTML, PDFs, and images, e.g. `--raw --out chart.png`. Raw files are never UTF-8 re-encoded, stripped of archive navigation, or truncated by `--max-chars`. Without `--out`, raw binary responses use `outputBase64` in JSON mode; terminal output shows metadata without dumping the binary body. Image downloads do not extract chart text or perform OCR.
 
 Readable extraction preserves repeated non-boilerplate lines: repeated table
 headers, dates, amounts, currencies, signs, and qualifiers can carry distinct

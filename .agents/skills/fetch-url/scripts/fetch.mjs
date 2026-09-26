@@ -3,6 +3,7 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { writeFile } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
+import { isUtf8 } from 'node:buffer';
 import { delimiter, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { argv, env, exit } from 'node:process';
@@ -407,7 +408,7 @@ Throttling: network attempts wait ${DEFAULT_THROTTLE_MS}ms by default to avoid h
 
 Caching: enabled by default at ${DEFAULT_CACHE_DIR} (override with --cache-dir or FETCH_URL_CACHE_DIR env). Cached responses younger than ${DEFAULT_CACHE_TTL_HOURS}h are reused. Use --refresh-cache to bypass the read but still write, --no-cache to disable read+write entirely.
 
-Output: default output is readable text. HTML pages use Mozilla Readability to extract main content by default; PDFs output extracted text. Use --full-text only as an escape hatch when Readability likely dropped useful non-article content (product/home pages, pricing pages, docs tables, feature grids, logos, navigation context). It is not cleaner; it intentionally keeps header/footer/navigation text. Use --raw only for diagnostics or archival raw HTML/PDF bytes. Use --json for a structured object with status, final URL, source, title/PDF metadata, and extracted body/text.
+Output: default output is readable text. HTML pages use Mozilla Readability to extract main content by default; PDFs output extracted text. Use --full-text only as an escape hatch when Readability likely dropped useful non-article content (product/home pages, pricing pages, docs tables, feature grids, logos, navigation context). It is not cleaner; it intentionally keeps header/footer/navigation text. Use --raw --out for byte-exact archival of HTML, PDFs, or images; --max-chars never truncates raw files. Raw binary responses without --out use base64 in --json and are not printed to the terminal. Use --json for a structured object with status, final URL, source, title/PDF metadata, and extracted body/text.
 
 Wayback fallback: bot-protected sites (DataDome/Cloudflare challenge, 401/403/451/503) automatically retry through web.archive.org. Use --via-wayback to force, --no-wayback to disable.
 
@@ -1011,14 +1012,15 @@ export function stripWaybackToolbar(html) {
     .replace(/<link[^>]*\/static\/_wb_\/[^>]*>/gi, '');
 }
 
-async function writeOutputFile(file, output, { isPdf, raw, contentLength }) {
+async function writeOutputFile(file, output, { isPdf, isBinary, raw }) {
   if (Buffer.isBuffer(output)) {
+    const kind = isPdf ? 'pdf' : isBinary ? 'bytes' : 'body';
     await writeFile(file, output);
     return {
       path: file,
-      kind: 'pdf',
-      bytes: contentLength,
-      message: `Wrote ${contentLength} bytes (PDF) to ${file}`,
+      kind,
+      bytes: output.length,
+      message: `Wrote ${output.length} bytes (${kind}) to ${file}`,
     };
   }
   const kind = raw && !isPdf ? 'body' : 'text';
@@ -1031,7 +1033,7 @@ async function writeOutputFile(file, output, { isPdf, raw, contentLength }) {
   };
 }
 
-function buildJsonPayload({ result, source, cacheHit, cacheAgeMinutes, cacheTtlHours, isPdf, title, pdfMeta, pdfTruncated, textExtraction, outputTruncated, output, outputFile, raw }) {
+function buildJsonPayload({ result, source, cacheHit, cacheAgeMinutes, cacheTtlHours, isPdf, isBinary, title, pdfMeta, pdfTruncated, textExtraction, outputTruncated, output, outputFile, raw }) {
   const outputIsBuffer = Buffer.isBuffer(output);
   const payload = {
     status: result.status,
@@ -1050,7 +1052,7 @@ function buildJsonPayload({ result, source, cacheHit, cacheAgeMinutes, cacheTtlH
     profile: result.profile,
     bytes: result.contentLength,
     elapsedMs: result.elapsedMs,
-    format: isPdf ? 'pdf' : 'html',
+    format: isPdf ? 'pdf' : isBinary ? 'binary' : 'html',
     title,
     truncated: outputTruncated,
     outputKind: outputIsBuffer ? 'bytes' : (raw && !isPdf ? 'body' : 'text'),
@@ -1312,39 +1314,36 @@ export async function main(args = argv.slice(2)) {
   // that returned an HTML error page still flows through the HTML path, and
   // a no-extension EDGAR URL that returns a real PDF is still detected.
   const isPdf = looksLikePdfBuffer(result.body);
+  const isBinary = opts.raw && !isPdf && (
+    /^(?:image\/(?!svg\+xml)|audio\/|video\/|application\/(?:octet-stream|zip|gzip)(?:;|$))/i.test(result.contentType ?? '')
+    || !isUtf8(result.body) || result.body.includes(0)
+  );
 
-  // Compute the displayable output. PDFs always go through pdfToText when we
-  // need text; their raw bytes are never printed to stdout. HTML decodes the
-  // Buffer to utf-8 once here, then optionally strips the Wayback toolbar
-  // and runs the cleaned text extraction path.
+  // Raw files retain the response bytes, including archived HTML navigation.
+  // Decoding, cleanup and character limits apply only to text output.
   let output;
   let pdfMeta = null;
   let pdfTruncated = false;
   let textExtraction = null;
   let outputTruncated = false;
-  let bodyStr = null;
-  if (isPdf) {
-    if (!opts.raw || !opts.file) {
-      // Need text for the default output. Skip parsing only when the user
-      // explicitly wants raw bytes via --raw --out.
-      try {
-        const parsed = await pdfToText(result.body, { maxChars: opts.maxChars });
-        output = parsed.text;
-        pdfMeta = { numPages: parsed.numPages, info: parsed.info };
-        pdfTruncated = parsed.truncated;
-        outputTruncated = parsed.truncated;
-      } catch (err) {
-        console.error(`[fetch-url] PDF parse failed: ${err.message}`);
-        exit(1);
-      }
-    } else {
-      output = result.body;
+  const bodyStr = isPdf || isBinary ? null : result.body.toString('utf8');
+  if (opts.raw && (opts.file || isBinary)) {
+    output = result.body;
+  } else if (isPdf) {
+    try {
+      const parsed = await pdfToText(result.body, { maxChars: opts.maxChars });
+      output = parsed.text;
+      pdfMeta = { numPages: parsed.numPages, info: parsed.info };
+      pdfTruncated = parsed.truncated;
+      outputTruncated = parsed.truncated;
+    } catch (err) {
+      console.error(`[fetch-url] PDF parse failed: ${err.message}`);
+      exit(1);
     }
   } else {
-    bodyStr = result.body.toString('utf8');
-    if (source === 'wayback') bodyStr = stripWaybackToolbar(bodyStr);
     if (!opts.raw) {
-      textExtraction = await extractHtmlText(bodyStr, result.finalUrl, result.contentType, { mainContent: opts.mainContent });
+      const html = source === 'wayback' ? stripWaybackToolbar(bodyStr) : bodyStr;
+      textExtraction = await extractHtmlText(html, result.finalUrl, result.contentType, { mainContent: opts.mainContent });
       output = textExtraction.text;
     } else {
       output = bodyStr;
@@ -1359,11 +1358,11 @@ export async function main(args = argv.slice(2)) {
 
   const title = isPdf
     ? (pdfMeta?.info?.Title?.trim() || null)
-    : (textExtraction?.title?.trim?.() || extractTitle(bodyStr));
+    : isBinary ? null : (textExtraction?.title?.trim?.() || extractTitle(bodyStr));
 
   if (opts.json) {
     const outputFile = opts.file
-      ? await writeOutputFile(opts.file, output, { isPdf, raw: opts.raw, contentLength: result.contentLength })
+      ? await writeOutputFile(opts.file, output, { isPdf, isBinary, raw: opts.raw })
       : null;
     console.log(JSON.stringify(buildJsonPayload({
       result,
@@ -1372,6 +1371,7 @@ export async function main(args = argv.slice(2)) {
       cacheAgeMinutes,
       cacheTtlHours: opts.cacheTtlHours,
       isPdf,
+      isBinary,
       title,
       pdfMeta,
       pdfTruncated,
@@ -1402,6 +1402,8 @@ export async function main(args = argv.slice(2)) {
     console.log(`PDF title:     ${title ?? '(not found)'}`);
     if (pdfTruncated) console.log(`Truncated:     yes (--max-chars ${opts.maxChars})`);
     if (typeof output === 'string') console.log(`Text bytes:    ${output.length}`);
+  } else if (isBinary) {
+    console.log('Format:        binary');
   } else {
     console.log(`<title>:       ${title ?? '(not found)'}`);
     if (!opts.raw && textExtraction) {
@@ -1415,8 +1417,10 @@ export async function main(args = argv.slice(2)) {
   }
 
   if (opts.file) {
-    const outputFile = await writeOutputFile(opts.file, output, { isPdf, raw: opts.raw, contentLength: result.contentLength });
+    const outputFile = await writeOutputFile(opts.file, output, { isPdf, isBinary, raw: opts.raw });
     console.log(outputFile.message);
+  } else if (isBinary) {
+    console.log('Binary body omitted; use --raw --out <file> for bytes or --raw --json for base64.');
   } else if (isPdf && opts.raw) {
     // Raw PDF behavior on a TTY (--raw, no --out): show
     // metadata + a short text preview, but do NOT dump full text to terminal.

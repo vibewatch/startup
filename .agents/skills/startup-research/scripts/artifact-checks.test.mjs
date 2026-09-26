@@ -4,6 +4,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'nod
 import { tmpdir } from 'node:os';
 import { basename, join } from 'node:path';
 import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
 import yaml from 'js-yaml';
 import { canonicalCacheKey, cleanExtractedText, htmlToText, isAccessErrorResponse, looksLikeBotChallenge, readerUrl } from '../../fetch-url/scripts/fetch.mjs';
 import { checkFigureDeep } from './artifact-checks.mjs';
@@ -112,6 +113,124 @@ test('fetch CLI preserves financial tables in main, full, cached and reader text
       assert.equal(output.cache.hit, mode === 'cache', mode);
       assert.equal(output.extraction.method, ['main', 'cache'].includes(mode) ? 'readability' : 'full-text', mode);
       assert.equal(output.retrievalSource, mode === 'reader' ? 'reader' : 'origin', mode);
+    }
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
+});
+
+test('fetch CLI preserves raw image bytes, metadata and provenance across output modes', () => {
+  const folder = mkdtempSync(join(tmpdir(), 'source-binary-check-'));
+  const png = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aX1sAAAAASUVORK5CYII=', 'base64');
+  const url = 'https://example.com/chart.png';
+  try {
+    for (const mode of ['origin-file', 'cache-file', 'json', 'terminal', 'missing-type', 'octet-stream']) {
+      const outputPath = join(folder, `${mode}.png`);
+      const log = join(folder, `${mode}.jsonl`);
+      const contentType = mode === 'missing-type' ? null : mode === 'octet-stream' ? 'application/octet-stream' : 'image/png';
+      const fileMode = mode.endsWith('-file');
+      if (mode === 'cache-file') {
+        writeFileSync(join(folder, `${canonicalCacheKey(url)}.json`), JSON.stringify({
+          requestedUrl: url, finalUrl: url, status: 200, ok: true,
+          contentType, body: png.toString('base64'), source: 'origin',
+          fetchedAt: new Date().toISOString(),
+        }));
+      }
+      const flags = [
+        url, '--raw', '--max-chars', '5', '--no-host-map', '--no-throttle',
+        '--no-retry-profiles', '--no-reader', '--no-wayback',
+        ...(mode === 'cache-file' ? ['--cache-dir', folder] : ['--no-cache']),
+        ...(fileMode ? ['--out', outputPath] : []),
+        ...(mode === 'terminal' ? [] : ['--json']),
+      ];
+      const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
+        import assert from 'node:assert/strict';
+        import { main } from './.agents/skills/fetch-url/scripts/fetch.mjs';
+        let requests = 0;
+        globalThis.fetch = async (requestUrl) => {
+          requests++;
+          const response = new Response(Buffer.from(${JSON.stringify(png.toString('base64'))}, 'base64'), {
+            status: 200, headers: ${JSON.stringify(contentType ? { 'content-type': contentType } : {})},
+          });
+          Object.defineProperty(response, 'url', { value: String(requestUrl) });
+          return response;
+        };
+        await main(${JSON.stringify(flags)});
+        assert.equal(requests, ${mode === 'cache-file' ? 0 : 1});
+      `], { encoding: 'utf8', env: { ...process.env, STARTUP_FETCH_LOG_PATH: log } });
+      assert.equal(result.status, 0, `${mode}: ${result.stderr}`);
+      const trail = JSON.parse(readFileSync(log, 'utf8').trim());
+      assert.equal(trail.ok, true);
+      assert.equal(trail.sha256, createHash('sha256').update(png).digest('hex'));
+      assert.equal(trail.bytes, png.length);
+      if (mode === 'terminal') {
+        assert.match(result.stdout, /binary/i);
+        assert.doesNotMatch(result.stdout, /\uFFFD|PNG|base64,/);
+        continue;
+      }
+      const output = JSON.parse(result.stdout);
+      assert.equal(output.format, 'binary', mode);
+      assert.equal(output.outputKind, 'bytes', mode);
+      assert.equal(output.outputBytes, png.length, mode);
+      assert.equal(output.truncated, false, mode);
+      assert.equal(output.title, null, mode);
+      assert.equal(output.output, undefined, mode);
+      assert.equal(output.cache.hit, mode === 'cache-file', mode);
+      if (fileMode) {
+        assert.deepEqual(readFileSync(outputPath), png, mode);
+        assert.equal(output.outputFile.kind, 'bytes', mode);
+        assert.equal(output.outputFile.bytes, png.length, mode);
+        assert.equal(output.outputBase64, undefined, mode);
+      } else {
+        assert.deepEqual(Buffer.from(output.outputBase64, 'base64'), png, mode);
+      }
+    }
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
+});
+
+test('fetch CLI keeps raw PDF and HTML files byte-exact without changing readable output', () => {
+  const folder = mkdtempSync(join(tmpdir(), 'source-raw-check-'));
+  const toolbar = '<!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-base">Archive</div><!-- END WAYBACK TOOLBAR INSERT -->';
+  try {
+    for (const mode of ['pdf', 'html', 'archive-html', 'html-json', 'html-text']) {
+      const isPdf = mode === 'pdf';
+      const raw = mode !== 'html-text';
+      const fileMode = !['html-json', 'html-text'].includes(mode);
+      const html = `<html><title>Original</title><body>${toolbar}<p>Original source content.</p></body></html>`;
+      const body = Buffer.from(isPdf ? '%PDF-1.7\nOriginal binary \u00ff\n%%EOF' : html);
+      const outputPath = join(folder, `${mode}.out`);
+      const flags = [
+        'https://example.com/source', '--json', '--no-cache', '--no-host-map',
+        '--no-throttle', '--no-retry-profiles', '--no-reader', '--no-wayback',
+        ...(raw ? ['--raw'] : []),
+        ...(fileMode ? ['--out', outputPath, '--max-chars', '5'] : []),
+        ...(mode === 'archive-html' ? ['--via-wayback'] : []),
+      ];
+      const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
+        import { main } from './.agents/skills/fetch-url/scripts/fetch.mjs';
+        globalThis.fetch = async () => new Response(Buffer.from(${JSON.stringify(body.toString('base64'))}, 'base64'), {
+          status: 200, headers: { 'content-type': ${JSON.stringify(isPdf ? 'application/pdf' : 'text/html')} },
+        });
+        await main(${JSON.stringify(flags)});
+      `], { encoding: 'utf8', env: { ...process.env, STARTUP_FETCH_LOG_PATH: '' } });
+      assert.equal(result.status, 0, `${mode}: ${result.stderr}`);
+      const output = JSON.parse(result.stdout);
+      assert.equal(output.format, isPdf ? 'pdf' : 'html', mode);
+      assert.equal(output.truncated, false, mode);
+      if (fileMode) {
+        assert.deepEqual(readFileSync(outputPath), body, mode);
+        assert.equal(output.outputFile.bytes, body.length, mode);
+        assert.equal(output.outputFile.kind, isPdf ? 'pdf' : 'body', mode);
+      } else if (raw) {
+        assert.equal(output.output, html);
+        assert.equal(output.outputKind, 'body');
+      } else {
+        assert.match(output.output, /Original source content\./);
+        assert.doesNotMatch(output.output, /<p>|<html>/);
+        assert.equal(output.outputKind, 'text');
+      }
     }
   } finally {
     rmSync(folder, { recursive: true, force: true });
