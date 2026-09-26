@@ -104,7 +104,8 @@ attribution, and the wider translationese soundcheck with zero hard errors.
 Advisory glossary/descriptor/punctuation findings must either reach zero or
 strictly decrease from the validated draft; equal or higher counts are rejected.
 If the first strict check reports exact failing paths, automation performs one
-bounded source-anchored repair of only those cached leaves and validates again.
+bounded source-anchored repair with `gpt-5.6-luna` of only those cached leaves
+and validates again; the initial editor uses `gpt-6-luna`.
 `editor-accept` writes the complete cross-artifact issue set to
 `.translate-cache/<runId>/editor-findings.json`; the repair must address every
 listed error rather than stopping at the first failing artifact. `--skip-quality`
@@ -117,6 +118,12 @@ restore the safe draft instead of publishing a regression:
 ```sh
 npm run translate:zh -- editor-restore "$REPORT"
 ```
+
+Rollback is not publication approval. After editorial acceptance, restoration,
+or a skipped editorial pass, automation checks both final artifacts with
+`check-translation-quality.mjs --strict-editor`. Remaining hard findings fail
+the run and block commit/push; the restored draft is retained only as a workflow
+artifact. Advisory findings remain separate from hard publication failures.
 
 Scheduled recovery translates one report per two-hour run. This keeps each draft
 and editorial context bounded while still clearing a monthly backlog comfortably.

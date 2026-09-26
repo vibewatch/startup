@@ -1334,6 +1334,39 @@ try {
   cpSync(new URL('../references/glossary.zh.yaml', import.meta.url), join(references, 'glossary.zh.yaml'));
   symlinkSync(fileURLToPath(new URL('../../../../node_modules', import.meta.url)), join(fixtureRoot, 'node_modules'), 'dir');
   writeFileSync(join(fixtureRoot, 'package.json'), '{"type":"module"}');
+  const translationWorkflow = yaml.load(readFileSync(new URL('../../../../.github/workflows/translate-reports-zh.yml', import.meta.url), 'utf8'));
+  const workflowSteps = translationWorkflow.jobs.translate.steps;
+  const verificationIndex = workflowSteps.findIndex((step) => step.name === 'Verify selected translations');
+  const publicationIndex = workflowSteps.findIndex((step) => step.name === 'Commit and publish Chinese translations');
+  assert.ok(verificationIndex >= 0 && publicationIndex > verificationIndex);
+  const verificationStep = workflowSteps[verificationIndex];
+  assert.equal(verificationStep['continue-on-error'], undefined);
+  for (const runId of ['publication-clean', 'publication-candidate']) {
+    const folder = join(fixtureRoot, 'reports', runId);
+    mkdirSync(folder);
+    for (const artifact of ['summary-card', 'full-report']) {
+      const document = (text) => artifact === 'full-report'
+        ? fullReport(text) : { artifact, summary: { headline: text } };
+      writeFileSync(join(folder, `${artifact}.yaml`), JSON.stringify(document(source.subtitle)));
+      writeFileSync(join(folder, `${artifact}.zh.yaml`), JSON.stringify(document(clean.subtitle)));
+    }
+  }
+  for (const artifact of ['summary-card', 'full-report']) {
+    const document = (text) => artifact === 'full-report'
+      ? fullReport(text) : { artifact, summary: { headline: text } };
+    const target = join(fixtureRoot, 'reports/publication-candidate', `${artifact}.zh.yaml`);
+    for (const [candidate, expectedStatus] of [[changedMetric, 1], [strictTranslationese, 1], [clean, 0]]) {
+      assert.equal(checkPairQuality(document(source.subtitle), document(candidate.subtitle))
+        .filter((issue) => issue.severity === 'error').length, 0, 'fixture must pass the weaker draft gate');
+      writeFileSync(target, JSON.stringify(document(candidate.subtitle)));
+      const child = spawnSync('bash', ['-c', verificationStep.run], {
+        cwd: fixtureRoot, encoding: 'utf8',
+        env: { ...process.env, REPORT_IDS: 'publication-clean\npublication-candidate' },
+      });
+      assert.equal(child.status, expectedStatus, `${artifact}: ${child.stdout}\n${child.stderr}`);
+      if (expectedStatus !== 0) assert.ok(child.stderr.includes(`publication-candidate/${artifact}.zh.yaml`), child.stderr);
+    }
+  }
   const repairDir = join(fixtureRoot, 'reports', 'repair-fixture');
   mkdirSync(repairDir);
   const repairSource = {

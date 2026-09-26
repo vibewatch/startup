@@ -108,6 +108,11 @@ const workflowModelChecks = [
     profile: 'translation-draft',
     marker: (model) => `default: "${model}"`,
   },
+  {
+    path: '.github/workflows/translate-reports-zh.yml',
+    profile: 'translation-qa',
+    marker: (model) => `copilot --yolo --autopilot --model ${model} -p "$REPAIR_PROMPT"`,
+  },
 ];
 if (models.success) {
   for (const check of workflowModelChecks) {

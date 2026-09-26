@@ -302,7 +302,7 @@ jobs:
           EOF
               )
               REPAIR_LOG="$RUNNER_TEMP/copilot-logs/translate-zh-editor-repair-$report.log"
-              if copilot --yolo --autopilot --model gpt-6-luna -p "$REPAIR_PROMPT" 2>&1 | tee "$REPAIR_LOG" \
+              if copilot --yolo --autopilot --model gpt-5.6-luna -p "$REPAIR_PROMPT" 2>&1 | tee "$REPAIR_LOG" \
                 && validate_editor "$report"; then
                 accepted=$((accepted + 1))
                 repaired=$((repaired + 1))
@@ -317,6 +317,7 @@ jobs:
             echo
             echo "### Source-anchored editorial pass"
             echo "- Editor model: gpt-6-luna"
+            echo "- Targeted repair model: gpt-5.6-luna"
             echo "- Accepted: $accepted"
             echo "- Accepted after targeted repair: $repaired"
             echo "- Rolled back safely: $restored"
@@ -381,6 +382,10 @@ jobs:
           while IFS= read -r report; do
             [ -z "$report" ] && continue
             node .agents/skills/translate-zh/scripts/check-translation.mjs "reports/$report" --strict --require-final
+            for artifact in summary-card full-report; do
+              node .agents/skills/translate-zh/scripts/check-translation-quality.mjs \
+                "reports/$report/$artifact.yaml" "reports/$report/$artifact.zh.yaml" --strict-editor
+            done
           done <<< "$REPORT_IDS"
 
       - name: Validate reports and website build
