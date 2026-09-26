@@ -46,8 +46,65 @@ const patentSource = fullReport('Trademark search analysis, patent claim draftin
 const patentAssertionSource = fullReport('The company claims its new product improves patent claim drafting.');
 const noPublicIpSource = 'The architecture documentation says these warehouses have no public IP addresses.';
 const noPublicIpAndMilestoneSource = `${noPublicIpSource} The IPO timeline has no public milestone disclosed.`;
+const legalClaimNounPairs = [
+  ['The founder observed a family member navigate a personal injury claim.', '创始人曾目睹家人处理人身伤害索赔。'],
+  ['The workflow supports bodily-injury claims.', '该流程支持人身伤害索赔。'],
+  ['InsurTech claims processing platforms serve insurers.', 'InsurTech 理赔处理平台服务保险公司。'],
+  ['AI letters may inflate or anchor claim values; certifications do not address claim-inflation or bias concerns.', 'AI 索赔函可能抬高或锚定索赔金额；认证不能回应索赔膨胀或偏见担忧。'],
+  ['Treatment gaps weaken claim value; insurers are more sophisticated in claims processing.', '治疗缺口会削弱索赔价值；保险公司的理赔处理也更成熟。'],
+  ['Insurance carrier claims automation, AI reserve setting, fraud detection', '保险公司理赔自动化、AI 准备金设定、欺诈检测'],
+  ['Legal staff: claim setup, care coordination, records retrieval', '法律人员：索赔建档、护理协调、病历调取'],
+  ['AI agents for claim opening, coverage confirmation, client check-ins', '用于索赔建档、确认保险范围和客户回访的 AI 智能体'],
+  ['Staff calls carrier; 16+ minutes per claim average (EvenUp estimate)', '员工致电保险公司；平均每案 16+ 分钟（EvenUp 估计）'],
+  ['Agents open claims in parallel, returning claim numbers.', '智能体并行开立理赔，返回理赔编号。'],
+  ['Staff handle claim negotiation and optional lien resolution.', '员工处理索赔谈判和可选留置权解决。'],
+  ['PI-specific flows trained on thousands of claims', 'PI 专用流程用数千宗索赔训练'],
+  ['Incorrect citations could expose attorneys to malpractice claims.', '错误引用可能让律师面临执业过失索赔。'],
+].map(([en, zh]) => [`${en} This is a diligence observation.`, `${zh} 这是尽调观察。`]);
 
 const checks = [
+  ...legalClaimNounPairs.flatMap(([en, zh]) => [false, true].flatMap((strictEditor) => [
+    [
+      checkPairQuality(fullReport(en), fullReport(zh), { strictEditor }).length === 0,
+      `legal/insurance claims nouns are not assertion qualifiers (strict=${strictEditor}): ${en}`,
+    ],
+    [
+      checkPairQuality(
+        fullReport(`${en} The company claims performance is superior.`),
+        fullReport(`${zh} 性能更优。`),
+        { strictEditor },
+      ).some((issue) => issue.code === 'hedge-preservation'),
+      `a legal claims noun must not conceal a separate omitted company assertion (strict=${strictEditor}): ${en}`,
+    ],
+  ])),
+  ...[
+    ['The company claims setup takes one day.', '设置耗时一天。'],
+    ['Analysts claim numbers are incorrect.', '数字不正确。'],
+    ['The company claims inflation is lower.', '通胀更低。'],
+  ].flatMap(([en, zh]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(`${en} This is a diligence observation.`), fullReport(`${zh} 这是尽调观察。`), { strictEditor })
+      .some((issue) => issue.code === 'hedge-preservation'),
+    `ordinary claim verbs must still retain attribution (strict=${strictEditor}): ${en}`,
+  ])),
+  ...[
+    ['Managed-service model unproven at scale; quality control risk.', '托管服务模式尚未规模化验证；质量控制风险。'],
+    ['No public third-party audit of OCR error rates; company benchmarks are self-reported.', '未见 OCR 错误率公开第三方审计；公司基准为自报。'],
+  ].flatMap(([en, zh]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(`${en} This is a diligence observation.`), fullReport(`${zh} 这是尽调观察。`), { strictEditor }).length === 0,
+    `faithful scale-validation and object-specific audit gaps must pass (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
+    ['The managed-service model is unproven at scale.', '托管服务模式已规模化验证。'],
+    ['The managed-service model is unproven at scale.', '托管服务模式并非尚未规模化验证。'],
+    ['No public third-party audit of OCR error rates.', '已见 OCR 错误率公开第三方审计。'],
+    ['No public third-party audit of OCR error rates.', '未见错误率下降；公开第三方审计已经完成。'],
+    ['No public third-party audit of OCR error rates.', '并非未见 OCR 错误率公开第三方审计。'],
+    ['No public third-party audit of OCR error rates.', '并非尚未见 OCR 错误率公开第三方审计。'],
+  ].flatMap(([en, zh]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(`${en} This is a diligence observation.`), fullReport(`${zh} 这是尽调观察。`), { strictEditor })
+      .some((issue) => issue.code === 'hedge-preservation'),
+    `new evidence-gap aliases must not accept proven status, negation or another clause (strict=${strictEditor}): ${zh}`,
+  ])),
   ...[
     ['v0 ARR is not disclosed.', 'v0 的 ARR 未披露。'],
     ['V0 MRR is $10M.', 'V0 的 MRR 为 $10M。'],

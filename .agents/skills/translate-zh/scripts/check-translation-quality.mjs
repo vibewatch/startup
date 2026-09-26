@@ -55,17 +55,18 @@ const hedgeRules = [
   {
     en: /\bclaims?\b/i,
     zh: /声称|称|说法|主张|表述|断言|声明|自述|公司口径|网站口径|反方观点/u,
-    exclude: /\b(?:(?:for|in|of|on)\s+claims?\s+(?:modeling|modelling|processing|handling|management|adjudication|submission|settlement)|patent\s+claims?\s+(?:drafting|construction|interpretation|scope)|small[- ]claims?\s+(?:processing|courts?)|clinical\s*,\s*claims?\s*,?\s+and\s+operational\s+(?:data|systems)|EHRs?\s*,\s*claims?\s+systems|fraud\s+claims?\s+handling|government\s+guarantee\s+claims?\s+status|insurance\s+coverage\s+limits?\s+and\s+claims\s+history|premium\s+and\s+claims\s+expenditure|high[- ]cost\s+claims?\s+(?:concentration|categories)|million[- ]dollar[- ]plus\s+claims|highest[- ]ROI\s+claims|claims[- ]data[- ]driven|\d+(?:\.\d+)?%\s+claims\s+cost\s+reduction|real[- ]time\s+claims\s+data|claims\s+data\s+latency(?=\s*(?:[.;]|$))|do(?:es)?\s+not\s+reveal\s+claims?\s+quality\s+or\s+jurisdictions|qualitative\s+directional\s+claim)\b/gi,
+    exclude: /\b(?:(?:for|in|of|on)\s+claims?\s+(?:modeling|modelling|processing|handling|management|adjudication|submission|settlement|opening|setup|negotiation)|patent\s+claims?\s+(?:drafting|construction|interpretation|scope)|small[- ]claims?\s+(?:processing|courts?)|clinical\s*,\s*claims?\s*,?\s+and\s+operational\s+(?:data|systems)|EHRs?\s*,\s*claims?\s+systems|fraud\s+claims?\s+handling|government\s+guarantee\s+claims?\s+status|insurance\s+coverage\s+limits?\s+and\s+claims\s+history|premium\s+and\s+claims\s+expenditure|high[- ]cost\s+claims?\s+(?:concentration|categories)|million[- ]dollar[- ]plus\s+claims|highest[- ]ROI\s+claims|claims[- ]data[- ]driven|\d+(?:\.\d+)?%\s+claims\s+cost\s+reduction|real[- ]time\s+claims\s+data|claims\s+data\s+latency(?=\s*(?:[.;]|$))|do(?:es)?\s+not\s+reveal\s+claims?\s+quality\s+or\s+jurisdictions|qualitative\s+directional\s+claim|(?:personal|bodily)[ -]injury\s+claims?|(?:anchor|inflate|weaken)\s+claims?\s+values?|claims?-inflation|InsurTech\s+claims?\s+processing|insurance\s+carriers?\s+claims?\s+automation|claims?\s+setup(?=\s*,\s*care\s+coordination\b)|per\s+claims?|open\s+claims|return(?:s|ing)?\s+claims?\s+numbers|handle\s+claims?\s+negotiation|trained\s+on\s+(?:hundreds|thousands|millions)\s+of\s+claims|malpractice\s+claims)\b/gi,
   },
   { en: /\bnot yet\b/i, zh: /尚未|还未|仍未|还没|目前没有|尚无|尚缺|尚不|还不|仍不/u },
   {
     en: /\b(?:unproven|not proven)\b/i,
     zh: /未经证实|未获证实|未(?:被)?(?:证明|验证|证实)|未在规模上得到验证|无法证明|未经验证|未获验证/u,
-    alternative: (_, target) => /(?<!并非|不是|非|尚)(?:尚未跑通|未跑通|尚无公开验证|未获公开验证|尚?未(?:在|按)[^。！？；，：]{1,24}(?:得到)?(?:验证|证实|证明))/u.test(target),
+    alternative: (_, target) => /(?<!并非|不是|非|尚)(?:尚未跑通|未跑通|尚无公开验证|未获公开验证|尚?未规模化验证|尚?未(?:在|按)[^。！？；，：]{1,24}(?:得到)?(?:验证|证实|证明))/u.test(target),
   },
   {
     en: /\bno public\b/i,
     zh: /没有(?:与[^。！？；，：]{1,40}的)?公开|无公开|尚无公开|未见公开|(?:未|没有)(?:找到|发现)\s*(?:(?:针对[^。！？；，：]{1,40}|[A-Za-z][A-Za-z0-9 .&+-]{0,60})的\s*)?公开|未公开|未确认有公开|(?:未|尚未|没有)(?:披露|发布)公开|公开(?:资料|信息|记录|文件|数据|证据|材料|来源)(?:中)?(?:未|尚未|没有|尚无|无法)/u,
+    alternative: (_, target) => /(?<!并非|不是|非|尚)尚?未见[^。！？；，：]{1,24}公开(?:第三方)?审计/u.test(target),
     exclude: /\bno public[- ]cloud(?:\s+LLM)?\s+APIs?\s+(?:are\s+)?allowed\b|\b(?:has|have)\s+no public\s+IP\s+address(?:es)?(?=\s*(?:[.;,]|$))/gi,
   },
   {

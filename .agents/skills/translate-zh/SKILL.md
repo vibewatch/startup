@@ -198,6 +198,12 @@ Scoped absence of proof can also read `未跑通`, `尚无公开验证`, or
 negative attached to validation within the same clause; `尚未按期发布，但已验证`
 does not preserve it. These phrase checks still require a source-level review
 when multiple assertions or qualifiers share a leaf.
+Legal and insurance workflow nouns such as `personal injury claim`, `claim setup`,
+`per claim`, and `returning claim numbers` do not require invented company
+attribution. Ordinary verbs such as `the company claims setup takes one day`
+still do. `尚未规模化验证` retains missing scale validation, and
+`未见 OCR 错误率公开第三方审计` retains an object-specific public-audit gap;
+negated aliases and statements in a different clause must not satisfy either.
 The `通过…来` soundcheck stays within one clause and does not treat `来自` as a
 purpose marker; a separate genuine `通过…来` construction still needs rewriting.
 Likewise, `正在…集中` is not the redundant `正在…中` construction, and that
