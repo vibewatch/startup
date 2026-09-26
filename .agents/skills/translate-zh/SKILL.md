@@ -322,6 +322,11 @@ cross-clause matches, and additional public-evidence gaps must not be cleared
 by these alternatives. Warranty-claim histories, rates, service requests and
 compensation demands are nouns, not company assertions; a separate assertion
 about warranty coverage or product performance still requires attribution.
+`claims in this table are minted locally` describes this report's evidence
+ledger, not a company assertion; a separate company claim still needs attribution.
+`公开证据缺失` can retain a single `no public evidence` gap. Negated predicates
+and additional disclosure gaps must not be cleared by that wording. These
+qualifier checks do not establish that every object or proposition was preserved.
 `公开信息不足以` (also `公开资料`, `公开证据`, or `公开依据`) can preserve
 `no public basis`; it cannot substitute for another missing public disclosure.
 `还无法完全看清` or `仍无法完全看清` can retain `not yet fully transparent`,
@@ -674,6 +679,8 @@ Publication checks must exercise the hydrated charts and their hover/tap
 tooltips in a browser. Raw `script.figure-chart-data` payloads are not proof
 that a translated field is displayed; readable-page extraction omits those
 payloads and cannot validate client-rendered chart text.
+Approximation and evidence notes must remain visible on narrow screens and in
+print; they qualify the chart data rather than serving as optional decoration.
 Also verify report-level `coverageNotes`, displayed before cover facts with
 the same Chinese-leaf / English-fallback behavior as other report text.
 

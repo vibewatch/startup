@@ -65,6 +65,31 @@ const legalClaimNounPairs = [
 
 const checks = [
   ...[
+    ['All claims in this table are minted locally for the Financials chapter.', '本表各项判断在财务章节内单独生成。', false],
+    ['All claims in this table\nare minted locally. Cash balance and burn are fully private.', '本表各项判断在本章内单独生成。现金余额和烧钱速度完全未公开。', false],
+    ['All claims in this table are minted locally. The company claims national coverage.', '本表各项判断均单独生成。覆盖全国。', true],
+    ['All claims in this table are minted locally. The company claims national coverage.', '本表各项判断均单独生成。公司声称覆盖全国。', false],
+    ['The company claims in this table that coverage is national.', '覆盖全国。', true],
+    ['The company claims locally deployed software raises accuracy.', '本地部署的软件提高了准确率。', true],
+    ['No public evidence available.', '公开证据缺失。', false],
+    ['No public evidence of revenue quality.', '有关收入质量，公开证据仍缺失。', false],
+    ['No public evidence on current data volume, eval cadence, or post-deal model roadmap ownership.', '关于当前数据量、评估节奏或交易后模型路线图归属，公开证据缺失', false],
+    ['No public evidence available.', '公开证据尚缺失', false],
+    ['No public evidence available.', '公开证据已提供。', true],
+    ['No public evidence available.', '并非公开证据缺失。', true],
+    ['No public evidence available.', '不是 公开证据缺失。', true],
+    ['No public evidence available.', '公开证据并非缺失。', true],
+    ['No public evidence available.', '公开证据缺失的说法不成立。', true],
+    ['No public evidence available.', '公开证据缺失：否。', true],
+    ['No public evidence available; no public pricing data.', '公开证据缺失；定价已公布。', true],
+    ['No public evidence of revenue; no public evidence of profit.', '公开证据缺失；利润已有证据。', true],
+    ['No public pricing data.', '公开证据缺失。', true],
+  ].flatMap(([en, zh, expected]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(`${en} This is a source-reviewed diligence observation.`), fullReport(zh), { strictEditor })
+      .some((issue) => issue.code === 'hedge-preservation') === expected,
+    `ledger nouns and public-evidence absence retain separate assertions and gaps (strict=${strictEditor}): ${en} / ${zh}`,
+  ])),
+  ...[
     ['No public evidence of multi-cloud failover.', '没有多云故障切换的公开证据。', false],
     ['No public evidence of Alibaba/Tencent-driven customer conversion.', '没有 Alibaba / Tencent 推动客户转化的公开证据。', false],
     ['No public evidence on financial performance.', '未见财务表现的公开证据。', false],

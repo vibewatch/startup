@@ -12,6 +12,14 @@ import { KNOWN_DIMENSIONS, WARNING_DIMENSIONS } from './validation-catalog.mjs';
 import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
 import { figureDetail } from '../../../../website/src/lib/figures.mjs';
 
+for (const file of ['FigureRenderer.astro', 'DiligenceReport.astro']) {
+  test(`figure caveats are not hidden by ${file} styles`, () => {
+    const source = readFileSync(`website/src/components/${file}`, 'utf8');
+    assert.equal(/\.figure-note[^{]*\{[^}]*\b(?:display:\s*none|visibility:\s*hidden)\b/.test(source), false,
+      `${file}: figure approximation and evidence notes must remain visible`);
+  });
+}
+
 test('authoring-instruction checks reject leaked workflow directives in public prose', () => {
   const directives = [
     'The first pass through the chapter should answer the mission questions directly.',
