@@ -60,9 +60,35 @@ const legalClaimNounPairs = [
   ['Staff handle claim negotiation and optional lien resolution.', '员工处理索赔谈判和可选留置权解决。'],
   ['PI-specific flows trained on thousands of claims', 'PI 专用流程用数千宗索赔训练'],
   ['Incorrect citations could expose attorneys to malpractice claims.', '错误引用可能让律师面临执业过失索赔。'],
+  ['Reputational risk; likely customer compensation claims; pause adoption pending resolution.', '声誉风险；可能引发客户赔偿索赔；问题解决前暂停采用。'],
 ].map(([en, zh]) => [`${en} This is a diligence observation.`, `${zh} 这是尽调观察。`]);
 
 const checks = [
+  ...[
+    ['No public financing event has been disclosed.', '没有披露任何公开融资事件。', false],
+    ['No public financing event has been disclosed.', '已经披露公开融资事件。', true],
+    ['No public financing event has been disclosed.', '并非没有披露任何公开融资事件。', true],
+    ['No public financing event has been disclosed.', '没有披露任何问题；公开融资事件已经披露。', true],
+    ['Capital adequacy is opaque: no public financial metrics for verification.', '资本充足度不透明：没有可验证的公开财务指标。', false],
+    ['Capital adequacy is opaque: no public financial metrics for verification.', '资本充足度不透明：有可验证的公开财务指标。', true],
+    ['Capital adequacy is opaque: no public financial metrics for verification.', '资本充足度不透明：并非没有可验证的公开财务指标。', true],
+    ['Capital adequacy is opaque: no public financial metrics for verification.', '没有可验证的结论；公开财务指标已经披露。', true],
+  ].flatMap(([en, zh, missing]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(`${en} This is a diligence observation.`), fullReport(`${zh} 这是尽调观察。`), { strictEditor })
+      .some((issue) => issue.code === 'hedge-preservation') === missing,
+    `public-evidence wording must preserve absence in the same clause (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
+    ['Aiven differentiates itself for regulated enterprise buyers.', '在受监管企业买方面前，Aiven 能体现差异。', false],
+    ['The company presents evidence to the buyer.', '公司在买方面前展示证据。', false],
+    ['The company has a compliance advantage.', '公司在合规方面具备优势。', true],
+    ['The company has promising technology prospects.', '公司在技术方面前景可期。', true],
+    ['The company discusses compliance with the buyer.', '公司在买方面前说明在合规方面的优势。', true],
+  ].flatMap(([en, zh, awkward]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor })
+      .some((issue) => issue.code === 'translationese') === awkward,
+    `buyer-facing wording is not the in-an-area construction (strict=${strictEditor}): ${zh}`,
+  ])),
   ...[
     ['The revenue threshold is $50M.', '收入门槛为 5,000 万美元。'],
     ['Revenue reaches $50M.', '收入达到 5,000 万美元。'],

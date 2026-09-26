@@ -231,6 +231,11 @@ Do not mistake `来源` or `带来` for the purpose marker in `通过…来`, or
 locative phrase such as `正在生产环境中部署` for clause-final `正在…中`.
 Public-evidence gaps can place a Latin company name or a carrier relationship
 before `公开`; `公开材料没有…` and `公开来源无法…` can retain a negative finding.
+`没有披露任何公开…` and `没有可验证的公开…` also retain scoped evidence gaps;
+negated wording or an absence in another clause must not satisfy them.
+`customer compensation claims` means customer compensation demands, not a
+company assertion; a separate assertion still needs attribution. The soundcheck
+does not mistake `在买方面前` for the `在…方面` construction.
 `预估` can retain an estimate, and `预计` can express a likely outcome or
 inferred financial condition. Negated forms do not establish preservation.
 Review the proposition: these aliases do not validate the metric, time basis,
