@@ -303,6 +303,15 @@ cover submission through finalization without human intervention, whereas a
 clean-claim metric may measure passing the first claim edits without manual
 intervention. Neither means payer approval or payment. Render `manual touch`
 as manual intervention, not a physical touchpoint, in these billing workflows.
+Coverage lists containing claim procedures, claim triggers, or claims history
+refer to insurance processes, not assertions; separate company claims still
+require attribution. `公司披露的增长口径` and `管理层口径` retain attribution.
+`未提交公开…` can preserve an explicit public-filing gap, and `未确认公开…`
+can preserve an explicit confirmation gap. Neither is a blanket substitute
+for absent public information. `暂无…数据` can retain `not yet available`,
+but does not establish another negative proposition such as lack of profit.
+Negated wording and a filing or confirmation in a different clause do not
+satisfy these aliases.
 
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json
@@ -639,6 +648,8 @@ Publication checks must exercise the hydrated charts and their hover/tap
 tooltips in a browser. Raw `script.figure-chart-data` payloads are not proof
 that a translated field is displayed; readable-page extraction omits those
 payloads and cannot validate client-rendered chart text.
+Also verify report-level `coverageNotes`, displayed before cover facts with
+the same Chinese-leaf / English-fallback behavior as other report text.
 
 - **Translate**: `title`, `subtitle`, `summary`, `description`,
   `caption`, `insight`, `basis`, `notes`, `approximationNotes`, the

@@ -94,6 +94,7 @@ export interface ReportAppendix extends ReportRecord {
 export interface FullReport extends ReportRecord {
   company?: { name?: string };
   subtitle?: string | null;
+  coverageNotes?: string | null;
   coverFacts?: CoverFact[];
   companyProfile?: CompanyProfile;
   chapters?: ReportChapter[];

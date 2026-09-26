@@ -65,6 +65,47 @@ const legalClaimNounPairs = [
 
 const checks = [
   ...[
+    ['Coverage limits, exclusions, and claim procedures are not publicly disclosed.', '承保限额、除外责任和理赔流程未公开披露。'],
+    ['Coverage limits, claim triggers, and exclusion list are not publicly disclosed.', '承保限额、理赔触发条件和除外责任清单未公开披露。'],
+    ['Coverage terms and claims history are not public.', '承保条款和理赔历史未公开。'],
+  ].map(([en, zh]) => [`${en} This is a diligence observation.`, `${zh} 这是尽调观察。`])
+    .flatMap(([en, zh]) => [false, true].flatMap((strictEditor) => [
+    [
+      !checkPairQuality(fullReport(en), fullReport(zh), { strictEditor }).some((issue) => issue.code === 'hedge-preservation'),
+      `coverage-list claims are insurance nouns (strict=${strictEditor}): ${en}`,
+    ],
+    [
+      checkPairQuality(fullReport(`${en} The company claims its product is superior.`), fullReport(`${zh} 产品更好。`), { strictEditor })
+        .some((issue) => issue.code === 'hedge-preservation'),
+      `a coverage list must not hide a separate assertion (strict=${strictEditor}): ${en}`,
+    ],
+  ])),
+  ...[
+    ['Company-stated growth claims are not audited financials.', '公司披露的增长口径并非审计财务数据。', false],
+    ['Revenue growth is a management claim, without independent verification.', '收入增长来自管理层口径，缺乏独立验证。', false],
+    ['Revenue growth is a management claim.', '收入增长并非管理层口径。', true],
+    ['Revenue growth is a company claim.', '收入增长不是公司披露的增长口径。', true],
+    ['No public financial statements filed.', '未提交公开财务报表。', false],
+    ['No public financial statements filed.', '已提交公开财务报表。', true],
+    ['No public financial statements filed.', '并非未提交公开财务报表。', true],
+    ['No public security certification confirmed.', '未确认公开安全认证。', false],
+    ['No public SOC 2 Type II, ISO 27001, or IEC 62443 certification confirmed.', '未确认公开 SOC 2 Type II、ISO 27001 或 IEC 62443 认证。', false],
+    ['No public security certification confirmed.', '已确认公开安全认证。', true],
+    ['No public security certification confirmed.', '并非未确认公开安全认证。', true],
+    ['No public pricing data exists; a partnership was confirmed.', '未确认公开定价数据。', true],
+    ['No public revenue data exists; a financing was filed.', '未提交公开收入数据。', true],
+    ['Performance data not yet available.', '暂无绩效数据。', false],
+    ['Performance data not yet available.', '已有绩效数据。', true],
+    ['Performance data not yet available.', '并非暂无绩效数据。', true],
+    ['The company is not yet profitable.', '暂无财务数据，公司已经盈利。', true],
+    ['Coverage limits are low; the company claims procedures prevent losses.', '承保限额低；流程能防止损失。', true],
+  ].map(([en, zh, expected]) => [`${en} This is a diligence observation.`, `${zh} 这是尽调观察。`, expected])
+    .flatMap(([en, zh, expected]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor })
+      .some((issue) => issue.code === 'hedge-preservation') === expected,
+    `scoped disclosure aliases preserve attribution and absence (strict=${strictEditor}): ${en} / ${zh}`,
+  ])),
+  ...[
     ['The Series D tripled its February 2025 valuation.', 'Series D 估值增至 2025 年 2 月的 3 倍。', true],
     ['$120M raised in July 2026, tripling its February 2025 valuation.', '2026 年 7 月融资 $120M，估值增至 2025 年 2 月的 3 倍。', true],
     ['The Series D is said to triple the Series C valuation.', 'Series D 据称让 Series C 估值增至 3 倍。', true],
