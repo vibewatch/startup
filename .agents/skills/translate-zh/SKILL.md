@@ -73,9 +73,14 @@ verify the source proposition and metric meaning as well.
 
 The uncertainty check accepts `未披露公开里程碑` as a faithful rendering of
 `no public milestone disclosed`. Reported attribution accepts `据报道`, `据报`,
-`据称`, or `报道称`; omitting it still fails. A prohibition such as `no public cloud LLM API
-allowed` is checked separately from missing public disclosures: Chinese must
-preserve the restriction, not add an unrelated evidence gap.
+`据称`, or `报道称`; omitting it still fails.
+Clause-leading `报称` and `据独立报道`, `据媒体报道`, or `据公开报道`
+(including `根据` variants) also retain reported attribution. Directly negated
+versions do not satisfy these additional aliases. This does not establish
+publisher identity or preserve a separate assertion elsewhere in the same leaf.
+A prohibition such as `no public cloud LLM API allowed` is checked separately
+from missing public disclosures: Chinese must preserve the restriction, not
+add an unrelated evidence gap.
 Likewise, a warehouse that `has no public IP address` or warehouses that
 `have no public IP addresses` lack public IP addresses; this is not a claim
 that their addresses were merely undisclosed. A separate public-disclosure

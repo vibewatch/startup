@@ -65,6 +65,31 @@ const legalClaimNounPairs = [
 
 const checks = [
   ...[
+    ['据独立报道，累计融资超过 $1B。', false],
+    ['据媒体报道，累计融资超过 $1B。', false],
+    ['据公开报道，累计融资超过 $1B。', false],
+    ['根据独立报道，累计融资超过 $1B。', false],
+    ['根据媒体报道，累计融资超过 $1B。', false],
+    ['根据公开报道，累计融资超过 $1B。', false],
+    ['报称累计融资超过 $1B。', false],
+    ['融资尚待核验；报称累计融资超过 $1B。', false],
+    ['累计融资超过 $1B。', true],
+    ['并非据独立报道，累计融资超过 $1B。', true],
+    ['不是根据媒体报道，累计融资超过 $1B。', true],
+    ['没有根据公开报道，累计融资超过 $1B。', true],
+    ['未据独立报道，累计融资超过 $1B。', true],
+    ['并非报称累计融资超过 $1B。', true],
+    ['没有报称累计融资超过 $1B。', true],
+    ['媒体并未报称累计融资超过 $1B。', true],
+  ].flatMap(([zh, expected]) => [false, true].map((strictEditor) => [
+    checkPairQuality(
+      fullReport('According to reports, cumulative funding exceeds $1B. This is a diligence observation.'),
+      fullReport(zh),
+      { strictEditor },
+    ).some((issue) => issue.code === 'hedge-preservation') === expected,
+    `reported-attribution variants preserve a non-negated reporting qualifier (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
     ['Filings: August 2015 ×2 and October 2020.', '备案：2015 年 8 月 ×2、2020 年 10 月。', true],
     ['Filings: March 2024 x2.', '备案：2024 年 03 月 X2。', true],
     ['Filings: August 2015 ×2; revenue was $10M.', '备案：2015 年 8 月 ×2；收入为 1000 万美元。', true],

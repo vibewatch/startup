@@ -75,7 +75,11 @@ const hedgeRules = [
     alternative: (source, target) => /大体/u.test(target)
       && !/\b(?:approximately|roughly)\s*(?:[$€£¥₦+-]?\s*\d|half\b|one\b|two\b|three\b|four\b|five\b|six\b|seven\b|eight\b|nine\b|ten\b)/i.test(source),
   },
-  { en: /\b(?:reportedly|according to reports)\b/i, zh: /据报道|据报|据称|报道称/u },
+  {
+    en: /\b(?:reportedly|according to reports)\b/i,
+    zh: /据报道|据报|据称|报道称/u,
+    alternative: (_, target) => /(?:^|[。！？；，：])\s*报称|(?<!根|并非|不是|没有|非|未|不|无)(?:据|根据)(?:独立|媒体|公开)报道/u.test(target),
+  },
   { en: /\bestimated\b|\b(?:we|analysts?|reports?) estimate\b/i, zh: /估计|估算|预计|测算|推算|(?<!并非|不是|无需|没有|未经|未|不|无)预估/u },
   { en: /\bat least\b/i, zh: /至少|不低于/u },
   { en: /\bat most\b(?!\s+recent\b)/i, zh: /至多|最多|不超过/u },
