@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { checkPrefetchedSourceQuotes } from './source-quote-checks.mjs';
 import { checkSearchQueryProvenance, executedSearchQueries } from './search-query-checks.mjs';
 import { RevisionSchema } from './contracts/report-artifacts.schema.mjs';
+import { checkReviewReadback, hasReviewReadback, prepareReviewReadback } from './review-readback.mjs';
 import {
   EXIT,
   FINAL_ARTIFACTS,
@@ -102,7 +103,7 @@ function hasCurrentPublishedRevision(reportFolder) {
   ));
 }
 
-function finalizerPrompt({ reportFolder, resultsPath, bundlePath, fetchLogPath, reviewFindings, publishedDeepReview }) {
+function finalizerPrompt({ reportFolder, resultsPath, bundlePath, fetchLogPath, reviewFindings, publishedDeepReview, previousFailures }) {
   return `Use the startup-research skill to converge and finalize the existing report at ${reportFolder}. Work directly; do not launch subagents or background agents.
 
 Inputs:
@@ -131,8 +132,10 @@ ${reviewFindings ? `
 Source-review findings (human/agent review, not automated validator output):
 ${JSON.stringify(reviewFindings, null, 2)}
 
+When every issue supplies tokens, expectedBefore and exactReplacement, these are guarded exact assignments. Apply only those assignments; preserve all other authored values. On a retry, already-correct values stay unchanged. If source evidence cannot support an exact replacement, report the blocker instead of substituting another value. The caller checks the entire authored scope and canonical assembled outputs, not only schema validity.
 Resolve every listed issue against ${publishedDeepReview ? 'the available authentic source text, without claiming it was fetched in the original run' : 'the original fetched text'}, including its linked claims, tables, figures, cover facts, and metadata. Preserve date, unit, metric denominator, and attribution. If the available evidence does not support a metric, remove the unsupported precision and document the gap; do not invent a midpoint or relabel an assumption as reported. Preserve valid historical comparisons by dating them explicitly. Do not edit the review-findings input. In your final response, account for every finding and state any unresolved blocker. A schema pass alone does not establish factual accuracy.
 ` : ''}
+${previousFailures ? `The preceding attempt failed independent acceptance. Read the complete diagnostic file at ${previousFailures} and repair those concrete failures within the original scope; do not repeat already-applied changes.\n` : ''}
 
 Do not report success unless summary-card.yaml, evidence.yaml, full-report.yaml, and report-meta.yaml exist and finalize-report prints its pipeline-complete line.`;
 }
@@ -166,6 +169,7 @@ if (!existsSync(reportFolder) || !isRunId(runId)) {
 const cacheDir = researchCacheDir(runId);
 const config = loadWorkflowConfig({ reportFolder });
 let reviewFindings = null;
+let reviewReadback = null;
 const reviewFindingsPath = args.reviewFindings ? resolve(args.reviewFindings) : null;
 if (reviewFindingsPath) {
   try {
@@ -184,6 +188,10 @@ if (reviewFindingsPath) {
           || !authoredFiles.has(issue.path.split(':')[0])
         ))) {
       throw new Error('expected this runId and nonempty issues with authored-file path, message, and fix');
+    }
+    if (hasReviewReadback(reviewFindings.issues)) {
+      reviewReadback = prepareReviewReadback(reviewFindings.issues,
+        new Map([...authoredFiles].map((file) => [file, readYaml(join(reportFolder, file))])));
     }
   } catch (error) {
     console.error(`[run-report-finalizer] invalid review findings: ${error.message}`);
@@ -238,6 +246,7 @@ const plan = {
   fetchLogPath,
   reviewFindingsPath,
   reviewFindingCount: reviewFindings?.issues.length ?? 0,
+  exactReviewAssignmentCount: reviewReadback?.assignmentCount ?? 0,
 };
 if (args.dryRun) {
   console.log(JSON.stringify(plan, null, 2));
@@ -267,8 +276,10 @@ for (const signal of ['SIGINT', 'SIGTERM']) {
   });
 }
 
-async function runAttempt(attemptRoute, attemptNumber) {
+async function runAttempt(attemptRoute, attemptNumber, previousFailures = null) {
   const attemptStartedAt = new Date();
+  const previousFailuresPath = previousFailures ? join(cacheDir, `finalizer-acceptance-attempt-${attemptNumber - 1}.json`) : null;
+  if (previousFailuresPath) writeFileSync(previousFailuresPath, `${JSON.stringify(previousFailures, null, 2)}\n`);
   let attemptTail = '';
   let timedOut = false;
   capture(`\n[run-report-finalizer] attempt ${attemptNumber}: ${attemptRoute.model}/${attemptRoute.reasoningEffort}\n`);
@@ -277,7 +288,7 @@ async function runAttempt(attemptRoute, attemptNumber) {
     '--autopilot',
     '--excluded-tools', 'web_fetch',
     '--model', attemptRoute.model,
-    '-p', finalizerPrompt({ reportFolder, resultsPath, bundlePath, fetchLogPath, reviewFindings, publishedDeepReview }),
+    '-p', finalizerPrompt({ reportFolder, resultsPath, bundlePath, fetchLogPath, reviewFindings, publishedDeepReview, previousFailures: previousFailuresPath }),
   ];
   if (attemptRoute.reasoningEffort !== 'default') {
     copilotArgs.splice(copilotArgs.indexOf('-p'), 0, '--effort', attemptRoute.reasoningEffort);
@@ -322,17 +333,19 @@ async function runAttempt(attemptRoute, attemptNumber) {
     durationSeconds: Number(((completedAt - attemptStartedAt) / 1000).toFixed(2)),
     aiCredits: Number(attemptTail.match(/AI Credits\s+([\d.]+)/i)?.[1] ?? 0) || null,
     tokenLine: attemptTail.match(/^Tokens\s+.+$/im)?.[0] ?? null,
+    ...(previousFailuresPath ? { previousFailuresPath } : {}),
   };
 }
 
 const attempts = [await runAttempt(route, 1)];
 let processResult = attempts[0];
 function inspectFinalReport() {
+  const reviewIssues = checkReviewReadback(reviewReadback, (file) => readYaml(join(reportFolder, file)));
   const missingFiles = requiredFiles.filter((file) => !existsSync(join(reportFolder, file)));
   if (missingFiles.length > 0) {
     return {
       missingFiles,
-      reportCheck: { ok: false, exitCode: null, error: '' },
+      reportCheck: { ok: false, exitCode: null, error: '', reviewIssues },
     };
   }
   const check = spawnSync(process.execPath, [
@@ -346,6 +359,18 @@ function inspectFinalReport() {
   });
   const quoteIssues = [];
   const queryIssues = [];
+  if (check.status === 0 && reviewReadback) {
+    for (const script of ['build-evidence-ledger.mjs', 'build-report.mjs']) {
+      const assembled = spawnSync(process.execPath, [
+        join(scriptDir, script), reportFolder, '--check', '--format', 'json',
+      ], { cwd: repoRoot, encoding: 'utf8' });
+      if (assembled.status !== 0) {
+        reviewIssues.push({ path: script, code: 'reviewAssemblyMismatch',
+          message: assembled.error?.message || assembled.stdout || assembled.stderr || `Exited ${assembled.status}`,
+          fix: 'Run unchanged finalization to rebuild the ledger and published artifacts from the approved authored state.' });
+      }
+    }
+  }
   if (check.status === 0 && config.activeResearchProfile === 'fast') {
     const bundle = JSON.parse(readFileSync(bundlePath, 'utf8'));
     const queries = executedSearchQueries(bundle);
@@ -364,13 +389,14 @@ function inspectFinalReport() {
   return {
     missingFiles,
     reportCheck: {
-      ok: check.status === 0 && quoteIssues.length === 0 && queryIssues.length === 0,
+      ok: check.status === 0 && quoteIssues.length === 0 && queryIssues.length === 0 && reviewIssues.length === 0,
       exitCode: check.status,
       error: check.status === 0
-        ? [...quoteIssues, ...queryIssues].map((issue) => `${issue.path}: ${issue.code}: ${issue.message}`).join('\n')
+        ? [...quoteIssues, ...queryIssues, ...reviewIssues].map((issue) => `${issue.path}: ${issue.code}: ${issue.message}`).join('\n')
         : (check.stderr || check.stdout),
       quoteIssues,
       queryIssues,
+      reviewIssues,
     },
   };
 }
@@ -386,7 +412,7 @@ if ((processResult.timedOut || processResult.exitCode !== 0
   attempts.push(await runAttempt({
     model: route.escalateTo,
     reasoningEffort: 'xhigh',
-  }, 2));
+  }, 2, finalReport));
   processResult = attempts[1];
   finalReport = inspectFinalReport();
 }

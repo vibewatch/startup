@@ -67,6 +67,37 @@ Workflow narrative: what to run, in what order, with which flags. Two generated 
 
 **Source-review corrections:** a later factual review may find defects that structural gates cannot detect. Record verified findings under `.research-cache/<runId>/` as JSON with `runId` and nonempty `issues[]`; each issue needs `path` (`<authored-chapter-file>:<field>` or `report-meta.yaml:<field>`), `message`, and a source-anchored `fix`. Pass that file to `research:finalize -- --report-folder <reportFolder> --review-findings <path>`. This uses the same bounded finalizer and retry limits, permits only named corrections and their dependent surfaces, and does not authorize new fetches, circular sources, weaker gates, or unrelated rewrites. Keep these review findings separate from machine-generated worker results. The caller must verify the corrected facts against original fetched text before publication; a successful finalizer exit is not semantic acceptance.
 
+For a fully specified correction, supply `tokens`, `expectedBefore`, and
+`exactReplacement` on **every** issue in the batch. Tokens address an existing
+authored YAML value using string keys and zero-based numeric array indexes:
+
+```json
+{
+  "path": "06-customers.yaml:localEvidence.claims[12].statement",
+  "tokens": ["localEvidence", "claims", 12, "statement"],
+  "expectedBefore": "The old statement.",
+  "exactReplacement": "The source-reviewed replacement.",
+  "message": "Explain the verified factual defect.",
+  "fix": "Assign the exact replacement supported by the retained source."
+}
+```
+
+Exact-review preflight rejects stale before-values, invalid paths, partial
+structured issues, and duplicate or overlapping targets. It snapshots all
+authored chapters and metadata. After each model attempt, missed replacements
+and unrelated authored edits fail acceptance even if the model exits zero.
+The canonical builders also check the ledger and both published
+English artifacts without writing them (`build-evidence-ledger.mjs --check`
+and `build-report.mjs --check`). Concrete failures go to the existing bounded
+fallback through a saved `finalizer-acceptance-attempt-<n>.json` diagnostic;
+already-applied assignments must not be repeated. A remaining failure
+blocks completion. List all necessary dependent authored changes in the exact
+batch; do not mix exact assignments with open-ended review issues.
+Legacy batches containing only `path`, `message`, and `fix` retain their existing
+behavior. Exact readback proves agreement with the approved correction, not
+that the correction's underlying facts are true; caller source review and
+Chinese/display acceptance remain required.
+
 Complete, **current deep reports** can enter explicit source review without worker
 results or a shared search bundle: older sequential runs may never have produced
 those files. The plan identifies this as `published-deep-review` and reports

@@ -9,6 +9,7 @@
 // truth for the consolidated artifacts so the agent never hand-edits them.
 import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
+import { isDeepStrictEqual } from 'node:util';
 import { EXIT, FINAL_ARTIFACTS, REPORT_META_FILE, getAnalysisArtifacts, loadWorkflowConfig, parseDate, tryReadYaml, writeYaml } from './utils.mjs';
 import { ReportMetaSchema, SCHEMA_VERSION, schemaErrors } from './contracts/report-artifacts.schema.mjs';
 import { formatValidationCompact, validationEnvelope, validationIssue } from './contracts/validation-result.mjs';
@@ -52,20 +53,22 @@ function abort(messageOrOpts) {
 }
 
 function parseArgs(argv) {
-  const args = { folder: null, dryRun: false, format: 'text' };
+  const args = { folder: null, dryRun: false, check: false, format: 'text' };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--dry-run') args.dryRun = true;
+    else if (arg === '--check') args.check = true;
     else if (arg === '--format') {
       const next = argv[++i];
-      if (next === undefined || next.startsWith('-')) abort(`--format requires a value (text|json|compact)\nUsage: node .agents/skills/startup-research/scripts/build-report.mjs <report-folder> [--dry-run] [--format text|json|compact]`);
+      if (next === undefined || next.startsWith('-')) abort(`--format requires a value (text|json|compact)\nUsage: node .agents/skills/startup-research/scripts/build-report.mjs <report-folder> [--dry-run | --check] [--format text|json|compact]`);
       args.format = next;
-    } else if (arg === '-h' || arg === '--help') abort(`Usage: node .agents/skills/startup-research/scripts/build-report.mjs <report-folder> [--dry-run] [--format text|json|compact]`);
-    else if (arg.startsWith('-')) abort(`unknown flag: ${arg}\nUsage: node .agents/skills/startup-research/scripts/build-report.mjs <report-folder> [--dry-run] [--format text|json|compact]`);
+    } else if (arg === '-h' || arg === '--help') abort(`Usage: node .agents/skills/startup-research/scripts/build-report.mjs <report-folder> [--dry-run | --check] [--format text|json|compact]`);
+    else if (arg.startsWith('-')) abort(`unknown flag: ${arg}\nUsage: node .agents/skills/startup-research/scripts/build-report.mjs <report-folder> [--dry-run | --check] [--format text|json|compact]`);
     else if (!args.folder) args.folder = arg;
-    else abort(`unexpected positional argument: ${arg}\nUsage: node .agents/skills/startup-research/scripts/build-report.mjs <report-folder> [--dry-run] [--format text|json|compact]`);
+    else abort(`unexpected positional argument: ${arg}\nUsage: node .agents/skills/startup-research/scripts/build-report.mjs <report-folder> [--dry-run | --check] [--format text|json|compact]`);
   }
   if (!['text', 'json', 'compact'].includes(args.format)) abort(`invalid --format: ${args.format} (expected text|json|compact)`);
+  if (args.dryRun && args.check) abort('--dry-run and --check cannot be combined');
   return args;
 }
 
@@ -73,7 +76,7 @@ function main() {
 const args = parseArgs(process.argv.slice(2));
 outputFormat = args.format;
 if (!args.folder) {
-  abort('Usage: node .agents/skills/startup-research/scripts/build-report.mjs <report-folder> [--dry-run] [--format text|json|compact]');
+  abort('Usage: node .agents/skills/startup-research/scripts/build-report.mjs <report-folder> [--dry-run | --check] [--format text|json|compact]');
 }
 
 const reportFolder = resolve(args.folder);
@@ -396,17 +399,28 @@ const summaryCard = {
 const fullReportPath = join(reportFolder, fullReportFile);
 const summaryCardPath = join(reportFolder, summaryCardFile);
 
-if (args.dryRun) {
+if (args.check) {
+  for (const [file, expected] of [[fullReportFile, fullReport], [summaryCardFile, summaryCard]]) {
+    if (!isDeepStrictEqual(readRequiredYaml(file, 'assembled artifact'), expected)) {
+      abort({ message: `${file} does not match its authored inputs`, code: 'buildReport.assemblyMismatch',
+        path: file, fix: 'Run unchanged finalization to rebuild published artifacts from the corrected authored inputs.' });
+    }
+  }
+}
+if (args.dryRun || args.check) {
   if (outputFormat === 'text') {
-    console.log(`[build-report] dry-run: would write ${fullReportPath}`);
-    console.log(`[build-report] dry-run: would write ${summaryCardPath}`);
+    if (args.check) console.log('[build-report] ✓ assembled artifacts match authored inputs');
+    else {
+      console.log(`[build-report] dry-run: would write ${fullReportPath}`);
+      console.log(`[build-report] dry-run: would write ${summaryCardPath}`);
+    }
     console.log(`[build-report] chapters=${chapterDocs.length} tables=${tables.length} figures=${figures.length} sources=${sourceRefs.length}`);
   } else {
     const envelope = validationEnvelope({
       ok: true,
       validator: 'build-report',
       reportFolder,
-      summary: { stage: 'build-report', dryRun: true, fullReportPath, summaryCardPath, chapters: chapterDocs.length, tables: tables.length, figures: figures.length, sources: sourceRefs.length },
+      summary: { stage: 'build-report', ...(args.check ? { check: true } : { dryRun: true }), fullReportPath, summaryCardPath, chapters: chapterDocs.length, tables: tables.length, figures: figures.length, sources: sourceRefs.length },
     });
     if (outputFormat === 'json') console.log(JSON.stringify(envelope, null, 2));
     else console.log(formatValidationCompact(envelope));

@@ -19,7 +19,8 @@
 // namespace. This makes chapter generation fully parallel-safe.
 import { existsSync } from 'node:fs';
 import { join, resolve } from 'node:path';
-import { EXIT, canonicalSourceUrl, FINAL_ARTIFACTS, getAnalysisArtifacts, loadWorkflowConfig, parseDate, readYaml, registrableDomain, writeYaml } from './utils.mjs';
+import { isDeepStrictEqual } from 'node:util';
+import { EXIT, canonicalSourceUrl, FINAL_ARTIFACTS, getAnalysisArtifacts, loadWorkflowConfig, parseDate, readYaml, registrableDomain, tryReadYaml, writeYaml } from './utils.mjs';
 import { FRESHNESS_THRESHOLDS, EVIDENCE_QUALITY_TIERS } from './validation-catalog.mjs';
 import { formatValidationCompact, formatValidationText, validationEnvelope, validationIssue } from './contracts/validation-result.mjs';
 
@@ -44,7 +45,7 @@ let reportFolderForEnvelope = null;
 
 function usageAbort(message) {
   abort({
-    message: `${message}\nUsage: node .agents/skills/startup-research/scripts/build-evidence-ledger.mjs <report-folder> [--format text|json|compact]`,
+    message: `${message}\nUsage: node .agents/skills/startup-research/scripts/build-evidence-ledger.mjs <report-folder> [--check] [--format text|json|compact]`,
     dimension: 'usage',
     code: 'evidenceLedger.usage',
     fix: 'Pass exactly one report folder and an optional --format value (text|json|compact).',
@@ -68,10 +69,11 @@ function abort({ message, dimension = 'reportContract', code = 'reportContract.f
 }
 
 function parseArgs(argv) {
-  const args = { folder: null, format: 'text' };
+  const args = { folder: null, check: false, format: 'text' };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
-    if (arg === '--format') {
+    if (arg === '--check') args.check = true;
+    else if (arg === '--format') {
       const next = argv[++i];
       if (next === undefined || next.startsWith('-')) usageAbort('--format requires a value (text|json|compact)');
       args.format = next;
@@ -115,9 +117,17 @@ const { sources, claims, evidenceGaps, duplicateSourceCount, duplicateClaimCount
 const ledger = buildLedger(docs, sources, claims, evidenceGaps);
 
 const evidencePath = join(reportFolder, EVIDENCE_FILE);
-writeYaml(evidencePath, ledger);
+if (args.check) {
+  const current = tryReadYaml(evidencePath);
+  if (!current.ok || !isDeepStrictEqual(current.value, ledger)) {
+    abort({ message: current.ok ? 'evidence.yaml does not match its authored inputs' : current.error,
+      code: 'evidenceLedger.assemblyMismatch',
+      fix: 'Run unchanged finalization to rebuild the ledger from the corrected authored inputs.' });
+  }
+} else writeYaml(evidencePath, ledger);
 const summaryFields = {
   evidencePath,
+  ...(args.check ? { check: true } : {}),
   sources: sources.length,
   duplicateSources: duplicateSourceCount,
   claims: claims.length,
@@ -125,7 +135,7 @@ const summaryFields = {
   evidenceGaps: evidenceGaps.length,
 };
 if (outputFormat === 'text') {
-  console.log(`[evidence-ledger] wrote ${evidencePath} (${sources.length} sources [${duplicateSourceCount} duplicates], ${claims.length} claims [${duplicateClaimCount} duplicates])`);
+  console.log(`[evidence-ledger] ${args.check ? 'verified' : 'wrote'} ${evidencePath} (${sources.length} sources [${duplicateSourceCount} duplicates], ${claims.length} claims [${duplicateClaimCount} duplicates])`);
 } else {
   const envelope = validationEnvelope({
     ok: true,
@@ -369,4 +379,3 @@ function inferEvidenceQuality(sources, claims) {
   if (sources.length >= medium.minSources && claims.length >= medium.minClaims && reputationCheck) return 'medium';
   return 'low';
 }
-
