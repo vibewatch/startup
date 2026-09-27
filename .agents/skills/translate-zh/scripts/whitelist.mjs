@@ -128,6 +128,12 @@ const FIGURE_PATHS = [
   'figures/[]/data/series/[]/label',
   'figures/[]/data/series/[]/name',
   'figures/[]/data/series/[]/points/[]/label',
+  'figures/[]/data/series/[]/points/[]/detail',
+  'figures/[]/data/series/[]/points/[]/details',
+  'figures/[]/data/series/[]/points/[]/description',
+  'figures/[]/data/series/[]/points/[]/note',
+  'figures/[]/data/series/[]/points/[]/notes',
+  'figures/[]/data/series/[]/points/[]/context',
 ];
 
 export const TRANSLATE_PATHS = Object.freeze({

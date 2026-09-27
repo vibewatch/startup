@@ -105,6 +105,17 @@ Missing evidence remains a blocker. This targeted check does not establish
 general prose quality or factual accuracy. Historical `--contract` checks
 remain structural and do not certify the absence of such content defects.
 
+**Funnel comparability:** use a funnel only for comparable stages of the same
+population, unit and time basis. Mixed patient, organization, transaction and
+currency metrics belong in separate cards or a table, not a conversion funnel.
+The renderer shows separate cards with a visible localized notice when explicit
+stage-unit strings differ (including different qualifications); it does not
+guess whether unlike unit descriptions are equivalent. Missing or matching unit
+strings do not certify comparability. Funnel stage details, notes, context and
+units remain available in tooltips and on the page, including print. This
+presentation safeguard does not verify the source metrics or fix mixed-unit
+figures whose units exist only in labels or prose; those still need source review.
+
 **Executed search provenance:** worker pools include `executedSearchQueries` projected
 from successful shared searches, with literal query strings, actual providers,
 unfiltered result counts, and only assigned result URLs. Copy those records into

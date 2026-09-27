@@ -67,6 +67,25 @@ export function kpiContext(item) {
   };
 }
 
+export function funnelItems(data) {
+  if (Array.isArray(data?.items) && data.items.length) return data.items;
+  const points = data?.series?.[0]?.points;
+  return Array.isArray(points) ? points : [];
+}
+
+export function funnelStageNotes(item) {
+  return [...new Set([
+    figureDetail(item), item.description, item.details, item.note, item.notes, item.context,
+  ].filter((value) => typeof value === 'string' && value.trim()))];
+}
+
+export function funnelUnitsDiffer(items) {
+  const units = items.map((item) => item.unit)
+    .filter((unit) => typeof unit === 'string' && unit.trim())
+    .map((unit) => unit.trim());
+  return new Set(units).size > 1;
+}
+
 export function withRangeTones(figure) {
   if (figure.type !== 'range' || !Array.isArray(figure.data?.items)) return figure;
   return {

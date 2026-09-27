@@ -10,7 +10,8 @@ import { canonicalCacheKey, cleanExtractedText, htmlToText, isAccessErrorRespons
 import { checkAuthoringInstructions, checkFigureDeep } from './artifact-checks.mjs';
 import { KNOWN_DIMENSIONS, WARNING_DIMENSIONS } from './validation-catalog.mjs';
 import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
-import { figureDetail, kpiContext, withRangeTones } from '../../../../website/src/lib/figures.mjs';
+import { figureDetail, funnelItems, funnelStageNotes, funnelUnitsDiffer, kpiContext, withRangeTones } from '../../../../website/src/lib/figures.mjs';
+import { isTranslatableLeaf, TRANSLATE_PATHS } from '../../translate-zh/scripts/whitelist.mjs';
 
 for (const file of ['FigureRenderer.astro', 'DiligenceReport.astro']) {
   test(`figure caveats are not hidden by ${file} styles`, () => {
@@ -77,6 +78,72 @@ test('range tones are resolved before localization without overriding authored t
   assert.deepEqual(withRangeTones(prepared), prepared);
   for (const other of [{ type: 'bar', data: { items } }, { type: 'range' }, { type: 'range', data: { nodes: items } }]) {
     assert.equal(withRangeTones(other), other);
+  }
+});
+
+test('funnel units are compared conservatively without inferring units from labels', () => {
+  const cases = [
+    [[{ unit: 'businesses' }, { unit: 'USD' }], true],
+    [[{ unit: 'USD' }, { unit: ' USD ' }], false],
+    [[{ unit: 'm' }, { unit: 'M' }], true],
+    [[{ unit: 'clients' }, { unit: 'clients (estimated)' }], true],
+    [[{ unit: 'businesses' }, { unit: 'businesses' }], false],
+    [[{ unit: 'USD' }, { unit: null }, {}], false],
+    [[{ unit: 'clients' }, {}, { unit: 'USD' }], true],
+    [[{ label: 'Customers' }, { label: 'Revenue', unit: '' }], false],
+    [[], false],
+  ];
+  for (const [items, expected] of cases) {
+    const before = structuredClone(items);
+    assert.equal(funnelUnitsDiffer(Object.freeze(items.map(Object.freeze))), expected);
+    assert.deepEqual(items, before);
+    const translated = items.map((item) => ({ ...item, label: 'Translated label' }));
+    assert.equal(funnelUnitsDiffer(translated), expected);
+  }
+});
+
+test('funnel items use the same items-or-first-series precedence in all render paths', () => {
+  const items = Object.freeze([{ label: 'Primary', value: 0 }]);
+  const points = Object.freeze([{ label: 'Series', value: 10 }]);
+  assert.equal(funnelItems({ items, series: [{ points }] }), items);
+  assert.equal(funnelItems({ items: [], series: [{ points }] }), points);
+  assert.equal(funnelItems({ series: [{ points }, { points: items }] }), points);
+  for (const data of [undefined, null, {}, { items: [] }, { series: [] }]) {
+    assert.deepEqual(funnelItems(data), []);
+  }
+});
+
+test('funnel qualifications preserve distinct text, aliases and literal markup without duplication', () => {
+  const cases = [
+    [{ note: 'Highly uncertain; actual count not disclosed.' }, ['Highly uncertain; actual count not disclosed.']],
+    [{ description: 'Company-reported.' }, ['Company-reported.']],
+    [{ detail: 'Estimated.', description: 'Single cohort.', note: 'Unaudited.' }, ['Estimated.', 'Single cohort.', 'Unaudited.']],
+    [{ detail: '', description: 'Known scope.', notes: 'May exclude inactive users.' }, ['Known scope.', 'May exclude inactive users.']],
+    [{ detail: 'Estimated.', note: 'Estimated.', context: 'Estimated.' }, ['Estimated.']],
+    [{ details: 'One year only.', context: 'Not recurring revenue.' }, ['One year only.', 'Not recurring revenue.']],
+    [{ note: '<em>Not markup</em> & a qualification.' }, ['<em>Not markup</em> & a qualification.']],
+    [{ note: '', description: null, context: ' \n ' }, []],
+    [{ value: 0, unit: 'USD' }, []],
+  ];
+  for (const [item, expected] of cases) {
+    const before = structuredClone(item);
+    assert.deepEqual(funnelStageNotes(Object.freeze(item)), expected);
+    assert.deepEqual(item, before);
+  }
+});
+
+test('all supported funnel qualifications are translatable in both data shapes, but units stay preserved', () => {
+  for (const prefix of [
+    ['figures', 0, 'data', 'items', 0],
+    ['figures', 0, 'data', 'series', 0, 'points', 0],
+  ]) {
+    for (const field of ['detail', 'description', 'details', 'note', 'notes', 'context']) {
+      assert.deepEqual(funnelStageNotes({ [field]: 'Qualification.' }), ['Qualification.']);
+      assert.equal(isTranslatableLeaf([...prefix, field], TRANSLATE_PATHS.fullReport), true);
+    }
+    for (const field of ['value', 'displayValue', 'unit', 'claimRefs']) {
+      assert.equal(isTranslatableLeaf([...prefix, field], TRANSLATE_PATHS.fullReport), false);
+    }
   }
 });
 

@@ -6,6 +6,7 @@ import DataTable from './DataTable.astro';
 import FigureRenderer from './FigureRenderer.astro';
 import { hasInlineClaimRefs, splitClaimRefsText } from '../lib/claim-refs.mjs';
 import { asArray, claimRefs } from '../lib/report-types';
+import type { Locale } from '../lib/locale';
 import type { Claim, ReportBlock as ReportBlockData, ReportFigure, ReportTable, Source } from '../lib/report-types';
 
 interface Props {
@@ -14,9 +15,10 @@ interface Props {
   figures: Map<string, ReportFigure>;
   claims: Claim[];
   sources: Source[];
+  locale?: Locale;
 }
 
-const { block, tables, figures, claims, sources } = Astro.props;
+const { block, tables, figures, claims, sources, locale = 'en' } = Astro.props;
 
 function blockClass(type: string | null | undefined): string {
   return `report-callout callout-${String(type ?? 'insight').replace(/[^a-z0-9-]/gi, '-')}`;
@@ -106,5 +108,5 @@ const figure = block.type === 'figure' && block.figureRef ? figures.get(block.fi
 )}
 
 {block.type === 'figure' && figure && (
-  <FigureRenderer figure={figure} claims={claims} sources={sources} />
+  <FigureRenderer figure={figure} claims={claims} sources={sources} locale={locale} />
 )}

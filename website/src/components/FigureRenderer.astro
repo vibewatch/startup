@@ -1,21 +1,38 @@
 ---
 import ClaimRefs from './ClaimRefs.astro';
-import { RENDERED_FIGURE_TYPES } from '../lib/figures.mjs';
+import { RENDERED_FIGURE_TYPES, funnelItems, funnelStageNotes, funnelUnitsDiffer } from '../lib/figures.mjs';
+import { t } from '../lib/i18n';
+import type { Locale } from '../lib/locale';
 import { claimRefs, type Claim, type ReportFigure, type Source } from '../lib/report-types';
 
 interface Props {
   figure: ReportFigure;
   claims?: Claim[];
   sources?: Source[];
+  locale?: Locale;
 }
 
-const { figure, claims = [], sources = [] } = Astro.props;
-const type = figure?.type ?? 'flow';
+const { figure, claims = [], sources = [], locale = 'en' } = Astro.props;
+const authoredType = figure?.type ?? 'flow';
 const data = figure?.data ?? {};
+const stages = authoredType === 'funnel' ? funnelItems(data) : [];
+const unitsDiffer = funnelUnitsDiffer(stages);
+const type = unitsDiffer ? 'kpi' : authoredType;
+const chartData = unitsDiffer ? {
+  ...data,
+  items: stages.map((item) => ({
+    ...item,
+    detail: funnelStageNotes(item).join('\n'),
+    context: item.unit,
+  })),
+} : data;
+const stageAnnotations = unitsDiffer ? [] : stages.map((item) => ({
+  item, notes: funnelStageNotes(item),
+})).filter(({ item, notes }) => item.unit || notes.length);
 const chartTypes = new Set(RENDERED_FIGURE_TYPES);
 const usesD3Chart = chartTypes.has(type);
 const chartId = `chart-${String(figure?.id ?? 'figure').replace(/[^a-z0-9_-]/gi, '-')}-${Math.random().toString(36).slice(2, 9)}`;
-const chartPayload = usesD3Chart ? { id: chartId, type, data } : null;
+const chartPayload = usesD3Chart ? { id: chartId, type, data: chartData } : null;
 const chartPayloadJson = chartPayload
   ? JSON.stringify(chartPayload).replace(/[<>&\u2028\u2029]/g, (char) => ({ '<': '\\u003c', '>': '\\u003e', '&': '\\u0026', '\u2028': '\\u2028', '\u2029': '\\u2029' }[char] ?? char))
   : null;
@@ -26,7 +43,23 @@ const chartPayloadJson = chartPayload
 
   {figure.summary && <p class="figure-summary">{figure.summary}</p>}
 
+  {unitsDiffer && <p class="figure-note funnel-unit-notice" role="note">{t('reportFunnelUnitNotice', locale)}</p>}
+
   {usesD3Chart && <div id={chartId} class:list={['d3-figure', `chart-${type}`]}></div>}
+
+  {stageAnnotations.length > 0 && (
+    <div class="figure-note funnel-stage-notes">
+      <dl>
+        {stageAnnotations.map(({ item, notes }) => (
+          <div>
+            <dt>{item.label ?? item.name}</dt>
+            {item.unit && <dd>{item.displayValue ?? item.value} {item.unit}</dd>}
+            {notes.map((note) => <dd>{note}</dd>)}
+          </div>
+        ))}
+      </dl>
+    </div>
+  )}
 
   {type === 'other' && (
     <div class="figure-fallback" role="note">
@@ -42,7 +75,7 @@ const chartPayloadJson = chartPayload
 
 <script>
   import * as d3 from 'd3';
-  import { figureDetail, kpiContext } from '../lib/figures.mjs';
+  import { figureDetail, funnelItems, funnelStageNotes, kpiContext } from '../lib/figures.mjs';
 
   const palette = {
     claret: '#990f3d',
@@ -1627,7 +1660,7 @@ const chartPayloadJson = chartPayload
   };
 
   const renderFunnel = (element, payload) => {
-    const items = arr(payload.data.items).length ? arr(payload.data.items) : arr(arr(payload.data.series)[0]?.points);
+    const items = funnelItems(payload.data);
     const containerWidth = element.getBoundingClientRect().width || 760;
     const compact = containerWidth < 640;
     const { svg, width, height } = svgBase(element, Math.max(compact ? 360 : 330, items.length * (compact ? 58 : 54) + 90));
@@ -1725,8 +1758,13 @@ const chartPayloadJson = chartPayload
         .attr('font-weight', fontWeight('medium'))
         .text((d) => d.conversion == null ? 'entry' : `${d3.format('.0%')(d.conversion)} prior`);
     }
-    stages.each(function(d) { addTitle(d3.select(this), `${d.item.label}: ${valueLabel(d.item)}${d.conversion == null ? '' : `; ${d3.format('.0%')(d.conversion)} from prior`}`); });
-    withTooltip(stages, (d) => tooltipHtml(d.item.label, [valueLabel(d.item), d.conversion == null ? 'Entry stage' : `${d3.format('.0%')(d.conversion)} from prior`, d.item.detail]));
+    const tooltipLines = (d) => [
+      String(valueLabel(d.item)), d.item.unit,
+      d.conversion == null ? 'Entry stage' : `${d3.format('.0%')(d.conversion)} from prior`,
+      ...funnelStageNotes(d.item),
+    ];
+    stages.each(function(d) { addTitle(d3.select(this), [d.item.label, ...tooltipLines(d)].filter(Boolean).join('\n')); });
+    withTooltip(stages, (d) => tooltipHtml(d.item.label, tooltipLines(d)));
   };
 
   const renderRange = (element, payload) => {
@@ -2162,6 +2200,10 @@ const chartPayloadJson = chartPayload
   figcaption { margin-bottom: var(--space-3); font-family: var(--font-sans); font-variant-caps: all-small-caps; font-size: var(--chart-fs-kicker); font-weight: var(--chart-fw-body); letter-spacing: var(--chart-tracking-subtle); line-height: var(--chart-leading-caption); color: var(--claret); }
   .figure-summary, .figure-note { margin: 0 0 var(--space-3); color: var(--caption-gray); font-family: var(--font-sans); font-size: var(--chart-fs-note); line-height: var(--chart-leading-body); }
   .figure-note { margin-top: var(--space-3); }
+  .funnel-stage-notes dl { margin: 0; }
+  .funnel-stage-notes dl > div + div { margin-top: var(--space-2); }
+  .funnel-stage-notes dt { font-weight: 700; }
+  .funnel-stage-notes dd { margin: 0.2em 0 0; white-space: pre-line; overflow-wrap: anywhere; }
   .d3-figure { position: relative; width: 100%; min-height: 0; margin: var(--space-3) 0; overflow: visible; }
   .d3-figure[data-render-state='pending'] { min-height: clamp(12rem, 34vh, 20rem); border-radius: var(--radius-card, 0.5rem); background: linear-gradient(110deg, rgba(212,196,184,0.12), rgba(255,250,245,0.52), rgba(212,196,184,0.12)); }
   .d3-figure[data-render-state='pending']::before { content: 'Loading figure…'; position: absolute; inset: 0; display: grid; place-items: center; color: var(--caption-gray); font-family: var(--font-sans); font-size: var(--chart-fs-caption); }
