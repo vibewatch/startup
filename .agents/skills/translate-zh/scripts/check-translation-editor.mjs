@@ -127,6 +127,25 @@ const checks = [
     `award-count normalization cannot erase company attribution (strict=${strictEditor})`,
   ]),
   ...[
+    ['No public customer or economics proof at a reported valuation.', '仍缺公开客户与经济性证明。', false],
+    ['No public customer proof.', '尚缺公开客户证据。', false],
+    ['No public evidence.', '仍缺公开证据。', false],
+    ['No public customer proof.', '已有公开客户证明。', true],
+    ['No public customer proof.', '并非仍缺公开客户证明。', true],
+    ['No public customer proof.', '不是 尚缺公开客户证明。', true],
+    ['No public customer proof.', '仍缺公开客户证明的说法不成立。', true],
+    ['No public customer proof.', '仍缺公开资料；客户证明已经发布。', true],
+    ['No public customer proof.', '仍缺公开资料，其他材料构成证明。', true],
+    ['No public pricing.', '仍缺公开客户证明。', true],
+    ['No public pricing; customer proof is available.', '仍缺公开客户证明。', true],
+    ['No public pricing, but customer proof is available.', '仍缺公开客户证明。', true],
+    ['No public customer proof; no public revenue data.', '仍缺公开客户证明；收入已经披露。', true],
+  ].flatMap(([en, zh, expected]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(`${en} This is a source-reviewed diligence observation.`), fullReport(zh), { strictEditor })
+      .some((issue) => issue.code === 'hedge-preservation') === expected,
+    `missing public proof retains scope and negation (strict=${strictEditor}): ${en} / ${zh}`,
+  ])),
+  ...[
     ['GitHub has no public repositories attributable to GreyOrange warehouse orchestration.', 'GitHub 上没有可归因于 GreyOrange 仓库编排的公开代码库。', false],
     ['There are no public repositories attributable to the company.', '未见可归因于该公司的公开仓库。', false],
     ['GitHub has no public repositories attributable to GreyOrange.', 'GitHub 上有可归因于 GreyOrange 的公开代码库。', true],
@@ -256,6 +275,7 @@ const checks = [
     ['Product liability claims against GreyOrange are plausible if an injury traces to a software defect.', '如果伤害可追溯至软件缺陷，GreyOrange 可能面临产品责任索赔。'],
     ['A product-liability claim can follow a warehouse injury.', '仓库伤害事件可能引发产品责任索赔。'],
     ['Review product liability claims and warranty claim history.', '复核产品责任索赔和保修索赔历史。'],
+    ['Injury, property damage, recall, insurance and customer claims.', '人身伤害、财产损失、召回、保险和客户索赔。'],
   ].flatMap(([en, zh]) => [false, true].flatMap((strictEditor) => [
     [
       !checkPairQuality(fullReport(`${en} This is a source-reviewed diligence observation.`), fullReport(zh), { strictEditor })
@@ -275,6 +295,9 @@ const checks = [
     'Warranty claims, return rates; claims its product is superior.',
     'The company claims product liability is limited.',
     'Product liability claims remain possible; claims every deployment is safe.',
+    'The company claims insurance and customer protection are unlimited.',
+    'Review insurance and customer claims; claims every deployment is safe.',
+    'Insurance and customer claims are logged; the company claims its product is superior.',
   ].flatMap((en) => [false, true].map((strictEditor) => [
     checkPairQuality(fullReport(`${en} This is a source-reviewed diligence observation.`), fullReport('保障没有限制，产品更好。'), { strictEditor })
       .some((issue) => issue.code === 'hedge-preservation'),

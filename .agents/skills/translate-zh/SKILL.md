@@ -374,6 +374,10 @@ For `no public repositories attributable to` a company, `没有可归因于…�
 retains the repository-attribution gap. Negation, clause boundaries and a separate
 public-disclosure gap still matter. Product-liability claims are legal demands,
 not company assertions; a separate assertion in the same leaf still needs attribution.
+`仍缺公开…证明` or `尚缺公开…证据` can retain a single missing-public-proof
+finding; negated wording and a separate disclosure gap still fail. A clause-ending
+`insurance and customer claims` list refers to legal demands, not a company
+assertion. Separate assertions still require attribution.
 
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json

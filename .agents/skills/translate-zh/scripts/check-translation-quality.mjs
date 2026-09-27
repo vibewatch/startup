@@ -68,6 +68,7 @@ const insuranceClaimNouns = new RegExp([
   '\\b(?:genomics to|from policy to|propagated to|propagate data to) claims(?=\\s*(?:[.,;:]|$))',
   '\\bcoverage\\s+(?:limits?\\s*,\\s*(?:exclusions?\\s*,\\s*and\\s+claims?\\s+procedures?|claims?\\s+triggers?)|terms\\s+and\\s+claims?\\s+histor(?:y|ies))\\b',
   '\\bproduct[ -]liability\\s+claims?\\b',
+  '\\binsurance\\s+and\\s+customer\\s+claims\\b(?=\\s*(?:[,.;:]|$))',
 ].join('|'), 'gi');
 const patentClaimNouns = new RegExp([
   '\\b(?:requires?\\s+careful|depends\\s+on)\\s+claim\\s+drafting(?:\\s+strategy)?\\b',
@@ -126,6 +127,9 @@ const hedgeRules = [
     alternative: (source, target) => /(?<!并非|不是|非|尚)尚?未见[^。！？；，：]{1,24}公开(?:第三方)?审计|(?<!并非|不是)(?:没有(?:披露任何|可验证的)公开|没有发现[^。！？；，：]{1,40}上的公开|(?:未|没有)发现\s+[A-Za-z][A-Za-z0-9 .&+-]{0,60}\s+公开|未(?:提及|披露任何)公开|公开(?:渠道|披露|层面)(?:未|没有)|公开资料不显示)/u.test(target)
       || (/\bno public\b[^.;!?]{0,120}\bfiled\b/i.test(source) && /(?<!并非|不是|非)未提交公开/u.test(target))
       || (/\bno public\b[^.;!?]{0,120}\bconfirmed\b/i.test(source) && /(?<!并非|不是|非)未确认公开/u.test(target))
+      || (/\bno public\b[^.;!?,]{0,160}\b(?:proof|evidence)\b/i.test(source)
+        && (source.match(/\bno public\b/gi) ?? []).length === 1
+        && /(?<!并非\s*|不是\s*|非\s*|不\s*)(?:仍|尚)缺公开[^。！？；，：\n.!?;,]{0,60}(?:证明|证据)(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
       || (/\bno public repositories attributable to\b/i.test(source)
         && (source.match(/\bno public\b/gi) ?? []).length === 1
         && /(?<!并非\s*|不是\s*|非\s*|不\s*)(?:没有|未见)可归因于[^。！？；，：\n.!?;,]{1,60}的公开(?:代码库|仓库)(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
