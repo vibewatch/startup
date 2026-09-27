@@ -8,7 +8,7 @@
 // siblings) is persisted in .cache/check-translations.json on full success.
 // Folders whose digest still matches the cache are skipped. We only persist
 // when every checked folder passes, so any failure forces a re-check next
-// run. Bump CHECK_VERSION when diff/whitelist/strict-mode rules change;
+// run. Checker and whitelist source bytes automatically version the cache;
 // set CHECK_TRANSLATION_NO_CACHE=1 to bypass.
 //
 // Usage:
@@ -22,9 +22,10 @@ import { checkFolder, valueExcerpt } from './check-translation.mjs';
 const REPORTS_DIR = resolve(fileURLToPath(import.meta.url), '..', '..', '..', '..', '..', 'reports');
 const REPO_ROOT = resolve(REPORTS_DIR, '..');
 const CACHE_FILE = join(REPO_ROOT, '.cache', 'check-translations.json');
-// Bump when check-translation's diff/whitelist/strict-mode rules change so
-// cached digests invalidate everywhere.
-const CHECK_VERSION = '1';
+const CHECK_VERSION = ['check-translations.mjs', 'check-translation.mjs', 'whitelist.mjs']
+  .reduce((hash, name) => hash.update(name).update('\0')
+    .update(readFileSync(new URL(name, import.meta.url))).update('\0'), createHash('sha256'))
+  .digest('hex');
 const USE_CACHE = process.env.CHECK_TRANSLATION_NO_CACHE !== '1';
 
 function parseArgs(argv) {

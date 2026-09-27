@@ -351,6 +351,10 @@ for absent public information. `暂无…数据` can retain `not yet available`,
 but does not establish another negative proposition such as lack of profit.
 Negated wording and a filing or confirmation in a different clause do not
 satisfy these aliases.
+`仍无法从公开材料中衡量` can retain a single `not yet publicly measurable`
+gap; negation, unrelated gaps and additional `not yet` clauses still fail.
+A rejected formulation such as `rather than a single "market size is X" claim`
+is not a company assertion. A separate company claim still requires attribution.
 
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json
@@ -510,6 +514,11 @@ silently drops anything else; the validator byte-compares everything else.
 If a new visible-text path appears (new figure shape, new section), stop
 and report the whitelist gap. Whitelist changes are repo-development
 work, not part of a report translation run.
+
+The corpus translation-check cache is keyed by the batch checker, per-folder
+checker and whitelist source bytes as well as report bytes and validation flags.
+Changes to those rules must recheck previously cached reports; a cached pass is
+not evidence that newly translatable fields have been translated.
 
 Use `references/glossary.zh.yaml` for recurring terms. Do not edit the
 glossary during a report translation; if a recurring term is missing,

@@ -147,6 +147,65 @@ test('all supported funnel qualifications are translatable in both data shapes, 
   }
 });
 
+test('translation sweep invalidates cached passes when checker or whitelist code changes', () => {
+  mkdirSync('.research-cache', { recursive: true });
+  const root = mkdtempSync(join('.research-cache', 'translation-cache-test-'));
+  try {
+    const scripts = join(root, '.agents/skills/translate-zh/scripts');
+    const report = join(root, 'reports/20990101000000-cache-test');
+    mkdirSync(scripts, { recursive: true });
+    mkdirSync(report, { recursive: true });
+    for (const name of ['check-translations.mjs', 'check-translation.mjs', 'whitelist.mjs']) {
+      writeFileSync(join(scripts, name), readFileSync(`.agents/skills/translate-zh/scripts/${name}`));
+    }
+    const whitelistFile = join(scripts, 'whitelist.mjs');
+    const whitelist = readFileSync(whitelistFile, 'utf8');
+    const oldWhitelist = whitelist.replace("  'figures/[]/data/items/[]/note',\n", '');
+    assert.notEqual(oldWhitelist, whitelist);
+    writeFileSync(whitelistFile, oldWhitelist);
+    const english = { artifact: 'full-report', figures: [{ data: { items: [
+      { label: 'Entry', value: 100, note: 'Important disclosure remains unavailable.' },
+    ] } }] };
+    const chinese = structuredClone(english);
+    chinese.figures[0].data.items[0].label = '入口';
+    writeFileSync(join(report, 'full-report.yaml'), JSON.stringify(english));
+    writeFileSync(join(report, 'full-report.zh.yaml'), JSON.stringify(chinese));
+    const sweep = () => spawnSync(process.execPath, [join(scripts, 'check-translations.mjs'), '--strict'], {
+      encoding: 'utf8', timeout: 15000,
+      env: { ...process.env, CHECK_TRANSLATION_NO_CACHE: '0' },
+    });
+    const first = sweep();
+    assert.equal(first.status, 0, first.stderr);
+    assert.match(first.stdout, /1 re-checked, 0 cached/);
+    const cached = sweep();
+    assert.equal(cached.status, 0, cached.stderr);
+    assert.match(cached.stdout, /0 re-checked, 1 cached/);
+    const cacheFile = join(root, '.cache/check-translations.json');
+    const oldCache = readFileSync(cacheFile, 'utf8');
+    writeFileSync(whitelistFile, whitelist);
+    const rejected = sweep();
+    assert.equal(rejected.status, 1, rejected.stdout);
+    assert.match(rejected.stderr, /figures\/0\/data\/items\/0\/note: translation is identical/);
+    assert.equal(readFileSync(cacheFile, 'utf8'), oldCache);
+    chinese.figures[0].data.items[0].note = '重要信息仍未公开。';
+    writeFileSync(join(report, 'full-report.zh.yaml'), JSON.stringify(chinese));
+    const repaired = sweep();
+    assert.equal(repaired.status, 0, repaired.stderr);
+    assert.match(repaired.stdout, /1 re-checked, 0 cached/);
+    for (const name of ['check-translation.mjs', 'check-translations.mjs']) {
+      const before = JSON.parse(readFileSync(cacheFile, 'utf8')).version;
+      const file = join(scripts, name);
+      writeFileSync(file, `${readFileSync(file, 'utf8')}\n// Regression fixture change.\n`);
+      const result = sweep();
+      assert.equal(result.status, 0, result.stderr);
+      assert.match(result.stdout, /1 re-checked, 0 cached/);
+      assert.notEqual(JSON.parse(readFileSync(cacheFile, 'utf8')).version, before);
+    }
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
 test('authoring-instruction checks reject leaked workflow directives in public prose', () => {
   const directives = [
     'The first pass through the chapter should answer the mission questions directly.',
