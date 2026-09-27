@@ -164,6 +164,11 @@ in tooltips. Populated `items` retain precedence over the alternative `series`
 shape. These display safeguards do not establish metric accuracy or comparability
 when units, populations or time bases are missing or misleading in the source.
 
+KPI cards retain distinct detail, note, context and unit text both on the card
+and in tooltips, including when used for mixed-unit bars. Print must retain
+these qualifications too; identical strings appear only once. This display
+rule does not validate the metric or the assumptions behind it.
+
 **Flow relationships:** an ordered flow with no explicit edges keeps its existing
 sequence layout. Explicit edges must form the complete, unambiguous adjacent-node
 chain to use that layout; otherwise the renderer lists every node and connection

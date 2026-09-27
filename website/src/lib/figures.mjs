@@ -59,12 +59,10 @@ export const RENDERED_FIGURE_TYPES = FIGURE_TYPES.filter((type) => type !== 'oth
 
 export const figureDetail = (item) => item.detail ?? item.description;
 
-export function kpiContext(item) {
-  const detail = figureDetail(item) ?? item.summary;
-  return {
-    visible: item.context && item.context !== detail ? item.context : null,
-    tooltip: item.context && item.context !== (detail || item.note) ? item.context : null,
-  };
+export function kpiNotes(item) {
+  return [...new Set([
+    figureDetail(item) ?? item.summary, ...figureItemNotes(item), item.unit,
+  ].filter((value) => typeof value === 'string' && value.trim()))];
 }
 
 export function figureItemNotes(item) {

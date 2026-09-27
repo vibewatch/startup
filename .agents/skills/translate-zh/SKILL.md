@@ -714,9 +714,10 @@ Single-series bars preserve point qualifications on the page and in print;
 differing explicit point units instead produce separate cards with a localized
 notice. These presentation changes preserve report YAML and do not certify the
 underlying metrics or comparability.
-KPI item `context` also qualifies its value: verify it on the card and in its
-hover/tap tooltip, including when a separate detail or note is present. Preserve
-distinct qualifications without duplicating identical text.
+KPI item detail, note, context and unit text qualify its value: verify every
+distinct qualification on the card, in print and in its hover/tap tooltip,
+including when several fields coexist. Preserve distinct qualifications without
+duplicating identical text; mixed-unit bar cards follow the same rule.
 Range-chart colors must agree across locales. The renderer resolves legacy
 English label hints before translation and gives explicit `tone` values priority;
 translated display labels must not change those colors.

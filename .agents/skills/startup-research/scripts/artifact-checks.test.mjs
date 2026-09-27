@@ -10,7 +10,7 @@ import { canonicalCacheKey, cleanExtractedText, htmlToText, isAccessErrorRespons
 import { checkAuthoringInstructions, checkFigureDeep } from './artifact-checks.mjs';
 import { KNOWN_DIMENSIONS, WARNING_DIMENSIONS } from './validation-catalog.mjs';
 import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
-import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, flowRelationshipTable, flowTopology, funnelStageTable, kpiContext, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
+import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, flowRelationshipTable, flowTopology, funnelStageTable, kpiNotes, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
 import { isTranslatableLeaf, TRANSLATE_PATHS } from '../../translate-zh/scripts/whitelist.mjs';
 import { claimRefs } from '../../../../website/src/lib/report-types.ts';
 
@@ -161,28 +161,33 @@ for (const file of ['FigureRenderer.astro', 'DiligenceReport.astro']) {
   });
 }
 
-test('KPI context preserves distinct qualifications without duplicating detail or tooltip notes', () => {
+test('KPI cards and tooltips retain every distinct qualification and unit without changing the input', () => {
   const cases = [
-    [{ context: 'Unaudited.' }, 'Unaudited.', 'Unaudited.'],
-    [{ detail: 'Estimated.', context: 'Single geography.' }, 'Single geography.', 'Single geography.'],
-    [{ detail: 'Estimated.', context: 'Estimated.' }, null, null],
-    [{ note: 'Provisional.', context: 'Current cohort only.' }, 'Current cohort only.', 'Current cohort only.'],
-    [{ note: 'Annualized.', context: 'Annualized.' }, 'Annualized.', null],
-    [{ description: 'Estimated.', context: 'Estimated.' }, null, null],
-    [{ summary: 'Limited sample.', context: 'Limited sample.' }, null, null],
-    [{ detail: '', description: 'Known scope.', context: 'Known scope.' }, 'Known scope.', 'Known scope.'],
-    [{ detail: 'Other detail.', note: 'Known scope.', context: 'Known scope.' }, 'Known scope.', 'Known scope.'],
-    [{ detail: 'Original detail.' }, null, null],
-    [{ detail: 'Original detail.', context: '' }, null, null],
-    [{ detail: 'Original detail.', context: null }, null, null],
-    [{ context: '<b>Not markup</b> & a condition.' }, '<b>Not markup</b> & a condition.', '<b>Not markup</b> & a condition.'],
+    [{ note: 'Illustrative FX only.' }, ['Illustrative FX only.']],
+    [{ context: 'Unaudited.' }, ['Unaudited.']],
+    [{ detail: 'Estimated.', context: 'Single geography.' }, ['Estimated.', 'Single geography.']],
+    [{ detail: 'Estimated.', context: 'Estimated.' }, ['Estimated.']],
+    [{ note: 'Provisional.', context: 'Current cohort only.' }, ['Provisional.', 'Current cohort only.']],
+    [{ note: 'Annualized.', context: 'Annualized.' }, ['Annualized.']],
+    [{ description: 'Estimated.', context: 'Estimated.' }, ['Estimated.']],
+    [{ summary: 'Limited sample.', context: 'Limited sample.' }, ['Limited sample.']],
+    [{ detail: '', description: 'Known scope.', context: 'Known scope.' }, ['Known scope.']],
+    [{ detail: 'Other detail.', note: 'Known scope.', context: 'Known scope.' }, ['Other detail.', 'Known scope.']],
+    [{ detail: 'Original detail.', context: '' }, ['Original detail.']],
+    [{ detail: 'Original detail.', context: null }, ['Original detail.']],
+    [{ context: '<b>Not markup</b> & a condition.' }, ['<b>Not markup</b> & a condition.']],
+    [{ detail: 'Basis.', description: 'Definition.', note: 'Estimate.', notes: 'Period.', context: 'Scope.', unit: 'R$mn' },
+      ['Basis.', 'Definition.', 'Estimate.', 'Period.', 'Scope.', 'R$mn']],
+    [{ value: -139.6, note: 'Loss.', context: 'R$mn', unit: 'R$mn' }, ['Loss.', 'R$mn']],
+    [{ value: 0, note: '', notes: ' ', context: null, unit: '%' }, ['%']],
+    [{}, []],
   ];
-  for (const [item, visible, tooltip] of cases) {
+  for (const [item, expected] of cases) {
     const before = structuredClone(item);
-    assert.deepEqual(kpiContext(Object.freeze(item)), { visible, tooltip });
+    assert.deepEqual(kpiNotes(Object.freeze(item)), expected);
     assert.deepEqual(item, before);
     const normalized = { ...item, detail: figureDetail(item) ?? item.summary };
-    assert.deepEqual(kpiContext(Object.freeze(normalized)), { visible, tooltip });
+    assert.deepEqual(kpiNotes(Object.freeze(normalized)), expected);
   }
 });
 
