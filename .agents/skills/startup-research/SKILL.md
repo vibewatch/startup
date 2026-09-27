@@ -189,7 +189,7 @@ The supplemental table does not invent explicit edges for an implicit sequence.
 Generic node positions and tone hints must not be relabeled as evidence,
 constraints or decisions unless that role is actually authored.
 
-**Evidence-link completeness:** blocks, tables, figures and cover facts retain
+**Evidence-link completeness:** company profiles, blocks, tables, figures and cover facts retain
 every declared claim reference in authored order, without a display-count cap.
 Enable the evidence toggle to inspect the links; print hides inline links but
 retains the evidence index. Link presence does not establish source support.

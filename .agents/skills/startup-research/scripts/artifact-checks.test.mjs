@@ -60,16 +60,21 @@ test('implicit flow details retain full qualifications without inventing explici
 });
 
 test('report evidence links retain every declared reference in order without mutating the input', () => {
-  const refs = Object.freeze(['CI005', 'CI006', 'CI010', 'CI011', 'CI015', 'CI016', 'CI020', 'CI005']);
+  const refs = Object.freeze(['CI005', 'CI006', 'CI010', 'CI011', 'CI015', 'CI016', 'CI020', 'CI021', 'CI022', 'CI005']);
   const result = claimRefs(Object.freeze({ claimRefs: refs }));
   assert.deepEqual(result, refs);
   assert.notEqual(result, refs);
   result.pop();
-  assert.equal(refs.length, 8);
+  assert.equal(refs.length, 10);
   assert.deepEqual(claimRefs({ claimRefs: ['CO001'] }), ['CO001']);
   for (const value of [null, undefined, 'CO001', {}, { claimRefs: null }]) {
     assert.deepEqual(claimRefs(value), []);
   }
+});
+
+test('company profiles use the uncapped evidence-reference projection', () => {
+  const source = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
+  assert.match(source, /<ClaimRefs refs=\{claimRefs\(companyProfile\)\} claims=\{claims\} sources=\{sources\}/);
 });
 
 test('flow sequences require every explicit connection to form the complete ordered chain', () => {
