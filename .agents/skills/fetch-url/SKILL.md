@@ -79,6 +79,8 @@ This also covers recognized soft-404 pages, including the exact Chinese title
 The exact title `404 | Page Not Found` is also an error, even when cookie
 controls and navigation make the body look substantive. Live responses and
 all cache variants use the same rejection and fallback checks.
+The exact title `DO NOT DELETE - 404 Page` is likewise unusable, including
+reader copies surrounded by publisher navigation and subscription links.
 The redirect-only text `You are now being redirected to shortly.....`
 is also unusable, including reader wrappers and URLs ending in `.pdf`
 that actually serve HTML. It is not the requested source document.

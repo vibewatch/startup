@@ -637,6 +637,8 @@ const clinicalTrialShellBodies = [
 const notFoundTitleBodies = [
   '<html><head><title>404 | Page Not Found</title></head><body>Manage your tracker preferences.<h1>We can\'t find the page you\'re looking for.</h1><nav>Newsletters Careers Privacy policy</nav></body></html>',
   "Title: 404 | Page Not Found\n\nURL Source: https://example.com/missing-article\n\nMarkdown Content:\nManage your tracker preferences.\n\nWe can't find the page you're looking for.\n\nNewsletters Careers Privacy policy",
+  '<html><head><title>DO NOT DELETE - 404 Page</title></head><body><nav>Markets Business Investing Tech</nav><h1>We are sorry, the page you were looking for cannot be found.</h1><footer>Newsletters Subscribe Privacy</footer></body></html>',
+  'Title: DO NOT DELETE - 404 Page\n\nURL Source: https://example.com/missing-article\n\nPublished Time: 2018-04-05T15:43:23+0000\n\nMarkdown Content:\nMarkets Business Investing Tech\n\nWe are sorry, the page you were looking for cannot be found.\n\nNewsletters Subscribe Privacy',
 ];
 const redirectShellBodies = [
   'You are now being redirected to shortly.....',
@@ -875,6 +877,7 @@ test('HTTP-200 challenge pages are not successful source retrievals', () => {
   }
   assert.equal(isAccessErrorResponse({ status: 200, title: '页面未找到', body: '' }), true);
   assert.equal(isAccessErrorResponse({ status: 200, title: '404 | Page Not Found', body: '' }), true);
+  assert.equal(isAccessErrorResponse({ status: 200, title: 'DO NOT DELETE - 404 Page', body: '' }), true);
   assert.equal(isAccessErrorResponse({ status: 200, title: 'ClinicalTrials.gov', body: 'Show glossary' }), true);
 });
 
@@ -886,6 +889,8 @@ test('access-error detection preserves real articles about security and PDF bodi
     '<html><title>理解页面未找到错误</title><article>404 页面未找到是常见的网站错误。本文介绍如何排查。</article></html>',
     '<html><title>Understanding 404 - Page Not Found</title><article>A guide to error handling.</article></html>',
     '<html><title>Understanding 404 | Page Not Found</title><article>A guide to error handling.</article></html>',
+    '<html><title>Understanding DO NOT DELETE - 404 Page</title><article>A guide to error handling.</article></html>',
+    'Title: Funding announcement\n\nURL Source: https://example.com/article\n\nMarkdown Content:\nThe company raised $150M. An old link is titled DO NOT DELETE - 404 Page.',
     'Title: Funding announcement\n\nURL Source: https://example.com/article\n\nMarkdown Content:\nThe company raised $150M. An old link is titled 404 | Page Not Found.',
     '404 documents were processed, while three links returned page not found.',
     '404\n\n没有找到此种页面\n\nThis report analyzes the error rather than serving an error page.',
@@ -904,6 +909,7 @@ test('access-error detection preserves real articles about security and PDF bodi
     Buffer.from('%PDF-1.7\nTitle: Vercel Security Checkpoint'),
     Buffer.from('%PDF-1.7\nTitle: 页面未找到'),
     Buffer.from('%PDF-1.7\nTitle: 404 | Page Not Found'),
+    Buffer.from('%PDF-1.7\nTitle: DO NOT DELETE - 404 Page'),
     Buffer.from('%PDF-1.7\nYou are now being redirected to shortly.....'),
     Buffer.from('%PDF-1.7\nNew to Earnings Whispers?\nCreate FREE account to continue.'),
     Buffer.from('%PDF-1.7\nPowered and protected by\n\nPrivacy'),
