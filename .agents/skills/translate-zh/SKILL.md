@@ -382,6 +382,12 @@ assertion. Separate assertions still require attribution.
 For an explicit `no public announcement` gap, `没有…的公开公告` or
 `未见…的公开公告` retains the missing announcement, not absence of the event.
 Negated wording, clause boundaries and additional gaps remain separate.
+`还谈不上便宜` can preserve a single `not yet cheap` qualification.
+`公开市场上没有…报告` can preserve a single explicit public-market-report gap;
+neither alias can stand in for another missing predicate. `can claim every
+BaaS or DBaaS dollar` describes capturing market spending, not making an
+assertion; `rather than a single expansive TAM claim` rejects a sizing shortcut.
+A separate company assertion still requires attribution.
 
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json

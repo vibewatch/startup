@@ -65,6 +65,38 @@ const legalClaimNounPairs = [
 
 const checks = [
   ...[
+    ['The valuation is not yet cheap.', '估值还谈不上便宜。', false],
+    ['The valuation is not yet cheap.', '估值已经很便宜。', true],
+    ['The valuation is not yet cheap.', '估值并非还谈不上便宜。', true],
+    ['The valuation is not yet cheap.', '不是 还谈不上便宜。', true],
+    ['The valuation is not yet cheap.', '还谈不上便宜的判断不成立。', true],
+    ['The valuation is not yet cheap.', '还谈不上盈利；估值很便宜。', true],
+    ['The valuation is not yet cheap; earnings are not yet audited.', '估值还谈不上便宜；盈利已审计。', true],
+    ['The company is not yet profitable.', '估值还谈不上便宜。', true],
+    ['There is no public, universally accepted market report for the category.', '公开市场上没有被普遍接受的品类报告。', false],
+    ['There is no public market report for the category.', '公开市场上没有这类报告。', false],
+    ['There is no public market report for the category.', '公开市场上已有这类报告。', true],
+    ['There is no public market report for the category.', '并非公开市场上没有这类报告。', true],
+    ['There is no public market report for the category.', '不是 公开市场上没有这类报告。', true],
+    ['There is no public market report for the category.', '公开市场上没有这类报告的判断不成立。', true],
+    ['There is no public market report for the category.', '公开市场上没有价格；报告已发布。', true],
+    ['There is no public market report; no public revenue data is available.', '公开市场上没有这类报告；收入已披露。', true],
+    ['There is no public revenue data.', '公开市场上没有这类报告。', true],
+    ['The conclusion is not that the company can claim every BaaS or DBaaS dollar.', '结论并非公司能拿下每一美元 BaaS 或 DBaaS 支出。', false],
+    ['The company can claim every BaaS dollar.', '公司能拿下每一美元 BaaS 支出。', false],
+    ['Use public budgets rather than a single expansive TAM claim.', '应采用公开预算，而非单一扩张型 TAM 叙事。', false],
+    ['Use public budgets rather than a single TAM claim.', '应采用公开预算，而非单一 TAM 叙事。', false],
+    ['The company claims it can claim every BaaS or DBaaS dollar.', '公司能拿下每一美元 BaaS 或 DBaaS 支出。', true],
+    ['The company can claim every BaaS dollar, and claims margins will improve.', '公司能拿下每一美元 BaaS 支出，利润率也将改善。', true],
+    ['Use public budgets rather than a single expansive TAM claim; the company claims it is profitable.', '应采用公开预算，而非单一扩张型 TAM 叙事；公司已盈利。', true],
+    ['The company makes a single expansive TAM claim.', '公司可获取的市场很大。', true],
+    ['The company can claim every DBaaS dollar; its claimed scale needs verification.', '公司能拿下每一美元 DBaaS 支出；规模还需核实。', true],
+  ].flatMap(([en, zh, expected]) => [false, true].map(strictEditor => [
+    checkPairQuality(fullReport(`${en} This is a source-reviewed diligence observation.`), fullReport(zh), { strictEditor })
+      .some(issue => issue.code === 'hedge-preservation') === expected,
+    `market sizing and cheapness qualifiers keep scope and separate assertions (strict=${strictEditor}): ${en} / ${zh}`,
+  ])),
+  ...[
     ['B2B AWARDS recognition; the B2B AWARDS category is named again.', 'B2B AWARDS 奖项；再次提及该品类。', false],
     ['B2B revenue is $2B.', 'B2B 收入为 $2B。', false],
     ['B2B revenue is $2B.', 'B2B 收入为 $3B。', true],
