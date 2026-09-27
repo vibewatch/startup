@@ -370,6 +370,10 @@ or `未检索到 … 的公开申报文件` retains the search-result gap. It do
 establish that no filings exist. Negation, clause boundaries and additional
 public-disclosure gaps remain distinct; this check does not verify the search
 itself or the underlying English assertion.
+For `no public repositories attributable to` a company, `没有可归因于…的公开代码库`
+retains the repository-attribution gap. Negation, clause boundaries and a separate
+public-disclosure gap still matter. Product-liability claims are legal demands,
+not company assertions; a separate assertion in the same leaf still needs attribution.
 
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json

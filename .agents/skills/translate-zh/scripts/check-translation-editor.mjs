@@ -127,6 +127,16 @@ const checks = [
     `award-count normalization cannot erase company attribution (strict=${strictEditor})`,
   ]),
   ...[
+    ['GitHub has no public repositories attributable to GreyOrange warehouse orchestration.', 'GitHub 上没有可归因于 GreyOrange 仓库编排的公开代码库。', false],
+    ['There are no public repositories attributable to the company.', '未见可归因于该公司的公开仓库。', false],
+    ['GitHub has no public repositories attributable to GreyOrange.', 'GitHub 上有可归因于 GreyOrange 的公开代码库。', true],
+    ['GitHub has no public repositories attributable to GreyOrange.', 'GitHub 上并非没有可归因于 GreyOrange 的公开代码库。', true],
+    ['GitHub has no public repositories attributable to GreyOrange.', '不是 未见可归因于 GreyOrange 的公开代码库。', true],
+    ['GitHub has no public repositories attributable to GreyOrange.', '没有可归因于 GreyOrange 的公开代码库的说法不成立。', true],
+    ['GitHub has no public repositories attributable to GreyOrange.', '没有可归因于公司的记录；公开代码库已上线。', true],
+    ['GitHub has no public repositories attributable to GreyOrange.', '没有可归因于公司的记录，其他团队的公开代码库可查。', true],
+    ['No public pricing is attributable to GreyOrange.', '没有可归因于 GreyOrange 的公开代码库。', true],
+    ['No public repositories attributable to GreyOrange; no public audit.', '没有可归因于 GreyOrange 的公开代码库；审计已完成。', true],
     ['SEC EDGAR returns no public filings for BETA.', 'SEC EDGAR 没有检索到 BETA 的公开文件。', false],
     ['The search returned no public filings for BETA.', '未检索到 BETA 的公开申报文件。', false],
     ['The search found no public filing for BETA.', '没有检索到 BETA 的公开文件。', false],
@@ -243,16 +253,19 @@ const checks = [
     ['The warranty claim response target is 24 hours.', '保修索赔响应目标为 24 小时。'],
     ['Warranty claims resolved target: 24 hours.', '保修索赔解决目标：24 小时。'],
     ['Margin depends on warranty claims and field service.', '利润率取决于保修索赔和现场服务。'],
+    ['Product liability claims against GreyOrange are plausible if an injury traces to a software defect.', '如果伤害可追溯至软件缺陷，GreyOrange 可能面临产品责任索赔。'],
+    ['A product-liability claim can follow a warehouse injury.', '仓库伤害事件可能引发产品责任索赔。'],
+    ['Review product liability claims and warranty claim history.', '复核产品责任索赔和保修索赔历史。'],
   ].flatMap(([en, zh]) => [false, true].flatMap((strictEditor) => [
     [
       !checkPairQuality(fullReport(`${en} This is a source-reviewed diligence observation.`), fullReport(zh), { strictEditor })
         .some((issue) => issue.code === 'hedge-preservation'),
-      `warranty claims are service or compensation nouns (strict=${strictEditor}): ${en}`,
+      `service and liability claims are compensation nouns (strict=${strictEditor}): ${en}`,
     ],
     [
       checkPairQuality(fullReport(`${en} The company claims its product is superior.`), fullReport(`${zh} 产品更好。`), { strictEditor })
         .some((issue) => issue.code === 'hedge-preservation'),
-      `warranty nouns do not suppress separate assertions (strict=${strictEditor}): ${en}`,
+      `compensation nouns do not suppress separate assertions (strict=${strictEditor}): ${en}`,
     ],
   ])),
   ...[
@@ -260,10 +273,12 @@ const checks = [
     'The warranty claims that every loss is covered.',
     'The warranty claims complete protection.',
     'Warranty claims, return rates; claims its product is superior.',
+    'The company claims product liability is limited.',
+    'Product liability claims remain possible; claims every deployment is safe.',
   ].flatMap((en) => [false, true].map((strictEditor) => [
     checkPairQuality(fullReport(`${en} This is a source-reviewed diligence observation.`), fullReport('保障没有限制，产品更好。'), { strictEditor })
       .some((issue) => issue.code === 'hedge-preservation'),
-    `warranty-adjacent assertions still require attribution (strict=${strictEditor}): ${en}`,
+    `compensation-adjacent assertions still require attribution (strict=${strictEditor}): ${en}`,
   ])),
   ...[
     ['There is no public basis to calculate runway.', '公开信息不足以计算现金续航。', false],
