@@ -127,6 +127,24 @@ const checks = [
     `award-count normalization cannot erase company attribution (strict=${strictEditor})`,
   ]),
   ...[
+    ['SEC EDGAR returns no public filings for BETA.', 'SEC EDGAR 没有检索到 BETA 的公开文件。', false],
+    ['The search returned no public filings for BETA.', '未检索到 BETA 的公开申报文件。', false],
+    ['The search found no public filing for BETA.', '没有检索到 BETA 的公开文件。', false],
+    ['SEC EDGAR returns no public filings for BETA.', 'SEC EDGAR 已检索到 BETA 的公开文件。', true],
+    ['SEC EDGAR returns no public filings for BETA.', 'SEC EDGAR 并非没有检索到 BETA 的公开文件。', true],
+    ['SEC EDGAR returns no public filings for BETA.', '不是 未检索到 BETA 的公开申报文件。', true],
+    ['SEC EDGAR returns no public filings for BETA.', '没有检索到 BETA 的公开文件的说法不成立。', true],
+    ['SEC EDGAR returns no public filings for BETA.', '没有检索到资料；BETA 的公开文件可查。', true],
+    ['SEC EDGAR returns no public filings for BETA.', '没有检索到资料，BETA 的公开文件可查。', true],
+    ['No public filings exist for BETA.', '没有检索到 BETA 的公开文件。', true],
+    ['The search found no public pricing for BETA.', '没有检索到 BETA 的公开文件。', true],
+    ['SEC EDGAR returns no public filings for BETA; no public revenue data.', '没有检索到 BETA 的公开文件；收入已披露。', true],
+  ].flatMap(([en, zh, expected]) => [false, true].map((strictEditor) => [
+    checkPairQuality(fullReport(`${en} This is a source-reviewed diligence observation.`), fullReport(zh), { strictEditor })
+      .some((issue) => issue.code === 'hedge-preservation') === expected,
+    `filing-search absence retains scope and negation (strict=${strictEditor}): ${en} / ${zh}`,
+  ])),
+  ...[
     ['Plant-derived compounds require careful claim drafting for patent protection.', '植物来源化合物需要谨慎撰写权利要求，才能获得专利保护。', false],
     ['Protection depends on claim drafting strategy.', '保护范围取决于权利要求撰写策略。', false],
     ['Composition-of-matter claims on novel analogs more defensible than isolation claims.', '新型类似物的物质组成权利要求比单纯分离权利要求更站得住。', false],

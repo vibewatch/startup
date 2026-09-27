@@ -365,6 +365,11 @@ satisfy these aliases.
 gap; negation, unrelated gaps and additional `not yet` clauses still fail.
 A rejected formulation such as `rather than a single "market size is X" claim`
 is not a company assertion. A separate company claim still requires attribution.
+For a search that `returns no public filings`, `没有检索到 … 的公开文件`
+or `未检索到 … 的公开申报文件` retains the search-result gap. It does not
+establish that no filings exist. Negation, clause boundaries and additional
+public-disclosure gaps remain distinct; this check does not verify the search
+itself or the underlying English assertion.
 
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json
