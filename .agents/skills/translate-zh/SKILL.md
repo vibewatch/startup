@@ -706,6 +706,9 @@ Publication checks must exercise the hydrated charts and their hover/tap
 tooltips in a browser. Raw `script.figure-chart-data` payloads are not proof
 that a translated field is displayed; readable-page extraction omits those
 payloads and cannot validate client-rendered chart text.
+Timeline entries retain their full date, label and detail in visible text and
+shared hover/tap tooltips. Check both surfaces; an accessibility label alone
+does not prove the tooltip works, and print must retain the visible detail.
 Approximation and evidence notes must remain visible on narrow screens and in
 print; they qualify the chart data rather than serving as optional decoration.
 Multi-series bars render as tables: check every series name and point, including

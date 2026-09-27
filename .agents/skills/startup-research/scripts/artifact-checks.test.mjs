@@ -14,6 +14,13 @@ import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDi
 import { isTranslatableLeaf, TRANSLATE_PATHS } from '../../translate-zh/scripts/whitelist.mjs';
 import { claimRefs } from '../../../../website/src/lib/report-types.ts';
 
+test('timeline rows use shared pointer tooltips with full date and detail', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const timeline = source.slice(source.indexOf('const renderTimeline ='), source.indexOf('const renderStack ='));
+  assert.match(timeline, /withTooltip\(rows, \(d\) => tooltipHtml\(d\.label, \[d\.date, d\.detail\]\)\)/);
+  assert.match(timeline, /renderLineBlock\(d3\.select\(this\), d\.detailLines/);
+});
+
 test('stack details retain complete ordered groups, duplicate labels, values and qualifications', () => {
   const data = { layers: [{
     label: 'Layer', detail: 'Primary context', description: 'Additional context', note: 'Not verified', unit: '%', value: 0,
