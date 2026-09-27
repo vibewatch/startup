@@ -10,8 +10,87 @@ import { canonicalCacheKey, cleanExtractedText, htmlToText, isAccessErrorRespons
 import { checkAuthoringInstructions, checkFigureDeep } from './artifact-checks.mjs';
 import { KNOWN_DIMENSIONS, WARNING_DIMENSIONS } from './validation-catalog.mjs';
 import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
-import { barSeries, barSeriesTable, figureDetail, figureItems, figureItemNotes, figureUnitsDiffer, kpiContext, withRangeTones } from '../../../../website/src/lib/figures.mjs';
+import { barSeries, barSeriesTable, figureDetail, figureItems, figureItemNotes, figureUnitsDiffer, flowRelationshipTable, flowTopology, kpiContext, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
 import { isTranslatableLeaf, TRANSLATE_PATHS } from '../../translate-zh/scripts/whitelist.mjs';
+
+test('flow sequences require every explicit connection to form the complete ordered chain', () => {
+  const nodes = [{ id: 'a', label: 'First' }, { id: 'b', label: 'Second' }, { id: 'c', label: 'Third' }];
+  assert.equal(flowTopology({ nodes }).sequence, true);
+  assert.equal(flowTopology({ nodes, edges: [{ from: 'b', to: 'c' }, { source: 'First', target: 'Second' }] }).sequence, true);
+  for (const edges of [
+    [{ from: 'a', to: 'b' }],
+    [{ from: 'a', to: 'b' }, { from: 'a', to: 'c' }],
+    [{ from: 'a', to: 'b' }, { from: 'b', to: 'a' }],
+    [{ from: 'a', to: 'b' }, { from: 'a', to: 'b' }],
+    [{ from: 'a', to: 'a' }, { from: 'b', to: 'c' }],
+  ]) {
+    const topology = flowTopology({ nodes, edges });
+    assert.equal(topology.sequence, false);
+    assert.equal(topology.unresolved, false);
+    assert.equal(topology.endpoints.length, edges.length);
+  }
+});
+
+test('flow endpoints retain missing, ambiguous, alias and zero-valued identifiers without guessing', () => {
+  const data = { nodes: [{ id: 0, label: 'Zero' }, { id: 'b', label: 'Shared' }, { id: 'c', label: 'Shared' }],
+    edges: [{ from: 0, to: 'b' }, { from: 'Shared', to: 'missing' }, { from: '', to: null }, { source: 'c', target: 'Zero' }] };
+  assert.deepEqual(flowTopology(data), { sequence: false, unresolved: true, endpoints: [
+    { fromIndex: 0, toIndex: 1 }, { fromIndex: null, toIndex: null },
+    { fromIndex: null, toIndex: null }, { fromIndex: 2, toIndex: 0 },
+  ] });
+  assert.equal(flowTopology({ nodes: [{ id: 'same' }, { id: 'same' }], edges: [{ from: 'same', to: 'same' }] }).unresolved, true);
+});
+
+test('relationship tables preserve all nodes, duplicate connections, context and raw unresolved endpoints', () => {
+  const data = {
+    nodes: [
+      { id: 'a', label: 'First', value: 0, unit: 'USD', detail: 'Estimated.', note: 'Estimated.', context: 'Not revenue.', tone: 'warning' },
+      { id: 'b', label: 'Second', description: 'Separate cohort.' },
+      { id: 'isolated', label: 'Unconnected' },
+    ],
+    edges: [
+      { from: 'a', to: 'b', label: 'First connection', note: '<b>Literal</b>' },
+      { from: 'a', to: 'b', relationship: 'Second connection', value: -2, unit: '%' },
+      { from: 'unknown', to: 'a', label: 'Unresolved source' },
+      { source: 'b', target: 'a', label: 'Feedback' },
+    ],
+  };
+  const before = structuredClone(data);
+  [...data.nodes, ...data.edges].forEach(Object.freeze);
+  Object.freeze(data.nodes);
+  Object.freeze(data.edges);
+  Object.freeze(data);
+  const table = flowRelationshipTable(data, flowTopology(data),
+    { nodeLabel: 'Node', connectionLabel: 'Connection', sourceLabel: 'Node / from', targetLabel: 'To', contextLabel: 'Context' });
+  assert.deepEqual(table.columns, ['Node / from', 'To', 'Context']);
+  assert.deepEqual(table.rows.map(row => row.label), ['Node 1', 'Node 2', 'Node 3', 'Connection 1', 'Connection 2', 'Connection 3', 'Connection 4']);
+  assert.deepEqual(table.rows[0].values, [{ label: 'First [a]', tone: 'warning' }, null, '0\nUSD\nEstimated.\nNot revenue.']);
+  assert.equal(table.rows[1].values[2], 'Separate cohort.');
+  assert.equal(table.rows[2].values[0].label, 'Unconnected [isolated]');
+  assert.deepEqual(table.rows[3].values, ['First [a]', 'Second [b]', 'First connection\n<b>Literal</b>']);
+  assert.deepEqual(table.rows[4].values, ['First [a]', 'Second [b]', 'Second connection\n-2\n%']);
+  assert.deepEqual(table.rows[5].values, ['unknown', 'First [a]', 'Unresolved source']);
+  assert.deepEqual(table.rows[6].values, ['Second [b]', 'First [a]', 'Feedback']);
+  assert.deepEqual(data, before);
+});
+
+test('flow topology resolves English label aliases before Chinese overlays without changing report data', () => {
+  const data = { nodes: [{ label: 'First' }, { label: 'Second' }], edges: [{ from: 'First', to: 'Second', label: 'Relation' }] };
+  const figure = Object.freeze({ type: 'flow', data: Object.freeze(data) });
+  const before = structuredClone(figure);
+  const prepared = withFlowTopology(figure);
+  assert.equal(prepared.data, data);
+  assert.deepEqual(figure, before);
+  const translated = { ...prepared, data: { ...data, nodes: [{ label: '起点' }, { label: '终点' }],
+    edges: [{ ...data.edges[0], label: '关系' }] } };
+  assert.equal(translated._flowTopology.sequence, true);
+  assert.equal(flowTopology(translated.data).unresolved, true);
+  const table = flowRelationshipTable(translated.data, translated._flowTopology,
+    { nodeLabel: '节点', connectionLabel: '连接', sourceLabel: '节点 / 起点', targetLabel: '终点', contextLabel: '说明' });
+  assert.deepEqual(table.rows[2].values, ['起点', '终点', '关系']);
+  const other = { type: 'bar', data: { items: [] } };
+  assert.equal(withFlowTopology(other), other);
+});
 
 test('bar series retain every populated series and preserve existing item precedence', () => {
   const items = Object.freeze([{ label: 'Item', value: 1 }]);

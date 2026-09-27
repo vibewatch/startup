@@ -1,3 +1,5 @@
+import type { flowTopology } from './figures.mjs';
+
 export type ReportRecord = Record<string, unknown>;
 
 export interface Claim extends ReportRecord {
@@ -44,6 +46,7 @@ export interface ReportFigure extends ReportRecord {
   approximationNotes?: string;
   data?: unknown;
   claimRefs?: string[];
+  _flowTopology?: ReturnType<typeof flowTopology>;
 }
 
 export interface CoverFact extends ReportRecord {

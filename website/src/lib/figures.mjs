@@ -114,6 +114,64 @@ export function barSeriesTable(series, { valueLabel, contextLabel }) {
   };
 }
 
+export function flowTopology(data) {
+  const nodes = Array.isArray(data?.nodes) ? data.nodes : [];
+  const edges = Array.isArray(data?.edges) ? data.edges : [];
+  const resolve = (endpoint) => {
+    if (endpoint == null || endpoint === '') return null;
+    const matches = nodes.map((node, index) => {
+      const key = node.id ?? node.label ?? String(index + 1);
+      return endpoint === key || endpoint === node.id || endpoint === node.label ? index : -1;
+    }).filter((index) => index >= 0);
+    return matches.length === 1 ? matches[0] : null;
+  };
+  const endpoints = edges.map((edge) => ({
+    fromIndex: resolve(edge.from ?? edge.source),
+    toIndex: resolve(edge.to ?? edge.target),
+  }));
+  const unresolved = endpoints.some(({ fromIndex, toIndex }) => fromIndex == null || toIndex == null);
+  const sequence = edges.length === 0 || (!unresolved && edges.length === nodes.length - 1
+    && new Set(endpoints.map(({ fromIndex }) => fromIndex)).size === edges.length
+    && endpoints.every(({ fromIndex, toIndex }) => toIndex === fromIndex + 1));
+  return { sequence, unresolved, endpoints };
+}
+
+export function withFlowTopology(figure) {
+  return figure.type === 'flow' ? { ...figure, _flowTopology: flowTopology(figure.data) } : figure;
+}
+
+export function flowRelationshipTable(data, topology, { nodeLabel, connectionLabel, sourceLabel, targetLabel, contextLabel }) {
+  const nodes = Array.isArray(data?.nodes) ? data.nodes : [];
+  const edges = Array.isArray(data?.edges) ? data.edges : [];
+  const text = (value) => value == null ? '\u2014'
+    : typeof value === 'object' ? JSON.stringify(value) : String(value);
+  const label = (node, index) => {
+    const name = text(node.label ?? node.name ?? node.id ?? `#${index + 1}`);
+    return node.id != null && text(node.id) !== name ? `${name} [${text(node.id)}]` : name;
+  };
+  const context = (item) => [...new Set([
+    item.displayValue ?? item.value, item.unit, ...figureItemNotes(item),
+  ].filter((value) => value != null && value !== '').map(text))].join('\n');
+  const endpoint = (value, index) => index == null ? text(value) : label(nodes[index], index);
+  return {
+    columns: [sourceLabel, targetLabel, contextLabel],
+    rows: [
+      ...nodes.map((node, index) => ({
+        label: `${nodeLabel} ${index + 1}`,
+        values: [{ label: label(node, index), ...(node.tone ? { tone: node.tone } : {}) }, null, context(node) || null],
+      })),
+      ...edges.map((edge, index) => ({
+        label: `${connectionLabel} ${index + 1}`,
+        values: [
+          endpoint(edge.from ?? edge.source, topology.endpoints[index].fromIndex),
+          endpoint(edge.to ?? edge.target, topology.endpoints[index].toIndex),
+          [...new Set([edge.label, edge.relationship, context(edge)].filter((value) => value != null && value !== '').map(text))].join('\n') || null,
+        ],
+      })),
+    ],
+  };
+}
+
 export function withRangeTones(figure) {
   if (figure.type !== 'range' || !Array.isArray(figure.data?.items)) return figure;
   return {

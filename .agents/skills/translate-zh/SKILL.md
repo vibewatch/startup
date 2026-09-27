@@ -712,6 +712,11 @@ English label hints before translation and gives explicit `tone` values priority
 translated display labels must not change those colors.
 Also verify report-level `coverageNotes`, displayed before cover facts with
 the same Chinese-leaf / English-fallback behavior as other report text.
+Flow edge aliases resolve from English before overlays are merged. Non-sequential
+explicit flows render as node/connection tables, with localized notices for
+missing or ambiguous endpoints. Verify all connection directions, duplicate
+connections, node details and visible notes in both locales and in print;
+unchanged endpoint identifiers must not be translated to repair a display issue.
 
 - **Translate**: `title`, `subtitle`, `summary`, `description`,
   `caption`, `insight`, `basis`, `notes`, `approximationNotes`, the

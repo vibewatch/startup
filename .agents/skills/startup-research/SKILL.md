@@ -161,6 +161,16 @@ in tooltips. Populated `items` retain precedence over the alternative `series`
 shape. These display safeguards do not establish metric accuracy or comparability
 when units, populations or time bases are missing or misleading in the source.
 
+**Flow relationships:** an ordered flow with no explicit edges keeps its existing
+sequence layout. Explicit edges must form the complete, unambiguous adjacent-node
+chain to use that layout; otherwise the renderer lists every node and connection
+in a table, preserving branches, cycles, duplicates and disconnected nodes without
+inventing links. Missing or ambiguous endpoints receive a visible notice and keep
+their raw identifiers. English label aliases resolve before Chinese overlays, so
+translation cannot change connectivity. Use `dag` when authoring an explicit
+graph intended for spatial layout. These presentation checks do not establish that
+the authored relationships are factually correct.
+
 **Executed search provenance:** worker pools include `executedSearchQueries` projected
 from successful shared searches, with literal query strings, actual providers,
 unfiltered result counts, and only assigned result URLs. Copy those records into

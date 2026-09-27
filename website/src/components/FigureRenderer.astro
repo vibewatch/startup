@@ -1,6 +1,6 @@
 ---
 import ClaimRefs from './ClaimRefs.astro';
-import { RENDERED_FIGURE_TYPES, barSeries, barSeriesTable, figureItems, figureItemNotes, figureUnitsDiffer } from '../lib/figures.mjs';
+import { RENDERED_FIGURE_TYPES, barSeries, barSeriesTable, figureItems, figureItemNotes, figureUnitsDiffer, flowRelationshipTable, flowTopology } from '../lib/figures.mjs';
 import { t } from '../lib/i18n';
 import type { Locale } from '../lib/locale';
 import { claimRefs, type Claim, type ReportFigure, type Source } from '../lib/report-types';
@@ -15,14 +15,20 @@ interface Props {
 const { figure, claims = [], sources = [], locale = 'en' } = Astro.props;
 const authoredType = figure?.type ?? 'flow';
 const data = figure?.data ?? {};
+const flow = authoredType === 'flow' ? figure._flowTopology ?? flowTopology(data) : null;
+const relationshipTable = flow && !flow.sequence;
 const series = authoredType === 'bar' ? barSeries(data) : [];
 const multipleBarSeries = series.length > 1;
 const stages = authoredType === 'funnel' ? figureItems(data) : series.length === 1
   ? series[0].points.map((item) => item.unit == null && series[0].unit != null ? { ...item, unit: series[0].unit } : item)
   : [];
 const unitsDiffer = figureUnitsDiffer(stages);
-const type = multipleBarSeries ? 'matrix' : unitsDiffer ? 'kpi' : authoredType;
-const chartData = multipleBarSeries ? barSeriesTable(series, {
+const type = multipleBarSeries || relationshipTable ? 'matrix' : unitsDiffer ? 'kpi' : authoredType;
+const chartData = relationshipTable ? flowRelationshipTable(data, flow, {
+  nodeLabel: t('reportFigureNode', locale), connectionLabel: t('reportFigureConnection', locale),
+  sourceLabel: t('reportFigureNodeOrFrom', locale), targetLabel: t('reportFigureTo', locale),
+  contextLabel: t('reportFigureContext', locale),
+}) : multipleBarSeries ? barSeriesTable(series, {
   valueLabel: t('reportFigureValue', locale), contextLabel: t('reportFigureContext', locale),
 }) : unitsDiffer ? {
   ...data,
@@ -38,7 +44,7 @@ const stageAnnotations = unitsDiffer ? [] : stages.map((item) => ({
 const chartTypes = new Set(RENDERED_FIGURE_TYPES);
 const usesD3Chart = chartTypes.has(type);
 const chartId = `chart-${String(figure?.id ?? 'figure').replace(/[^a-z0-9_-]/gi, '-')}-${Math.random().toString(36).slice(2, 9)}`;
-const chartPayload = usesD3Chart ? { id: chartId, type, data: chartData } : null;
+const chartPayload = usesD3Chart ? { id: chartId, type, data: chartData, ...(flow ? { flowTopology: flow } : {}) } : null;
 const chartPayloadJson = chartPayload
   ? JSON.stringify(chartPayload).replace(/[<>&\u2028\u2029]/g, (char) => ({ '<': '\\u003c', '>': '\\u003e', '&': '\\u0026', '\u2028': '\\u2028', '\u2029': '\\u2029' }[char] ?? char))
   : null;
@@ -49,6 +55,8 @@ const chartPayloadJson = chartPayload
 
   {figure.summary && <p class="figure-summary">{figure.summary}</p>}
 
+  {relationshipTable && <p class="figure-note flow-relationship-notice" role="note">{t('reportFlowRelationshipNotice', locale)}</p>}
+  {flow?.unresolved && <p class="figure-note flow-endpoint-notice" role="note">{t('reportFlowEndpointNotice', locale)}</p>}
   {multipleBarSeries && <p class="figure-note bar-series-notice" role="note">{t('reportBarSeriesNotice', locale)}</p>}
   {authoredType === 'bar' && series.length === 1 && (series[0].label || series[0].name) && (
     <p class="figure-note bar-series-label">{series[0].label || series[0].name}</p>
@@ -87,7 +95,7 @@ const chartPayloadJson = chartPayload
 
 <script>
   import * as d3 from 'd3';
-  import { figureDetail, figureItems, figureItemNotes, kpiContext } from '../lib/figures.mjs';
+  import { figureDetail, figureItems, figureItemNotes, flowTopology, kpiContext } from '../lib/figures.mjs';
 
   const palette = {
     claret: '#990f3d',
@@ -1106,11 +1114,9 @@ const chartPayloadJson = chartPayload
   const renderFlow = (element, payload) => {
     const nodes = arr(payload.data.nodes).map((node, index) => ({ ...node, detail: figureDetail(node), _index: index, _key: node.id ?? node.label ?? String(index + 1) }));
     const edges = arr(payload.data.edges);
-    const edgeBetween = (source, target) => edges.find((edge) => {
-      const from = edge.from ?? edge.source;
-      const to = edge.to ?? edge.target;
-      return (from === source._key || from === source.id || from === source.label) && (to === target._key || to === target.id || to === target.label);
-    });
+    const topology = payload.flowTopology ?? flowTopology(payload.data);
+    const edgeBetween = (source, target) => edges[topology.endpoints.findIndex((edge) =>
+      edge.fromIndex === source._index && edge.toIndex === target._index)];
     const containerWidth = element.getBoundingClientRect().width || 760;
     const compact = containerWidth < 520;
     const hasDetails = nodes.some((node) => String(node.detail ?? '').trim());
@@ -1136,8 +1142,7 @@ const chartPayloadJson = chartPayload
     const connectorArrowTipY = (index) => stepY(index + 1) + cardH / 2 - railRadius - 3;
     const visibleEdgeLabel = (edge) => {
       const label = String(edge?.label ?? '').trim();
-      if (!label || ['therefore', 'decision', 'next'].includes(label.toLowerCase())) return null;
-      return label;
+      return label || null;
     };
     svg.append('g')
       .attr('class', 'flow-connector-lines')
@@ -1183,6 +1188,8 @@ const chartPayloadJson = chartPayload
       .attr('font-size', chartFont.small)
       .attr('font-weight', fontWeight('label'))
       .text((d) => labelText(visibleEdgeLabel(d.edge), 12));
+    connectorLabels.each(function(d) { addTitle(d3.select(this), `${d.source.label} → ${d.target.label}: ${d.edge.label}`); });
+    withTooltip(connectorLabels, (d) => tooltipHtml(`${d.source.label} → ${d.target.label}`, [d.edge.label, d.edge.relationship, ...figureItemNotes(d.edge)]));
     const railNodes = svg.append('g').selectAll('g').data(nodes).join('g').attr('transform', (_node, index) => `translate(${railX},${stepY(index) + cardH / 2})`);
     railNodes.append('circle').attr('r', railRadius).attr('fill', '#fff7ef').attr('stroke', (node) => colorForTone(node.tone)).attr('stroke-width', compact ? 2.4 : 3);
     railNodes.append('circle').attr('r', innerRailRadius).attr('fill', (node) => colorForTone(node.tone));
