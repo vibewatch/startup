@@ -59,7 +59,7 @@ export const RENDERED_FIGURE_TYPES = FIGURE_TYPES.filter((type) => type !== 'oth
 
 export const figureDetail = (item) => item.detail ?? item.description;
 
-export function kpiNotes(item) {
+export function figureValueNotes(item) {
   return [...new Set([
     figureDetail(item) ?? item.summary, ...figureItemNotes(item), item.unit,
   ].filter((value) => typeof value === 'string' && value.trim()))];

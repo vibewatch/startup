@@ -169,6 +169,10 @@ and in tooltips, including when used for mixed-unit bars. Print must retain
 these qualifications too; identical strings appear only once. This display
 rule does not validate the metric or the assumptions behind it.
 
+Range charts retain the same distinct qualifications and units on each row,
+in tooltips and in print. Preserve authored endpoints and center values;
+showing their notes does not establish comparability or validate a forecast.
+
 **Flow relationships:** an ordered flow with no explicit edges keeps its existing
 sequence layout. Explicit edges must form the complete, unambiguous adjacent-node
 chain to use that layout; otherwise the renderer lists every node and connection

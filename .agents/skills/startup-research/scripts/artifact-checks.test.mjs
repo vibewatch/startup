@@ -10,7 +10,7 @@ import { canonicalCacheKey, cleanExtractedText, htmlToText, isAccessErrorRespons
 import { checkAuthoringInstructions, checkFigureDeep } from './artifact-checks.mjs';
 import { KNOWN_DIMENSIONS, WARNING_DIMENSIONS } from './validation-catalog.mjs';
 import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
-import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, flowRelationshipTable, flowTopology, funnelStageTable, kpiNotes, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
+import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, funnelStageTable, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
 import { isTranslatableLeaf, TRANSLATE_PATHS } from '../../translate-zh/scripts/whitelist.mjs';
 import { claimRefs } from '../../../../website/src/lib/report-types.ts';
 
@@ -161,7 +161,7 @@ for (const file of ['FigureRenderer.astro', 'DiligenceReport.astro']) {
   });
 }
 
-test('KPI cards and tooltips retain every distinct qualification and unit without changing the input', () => {
+test('KPI and range cards and tooltips retain every distinct qualification and unit without changing the input', () => {
   const cases = [
     [{ note: 'Illustrative FX only.' }, ['Illustrative FX only.']],
     [{ context: 'Unaudited.' }, ['Unaudited.']],
@@ -179,15 +179,18 @@ test('KPI cards and tooltips retain every distinct qualification and unit withou
     [{ detail: 'Basis.', description: 'Definition.', note: 'Estimate.', notes: 'Period.', context: 'Scope.', unit: 'R$mn' },
       ['Basis.', 'Definition.', 'Estimate.', 'Period.', 'Scope.', 'R$mn']],
     [{ value: -139.6, note: 'Loss.', context: 'R$mn', unit: 'R$mn' }, ['Loss.', 'R$mn']],
+    [{ low: -20, mid: 80, high: 180, note: 'Not shareholder returns.', unit: '%' }, ['Not shareholder returns.', '%']],
+    [{ low: -20, high: 180, detail: 'Selected scenarios.', note: 'Not a floor.', context: 'No horizon.', unit: '%' },
+      ['Selected scenarios.', 'Not a floor.', 'No horizon.', '%']],
     [{ value: 0, note: '', notes: ' ', context: null, unit: '%' }, ['%']],
     [{}, []],
   ];
   for (const [item, expected] of cases) {
     const before = structuredClone(item);
-    assert.deepEqual(kpiNotes(Object.freeze(item)), expected);
+    assert.deepEqual(figureValueNotes(Object.freeze(item)), expected);
     assert.deepEqual(item, before);
     const normalized = { ...item, detail: figureDetail(item) ?? item.summary };
-    assert.deepEqual(kpiNotes(Object.freeze(normalized)), expected);
+    assert.deepEqual(figureValueNotes(Object.freeze(normalized)), expected);
   }
 });
 

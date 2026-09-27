@@ -721,6 +721,9 @@ duplicating identical text; mixed-unit bar cards follow the same rule.
 Range-chart colors must agree across locales. The renderer resolves legacy
 English label hints before translation and gives explicit `tone` values priority;
 translated display labels must not change those colors.
+Range rows must also retain every distinct detail, note, context and unit on the
+page, in print and in hover/tap tooltips. Check the authored low, center and high
+values without inferring comparability or forecast confidence from the display.
 Also verify report-level `coverageNotes`, displayed before cover facts with
 the same Chinese-leaf / English-fallback behavior as other report text.
 Flow edge aliases resolve from English before overlays are merged. Non-sequential
