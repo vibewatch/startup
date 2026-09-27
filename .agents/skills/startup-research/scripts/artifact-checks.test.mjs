@@ -12,6 +12,20 @@ import { KNOWN_DIMENSIONS, WARNING_DIMENSIONS } from './validation-catalog.mjs';
 import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
 import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, flowRelationshipTable, flowTopology, funnelStageTable, kpiContext, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
 import { isTranslatableLeaf, TRANSLATE_PATHS } from '../../translate-zh/scripts/whitelist.mjs';
+import { claimRefs } from '../../../../website/src/lib/report-types.ts';
+
+test('report evidence links retain every declared reference in order without mutating the input', () => {
+  const refs = Object.freeze(['CI005', 'CI006', 'CI010', 'CI011', 'CI015', 'CI016', 'CI020', 'CI005']);
+  const result = claimRefs(Object.freeze({ claimRefs: refs }));
+  assert.deepEqual(result, refs);
+  assert.notEqual(result, refs);
+  result.pop();
+  assert.equal(refs.length, 8);
+  assert.deepEqual(claimRefs({ claimRefs: ['CO001'] }), ['CO001']);
+  for (const value of [null, undefined, 'CO001', {}, { claimRefs: null }]) {
+    assert.deepEqual(claimRefs(value), []);
+  }
+});
 
 test('flow sequences require every explicit connection to form the complete ordered chain', () => {
   const nodes = [{ id: 'a', label: 'First' }, { id: 'b', label: 'Second' }, { id: 'c', label: 'Third' }];

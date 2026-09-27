@@ -723,6 +723,10 @@ authored rates and qualifications. Verify stage labels, raw values, units,
 series names and notes in the visible rows and hover/tap tooltips in both locales,
 including narrow screens and print; never invent a rate to replace the old
 renderer-generated percentages.
+Enable the evidence toggle when checking inline claim links. Every declared
+reference must remain reachable, including references after the sixth; their
+IDs and order do not change with translation. Print hides inline links while
+retaining the evidence index.
 
 - **Translate**: `title`, `subtitle`, `summary`, `description`,
   `caption`, `insight`, `basis`, `notes`, `approximationNotes`, the

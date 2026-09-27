@@ -174,6 +174,11 @@ translation cannot change connectivity. Use `dag` when authoring an explicit
 graph intended for spatial layout. These presentation checks do not establish that
 the authored relationships are factually correct.
 
+**Evidence-link completeness:** blocks, tables, figures and cover facts retain
+every declared claim reference in authored order, without a display-count cap.
+Enable the evidence toggle to inspect the links; print hides inline links but
+retains the evidence index. Link presence does not establish source support.
+
 **Executed search provenance:** worker pools include `executedSearchQueries` projected
 from successful shared searches, with literal query strings, actual providers,
 unfiltered result counts, and only assigned result URLs. Copy those records into

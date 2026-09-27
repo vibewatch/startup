@@ -124,6 +124,6 @@ export function asArray<T = unknown>(value: unknown): T[] {
   return Array.isArray(value) ? (value as T[]) : [];
 }
 
-export function claimRefs(value: unknown, limit = 6): string[] {
-  return asArray<string>(isRecord(value) ? value.claimRefs : null).slice(0, limit);
+export function claimRefs(value: unknown): string[] {
+  return asArray<string>(isRecord(value) ? value.claimRefs : null).slice();
 }
