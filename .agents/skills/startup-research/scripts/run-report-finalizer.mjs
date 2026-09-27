@@ -103,7 +103,7 @@ function hasCurrentPublishedRevision(reportFolder) {
   ));
 }
 
-function finalizerPrompt({ reportFolder, resultsPath, bundlePath, fetchLogPath, reviewFindings, publishedDeepReview, previousFailures }) {
+function finalizerPrompt({ reportFolder, resultsPath, bundlePath, fetchLogPath, reviewFindingsPath, publishedDeepReview, previousFailures }) {
   return `Use the startup-research skill to converge and finalize the existing report at ${reportFolder}. Work directly; do not launch subagents or background agents.
 
 Inputs:
@@ -119,18 +119,18 @@ Binding sequence:
 1. Walk chapters in configured order and run normal then strict validation.
 2. ${publishedDeepReview
     ? 'Repair only the named source-review findings and their dependent surfaces, or concrete validator failures in the existing chapters. Do not create replacement chapters, change the workflow snapshot or warning acknowledgements, or reconstruct missing worker inputs'
-    : `For a timed-out/failed worker or a missing chapter, complete only that chapter directly from its worker-input context and pool. For completed workers, repair only named validator failures in worker-results.json or subsequent checks${reviewFindings ? ' and the source-review findings below' : ''}`}; never rewrite unrelated passing content. Enforce each chapter's convergence retry budget.
+    : `For a timed-out/failed worker or a missing chapter, complete only that chapter directly from its worker-input context and pool. For completed workers, repair only named validator failures in worker-results.json or subsequent checks${reviewFindingsPath ? ' and the source-review findings below' : ''}`}; never rewrite unrelated passing content. Enforce each chapter's convergence retry budget.
 3. ${publishedDeepReview
     ? 'Use authentic source text for URLs already retained in this report. An existing report URL may be reused in another deep chapter for a named correction, with a local source ID and supported claim; do not introduce new report URLs or invent retrieval dates.'
     : "Fast chapters may use only successful prefetched URLs in that chapter's worker-input pool. Never borrow a URL from a sibling pool even if it appears in search-bundle fetchedSources. Do not add a URL."} Do not search, fetch, use curl, or write to the fetch trail. Keep fetched text read-only; keyQuote must contain literal, ordered excerpts, not paraphrases or reviewer commentary.
    ${publishedDeepReview
     ? 'Preserve existing search logs and source URLs. A later review fetch is not an original search execution; do not backfill or rewrite provenance. If a correction needs unavailable source evidence, report the blocker instead.'
     : 'Search logs must match actual search-bundle.json searches: literal query, response.provider, and response.results.length. retainedSourceRefs may name only chapter source URLs returned by that execution. Repair fabricated logs from the immutable execution records, not by changing the bundle or inventing new searches.'}
-4. Author report-meta.yaml only after every chapter passes strict, validate it, then run finalize-report.mjs.${reviewFindings ? ' Preserve existing metadata except where a named finding or a corrected supporting claim requires an update.' : ''}
-5. Fix only concrete validator findings${reviewFindings ? ' or the supplied source-review findings' : ''} with already-prefetched evidence. Never invent a replacement source or fact to satisfy a gate. Do not inspect historical reports, modify repository code/config/docs, or use git.
-${reviewFindings ? `
+4. Author report-meta.yaml only after every chapter passes strict, validate it, then run finalize-report.mjs.${reviewFindingsPath ? ' Preserve existing metadata except where a named finding or a corrected supporting claim requires an update.' : ''}
+5. Fix only concrete validator findings${reviewFindingsPath ? ' or the supplied source-review findings' : ''} with already-prefetched evidence. Never invent a replacement source or fact to satisfy a gate. Do not inspect historical reports, modify repository code/config/docs, or use git.
+${reviewFindingsPath ? `
 Source-review findings (human/agent review, not automated validator output):
-${JSON.stringify(reviewFindings, null, 2)}
+Read the complete review JSON at ${reviewFindingsPath}, including every issue and all source-proof context. Do not edit this input file. The review is supplied by path so large exact assignments do not exceed command-line argument limits.
 
 When every issue supplies tokens, expectedBefore and exactReplacement, these are guarded exact assignments. Apply only those assignments; preserve all other authored values. On a retry, already-correct values stay unchanged. If source evidence cannot support an exact replacement, report the blocker instead of substituting another value. The caller checks the entire authored scope and canonical assembled outputs, not only schema validity.
 Resolve every listed issue against ${publishedDeepReview ? 'the available authentic source text, without claiming it was fetched in the original run' : 'the original fetched text'}, including its linked claims, tables, figures, cover facts, and metadata. Preserve date, unit, metric denominator, and attribution. If the available evidence does not support a metric, remove the unsupported precision and document the gap; do not invent a midpoint or relabel an assumption as reported. Preserve valid historical comparisons by dating them explicitly. Do not edit the review-findings input. In your final response, account for every finding and state any unresolved blocker. A schema pass alone does not establish factual accuracy.
@@ -288,7 +288,7 @@ async function runAttempt(attemptRoute, attemptNumber, previousFailures = null) 
     '--autopilot',
     '--excluded-tools', 'web_fetch',
     '--model', attemptRoute.model,
-    '-p', finalizerPrompt({ reportFolder, resultsPath, bundlePath, fetchLogPath, reviewFindings, publishedDeepReview, previousFailures: previousFailuresPath }),
+    '-p', finalizerPrompt({ reportFolder, resultsPath, bundlePath, fetchLogPath, reviewFindingsPath, publishedDeepReview, previousFailures: previousFailuresPath }),
   ];
   if (attemptRoute.reasoningEffort !== 'default') {
     copilotArgs.splice(copilotArgs.indexOf('-p'), 0, '--effort', attemptRoute.reasoningEffort);

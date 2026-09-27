@@ -113,6 +113,9 @@ Use authentic source text from the review when original text is unavailable,
 without attributing later retrievals to the original run. Missing evidence remains
 a blocker. Preserve existing source URLs, search logs, workflow snapshots and
 warning acknowledgements; do not backfill provenance or weaken gates.
+The finalizer passes the review file by path rather than embedding its full JSON
+in a command-line argument. Workers must read every issue and the source-proof
+context; large exact assignments retain the same preflight and readback gates.
 An already-retained report URL can support a named correction in another deep
 chapter, with a local source ID and verified supporting text, but no new report
 URLs or invented retrieval dates are allowed.

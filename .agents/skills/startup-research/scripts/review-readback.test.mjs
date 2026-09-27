@@ -155,16 +155,24 @@ export const researchCacheDir=()=>${JSON.stringify(cache)};
       `if(!process.argv.includes('--check'))throw new Error('expected read-only check');process.exit(process.env.REVIEW_TEST_MODE==='stale-assembly'?1:0);`);
     for (const file of ['worker-results.json', 'search-bundle.json', '_fetch-log.jsonl']) write(join(cache, file), '{}');
     const reviewPath = join(cache, 'review.json');
-    write(reviewPath, JSON.stringify({ runId, issues: [{ ...finding(), message: 'Clinical target correction', fix: 'Use exact replacement.' }] }));
+    const largeSourceContext = 'SOURCE-CONTEXT '.repeat(20000);
+    write(reviewPath, JSON.stringify({ runId, sourceProof: largeSourceContext,
+      issues: [{ ...finding(), message: 'Clinical target correction', fix: 'Use exact replacement.' }] }));
+    assert.ok(readFileSync(reviewPath).length > 128 * 1024);
     const fake = join(cache, 'fake-copilot.mjs');
     const invocationLog = join(cache, 'invocations.jsonl');
     write(fake, `#!/usr/bin/env node
 import {appendFileSync,writeFileSync,readFileSync} from 'node:fs';
+import assert from 'node:assert/strict';
+const prompt=process.argv[process.argv.indexOf('-p')+1];
+assert.ok(prompt.includes(${JSON.stringify(reviewPath)}));
+const review=JSON.parse(readFileSync(${JSON.stringify(reviewPath)},'utf8'));
+assert.ok(review.sourceProof.length>128*1024);
 appendFileSync(${JSON.stringify(invocationLog)},JSON.stringify(process.argv.slice(2))+'\\n');
 if(process.argv.includes('repair') && process.env.REVIEW_TEST_MODE!=='skip'){
 const path=${JSON.stringify(join(folder, 'chapter.yaml'))};
 const doc=JSON.parse(readFileSync(path,'utf8'));
-doc.claims[0].statement=${JSON.stringify(finding().exactReplacement)};
+doc.claims[0].statement=review.issues[0].exactReplacement;
 if(process.env.REVIEW_TEST_MODE==='unrelated')doc.unchanged='Changed';
 writeFileSync(path,JSON.stringify(doc));
 }
@@ -184,6 +192,12 @@ writeFileSync(path,JSON.stringify(doc));
       assert.equal(output.exactReviewAssignmentCount, 1);
       assert.equal(output.status, mode === 'repair' ? 'completed' : 'failed');
       const invocations = readFileSync(invocationLog, 'utf8').trim().split('\n').map((line) => JSON.parse(line));
+      for (const invocation of invocations) {
+        const prompt = invocation[invocation.indexOf('-p') + 1];
+        assert.ok(prompt.includes(reviewPath));
+        assert.ok(Buffer.byteLength(prompt) < 16 * 1024);
+        assert.ok(!prompt.includes('SOURCE-CONTEXT'));
+      }
       const feedback = join(cache, 'finalizer-acceptance-attempt-1.json');
       assert.ok(invocations[1][invocations[1].indexOf('-p') + 1].includes(feedback));
       assert.match(readFileSync(feedback, 'utf8'), /reviewReadbackMismatch/);

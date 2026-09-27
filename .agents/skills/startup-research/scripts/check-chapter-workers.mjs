@@ -197,8 +197,9 @@ process.exit(Number(process.env.FAKE_COPILOT_EXIT ?? 1));
     .map((line) => JSON.parse(line));
   for (const invocation of fallbackInvocations) {
     const prompt = invocation[invocation.indexOf('-p') + 1];
-    assert(prompt.includes(reviewFindings.issues[0].message));
-    assert(prompt.includes(reviewFindings.issues[0].fix));
+    assert(prompt.includes(reviewFindingsPath));
+    assert(prompt.includes('Read the complete review JSON'));
+    assert.deepEqual(JSON.parse(readFileSync(reviewFindingsPath, 'utf8')), reviewFindings);
     assert(prompt.includes('never rewrite unrelated passing content'));
     assert(prompt.includes('A schema pass alone does not establish factual accuracy'));
   }
