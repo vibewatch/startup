@@ -986,6 +986,7 @@ export function isAccessErrorResponse(result) {
     .replace(/[‘’]/gu, "'");
   if (/^(?:404\s*[-:：]?\s*)?(?:没有找到此种页面|页面未找到|页面不存在|找不到页面|page not found|not found)[.!。]?\s*$/iu.test(text)) return true;
   const unwrappedText = text.replace(/^Title:[^\n]*\n+URL Source:\s*https?:\/\/[^\n]+\n+(?:Published Time:[^\n]*\n+)?Markdown Content:\s*/i, '');
+  if (/^You are now being redirected to shortly\.{3,}\s*$/i.test(unwrappedText)) return true;
   if (/^Powered and protected by\s+Privacy\s*$/i.test(unwrappedText)) return true;
   if ((title === 'clinicaltrials.gov' || /^ClinicalTrials\.gov\s+/i.test(unwrappedText))
       && /^(?:ClinicalTrials\.gov\s+)?Show glossary(?:\s+Search for terms\s+Hide glossary\s+Study record managers:\s+refer to the Data Element Definitions if submitting registration or results information\.)?\s*$/i.test(unwrappedText)) return true;

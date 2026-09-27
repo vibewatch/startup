@@ -79,6 +79,9 @@ This also covers recognized soft-404 pages, including the exact Chinese title
 The exact title `404 | Page Not Found` is also an error, even when cookie
 controls and navigation make the body look substantive. Live responses and
 all cache variants use the same rejection and fallback checks.
+The redirect-only text `You are now being redirected to shortly.....`
+is also unusable, including reader wrappers and URLs ending in `.pdf`
+that actually serve HTML. It is not the requested source document.
 Articles discussing missing-page errors are not rejected merely for mentioning
 those words. The same detector protects retained prefetched source text even
 when an older cache record incorrectly says `ok: true`.

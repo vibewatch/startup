@@ -578,6 +578,11 @@ const notFoundTitleBodies = [
   '<html><head><title>404 | Page Not Found</title></head><body>Manage your tracker preferences.<h1>We can\'t find the page you\'re looking for.</h1><nav>Newsletters Careers Privacy policy</nav></body></html>',
   "Title: 404 | Page Not Found\n\nURL Source: https://example.com/missing-article\n\nMarkdown Content:\nManage your tracker preferences.\n\nWe can't find the page you're looking for.\n\nNewsletters Careers Privacy policy",
 ];
+const redirectShellBodies = [
+  'You are now being redirected to shortly.....',
+  '<html><head><title>Company biography</title></head><body>You are now being redirected to shortly.....</body></html>',
+  'Title: Company biography\n\nURL Source: https://example.com/biography.pdf\n\nMarkdown Content:\nYou are now being redirected to shortly.....',
+];
 const accessErrorBodies = [
   '<html><head><title>Client Challenge</title></head><body>A required part of this site couldn’t load.</body></html>',
   "Title:\n\nURL Source: https://example.com/thread\n\nWarning: Target URL returned error 403: Forbidden\n\nMarkdown Content:\nYou've been blocked by network security.",
@@ -586,6 +591,7 @@ const accessErrorBodies = [
   '404\n\n没有找到此种页面',
   '<html><title>404 - Page Not Found</title><body>This page is unavailable.</body></html>',
   ...notFoundTitleBodies,
+  ...redirectShellBodies,
   '<html><head><title></title></head><body><div>Powered and protected by</div><div>Privacy</div></body></html>',
   '<html><body><!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-base">Wayback Machine: April 16, 2026</div><!-- END WAYBACK TOOLBAR INSERT --><div>Powered and protected by</div><div>Privacy</div></body></html>',
   'Powered and protected by\n\nPrivacy',
@@ -815,6 +821,7 @@ test('access-error detection preserves real articles about security and PDF bodi
     'Title: Funding announcement\n\nURL Source: https://example.com/article\n\nMarkdown Content:\nThe company raised $150M. An old link is titled 404 | Page Not Found.',
     '404 documents were processed, while three links returned page not found.',
     '404\n\n没有找到此种页面\n\nThis report analyzes the error rather than serving an error page.',
+    'You are now being redirected to shortly.....\n\nThis article explains the redirect message rather than serving a redirect shell.',
     '<html><title>Funding announcement</title><body><article>The company raised $150M.</article><div>Powered and protected by</div><div>Privacy</div></body></html>',
     '<html><body><!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-base">Wayback Machine</div><!-- END WAYBACK TOOLBAR INSERT --><article>The company raised $150M.</article><div>Powered and protected by</div><div>Privacy</div></body></html>',
     'Title: Funding announcement\n\nURL Source: https://example.com/page\n\nPublished Time: 2026-04-16\n\nMarkdown Content:\nThe company raised $150M.\nPowered and protected by\n\nPrivacy',
@@ -827,6 +834,7 @@ test('access-error detection preserves real articles about security and PDF bodi
     Buffer.from('%PDF-1.7\nTitle: Vercel Security Checkpoint'),
     Buffer.from('%PDF-1.7\nTitle: 页面未找到'),
     Buffer.from('%PDF-1.7\nTitle: 404 | Page Not Found'),
+    Buffer.from('%PDF-1.7\nYou are now being redirected to shortly.....'),
     Buffer.from('%PDF-1.7\nPowered and protected by\n\nPrivacy'),
     Buffer.from('%PDF-1.7\nClinicalTrials.gov\n\nShow glossary'),
   ]) assert.equal(isAccessErrorResponse({ status: 200, body }), false);
@@ -891,7 +899,7 @@ test('fetch CLI rejects origin, reader, archived, and cached access-error pages 
 });
 
 test('fetch CLI recovers an access-error page through a valid reader response', () => {
-  for (const body of [accessErrorBodies[0], ...clinicalTrialShellBodies, ...notFoundTitleBodies]) {
+  for (const body of [accessErrorBodies[0], ...clinicalTrialShellBodies, ...notFoundTitleBodies, ...redirectShellBodies]) {
     const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
       import assert from 'node:assert/strict';
       import { main } from './.agents/skills/fetch-url/scripts/fetch.mjs';
@@ -917,7 +925,7 @@ test('fetch CLI refreshes blocked reader and archive fallback caches', () => {
   const folder = mkdtempSync(join(tmpdir(), 'source-fallback-cache-check-'));
   const url = 'https://example.com/page';
   try {
-    const cases = ['Powered and protected by\n\nPrivacy', clinicalTrialShellBodies[0], ...notFoundTitleBodies]
+    const cases = ['Powered and protected by\n\nPrivacy', clinicalTrialShellBodies[0], ...notFoundTitleBodies, ...redirectShellBodies]
       .flatMap((body) => ['reader', 'wayback'].map((variant) => [body, variant]));
     for (const [body, variant] of cases) {
       writeFileSync(join(folder, `${canonicalCacheKey(url, variant)}.json`), JSON.stringify({
