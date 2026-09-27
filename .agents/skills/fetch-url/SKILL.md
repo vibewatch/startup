@@ -91,6 +91,11 @@ For HTML containing this prompt, retrieval also checks the extracted main text
 before accepting an origin, reader, archive, or cache response. Navigation and
 sign-in controls cannot disguise a signup-only article; normal fallback recovery
 still applies.
+The reader-only placeholder `A 1x1 image, likely be a tacker probe` (also
+`tracker probe`) is not the requested article. It is rejected through the same
+fallback and cache paths, including reader wrappers with a cached-snapshot
+warning. Substantive articles discussing tracking pixels, original image bytes
+requested with `--raw`, and PDF documents are not rejected by this text check.
 Articles discussing missing-page errors are not rejected merely for mentioning
 those words. The same detector protects retained prefetched source text even
 when an older cache record incorrectly says `ok: true`.
