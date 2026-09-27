@@ -147,6 +147,17 @@ units remain available in tooltips and on the page, including print. This
 presentation safeguard does not verify the source metrics or fix mixed-unit
 figures whose units exist only in labels or prose; those still need source review.
 
+**Bar-chart completeness:** multiple populated `series[].points[]` are shown
+as a table, with every point retained in original series order. Series names,
+values, explicit units and point qualifications remain together; duplicate
+point labels are not merged. This avoids implying a common numeric scale for
+unlike series. Single-series bars with differing explicit point-unit strings
+use separate KPI cards instead. Other single-series bars retain their existing
+geometry and expose point qualifications and units on the page, in print and
+in tooltips. Populated `items` retain precedence over the alternative `series`
+shape. These display safeguards do not establish metric accuracy or comparability
+when units, populations or time bases are missing or misleading in the source.
+
 **Executed search provenance:** worker pools include `executedSearchQueries` projected
 from successful shared searches, with literal query strings, actual providers,
 unfiltered result counts, and only assigned result URLs. Copy those records into

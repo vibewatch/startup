@@ -67,23 +67,51 @@ export function kpiContext(item) {
   };
 }
 
-export function funnelItems(data) {
+export function figureItems(data) {
   if (Array.isArray(data?.items) && data.items.length) return data.items;
   const points = data?.series?.[0]?.points;
   return Array.isArray(points) ? points : [];
 }
 
-export function funnelStageNotes(item) {
+export function figureItemNotes(item) {
   return [...new Set([
     figureDetail(item), item.description, item.details, item.note, item.notes, item.context,
   ].filter((value) => typeof value === 'string' && value.trim()))];
 }
 
-export function funnelUnitsDiffer(items) {
+export function figureUnitsDiffer(items) {
   const units = items.map((item) => item.unit)
     .filter((unit) => typeof unit === 'string' && unit.trim())
     .map((unit) => unit.trim());
   return new Set(units).size > 1;
+}
+
+export function barSeries(data) {
+  if (Array.isArray(data?.items) && data.items.length) return [{ points: data.items }];
+  return Array.isArray(data?.series)
+    ? data.series.filter((series) => Array.isArray(series?.points) && series.points.length)
+    : [];
+}
+
+export function barSeriesTable(series, { valueLabel, contextLabel }) {
+  const rows = series.flatMap((group, groupIndex) => group.points.map((point, pointIndex) => {
+    const context = [...new Set([point.unit ?? group.unit, ...figureItemNotes(point)]
+      .filter((value) => typeof value === 'string' && value.trim()))].join('\n');
+    return {
+      label: `${group.label || group.name || `#${groupIndex + 1}`} / ${point.label ?? point.name ?? `#${pointIndex + 1}`}`,
+      values: [{
+        label: String(point.displayValue ?? point.value ?? '\u2014'),
+        value: point.value,
+        detail: context,
+        ...(point.tone ? { tone: point.tone } : {}),
+      }, context || null],
+    };
+  }));
+  const hasContext = rows.some((row) => row.values[1]);
+  return {
+    columns: hasContext ? [valueLabel, contextLabel] : [valueLabel],
+    rows: hasContext ? rows : rows.map((row) => ({ ...row, values: row.values.slice(0, 1) })),
+  };
 }
 
 export function withRangeTones(figure) {

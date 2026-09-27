@@ -698,6 +698,12 @@ that a translated field is displayed; readable-page extraction omits those
 payloads and cannot validate client-rendered chart text.
 Approximation and evidence notes must remain visible on narrow screens and in
 print; they qualify the chart data rather than serving as optional decoration.
+Multi-series bars render as tables: check every series name and point, including
+duplicate point labels, visible context cells, and full hover/tap text.
+Single-series bars preserve point qualifications on the page and in print;
+differing explicit point units instead produce separate cards with a localized
+notice. These presentation changes preserve report YAML and do not certify the
+underlying metrics or comparability.
 KPI item `context` also qualifies its value: verify it on the card and in its
 hover/tap tooltip, including when a separate detail or note is present. Preserve
 distinct qualifications without duplicating identical text.

@@ -10,8 +10,55 @@ import { canonicalCacheKey, cleanExtractedText, htmlToText, isAccessErrorRespons
 import { checkAuthoringInstructions, checkFigureDeep } from './artifact-checks.mjs';
 import { KNOWN_DIMENSIONS, WARNING_DIMENSIONS } from './validation-catalog.mjs';
 import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
-import { figureDetail, funnelItems, funnelStageNotes, funnelUnitsDiffer, kpiContext, withRangeTones } from '../../../../website/src/lib/figures.mjs';
+import { barSeries, barSeriesTable, figureDetail, figureItems, figureItemNotes, figureUnitsDiffer, kpiContext, withRangeTones } from '../../../../website/src/lib/figures.mjs';
 import { isTranslatableLeaf, TRANSLATE_PATHS } from '../../translate-zh/scripts/whitelist.mjs';
+
+test('bar series retain every populated series and preserve existing item precedence', () => {
+  const items = Object.freeze([{ label: 'Item', value: 1 }]);
+  const points = Object.freeze([{ label: 'Point', value: 2 }]);
+  const first = Object.freeze({ name: 'First', points });
+  const second = Object.freeze({ label: 'Second', points: items });
+  assert.equal(barSeries({ items, series: [first, second] })[0].points, items);
+  assert.deepEqual(barSeries({ items: [], series: [{ points: [] }, first, second] }), [first, second]);
+  for (const data of [undefined, {}, { series: [] }, { series: [null, { points: [] }] }]) {
+    assert.deepEqual(barSeries(data), []);
+  }
+});
+
+test('multi-series bar tables preserve duplicate labels, exact values, units, notes and tones', () => {
+  const input = [
+    { name: 'Money', unit: 'USD', points: [
+      { label: 'Same', value: 0, note: 'Estimated.', context: 'Estimated.', tone: 'warning' },
+      { label: 'Same', value: 1200, displayValue: '$1.2K', detail: 'Not recurring.', description: 'One period only.' },
+    ] },
+    { label: 'Rate', points: [
+      { label: 'Same', value: -12.5, unit: '%', notes: '<em>Literal qualification</em>' },
+      { label: 'Unknown', value: null },
+    ] },
+  ];
+  const before = structuredClone(input);
+  for (const group of input) {
+    group.points.forEach(Object.freeze);
+    Object.freeze(group.points);
+    Object.freeze(group);
+  }
+  const table = barSeriesTable(Object.freeze(input), { valueLabel: 'Value', contextLabel: 'Context' });
+  assert.deepEqual(table.columns, ['Value', 'Context']);
+  assert.deepEqual(table.rows.map((row) => row.label), ['Money / Same', 'Money / Same', 'Rate / Same', 'Rate / Unknown']);
+  assert.deepEqual(table.rows.map((row) => row.values[0].label), ['0', '$1.2K', '-12.5', '—']);
+  assert.deepEqual(table.rows.map((row) => row.values[0].value), [0, 1200, -12.5, null]);
+  assert.equal(table.rows[0].values[0].tone, 'warning');
+  assert.equal(table.rows[0].values[1], 'USD\nEstimated.');
+  assert.equal(table.rows[1].values[1], 'USD\nNot recurring.\nOne period only.');
+  assert.equal(table.rows[2].values[1], '%\n<em>Literal qualification</em>');
+  assert.equal(table.rows[3].values[1], null);
+  assert.deepEqual(input, before);
+  const unqualified = barSeriesTable([{ points: [{ value: 0 }, { label: 'Again', value: 2 }] }],
+    { valueLabel: '数值', contextLabel: '说明' });
+  assert.deepEqual(unqualified.columns, ['数值']);
+  assert.equal(unqualified.rows[0].label, '#1 / #1');
+  assert.ok(unqualified.rows.every((row) => row.values.length === 1));
+});
 
 for (const file of ['FigureRenderer.astro', 'DiligenceReport.astro']) {
   test(`figure caveats are not hidden by ${file} styles`, () => {
@@ -95,21 +142,21 @@ test('funnel units are compared conservatively without inferring units from labe
   ];
   for (const [items, expected] of cases) {
     const before = structuredClone(items);
-    assert.equal(funnelUnitsDiffer(Object.freeze(items.map(Object.freeze))), expected);
+    assert.equal(figureUnitsDiffer(Object.freeze(items.map(Object.freeze))), expected);
     assert.deepEqual(items, before);
     const translated = items.map((item) => ({ ...item, label: 'Translated label' }));
-    assert.equal(funnelUnitsDiffer(translated), expected);
+    assert.equal(figureUnitsDiffer(translated), expected);
   }
 });
 
 test('funnel items use the same items-or-first-series precedence in all render paths', () => {
   const items = Object.freeze([{ label: 'Primary', value: 0 }]);
   const points = Object.freeze([{ label: 'Series', value: 10 }]);
-  assert.equal(funnelItems({ items, series: [{ points }] }), items);
-  assert.equal(funnelItems({ items: [], series: [{ points }] }), points);
-  assert.equal(funnelItems({ series: [{ points }, { points: items }] }), points);
+  assert.equal(figureItems({ items, series: [{ points }] }), items);
+  assert.equal(figureItems({ items: [], series: [{ points }] }), points);
+  assert.equal(figureItems({ series: [{ points }, { points: items }] }), points);
   for (const data of [undefined, null, {}, { items: [] }, { series: [] }]) {
-    assert.deepEqual(funnelItems(data), []);
+    assert.deepEqual(figureItems(data), []);
   }
 });
 
@@ -127,7 +174,7 @@ test('funnel qualifications preserve distinct text, aliases and literal markup w
   ];
   for (const [item, expected] of cases) {
     const before = structuredClone(item);
-    assert.deepEqual(funnelStageNotes(Object.freeze(item)), expected);
+    assert.deepEqual(figureItemNotes(Object.freeze(item)), expected);
     assert.deepEqual(item, before);
   }
 });
@@ -138,7 +185,7 @@ test('all supported funnel qualifications are translatable in both data shapes, 
     ['figures', 0, 'data', 'series', 0, 'points', 0],
   ]) {
     for (const field of ['detail', 'description', 'details', 'note', 'notes', 'context']) {
-      assert.deepEqual(funnelStageNotes({ [field]: 'Qualification.' }), ['Qualification.']);
+      assert.deepEqual(figureItemNotes({ [field]: 'Qualification.' }), ['Qualification.']);
       assert.equal(isTranslatableLeaf([...prefix, field], TRANSLATE_PATHS.fullReport), true);
     }
     for (const field of ['value', 'displayValue', 'unit', 'claimRefs']) {
