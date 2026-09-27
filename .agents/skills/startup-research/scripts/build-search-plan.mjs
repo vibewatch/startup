@@ -98,6 +98,16 @@ function chapterQueries({ company, year, chapter, mode, strategy, gaps, budget }
       query: `"${company}" official ${chapter.title}`,
       rationale: `Find first-party evidence specific to ${chapter.key}.`,
     },
+    {
+      intent: 'freshness',
+      query: `"${company}" ${focus[0]} latest developments ${year}`,
+      rationale: `Find recent chapter-specific evidence rather than relying on older coverage for ${chapter.key}.`,
+    },
+    {
+      intent: 'adverse',
+      query: `"${company}" ${focus[0]} challenges limitations ${year}`,
+      rationale: `Seek contradictory evidence and limitations specific to ${chapter.key}.`,
+    },
   ];
   const queries = [];
   if (mode === 'fresh') {

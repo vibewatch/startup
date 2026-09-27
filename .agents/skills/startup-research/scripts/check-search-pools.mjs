@@ -183,14 +183,23 @@ const tests = [
           assert.doesNotMatch(query.query, /\b(?:SQLite|libSQL|database|serverless|Cloudflare D1|PlanetScale|Neon|Supabase)\b/i,
             'shared research terms assume an unrelated database industry or competitor set');
           const volatile = policy.volatileFactQueryTokens.some((token) => query.query.toLowerCase().includes(token.toLowerCase()));
-          if (volatile) assert.match(query.query, /\b2099\b/, `undated volatile query: ${query.query}`);
-          assert.equal((query.query.match(/\b2099\b/g) ?? []).length, volatile ? 1 : 0,
+          const dated = volatile || ['freshness', 'adverse'].includes(query.intent);
+          if (dated) assert.match(query.query, /\b2099\b/, `undated current-evidence query: ${query.query}`);
+          assert.equal((query.query.match(/\b2099\b/g) ?? []).length, dated ? 1 : 0,
             'query year was duplicated or added to a static lookup');
         }
         if (refresh) assert(queries.some((query) => /\b2020\b/.test(query.query)), 'refresh lost its prior evidence gap');
         for (const chapter of plan.chapters) {
           assert.equal(chapter.evidenceTarget.minSources >= (profile === 'fast' ? 8 : 25), true);
           assert.equal(chapter.evidenceTarget.minNetNewSources >= (profile === 'fast' ? 2 : 8), true);
+          assert.equal(chapter.queries.length, (profile === 'fast' ? 2 : 5) + (refresh ? 1 : 0),
+            'chapter discovery did not execute its configured breadth plus the retained gap');
+          if (profile === 'deep') {
+            for (const intent of ['broad', 'semantic', 'primary', 'freshness', 'adverse']) {
+              assert(chapter.queries.some((query) => query.intent === intent),
+                `${chapter.key}: deep discovery omitted ${intent} evidence`);
+            }
+          }
         }
       } finally {
         rmSync(folder, { recursive: true, force: true });

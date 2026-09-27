@@ -50,6 +50,11 @@ Workflow narrative: what to run, in what order, with which flags. Two generated 
    canonical run year before searches execute, including global and refresh
    queries. Keep the actual executed query in the chapter log; never append
    a year only to the recorded log to conceal an undated search.
+   Deep fresh and refresh runs use all five chapter discovery intents:
+   broad, semantic, primary, freshness and adverse. Refresh gap queries
+   supplement that coverage rather than replacing it. Fast query budgets
+   remain unchanged; broader discovery never reduces evidence thresholds
+   or makes an irrelevant or inaccessible source eligible.
 7. **Export `STARTUP_FETCH_LOG_PATH` before any `fetch-url` invocation:**
    ```sh
    RUN_ID=$(basename "$REPORT_FOLDER")
