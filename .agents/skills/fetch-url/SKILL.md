@@ -99,6 +99,12 @@ requested with `--raw`, and PDF documents are not rejected by this text check.
 Articles discussing missing-page errors are not rejected merely for mentioning
 those words. The same detector protects retained prefetched source text even
 when an older cache record incorrectly says `ok: true`.
+Financial-registry shells are not records: a body containing only
+`Skip to navigation` / `Skip to main content` links, or only the standard
+IAPD/BrokerCheck application title, is rejected. An empty body under either
+known registry title is rejected too.
+The same rule covers archived HTML, reader copies and retained prefetched text;
+substantive firm records and PDF documents remain eligible for source review.
 Footer-only bot-protection responses containing `Powered and protected by` and
 `Privacy` are also unusable, including reader-wrapped text and old cached bodies.
 Wayback navigation is removed before this check so it cannot disguise a challenge

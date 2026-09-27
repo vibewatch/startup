@@ -990,6 +990,10 @@ export function isAccessErrorResponse(result) {
   if (/^You are now being redirected to shortly\.{3,}\s*$/i.test(unwrappedText)) return true;
   if (/^(?:New to Earnings Whispers\?\s+)?Create FREE account to continue\.\s*$/i.test(unwrappedText)) return true;
   if (/^A 1x1 image, likely be a (?:tracker|tacker) probe\.?\s*$/i.test(unwrappedText)) return true;
+  const financialRegistryTitle = /^(?:IAPD - Investment Adviser Public Disclosure(?: - Homepage)?|BrokerCheck - Find a broker, investment or financial advisor)$/i;
+  if (/^(?:Skip to (?:main content|navigation)\s*)+$/i.test(unwrappedText)
+      || financialRegistryTitle.test(unwrappedText.trim())
+      || (financialRegistryTitle.test(title) && !unwrappedText.trim())) return true;
   if (/^Powered and protected by\s+Privacy\s*$/i.test(unwrappedText)) return true;
   if ((title === 'clinicaltrials.gov' || /^ClinicalTrials\.gov\s+/i.test(unwrappedText))
       && /^(?:ClinicalTrials\.gov\s+)?Show glossary(?:\s+Search for terms\s+Hide glossary\s+Study record managers:\s+refer to the Data Element Definitions if submitting registration or results information\.)?\s*$/i.test(unwrappedText)) return true;

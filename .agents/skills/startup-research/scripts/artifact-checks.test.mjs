@@ -659,6 +659,16 @@ const trackingPixelBodies = [
   'Title: Tracking image\n\nURL Source: https://example.com/article\n\nPublished Time: 2026-02-10\n\nWarning: This is a cached snapshot of the original page, consider retry with caching opt-out.\n\nMarkdown Content:\nA 1x1 image, likely be a tracker probe',
   '<html><body><!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-base">Wayback Machine: February 10, 2026</div><!-- END WAYBACK TOOLBAR INSERT -->A 1x1 image, likely be a tacker probe</body></html>',
 ];
+const financialRegistryShellBodies = [
+  'Skip to navigation',
+  'Skip to main content\nSkip to navigation',
+  'BrokerCheck - Find a broker, investment or financial advisor',
+  '<html><head><title>IAPD - Investment Adviser Public Disclosure - Homepage</title></head><body><a href="#main">Skip to main content</a><a href="#navigation">Skip to navigation</a><app-root></app-root><script src="main.js"></script></body></html>',
+  '<html><head><title>BrokerCheck - Find a broker, investment or financial advisor</title></head><body><bc-root></bc-root><script src="main.js"></script></body></html>',
+  'Title: IAPD - Investment Adviser Public Disclosure\n\nURL Source: https://adviserinfo.sec.gov/firm/summary/299398\n\nMarkdown Content:\nSkip to navigation',
+  'Title: BrokerCheck - Find a broker, investment or financial advisor\n\nURL Source: https://brokercheck.finra.org/firm/summary/299398\n\nMarkdown Content:\nBrokerCheck - Find a broker, investment or financial advisor',
+  '<html><head><title>BrokerCheck - Find a broker, investment or financial advisor</title></head><body><!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-base">Wayback Machine: June 25, 2026</div><!-- END WAYBACK TOOLBAR INSERT --><bc-root></bc-root></body></html>',
+];
 const accessErrorBodies = [
   '<html><head><title>Client Challenge</title></head><body>A required part of this site couldn’t load.</body></html>',
   "Title:\n\nURL Source: https://example.com/thread\n\nWarning: Target URL returned error 403: Forbidden\n\nMarkdown Content:\nYou've been blocked by network security.",
@@ -670,6 +680,7 @@ const accessErrorBodies = [
   ...redirectShellBodies,
   ...signupShellBodies,
   ...trackingPixelBodies,
+  ...financialRegistryShellBodies,
   '<html><head><title></title></head><body><div>Powered and protected by</div><div>Privacy</div></body></html>',
   '<html><body><!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-base">Wayback Machine: April 16, 2026</div><!-- END WAYBACK TOOLBAR INSERT --><div>Powered and protected by</div><div>Privacy</div></body></html>',
   'Powered and protected by\n\nPrivacy',
@@ -908,6 +919,12 @@ test('access-error detection preserves real articles about security and PDF bodi
     'A 1x1 image, likely be a tacker probe\n\nThis article explains the reader placeholder rather than serving only a tracking image.',
     '<html><title>Tracking pixels</title><article>A 1x1 image, likely be a tracker probe. This document explains how tracking images work.</article></html>',
     'Title: https://match.adsrvr.org/track/cmf/generic\n\nURL Source: https://example.com/article\n\nWarning: This is a cached snapshot of the original page, consider retry with caching opt-out.\n\nMarkdown Content:\nThe company introduced tax-planning software in February 2026.',
+    'Skip to navigation\n\nFirm registration: Example Financial LLC, CRD 123456.',
+    'Skip to main content\nSkip to navigation\n\nFirm registration: Example Financial LLC, CRD 123456.',
+    '<html><head><title>IAPD - Investment Adviser Public Disclosure - Homepage</title></head><body><a>Skip to navigation</a><article>Firm registration: Example Financial LLC, CRD 123456.</article></body></html>',
+    '<html><head><title>BrokerCheck - Find a broker, investment or financial advisor</title></head><body><article>Firm registration: Example Financial LLC, CRD 123456.</article></body></html>',
+    'Title: BrokerCheck - Find a broker, investment or financial advisor\n\nURL Source: https://brokercheck.finra.org/firm/summary/123456\n\nMarkdown Content:\nBrokerCheck - Find a broker, investment or financial advisor\n\nFirm registration: Example Financial LLC, CRD 123456.',
+    'BrokerCheck - Find a broker, investment or financial advisor\n\nThis article discusses an empty application shell rather than providing one.',
     '<html><title>Funding announcement</title><body><article>The company raised $150M.</article><div>Powered and protected by</div><div>Privacy</div></body></html>',
     '<html><body><!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-base">Wayback Machine</div><!-- END WAYBACK TOOLBAR INSERT --><article>The company raised $150M.</article><div>Powered and protected by</div><div>Privacy</div></body></html>',
     'Title: Funding announcement\n\nURL Source: https://example.com/page\n\nPublished Time: 2026-04-16\n\nMarkdown Content:\nThe company raised $150M.\nPowered and protected by\n\nPrivacy',
@@ -924,6 +941,8 @@ test('access-error detection preserves real articles about security and PDF bodi
     Buffer.from('%PDF-1.7\nYou are now being redirected to shortly.....'),
     Buffer.from('%PDF-1.7\nNew to Earnings Whispers?\nCreate FREE account to continue.'),
     Buffer.from('%PDF-1.7\nA 1x1 image, likely be a tacker probe'),
+    Buffer.from('%PDF-1.7\nSkip to navigation'),
+    Buffer.from('%PDF-1.7\nBrokerCheck - Find a broker, investment or financial advisor'),
     Buffer.from('%PDF-1.7\nPowered and protected by\n\nPrivacy'),
     Buffer.from('%PDF-1.7\nClinicalTrials.gov\n\nShow glossary'),
   ]) assert.equal(isAccessErrorResponse({ status: 200, body }), false);
@@ -989,7 +1008,7 @@ test('fetch CLI rejects origin, reader, archived, and cached access-error pages 
 });
 
 test('fetch CLI recovers an access-error page through a valid reader response', () => {
-  for (const body of [accessErrorBodies[0], ...clinicalTrialShellBodies, ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, signupChromeBody]) {
+  for (const body of [accessErrorBodies[0], ...clinicalTrialShellBodies, ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, signupChromeBody]) {
     const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
       import assert from 'node:assert/strict';
       import { main } from './.agents/skills/fetch-url/scripts/fetch.mjs';
@@ -1015,7 +1034,7 @@ test('fetch CLI refreshes blocked reader and archive fallback caches', () => {
   const folder = mkdtempSync(join(tmpdir(), 'source-fallback-cache-check-'));
   const url = 'https://example.com/page';
   try {
-    const cases = ['Powered and protected by\n\nPrivacy', clinicalTrialShellBodies[0], ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, signupChromeBody]
+    const cases = ['Powered and protected by\n\nPrivacy', clinicalTrialShellBodies[0], ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, signupChromeBody]
       .flatMap((body) => ['reader', 'wayback'].map((variant) => [body, variant]));
     for (const [body, variant] of cases) {
       writeFileSync(join(folder, `${canonicalCacheKey(url, variant)}.json`), JSON.stringify({
