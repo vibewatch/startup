@@ -267,8 +267,9 @@ function normalizedDatedCounts(value) {
 
 function normalizedMetricTokens(value, { includePlainNumbers = false } = {}) {
   const dated = normalizedDatedCounts(value);
-  // Calendar and version-style labels are not ARR/GMV quantities.
+  // Calendar, version-style and B2B labels are not financial quantities.
   const separated = normalizeQuantityWords(normalizeCalendarSpacing(dated.text))
+    .replace(/(?<!\d)B2B\b/gi, '')
     .replace(/\bFY\s*((?:19|20)\d{2})E?\b/gi, '$1;')
     .replace(/\b(?:Q[1-4]|H[12])\b/gi, ';')
     .replace(/\b(v\d+)\b(?=\s+(?:ARR|MRR|GMV|TPV|NPL|IRR)\b)/gi, '$1;');
@@ -424,6 +425,27 @@ function equivalentTripledMetrics(source, target) {
   });
 }
 
+function equivalentAwardCounts(source, target) {
+  if (!/[×x]\s*(?:Reclame\s+Aqui\s+)?(?:awards?|champion|winner)\b/iu.test(source)) return false;
+  if (/[-+−–—]\s*[$€£¥₦]?\s*\d|[(（]\s*[$€£¥₦]\s*\d/iu.test(`${source}\n${target}`)) return false;
+  const normalize = (value, pattern) => {
+    const counts = [];
+    const text = value.replace(pattern, (match, count, label, offset) => {
+      if (/(?:\b(?:about|roughly|approximately|nearly|over|under|at least|at most|more than|less than|no fewer than|no more than)|约|近|至少|至多|最多|多达|超过|不足|多于|少于)\s*$/iu.test(value.slice(0, offset))) return match;
+      counts.push(count);
+      return label;
+    });
+    return { text, counts: counts.sort() };
+  };
+  const en = normalize(source, /(?<![\w.,/])([1-9]\d*)\s*[×x]\s*((?:Reclame\s+Aqui\s+)?(?:awards?|champion|winner))(?=\s*(?:$|[.;,:(\[]))/giu);
+  const zh = normalize(target, /(?<![\w.,/])([1-9]\d*)\s*次\s*((?:Reclame\s+Aqui\s*)?(?:获奖|夺冠|冠军))(?=\s*(?:$|[。；，：（(、]))/gu);
+  if (!en.counts.length || JSON.stringify(en.counts) !== JSON.stringify(zh.counts)) return false;
+  const options = { normalizeMonths: true, allowUnconverted: true };
+  const sourceTokens = normalizedCountMetrics(en.text, options);
+  const targetTokens = normalizedCountMetrics(zh.text, options);
+  return sourceTokens && targetTokens && JSON.stringify(sourceTokens) === JSON.stringify(targetTokens);
+}
+
 function pushIssue(issues, issue) {
   issues.push({ severity: 'error', ...issue });
 }
@@ -475,7 +497,8 @@ function walk(en, zh, path, whitelist, issues, options) {
       const targetDollars = equivalentCounts ? null : normalizedDollarMetrics(numericTarget);
       const equivalentDollars = sourceDollars && targetDollars
         && JSON.stringify(sourceDollars) === JSON.stringify(targetDollars);
-      if (!equivalentCounts && !equivalentDollars && !equivalentTripledMetrics(en, numericTarget)) {
+      if (!equivalentCounts && !equivalentDollars && !equivalentTripledMetrics(en, numericTarget)
+          && !equivalentAwardCounts(en, numericTarget)) {
         pushIssue(issues, {
           path: path.join('/'),
           kind: 'semantic',

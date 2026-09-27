@@ -208,6 +208,16 @@ retaining the paired month/year, exact integer count, and repeated occurrences.
 Signed, decimal, ranged, or suffixed counts are not reinterpreted by this rule;
 neither are bare years without a month. This does not establish the underlying
 filing history or general date/count fidelity.
+Exact integer award occurrences such as `4× champion` or
+`4× Reclame Aqui award` can match `4 次夺冠` or `4 次 Reclame Aqui 获奖`.
+The fallback compares award occurrences separately and preserves every other
+numeric token and paired month/year anchor. Approximate, bounded, signed,
+decimal and ranged counts remain outside it; ordinary growth multipliers
+still require `倍`, not `次`. Company attribution remains mandatory.
+`B2B` is an identifier, not a `2B` quantity; repetition or anaphora does not
+create or remove a two-billion metric. Nearby actual amounts still retain
+their values and occurrence counts. These checks do not establish award
+identity, issuer independence, or the truth of the recognition.
 Other unit or currency conversions still require source
 comparison; do not remove faithful units merely to make token-level checks pass.
 An exact fallback accepts positive dollar scalars such as `$50M` and
