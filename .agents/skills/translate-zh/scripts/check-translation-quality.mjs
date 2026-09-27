@@ -119,7 +119,9 @@ const hedgeRules = [
   {
     en: /\b(?:unproven|not proven)\b/i,
     zh: /未经证实|未获证实|未(?:被)?(?:证明|验证|证实)|未在规模上得到验证|无法证明|未经验证|未获验证/u,
-    alternative: (_, target) => /(?<!并非|不是|非|尚)(?:尚未跑通|未跑通|尚无公开验证|未获公开验证|还不足以证明|尚?未经证明|尚?未规模化验证|尚?未(?:在|按)[^。！？；，：]{1,24}(?:得到)?(?:验证|证实|证明))/u.test(target),
+    alternative: (source, target) => /(?<!并非|不是|非|尚)(?:尚未跑通|未跑通|尚无公开验证|未获公开验证|还不足以证明|尚?未经证明|尚?未规模化验证|尚?未(?:在|按)[^。！？；，：]{1,24}(?:得到)?(?:验证|证实|证明))/u.test(target)
+      || ((source.match(/\b(?:unproven|not proven)\b/gi) ?? []).length === 1
+        && /(?<!并非\s*|不是\s*|非\s*|不\s*)尚未得到(?:证明|验证|证实)(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target)),
   },
   {
     en: /\bno public\b/i,
@@ -127,6 +129,9 @@ const hedgeRules = [
     alternative: (source, target) => /(?<!并非|不是|非|尚)尚?未见[^。！？；，：]{1,24}公开(?:第三方)?审计|(?<!并非|不是)(?:没有(?:披露任何|可验证的)公开|没有发现[^。！？；，：]{1,40}上的公开|(?:未|没有)发现\s+[A-Za-z][A-Za-z0-9 .&+-]{0,60}\s+公开|未(?:提及|披露任何)公开|公开(?:渠道|披露|层面)(?:未|没有)|公开资料不显示)/u.test(target)
       || (/\bno public\b[^.;!?]{0,120}\bfiled\b/i.test(source) && /(?<!并非|不是|非)未提交公开/u.test(target))
       || (/\bno public\b[^.;!?]{0,120}\bconfirmed\b/i.test(source) && /(?<!并非|不是|非)未确认公开/u.test(target))
+      || (/\bno public announcements?\b/i.test(source)
+        && (source.match(/\bno public\b/gi) ?? []).length === 1
+        && /(?<!并非\s*|不是\s*|非\s*|不\s*)(?:没有|未见)[^。！？；，：\n.!?;,]{1,60}的公开公告(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
       || (/\bno public\b[^.;!?,]{0,160}\b(?:proof|evidence)\b/i.test(source)
         && (source.match(/\bno public\b/gi) ?? []).length === 1
         && /(?<!并非\s*|不是\s*|非\s*|不\s*)(?:仍|尚)缺公开[^。！？；，：\n.!?;,]{0,60}(?:证明|证据)(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))

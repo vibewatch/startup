@@ -378,6 +378,10 @@ not company assertions; a separate assertion in the same leaf still needs attrib
 finding; negated wording and a separate disclosure gap still fail. A clause-ending
 `insurance and customer claims` list refers to legal demands, not a company
 assertion. Separate assertions still require attribution.
+`尚未得到证明` (also `验证` or `证实`) can retain a single unproven predicate.
+For an explicit `no public announcement` gap, `没有…的公开公告` or
+`未见…的公开公告` retains the missing announcement, not absence of the event.
+Negated wording, clause boundaries and additional gaps remain separate.
 
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json
