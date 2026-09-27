@@ -10,9 +10,54 @@ import { canonicalCacheKey, cleanExtractedText, htmlToText, isAccessErrorRespons
 import { checkAuthoringInstructions, checkFigureDeep } from './artifact-checks.mjs';
 import { KNOWN_DIMENSIONS, WARNING_DIMENSIONS } from './validation-catalog.mjs';
 import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
-import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, funnelStageTable, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
+import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, funnelStageTable, stackLayerDetails, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
 import { isTranslatableLeaf, TRANSLATE_PATHS } from '../../translate-zh/scripts/whitelist.mjs';
 import { claimRefs } from '../../../../website/src/lib/report-types.ts';
+
+test('stack details retain complete ordered groups, duplicate labels, values and qualifications', () => {
+  const data = { layers: [{
+    label: 'Layer', detail: 'Primary context', description: 'Additional context', note: 'Not verified', unit: '%', value: 0,
+    items: ['First item', { name: 'Named item', detail: 'Item detail' }],
+    modules: ['First module', 'Second module', 'Third module', { label: 'Repeated', value: -2, unit: 'USD', note: 'Estimated' }, { label: 'Repeated', note: 'Different qualification' }],
+    outputs: ['First output', 'Second output', 0, false],
+  }] };
+  const before = structuredClone(data);
+  const [layer] = stackLayerDetails(data);
+  assert.equal(layer.label, 'Layer');
+  assert.deepEqual(layer.notes, ['0', 'Primary context', 'Additional context', 'Not verified', '%']);
+  assert.deepEqual(layer.groups, [
+    { key: 'items', entries: [['First item'], ['Named item', 'Item detail']] },
+    { key: 'modules', entries: [['First module'], ['Second module'], ['Third module'], ['Repeated', '-2', 'Estimated', 'USD'], ['Repeated', 'Different qualification']] },
+    { key: 'outputs', entries: [['First output'], ['Second output'], ['0'], ['false']] },
+  ]);
+  assert.deepEqual(data, before);
+});
+
+test('stack details preserve aliases, zero-valued labels and display values without fabricated group contents', () => {
+  const layers = Object.freeze([
+    Object.freeze({ name: 'Named layer', summary: 'Summary', modules: Object.freeze([{ displayValue: 'R$2mn', value: 2, unit: 'R$mn' }]) }),
+    'Text layer', { label: 0, items: [null, '', { id: 'raw-id', context: 'Context' }] },
+  ]);
+  const result = stackLayerDetails({ items: layers });
+  assert.deepEqual(result.map(layer => layer.label), ['Named layer', 'Text layer', '0']);
+  assert.deepEqual(result[0].notes, ['Summary']);
+  assert.deepEqual(result[0].groups[0].entries, [['R$2mn', 'R$mn']]);
+  assert.deepEqual(result[2].groups[0].entries, [['raw-id', 'Context']]);
+  assert.deepEqual(stackLayerDetails({ layers: [], items: layers }), []);
+  assert.deepEqual(stackLayerDetails(null), []);
+});
+
+test('implicit flow details retain full qualifications without inventing explicit connections', () => {
+  const data = { nodes: [{ id: 'a', label: 'A', value: 0, unit: 'USD', summary: 'Full summary', note: 'Not a forecast' }, { id: 'b', label: 'B' }] };
+  const table = flowRelationshipTable(data, flowTopology(data), {
+    nodeLabel: 'Node', connectionLabel: 'Connection', sourceLabel: 'Node / from', targetLabel: 'To', contextLabel: 'Context',
+  });
+  assert.equal(table.rows.length, 2);
+  assert.deepEqual(table.rows.map(row => row.label), ['Node 1', 'Node 2']);
+  assert.equal(table.rows[0].values[2], '0\nUSD\nFull summary\nNot a forecast');
+  assert.equal(table.rows[1].values[1], null);
+  assert.equal(Object.hasOwn(data, 'edges'), false);
+});
 
 test('report evidence links retain every declared reference in order without mutating the input', () => {
   const refs = Object.freeze(['CI005', 'CI006', 'CI010', 'CI011', 'CI015', 'CI016', 'CI020', 'CI005']);

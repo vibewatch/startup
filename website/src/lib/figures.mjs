@@ -71,6 +71,32 @@ export function figureItemNotes(item) {
   ].filter((value) => typeof value === 'string' && value.trim()))];
 }
 
+export function stackLayerDetails(data) {
+  const content = (value) => {
+    if (value == null) return [];
+    if (typeof value !== 'object') return String(value).trim() ? [String(value)] : [];
+    return [...new Set([
+      value.label ?? value.name ?? value.displayValue ?? value.value ?? value.score ?? value.id,
+      value.displayValue ?? value.value ?? value.score,
+      ...figureValueNotes(value),
+    ].filter((item) => ['string', 'number', 'boolean'].includes(typeof item) && String(item).trim()).map(String))];
+  };
+  const layers = data?.layers ?? data?.items ?? data?.nodes;
+  return (Array.isArray(layers) ? layers : []).map((value, index) => {
+    const item = value && typeof value === 'object' ? value : { label: value };
+    const label = String(item.label ?? item.name ?? item.id ?? `#${index + 1}`);
+    return {
+      item,
+      label,
+      notes: content(item).filter((text) => text !== label),
+      groups: ['items', 'modules', 'outputs'].map((key) => ({
+        key,
+        entries: Array.isArray(item[key]) ? item[key].map(content).filter((lines) => lines.length) : [],
+      })).filter((group) => group.entries.length),
+    };
+  });
+}
+
 export function figureUnitsDiffer(items) {
   const units = items.map((item) => item.unit)
     .filter((unit) => typeof unit === 'string' && unit.trim())
@@ -154,7 +180,7 @@ export function flowRelationshipTable(data, topology, { nodeLabel, connectionLab
     return node.id != null && text(node.id) !== name ? `${name} [${text(node.id)}]` : name;
   };
   const context = (item) => [...new Set([
-    item.displayValue ?? item.value, item.unit, ...figureItemNotes(item),
+    item.displayValue ?? item.value, item.unit, ...figureValueNotes(item),
   ].filter((value) => value != null && value !== '').map(text))].join('\n');
   const endpoint = (value, index) => index == null ? text(value) : label(nodes[index], index);
   return {

@@ -182,11 +182,24 @@ their raw identifiers. English label aliases resolve before Chinese overlays, so
 translation cannot change connectivity. Use `dag` when authoring an explicit
 graph intended for spatial layout. These presentation checks do not establish that
 the authored relationships are factually correct.
+Ordered sequence diagrams also retain their complete node text, values, units
+and declared connections in a supplemental table visible on-page and in print;
+compact diagram labels may be previews, but tooltips retain the qualifications.
+The supplemental table does not invent explicit edges for an implicit sequence.
+Generic node positions and tone hints must not be relabeled as evidence,
+constraints or decisions unless that role is actually authored.
 
 **Evidence-link completeness:** blocks, tables, figures and cover facts retain
 every declared claim reference in authored order, without a display-count cap.
 Enable the evidence toggle to inspect the links; print hides inline links but
 retains the evidence index. Link presence does not establish source support.
+
+**Stack completeness:** compact layer diagrams are previews, not the full
+data display. Retain every ordered item, module and output, including duplicate
+labels, values, units and qualifications, in visible layer details and matching
+tooltips. Layer details must remain visible on narrow screens and in print.
+Do not infer a universal experience-to-governance direction from a stack type.
+This display safeguard does not establish the authored architecture's accuracy.
 
 **Executed search provenance:** worker pools include `executedSearchQueries` projected
 from successful shared searches, with literal query strings, actual providers,

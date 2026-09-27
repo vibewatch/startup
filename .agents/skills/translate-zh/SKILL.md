@@ -724,6 +724,10 @@ translated display labels must not change those colors.
 Range rows must also retain every distinct detail, note, context and unit on the
 page, in print and in hover/tap tooltips. Check the authored low, center and high
 values without inferring comparability or forecast confidence from the display.
+Stack diagrams retain their complete ordered items, modules and outputs in
+visible layer details and matching tooltips, even when the diagram previews
+only a few pills. Check every label, value, unit and qualification in both
+locales, on narrow screens and in print; duplicate labels are not merged.
 Also verify report-level `coverageNotes`, displayed before cover facts with
 the same Chinese-leaf / English-fallback behavior as other report text.
 Flow edge aliases resolve from English before overlays are merged. Non-sequential
@@ -731,6 +735,9 @@ explicit flows render as node/connection tables, with localized notices for
 missing or ambiguous endpoints. Verify all connection directions, duplicate
 connections, node details and visible notes in both locales and in print;
 unchanged endpoint identifiers must not be translated to repair a display issue.
+For ordered flow diagrams, also inspect the supplemental node/connection table:
+full node text, values, units and qualifications must remain visible on-page and
+in print even when diagram labels are shortened. Check the full tooltip text.
 Funnel figures display ordered stage-value tables without deriving conversion
 rates or shared population, unit or time assumptions. Preserve explicitly
 authored rates and qualifications. Verify stage labels, raw values, units,

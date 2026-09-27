@@ -1,6 +1,7 @@
 ---
 import ClaimRefs from './ClaimRefs.astro';
-import { RENDERED_FIGURE_TYPES, barSeries, barSeriesTable, figureItemNotes, figureUnitsDiffer, flowRelationshipTable, flowTopology, funnelStageTable } from '../lib/figures.mjs';
+import DataTable from './DataTable.astro';
+import { RENDERED_FIGURE_TYPES, barSeries, barSeriesTable, figureItemNotes, figureUnitsDiffer, flowRelationshipTable, flowTopology, funnelStageTable, stackLayerDetails } from '../lib/figures.mjs';
 import { t } from '../lib/i18n';
 import type { Locale } from '../lib/locale';
 import { claimRefs, type Claim, type ReportFigure, type Source } from '../lib/report-types';
@@ -17,6 +18,11 @@ const authoredType = figure?.type ?? 'flow';
 const data = figure?.data ?? {};
 const flow = authoredType === 'flow' ? figure._flowTopology ?? flowTopology(data) : null;
 const relationshipTable = flow && !flow.sequence;
+const sequenceDetails = flow?.sequence ? flowRelationshipTable(data, flow, {
+  nodeLabel: t('reportFigureNode', locale), connectionLabel: t('reportFigureConnection', locale),
+  sourceLabel: t('reportFigureNodeOrFrom', locale), targetLabel: t('reportFigureTo', locale),
+  contextLabel: t('reportFigureContext', locale),
+}) : null;
 const funnel = authoredType === 'funnel';
 const series = authoredType === 'bar' ? barSeries(data) : [];
 const multipleBarSeries = series.length > 1;
@@ -42,8 +48,15 @@ const stageAnnotations = unitsDiffer ? [] : stages.map((item) => ({
 })).filter(({ item, notes }) => item.unit || notes.length);
 const chartTypes = new Set(RENDERED_FIGURE_TYPES);
 const usesD3Chart = chartTypes.has(type);
+const stackDetails = authoredType === 'stack' ? stackLayerDetails(data) : [];
+const stackLabels: Record<string, string> = {
+  overview: t('reportStackOverview', locale),
+  items: t('reportStackItems', locale),
+  modules: t('reportStackModules', locale),
+  outputs: t('reportStackOutputs', locale),
+};
 const chartId = `chart-${String(figure?.id ?? 'figure').replace(/[^a-z0-9_-]/gi, '-')}-${Math.random().toString(36).slice(2, 9)}`;
-const chartPayload = usesD3Chart ? { id: chartId, type, data: chartData, ...(flow ? { flowTopology: flow } : {}) } : null;
+const chartPayload = usesD3Chart ? { id: chartId, type, data: chartData, ...(flow ? { flowTopology: flow, flowLabels: { node: t('reportFigureNode', locale) } } : {}), ...(authoredType === 'stack' ? { stackLabels } : {}) } : null;
 const chartPayloadJson = chartPayload
   ? JSON.stringify(chartPayload).replace(/[<>&\u2028\u2029]/g, (char) => ({ '<': '\\u003c', '>': '\\u003e', '&': '\\u0026', '\u2028': '\\u2028', '\u2029': '\\u2029' }[char] ?? char))
   : null;
@@ -81,6 +94,39 @@ const chartPayloadJson = chartPayload
     </div>
   )}
 
+  {stackDetails.length > 0 && (
+    <div class="figure-note figure-item-notes stack-layer-notes">
+      <dl>
+        {stackDetails.map((layer) => (
+          <div>
+            <dt>{layer.label}</dt>
+            {layer.notes.map((note) => <dd>{note}</dd>)}
+            {layer.groups.map((group) => (
+              <dd>
+                <strong>{stackLabels[group.key]}</strong>
+                <ul>{group.entries.map((lines) => <li>{lines.join(' — ')}</li>)}</ul>
+              </dd>
+            ))}
+          </div>
+        ))}
+      </dl>
+    </div>
+  )}
+
+  {sequenceDetails && (
+    <div class="flow-sequence-details">
+      <DataTable title={t('reportFlowDetails', locale)}
+        columns={[`${t('reportFigureNode', locale)} / ${t('reportFigureConnection', locale)}`, ...sequenceDetails.columns]}>
+        {sequenceDetails.rows.map((row) => (
+          <tr>
+            <td>{row.label}</td>
+            {row.values.map((value) => <td>{value && typeof value === 'object' ? value.label : value}</td>)}
+          </tr>
+        ))}
+      </DataTable>
+    </div>
+  )}
+
   {type === 'other' && (
     <div class="figure-fallback" role="note">
       <strong>Generic figure</strong>
@@ -95,7 +141,7 @@ const chartPayloadJson = chartPayload
 
 <script>
   import * as d3 from 'd3';
-  import { figureDetail, figureItemNotes, figureValueNotes, flowTopology } from '../lib/figures.mjs';
+  import { figureDetail, figureItemNotes, figureValueNotes, flowTopology, stackLayerDetails } from '../lib/figures.mjs';
 
   const palette = {
     claret: '#990f3d',
@@ -1189,7 +1235,7 @@ const chartPayloadJson = chartPayload
       .attr('font-weight', fontWeight('label'))
       .text((d) => labelText(visibleEdgeLabel(d.edge), 12));
     connectorLabels.each(function(d) { addTitle(d3.select(this), `${d.source.label} → ${d.target.label}: ${d.edge.label}`); });
-    withTooltip(connectorLabels, (d) => tooltipHtml(`${d.source.label} → ${d.target.label}`, [d.edge.label, d.edge.relationship, ...figureItemNotes(d.edge)]));
+    withTooltip(connectorLabels, (d) => tooltipHtml(`${d.source.label} → ${d.target.label}`, [d.edge.label, d.edge.relationship, safeText(d.edge.displayValue ?? d.edge.value), ...figureValueNotes(d.edge)]));
     const railNodes = svg.append('g').selectAll('g').data(nodes).join('g').attr('transform', (_node, index) => `translate(${railX},${stepY(index) + cardH / 2})`);
     railNodes.append('circle').attr('r', railRadius).attr('fill', '#fff7ef').attr('stroke', (node) => colorForTone(node.tone)).attr('stroke-width', compact ? 2.4 : 3);
     railNodes.append('circle').attr('r', innerRailRadius).attr('fill', (node) => colorForTone(node.tone));
@@ -1207,7 +1253,7 @@ const chartPayloadJson = chartPayload
     const labelY = hasDetails ? (compact ? 40 : 52) : (compact ? 45 : 52);
     const labelFontSize = hasDetails ? (compact ? chartFont.label : chartFont.size.title) : (compact ? chartFont.axis : chartFont.label);
     const labelLineHeight = hasDetails ? (compact ? chartFont.lineHeight.small : chartFont.lineHeight.title) : chartFont.lineHeight.label;
-    cards.append('text').attr('x', textX).attr('y', eyebrowY).attr('fill', palette.claret).attr('font-size', compact ? chartFont.size.tiny : chartFont.size.caption).attr('font-weight', fontWeight('label')).attr('letter-spacing', chartFont.tracking.caps).text((node) => node._index === nodes.length - 1 ? 'DECISION' : node.tone === 'risk' || node.tone === 'critical' || node.tone === 'high' ? 'CONSTRAINT' : 'EVIDENCE');
+    cards.append('text').attr('x', textX).attr('y', eyebrowY).attr('fill', palette.claret).attr('font-size', compact ? chartFont.size.tiny : chartFont.size.caption).attr('font-weight', fontWeight('label')).attr('letter-spacing', chartFont.tracking.caps).text((node) => `${payload.flowLabels.node} ${node._index + 1}`);
     cards.append('text').attr('x', textX).attr('y', labelY).attr('fill', palette.ink).attr('font-size', labelFontSize).attr('font-weight', fontWeight('emphasis')).each(function(node) {
       renderWrappedText(d3.select(this), node.label, { maxChars: Math.max(compact ? 22 : 24, Math.floor((cardW - textX * 2) / (compact ? 7.8 : 8.4))), maxLines: 2, lineHeight: labelLineHeight });
     });
@@ -1216,8 +1262,8 @@ const chartPayloadJson = chartPayload
         renderWrappedText(d3.select(this), node.detail, { maxChars: Math.max(compact ? 34 : 40, Math.floor((cardW - textX * 2) / (compact ? 6.2 : 6.5))), maxLines: compact ? 2 : 3, lineHeight: compact ? chartFont.lineHeight.compact : chartFont.lineHeight.small });
       });
     }
-    cards.each(function(node) { addTitle(d3.select(this), `${node._index + 1}. ${node.label}${node.detail ? ` — ${node.detail}` : ''}`); });
-    withTooltip(cards, (node) => tooltipHtml(node.label, [node.detail]));
+    cards.each(function(node) { addTitle(d3.select(this), [node.label, node.displayValue ?? node.value, ...figureValueNotes(node)].map(safeText).filter(Boolean).join('; ')); });
+    withTooltip(cards, (node) => tooltipHtml(node.label, [safeText(node.displayValue ?? node.value), ...figureValueNotes(node)]));
   };
 
   const firstNonEmpty = (...values) => values.find((value) => Array.isArray(value) && value.length > 0) ?? [];
@@ -1329,7 +1375,9 @@ const chartPayloadJson = chartPayload
   };
 
   const renderStack = (element, payload) => {
-    const layers = normalizedItems({ layers: payload.data.layers ?? payload.data.items ?? payload.data.nodes });
+    const layers = stackLayerDetails(payload.data).map((layer) => ({
+      ...layer.item, label: layer.label, detail: figureDetail(layer.item) ?? layer.item.summary, fullDetails: layer,
+    }));
     const containerWidth = element.getBoundingClientRect().width || 760;
     const compact = containerWidth < 640;
     const margin = compact ? { top: 58, right: 24, bottom: 36, left: 24 } : { top: 62, right: 38, bottom: 40, left: 44 };
@@ -1344,8 +1392,8 @@ const chartPayloadJson = chartPayload
     const detailSize = compact ? chartFont.size.axis : chartFont.size.label;       // 13 / 14
     const pillSize = compact ? chartFont.size.caption : chartFont.size.small;      // 10.5 / 12
     const badgeSize = compact ? chartFont.size.value : chartFont.size.metric;      // 18 / 26
-    const stackItemText = (item) => safeText(item);
-    const stackListText = (items) => arr(items).map(stackItemText).filter(Boolean).join(', ');
+    const groupText = (group) => `${payload.stackLabels[group.key]}: ${group.entries.map((lines) => lines.join(' — ')).join('; ')}`;
+    const detailLines = (layer) => [...layer.fullDetails.notes, ...layer.fullDetails.groups.map(groupText)];
     svg.append('text')
       .attr('x', margin.left)
       .attr('y', margin.top - 24)
@@ -1353,15 +1401,7 @@ const chartPayloadJson = chartPayload
       .attr('font-size', chartFont.small)
       .attr('font-weight', fontWeight('label'))
       .attr('letter-spacing', chartFont.tracking.subtle)
-      .text('Layered stack');
-    svg.append('text')
-      .attr('x', width - margin.right)
-      .attr('y', margin.top - 24)
-      .attr('text-anchor', 'end')
-      .attr('fill', palette.muted)
-      .attr('font-size', chartFont.small)
-      .attr('font-weight', fontWeight('strong'))
-      .text('Experience → Governance');
+      .text(payload.stackLabels.overview);
     const groups = svg.append('g').selectAll('g.stack-layer').data(layers).join('g')
       .attr('class', 'stack-layer')
       .attr('transform', (_d, index) => {
@@ -1412,10 +1452,10 @@ const chartPayloadJson = chartPayload
     const moduleRows = groups.append('g').attr('class', 'stack-modules').attr('transform', `translate(24,${compact ? 64 : 72})`);
     moduleRows.each(function(d, layerIndex) {
       const layerWidth = Math.max(120, maxW - layerIndex * stackInset * 2);
-      const modules = arr(d.modules).slice(0, compact ? 1 : 2).map((item) => ({ label: stackItemText(item), tone: item?.tone ?? d.tone, kind: 'module' })).filter((item) => item.label);
-      const output = arr(d.outputs)[0];
-      const outputLabel = stackItemText(output);
-      const pills = [...modules, ...(outputLabel ? [{ label: `→ ${outputLabel}`, tone: 'neutral', kind: 'output' }] : [])];
+      const modules = (d.fullDetails.groups.find((group) => group.key === 'modules')?.entries ?? [])
+        .slice(0, compact ? 1 : 2).map((lines) => ({ label: lines.join(' — '), kind: 'module' }));
+      const output = d.fullDetails.groups.find((group) => group.key === 'outputs')?.entries[0];
+      const pills = [...modules, ...(output ? [{ label: `→ ${output.join(' — ')}`, kind: 'output' }] : [])];
       let xCursor = 0;
       const row = d3.select(this);
       pills.forEach((pill) => {
@@ -1442,11 +1482,9 @@ const chartPayloadJson = chartPayload
       });
     });
     groups.each(function(d) {
-      const modules = stackListText(d.modules);
-      const outputs = stackListText(d.outputs);
-      addTitle(d3.select(this), `${d.label}${d.detail ? ` — ${d.detail}` : ''}${modules ? `; modules: ${modules}` : ''}${outputs ? `; outputs: ${outputs}` : ''}`);
+      addTitle(d3.select(this), [d.label, ...detailLines(d)].join('; '));
     });
-    withTooltip(groups, (d) => tooltipHtml(d.label, [d.detail, stackListText(d.modules) ? `Modules: ${stackListText(d.modules)}` : '', stackListText(d.outputs) ? `Outputs: ${stackListText(d.outputs)}` : '']));
+    withTooltip(groups, (d) => tooltipHtml(d.label, detailLines(d)));
   };
 
   const renderPyramid = (element, payload) => {
@@ -2114,6 +2152,8 @@ const chartPayloadJson = chartPayload
   .figure-item-notes dl > div + div { margin-top: var(--space-2); }
   .figure-item-notes dt { font-weight: 700; }
   .figure-item-notes dd { margin: 0.2em 0 0; white-space: pre-line; overflow-wrap: anywhere; }
+  .stack-layer-notes ul { margin: 0.2em 0; padding-left: 1.2em; }
+  .flow-sequence-details :global(td) { white-space: pre-line; }
   .d3-figure { position: relative; width: 100%; min-height: 0; margin: var(--space-3) 0; overflow: visible; }
   .d3-figure[data-render-state='pending'] { min-height: clamp(12rem, 34vh, 20rem); border-radius: var(--radius-card, 0.5rem); background: linear-gradient(110deg, rgba(212,196,184,0.12), rgba(255,250,245,0.52), rgba(212,196,184,0.12)); }
   .d3-figure[data-render-state='pending']::before { content: 'Loading figure…'; position: absolute; inset: 0; display: grid; place-items: center; color: var(--caption-gray); font-family: var(--font-sans); font-size: var(--chart-fs-caption); }
