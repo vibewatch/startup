@@ -966,6 +966,7 @@ const ACCESS_ERROR_TITLES = new Set([
   '429 too many requests',
   '404 not found',
   '404 - page not found',
+  '404 | page not found',
   'page not found',
   '页面未找到',
   '页面不存在',

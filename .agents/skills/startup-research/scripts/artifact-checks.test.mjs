@@ -574,6 +574,10 @@ const clinicalTrialShellBodies = [
   `<html><head><title>ClinicalTrials.gov</title></head><body><!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-base">Wayback Machine: April 16, 2026</div><!-- END WAYBACK TOOLBAR INSERT -->${clinicalGlossaryShell}</body></html>`,
 ];
 
+const notFoundTitleBodies = [
+  '<html><head><title>404 | Page Not Found</title></head><body>Manage your tracker preferences.<h1>We can\'t find the page you\'re looking for.</h1><nav>Newsletters Careers Privacy policy</nav></body></html>',
+  "Title: 404 | Page Not Found\n\nURL Source: https://example.com/missing-article\n\nMarkdown Content:\nManage your tracker preferences.\n\nWe can't find the page you're looking for.\n\nNewsletters Careers Privacy policy",
+];
 const accessErrorBodies = [
   '<html><head><title>Client Challenge</title></head><body>A required part of this site couldn’t load.</body></html>',
   "Title:\n\nURL Source: https://example.com/thread\n\nWarning: Target URL returned error 403: Forbidden\n\nMarkdown Content:\nYou've been blocked by network security.",
@@ -581,6 +585,7 @@ const accessErrorBodies = [
   '<html><head><title>页面未找到</title></head><body><h1>404</h1><p>没有找到此种页面</p></body></html>',
   '404\n\n没有找到此种页面',
   '<html><title>404 - Page Not Found</title><body>This page is unavailable.</body></html>',
+  ...notFoundTitleBodies,
   '<html><head><title></title></head><body><div>Powered and protected by</div><div>Privacy</div></body></html>',
   '<html><body><!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-base">Wayback Machine: April 16, 2026</div><!-- END WAYBACK TOOLBAR INSERT --><div>Powered and protected by</div><div>Privacy</div></body></html>',
   'Powered and protected by\n\nPrivacy',
@@ -795,6 +800,7 @@ test('HTTP-200 challenge pages are not successful source retrievals', () => {
     assert.equal(looksLikeBotChallenge({ status: 200, body: Buffer.from(body) }), true, body);
   }
   assert.equal(isAccessErrorResponse({ status: 200, title: '页面未找到', body: '' }), true);
+  assert.equal(isAccessErrorResponse({ status: 200, title: '404 | Page Not Found', body: '' }), true);
   assert.equal(isAccessErrorResponse({ status: 200, title: 'ClinicalTrials.gov', body: 'Show glossary' }), true);
 });
 
@@ -805,6 +811,8 @@ test('access-error detection preserves real articles about security and PDF bodi
     'Security troubleshooting guide\n\nA required part of this site couldn’t load is a message that users may encounter.',
     '<html><title>理解页面未找到错误</title><article>404 页面未找到是常见的网站错误。本文介绍如何排查。</article></html>',
     '<html><title>Understanding 404 - Page Not Found</title><article>A guide to error handling.</article></html>',
+    '<html><title>Understanding 404 | Page Not Found</title><article>A guide to error handling.</article></html>',
+    'Title: Funding announcement\n\nURL Source: https://example.com/article\n\nMarkdown Content:\nThe company raised $150M. An old link is titled 404 | Page Not Found.',
     '404 documents were processed, while three links returned page not found.',
     '404\n\n没有找到此种页面\n\nThis report analyzes the error rather than serving an error page.',
     '<html><title>Funding announcement</title><body><article>The company raised $150M.</article><div>Powered and protected by</div><div>Privacy</div></body></html>',
@@ -818,6 +826,7 @@ test('access-error detection preserves real articles about security and PDF bodi
     'Show glossary',
     Buffer.from('%PDF-1.7\nTitle: Vercel Security Checkpoint'),
     Buffer.from('%PDF-1.7\nTitle: 页面未找到'),
+    Buffer.from('%PDF-1.7\nTitle: 404 | Page Not Found'),
     Buffer.from('%PDF-1.7\nPowered and protected by\n\nPrivacy'),
     Buffer.from('%PDF-1.7\nClinicalTrials.gov\n\nShow glossary'),
   ]) assert.equal(isAccessErrorResponse({ status: 200, body }), false);
@@ -882,7 +891,7 @@ test('fetch CLI rejects origin, reader, archived, and cached access-error pages 
 });
 
 test('fetch CLI recovers an access-error page through a valid reader response', () => {
-  for (const body of [accessErrorBodies[0], ...clinicalTrialShellBodies]) {
+  for (const body of [accessErrorBodies[0], ...clinicalTrialShellBodies, ...notFoundTitleBodies]) {
     const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
       import assert from 'node:assert/strict';
       import { main } from './.agents/skills/fetch-url/scripts/fetch.mjs';
@@ -908,7 +917,7 @@ test('fetch CLI refreshes blocked reader and archive fallback caches', () => {
   const folder = mkdtempSync(join(tmpdir(), 'source-fallback-cache-check-'));
   const url = 'https://example.com/page';
   try {
-    const cases = ['Powered and protected by\n\nPrivacy', clinicalTrialShellBodies[0]]
+    const cases = ['Powered and protected by\n\nPrivacy', clinicalTrialShellBodies[0], ...notFoundTitleBodies]
       .flatMap((body) => ['reader', 'wayback'].map((variant) => [body, variant]));
     for (const [body, variant] of cases) {
       writeFileSync(join(folder, `${canonicalCacheKey(url, variant)}.json`), JSON.stringify({
