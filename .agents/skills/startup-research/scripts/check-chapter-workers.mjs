@@ -430,6 +430,71 @@ process.exit(Number(process.env.FAKE_COPILOT_EXIT ?? 1));
       assert.doesNotMatch(directQuoteProbe.stdout, /pipeline complete/);
     }
   }
+  const refreshContextPath = join(folder, 'refresh-context.yaml');
+  const refreshContext = {
+    mode: 'refresh', newRunId: runId, refreshOfRunId: '20980101000000-refresh-parent',
+    refreshReason: 'Correct prior disclosure and preserve revision history.',
+  };
+  try {
+    for (const invalid of [
+      null, {}, { ...refreshContext, mode: 'fresh' },
+      { ...refreshContext, newRunId: '20970101000000-wrong' },
+      { ...refreshContext, refreshOfRunId: runId },
+      { ...refreshContext, refreshOfRunId: '../wrong' },
+      { ...refreshContext, refreshReason: '' },
+    ]) {
+      writeFileSync(refreshContextPath, JSON.stringify(invalid));
+      const result = spawnSync(process.execPath, [
+        join(here, 'run-report-finalizer.mjs'), '--report-folder', folder, '--dry-run',
+      ], { encoding: 'utf8' });
+      assert.equal(result.status, 1, `accepted invalid refresh context: ${JSON.stringify(invalid)}`);
+      assert.match(result.stderr, /invalid cached refresh context/);
+    }
+    writeFileSync(refreshContextPath, JSON.stringify(refreshContext));
+    const refreshPlan = JSON.parse(run('run-report-finalizer.mjs', [
+      '--report-folder', folder, '--dry-run', '--format', 'json',
+    ]));
+    assert.equal(refreshPlan.refreshOfRunId, refreshContext.refreshOfRunId);
+    assert.equal(refreshPlan.refreshContextPath, refreshContextPath);
+    const script = join(here, 'run-report-finalizer.mjs');
+    const refreshLog = join(folder, 'fake-refresh-finalizer.log');
+    const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
+      import childProcess from 'node:child_process';
+      import { syncBuiltinESMExports } from 'node:module';
+      const original = childProcess.spawnSync;
+      childProcess.spawnSync = (binary, args, options) =>
+        args[0] === ${JSON.stringify(join(here, 'check-report.mjs'))}
+          ? { status: 0, stdout: '', stderr: '' }
+          : original(binary, args, options);
+      syncBuiltinESMExports();
+      process.argv = ${JSON.stringify([
+        process.execPath, script, '--report-folder', folder,
+        '--copilot-bin', fakeCopilotPath, '--format', 'json',
+      ])};
+      await import(${JSON.stringify(pathToFileURL(script).href)});
+    `], {
+      encoding: 'utf8',
+      env: { ...process.env, FAKE_COPILOT_LOG: refreshLog, FAKE_COPILOT_EXIT: '0',
+        STARTUP_FETCH_LOG_PATH: join(folder, '_fetch-log.jsonl') },
+    });
+    assert.equal(result.status, 1, result.stderr);
+    const output = JSON.parse(result.stdout);
+    assert.equal(output.attempts.length, 2, 'refresh readback must retain the bounded fallback');
+    assert.equal(output.reportCheck.ok, false);
+    assert.deepEqual(output.reportCheck.quoteIssues, []);
+    assert.deepEqual(output.reportCheck.queryIssues, []);
+    assert(output.reportCheck.refreshIssues.length > 0, 'unlinked artifacts passed a success-shaped finalizer exit');
+    for (const line of readFileSync(refreshLog, 'utf8').trim().split('\n')) {
+      const invocation = JSON.parse(line);
+      const prompt = invocation[invocation.indexOf('-p') + 1];
+      assert(prompt.includes(refreshContextPath));
+      assert(prompt.includes('finalize-report.mjs with --refresh'));
+      assert(prompt.includes('Do not hand-author revision fields'));
+    }
+    assert.deepEqual(JSON.parse(readFileSync(refreshContextPath, 'utf8')), refreshContext);
+  } finally {
+    rmSync(refreshContextPath, { force: true });
+  }
   const queryChapterPath = join(folder, roster.chapters[0].file);
   const queryChapter = JSON.parse(readFileSync(queryChapterPath, 'utf8'));
   queryChapter.localEvidence.searchQueries[0].query = 'Invented query';

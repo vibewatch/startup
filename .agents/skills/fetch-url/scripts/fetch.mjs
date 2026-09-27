@@ -896,7 +896,7 @@ function cachePath(dir, url, variant) {
   return join(dir, `${canonicalCacheKey(url, variant)}.json`);
 }
 
-function readCache(dir, url, variant, ttlHours) {
+async function readCache(dir, url, variant, ttlHours) {
   const path = cachePath(dir, url, variant);
   if (!existsSync(path)) return null;
   try {
@@ -906,7 +906,7 @@ function readCache(dir, url, variant, ttlHours) {
     if (!Number.isFinite(ageMs) || ageMs < 0) return null;
     if (ttlHours > 0 && ageMs > ttlHours * 3_600_000) return null;
     const cached = { ...raw, body: Buffer.from(raw.body, 'base64'), _cachePath: path, _ageMs: ageMs };
-    if (isAccessErrorResponse(cached)) {
+    if (await hasAccessErrorContent(cached)) {
       console.error(`[fetch-url] cached access-error page is unusable (${cacheVariantName(variant)}); retrying retrieval.`);
       return null;
     }
@@ -987,10 +987,25 @@ export function isAccessErrorResponse(result) {
   if (/^(?:404\s*[-:：]?\s*)?(?:没有找到此种页面|页面未找到|页面不存在|找不到页面|page not found|not found)[.!。]?\s*$/iu.test(text)) return true;
   const unwrappedText = text.replace(/^Title:[^\n]*\n+URL Source:\s*https?:\/\/[^\n]+\n+(?:Published Time:[^\n]*\n+)?Markdown Content:\s*/i, '');
   if (/^You are now being redirected to shortly\.{3,}\s*$/i.test(unwrappedText)) return true;
+  if (/^(?:New to Earnings Whispers\?\s+)?Create FREE account to continue\.\s*$/i.test(unwrappedText)) return true;
   if (/^Powered and protected by\s+Privacy\s*$/i.test(unwrappedText)) return true;
   if ((title === 'clinicaltrials.gov' || /^ClinicalTrials\.gov\s+/i.test(unwrappedText))
       && /^(?:ClinicalTrials\.gov\s+)?Show glossary(?:\s+Search for terms\s+Hide glossary\s+Study record managers:\s+refer to the Data Element Definitions if submitting registration or results information\.)?\s*$/i.test(unwrappedText)) return true;
   return /^(?:You've been blocked by network security\b|A required part of this site couldn't load\b)/i.test(text);
+}
+
+async function hasAccessErrorContent(result) {
+  if (isAccessErrorResponse(result)) return true;
+  if (!result || looksLikePdfBuffer(result.body)) return false;
+  const body = Buffer.isBuffer(result.body) ? result.body.toString('utf8') : String(result.body ?? '');
+  if (!looksLikeHtml(body, result.contentType)
+      || !/Create\s+FREE\s+account\s+to\s+continue\./i.test(htmlToText(body))) return false;
+  const extracted = await extractHtmlText(body, result.finalUrl || result.url, result.contentType);
+  return isAccessErrorResponse({ ...result, body: extracted.text });
+}
+
+async function isBlockedSource(result) {
+  return looksLikeBotChallenge(result) || await hasAccessErrorContent(result);
 }
 
 export function looksLikeBotChallenge(result) {
@@ -1180,7 +1195,7 @@ export async function main(args = argv.slice(2)) {
   const targetUrl = opts.viaReader ? readerUrl(opts.url) : opts.viaWayback ? waybackUrl(opts.url) : opts.url;
 
   if (useCacheRead) {
-    const cached = readCache(opts.cacheDir, opts.url, source, opts.cacheTtlHours);
+    const cached = await readCache(opts.cacheDir, opts.url, source, opts.cacheTtlHours);
     if (cached) {
       result = {
         url: cached.requestedUrl,
@@ -1218,7 +1233,7 @@ export async function main(args = argv.slice(2)) {
             throttleMs: opts.throttleMs,
           });
           result = { ...result, profile: profileAttempt.name };
-          if (!looksLikeBotChallenge(result)) break;
+          if (!await isBlockedSource(result)) break;
           console.error(`[fetch-url] origin via ${profileAttempt.name} returned ${result.status} or bot-challenge body.`);
         }
       }
@@ -1238,10 +1253,10 @@ export async function main(args = argv.slice(2)) {
       exit(1);
     }
 
-    if (!opts.viaReader && !opts.viaWayback && !opts.noReader && looksLikeBotChallenge(result)) {
+    if (!opts.viaReader && !opts.viaWayback && !opts.noReader && await isBlockedSource(result)) {
       console.error('[fetch-url] origin still looks blocked; retrying via r.jina.ai reader text.');
       try {
-        const cachedReader = useCacheRead ? readCache(opts.cacheDir, opts.url, 'reader', opts.cacheTtlHours) : null;
+        const cachedReader = useCacheRead ? await readCache(opts.cacheDir, opts.url, 'reader', opts.cacheTtlHours) : null;
         const fallback = cachedReader
           ? { ...cachedReader, url: opts.url, body: cachedReader.body }
           : await fetchUrl(readerUrl(opts.url), {
@@ -1249,7 +1264,7 @@ export async function main(args = argv.slice(2)) {
               userAgent: opts.userAgentOverride ? opts.userAgent : null,
               throttleMs: opts.throttleMs,
             });
-        if (fallback.ok && !looksLikeBotChallenge(fallback)) {
+        if (fallback.ok && !await isBlockedSource(fallback)) {
           result = fallback;
           source = 'reader';
           cacheHit = Boolean(cachedReader);
@@ -1262,10 +1277,10 @@ export async function main(args = argv.slice(2)) {
       }
     }
 
-    if (!opts.viaWayback && !opts.noWayback && looksLikeBotChallenge(result)) {
+    if (!opts.viaWayback && !opts.noWayback && await isBlockedSource(result)) {
       console.error('[fetch-url] retrying via Wayback Machine.');
       try {
-        const cachedWayback = useCacheRead ? readCache(opts.cacheDir, opts.url, 'wayback', opts.cacheTtlHours) : null;
+        const cachedWayback = useCacheRead ? await readCache(opts.cacheDir, opts.url, 'wayback', opts.cacheTtlHours) : null;
         const fallback = cachedWayback
           ? { ...cachedWayback, url: opts.url, body: cachedWayback.body }
           : await fetchUrl(waybackUrl(opts.url), {
@@ -1273,7 +1288,7 @@ export async function main(args = argv.slice(2)) {
               userAgent: opts.userAgentOverride ? opts.userAgent : null,
               throttleMs: opts.throttleMs,
             });
-        if (fallback.ok && !looksLikeBotChallenge(fallback)) {
+        if (fallback.ok && !await isBlockedSource(fallback)) {
           result = fallback;
           source = 'wayback';
           cacheHit = Boolean(cachedWayback);
@@ -1286,12 +1301,12 @@ export async function main(args = argv.slice(2)) {
       }
     }
 
-    if (useCacheWrite && !cacheHit && result.ok && !looksLikeBotChallenge(result)) {
+    if (useCacheWrite && !cacheHit && result.ok && !await isBlockedSource(result)) {
       writeCache(opts.cacheDir, opts.url, source, result);
     }
   }
 
-  if (isAccessErrorResponse(result)) {
+  if (await hasAccessErrorContent(result)) {
     result = { ...result, ok: false, error: `Unusable access-error response (HTTP ${result.status}); source content was not retrieved.` };
     console.error(`[fetch-url] ${result.error}`);
   }

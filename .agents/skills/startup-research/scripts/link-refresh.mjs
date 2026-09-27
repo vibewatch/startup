@@ -19,6 +19,7 @@ import { spawnSync } from 'node:child_process';
 import { existsSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { refreshArtifactsAreInSync } from './refresh-readback.mjs';
 import {
   EXIT,
   SUMMARY_CARD_FILE,
@@ -219,18 +220,6 @@ function setOldRevision({ oldRunId, newRunId, refreshReason }) {
   return updateMetaRevision(oldMetaPath, nextRevision);
 }
 
-// Detect partial recovery: report-meta.yaml says superseded but the assembled
-// artifacts still carry the old revision. Without this check, a re-run of
-// finalize-report --refresh would skip reassemble (because setOldRevision returns
-// false when meta is already up to date) and leave the inconsistency for
-// check-revision-graph to discover.
-function oldArtifactsAreInSync(oldRunId, expectedRevision) {
-  const card = readSummaryCard(oldRunId);
-  if (!card) return false;
-  const cardRevision = normalizeRevision(card?.revision);
-  return JSON.stringify(cardRevision) === JSON.stringify(expectedRevision);
-}
-
 function updateOldArtifactRevisions(oldRunId, revision) {
   const oldFolder = join(reportsDir, oldRunId);
   for (const file of [SUMMARY_CARD_FILE, 'full-report.yaml']) {
@@ -266,7 +255,7 @@ const oldChanged = setOldRevision({ oldRunId, newRunId, refreshReason });
 console.log(`[refresh] previous report ${oldRunId} supersededByRunId=${newRunId}${oldChanged ? ' (updated)' : ' (already set)'}`);
 const { doc: oldMetaAfterLink } = readReportMeta(join(reportsDir, oldRunId));
 const oldRevision = normalizeRevision(oldMetaAfterLink.revision);
-if (oldChanged || !oldArtifactsAreInSync(oldRunId, oldRevision)) {
+if (oldChanged || !refreshArtifactsAreInSync(join(reportsDir, oldRunId), oldRevision)) {
   const oldFolder = join(reportsDir, oldRunId);
   updateOldArtifactRevisions(oldRunId, oldRevision);
   runScript(syncPreservedFieldsScript, [oldFolder]);

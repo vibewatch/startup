@@ -82,6 +82,13 @@ all cache variants use the same rejection and fallback checks.
 The redirect-only text `You are now being redirected to shortly.....`
 is also unusable, including reader wrappers and URLs ending in `.pdf`
 that actually serve HTML. It is not the requested source document.
+The signup-only body `New to Earnings Whispers? Create FREE account to continue.`
+(or just its account-creation sentence) is rejected too. A substantive article
+or preview is not rejected merely for including that signup prompt.
+For HTML containing this prompt, retrieval also checks the extracted main text
+before accepting an origin, reader, archive, or cache response. Navigation and
+sign-in controls cannot disguise a signup-only article; normal fallback recovery
+still applies.
 Articles discussing missing-page errors are not rejected merely for mentioning
 those words. The same detector protects retained prefetched source text even
 when an older cache record incorrectly says `ok: true`.

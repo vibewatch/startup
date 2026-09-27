@@ -129,7 +129,7 @@ test('a schema-successful model exit must pass readback and assembly before comp
   const cache = join(root, '.research-cache', runId);
   const write = (path, text) => { mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, text); };
   try {
-    for (const file of ['run-report-finalizer.mjs', 'review-readback.mjs']) {
+    for (const file of ['run-report-finalizer.mjs', 'review-readback.mjs', 'refresh-readback.mjs']) {
       mkdirSync(isolatedScripts, { recursive: true });
       copyFileSync(join(scripts, file), join(isolatedScripts, file));
     }
@@ -139,11 +139,13 @@ export const EXIT={ok:0,failure:1,notFound:4};
 export const FINAL_ARTIFACTS={evidence:{file:'evidence.yaml'},fullReport:{file:'full-report.yaml'},summaryCard:{file:'summary-card.yaml'}};
 export const REPORT_META_FILE='report-meta.yaml';
 export const getAnalysisArtifacts=()=>[{file:'chapter.yaml'}];
+export const hasText=value=>typeof value==='string'&&value.trim().length>0;
 export const isRunId=()=>true;
 export const loadWorkflowConfig=()=>({activeResearchProfile:'fast'});
 export const normalizeRevision=v=>v;
 export const readYaml=p=>JSON.parse(readFileSync(p,'utf8'));
 export const researchCacheDir=()=>${JSON.stringify(cache)};
+export const reportsDir=${JSON.stringify(join(root, 'reports'))};
 `);
     write(join(isolatedScripts, 'source-quote-checks.mjs'), 'export const checkPrefetchedSourceQuotes=()=>[];');
     write(join(isolatedScripts, 'search-query-checks.mjs'), 'export const checkSearchQueryProvenance=()=>[];export const executedSearchQueries=()=>[];');

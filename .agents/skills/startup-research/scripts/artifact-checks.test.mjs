@@ -10,9 +10,69 @@ import { canonicalCacheKey, cleanExtractedText, htmlToText, isAccessErrorRespons
 import { checkAuthoringInstructions, checkFigureDeep } from './artifact-checks.mjs';
 import { KNOWN_DIMENSIONS, WARNING_DIMENSIONS } from './validation-catalog.mjs';
 import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
+import { checkRefreshReadback, refreshArtifactsAreInSync } from './refresh-readback.mjs';
+import { reportsDir } from './utils.mjs';
 import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, funnelStageTable, stackLayerDetails, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
 import { isTranslatableLeaf, TRANSLATE_PATHS } from '../../translate-zh/scripts/whitelist.mjs';
 import { claimRefs } from '../../../../website/src/lib/report-types.ts';
+
+test('refresh acceptance checks both reports and existing overlays without rewriting history', () => {
+  const runId = '20990101000000-refresh-check';
+  const previousRunId = '20980101000000-refresh-check';
+  const reportFolder = join('.research-cache', runId);
+  const refreshContext = { refreshOfRunId: previousRunId, refreshReason: 'Correct the dated financial disclosures.' };
+  const current = { status: 'current', refreshOfRunId: previousRunId, supersededByRunId: null, refreshReason: refreshContext.refreshReason };
+  const previous = { status: 'superseded', refreshOfRunId: '20970101000000-refresh-check', supersededByRunId: runId, refreshReason: 'Preserve the earlier refresh reason.' };
+  const documents = new Map();
+  for (const [folder, revision] of [[reportFolder, current], [join(reportsDir, previousRunId), previous]]) {
+    for (const file of ['report-meta.yaml', 'summary-card.yaml', 'full-report.yaml', 'summary-card.zh.yaml', 'full-report.zh.yaml']) {
+      documents.set(join(folder, file), { revision });
+    }
+  }
+  const check = () => checkRefreshReadback({ reportFolder, runId, refreshContext },
+    (path) => structuredClone(documents.get(path)), (path) => documents.has(path));
+  const before = structuredClone(documents);
+  const oldFolder = join(reportsDir, previousRunId);
+  const inSync = () => refreshArtifactsAreInSync(oldFolder, previous,
+    (path) => documents.get(path), (path) => documents.has(path));
+  assert.equal(inSync(), true);
+  for (const file of ['summary-card.yaml', 'full-report.yaml', 'summary-card.zh.yaml', 'full-report.zh.yaml']) {
+    const path = join(oldFolder, file);
+    documents.set(path, { revision: { ...previous, status: 'current', supersededByRunId: null } });
+    assert.equal(inSync(), false, `stale ${file} must trigger revision-only recovery`);
+    documents.set(path, before.get(path));
+  }
+  assert.deepEqual(check(), []);
+  assert.deepEqual(documents, before);
+  assert.deepEqual(checkRefreshReadback({ reportFolder, runId, refreshContext: null }, () => {
+    throw new Error('Fresh runs must not inspect refresh artifacts');
+  }), []);
+  for (const [path, original] of before) {
+    for (const revision of [
+      undefined, null, {}, 'current', { ...original.revision, status: 'unknown' },
+      { ...original.revision, supersededByRunId: '20960101000000-wrong' },
+      { ...original.revision, refreshReason: 'Unapproved reason' },
+    ]) {
+      documents.set(path, { revision });
+      assert(check().length > 0,
+        `accepted broken revision in ${path}: ${JSON.stringify(revision)}`);
+    }
+    documents.set(path, original);
+  }
+  const summaryPath = join(reportFolder, 'summary-card.yaml');
+  documents.set(summaryPath, { revision: { ...current, refreshOfRunId: '20960101000000-wrong' } });
+  assert(check().some((issue) => issue.path === `${summaryPath}:revision`));
+  documents.set(summaryPath, before.get(summaryPath));
+  for (const path of [...documents.keys()].filter(path => path.endsWith('.zh.yaml'))) documents.delete(path);
+  assert.deepEqual(check(), [], 'English-only runs do not require nonexistent overlays');
+  assert.equal(inSync(), true);
+  const oldSummary = join(oldFolder, 'summary-card.yaml');
+  documents.delete(oldSummary);
+  assert.equal(inSync(), false, 'missing English artifacts cannot be considered synchronized');
+  documents.set(oldSummary, before.get(oldSummary));
+  documents.delete(summaryPath);
+  assert(check().some((issue) => issue.path === `${summaryPath}:revision`));
+});
 
 test('timeline rows use shared pointer tooltips with full date and detail', () => {
   const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
@@ -583,6 +643,13 @@ const redirectShellBodies = [
   '<html><head><title>Company biography</title></head><body>You are now being redirected to shortly.....</body></html>',
   'Title: Company biography\n\nURL Source: https://example.com/biography.pdf\n\nMarkdown Content:\nYou are now being redirected to shortly.....',
 ];
+const signupShellBodies = [
+  'New to Earnings Whispers?\n\nCreate FREE account to continue.',
+  'Create FREE account to continue.',
+  '<html><head><title>Earnings Whispers</title></head><body>New to Earnings Whispers?<p>Create FREE account to continue.</p></body></html>',
+  'Title: Earnings Whispers\n\nURL Source: https://example.com/earnings\n\nMarkdown Content:\nNew to Earnings Whispers?\n\nCreate FREE account to continue.',
+];
+const signupChromeBody = '<html><head><title>Earnings article</title></head><body><nav>Calendar Research Prices</nav><form>Sign In <label>Email Address</label><input type="email"><label>Password</label><input type="password"></form><main><article><h5>New to Earnings Whispers?</h5><p>Create <strong>FREE</strong> account to continue.</p></article></main><footer>Copyright Terms Privacy</footer></body></html>';
 const accessErrorBodies = [
   '<html><head><title>Client Challenge</title></head><body>A required part of this site couldn’t load.</body></html>',
   "Title:\n\nURL Source: https://example.com/thread\n\nWarning: Target URL returned error 403: Forbidden\n\nMarkdown Content:\nYou've been blocked by network security.",
@@ -592,6 +659,7 @@ const accessErrorBodies = [
   '<html><title>404 - Page Not Found</title><body>This page is unavailable.</body></html>',
   ...notFoundTitleBodies,
   ...redirectShellBodies,
+  ...signupShellBodies,
   '<html><head><title></title></head><body><div>Powered and protected by</div><div>Privacy</div></body></html>',
   '<html><body><!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-base">Wayback Machine: April 16, 2026</div><!-- END WAYBACK TOOLBAR INSERT --><div>Powered and protected by</div><div>Privacy</div></body></html>',
   'Powered and protected by\n\nPrivacy',
@@ -822,6 +890,8 @@ test('access-error detection preserves real articles about security and PDF bodi
     '404 documents were processed, while three links returned page not found.',
     '404\n\n没有找到此种页面\n\nThis report analyzes the error rather than serving an error page.',
     'You are now being redirected to shortly.....\n\nThis article explains the redirect message rather than serving a redirect shell.',
+    'Revenue rose to $14.7 million in the second quarter. New to Earnings Whispers? Create FREE account to continue.',
+    'Title: Earnings Whispers\n\nURL Source: https://example.com/earnings\n\nMarkdown Content:\nRevenue rose to $14.7 million in the second quarter.\n\nCreate FREE account to continue.',
     '<html><title>Funding announcement</title><body><article>The company raised $150M.</article><div>Powered and protected by</div><div>Privacy</div></body></html>',
     '<html><body><!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-base">Wayback Machine</div><!-- END WAYBACK TOOLBAR INSERT --><article>The company raised $150M.</article><div>Powered and protected by</div><div>Privacy</div></body></html>',
     'Title: Funding announcement\n\nURL Source: https://example.com/page\n\nPublished Time: 2026-04-16\n\nMarkdown Content:\nThe company raised $150M.\nPowered and protected by\n\nPrivacy',
@@ -835,6 +905,7 @@ test('access-error detection preserves real articles about security and PDF bodi
     Buffer.from('%PDF-1.7\nTitle: 页面未找到'),
     Buffer.from('%PDF-1.7\nTitle: 404 | Page Not Found'),
     Buffer.from('%PDF-1.7\nYou are now being redirected to shortly.....'),
+    Buffer.from('%PDF-1.7\nNew to Earnings Whispers?\nCreate FREE account to continue.'),
     Buffer.from('%PDF-1.7\nPowered and protected by\n\nPrivacy'),
     Buffer.from('%PDF-1.7\nClinicalTrials.gov\n\nShow glossary'),
   ]) assert.equal(isAccessErrorResponse({ status: 200, body }), false);
@@ -849,7 +920,8 @@ test('reader URLs preserve the original scheme without adding a second one', () 
 test('fetch CLI rejects origin, reader, archived, and cached access-error pages with a failed fetch trail', () => {
   const folder = mkdtempSync(join(tmpdir(), 'source-fetch-check-'));
   try {
-    const cases = accessErrorBodies.flatMap((_, index) =>
+    const bodies = [...accessErrorBodies, signupChromeBody];
+    const cases = bodies.flatMap((_, index) =>
       ['origin', 'reader', 'archive', 'cache', 'archive-cache'].map((mode) => [index, mode]));
     for (const [index, mode] of cases) {
       const url = 'https://example.com/page';
@@ -860,7 +932,7 @@ test('fetch CLI rejects origin, reader, archived, and cached access-error pages 
       if (cachedMode) {
         writeFileSync(join(folder, `${canonicalCacheKey(url, cacheSource)}.json`), JSON.stringify({
           requestedUrl: url, finalUrl: url, status: 200, ok: true,
-          body: Buffer.from(accessErrorBodies[index]).toString('base64'),
+          body: Buffer.from(bodies[index]).toString('base64'),
           source: cacheSource, fetchedAt: new Date().toISOString(),
         }));
       }
@@ -875,7 +947,7 @@ test('fetch CLI rejects origin, reader, archived, and cached access-error pages 
         import { main } from './.agents/skills/fetch-url/scripts/fetch.mjs';
         globalThis.fetch = async (url) => {
           appendFileSync(${JSON.stringify(requests)}, JSON.stringify(url) + '\\n');
-          return new Response(${JSON.stringify(accessErrorBodies[index])}, {
+          return new Response(${JSON.stringify(bodies[index])}, {
             status: 200, headers: { 'content-type': 'text/html' },
           });
         };
@@ -899,7 +971,7 @@ test('fetch CLI rejects origin, reader, archived, and cached access-error pages 
 });
 
 test('fetch CLI recovers an access-error page through a valid reader response', () => {
-  for (const body of [accessErrorBodies[0], ...clinicalTrialShellBodies, ...notFoundTitleBodies, ...redirectShellBodies]) {
+  for (const body of [accessErrorBodies[0], ...clinicalTrialShellBodies, ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, signupChromeBody]) {
     const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
       import assert from 'node:assert/strict';
       import { main } from './.agents/skills/fetch-url/scripts/fetch.mjs';
@@ -925,7 +997,7 @@ test('fetch CLI refreshes blocked reader and archive fallback caches', () => {
   const folder = mkdtempSync(join(tmpdir(), 'source-fallback-cache-check-'));
   const url = 'https://example.com/page';
   try {
-    const cases = ['Powered and protected by\n\nPrivacy', clinicalTrialShellBodies[0], ...notFoundTitleBodies, ...redirectShellBodies]
+    const cases = ['Powered and protected by\n\nPrivacy', clinicalTrialShellBodies[0], ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, signupChromeBody]
       .flatMap((body) => ['reader', 'wayback'].map((variant) => [body, variant]));
     for (const [body, variant] of cases) {
       writeFileSync(join(folder, `${canonicalCacheKey(url, variant)}.json`), JSON.stringify({
@@ -960,6 +1032,45 @@ test('fetch CLI refreshes blocked reader and archive fallback caches', () => {
       assert.equal(output.retrievalSource, variant);
       assert.match(output.output, /Verified original evidence: revenue was \$150M/);
       assert.match(result.stderr, /cached access-error page is unusable/);
+    }
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
+});
+
+test('fetch CLI retains substantive articles with signup navigation in fresh and cached responses', () => {
+  const folder = mkdtempSync(join(tmpdir(), 'source-signup-article-check-'));
+  const url = 'https://example.com/earnings';
+  const article = 'The company reported quarterly revenue of $14.7 million. Its report separates revenue, operating expenses and cash balances, and explains the relevant financial period.';
+  const body = signupChromeBody.replace(
+    '<h5>New to Earnings Whispers?</h5><p>Create <strong>FREE</strong> account to continue.</p>',
+    `<h1>Quarterly results</h1>${`<p>${article}</p>`.repeat(6)}<p>Create FREE account to continue.</p>`,
+  );
+  try {
+    for (const cached of [false, true]) {
+      if (cached) writeFileSync(join(folder, `${canonicalCacheKey(url)}.json`), JSON.stringify({
+        requestedUrl: url, finalUrl: url, status: 200, ok: true, contentType: 'text/html',
+        body: Buffer.from(body).toString('base64'), source: 'origin', fetchedAt: new Date().toISOString(),
+      }));
+      const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
+        import assert from 'node:assert/strict';
+        import { main } from './.agents/skills/fetch-url/scripts/fetch.mjs';
+        let requests = 0;
+        globalThis.fetch = async () => {
+          requests++;
+          return new Response(${JSON.stringify(body)}, { status: 200, headers: { 'content-type': 'text/html' } });
+        };
+        await main(${JSON.stringify([
+          url, '--json', '--no-host-map', '--no-throttle', '--no-retry-profiles',
+          '--no-reader', '--no-wayback', ...(cached ? ['--cache-dir', folder] : ['--no-cache']),
+        ])});
+        assert.equal(requests, ${cached ? 0 : 1});
+      `], { encoding: 'utf8', env: { ...process.env, STARTUP_FETCH_LOG_PATH: '' } });
+      assert.equal(result.status, 0, result.stderr);
+      const output = JSON.parse(result.stdout);
+      assert.equal(output.ok, true);
+      assert.equal(output.cache.hit, cached);
+      assert(output.output.includes(article));
     }
   } finally {
     rmSync(folder, { recursive: true, force: true });

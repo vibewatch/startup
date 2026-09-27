@@ -12,11 +12,13 @@ import { checkPrefetchedSourceQuotes } from './source-quote-checks.mjs';
 import { checkSearchQueryProvenance, executedSearchQueries } from './search-query-checks.mjs';
 import { RevisionSchema } from './contracts/report-artifacts.schema.mjs';
 import { checkReviewReadback, hasReviewReadback, prepareReviewReadback } from './review-readback.mjs';
+import { checkRefreshReadback } from './refresh-readback.mjs';
 import {
   EXIT,
   FINAL_ARTIFACTS,
   REPORT_META_FILE,
   getAnalysisArtifacts,
+  hasText,
   isRunId,
   loadWorkflowConfig,
   normalizeRevision,
@@ -103,13 +105,14 @@ function hasCurrentPublishedRevision(reportFolder) {
   ));
 }
 
-function finalizerPrompt({ reportFolder, resultsPath, bundlePath, fetchLogPath, reviewFindingsPath, publishedDeepReview, previousFailures }) {
+function finalizerPrompt({ reportFolder, resultsPath, bundlePath, fetchLogPath, reviewFindingsPath, refreshContextPath, publishedDeepReview, previousFailures }) {
   return `Use the startup-research skill to converge and finalize the existing report at ${reportFolder}. Work directly; do not launch subagents or background agents.
 
 Inputs:
 - worker results: ${resultsPath ?? 'not available for this published deep report'}
 - shared search bundle: ${bundlePath ?? 'not available for this published deep report'}
 - fetch trail: ${fetchLogPath}
+${refreshContextPath ? `- refresh context: ${refreshContextPath}\n` : ''}
 
 Read references/rules.md and the report-meta section of references/contracts.md. ${publishedDeepReview
     ? 'This is a source review of a complete, current deep report, not worker convergence. Use the existing authored chapters and authentic source text supplied by the review. Missing evidence is a blocker: never manufacture worker results, a search bundle, or historical execution records.'
@@ -126,7 +129,7 @@ Binding sequence:
    ${publishedDeepReview
     ? 'Preserve existing search logs and source URLs. A later review fetch is not an original search execution; do not backfill or rewrite provenance. If a correction needs unavailable source evidence, report the blocker instead.'
     : 'Search logs must match actual search-bundle.json searches: literal query, response.provider, and response.results.length. retainedSourceRefs may name only chapter source URLs returned by that execution. Repair fabricated logs from the immutable execution records, not by changing the bundle or inventing new searches.'}
-4. Author report-meta.yaml only after every chapter passes strict, validate it, then run finalize-report.mjs.${reviewFindingsPath ? ' Preserve existing metadata except where a named finding or a corrected supporting claim requires an update.' : ''}
+4. Author report-meta.yaml only after every chapter passes strict, validate it, then run finalize-report.mjs${refreshContextPath ? ' with --refresh. Read the cached refresh context; preserve its target and reason. Do not hand-author revision fields: link-refresh must link the new report to its predecessor and synchronize the predecessor\'s preserved Chinese fields' : ''}.${reviewFindingsPath ? ' Preserve existing metadata except where a named finding or a corrected supporting claim requires an update.' : ''}
 5. Fix only concrete validator findings${reviewFindingsPath ? ' or the supplied source-review findings' : ''} with already-prefetched evidence. Never invent a replacement source or fact to satisfy a gate. Do not inspect historical reports, modify repository code/config/docs, or use git.
 ${reviewFindingsPath ? `
 Source-review findings (human/agent review, not automated validator output):
@@ -217,6 +220,15 @@ if (missingWorkerInputs && !publishedDeepReview) {
   process.exit(EXIT.notFound);
 }
 const context = runJson(contextScript, ['--order', '1', '--report-folder', reportFolder]);
+const refreshContextPath = existsSync(join(cacheDir, 'refresh-context.yaml'))
+  ? join(cacheDir, 'refresh-context.yaml') : null;
+const refreshContext = context.runCache?.refreshContext ?? null;
+if (refreshContextPath && (!refreshContext || refreshContext.mode !== 'refresh'
+    || refreshContext.newRunId !== runId || !isRunId(refreshContext.refreshOfRunId)
+    || refreshContext.refreshOfRunId === runId || !hasText(refreshContext.refreshReason))) {
+  console.error(`[run-report-finalizer] invalid cached refresh context: ${refreshContextPath}`);
+  process.exit(EXIT.failure);
+}
 const route = args.modelOverride
   ? {
       ...context.policy.finalizerRouting,
@@ -245,6 +257,8 @@ const plan = {
   bundlePath,
   fetchLogPath,
   reviewFindingsPath,
+  refreshContextPath,
+  refreshOfRunId: refreshContext?.refreshOfRunId ?? null,
   reviewFindingCount: reviewFindings?.issues.length ?? 0,
   exactReviewAssignmentCount: reviewReadback?.assignmentCount ?? 0,
 };
@@ -288,7 +302,7 @@ async function runAttempt(attemptRoute, attemptNumber, previousFailures = null) 
     '--autopilot',
     '--excluded-tools', 'web_fetch',
     '--model', attemptRoute.model,
-    '-p', finalizerPrompt({ reportFolder, resultsPath, bundlePath, fetchLogPath, reviewFindingsPath, publishedDeepReview, previousFailures: previousFailuresPath }),
+    '-p', finalizerPrompt({ reportFolder, resultsPath, bundlePath, fetchLogPath, reviewFindingsPath, refreshContextPath, publishedDeepReview, previousFailures: previousFailuresPath }),
   ];
   if (attemptRoute.reasoningEffort !== 'default') {
     copilotArgs.splice(copilotArgs.indexOf('-p'), 0, '--effort', attemptRoute.reasoningEffort);
@@ -341,11 +355,12 @@ const attempts = [await runAttempt(route, 1)];
 let processResult = attempts[0];
 function inspectFinalReport() {
   const reviewIssues = checkReviewReadback(reviewReadback, (file) => readYaml(join(reportFolder, file)));
+  const refreshIssues = checkRefreshReadback({ reportFolder, runId, refreshContext });
   const missingFiles = requiredFiles.filter((file) => !existsSync(join(reportFolder, file)));
   if (missingFiles.length > 0) {
     return {
       missingFiles,
-      reportCheck: { ok: false, exitCode: null, error: '', reviewIssues },
+      reportCheck: { ok: false, exitCode: null, error: '', reviewIssues, refreshIssues },
     };
   }
   const check = spawnSync(process.execPath, [
@@ -389,14 +404,15 @@ function inspectFinalReport() {
   return {
     missingFiles,
     reportCheck: {
-      ok: check.status === 0 && quoteIssues.length === 0 && queryIssues.length === 0 && reviewIssues.length === 0,
+      ok: check.status === 0 && quoteIssues.length === 0 && queryIssues.length === 0 && reviewIssues.length === 0 && refreshIssues.length === 0,
       exitCode: check.status,
       error: check.status === 0
-        ? [...quoteIssues, ...queryIssues, ...reviewIssues].map((issue) => `${issue.path}: ${issue.code}: ${issue.message}`).join('\n')
+        ? [...quoteIssues, ...queryIssues, ...reviewIssues, ...refreshIssues].map((issue) => `${issue.path}: ${issue.code}: ${issue.message}`).join('\n')
         : (check.stderr || check.stdout),
       quoteIssues,
       queryIssues,
       reviewIssues,
+      refreshIssues,
     },
   };
 }

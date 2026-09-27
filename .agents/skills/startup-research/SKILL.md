@@ -70,6 +70,15 @@ Workflow narrative: what to run, in what order, with which flags. Two generated 
 
 **Automation fast path:** after the shared bootstrap, run `npm run research:workers -- --report-folder <reportFolder> --concurrency 8 --timeout-seconds 900`, then run `npm run research:finalize -- --report-folder <reportFolder> --timeout-seconds 900` even when the worker command exits nonzero with convergence-only failures. The worker runner launches one independent Copilot CLI process per chapter with exact profile routing, stores per-worker inputs/logs/results under `.research-cache/<runId>/`, and runs ordered strict checks. The bounded finalizer reads those results, repairs only named convergence failures, authors report metadata, finalizes, and mechanically rejects a success-shaped CLI exit when required artifacts or the report gate are missing. The parent orchestrator must not launch nested chapter subagents, rerun passing workers, or perform its own chapter repair/finalization loop.
 
+The bounded finalizer also reads cached refresh intent. Refresh runs must execute
+`finalize-report.mjs --refresh`; acceptance checks the new and previous reports'
+metadata, both English artifacts, and any existing Chinese revision fields.
+Missing links, stale artifacts, changed targets/reasons, and malformed refresh
+contexts cannot pass as fresh reports. Only `link-refresh` owns revision edits;
+an old report may retain the reason from its own earlier refresh.
+Idempotent linking repairs stale predecessor full-report or Chinese revisions
+even when its summary-card revision is already synchronized.
+
 **Source-review corrections:** a later factual review may find defects that structural gates cannot detect. Record verified findings under `.research-cache/<runId>/` as JSON with `runId` and nonempty `issues[]`; each issue needs `path` (`<authored-chapter-file>:<field>` or `report-meta.yaml:<field>`), `message`, and a source-anchored `fix`. Pass that file to `research:finalize -- --report-folder <reportFolder> --review-findings <path>`. This uses the same bounded finalizer and retry limits, permits only named corrections and their dependent surfaces, and does not authorize new fetches, circular sources, weaker gates, or unrelated rewrites. Keep these review findings separate from machine-generated worker results. The caller must verify the corrected facts against original fetched text before publication; a successful finalizer exit is not semantic acceptance.
 
 For a fully specified correction, supply `tokens`, `expectedBefore`, and
