@@ -67,12 +67,6 @@ export function kpiContext(item) {
   };
 }
 
-export function figureItems(data) {
-  if (Array.isArray(data?.items) && data.items.length) return data.items;
-  const points = data?.series?.[0]?.points;
-  return Array.isArray(points) ? points : [];
-}
-
 export function figureItemNotes(item) {
   return [...new Set([
     figureDetail(item), item.description, item.details, item.note, item.notes, item.context,
@@ -112,6 +106,18 @@ export function barSeriesTable(series, { valueLabel, contextLabel }) {
     columns: hasContext ? [valueLabel, contextLabel] : [valueLabel],
     rows: hasContext ? rows : rows.map((row) => ({ ...row, values: row.values.slice(0, 1) })),
   };
+}
+
+export function funnelStageTable(data, labels) {
+  const series = barSeries(data);
+  const table = barSeriesTable(series, labels);
+  if (series.length === 1 && !series[0].label && !series[0].name) {
+    table.rows.forEach((row, index) => {
+      const point = series[0].points[index];
+      row.label = point.label ?? point.name ?? `#${index + 1}`;
+    });
+  }
+  return table;
 }
 
 export function flowTopology(data) {

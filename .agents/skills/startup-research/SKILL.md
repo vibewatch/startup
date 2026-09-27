@@ -142,13 +142,16 @@ remain structural and do not certify the absence of such content defects.
 **Funnel comparability:** use a funnel only for comparable stages of the same
 population, unit and time basis. Mixed patient, organization, transaction and
 currency metrics belong in separate cards or a table, not a conversion funnel.
-The renderer shows separate cards with a visible localized notice when explicit
-stage-unit strings differ (including different qualifications); it does not
-guess whether unlike unit descriptions are equivalent. Missing or matching unit
-strings do not certify comparability. Funnel stage details, notes, context and
-units remain available in tooltips and on the page, including print. This
-presentation safeguard does not verify the source metrics or fix mixed-unit
-figures whose units exist only in labels or prose; those still need source review.
+The renderer lists funnel stages as an ordered value table with a localized
+notice. It does not derive conversion rates, percentage shares or proportional
+widths: the figure contract does not establish a shared population or time basis,
+and matching or missing units cannot supply that evidence. Values, explicitly
+authored rates, stage order, series names, units and supported qualifications
+remain on the page, in print and in tooltips. Populated `items` take precedence;
+otherwise every populated `series[].points[]` is retained. For genuine comparable
+funnels, author and source conversion rates explicitly rather than relying on
+the website to infer them. This presentation safeguard does not validate the
+metrics or repair unsupported claims in the report text.
 
 **Bar-chart completeness:** multiple populated `series[].points[]` are shown
 as a table, with every point retained in original series order. Series names,

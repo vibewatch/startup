@@ -717,6 +717,12 @@ explicit flows render as node/connection tables, with localized notices for
 missing or ambiguous endpoints. Verify all connection directions, duplicate
 connections, node details and visible notes in both locales and in print;
 unchanged endpoint identifiers must not be translated to repair a display issue.
+Funnel figures display ordered stage-value tables without deriving conversion
+rates or shared population, unit or time assumptions. Preserve explicitly
+authored rates and qualifications. Verify stage labels, raw values, units,
+series names and notes in the visible rows and hover/tap tooltips in both locales,
+including narrow screens and print; never invent a rate to replace the old
+renderer-generated percentages.
 
 - **Translate**: `title`, `subtitle`, `summary`, `description`,
   `caption`, `insight`, `basis`, `notes`, `approximationNotes`, the

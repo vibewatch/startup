@@ -10,7 +10,7 @@ import { canonicalCacheKey, cleanExtractedText, htmlToText, isAccessErrorRespons
 import { checkAuthoringInstructions, checkFigureDeep } from './artifact-checks.mjs';
 import { KNOWN_DIMENSIONS, WARNING_DIMENSIONS } from './validation-catalog.mjs';
 import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
-import { barSeries, barSeriesTable, figureDetail, figureItems, figureItemNotes, figureUnitsDiffer, flowRelationshipTable, flowTopology, kpiContext, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
+import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, flowRelationshipTable, flowTopology, funnelStageTable, kpiContext, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
 import { isTranslatableLeaf, TRANSLATE_PATHS } from '../../translate-zh/scripts/whitelist.mjs';
 
 test('flow sequences require every explicit connection to form the complete ordered chain', () => {
@@ -207,7 +207,7 @@ test('range tones are resolved before localization without overriding authored t
   }
 });
 
-test('funnel units are compared conservatively without inferring units from labels', () => {
+test('chart units are compared conservatively without inferring units from labels', () => {
   const cases = [
     [[{ unit: 'businesses' }, { unit: 'USD' }], true],
     [[{ unit: 'USD' }, { unit: ' USD ' }], false],
@@ -228,15 +228,54 @@ test('funnel units are compared conservatively without inferring units from labe
   }
 });
 
-test('funnel items use the same items-or-first-series precedence in all render paths', () => {
-  const items = Object.freeze([{ label: 'Primary', value: 0 }]);
-  const points = Object.freeze([{ label: 'Series', value: 10 }]);
-  assert.equal(figureItems({ items, series: [{ points }] }), items);
-  assert.equal(figureItems({ items: [], series: [{ points }] }), points);
-  assert.equal(figureItems({ series: [{ points }, { points: items }] }), points);
-  for (const data of [undefined, null, {}, { items: [] }, { series: [] }]) {
-    assert.deepEqual(figureItems(data), []);
+test('funnel tables retain original stage values without inferring ratios or comparability', () => {
+  for (const units of [['people', 'people'], ['people', 'USD'], [undefined, undefined], ['people', undefined]]) {
+    const items = Object.freeze([
+      Object.freeze({ label: 'Repeated', value: 100, unit: units[0], detail: 'Only one period.', note: '<b>Literal</b>', context: 'Estimated.' }),
+      Object.freeze({ label: 'Repeated', value: 500, unit: units[1], note: 'Different population.', tone: 'warning' }),
+      Object.freeze({ name: 'Zero', value: 0 }),
+      Object.freeze({ label: 'Authored percentage', value: 40, displayValue: '40%', unit: '%', note: 'Company-reported rate.' }),
+    ]);
+    const data = Object.freeze({ items });
+    const before = structuredClone(data);
+    const table = funnelStageTable(data, { valueLabel: 'Value', contextLabel: 'Context' });
+    assert.deepEqual(table.columns, ['Value', 'Context']);
+    assert.deepEqual(table.rows.map(row => row.label), ['Repeated', 'Repeated', 'Zero', 'Authored percentage']);
+    assert.deepEqual(table.rows.map(row => row.values[0].label), ['100', '500', '0', '40%']);
+    assert.deepEqual(table.rows.map(row => row.values[0].value), [100, 500, 0, 40]);
+    assert.equal(table.rows[0].values[1], [units[0], 'Only one period.', '<b>Literal</b>', 'Estimated.'].filter(Boolean).join('\n'));
+    assert.equal(table.rows[1].values[0].tone, 'warning');
+    assert.equal(table.rows[2].values[1], null);
+    assert.deepEqual(data, before);
   }
+});
+
+test('funnel tables preserve populated-item precedence and every fallback series with its units', () => {
+  const items = [{ label: 'Primary', value: 0 }];
+  const series = [{ name: 'Empty', points: [] },
+    { name: 'Cohort A', unit: 'accounts', points: [{ label: 'Repeat', value: 20 }, { label: 'Repeat', value: 10, unit: 'people' }] },
+    { label: 'Cohort B', unit: 'USD', points: [{ label: 'Repeat', value: 30 }] }];
+  const labels = { valueLabel: 'Value', contextLabel: 'Context' };
+  const data = { items: [], series };
+  const before = structuredClone(data);
+  assert.deepEqual(funnelStageTable({ items, series }, labels).rows, [{ label: 'Primary', values: [{ label: '0', value: 0, detail: '' }] }]);
+  const table = funnelStageTable(data, labels);
+  assert.deepEqual(table.rows.map(row => row.label), ['Cohort A / Repeat', 'Cohort A / Repeat', 'Cohort B / Repeat']);
+  assert.deepEqual(table.rows.map(row => row.values[1]), ['accounts', 'people', 'USD']);
+  assert.deepEqual(data, before);
+  for (const empty of [undefined, null, {}, { items: [] }, { series: [] }]) assert.deepEqual(funnelStageTable(empty, labels).rows, []);
+});
+
+test('funnel tables localize labels without changing values, units, order or authored rates', () => {
+  const data = { items: [{ label: 'Reached', value: 100, unit: 'accounts' }, { label: 'Converted', value: 20, displayValue: '20%', note: 'Reported.' }] };
+  const en = funnelStageTable(data, { valueLabel: 'Value', contextLabel: 'Context' });
+  const zh = funnelStageTable({ items: [{ ...data.items[0], label: '已触达' }, { ...data.items[1], label: '已转化', note: '据报道。' }] },
+    { valueLabel: '数值', contextLabel: '说明' });
+  assert.deepEqual(zh.columns, ['数值', '说明']);
+  assert.deepEqual(zh.rows.map(row => row.values[0].value), en.rows.map(row => row.values[0].value));
+  assert.deepEqual(zh.rows.map(row => row.values[0].label), en.rows.map(row => row.values[0].label));
+  assert.equal(zh.rows[0].values[1], 'accounts');
+  assert.equal(zh.rows[1].values[1], '据报道。');
 });
 
 test('funnel qualifications preserve distinct text, aliases and literal markup without duplication', () => {

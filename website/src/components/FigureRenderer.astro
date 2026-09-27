@@ -1,6 +1,6 @@
 ---
 import ClaimRefs from './ClaimRefs.astro';
-import { RENDERED_FIGURE_TYPES, barSeries, barSeriesTable, figureItems, figureItemNotes, figureUnitsDiffer, flowRelationshipTable, flowTopology } from '../lib/figures.mjs';
+import { RENDERED_FIGURE_TYPES, barSeries, barSeriesTable, figureItemNotes, figureUnitsDiffer, flowRelationshipTable, flowTopology, funnelStageTable } from '../lib/figures.mjs';
 import { t } from '../lib/i18n';
 import type { Locale } from '../lib/locale';
 import { claimRefs, type Claim, type ReportFigure, type Source } from '../lib/report-types';
@@ -17,14 +17,17 @@ const authoredType = figure?.type ?? 'flow';
 const data = figure?.data ?? {};
 const flow = authoredType === 'flow' ? figure._flowTopology ?? flowTopology(data) : null;
 const relationshipTable = flow && !flow.sequence;
+const funnel = authoredType === 'funnel';
 const series = authoredType === 'bar' ? barSeries(data) : [];
 const multipleBarSeries = series.length > 1;
-const stages = authoredType === 'funnel' ? figureItems(data) : series.length === 1
+const stages = series.length === 1
   ? series[0].points.map((item) => item.unit == null && series[0].unit != null ? { ...item, unit: series[0].unit } : item)
   : [];
 const unitsDiffer = figureUnitsDiffer(stages);
-const type = multipleBarSeries || relationshipTable ? 'matrix' : unitsDiffer ? 'kpi' : authoredType;
-const chartData = relationshipTable ? flowRelationshipTable(data, flow, {
+const type = funnel || multipleBarSeries || relationshipTable ? 'matrix' : unitsDiffer ? 'kpi' : authoredType;
+const chartData = funnel ? funnelStageTable(data, {
+  valueLabel: t('reportFigureValue', locale), contextLabel: t('reportFigureContext', locale),
+}) : relationshipTable ? flowRelationshipTable(data, flow, {
   nodeLabel: t('reportFigureNode', locale), connectionLabel: t('reportFigureConnection', locale),
   sourceLabel: t('reportFigureNodeOrFrom', locale), targetLabel: t('reportFigureTo', locale),
   contextLabel: t('reportFigureContext', locale),
@@ -57,18 +60,19 @@ const chartPayloadJson = chartPayload
 
   {relationshipTable && <p class="figure-note flow-relationship-notice" role="note">{t('reportFlowRelationshipNotice', locale)}</p>}
   {flow?.unresolved && <p class="figure-note flow-endpoint-notice" role="note">{t('reportFlowEndpointNotice', locale)}</p>}
+  {funnel && <p class="figure-note funnel-comparison-notice" role="note">{t('reportFunnelComparisonNotice', locale)}</p>}
   {multipleBarSeries && <p class="figure-note bar-series-notice" role="note">{t('reportBarSeriesNotice', locale)}</p>}
   {authoredType === 'bar' && series.length === 1 && (series[0].label || series[0].name) && (
     <p class="figure-note bar-series-label">{series[0].label || series[0].name}</p>
   )}
-  {unitsDiffer && <p class:list={['figure-note', authoredType === 'bar' ? 'bar-unit-notice' : 'funnel-unit-notice']} role="note">
-    {t(authoredType === 'bar' ? 'reportBarUnitNotice' : 'reportFunnelUnitNotice', locale)}
+  {unitsDiffer && <p class="figure-note bar-unit-notice" role="note">
+    {t('reportBarUnitNotice', locale)}
   </p>}
 
   {usesD3Chart && <div id={chartId} class:list={['d3-figure', `chart-${type}`]}></div>}
 
   {stageAnnotations.length > 0 && (
-    <div class:list={['figure-note', 'figure-item-notes', authoredType === 'bar' ? 'bar-point-notes' : 'funnel-stage-notes']}>
+    <div class="figure-note figure-item-notes bar-point-notes">
       <dl>
         {stageAnnotations.map(({ item, notes }) => (
           <div>
@@ -95,7 +99,7 @@ const chartPayloadJson = chartPayload
 
 <script>
   import * as d3 from 'd3';
-  import { figureDetail, figureItems, figureItemNotes, flowTopology, kpiContext } from '../lib/figures.mjs';
+  import { figureDetail, figureItemNotes, flowTopology, kpiContext } from '../lib/figures.mjs';
 
   const palette = {
     claret: '#990f3d',
@@ -1678,114 +1682,6 @@ const chartPayloadJson = chartPayload
     withTooltip(bars, (d) => tooltipHtml(d.label, [d.isTotal ? `Total: ${valueLabel(d) || d.value}` : `Change: ${valueLabel(d) || d.value}`, `Cumulative: ${d.to}`]));
   };
 
-  const renderFunnel = (element, payload) => {
-    const items = figureItems(payload.data);
-    const containerWidth = element.getBoundingClientRect().width || 760;
-    const compact = containerWidth < 640;
-    const { svg, width, height } = svgBase(element, Math.max(compact ? 360 : 330, items.length * (compact ? 58 : 54) + 90));
-    const margin = compact ? { top: 48, right: 72, bottom: 28, left: 106 } : { top: 50, right: 124, bottom: 30, left: 134 };
-    const max = Math.max(...items.map((d) => numberValue(d.value)), 1);
-    const stageGap = compact ? 8 : 9;
-    const stageH = Math.min(compact ? 46 : 44, (height - margin.top - margin.bottom) / Math.max(items.length, 1) - stageGap);
-    const top = margin.top;
-    const barLeft = margin.left;
-    const barRight = width - margin.right;
-    const barMaxW = barRight - barLeft;
-    const minW = Math.max(34, barMaxW * 0.12);
-    const widthScale = d3.scaleLinear().domain([0, max]).range([minW, barMaxW]);
-    const cx = barLeft + barMaxW / 2;
-    const defs = svg.append('defs');
-    const shadow = defs.append('filter').attr('id', `${payload.id}-funnel-shadow`).attr('x', '-10%').attr('y', '-35%').attr('width', '120%').attr('height', '170%');
-    shadow.append('feDropShadow').attr('dx', 0).attr('dy', 4).attr('stdDeviation', 4).attr('flood-color', 'rgba(51,48,46,0.14)');
-    const funnelColors = ['#a81749', '#b42351', '#c2415a', '#d1942f', '#0f766e'];
-    const colorAt = (index) => funnelColors[Math.min(index, funnelColors.length - 1)] ?? colorForTone(index === items.length - 1 ? 'positive' : 'neutral');
-    const rows = items.map((item, index) => {
-      const y = top + index * (stageH + stageGap);
-      const value = numberValue(item.value);
-      const previous = index > 0 ? numberValue(items[index - 1]?.value) : value;
-      const conversion = index === 0 || previous === 0 ? null : value / previous;
-      const share = max === 0 ? 0 : value / max;
-      const w = widthScale(value);
-      return { item, index, y, w, value, conversion, share };
-    });
-    svg.append('rect')
-      .attr('x', margin.left - (compact ? 88 : 112))
-      .attr('y', margin.top - 30)
-      .attr('width', width - margin.left - margin.right + (compact ? 178 : 236))
-      .attr('height', height - margin.top - margin.bottom + 52)
-      .attr('rx', 22)
-      .attr('fill', 'rgba(255,250,245,0.58)')
-      .attr('stroke', 'none');
-    svg.append('text')
-      .attr('x', cx)
-      .attr('y', margin.top - 18)
-      .attr('text-anchor', 'middle')
-      .attr('fill', palette.muted)
-      .attr('font-size', chartFont.small)
-      .attr('font-weight', fontWeight('label'))
-      .attr('letter-spacing', chartFont.tracking.subtle)
-      .text('Conversion levels');
-    const stages = svg.append('g').selectAll('g.funnel-stage').data(rows).join('g')
-      .attr('class', 'funnel-stage');
-    stages.append('rect')
-      .attr('class', 'funnel-level-track')
-      .attr('x', barLeft)
-      .attr('y', (d) => d.y)
-      .attr('width', barMaxW)
-      .attr('height', stageH)
-      .attr('rx', 12)
-      .attr('fill', 'rgba(212,196,184,0.14)')
-      .attr('stroke', 'rgba(212,196,184,0.38)');
-    stages.append('rect')
-      .attr('class', 'funnel-level-rect')
-      .attr('x', (d) => cx - d.w / 2)
-      .attr('y', (d) => d.y)
-      .attr('width', (d) => d.w)
-      .attr('height', stageH)
-      .attr('rx', 12)
-      .attr('fill', (d) => colorAt(d.index));
-    stages.append('text')
-      .attr('x', cx)
-      .attr('y', (d) => d.y + stageH / 2 + 5)
-      .attr('text-anchor', 'middle')
-      .attr('fill', '#fff7ef')
-      .attr('font-size', compact ? chartFont.size.caption : chartFont.small)
-      .attr('font-weight', fontWeight('emphasis'))
-      .text((d) => compact ? `${d3.format('.0%')(d.share)}` : `${d.index + 1} · ${d3.format('.0%')(d.share)}`);
-    stages.append('text')
-      .attr('x', margin.left - 14)
-      .attr('y', (d) => d.y + stageH / 2 + 5)
-      .attr('text-anchor', 'end')
-      .attr('fill', palette.ink)
-      .attr('font-size', compact ? chartFont.size.caption : chartFont.small)
-      .attr('font-weight', fontWeight('label'))
-      .text((d) => labelText(d.item.label, compact ? 18 : 16));
-    stages.append('text')
-      .attr('x', width - margin.right + 14)
-      .attr('y', (d) => d.y + stageH / 2 + (compact ? 5 : -3))
-      .attr('text-anchor', 'start')
-      .attr('fill', palette.muted)
-      .attr('font-size', compact ? chartFont.size.tiny : chartFont.small)
-      .attr('font-weight', fontWeight('strong'))
-      .text((d) => valueLabel(d.item));
-    if (!compact) {
-      stages.append('text')
-        .attr('x', width - margin.right + 14)
-        .attr('y', (d) => d.y + stageH / 2 + 15)
-        .attr('fill', palette.muted)
-        .attr('font-size', chartFont.small)
-        .attr('font-weight', fontWeight('medium'))
-        .text((d) => d.conversion == null ? 'entry' : `${d3.format('.0%')(d.conversion)} prior`);
-    }
-    const tooltipLines = (d) => [
-      String(valueLabel(d.item)), d.item.unit,
-      d.conversion == null ? 'Entry stage' : `${d3.format('.0%')(d.conversion)} from prior`,
-      ...figureItemNotes(d.item),
-    ];
-    stages.each(function(d) { addTitle(d3.select(this), [d.item.label, ...tooltipLines(d)].filter(Boolean).join('\n')); });
-    withTooltip(stages, (d) => tooltipHtml(d.item.label, tooltipLines(d)));
-  };
-
   const renderRange = (element, payload) => {
     const items = arr(payload.data.items);
     if (!items.length) return;
@@ -2090,7 +1986,6 @@ const chartPayloadJson = chartPayload
     'journey-map': renderJourneyMap,
     kpi: renderKpi,
     waterfall: renderWaterfall,
-    funnel: renderFunnel,
     range: renderRange,
     bar: renderBar,
     matrix: renderHeatmap,
