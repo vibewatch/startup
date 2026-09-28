@@ -1384,6 +1384,80 @@ test('source quotes allow typography, whitespace, and ordered omissions', () => 
   ]) assert.equal(isVerbatimSourceQuote(quote, source), true, quote);
 });
 
+test('source quotes allow spacing around word-delimited dashes without editing either input', () => {
+  const separators = ['-', '–', '—'].flatMap(dash => [
+    dash, ` ${dash} `, `${dash} `, ` ${dash}`, `\t${dash}\n`, `\u00a0${dash}\u2009`,
+  ]);
+  for (const sourceSeparator of separators) {
+    const source = `RedotPay has grown to 5 million verified users${sourceSeparator}expanding rapidly across markets.`;
+    for (const quoteSeparator of separators) {
+      const quote = `RedotPay has grown to 5 million verified users${quoteSeparator}expanding rapidly across markets.`;
+      assert.equal(isVerbatimSourceQuote(quote, source), true, JSON.stringify({ quote, source }));
+    }
+  }
+  assert.equal(isVerbatimSourceQuote('verified users … across markets.', 'verified users—expanding rapidly across markets.'), true);
+});
+
+test('word-delimited dash spacing does not erase numbers, signs, ranges, words or punctuation', () => {
+  for (const [quote, source] of [
+    ['50 million verified users — expanding rapidly.', '5 million verified users—expanding rapidly.'],
+    ['5 billion verified users — expanding rapidly.', '5 million verified users—expanding rapidly.'],
+    ['5 million verified users — expanding rapidly.', '15 million verified users—expanding rapidly.'],
+    ['5 million verified users — expanding rapidly.', '1.5 million verified users—expanding rapidly.'],
+    ['500 million verified users — expanding rapidly.', '1,500 million verified users—expanding rapidly.'],
+    ['5M in revenue — excluding debt.', '$5M in revenue—excluding debt.'],
+    ['$5M in revenue — excluding debt.', '-$5M in revenue—excluding debt.'],
+    ['5% growth in revenue — excluding debt.', '-5% growth in revenue—excluding debt.'],
+    ['5% growth in revenue — excluding debt.', '+5% growth in revenue—excluding debt.'],
+    ['25% growth in revenue — excluding debt.', '2.5% growth in revenue—excluding debt.'],
+    ['2024 verified users — expanding rapidly.', '2023 verified users—expanding rapidly.'],
+    ['$5M-$11M in revenue — excluding debt.', '$5M-$10M in revenue—excluding debt.'],
+    ['18 months in service — still active.', '12–18 months in service—still active.'],
+    ['Verified users expanding rapidly.', 'Verified users—expanding rapidly.'],
+    ['Verified usersexpanding rapidly.', 'Verified users—expanding rapidly.'],
+    ['Verified users--expanding rapidly.', 'Verified users—expanding rapidly.'],
+    ['Verified users — expanding rapidly.', 'Verified users—not expanding rapidly.'],
+    ['rapidly expanding … verified users', 'verified users—expanding rapidly'],
+    ['verified users — expanding rapidly.', 'unverified users—expanding rapidly.'],
+    ['Profit -25%', 'Profit — 25%'],
+    ['Loss - 25%', 'Loss -25%'],
+    ['$5M-$10M', '$5M - $10M'],
+    ['12-18 months', '12 – 18 months'],
+    ['GPT-6', 'GPT - 6'],
+  ]) assert.equal(isVerbatimSourceQuote(quote, source), false, JSON.stringify({ quote, source }));
+});
+
+test('word-delimited dash spacing retains partial excerpts and ordered omissions beside dashes', () => {
+  const source = 'Verified users — expanding rapidly across markets.';
+  for (const quote of [
+    'Verified users —',
+    '— expanding rapidly',
+    'Verified users — … across markets.',
+    'users ... — expanding',
+    '— expanding ... markets.',
+  ]) assert.equal(isVerbatimSourceQuote(quote, source), true, quote);
+});
+
+test('prefetched quotation gates accept word-dash spacing but retain evidence and value checks', () => {
+  const folder = mkdtempSync(join(tmpdir(), 'source-quote-dash-'));
+  const outputFile = join(folder, 'source.txt');
+  const url = 'https://example.com/customer-story';
+  const source = { id: 'SU008', url, keyQuote: '5 million verified users — expanding rapidly.' };
+  try {
+    writeFileSync(outputFile, '5 million verified users—expanding rapidly.');
+    for (const file of ['06-customers.yaml', 'evidence.yaml']) {
+      assert.deepEqual(checkPrefetchedSourceQuotes([source], [{ url, ok: true, outputFile }], file), []);
+      assert.equal(checkPrefetchedSourceQuotes(
+        [{ ...source, keyQuote: '50 million verified users — expanding rapidly.' }],
+        [{ url, ok: true, outputFile }], file,
+      )[0].code, 'sourceQuoteMismatch');
+      assert.equal(checkPrefetchedSourceQuotes([source], [{ url, ok: false, outputFile }], file)[0].code, 'sourceQuoteTextMissing');
+    }
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
+});
+
 test('source quotes reject fabricated wording, reordered excerpts, and partial numbers', () => {
   for (const [quote, source] of [
     ['ARR is $11M.', 'ARR is $10M.'],

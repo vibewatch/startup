@@ -139,6 +139,15 @@ superseded content with the current assembler.
 
 **Quotation fidelity:** `keyQuote` means a verbatim excerpt, not a summary or an analyst correction. The worker runner checks quotations against assigned prefetched text; fast finalization checks authored chapters and the assembled ledger before refresh linking, including reused evidence. The bounded finalizer independently checks both authored chapters and assembled evidence, so a successful model exit cannot skip this gate. `sourceQuoteMismatch` rejects changed wording, changed numbers, and reordered excerpts; `sourceQuoteTextMissing` requires restoration of the original fetched text. Whitespace and equivalent typography may differ, and ellipses may omit text without reordering it. Keep source files read-only. Copy an excerpt that actually supports the associated claim; do not delete quotations or choose irrelevant text just to clear the check. These checks establish literal provenance, not contextual fairness or factual support for every claim.
 
+An additional comparison accepts spacing around a dash between letters:
+`verified users — expanding` can match `verified users—expanding`.
+The dash and all words remain; this exception does not normalize spacing
+next to digits or currency signs. Numeric/sign boundaries, excerpt order,
+successful retrieval and access-error checks remain active. Do not rewrite
+a faithful quote or its source file solely to remove this spacing difference.
+The existing literal comparison runs first, so excerpts ending or beginning
+beside a dash and ordered omissions keep their previous acceptance.
+
 **Unusable fetched content:** `sourceContentBlocked` rejects recognized access-error pages, including old prefetched entries incorrectly marked `ok: true`. Empty or unreadable fetched text also fails. Omitting `keyQuote` does not bypass these source checks. Replace unusable citations and dependent claims with relevant evidence already eligible in the chapter's pool, or surface an evidence blocker; never present a security checkpoint or login error as supporting evidence.
 
 **Distinct chapter evidence:** source floors count distinct canonical URLs, not source IDs. A chapter cannot list the same URL twice, including tracking-parameter or fragment variants, to pad its evidence count or corroboration. Consolidate duplicate entries and their claim references. Reusing an eligible source in different chapters remains supported.

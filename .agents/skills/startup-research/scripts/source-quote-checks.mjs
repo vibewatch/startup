@@ -22,9 +22,8 @@ function completeBoundary(text, fragment, index) {
   return true;
 }
 
-export function isVerbatimSourceQuote(quote, sourceText) {
-  const text = normalizeText(sourceText);
-  const fragments = normalizeText(quote).split(/\.{3,}/u).map((part) => part.trim()).filter(Boolean);
+function matchesOrderedQuote(quote, text) {
+  const fragments = quote.split(/\.{3,}/u).map((part) => part.trim()).filter(Boolean);
   if (fragments.length === 0) return false;
   let cursor = 0;
   for (const fragment of fragments) {
@@ -36,6 +35,17 @@ export function isVerbatimSourceQuote(quote, sourceText) {
     cursor = index + fragment.length;
   }
   return true;
+}
+
+export function isVerbatimSourceQuote(quote, sourceText) {
+  const text = normalizeText(sourceText);
+  const normalizedQuote = normalizeText(quote);
+  if (matchesOrderedQuote(normalizedQuote, text)) return true;
+  const wordDashSpacing = /(?<=\p{L})\s*-\s*(?=\p{L})/gu;
+  return matchesOrderedQuote(
+    normalizedQuote.replace(wordDashSpacing, '-'),
+    text.replace(wordDashSpacing, '-'),
+  );
 }
 
 export function checkDistinctChapterSources(sources, file) {
