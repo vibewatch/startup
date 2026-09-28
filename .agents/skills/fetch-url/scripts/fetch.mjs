@@ -968,6 +968,7 @@ const ACCESS_ERROR_TITLES = new Set([
   '404 - page not found',
   '404 | page not found',
   'do not delete - 404 page',
+  'federal register :: request access',
   'page not found',
   '页面未找到',
   '页面不存在',
@@ -987,6 +988,7 @@ export function isAccessErrorResponse(result) {
     .replace(/[‘’]/gu, "'");
   if (/^(?:404\s*[-:：]?\s*)?(?:没有找到此种页面|页面未找到|页面不存在|找不到页面|page not found|not found)[.!。]?\s*$/iu.test(text)) return true;
   const unwrappedText = text.replace(/^Title:[^\n]*\n+URL Source:\s*https?:\/\/[^\n]+\n+(?:(?:Published Time:[^\n]*|Warning: This is a cached snapshot of the original page, consider retry with caching opt-out\.)\n+)*Markdown Content:\s*/i, '');
+  if (/^Due to aggressive automated scraping of FederalRegister\.gov and eCFR\.gov,[\s\S]{0,1200}Your request has been flagged as potentially automated\.[\s\S]{0,1200}complete the CAPTCHA \(bot test\)[\s\S]{0,1200}to make a request\.\s*$/i.test(unwrappedText)) return true;
   if (!unwrappedText.trim()
       && (/^(?:text\/(?:html|plain)|application\/xhtml\+xml)(?:;|$)/i.test(result.contentType ?? '')
         || /^\s*(?:<!doctype\s+html\b|<html\b)/i.test(body)

@@ -829,6 +829,23 @@ test('figure detail aliases preserve source text and existing precedence', () =>
 
 const clinicalGlossaryShell = 'Show glossary\n\nSearch for terms\n\nHide glossary\n\n'
   + 'Study record managers: refer to the Data Element Definitions if submitting registration or results information.';
+const federalRegisterAccessText = 'Due to aggressive automated scraping of FederalRegister.gov and eCFR.gov,\n'
+  + 'programmatic access to these sites is limited to access to our extensive\ndeveloper APIs. Please visit\n\n'
+  + 'FederalRegister.gov API\n\ndocumentation or\n\neCFR.gov API\n\ndocumentation to learn more about how to access the API.\n\n'
+  + 'Your request has been flagged as potentially automated. If you are human user\n'
+  + 'receiving this message, please complete the CAPTCHA (bot test) below and\n'
+  + 'click "Request Access". You may occassionally be asked to complete the\n'
+  + 'CAPTCHA again, this is normal and part of our security measures.\n\n'
+  + 'An official website of the United States government.\n\n'
+  + 'If you experiencing issues with the CAPTCHA or want to request a wider IP range,\n'
+  + 'you can use the "Site Help" button found in the lower, right of this page\nto make a request.';
+const federalRegisterAccessBodies = [
+  federalRegisterAccessText,
+  `<html><head><title>Federal Register :: Request Access</title></head><body>${federalRegisterAccessText}</body></html>`,
+  `Title: Federal Register :: Request Access\n\nURL Source: https://www.federalregister.gov/documents/2026/02/12/2026-02866/revision\n\nMarkdown Content:\n${federalRegisterAccessText}`,
+  `Title:\n\nURL Source: https://www.federalregister.gov/documents/2026/02/12/2026-02866/revision\n\nWarning: This is a cached snapshot of the original page, consider retry with caching opt-out.\n\nMarkdown Content:\n${federalRegisterAccessText}`,
+  `<html><body><!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-base">Wayback Machine</div><!-- END WAYBACK TOOLBAR INSERT -->${federalRegisterAccessText}</body></html>`,
+];
 const clinicalTrialShellBodies = [
   `<html><head><title>ClinicalTrials.gov</title></head><body>${clinicalGlossaryShell}</body></html>`,
   '<html><head><title>ClinicalTrials.gov</title></head><body>Show glossary</body></html>',
@@ -919,6 +936,7 @@ const accessErrorBodies = [
   'Title:\n\nURL Source: https://example.com/page\n\nMarkdown Content:\nPowered and protected by\n\nPrivacy',
   'Title:\n\nURL Source: https://example.com/page\n\nPublished Time: 2026-04-16\n\nMarkdown Content:\nPowered and protected by\n\nPrivacy',
   ...clinicalTrialShellBodies,
+  ...federalRegisterAccessBodies,
 ];
 
 const financialTables = '<table><tr><th>Metric</th><th>2026</th><th>2025</th></tr>'
@@ -1133,6 +1151,7 @@ test('HTTP-200 challenge pages are not successful source retrievals', () => {
   assert.equal(isAccessErrorResponse({ status: 200, title: 'DO NOT DELETE - 404 Page', body: '' }), true);
   assert.equal(isAccessErrorResponse({ status: 200, title: 'ClinicalTrials.gov', body: 'Show glossary' }), true);
   assert.equal(isAccessErrorResponse({ status: 200, title: 'Wayback Machine', body: '' }), true);
+  assert.equal(isAccessErrorResponse({ status: 200, title: 'Federal Register :: Request Access', body: '' }), true);
 });
 
 test('access-error detection preserves real articles about security and PDF bodies', () => {
@@ -1144,6 +1163,10 @@ test('access-error detection preserves real articles about security and PDF bodi
     '<html><title>Understanding 404 - Page Not Found</title><article>A guide to error handling.</article></html>',
     '<html><title>Understanding 404 | Page Not Found</title><article>A guide to error handling.</article></html>',
     '<html><title>Understanding DO NOT DELETE - 404 Page</title><article>A guide to error handling.</article></html>',
+    '<html><title>Understanding Federal Register :: Request Access</title><article>A guide to the public API.</article></html>',
+    `Federal Register access guide\n\n${federalRegisterAccessText}`,
+    `${federalRegisterAccessText}\n\nThis article quotes an access notice; it does not serve the challenge.`,
+    'The Federal Register revised the rule effective February 12, 2026. Its web page sometimes displays "Request Access".',
     'Title: Funding announcement\n\nURL Source: https://example.com/article\n\nMarkdown Content:\nThe company raised $150M. An old link is titled DO NOT DELETE - 404 Page.',
     'Title: Funding announcement\n\nURL Source: https://example.com/article\n\nMarkdown Content:\nThe company raised $150M. An old link is titled 404 | Page Not Found.',
     '404 documents were processed, while three links returned page not found.',
@@ -1182,6 +1205,7 @@ test('access-error detection preserves real articles about security and PDF bodi
     Buffer.from('%PDF-1.7\nTitle: 页面未找到'),
     Buffer.from('%PDF-1.7\nTitle: 404 | Page Not Found'),
     Buffer.from('%PDF-1.7\nTitle: DO NOT DELETE - 404 Page'),
+    Buffer.from(`%PDF-1.7\nTitle: Federal Register :: Request Access\n${federalRegisterAccessText}`),
     Buffer.from('%PDF-1.7\nYou are now being redirected to shortly.....'),
     Buffer.from('%PDF-1.7\nNew to Earnings Whispers?\nCreate FREE account to continue.'),
     Buffer.from('%PDF-1.7\nA 1x1 image, likely be a tacker probe'),
@@ -1320,7 +1344,7 @@ test('fetch CLI rejects origin, reader, archived, and cached access-error pages 
 });
 
 test('fetch CLI recovers an access-error page through a valid reader response', () => {
-  for (const body of [accessErrorBodies[0], ...clinicalTrialShellBodies, ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, ...waybackShellBodies, ...archiveRedirectBodies, ...emptyHtmlBodies, signupChromeBody]) {
+  for (const body of [accessErrorBodies[0], ...clinicalTrialShellBodies, ...federalRegisterAccessBodies, ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, ...waybackShellBodies, ...archiveRedirectBodies, ...emptyHtmlBodies, signupChromeBody]) {
     const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
       import assert from 'node:assert/strict';
       import { main } from './.agents/skills/fetch-url/scripts/fetch.mjs';
@@ -1346,7 +1370,7 @@ test('fetch CLI refreshes blocked reader and archive fallback caches', () => {
   const folder = mkdtempSync(join(tmpdir(), 'source-fallback-cache-check-'));
   const url = 'https://example.com/page';
   try {
-    const cases = ['Powered and protected by\n\nPrivacy', clinicalTrialShellBodies[0], ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, ...waybackShellBodies, ...archiveRedirectBodies, ...emptyHtmlBodies, signupChromeBody]
+    const cases = ['Powered and protected by\n\nPrivacy', clinicalTrialShellBodies[0], ...federalRegisterAccessBodies, ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, ...waybackShellBodies, ...archiveRedirectBodies, ...emptyHtmlBodies, signupChromeBody]
       .flatMap((body) => ['reader', 'wayback'].map((variant) => [body, variant]));
     for (const [body, variant] of cases) {
       writeFileSync(join(folder, `${canonicalCacheKey(url, variant)}.json`), JSON.stringify({
