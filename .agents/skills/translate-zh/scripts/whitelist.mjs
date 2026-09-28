@@ -61,10 +61,11 @@ const FIGURE_PATHS = [
   'figures/[]/data/xAxis/low',
   'figures/[]/data/yAxis/high',
   'figures/[]/data/yAxis/low',
-  // data.columns: scalar header OR { label, detail }
+  // data.columns: scalar header OR { label, detail, note }
   'figures/[]/data/columns/[]',
   'figures/[]/data/columns/[]/label',
   'figures/[]/data/columns/[]/detail',
+  'figures/[]/data/columns/[]/note',
   // data.rows / data.rows[].values (matrix, cohort, heatmap)
   'figures/[]/data/rows/[]/label',
   'figures/[]/data/rows/[]/note',

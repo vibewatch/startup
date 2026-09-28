@@ -763,7 +763,7 @@ tooltips in a browser. Raw `script.figure-chart-data` payloads are not proof
 that a translated field is displayed; readable-page extraction omits those
 payloads and cannot validate client-rendered chart text.
 For matrices, verify `text`-backed cells as well as `label`-backed cells.
-Column `detail`, row `note`, and distinct cell `detail` / `note` must stay
+Distinct column `detail` / `note`, row `note`, and cell `detail` / `note` must stay
 visible in desktop grids, mobile cards and print. Check that cell tooltips
 retain the matching row/column qualifications, without changing authored
 tones or promoting a fallback value over an explicit empty label.

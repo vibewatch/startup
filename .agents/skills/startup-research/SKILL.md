@@ -210,8 +210,8 @@ retains the evidence index. Link presence does not establish source support.
 
 **Matrix completeness:** resolve cell display aliases in the same order as the
 validator: `label`, `text`, `name`, `displayValue`, `value`, then `score`.
-Do not turn accepted text cells into no-data placeholders. Column `detail`,
-row `note`, and distinct cell `detail` / `note` qualifications remain visible
+Do not turn accepted text cells into no-data placeholders. Distinct column
+`detail` / `note`, row `note`, and cell `detail` / `note` qualifications remain visible
 in the desktop grid, narrow-screen cards and print. Cell hover/tap tooltips
 retain the corresponding row, column and cell qualifications. Preserve
 authored tones, ordering and empty-value semantics; displaying the matrix

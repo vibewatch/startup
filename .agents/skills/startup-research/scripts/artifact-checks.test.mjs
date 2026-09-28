@@ -51,11 +51,24 @@ test('matrix qualifications retain both distinct notes without treating unknown 
   }
 });
 
+test('matrix column notes are translatable without exposing structural fields or unrelated row sidecars', () => {
+  for (const key of ['label', 'detail', 'note']) {
+    assert.equal(isTranslatableLeaf(['figures', 0, 'data', 'columns', 0, key], TRANSLATE_PATHS.fullReport), true);
+  }
+  for (const key of ['id', 'key', 'tone', 'value', 'score', 'Impact']) {
+    assert.equal(isTranslatableLeaf(['figures', 0, 'data', 'columns', 0, key], TRANSLATE_PATHS.fullReport), false);
+  }
+  assert.equal(isTranslatableLeaf(['figures', 0, 'data', 'rows', 0, 'details', 0], TRANSLATE_PATHS.fullReport), false);
+  assert.equal(isTranslatableLeaf(['figures', 0, 'data', 'columns', 0, 'note', 'id'], TRANSLATE_PATHS.fullReport), false);
+  assert.deepEqual(figureItemNotes({ detail: '12-month horizon', note: 'Analyst assessment' }), ['12-month horizon', 'Analyst assessment']);
+  assert.deepEqual(figureItemNotes({ detail: 'Same scope', note: 'Same scope' }), ['Same scope']);
+});
+
 test('matrix grids and cards expose qualifications and preserve them in cell tooltips', () => {
   const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
   const matrix = source.slice(source.indexOf('const renderHeatmap ='), source.indexOf('const renderCohort ='));
   assert.match(matrix, /matrixCellText\(cell\)/);
-  assert.match(matrix, /figureItemNotes\(\{ detail: column\?\.detail \}\)/);
+  assert.match(matrix, /figureItemNotes\(\{ detail: column\?\.detail, note: column\?\.note \}\)/);
   assert.match(matrix, /figureItemNotes\(\{ note: row\?\.note \}\)/);
   assert.match(matrix, /figureItemNotes\(\{ detail: cell\?\.detail, note: cell\?\.note \}\)/);
   for (const className of ['matrix-column-detail', 'matrix-row-note', 'matrix-cell-detail', 'matrix-card-detail']) {
