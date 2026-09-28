@@ -296,12 +296,15 @@ beside a financial claims noun still needs attribution.
 coverage limits and claims history refer to insurance, not assertions.
 `at most recent fiscal quarter-end` names the latest period, not an upper bound;
 a separate `at most` quantity in the same leaf still needs its upper bound.
-Likewise, `at most confirmed sites` means at the majority of confirmed locations,
-not a numeric cap. Keep any separate upper-bound quantity. Percentage-qualified
+Likewise, `at most confirmed sites` or `at most RIAs` means at the majority of
+those locations or firms, not a numeric cap. Keep any separate upper-bound quantity. Percentage-qualified
 `payer denials documented in >20% of claims` describes insurance claims, not
 a company assertion; a separate company assertion still needs attribution.
 Do not mistake `来源` or `带来` for the purpose marker in `通过…来`, or a
 locative phrase such as `正在生产环境中部署` for clause-final `正在…中`.
+`通过…转来的顾问` contains the modifier `转来的`, not a purpose marker.
+Genuine purpose constructions such as `通过资金周转来改善现金流` or a second
+`通过…来…` in the same leaf still require rewriting.
 Public-evidence gaps can place a Latin company name or a carrier relationship
 before `公开`; `公开材料没有…` and `公开来源无法…` can retain a negative finding.
 `没有披露任何公开…` and `没有可验证的公开…` also retain scoped evidence gaps;
@@ -420,6 +423,10 @@ need attribution. `关税影响论断基于` can retain one explicitly source-ba
 assertion; it cannot clear another claim in the leaf. `缺少公开基准` can preserve
 one explicit `no public benchmark` gap. Negation, clause boundaries and separate
 public-disclosure gaps remain distinct.
+Likewise, `arbitration claims against` a party are arbitration demands, while
+`non-competition and non-solicitation claims against` a party are legal demands.
+Neither is a company assertion. A separate company or arbitration-provider
+assertion still requires attribution.
 `public evidence can support the claim that` introduces an evidence-based judgment,
 not necessarily a company assertion. A separate company claim still needs attribution.
 `公开市场上没有独立的校园招聘…TAM` can retain the explicit standalone

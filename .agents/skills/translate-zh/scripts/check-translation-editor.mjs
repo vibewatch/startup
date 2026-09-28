@@ -77,6 +77,43 @@ function entryMultiplePair({ header = 'Exit Multiple at 5.6B Entry', target = '�
 
 const checks = [
   ...[
+    ['客户通过从大型券商和经纪交易商转来的 W-2 顾问触达。', false],
+    ['公司通过转来的顾问连接客户。', false],
+    ['公司通过来自券商的顾问连接客户。', false],
+    ['公司通过资本周转来改善现金流。', true],
+    ['公司通过资产流转来减少占用。', true],
+    ['公司通过转来的顾问来获取客户。', true],
+    ['公司通过从券商转来的顾问连接客户；团队通过服务来吸引客户。', true],
+    ['公司通过转来的顾问连接客户；其他团队通过资金周转来改善现金流。', true],
+    ['公司通过顾问带来客户。', false],
+  ].flatMap(([zh, expected]) => [false, true].map(strictEditor => [
+    checkPairQuality(fullReport('The advisor network and capital turnover support the business.'), fullReport(zh), { strictEditor })
+      .some(issue => issue.code === 'translationese') === expected,
+    `purpose-marker soundcheck retains genuine turnover constructions but not the modifier 转来的 (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
+    ['Goldman filed arbitration claims against departing advisors.', 'Goldman 对离职顾问提出仲裁请求。', false],
+    ['Goldman Sachs arbitration claims against advisor recruits.', 'Goldman Sachs 对被招募顾问提出仲裁请求。', false],
+    ['Goldman filed an arbitration claim against an advisor.', 'Goldman 对一名顾问提出仲裁请求。', false],
+    ['The court dismissed non-competition and non-solicitation claims against an advisor.', '法院驳回了针对顾问的竞业限制和禁止招揽诉讼请求。', false],
+    ['The court dismissed non-competition and non-solicitation claims against an advisor; the company claims all clients stayed.', '法院驳回了针对顾问的竞业限制和禁止招揽诉讼请求；所有客户都留了下来。', true],
+    ['The court dismissed non-competition and non-solicitation claims against an advisor; the company claims all clients stayed.', '法院驳回了针对顾问的竞业限制和禁止招揽诉讼请求；公司声称所有客户都留了下来。', false],
+    ['The company claims non-competition agreements remain enforceable.', '竞业限制协议仍可执行。', true],
+    ['Goldman filed arbitration claims against departing advisors; the company claims all clients stayed.', 'Goldman 对离职顾问提出仲裁请求；所有客户都留了下来。', true],
+    ['Goldman filed arbitration claims against departing advisors; the company claims all clients stayed.', 'Goldman 对离职顾问提出仲裁请求；公司声称所有客户都留了下来。', false],
+    ['The arbitration provider claims all clients stayed.', '仲裁服务商的所有客户都留了下来。', true],
+    ['The arbitration provider claims, without evidence, all clients stayed.', '仲裁服务商的所有客户都留了下来。', true],
+    ['AI governance is weak at most RIAs.', '多数 RIA 的 AI 治理薄弱。', false],
+    ['AI governance is weak at most RIAs; at most 35% have formal policies.', '多数 RIA 的 AI 治理薄弱；35% 有正式政策。', true],
+    ['AI governance is weak at most RIAs; at most 35% have formal policies.', '多数 RIA 的 AI 治理薄弱；最多 35% 有正式政策。', false],
+    ['At most 35% of RIAs have formal policies.', '35% 的 RIA 有正式政策。', true],
+    ['At most 35% of RIAs have formal policies.', '不超过 35% 的 RIA 有正式政策。', false],
+  ].flatMap(([en, zh, expected]) => [false, true].map(strictEditor => [
+    checkPairQuality(fullReport(`${en} This is a source-reviewed diligence observation.`), fullReport(zh), { strictEditor })
+      .some(issue => issue.code === 'hedge-preservation') === expected,
+    `arbitration demands and majority locations remain distinct from assertions and caps (strict=${strictEditor}): ${en} / ${zh}`,
+  ])),
+  ...[
     ['The champion at most confirmed sites is a physician.', '多数已确认站点的推动者是医生。', false],
     ['The champion at most confirmed sites is a physician; at most two sites have contracts.', '多数已确认站点的推动者是医生；两个站点有合同。', true],
     ['The champion at most confirmed sites is a physician; at most two sites have contracts.', '多数已确认站点的推动者是医生；最多两个站点有合同。', false],

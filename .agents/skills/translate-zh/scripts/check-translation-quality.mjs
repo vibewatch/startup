@@ -15,7 +15,7 @@ const quantityPowers = { k: 3, m: 6, b: 9, t: 12, 千: 3, 万: 4, 亿: 8, 万亿
 const stylePatterns = [
   /对于[^。！？；]{1,24}而言/u,
   /在[^。！？；]{1,20}(?<![，：,:]\s*(?:一|另一))(?:(?<!买)方面|方面(?!前))/u,
-  /通过[^。！？；，：]{1,24}(?<!带)来(?!自|源)/u,
+  /通过[^。！？；，：]{1,24}(?<!带)来(?!自|源)(?!(?<=转来)的)/u,
   /在[^。！？；]{1,24}的过程中/u,
   /被设计为/u,
   /被要求/u,
@@ -80,7 +80,7 @@ const patentClaimNouns = new RegExp([
   '\\bUSPTO\\s+patent\\s+filing\\s+portfolio\\s+not\\s+fully\\s+disclosed;\\s+depth\\s+and\\s+quality\\s+of\\s+claims\\s+uncertain\\b',
 ].join('|'), 'gi');
 const marketSizingClaimContexts = /\bcan\s+claim\s+every\s+(?:BaaS|DBaaS)(?:\s+or\s+(?:BaaS|DBaaS))?\s+dollar\b|\brather\s+than\s+a\s+single\s+(?:expansive\s+)?TAM\s+claim\b/gi;
-const legalCounterclaimContexts = /\bconsumer[- ]protection\s+claims?\b|\bcounter-claims?\b/gi;
+const legalCounterclaimContexts = /\bconsumer[- ]protection\s+claims?\b|\bcounter-claims?\b|\b(?:arbitration|non-competition\s+and\s+non-solicitation)\s+claims?\s+against\b/gi;
 const evidenceAssessmentClaimContexts = /\bevidence\s+does\s+not\s+support\s+a\s+clear\s+positive\s+claim\b|\bpublic\s+evidence\s+can\s+(?:therefore\s+)?support\s+the\s+claim\s+that\b/gi;
 const procurementSequenceDisclaimer = /\bnot a claim that every customer follows the exact same procurement sequence\b/i;
 const hedgeRules = [
@@ -100,7 +100,7 @@ const hedgeRules = [
   {
     en: /\bat most\b(?!\s+recent\b)/i,
     zh: /至多|最多|不超过/u,
-    excludeContext: /\bat most confirmed sites\b/gi,
+    excludeContext: /\bat most (?:confirmed sites|RIAs)\b/gi,
   },
   {
     en: /\b(?:likely|probably)\b/i,
