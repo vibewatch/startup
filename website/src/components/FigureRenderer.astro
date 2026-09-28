@@ -141,7 +141,7 @@ const chartPayloadJson = chartPayload
 
 <script>
   import * as d3 from 'd3';
-  import { figureDetail, figureItemNotes, figureValueNotes, flowTopology, formatRangeValue, rangeCenterValue, stackLayerDetails } from '../lib/figures.mjs';
+  import { figureDetail, figureItemNotes, figureValueNotes, flowTopology, formatRangeValue, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails } from '../lib/figures.mjs';
 
   const palette = {
     claret: '#990f3d',
@@ -1717,6 +1717,14 @@ const chartPayloadJson = chartPayload
     withTooltip(bars, (d) => tooltipHtml(d.label, [d.isTotal ? `Total: ${valueLabel(d) || d.value}` : `Change: ${valueLabel(d) || d.value}`, `Cumulative: ${d.to}`]));
   };
 
+  const layoutRangeAxis = (axis) => {
+    const nodes = Array.from(axis.children);
+    nodes.forEach((node) => { node.hidden = false; });
+    const visible = new Set(rangeAxisTickIndices(nodes.map((node) => node.getBoundingClientRect())));
+    nodes.forEach((node, index) => { node.hidden = !visible.has(index); });
+  };
+  const layoutRangeAxes = () => document.querySelectorAll('.range-axis').forEach(layoutRangeAxis);
+
   const renderRange = (element, payload) => {
     const items = arr(payload.data.items);
     if (!items.length) return;
@@ -1736,7 +1744,7 @@ const chartPayloadJson = chartPayload
       return d3.format(',.2~f')(n);
     };
     const tickFormat = (value) => formatNumber(value);
-    const ticks = d3.scaleLinear().domain([min, max]).nice().ticks(4);
+    const ticks = d3.scaleLinear().domain([min, max]).nice().ticks(4).filter((value) => value >= min && value <= max);
     if (ticks[0] !== min) ticks.unshift(min);
     if (ticks[ticks.length - 1] !== max) ticks.push(max);
     d3.select(element).selectAll('*').remove();
@@ -1777,6 +1785,7 @@ const chartPayloadJson = chartPayload
         .style('left', pct(tickValue))
         .text(tickFormat(tickValue));
     });
+    layoutRangeAxis(axis.node());
     withTooltip(root.selectAll('.range-row'), (d) => tooltipHtml(d.label, [`Low: ${d.labels.low}`, `Mid: ${d.labels.mid}`, `High: ${d.labels.high}`, ...d.notes]));
   };
 
@@ -2092,7 +2101,10 @@ const chartPayloadJson = chartPayload
       const element = entry.target;
       const nextWidth = Math.round(entry.contentRect.width || 0);
       const prevWidth = Number(element.dataset.renderWidth || 0);
-      if (!nextWidth || (prevWidth && Math.abs(nextWidth - prevWidth) < RESIZE_RERENDER_DELTA_PX)) continue;
+      if (!nextWidth) continue;
+      const axis = element.querySelector('.range-axis');
+      if (axis) layoutRangeAxis(axis);
+      if (prevWidth && Math.abs(nextWidth - prevWidth) < RESIZE_RERENDER_DELTA_PX) continue;
       const existing = pendingResizeRenders.get(element);
       if (existing) window.clearTimeout(existing);
       const handle = window.setTimeout(() => flushResizeRender(element), RESIZE_RERENDER_DEBOUNCE_MS);
@@ -2131,7 +2143,12 @@ const chartPayloadJson = chartPayload
     renderAllCharts();
   };
   initializeCharts();
-  window.addEventListener('beforeprint', () => renderAllCharts());
+  document.fonts.ready.then(layoutRangeAxes);
+  window.addEventListener('beforeprint', () => {
+    renderAllCharts();
+    layoutRangeAxes();
+  });
+  window.addEventListener('afterprint', layoutRangeAxes);
   let resizeTimer = null;
   window.addEventListener('resize', () => {
     if (chartResizeObserver) return;

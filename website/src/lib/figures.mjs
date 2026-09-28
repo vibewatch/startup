@@ -212,6 +212,21 @@ export function formatRangeValue(value) {
   return Number.isFinite(value) ? rangeValueFormatter.format(value) : String(value ?? '');
 }
 
+export function rangeAxisTickIndices(bounds) {
+  if (bounds.length < 2) return bounds.map((_bound, index) => index);
+  const selected = [0];
+  const last = bounds.length - 1;
+  let right = bounds[0].right;
+  for (let index = 1; index < last; index++) {
+    if (bounds[index].left >= right + 8 && bounds[index].right <= bounds[last].left - 8) {
+      selected.push(index);
+      right = bounds[index].right;
+    }
+  }
+  selected.push(last);
+  return selected;
+}
+
 export function withRangeTones(figure) {
   if (figure.type !== 'range' || !Array.isArray(figure.data?.items)) return figure;
   return {

@@ -12,9 +12,43 @@ import { KNOWN_DIMENSIONS, WARNING_DIMENSIONS } from './validation-catalog.mjs';
 import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
 import { checkRefreshReadback, refreshArtifactsAreInSync } from './refresh-readback.mjs';
 import { reportsDir } from './utils.mjs';
-import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, rangeCenterValue, stackLayerDetails, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
+import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
 import { isTranslatableLeaf, TRANSLATE_PATHS } from '../../translate-zh/scripts/whitelist.mjs';
 import { claimRefs } from '../../../../website/src/lib/report-types.ts';
+
+test('range axis keeps domain endpoints and only interior labels with measured clearance', () => {
+  for (const [bounds, expected] of [
+    [[], []],
+    [[{ left: 0, right: 10 }], [0]],
+    [[{ left: 0, right: 10 }, { left: 90, right: 100 }], [0, 1]],
+    [[{ left: 0, right: 12 }, { left: 60, right: 80 }, { left: 150, right: 170 }, { left: 158, right: 190 }], [0, 1, 3]],
+    [[{ left: 0, right: 10 }, { left: 16, right: 28 }, { left: 40, right: 60 }, { left: 80, right: 100 }], [0, 2, 3]],
+    [[{ left: 0, right: 10 }, { left: 18, right: 28 }, { left: 36, right: 46 }], [0, 1, 2]],
+    [[{ left: 0, right: 10 }, { left: 17.99, right: 28 }, { left: 100, right: 110 }], [0, 2]],
+    [[{ left: -150, right: -130 }, { left: -120, right: -90 }, { left: 20, right: 50 }], [0, 1, 2]],
+  ]) {
+    const before = structuredClone(bounds);
+    bounds.forEach(Object.freeze);
+    assert.deepEqual(rangeAxisTickIndices(Object.freeze(bounds)), expected);
+    assert.deepEqual(bounds, before);
+  }
+});
+
+test('range axes filter derived out-of-domain ticks and remeasure on font, size and print changes', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const range = source.slice(source.indexOf('const renderRange ='), source.indexOf('const renderQuadrant ='));
+  assert.match(range, /ticks\(4\)\.filter\(\(value\) => value >= min && value <= max\)/);
+  assert.match(range, /layoutRangeAxis\(axis\.node\(\)\)/);
+  assert.match(source, /rangeAxisTickIndices\(nodes\.map\(\(node\) => node\.getBoundingClientRect\(\)\)\)/);
+  assert.match(source, /node\.hidden = !visible\.has\(index\)/);
+  assert.match(source, /document\.fonts\.ready\.then\(layoutRangeAxes\)/);
+  assert.match(source, /addEventListener\('afterprint', layoutRangeAxes\)/);
+  const print = source.slice(source.indexOf("window.addEventListener('beforeprint'"), source.indexOf("window.addEventListener('afterprint'"));
+  assert.match(print, /layoutRangeAxes\(\)/);
+  const resize = source.slice(source.indexOf('const chartResizeObserver ='), source.indexOf('const renderChartScript ='));
+  assert.ok(resize.indexOf('layoutRangeAxis(axis)') >= 0);
+  assert.ok(resize.indexOf('layoutRangeAxis(axis)') < resize.indexOf('Math.abs(nextWidth - prevWidth)'));
+});
 
 test('range centers preserve explicit aliases and finite numeric base without treating evidence prose as zero', () => {
   const cases = [

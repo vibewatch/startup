@@ -787,6 +787,10 @@ evidence labels in `base` are not numeric centers. Authored bounds and centers
 retain decimal precision in visible labels, generated summaries and tooltips.
 Check the center marker's position too, not just its text. Inferred midpoints
 and axis ticks retain their existing compact formatting.
+Derived axis ticks stay inside the numeric domain. When labels would overlap,
+thin only interior tick labels using their measured bounds; retain both endpoints.
+Check again after fonts load, small viewport resizes and print transitions.
+Tick thinning must not change row values, markers, summaries, notes or tooltips.
 Stack diagrams retain their complete ordered items, modules and outputs in
 visible layer details and matching tooltips, even when the diagram previews
 only a few pills. Check every label, value, unit and qualification in both
