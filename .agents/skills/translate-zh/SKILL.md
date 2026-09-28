@@ -370,6 +370,9 @@ cross-clause matches, and additional public-evidence gaps must not be cleared
 by these alternatives. Warranty-claim histories, rates, service requests and
 compensation demands are nouns, not company assertions; a separate assertion
 about warranty coverage or product performance still requires attribution.
+Requests for `claims frequency` and hyphenated `warranty-claim rate` or history
+likewise describe claim activity, not company assertions. Check the metric
+separately: claim frequency is not a payout ratio.
 `claims in this table are minted locally` describes this report's evidence
 ledger, not a company assertion; a separate company claim still needs attribution.
 Likewise, scores `synthesized from the cited claims` refer to cited evidence,
@@ -452,6 +455,10 @@ predicate, negation, another disclosure gap, or merely late publication (`未按
 `没有关于…的公开数据` or `未见关于…的公开数据` can retain one explicit
 `no public data on` gap. Negated wording, cross-clause matches and additional
 public-disclosure gaps remain distinct; this does not verify the data's subject.
+For the explicit revenue/user-count/repeat-purchase segmentation gap,
+`未按细分披露公开收入、用户数或复购情况` preserves the absence of that breakdown.
+It cannot clear a negated statement, merely late publication, a different
+missing disclosure, or an additional public-disclosure gap.
 
 For `no public signal`, `没有…的公开信号` retains a single signal gap,
 not absence of the underlying event. A requirement for `no public filing of

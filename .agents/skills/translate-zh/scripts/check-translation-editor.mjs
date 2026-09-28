@@ -77,6 +77,34 @@ function entryMultiplePair({ header = 'Exit Multiple at 5.6B Entry', target = '�
 
 const checks = [
   ...[
+    ['Request claims frequency, hub replacement rates, and reserve methodology.', '索取索赔频率、Hub 更换率和准备金方法。', false],
+    ['Request claim frequency.', '索取理赔频率。', false],
+    ['The company claims frequency is low.', '频率很低。', true],
+    ['Request claims frequency; the company claims every device lasts forever.', '索取理赔频率；每台设备都能永久使用。', true],
+    ['Request claims frequency; the company claims every device lasts forever.', '索取理赔频率；公司声称每台设备都能永久使用。', false],
+    ['Request annual churn and warranty-claim rate.', '索取年度流失率和保修索赔率。', false],
+    ['Review warranty-claims history.', '审阅保修索赔历史。', false],
+    ['The warranty claim proves every device lasts forever.', '每台设备都能永久使用。', true],
+    ['Review warranty-claim rate; the company claims every device lasts forever.', '审阅保修索赔率；每台设备都能永久使用。', true],
+    ['Review warranty-claim rate; the company claims every device lasts forever.', '审阅保修索赔率；公司声称每台设备都能永久使用。', false],
+    ['No public revenue, user-count, or repeat-purchase disclosure by segment.', '未按细分披露公开收入、用户数或复购情况。', false],
+    ['No public revenue, user-count, or repeat-purchase disclosure by segment.', '已按细分披露公开收入、用户数或复购情况。', true],
+    ['No public revenue, user-count, or repeat-purchase disclosure by segment.', '并非未按细分披露公开收入、用户数或复购情况。', true],
+    ['No public revenue, user-count, or repeat-purchase disclosure by segment.', '未按细分披露公开收入、用户数或复购情况的判断不成立。', true],
+    ['No public revenue, user-count, or repeat-purchase disclosure by segment.', '未按期披露公开收入、用户数或复购情况。', true],
+    ['No public revenue, user-count, or repeat-purchase disclosure by segment.', '未按细分准备数据；公开收入、用户数和复购情况均已披露。', true],
+    ['No public revenue, user-count, or repeat-purchase disclosure by segment; no public IPO milestone.', '未按细分披露公开收入、用户数或复购情况；IPO 时间已公布。', true],
+    ['No public IPO milestone.', '未按细分披露公开收入、用户数或复购情况。', true],
+  ].flatMap(([en, zh, expected]) => [false, true].flatMap(strictEditor => ['prose', 'table'].map(surface => [
+    checkPairQuality(
+      surface === 'prose' ? fullReport(`${en} This is a source-reviewed diligence observation.`) : { ...fullReport(''), tables: [{ rows: [[`${en} This is a source-reviewed diligence observation.`]] }] },
+      surface === 'prose' ? fullReport(zh) : { ...fullReport(''), tables: [{ rows: [[zh]] }] },
+      { strictEditor },
+    )
+      .some(issue => issue.code === 'hedge-preservation') === expected,
+    `warranty-frequency requests and scoped segment disclosures retain their meanings (${surface}, strict=${strictEditor}): ${en} / ${zh}`,
+  ]))),
+  ...[
     ['Dismissed with prejudice.', '有偏见驳回。', true],
     ['Voluntary dismissal with prejudice.', '自愿带偏见撤诉。', true],
     ['The case was dismissed with prejudice by stipulated order.', '案件依双方约定有偏见地驳回。', true],

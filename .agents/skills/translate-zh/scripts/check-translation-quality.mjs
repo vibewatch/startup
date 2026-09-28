@@ -44,6 +44,8 @@ const strictEditorStylePatterns = [
 const insuranceClaimHeads = '(?:intake|communications?|orchestration|automation|processing|handling|journeys?|platforms?|systems?(?:-of-record)?|workflows?|intelligence|infrastructure|organizations?|executives?|officers?|leaders?|modules?|messaging|experiences?|stack|volume|throughput|transformation|severity|types?|facts|participants|sales|enablement|audit|budgets?|cost|core|domain|pain|software|tech|operating|management|tooling|operations|scale|possibilities|AI|CX|lifecycle|submission|creation|work|quality|logic|coding|corrections?|accuracy|errors?|status|issues|datasets|context|data|rates?|preparation|production|routing|APIs?|histor(?:y|ies)|growth|visibility)';
 const insuranceClaimModifiers = '(?:(?:AI(?:-native)?|digital|agentic|enterprise|incumbent|legacy|modern|full|complete|cloud(?:-native)?|core|narrow|broader|automated|conversational|messy|intelligent|insurance|strong|pilot|P&C|annual|manual|transactional|preventable|touchless|clean|API-based|AI-driven|rules-driven|usage-based|payer-by-payer)[ -]+)*';
 const insuranceClaimNouns = new RegExp([
+  '\\brequest claims? frequency\\b(?=\\s*(?:[,.;:]|$))',
+  '\\bwarranty-claims?\\b(?=\\s+(?:history|rates?|frequency)\\b)',
   '\\bpayer denials (?:are )?documented in [<>]?\\s*\\d+(?:\\.\\d+)?% of claims\\b(?=\\s*(?:[,.;:]|$))',
   '\\bfor\\s+narrow\\s+claim\\s+classes\\b',
   `^claims?(?=[ -]+${insuranceClaimHeads}\\b)`,
@@ -168,6 +170,9 @@ const hedgeRules = [
       || (/\bno public contract-size or renewal data\b/i.test(source)
         && (source.match(/\bno public\b/gi) ?? []).length === 1
         && /(?<!并非\s*|不是\s*|非\s*|不\s*)未按电信\s*\/\s*媒体账户公开合同规模或续约数据(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
+      || (/\bno public revenue, user-count, or repeat-purchase disclosure by segment\b/i.test(source)
+        && (source.match(/\bno public\b/gi) ?? []).length === 1
+        && /(?:^|[。！？；，：\n])\s*未按细分披露公开收入、用户数或复购情况(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
       || (/\bno public benchmark\b/i.test(source)
         && (source.match(/\bno public\b/gi) ?? []).length === 1
         && /(?<!并非\s*|不是\s*|非\s*|不\s*)缺少公开基准(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
