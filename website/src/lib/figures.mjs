@@ -74,7 +74,7 @@ export function figureValueNotes(item) {
 
 export function figureItemNotes(item) {
   return [...new Set([
-    figureDetail(item), item.description, item.details, item.note, item.notes, item.context,
+    figureDetail(item), item.description, item.details, item.note, item.notes, item.context, item.valueNote,
   ].filter((value) => typeof value === 'string' && value.trim()))];
 }
 

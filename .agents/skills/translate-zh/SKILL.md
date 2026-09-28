@@ -421,6 +421,14 @@ a company assertion. A separate company claim still needs attribution.
 `未按电信 / 媒体账户公开合同规模或续约数据` retain their respective
 public-segmentation gaps. These scoped aliases do not accept a different missing
 predicate, negation, another disclosure gap, or merely late publication (`未按期`).
+For `no public signal`, `没有…的公开信号` retains a single signal gap,
+not absence of the underlying event. A requirement for `no public filing of
+accounts` means public filing is not required; it is neither a filing ban nor
+proof that no accounts were filed. `No public sources can substitute for
+data-room access` denies substitutability, not the existence of public sources.
+Financial `no public comparables at scale` refers to missing same-scale listed
+peers, not merely undisclosed company information. Each predicate is checked
+separately; negation and another missing disclosure must not be cleared by it.
 
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json
@@ -823,6 +831,10 @@ authored rates and qualifications. Verify stage labels, raw values, units,
 series names and notes in the visible rows and hover/tap tooltips in both locales,
 including narrow screens and print; never invent a rate to replace the old
 renderer-generated percentages.
+Item `valueNote` strings are also visible value qualifications, including
+`series[].points[]`. Translate them without changing the associated numeric
+value; preserve self-reporting, audit limitations and approximate-count wording
+on the page, in print and in tooltips.
 Enable the evidence toggle when checking inline claim links, including the
 company profile. Every declared reference must remain reachable, including references after the eighth; their
 IDs and order do not change with translation. Print hides inline links while
@@ -872,6 +884,8 @@ Style notes specific to figure text:
 - `detail` / `description` / `note` are one-sentence captions that
   appear in tooltips. Apply the prose translation philosophy: lead
   with the topic, drop `对……来说`, prefer concrete verbs.
+- `data.items[].valueNote` and `data.series[].points[].valueNote` are
+  translatable value qualifications, not numeric or enum fields.
 - Pure model / version / SKU lists in figure details may stay Latin with
   Chinese separators: "GPT-5.x、GPT-4.1、o1、GPT-4o" is fine.
 - Axis labels often carry a parenthetical unit hint

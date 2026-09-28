@@ -175,6 +175,10 @@ otherwise every populated `series[].points[]` is retained. For genuine comparabl
 funnels, author and source conversion rates explicitly rather than relying on
 the website to infer them. This presentation safeguard does not validate the
 metrics or repair unsupported claims in the report text.
+Authored item `valueNote` strings are value qualifications, not replacement
+values. Retain them alongside other distinct notes in the table and tooltip,
+including the `series[].points[]` shape. Localize the prose, preserve numeric
+values, and do not treat an unaudited company figure as independently verified.
 
 **Bar-chart completeness:** multiple populated `series[].points[]` are shown
 as a table, with every point retained in original series order. Series names,

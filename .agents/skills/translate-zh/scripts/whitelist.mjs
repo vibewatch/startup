@@ -85,6 +85,7 @@ const FIGURE_PATHS = [
   'figures/[]/data/items/[]/highLabel',
   'figures/[]/data/items/[]/examples',
   'figures/[]/data/items/[]/context',
+  'figures/[]/data/items/[]/valueNote',
   // journey-map / persona-style row labels (visible header text)
   'figures/[]/data/items/[]/actor',
   'figures/[]/data/items/[]/actors/[]',
@@ -135,6 +136,7 @@ const FIGURE_PATHS = [
   'figures/[]/data/series/[]/points/[]/note',
   'figures/[]/data/series/[]/points/[]/notes',
   'figures/[]/data/series/[]/points/[]/context',
+  'figures/[]/data/series/[]/points/[]/valueNote',
 ];
 
 export const TRANSLATE_PATHS = Object.freeze({

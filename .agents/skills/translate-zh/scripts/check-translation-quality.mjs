@@ -160,6 +160,9 @@ const hedgeRules = [
       || (/\bno public announcements?\b/i.test(source)
         && (source.match(/\bno public\b/gi) ?? []).length === 1
         && /(?<!并非\s*|不是\s*|非\s*|不\s*)(?:没有|未见)[^。！？；，：\n.!?;,]{1,60}的公开公告(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
+      || (/\bno public signal\b/i.test(source)
+        && (source.match(/\bno public\b/gi) ?? []).length === 1
+        && /(?<!并非\s*|不是\s*|非\s*|不\s*)(?:没有|未见)[^。！？；，：\n.!?;,]{1,80}的公开信号(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
       || (/\bno public\b[^.;!?,]{0,160}\b(?:proof|evidence)\b/i.test(source)
         && (source.match(/\bno public\b/gi) ?? []).length === 1
         && /(?<!并非\s*|不是\s*|非\s*|不\s*)(?:仍|尚)缺公开[^。！？；，：\n.!?;,]{0,60}(?:证明|证据)(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
@@ -181,7 +184,7 @@ const hedgeRules = [
           || /(?<!并非\s*|不是\s*|没有\s*|非\s*|不\s*|无\s*)公开证据(?:仍|尚)?缺失(?=\s*(?:[。；，.;,]|$))/u.test(target)
           || (/\bno public evidence supports\b/i.test(source)
             && /(?<!并非\s*|不是\s*|没有\s*|非\s*|不\s*|无\s*)公开证据(?:仍|尚)?不足以支撑/u.test(target)))),
-    exclude: /\bno public[- ]cloud(?:\s+LLM)?\s+APIs?\s+(?:are\s+)?allowed\b|\b(?:has|have)\s+no public\s+IP\s+address(?:es)?(?=\s*(?:[.;,]|$))/gi,
+    exclude: /\bno public[- ]cloud(?:\s+LLM)?\s+APIs?\s+(?:are\s+)?allowed\b|\b(?:has|have)\s+no public\s+IP\s+address(?:es)?(?=\s*(?:[.;,]|$))|\brequires?\s+no public filing of accounts\b|\bno public sources can substitute for data-room access\b|\bno public comparables at scale\b/gi,
   },
   {
     en: /\bno public[- ]cloud(?:\s+LLM)?\s+APIs?\s+(?:are\s+)?allowed\b/i,
@@ -190,6 +193,18 @@ const hedgeRules = [
   {
     en: /\b(?:has|have)\s+no public\s+IP\s+address(?:es)?(?=\s*(?:[.;,]|$))/i,
     zh: /(?<!并非|不是|非)(?:没有|无|不设|不具备)\s*(?:任何\s*)?(?:公共|公网|公有)\s*IP\b(?:\s*地址)?/u,
+  },
+  {
+    en: /\brequires?\s+no public filing of accounts\b/i,
+    zh: /(?<!并非\s*|不是\s*|非\s*|不\s*)(?:不要求|无需|不必)公开(?:提交|申报|备案)(?:账目|财务报表)(?=\s*(?:[。！？；，.!?;,]|$))/u,
+  },
+  {
+    en: /\bno public sources can substitute for data-room access\b/i,
+    zh: /(?<!并非\s*|不是\s*|非\s*|不\s*)没有(?:任何)?公开来源(?:可以|能够|能)?替代数据室(?:访问|查阅)(?=\s*(?:[。！？；，.!?;,]|$))/u,
+  },
+  {
+    en: /\bno public comparables at scale\b/i,
+    zh: /(?<!并非\s*|不是\s*|非\s*|不\s*)(?:缺少|没有|无)(?:同规模|规模相当的)(?:上市可比公司|可比上市公司)(?=\s*(?:[。！？；，.!?;,]|$))/u,
   },
 ];
 const urlToken = /(?:https?:\/\/|www\.)[^\s<>()（）「」，。；：！？]+|\b(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s<>()（）「」，。；：！？]*)?/gi;

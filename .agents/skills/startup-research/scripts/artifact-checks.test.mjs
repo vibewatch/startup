@@ -611,6 +611,12 @@ test('funnel qualifications preserve distinct text, aliases and literal markup w
     [{ detail: '', description: 'Known scope.', notes: 'May exclude inactive users.' }, ['Known scope.', 'May exclude inactive users.']],
     [{ detail: 'Estimated.', note: 'Estimated.', context: 'Estimated.' }, ['Estimated.']],
     [{ details: 'One year only.', context: 'Not recurring revenue.' }, ['One year only.', 'Not recurring revenue.']],
+    [{ detail: 'Reported total.', valueNote: 'Self-reported; no audit.' }, ['Reported total.', 'Self-reported; no audit.']],
+    [{ note: 'Unaudited.', valueNote: 'Unaudited.' }, ['Unaudited.']],
+    [{ valueNote: '<em>Literal qualification</em>' }, ['<em>Literal qualification</em>']],
+    [{ valueNote: ['Unsupported array'] }, []],
+    [{ valueNote: { label: 'Unsupported object' } }, []],
+    [{ valueNote: 0 }, []],
     [{ note: '<em>Not markup</em> & a qualification.' }, ['<em>Not markup</em> & a qualification.']],
     [{ note: '', description: null, context: ' \n ' }, []],
     [{ value: 0, unit: 'USD' }, []],
@@ -627,13 +633,26 @@ test('all supported funnel qualifications are translatable in both data shapes, 
     ['figures', 0, 'data', 'items', 0],
     ['figures', 0, 'data', 'series', 0, 'points', 0],
   ]) {
-    for (const field of ['detail', 'description', 'details', 'note', 'notes', 'context']) {
+    for (const field of ['detail', 'description', 'details', 'note', 'notes', 'context', 'valueNote']) {
       assert.deepEqual(figureItemNotes({ [field]: 'Qualification.' }), ['Qualification.']);
       assert.equal(isTranslatableLeaf([...prefix, field], TRANSLATE_PATHS.fullReport), true);
     }
     for (const field of ['value', 'displayValue', 'unit', 'claimRefs']) {
       assert.equal(isTranslatableLeaf([...prefix, field], TRANSLATE_PATHS.fullReport), false);
     }
+  }
+});
+
+test('funnel value notes remain visible and in tooltips without changing numeric values', () => {
+  const point = Object.freeze({ label: 'Devices', value: 170000000, detail: 'Reported total.', valueNote: 'Self-reported; no audit.' });
+  for (const data of [{ items: [point] }, { series: [{ name: 'Deployment', points: [point] }] }]) {
+    const before = structuredClone(data);
+    const table = funnelStageTable(data, { valueLabel: 'Value', contextLabel: 'Context' });
+    assert.equal(table.rows[0].values[0].value, 170000000);
+    assert.equal(table.rows[0].values[0].label, '170000000');
+    assert.equal(table.rows[0].values[0].detail, 'Reported total.\nSelf-reported; no audit.');
+    assert.equal(table.rows[0].values[1], 'Reported total.\nSelf-reported; no audit.');
+    assert.deepEqual(data, before);
   }
 });
 
