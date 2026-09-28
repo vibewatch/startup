@@ -388,6 +388,13 @@ neither alias can stand in for another missing predicate. `can claim every
 BaaS or DBaaS dollar` describes capturing market spending, not making an
 assertion; `rather than a single expansive TAM claim` rejects a sizing shortcut.
 A separate company assertion still requires attribution.
+Consumer-protection claims and hyphenated counter-claims describe legal demands,
+not a separate company assertion. `evidence does not support a clear positive claim`
+is a negative assessment, not a positive company claim. Separate assertions still
+need attribution. `关税影响论断基于` can retain one explicitly source-based tariff
+assertion; it cannot clear another claim in the leaf. `缺少公开基准` can preserve
+one explicit `no public benchmark` gap. Negation, clause boundaries and separate
+public-disclosure gaps remain distinct.
 
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json

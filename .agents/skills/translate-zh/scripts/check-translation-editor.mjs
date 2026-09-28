@@ -65,6 +65,36 @@ const legalClaimNounPairs = [
 
 const checks = [
   ...[
+    ['Additional consumer-protection claims remain unresolved.', '额外消费者保护索赔仍未解决。', false],
+    ['The company claims its consumer-protection policies are sufficient.', '公司的消费者保护政策足够完善。', true],
+    ['Consumer-protection claims remain unresolved; the company claims it is profitable.', '消费者保护索赔仍未解决；公司已盈利。', true],
+    ['The company pursued antitrust counter-claims.', '公司提起反垄断反诉。', false],
+    ['Pursue counter-claim; could offset damages or force settlement.', '推进反诉；可能抵消损害赔偿或促成和解。', false],
+    ['The company counter-claims an antitrust violation.', '公司反诉对方违反反垄断法。', false],
+    ['The company pursued a counter-claim and claims its product is superior.', '公司提起反诉，其产品更优。', true],
+    ['The company claims its counter-proposal is superior.', '公司的反提案更优。', true],
+    ['Evidence does not support a clear positive claim.', '证据不足以支持明确正向判断。', false],
+    ['Evidence does not support a clear positive claim; the company claims it is profitable.', '证据不足以支持明确正向判断；公司已盈利。', true],
+    ['The company makes a clear positive claim.', '公司的表现很好。', true],
+    ['Claims about tariff impacts are based on publicly available analysis.', '关税影响论断基于公开可得的分析。', false],
+    ['Claims about tariff impacts are based on publicly available analysis.', '关税影响已经确定。', true],
+    ['Claims about tariff impacts are based on publicly available analysis.', '并非关税影响论断基于公开分析。', true],
+    ['Claims about tariff impacts are based on publicly available analysis.', '不是 关税影响论断基于公开分析。', true],
+    ['Claims about tariff impacts are based on publicly available analysis; the company claims it is profitable.', '关税影响论断基于公开分析；公司已盈利。', true],
+    ['There is no public benchmark for the segment.', '该细分市场缺少公开基准。', false],
+    ['There is no public benchmark for the segment.', '该细分市场已有公开基准。', true],
+    ['There is no public benchmark for the segment.', '并非缺少公开基准。', true],
+    ['There is no public benchmark for the segment.', '不是 缺少公开基准。', true],
+    ['There is no public benchmark for the segment.', '缺少公开基准的判断不成立。', true],
+    ['There is no public benchmark for the segment.', '缺少价格信息；公开基准已经发布。', true],
+    ['There is no public revenue disclosure.', '该细分市场缺少公开基准。', true],
+    ['There is no public benchmark; no public revenue data is available.', '缺少公开基准；收入已披露。', true],
+  ].flatMap(([en, zh, expected]) => [false, true].map(strictEditor => [
+    checkPairQuality(fullReport(`${en} This is a diligence observation.`), fullReport(zh), { strictEditor })
+      .some(issue => issue.code === 'hedge-preservation') === expected,
+    `legal counterclaims, research assertions and benchmarks retain distinct scope (strict=${strictEditor}): ${en} / ${zh}`,
+  ])),
+  ...[
     ['The valuation is not yet cheap.', '估值还谈不上便宜。', false],
     ['The valuation is not yet cheap.', '估值已经很便宜。', true],
     ['The valuation is not yet cheap.', '估值并非还谈不上便宜。', true],
