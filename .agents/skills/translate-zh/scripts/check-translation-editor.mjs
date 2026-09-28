@@ -65,6 +65,34 @@ const legalClaimNounPairs = [
 
 const checks = [
   ...[
+    ['Public evidence can support the claim that users engage.', '公开证据可以支撑用户参与的判断。', false],
+    ['Public evidence can therefore support the claim that users engage.', '公开证据因此可以支撑用户参与的判断。', false],
+    ['Public evidence can support the claim that users engage; the company claims its revenue doubled.', '公开证据可以支撑用户参与的判断；公司收入翻倍。', true],
+    ['The company claims public evidence proves retention.', '公开证据证明了留存。', true],
+    ['The company makes a claim that users engage.', '用户会参与。', true],
+    ['No public standalone campus-recruiting TAM exists.', '公开市场上没有独立的校园招聘 TAM。', false],
+    ['No public standalone campus-recruiting software TAM exists.', '公开市场上没有独立的校园招聘软件 TAM。', false],
+    ['No public standalone campus-recruiting TAM exists.', '公开市场上已有独立的校园招聘 TAM。', true],
+    ['No public standalone campus-recruiting TAM exists.', '并非公开市场上没有独立的校园招聘 TAM。', true],
+    ['No public standalone campus-recruiting TAM exists.', '不是 公开市场上没有独立的校园招聘 TAM。', true],
+    ['No public standalone campus-recruiting TAM exists.', '公开市场上没有独立的校园招聘 TAM 的判断不成立。', true],
+    ['No public standalone campus-recruiting TAM exists.', '公开市场上没有价格；独立的校园招聘 TAM 已披露。', true],
+    ['No public standalone campus-recruiting TAM exists; no public revenue data exists.', '公开市场上没有独立的校园招聘 TAM；收入已披露。', true],
+    ['No public revenue data exists.', '公开市场上没有独立的校园招聘 TAM。', true],
+    ['No public segmentation by revenue, engagement, or school profitability exists.', '没有按收入、参与度或学校盈利能力公开分层。', false],
+    ['No public segmentation by revenue exists.', '已经按收入公开分层。', true],
+    ['No public segmentation by revenue exists.', '并非没有按收入公开分层。', true],
+    ['No public segmentation by revenue exists.', '不是 没有按收入公开分层。', true],
+    ['No public segmentation by revenue exists.', '没有按收入公开分层的判断不成立。', true],
+    ['No public segmentation by revenue exists.', '没有按期披露；按收入公开分层。', true],
+    ['No public segmentation exists; no public revenue data exists.', '没有按收入公开分层；收入已披露。', true],
+    ['No public revenue data exists.', '没有按收入公开分层。', true],
+  ].flatMap(([en, zh, expected]) => [false, true].map(strictEditor => [
+    checkPairQuality(fullReport(`${en} This is a source-reviewed diligence observation.`), fullReport(zh), { strictEditor })
+      .some(issue => issue.code === 'hedge-preservation') === expected,
+    `evidence judgments, standalone TAMs and segmentation gaps preserve scope (strict=${strictEditor}): ${en} / ${zh}`,
+  ])),
+  ...[
     ['Additional consumer-protection claims remain unresolved.', '额外消费者保护索赔仍未解决。', false],
     ['The company claims its consumer-protection policies are sufficient.', '公司的消费者保护政策足够完善。', true],
     ['Consumer-protection claims remain unresolved; the company claims it is profitable.', '消费者保护索赔仍未解决；公司已盈利。', true],

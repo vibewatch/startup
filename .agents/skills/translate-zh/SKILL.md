@@ -143,6 +143,13 @@ sides of conjunctions, and operators such as `only`, `at least`, `at most`,
 to the event they modify. Never replace a detailed source claim with a generic
 Chinese summary.
 
+Resolve financial terms by their role in the sentence. In an investor's assessment,
+`underwrite revenue quality`, `underwrite upside`, or an `underwriting judgment`
+usually means `评估收入质量`, `把上行空间计入投资判断`, or `投资判断`, not `承销`.
+Retain `承销` for securities issuance, `承保` for insurance, and appropriate
+credit-assessment wording for lending. Do not use a blanket glossary replacement:
+one report can discuss more than one of these activities.
+
 Use `npm run audit:translations-zh -- --limit 20` for a non-blocking corpus sample. The audit reports hard semantic/style errors separately from advisory glossary drift, untranslated ordinary descriptors, half-width Chinese punctuation, and dense `的` chains. Use the report to target only weak leaves; do not rewrite clean overlays.
 
 Add `--strict-editor` to include metric fidelity and the wider editorial
@@ -395,6 +402,12 @@ need attribution. `关税影响论断基于` can retain one explicitly source-ba
 assertion; it cannot clear another claim in the leaf. `缺少公开基准` can preserve
 one explicit `no public benchmark` gap. Negation, clause boundaries and separate
 public-disclosure gaps remain distinct.
+`public evidence can support the claim that` introduces an evidence-based judgment,
+not necessarily a company assertion. A separate company claim still needs attribution.
+`公开市场上没有独立的校园招聘…TAM` can retain the explicit standalone
+campus-recruiting TAM gap, and `没有按…公开分层` can retain a public-segmentation
+gap. These scoped alternatives do not clear negation, cross-clause matches or
+additional public-disclosure gaps in the same leaf.
 
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json
