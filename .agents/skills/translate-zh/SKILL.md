@@ -429,6 +429,17 @@ data-room access` denies substitutability, not the existence of public sources.
 Financial `no public comparables at scale` refers to missing same-scale listed
 peers, not merely undisclosed company information. Each predicate is checked
 separately; negation and another missing disclosure must not be cleared by it.
+Nominal `for NPE claims` / `handles NPE claims` contexts and a docket-count
+observation that additional claims may follow describe legal demands, not
+company assertions. `The NPE claims, …` remains an assertion, including with
+a parenthetical clause; separate assertions still require attribution.
+`未见…的公开引用` can retain a single
+`no public reference` gap; it does not establish that the underlying audit or
+event never occurred. Negation and other disclosure gaps remain separate.
+The `在…方面` soundcheck distinguishes a later clause-leading
+`一方面…另一方面…` comparison after a comma or colon from that construction.
+Actual aspect phrases, including comma-separated lists and `在某一方面`,
+remain subject to the soundcheck.
 
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json

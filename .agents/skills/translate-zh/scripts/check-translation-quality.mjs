@@ -14,7 +14,7 @@ const metricToken = /(?:[$€£¥₦]\s*)?\d+(?:[.,]\d+)*(?:[KMBT](?![a-z])|\s?(
 const quantityPowers = { k: 3, m: 6, b: 9, t: 12, 千: 3, 万: 4, 亿: 8, 万亿: 12 };
 const stylePatterns = [
   /对于[^。！？；]{1,24}而言/u,
-  /在[^。！？；]{1,20}(?:(?<!买)方面|方面(?!前))/u,
+  /在[^。！？；]{1,20}(?<![，：,:]\s*(?:一|另一))(?:(?<!买)方面|方面(?!前))/u,
   /通过[^。！？；，：]{1,24}(?<!带)来(?!自|源)/u,
   /在[^。！？；]{1,24}的过程中/u,
   /被设计为/u,
@@ -72,6 +72,8 @@ const insuranceClaimNouns = new RegExp([
   '\\binsurance\\s+and\\s+customer\\s+claims\\b(?=\\s*(?:[,.;:]|$))',
 ].join('|'), 'gi');
 const patentClaimNouns = new RegExp([
+  '\\b(?:for|handles?)\\s+(?:non-practicing\\s+entity\\s*\\(NPE\\)|NPE)\\s+claims(?=\\s*(?:[.;,]|$))',
+  '\\bCourtListener[\\x27’]s\\s+\\d+\\s+cases\\s*/\\s*\\d+\\s+docket\\s+entries\\s+suggest\\s+additional\\s+claims(?=\\s+may\\s+follow\\b)',
   '\\b(?:requires?\\s+careful|depends\\s+on)\\s+claim\\s+drafting(?:\\s+strategy)?\\b',
   '\\bcomposition-of-matter\\s+claims(?:\\s+on\\s+novel\\s+analogs\\s+more\\s+defensible\\s+than\\s+isolation\\s+claims)?\\b',
   '\\bUSPTO\\s+patent\\s+filing\\s+portfolio\\s+not\\s+fully\\s+disclosed;\\s+depth\\s+and\\s+quality\\s+of\\s+claims\\s+uncertain\\b',
@@ -163,6 +165,9 @@ const hedgeRules = [
       || (/\bno public signal\b/i.test(source)
         && (source.match(/\bno public\b/gi) ?? []).length === 1
         && /(?<!并非\s*|不是\s*|非\s*|不\s*)(?:没有|未见)[^。！？；，：\n.!?;,]{1,80}的公开信号(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
+      || (/\bno public reference\b/i.test(source)
+        && (source.match(/\bno public\b/gi) ?? []).length === 1
+        && /(?<!并非\s*|不是\s*|非\s*|不\s*)未见[^。！？；，：\n.!?;,]{1,80}的公开引用(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
       || (/\bno public\b[^.;!?,]{0,160}\b(?:proof|evidence)\b/i.test(source)
         && (source.match(/\bno public\b/gi) ?? []).length === 1
         && /(?<!并非\s*|不是\s*|非\s*|不\s*)(?:仍|尚)缺公开[^。！？；，：\n.!?;,]{0,60}(?:证明|证据)(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))

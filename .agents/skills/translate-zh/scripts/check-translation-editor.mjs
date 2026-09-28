@@ -77,6 +77,52 @@ function entryMultiplePair({ header = 'Exit Multiple at 5.6B Entry', target = '�
 
 const checks = [
   ...[
+    ['供应链集中在印度合同制造，一方面缓释风险，另一方面增加执行难度。', false],
+    ['产能集中在印度制造：一方面缓释风险，另一方面增加执行难度。', false],
+    ['产能集中在印度制造, 一方面缓释风险。', false],
+    ['产能集中在印度制造: 一方面缓释风险。', false],
+    ['团队在供应链方面仍有困难。', true],
+    ['团队在成本、质量方面仍有困难。', true],
+    ['团队在 API, SDK 方面仍有困难。', true],
+    ['团队在成本，质量方面仍有困难。', true],
+    ['团队在某一方面仍有困难。', true],
+    ['团队在供应链方面仍有困难，其他工作进展顺利。', true],
+    ['产能集中在印度制造，一方面缓释风险；团队在质量方面仍有困难。', true],
+    ['卖方在买方面前展示产品。', false],
+  ].flatMap(([zh, expected]) => [false, true].map(strictEditor => [
+    checkPairQuality(fullReport('The supply chain creates a geographic tradeoff and requires careful execution.'), fullReport(zh), { strictEditor })
+      .some(issue => issue.code === 'translationese') === expected,
+    `aspect soundcheck distinguishes clause-leading comparisons from aspect phrases (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
+    ['The venue is plaintiff-friendly for non-practicing entity (NPE) claims.', '该管辖区有利于非实施实体（NPE）的诉讼请求。', false],
+    ['The court handles NPE claims.', '法院处理 NPE 诉讼请求。', false],
+    ['The NPE claims the device infringes its patents.', '该设备侵犯其专利。', true],
+    ['The NPE claims, without evidence, that its software cannot infringe any patent.', '该软件不可能侵犯任何专利。', true],
+    ['The NPE claims, without evidence, that its software cannot infringe any patent.', '该 NPE 声称软件不可能侵犯任何专利，但没有提供证据。', false],
+    ['The venue handles NPE claims; the NPE claims, without evidence, that its software cannot infringe any patent.', '该管辖区处理 NPE 诉讼；该软件不可能侵犯任何专利。', true],
+    ['The venue handles NPE claims; the company claims all patents are valid.', '该管辖区处理 NPE 诉讼；所有专利均有效。', true],
+    ['The venue handles NPE claims; the company claims all patents are valid.', '该管辖区处理 NPE 诉讼；公司声称所有专利均有效。', false],
+    ["CourtListener's 15 cases / 78 docket entries suggest additional claims may follow.", 'CourtListener 的 15 起案件 / 78 条案卷记录提示，后续可能出现更多诉讼请求。', false],
+    ['CourtListener’s 15 cases / 78 docket entries suggest additional claims may follow.', 'CourtListener 的 15 起案件 / 78 条案卷记录提示，后续可能出现更多诉讼请求。', false],
+    ["CourtListener's 15 cases / 78 docket entries suggest additional claims may follow; the company claims the litigation is immaterial.", 'CourtListener 的 15 起案件 / 78 条案卷记录提示，后续可能出现更多诉讼请求；诉讼影响不大。', true],
+    ["CourtListener's 15 cases / 78 docket entries suggest additional claims may follow; the company claims the litigation is immaterial.", 'CourtListener 的 15 起案件 / 78 条案卷记录提示，后续可能出现更多诉讼请求；公司声称诉讼影响不大。', false],
+    ['CourtListener claims additional updates will follow.', 'CourtListener 后续将提供更多更新。', true],
+    ['No public reference to third-party OS or hardware security audit.', '未见第三方 OS 或硬件安全审计的公开引用。', false],
+    ['No public reference to a security audit.', '未见安全审计的公开引用。', false],
+    ['No public reference to a security audit.', '已有安全审计的公开引用。', true],
+    ['No public reference to a security audit.', '并非未见安全审计的公开引用。', true],
+    ['No public reference to a security audit.', '不是 未见安全审计的公开引用。', true],
+    ['No public reference to a security audit.', '未见安全审计的公开引用的判断不成立。', true],
+    ['No public reference to a security audit.', '未见合同；安全审计的公开引用可查。', true],
+    ['No public reference to a security audit; no public revenue data.', '未见安全审计的公开引用；收入已经披露。', true],
+    ['No public revenue data.', '未见安全审计的公开引用。', true],
+  ].flatMap(([en, zh, expected]) => [false, true].map(strictEditor => [
+    checkPairQuality(fullReport(`${en} This is a source-reviewed diligence observation.`), fullReport(zh), { strictEditor })
+      .some(issue => issue.code === 'hedge-preservation') === expected,
+    `legal demands and missing audit references retain their meaning (strict=${strictEditor}): ${en} / ${zh}`,
+  ])),
+  ...[
     ['Disclosure standards require no public filing of accounts.', '披露标准不要求公开提交账目。', false],
     ['The rule requires no public filing of accounts.', '规定无需公开申报财务报表。', false],
     ['Disclosure standards require no public filing of accounts.', '披露标准要求公开提交账目。', true],
