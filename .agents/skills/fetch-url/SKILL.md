@@ -74,6 +74,12 @@ Do not use for broad source discovery, multi-page crawling, JavaScript login flo
 Confirm status, final URL, source/cache state, content type, bytes, elapsed time, title/PDF metadata, and whether output was truncated. For non-2xx responses, record the failure rather than inventing page content.
 
 HTTP 200 alone does not establish successful retrieval. Recognized browser/security challenge pages and reader responses reporting upstream HTTP errors trigger fallbacks; if none succeeds, the command exits nonzero and records `ok: false` with an explicit error in both JSON output and the fetch trail. Cached access-error pages are retried rather than reused as evidence. A successful fetch still requires review for relevance and factual support.
+The Chrome error shell `This page has been blocked by Chrome` with
+`ERR_BLOCKED_BY_CLIENT` is not source evidence, even when a reader reports
+HTTP 200 under the requested company URL. The standalone notice, including
+its optional blocked-host heading, is rejected in origin, reader, archive,
+cache and retained prefetched text. Articles explaining the error and original
+PDF bytes remain eligible; the error code alone does not trigger this check.
 The standalone ten-minute lockout notice beginning `After three unsuccessful
 trials, for your security` is not an org chart or source document. Reader,
 archive, cache and retained prefetched copies are rejected too. A public page

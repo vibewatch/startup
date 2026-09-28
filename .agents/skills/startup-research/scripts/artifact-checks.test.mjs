@@ -865,6 +865,16 @@ const orgChartControlBodies = [
   `<html><head><title>Org chart</title></head><body>${orgChartControlText}</body></html>`,
   `Title: Org chart\n\nURL Source: https://example.com/org-chart\n\nMarkdown Content:\n${orgChartControlText}`,
 ];
+const clientBlockedText = 'example.com is blocked\n\nThis page has been blocked by Chrome\n\n'
+  + 'ERR_BLOCKED_BY_CLIENT\n\nThis page has been blocked by Chrome';
+const clientBlockedBodies = [
+  clientBlockedText,
+  'This page has been blocked by Chrome\n\nERR_BLOCKED_BY_CLIENT',
+  `<html><head><title>example.com</title></head><body><h1>example.com is blocked</h1><p>This page has been blocked by Chrome</p><div>ERR_BLOCKED_BY_CLIENT</div></body></html>`,
+  `Title: example.com\n\nURL Source: https://example.com/company\n\nMarkdown Content:\n## ${clientBlockedText}`,
+  `Title: example.com\n\nURL Source: https://example.com/company\n\nWarning: This is a cached snapshot of the original page, consider retry with caching opt-out.\n\nMarkdown Content:\n## ${clientBlockedText}`,
+  `<html><body><!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-base">Wayback Machine: August 10, 2026</div><!-- END WAYBACK TOOLBAR INSERT -->${clientBlockedText}</body></html>`,
+];
 const clinicalTrialShellBodies = [
   `<html><head><title>ClinicalTrials.gov</title></head><body>${clinicalGlossaryShell}</body></html>`,
   '<html><head><title>ClinicalTrials.gov</title></head><body>Show glossary</body></html>',
@@ -958,6 +968,7 @@ const accessErrorBodies = [
   ...federalRegisterAccessBodies,
   ...loginLockoutBodies,
   ...orgChartControlBodies,
+  ...clientBlockedBodies,
 ];
 
 const financialTables = '<table><tr><th>Metric</th><th>2026</th><th>2025</th></tr>'
@@ -1275,6 +1286,22 @@ test('HTTP-200 challenge pages are not successful source retrievals', () => {
   assert.equal(isAccessErrorResponse({ status: 200, title: 'Federal Register :: Request Access', body: '' }), true);
 });
 
+test('browser client-blocked notices require complete error-shell text', () => {
+  for (const body of clientBlockedBodies) {
+    assert.equal(isAccessErrorResponse({ status: 200, body }), true, body);
+  }
+  for (const body of [
+    `Browser troubleshooting guide\n\n${clientBlockedText}`,
+    `${clientBlockedText}\n\nThis article explains how browser extensions block requests.`,
+    'ERR_BLOCKED_BY_CLIENT',
+    'example.com is blocked\n\nThis page has been blocked by Chrome',
+    'The company reported revenue of $150M. A reader displayed ERR_BLOCKED_BY_CLIENT.',
+    `Title: Browser troubleshooting\n\nURL Source: https://example.com/guide\n\nMarkdown Content:\n${clientBlockedText}\n\nThe page above is an example, not a company record.`,
+    `<html><head><title>Browser errors</title></head><body><article><p>This guide explains browser error messages.</p><pre>${clientBlockedText}</pre></article></body></html>`,
+    Buffer.from(`%PDF-1.7\n${clientBlockedText}`),
+  ]) assert.equal(isAccessErrorResponse({ status: 200, body }), false, String(body));
+});
+
 test('access-error detection preserves real articles about security and PDF bodies', () => {
   for (const body of [
     '<html><title>DataDome company overview</title><article>DataDome provides captcha and bot detection.</article></html>',
@@ -1473,7 +1500,7 @@ test('fetch CLI rejects origin, reader, archived, and cached access-error pages 
 });
 
 test('fetch CLI recovers an access-error page through a valid reader response', () => {
-  for (const body of [accessErrorBodies[0], ...clinicalTrialShellBodies, ...federalRegisterAccessBodies, ...loginLockoutBodies, ...orgChartControlBodies, ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, ...waybackShellBodies, ...archiveRedirectBodies, ...emptyHtmlBodies, signupChromeBody, loginLockoutChromeBody]) {
+  for (const body of [accessErrorBodies[0], ...clinicalTrialShellBodies, ...federalRegisterAccessBodies, ...loginLockoutBodies, ...orgChartControlBodies, ...clientBlockedBodies, ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, ...waybackShellBodies, ...archiveRedirectBodies, ...emptyHtmlBodies, signupChromeBody, loginLockoutChromeBody]) {
     const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
       import assert from 'node:assert/strict';
       import { main } from './.agents/skills/fetch-url/scripts/fetch.mjs';
@@ -1499,7 +1526,7 @@ test('fetch CLI refreshes blocked reader and archive fallback caches', () => {
   const folder = mkdtempSync(join(tmpdir(), 'source-fallback-cache-check-'));
   const url = 'https://example.com/page';
   try {
-    const cases = ['Powered and protected by\n\nPrivacy', clinicalTrialShellBodies[0], ...federalRegisterAccessBodies, ...loginLockoutBodies, ...orgChartControlBodies, ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, ...waybackShellBodies, ...archiveRedirectBodies, ...emptyHtmlBodies, signupChromeBody, loginLockoutChromeBody]
+    const cases = ['Powered and protected by\n\nPrivacy', clinicalTrialShellBodies[0], ...federalRegisterAccessBodies, ...loginLockoutBodies, ...orgChartControlBodies, ...clientBlockedBodies, ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, ...waybackShellBodies, ...archiveRedirectBodies, ...emptyHtmlBodies, signupChromeBody, loginLockoutChromeBody]
       .flatMap((body) => ['reader', 'wayback'].map((variant) => [body, variant]));
     for (const [body, variant] of cases) {
       writeFileSync(join(folder, `${canonicalCacheKey(url, variant)}.json`), JSON.stringify({

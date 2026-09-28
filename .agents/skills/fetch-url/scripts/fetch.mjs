@@ -1004,6 +1004,7 @@ export function isAccessErrorResponse(result) {
   const unwrappedText = text.replace(/^Title:[^\n]*\n+URL Source:\s*https?:\/\/[^\n]+\n+(?:(?:Published Time:[^\n]*|Warning: This is a cached snapshot of the original page, consider retry with caching opt-out\.)\n+)*Markdown Content:\s*/i, '');
   if (isLoginLockoutNotice(unwrappedText)) return true;
   if (ORG_CHART_CONTROL_ONLY_RE.test(unwrappedText.trim())) return true;
+  if (/^(?:#{1,6}\s+)?(?:\S+\s+is blocked\s+)?This page has been blocked by Chrome\s+ERR_BLOCKED_BY_CLIENT(?:\s+This page has been blocked by Chrome)?\s*$/i.test(unwrappedText)) return true;
   if (/^Due to aggressive automated scraping of FederalRegister\.gov and eCFR\.gov,[\s\S]{0,1200}Your request has been flagged as potentially automated\.[\s\S]{0,1200}complete the CAPTCHA \(bot test\)[\s\S]{0,1200}to make a request\.\s*$/i.test(unwrappedText)) return true;
   if (!unwrappedText.trim()
       && (/^(?:text\/(?:html|plain)|application\/xhtml\+xml)(?:;|$)/i.test(result.contentType ?? '')
