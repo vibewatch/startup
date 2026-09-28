@@ -77,6 +77,32 @@ function entryMultiplePair({ header = 'Exit Multiple at 5.6B Entry', target = '�
 
 const checks = [
   ...[
+    ['The champion at most confirmed sites is a physician.', '多数已确认站点的推动者是医生。', false],
+    ['The champion at most confirmed sites is a physician; at most two sites have contracts.', '多数已确认站点的推动者是医生；两个站点有合同。', true],
+    ['The champion at most confirmed sites is a physician; at most two sites have contracts.', '多数已确认站点的推动者是医生；最多两个站点有合同。', false],
+    ['The company has at most 20 confirmed sites.', '公司有 20 个已确认站点。', true],
+    ['The company has at most 20 confirmed sites.', '公司最多有 20 个已确认站点。', false],
+    ['Payer denials documented in >20% of claims.', '>20% 的理赔有支付方拒付记录。', false],
+    ['Major payer denials are documented in 20.5% of claims.', '20.5% 的理赔有主要支付方拒付记录。', false],
+    ['Payer denials documented in >20% of claims; the company claims every appeal succeeds.', '>20% 的理赔有支付方拒付记录；每次申诉均成功。', true],
+    ['Payer denials documented in >20% of claims; the company claims every appeal succeeds.', '>20% 的理赔有支付方拒付记录；公司声称每次申诉均成功。', false],
+    ['The company claims payer denials affect >20% of requests.', '支付方拒付影响 >20% 的请求。', true],
+    ['The insurer claims, without evidence, all appeals succeed.', '保险公司的所有申诉均成功。', true],
+    ['No public data on installed base or market share.', '没有关于装机量或市场份额的公开数据。', false],
+    ['No public data on installed base or market share.', '未见关于装机量或市场份额的公开数据。', false],
+    ['No public data on installed base.', '已有关于装机量的公开数据。', true],
+    ['No public data on installed base.', '并非没有关于装机量的公开数据。', true],
+    ['No public data on installed base.', '不是 未见关于装机量的公开数据。', true],
+    ['No public data on installed base.', '没有关于装机量的公开数据的判断不成立。', true],
+    ['No public data on installed base.', '没有关于装机量的内部信息；装机量的公开数据可查。', true],
+    ['No public data on installed base; no public revenue disclosure.', '没有关于装机量的公开数据；收入已披露。', true],
+    ['No public milestone is disclosed.', '没有关于装机量的公开数据。', true],
+  ].flatMap(([en, zh, expected]) => [false, true].map(strictEditor => [
+    checkPairQuality(fullReport(`${en} This is a source-reviewed diligence observation.`), fullReport(zh), { strictEditor })
+      .some(issue => issue.code === 'hedge-preservation') === expected,
+    `majority locations, payer-denial nouns and scoped public-data gaps retain their predicates (strict=${strictEditor}): ${en} / ${zh}`,
+  ])),
+  ...[
     ['No public source reviewed confirms the financing round.', '已审阅公开来源均未确认该轮融资。', false],
     ['No public source in the research corpus - including Alpha and Beta - confirms the financing round.', '但研究语料中的公开来源——包括 Alpha、Beta——都没有确认该轮融资。', false],
     ['No public source reviewed confirms the financing round.', '已审阅公开来源均已确认该轮融资。', true],

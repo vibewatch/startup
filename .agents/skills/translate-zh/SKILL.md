@@ -150,6 +150,13 @@ Retain `承销` for securities issuance, `承保` for insurance, and appropriate
 credit-assessment wording for lending. Do not use a blanket glossary replacement:
 one report can discuss more than one of these activities.
 
+Legal `dismissed with prejudice` means dismissal barring refiling of the same
+claim, not bias (`有偏见`). Preserve whether dismissal was court-ordered,
+voluntary or stipulated, and any exceptions for different claims or parties.
+`Without prejudice` instead preserves the possibility of refiling. Neither
+disposition alone proves that the court ruled on infringement or that every
+underlying IP risk disappeared.
+
 Use `npm run audit:translations-zh -- --limit 20` for a non-blocking corpus sample. The audit reports hard semantic/style errors separately from advisory glossary drift, untranslated ordinary descriptors, half-width Chinese punctuation, and dense `的` chains. Use the report to target only weak leaves; do not rewrite clean overlays.
 
 Add `--strict-editor` to include metric fidelity and the wider editorial
@@ -289,6 +296,10 @@ beside a financial claims noun still needs attribution.
 coverage limits and claims history refer to insurance, not assertions.
 `at most recent fiscal quarter-end` names the latest period, not an upper bound;
 a separate `at most` quantity in the same leaf still needs its upper bound.
+Likewise, `at most confirmed sites` means at the majority of confirmed locations,
+not a numeric cap. Keep any separate upper-bound quantity. Percentage-qualified
+`payer denials documented in >20% of claims` describes insurance claims, not
+a company assertion; a separate company assertion still needs attribution.
 Do not mistake `来源` or `带来` for the purpose marker in `通过…来`, or a
 locative phrase such as `正在生产环境中部署` for clause-final `正在…中`.
 Public-evidence gaps can place a Latin company name or a carrier relationship
@@ -421,6 +432,10 @@ a company assertion. A separate company claim still needs attribution.
 `未按电信 / 媒体账户公开合同规模或续约数据` retain their respective
 public-segmentation gaps. These scoped aliases do not accept a different missing
 predicate, negation, another disclosure gap, or merely late publication (`未按期`).
+`没有关于…的公开数据` or `未见关于…的公开数据` can retain one explicit
+`no public data on` gap. Negated wording, cross-clause matches and additional
+public-disclosure gaps remain distinct; this does not verify the data's subject.
+
 For `no public signal`, `没有…的公开信号` retains a single signal gap,
 not absence of the underlying event. A requirement for `no public filing of
 accounts` means public filing is not required; it is neither a filing ban nor

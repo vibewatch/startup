@@ -44,6 +44,7 @@ const strictEditorStylePatterns = [
 const insuranceClaimHeads = '(?:intake|communications?|orchestration|automation|processing|handling|journeys?|platforms?|systems?(?:-of-record)?|workflows?|intelligence|infrastructure|organizations?|executives?|officers?|leaders?|modules?|messaging|experiences?|stack|volume|throughput|transformation|severity|types?|facts|participants|sales|enablement|audit|budgets?|cost|core|domain|pain|software|tech|operating|management|tooling|operations|scale|possibilities|AI|CX|lifecycle|submission|creation|work|quality|logic|coding|corrections?|accuracy|errors?|status|issues|datasets|context|data|rates?|preparation|production|routing|APIs?|histor(?:y|ies)|growth|visibility)';
 const insuranceClaimModifiers = '(?:(?:AI(?:-native)?|digital|agentic|enterprise|incumbent|legacy|modern|full|complete|cloud(?:-native)?|core|narrow|broader|automated|conversational|messy|intelligent|insurance|strong|pilot|P&C|annual|manual|transactional|preventable|touchless|clean|API-based|AI-driven|rules-driven|usage-based|payer-by-payer)[ -]+)*';
 const insuranceClaimNouns = new RegExp([
+  '\\bpayer denials (?:are )?documented in [<>]?\\s*\\d+(?:\\.\\d+)?% of claims\\b(?=\\s*(?:[,.;:]|$))',
   '\\bfor\\s+narrow\\s+claim\\s+classes\\b',
   `^claims?(?=[ -]+${insuranceClaimHeads}\\b)`,
   `\\b(?:across|around|for|in|on|as|of|with|without|within|through|from|by|into|over|whether|because|where|buy|sells|satisfy|captures?|supports?|shows?|show(?:s|ed)? that|adopt|request|automates?|automating|correct|autocorrects?|influence|scale|exports?|disrupts?|causing|handle)\\s+${insuranceClaimModifiers}claims?(?=[ -]+${insuranceClaimHeads}\\b)`,
@@ -96,7 +97,11 @@ const hedgeRules = [
   },
   { en: /\bestimated\b|\b(?:we|analysts?|reports?) estimate\b/i, zh: /估计|估算|预计|测算|推算|(?<!并非|不是|无需|没有|未经|未|不|无)预估/u },
   { en: /\bat least\b/i, zh: /至少|不低于/u },
-  { en: /\bat most\b(?!\s+recent\b)/i, zh: /至多|最多|不超过/u },
+  {
+    en: /\bat most\b(?!\s+recent\b)/i,
+    zh: /至多|最多|不超过/u,
+    excludeContext: /\bat most confirmed sites\b/gi,
+  },
   {
     en: /\b(?:likely|probably)\b/i,
     zh: /可能|很可能|大概率|多半|(?<!并非|不是|无需|没有|未经|未|不|无)预计/u,
@@ -179,6 +184,9 @@ const hedgeRules = [
       || (/\bno public benchmark by\b/i.test(source)
         && (source.match(/\bno public\b/gi) ?? []).length === 1
         && /(?:^|[。！？；，：\n])\s*(?:尚|仍)?未按(?!期|时|计划)[^。！？；，：\n.!?;,]{1,80}公开基准(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
+      || (/\bno public data on\b/i.test(source)
+        && (source.match(/\bno public\b/gi) ?? []).length === 1
+        && /(?:^|[。！？；，：\n])\s*(?:没有|未见)关于[^。！？；，：\n.!?;,]{1,80}的公开数据(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
       || (/\bno public\b[^.;!?,]{0,160}\b(?:proof|evidence)\b/i.test(source)
         && (source.match(/\bno public\b/gi) ?? []).length === 1
         && /(?<!并非\s*|不是\s*|非\s*|不\s*)(?:仍|尚)缺公开[^。！？；，：\n.!?;,]{0,60}(?:证明|证据)(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
