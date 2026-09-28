@@ -137,6 +137,17 @@ Fast reports still require their original worker inputs and search bundle.
 Incomplete or superseded reports cannot use this review path; never rebuild
 superseded content with the current assembler.
 
+Generation workflows preserve source-recovery inputs before pruning failed runs.
+Their report artifact includes a visible `research-evidence/<runId>/` directory
+containing the workflow snapshot, search bundle, fetched text, worker inputs and
+results, available finalizer/refresh metadata, and original fetch trails.
+`manifest.json` maps every archived file to its original workspace-relative path
+and records its SHA-256 hash. Environment files and raw model logs are excluded;
+hidden-file upload remains disabled. A partial archive lists missing inputs and
+does not synthesize execution records or approve publication. Retention remains
+14 days: download needed evidence before expiry. Restoring these files does not
+establish source support, and missing historical inputs remain a review blocker.
+
 **Quotation fidelity:** `keyQuote` means a verbatim excerpt, not a summary or an analyst correction. The worker runner checks quotations against assigned prefetched text; fast finalization checks authored chapters and the assembled ledger before refresh linking, including reused evidence. The bounded finalizer independently checks both authored chapters and assembled evidence, so a successful model exit cannot skip this gate. `sourceQuoteMismatch` rejects changed wording, changed numbers, and reordered excerpts; `sourceQuoteTextMissing` requires restoration of the original fetched text. Whitespace and equivalent typography may differ, and ellipses may omit text without reordering it. Keep source files read-only. Copy an excerpt that actually supports the associated claim; do not delete quotations or choose irrelevant text just to clear the check. These checks establish literal provenance, not contextual fairness or factual support for every claim.
 
 An additional comparison accepts spacing around a dash between letters:
