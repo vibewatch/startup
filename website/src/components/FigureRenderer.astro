@@ -141,7 +141,7 @@ const chartPayloadJson = chartPayload
 
 <script>
   import * as d3 from 'd3';
-  import { figureDetail, figureItemNotes, figureValueNotes, flowTopology, stackLayerDetails } from '../lib/figures.mjs';
+  import { figureDetail, figureItemNotes, figureValueNotes, flowTopology, formatRangeValue, rangeCenterValue, stackLayerDetails } from '../lib/figures.mjs';
 
   const palette = {
     claret: '#990f3d',
@@ -1722,7 +1722,7 @@ const chartPayloadJson = chartPayload
     if (!items.length) return;
     const lowOf = (item) => numberValue(item.low ?? item.min);
     const highOf = (item) => numberValue(item.high ?? item.max ?? item.value);
-    const midOf = (item) => numberValue(item.mid ?? item.value ?? ((lowOf(item) + highOf(item)) / 2));
+    const midOf = (item) => numberValue(rangeCenterValue(item) ?? ((lowOf(item) + highOf(item)) / 2));
     const min = Math.min(...items.map(lowOf), ...items.map(midOf), 0);
     const max = Math.max(...items.map(highOf), ...items.map(midOf), 1);
     const span = Math.max(max - min, 1e-9);
@@ -1746,9 +1746,14 @@ const chartPayloadJson = chartPayload
       const mid = midOf(item);
       const high = highOf(item);
       const fill = colorForTone(item.tone);
-      const summaryText = item.displayValue ?? `${formatNumber(low)} – ${formatNumber(high)}`;
+      const labels = {
+        low: formatRangeValue(low),
+        mid: rangeCenterValue(item) == null ? formatNumber(mid) : formatRangeValue(mid),
+        high: formatRangeValue(high),
+      };
+      const summaryText = item.displayValue ?? `${labels.low} – ${labels.high}`;
       const row = root.append('div').attr('class', 'range-row')
-        .datum({ label: safeText(item), low, mid, high, summary: summaryText, notes: figureValueNotes(item) });
+        .datum({ label: safeText(item), low, mid, high, labels, summary: summaryText, notes: figureValueNotes(item) });
       row.append('div').attr('class', 'range-row-label').text(safeText(item));
       const trackCell = row.append('div').attr('class', 'range-row-track-cell');
       const track = trackCell.append('div').attr('class', 'range-row-track');
@@ -1758,9 +1763,9 @@ const chartPayloadJson = chartPayload
         .style('background', fill);
       track.append('div').attr('class', 'range-row-mid-dot').style('left', pct(mid));
       const meta = trackCell.append('div').attr('class', 'range-row-meta');
-      meta.append('span').attr('class', 'range-row-meta-low').text(formatNumber(low));
-      meta.append('span').attr('class', 'range-row-meta-mid').text(`mid ${formatNumber(mid)}`);
-      meta.append('span').attr('class', 'range-row-meta-high').text(formatNumber(high));
+      meta.append('span').attr('class', 'range-row-meta-low').text(labels.low);
+      meta.append('span').attr('class', 'range-row-meta-mid').text(`mid ${labels.mid}`);
+      meta.append('span').attr('class', 'range-row-meta-high').text(labels.high);
       row.append('div').attr('class', 'range-row-summary').text(summaryText);
       row.selectAll('div.range-row-detail').data(figureValueNotes(item)).join('div')
         .attr('class', 'range-row-detail').text((note) => note);
@@ -1772,7 +1777,7 @@ const chartPayloadJson = chartPayload
         .style('left', pct(tickValue))
         .text(tickFormat(tickValue));
     });
-    withTooltip(root.selectAll('.range-row'), (d) => tooltipHtml(d.label, [`Low: ${formatNumber(d.low)}`, `Mid: ${formatNumber(d.mid)}`, `High: ${formatNumber(d.high)}`, ...d.notes]));
+    withTooltip(root.selectAll('.range-row'), (d) => tooltipHtml(d.label, [`Low: ${d.labels.low}`, `Mid: ${d.labels.mid}`, `High: ${d.labels.high}`, ...d.notes]));
   };
 
   const renderQuadrant = (element, payload) => {

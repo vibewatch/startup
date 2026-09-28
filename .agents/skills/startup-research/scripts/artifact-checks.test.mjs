@@ -12,9 +12,55 @@ import { KNOWN_DIMENSIONS, WARNING_DIMENSIONS } from './validation-catalog.mjs';
 import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
 import { checkRefreshReadback, refreshArtifactsAreInSync } from './refresh-readback.mjs';
 import { reportsDir } from './utils.mjs';
-import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, funnelStageTable, stackLayerDetails, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
+import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, rangeCenterValue, stackLayerDetails, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
 import { isTranslatableLeaf, TRANSLATE_PATHS } from '../../translate-zh/scripts/whitelist.mjs';
 import { claimRefs } from '../../../../website/src/lib/report-types.ts';
+
+test('range centers preserve explicit aliases and finite numeric base without treating evidence prose as zero', () => {
+  const cases = [
+    [{ low: 80, base: 147, high: 250 }, 147],
+    [{ mid: 0, value: 4, base: 6 }, 0],
+    [{ mid: 3, value: 4, base: 6 }, 3],
+    [{ mid: null, value: 0, base: 6 }, 0],
+    [{ mid: null, value: '0.0425', base: 6 }, '0.0425'],
+    [{ mid: null, value: null, base: 0 }, 0],
+    [{ base: -0.0425 }, -0.0425],
+    [{ low: 1, high: 3 }, undefined],
+    ...['public + estimated', 'estimated', 'inferred', '', '147', null, undefined, false, NaN, Infinity, -Infinity]
+      .map(base => [{ low: 975, base, high: 1000 }, undefined]),
+  ];
+  for (const [item, expected] of cases) {
+    const before = structuredClone(item);
+    assert.equal(rangeCenterValue(Object.freeze(item)), expected);
+    assert.deepEqual(item, before);
+  }
+});
+
+test('range value labels retain authored decimal precision across magnitudes', () => {
+  for (const value of [
+    0, 0.04, 0.0425, 0.045, 26.055, 26.058, 26.06, 123.456, 1234.56789,
+    1234567.890123, 21.040000000000003, 119.999899, -0.0425, -1234.56789, 1e-21, 1e21, Number.MIN_VALUE, Number.MAX_VALUE,
+  ]) {
+    assert.equal(Number(formatRangeValue(value).replaceAll(',', '')), value);
+  }
+  assert.equal(formatRangeValue(0.0425), '0.0425');
+  assert.equal(formatRangeValue(26.058), '26.058');
+  assert.equal(formatRangeValue(1234.56789), '1,234.56789');
+  assert.notEqual(formatRangeValue(0.04), formatRangeValue(0.045));
+});
+
+test('range renderer uses identical authored values in visible labels and pointer tooltips', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const range = source.slice(source.indexOf('const renderRange ='), source.indexOf('const renderQuadrant ='));
+  assert.match(range, /numberValue\(rangeCenterValue\(item\) \?\?/);
+  assert.match(range, /low: formatRangeValue\(low\)/);
+  assert.match(range, /high: formatRangeValue\(high\)/);
+  assert.match(range, /rangeCenterValue\(item\) == null \? formatNumber\(mid\) : formatRangeValue\(mid\)/);
+  for (const field of ['low', 'mid', 'high']) {
+    assert.match(range, new RegExp(`text\\([^\\n]*labels\\.${field}`));
+    assert.match(range, new RegExp(`\\$\\{d\\.labels\\.${field}\\}`));
+  }
+});
 
 test('refresh acceptance checks both reports and existing overlays without rewriting history', () => {
   const runId = '20990101000000-refresh-check';

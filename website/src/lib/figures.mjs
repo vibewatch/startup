@@ -202,6 +202,16 @@ export function flowRelationshipTable(data, topology, { nodeLabel, connectionLab
   };
 }
 
+export function rangeCenterValue(item) {
+  return item.mid ?? item.value ?? (Number.isFinite(item.base) ? item.base : undefined);
+}
+
+const rangeValueFormatter = new Intl.NumberFormat('en-US', { maximumSignificantDigits: 21 });
+
+export function formatRangeValue(value) {
+  return Number.isFinite(value) ? rangeValueFormatter.format(value) : String(value ?? '');
+}
+
 export function withRangeTones(figure) {
   if (figure.type !== 'range' || !Array.isArray(figure.data?.items)) return figure;
   return {

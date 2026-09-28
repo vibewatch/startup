@@ -782,6 +782,11 @@ translated display labels must not change those colors.
 Range rows must also retain every distinct detail, note, context and unit on the
 page, in print and in hover/tap tooltips. Check the authored low, center and high
 values without inferring comparability or forecast confidence from the display.
+An explicit `mid` or `value` takes priority over a finite-number `base`; prose
+evidence labels in `base` are not numeric centers. Authored bounds and centers
+retain decimal precision in visible labels, generated summaries and tooltips.
+Check the center marker's position too, not just its text. Inferred midpoints
+and axis ticks retain their existing compact formatting.
 Stack diagrams retain their complete ordered items, modules and outputs in
 visible layer details and matching tooltips, even when the diagram previews
 only a few pills. Check every label, value, unit and qualification in both
