@@ -113,6 +113,9 @@ const hedgeRules = [
     en: /\bclaims?\b|\bclaimed\s+scale\b/i,
     zh: /声称|称|说法|主张|表述|断言|声明|自述|公司口径|网站口径|反方观点/u,
     alternative: (source, target) => /(?<!并非|不是|非)公司披露的(?:汇总|增长)口径|(?<!并非|不是|非)管理层口径/u.test(target)
+      || (/\bcustomer validates (?:the )?fabric claim\b/i.test(source)
+        && (source.match(/\bclaims?\b|\bclaimed\s+scale\b/gi) ?? []).length === 1
+        && /(?:^|[。！？；，：\n])\s*客户在[^。！？；，：\n.!?;,]{1,60}(?:中|内)验证面料承诺(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
       || (/\bclaims about tariff impacts are based on publicly available\b/i.test(source)
         && (source.match(/\bclaims?\b|\bclaimed\s+scale\b/gi) ?? []).length === 1
         && /(?<!并非\s*|不是\s*|非\s*|不\s*)关税影响论断基于/u.test(target)),

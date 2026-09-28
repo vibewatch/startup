@@ -427,6 +427,10 @@ Likewise, `arbitration claims against` a party are arbitration demands, while
 `non-competition and non-solicitation claims against` a party are legal demands.
 Neither is a company assertion. A separate company or arbitration-provider
 assertion still requires attribution.
+In `customer validates fabric claim`, `客户在…验证面料承诺` retains the
+customer's testing of a fabric promise. This scoped rendering cannot satisfy
+a separate company assertion, a negated test, or a different claim; it does not
+establish that the promised performance was actually achieved.
 `public evidence can support the claim that` introduces an evidence-based judgment,
 not necessarily a company assertion. A separate company claim still needs attribution.
 `公开市场上没有独立的校园招聘…TAM` can retain the explicit standalone

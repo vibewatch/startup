@@ -77,6 +77,22 @@ function entryMultiplePair({ header = 'Exit Multiple at 5.6B Entry', target = '�
 
 const checks = [
   ...[
+    ['Customer validates fabric claim in gym, yoga studio, or daily life.', '客户在健身房、瑜伽馆或日常生活中验证面料承诺。', false],
+    ['The customer validates the fabric claim in daily life.', '客户在日常生活中验证面料承诺。', false],
+    ['Customer validates fabric claim in daily life.', '客户在日常生活中使用面料。', true],
+    ['Customer validates fabric claim in daily life.', '并非客户在日常生活中验证面料承诺。', true],
+    ['Customer validates fabric claim in daily life.', '客户在日常生活中没有验证面料承诺。', true],
+    ['Customer validates fabric claim in daily life.', '客户在日常生活中验证面料承诺的判断不成立。', true],
+    ['Customer validates fabric claim in daily life.', '客户在日常生活中运动；其他人验证面料承诺。', true],
+    ['The company claims its fabric lasts longer.', '客户在日常生活中验证面料承诺。', true],
+    ['Customer validates fabric claim in daily life; the company claims every customer renews.', '客户在日常生活中验证面料承诺；每个客户都续约。', true],
+    ['Customer validates fabric claim in daily life; the company claims every customer renews.', '客户在日常生活中验证面料承诺；公司声称每个客户都续约。', false],
+  ].flatMap(([en, zh, expected]) => [false, true].map(strictEditor => [
+    checkPairQuality(fullReport(`${en} This is a source-reviewed diligence observation.`), fullReport(zh), { strictEditor })
+      .some(issue => issue.code === 'hedge-preservation') === expected,
+    `customer testing of a fabric promise remains distinct from an unattributed assertion (strict=${strictEditor}): ${en} / ${zh}`,
+  ])),
+  ...[
     ['客户通过从大型券商和经纪交易商转来的 W-2 顾问触达。', false],
     ['公司通过转来的顾问连接客户。', false],
     ['公司通过来自券商的顾问连接客户。', false],
