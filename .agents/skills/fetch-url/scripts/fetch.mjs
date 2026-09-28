@@ -216,6 +216,7 @@ const ENTITY_MAP = {
 
 const NOISE_TAGS = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE', 'SVG', 'IFRAME', 'CANVAS']);
 const PROTECTED_EXTRACTION_TAGS = new Set(['HTML', 'HEAD', 'BODY', 'MAIN', 'ARTICLE']);
+const ORG_CHART_CONTROL_ONLY_RE = /^Search the org chart\s+Please certify that all the modifications are exact\s*$/i;
 const NOISE_HINT_RE = /\b(cookie|cookies|consent|gdpr|privacy[-_\s]?preferences?|newsletter|subscribe[-_\s]?(modal|popup|form|box|banner)|sign[-_\s]?up[-_\s]?(modal|popup|form|box|banner)|modal|popup|overlay|interstitial|ad[-_\s]?(container|slot|banner|unit)|advertisement|social[-_\s]?(share|links?)|share[-_\s]?(buttons?|bar|widget)|related[-_\s]?(articles?|posts?)|recommended[-_\s]?(articles?|posts?)|recirculation)\b/i;
 const NOISE_TEXT_RE = /\b(cookie|cookies|consent|gdpr|newsletter|subscribe to|sign up for|share this|advertisement|sponsored)\b/i;
 const BOILERPLATE_LINE_PATTERNS = [
@@ -630,11 +631,18 @@ function elementSignalText(el) {
   ].filter((value) => typeof value === 'string' && value.trim()).join(' ');
 }
 
+function isLoginLockoutNotice(value) {
+  const text = String(value ?? '').replace(/\s+/gu, ' ').trim();
+  return /^After three unsuccessful trials, for your security,\s*your access has to be interrupted for 10 minutes\.\s*Many thanks for your appreciated understanding\.\s*Please contact us for any assistance at (?:\[email protected\]|\S+@\S+)\.\s*(?:Close\s*)?$/i.test(text);
+}
+
 function isLikelyNoiseElement(el) {
   const tag = el.tagName?.toUpperCase?.() ?? '';
   if (NOISE_TAGS.has(tag)) return true;
   if (PROTECTED_EXTRACTION_TAGS.has(tag)) return false;
   if (el.hasAttribute?.('hidden') || String(el.getAttribute?.('aria-hidden') ?? '').toLowerCase() === 'true') return true;
+  if (el.classList?.contains('hidden')
+      && (isLoginLockoutNotice(el.textContent) || /^(?:sign[-_]?in|log[-_]?in)[-_](?:bubble|dialog|modal|popup)$/i.test(el.id ?? ''))) return true;
 
   const role = String(el.getAttribute?.('role') ?? '').toLowerCase();
   const signal = elementSignalText(el);
@@ -764,6 +772,12 @@ async function extractHtmlText(html, url, contentType, { mainContent = true } = 
     const article = new Readability(dom.window.document).parse();
     const articleText = article?.content ? htmlToText(article.content) : normalizePlainText(article?.textContent ?? '');
     const cleanedArticleText = cleanExtractedText(articleText);
+    if (ORG_CHART_CONTROL_ONLY_RE.test(cleanedArticleText.text.trim())) {
+      return fullTextExtraction(cleanedFullText, {
+        domStats: domCleaning,
+        fallbackReason: 'readability-org-chart-controls',
+      });
+    }
     if (!cleanedArticleText.text) {
       return fullTextExtraction(cleanedFullText.text ? cleanedFullText : fallbackText, {
         domStats: domCleaning,
@@ -988,6 +1002,8 @@ export function isAccessErrorResponse(result) {
     .replace(/[‘’]/gu, "'");
   if (/^(?:404\s*[-:：]?\s*)?(?:没有找到此种页面|页面未找到|页面不存在|找不到页面|page not found|not found)[.!。]?\s*$/iu.test(text)) return true;
   const unwrappedText = text.replace(/^Title:[^\n]*\n+URL Source:\s*https?:\/\/[^\n]+\n+(?:(?:Published Time:[^\n]*|Warning: This is a cached snapshot of the original page, consider retry with caching opt-out\.)\n+)*Markdown Content:\s*/i, '');
+  if (isLoginLockoutNotice(unwrappedText)) return true;
+  if (ORG_CHART_CONTROL_ONLY_RE.test(unwrappedText.trim())) return true;
   if (/^Due to aggressive automated scraping of FederalRegister\.gov and eCFR\.gov,[\s\S]{0,1200}Your request has been flagged as potentially automated\.[\s\S]{0,1200}complete the CAPTCHA \(bot test\)[\s\S]{0,1200}to make a request\.\s*$/i.test(unwrappedText)) return true;
   if (!unwrappedText.trim()
       && (/^(?:text\/(?:html|plain)|application\/xhtml\+xml)(?:;|$)/i.test(result.contentType ?? '')
@@ -1016,7 +1032,7 @@ async function hasAccessErrorContent(result) {
   if (!result || looksLikePdfBuffer(result.body)) return false;
   const body = Buffer.isBuffer(result.body) ? result.body.toString('utf8') : String(result.body ?? '');
   if (!looksLikeHtml(body, result.contentType)
-      || !/Create\s+FREE\s+account\s+to\s+continue\./i.test(htmlToText(body))) return false;
+      || !/Create\s+FREE\s+account\s+to\s+continue\.|After\s+three\s+unsuccessful\s+trials,\s*for\s+your\s+security,/i.test(htmlToText(body))) return false;
   const extracted = await extractHtmlText(body, result.finalUrl || result.url, result.contentType);
   return isAccessErrorResponse({ ...result, body: extracted.text });
 }

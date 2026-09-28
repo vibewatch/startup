@@ -846,6 +846,25 @@ const federalRegisterAccessBodies = [
   `Title:\n\nURL Source: https://www.federalregister.gov/documents/2026/02/12/2026-02866/revision\n\nWarning: This is a cached snapshot of the original page, consider retry with caching opt-out.\n\nMarkdown Content:\n${federalRegisterAccessText}`,
   `<html><body><!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-base">Wayback Machine</div><!-- END WAYBACK TOOLBAR INSERT -->${federalRegisterAccessText}</body></html>`,
 ];
+const loginLockoutText = 'After three unsuccessful trials, for your security,\n'
+  + 'your access has to be interrupted for 10 minutes.\n\n'
+  + 'Many thanks for your appreciated understanding.\n'
+  + 'Please contact us for any assistance at [email protected].';
+const loginLockoutBodies = [
+  loginLockoutText,
+  `<html><head><title>Example Company Org Chart</title></head><body>${loginLockoutText}<a>Close</a></body></html>`,
+  `Title: Example Company Org Chart\n\nURL Source: https://example.com/org-chart\n\nMarkdown Content:\n${loginLockoutText}`,
+  `Title:\n\nURL Source: https://example.com/org-chart\n\nWarning: This is a cached snapshot of the original page, consider retry with caching opt-out.\n\nMarkdown Content:\n${loginLockoutText}`,
+  `<html><body><!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-base">Wayback Machine</div><!-- END WAYBACK TOOLBAR INSERT -->${loginLockoutText}</body></html>`,
+  loginLockoutText.replace('[email protected]', 'support@example.com'),
+];
+const loginLockoutChromeBody = `<html><head><title>Example Company Org Chart</title></head><body><nav>Companies Industries Pricing</nav><main><article><p>${loginLockoutText}</p></article></main><footer>Terms Privacy Contact</footer></body></html>`;
+const orgChartControlText = 'Search the org chart\n\nPlease certify that all the modifications are exact';
+const orgChartControlBodies = [
+  orgChartControlText,
+  `<html><head><title>Org chart</title></head><body>${orgChartControlText}</body></html>`,
+  `Title: Org chart\n\nURL Source: https://example.com/org-chart\n\nMarkdown Content:\n${orgChartControlText}`,
+];
 const clinicalTrialShellBodies = [
   `<html><head><title>ClinicalTrials.gov</title></head><body>${clinicalGlossaryShell}</body></html>`,
   '<html><head><title>ClinicalTrials.gov</title></head><body>Show glossary</body></html>',
@@ -937,6 +956,8 @@ const accessErrorBodies = [
   'Title:\n\nURL Source: https://example.com/page\n\nPublished Time: 2026-04-16\n\nMarkdown Content:\nPowered and protected by\n\nPrivacy',
   ...clinicalTrialShellBodies,
   ...federalRegisterAccessBodies,
+  ...loginLockoutBodies,
+  ...orgChartControlBodies,
 ];
 
 const financialTables = '<table><tr><th>Metric</th><th>2026</th><th>2025</th></tr>'
@@ -1016,6 +1037,106 @@ test('fetch CLI preserves financial tables in main, full, cached and reader text
       assert.equal(output.cache.hit, mode === 'cache', mode);
       assert.equal(output.extraction.method, ['main', 'cache'].includes(mode) ? 'readability' : 'full-text', mode);
       assert.equal(output.retrievalSource, mode === 'reader' ? 'reader' : 'origin', mode);
+    }
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
+});
+
+test('fetch CLI excludes hidden login dialogs without discarding the public org chart or raw bytes', () => {
+  const folder = mkdtempSync(join(tmpdir(), 'source-hidden-lockout-check-'));
+  const url = 'https://example.com/org-chart';
+  const body = '<html><head><title>Example Company Org Chart</title></head><body>'
+    + '<aside><h1>Example Company Org Chart</h1><div>2 executives</div><div>CEO</div><div>A. Founder</div>'
+    + '<div>CFO</div><div>B. Finance</div><div>Updated Aug 20, 2025</div></aside>'
+    + '<article><div>Search the org chart</div><p>Please certify that all the modifications are exact</p></article>'
+    + '<div id="signin-bubble" class="hidden"><div>For each of our 1,321,081 listed executives,<br>discover their exact roles<br>and their biographies.</div><a>Complimentary Test</a></div>'
+    + `<div id="userLoginLimitEffort-bubble" class="hidden"><div>${loginLockoutText.replaceAll('\n', '<br>')}</div><a>Close</a></div>`
+    + '</body></html>';
+  try {
+    for (const mode of ['main', 'full', 'reader', 'archive', 'cache', 'archive-cache', 'raw']) {
+      const cached = mode === 'cache' || mode === 'archive-cache';
+      const variant = mode === 'archive-cache' ? 'wayback' : 'origin';
+      const log = join(folder, `${mode}.jsonl`);
+      const rawFile = join(folder, 'original.html');
+      if (cached) writeFileSync(join(folder, `${canonicalCacheKey(url, variant)}.json`), JSON.stringify({
+        requestedUrl: url, finalUrl: url, status: 200, ok: true, contentType: 'text/html',
+        body: Buffer.from(body).toString('base64'), source: variant, fetchedAt: new Date().toISOString(),
+      }));
+      const flags = [
+        url, '--json', '--no-host-map', '--no-throttle', '--no-retry-profiles', '--no-reader', '--no-wayback',
+        ...(cached ? ['--cache-dir', folder] : ['--no-cache']),
+        ...(mode === 'full' ? ['--full-text'] : []),
+        ...(mode === 'reader' ? ['--via-reader'] : []),
+        ...(mode === 'archive' || mode === 'archive-cache' ? ['--via-wayback'] : []),
+        ...(mode === 'raw' ? ['--raw', '--out', rawFile] : []),
+      ];
+      const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
+        import assert from 'node:assert/strict';
+        import { main } from './.agents/skills/fetch-url/scripts/fetch.mjs';
+        let requests = 0;
+        globalThis.fetch = async (url) => {
+          requests++;
+          const response = new Response(${JSON.stringify(body)}, { status: 200, headers: { 'content-type': 'text/html' } });
+          Object.defineProperty(response, 'url', { value: String(url) });
+          return response;
+        };
+        await main(${JSON.stringify(flags)});
+        assert.equal(requests, ${cached ? 0 : 1});
+      `], { encoding: 'utf8', env: { ...process.env, STARTUP_FETCH_LOG_PATH: log } });
+      assert.equal(result.status, 0, `${mode}: ${result.stderr}`);
+      const output = JSON.parse(result.stdout);
+      assert.equal(output.ok, true, mode);
+      assert.equal(output.cache.hit, cached, mode);
+      const trail = JSON.parse(readFileSync(log, 'utf8').trim());
+      assert.equal(trail.ok, true, mode);
+      assert.equal(trail.sha256, createHash('sha256').update(body).digest('hex'), mode);
+      if (mode === 'raw') {
+        assert.deepEqual(readFileSync(rawFile), Buffer.from(body));
+      } else {
+        for (const text of ['2 executives', 'CEO', 'A. Founder', 'CFO', 'B. Finance', 'Updated Aug 20, 2025']) {
+          assert.ok(output.output.includes(text), `${mode}: missing ${text}: ${output.output}`);
+        }
+        assert.doesNotMatch(output.output, /unsuccessful trials|interrupted for 10 minutes|Complimentary Test/);
+        if (mode !== 'full') assert.equal(output.extraction.fallbackReason, 'readability-org-chart-controls');
+      }
+    }
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
+});
+
+test('fetch CLI preserves visible articles explaining lockouts in fresh and cached responses', () => {
+  const folder = mkdtempSync(join(tmpdir(), 'source-lockout-article-check-'));
+  const url = 'https://example.com/security-guide';
+  const article = 'This guide explains login lockouts rather than denying access. The example below illustrates a temporary account restriction. Public company records still require independent review.';
+  const body = `<html><head><title>Account security guide</title></head><body><section id="signin-bubble" class="not-hidden"><h1>Account security guide</h1>${`<p>${article}</p>`.repeat(4)}<blockquote>${loginLockoutText}</blockquote></section></body></html>`;
+  try {
+    for (const cached of [false, true]) {
+      if (cached) writeFileSync(join(folder, `${canonicalCacheKey(url)}.json`), JSON.stringify({
+        requestedUrl: url, finalUrl: url, status: 200, ok: true, contentType: 'text/html',
+        body: Buffer.from(body).toString('base64'), source: 'origin', fetchedAt: new Date().toISOString(),
+      }));
+      const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
+        import assert from 'node:assert/strict';
+        import { main } from './.agents/skills/fetch-url/scripts/fetch.mjs';
+        let requests = 0;
+        globalThis.fetch = async () => {
+          requests++;
+          return new Response(${JSON.stringify(body)}, { status: 200, headers: { 'content-type': 'text/html' } });
+        };
+        await main(${JSON.stringify([
+          url, '--json', '--no-host-map', '--no-throttle', '--no-retry-profiles', '--no-reader', '--no-wayback',
+          ...(cached ? ['--cache-dir', folder] : ['--no-cache']),
+        ])});
+        assert.equal(requests, ${cached ? 0 : 1});
+      `], { encoding: 'utf8', env: { ...process.env, STARTUP_FETCH_LOG_PATH: '' } });
+      assert.equal(result.status, 0, result.stderr);
+      const output = JSON.parse(result.stdout);
+      assert.equal(output.ok, true);
+      assert.equal(output.cache.hit, cached);
+      assert.ok(output.output.includes(article));
+      assert.ok(output.output.includes('After three unsuccessful trials'));
     }
   } finally {
     rmSync(folder, { recursive: true, force: true });
@@ -1166,6 +1287,12 @@ test('access-error detection preserves real articles about security and PDF bodi
     '<html><title>Understanding Federal Register :: Request Access</title><article>A guide to the public API.</article></html>',
     `Federal Register access guide\n\n${federalRegisterAccessText}`,
     `${federalRegisterAccessText}\n\nThis article quotes an access notice; it does not serve the challenge.`,
+    `Account security guide\n\n${loginLockoutText}`,
+    `${loginLockoutText}\n\nThis article explains the lockout notice, rather than presenting an access error.`,
+    `Title: Example Company Org Chart\n\nURL Source: https://example.com/org-chart\n\nMarkdown Content:\nCEO: A. Founder.\n\n${loginLockoutText}`,
+    `<html><head><title>Example Company Org Chart</title></head><body><article>CEO: A. Founder.</article><div class="hidden">${loginLockoutText}</div></body></html>`,
+    `${orgChartControlText}\n\nCEO: A. Founder.`,
+    `Editing guide\n\n${orgChartControlText}`,
     'The Federal Register revised the rule effective February 12, 2026. Its web page sometimes displays "Request Access".',
     'Title: Funding announcement\n\nURL Source: https://example.com/article\n\nMarkdown Content:\nThe company raised $150M. An old link is titled DO NOT DELETE - 404 Page.',
     'Title: Funding announcement\n\nURL Source: https://example.com/article\n\nMarkdown Content:\nThe company raised $150M. An old link is titled 404 | Page Not Found.',
@@ -1206,6 +1333,8 @@ test('access-error detection preserves real articles about security and PDF bodi
     Buffer.from('%PDF-1.7\nTitle: 404 | Page Not Found'),
     Buffer.from('%PDF-1.7\nTitle: DO NOT DELETE - 404 Page'),
     Buffer.from(`%PDF-1.7\nTitle: Federal Register :: Request Access\n${federalRegisterAccessText}`),
+    Buffer.from(`%PDF-1.7\n${loginLockoutText}`),
+    Buffer.from(`%PDF-1.7\n${orgChartControlText}`),
     Buffer.from('%PDF-1.7\nYou are now being redirected to shortly.....'),
     Buffer.from('%PDF-1.7\nNew to Earnings Whispers?\nCreate FREE account to continue.'),
     Buffer.from('%PDF-1.7\nA 1x1 image, likely be a tacker probe'),
@@ -1293,7 +1422,7 @@ test('reader URLs preserve the original scheme without adding a second one', () 
 test('fetch CLI rejects origin, reader, archived, and cached access-error pages with a failed fetch trail', () => {
   const folder = mkdtempSync(join(tmpdir(), 'source-fetch-check-'));
   try {
-    const bodies = [...accessErrorBodies, signupChromeBody];
+    const bodies = [...accessErrorBodies, signupChromeBody, loginLockoutChromeBody];
     const cases = bodies.flatMap((_, index) =>
       ['origin', 'reader', 'archive', 'cache', 'archive-cache'].map((mode) => [index, mode]));
     for (const [index, mode] of cases) {
@@ -1344,7 +1473,7 @@ test('fetch CLI rejects origin, reader, archived, and cached access-error pages 
 });
 
 test('fetch CLI recovers an access-error page through a valid reader response', () => {
-  for (const body of [accessErrorBodies[0], ...clinicalTrialShellBodies, ...federalRegisterAccessBodies, ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, ...waybackShellBodies, ...archiveRedirectBodies, ...emptyHtmlBodies, signupChromeBody]) {
+  for (const body of [accessErrorBodies[0], ...clinicalTrialShellBodies, ...federalRegisterAccessBodies, ...loginLockoutBodies, ...orgChartControlBodies, ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, ...waybackShellBodies, ...archiveRedirectBodies, ...emptyHtmlBodies, signupChromeBody, loginLockoutChromeBody]) {
     const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
       import assert from 'node:assert/strict';
       import { main } from './.agents/skills/fetch-url/scripts/fetch.mjs';
@@ -1370,7 +1499,7 @@ test('fetch CLI refreshes blocked reader and archive fallback caches', () => {
   const folder = mkdtempSync(join(tmpdir(), 'source-fallback-cache-check-'));
   const url = 'https://example.com/page';
   try {
-    const cases = ['Powered and protected by\n\nPrivacy', clinicalTrialShellBodies[0], ...federalRegisterAccessBodies, ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, ...waybackShellBodies, ...archiveRedirectBodies, ...emptyHtmlBodies, signupChromeBody]
+    const cases = ['Powered and protected by\n\nPrivacy', clinicalTrialShellBodies[0], ...federalRegisterAccessBodies, ...loginLockoutBodies, ...orgChartControlBodies, ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, ...waybackShellBodies, ...archiveRedirectBodies, ...emptyHtmlBodies, signupChromeBody, loginLockoutChromeBody]
       .flatMap((body) => ['reader', 'wayback'].map((variant) => [body, variant]));
     for (const [body, variant] of cases) {
       writeFileSync(join(folder, `${canonicalCacheKey(url, variant)}.json`), JSON.stringify({
