@@ -94,6 +94,7 @@ const rightsClaimContexts = new RegExp([
 ].join('|'), 'gi');
 const evidenceAssessmentClaimContexts = /\bevidence\s+does\s+not\s+support\s+a\s+clear\s+positive\s+claim\b|\bpublic\s+evidence\s+can\s+(?:therefore\s+)?support\s+the\s+claim\s+that\b/gi;
 const procurementSequenceDisclaimer = /\bnot a claim that every customer follows the exact same procurement sequence\b/i;
+const valuationMultiplesDisclaimer = /\bnot a claim that the company has already earned public-market software multiples on disclosed fundamentals\b/i;
 const withPrejudiceDisposition = /\b(?:dismiss(?:ed|al)|withdraw(?:n|al))\b[^.!?;\n]{0,220}\bwith prejudice\b|\bwith-prejudice (?:dismissal|withdrawal)\b/i;
 const literalDismissalBias = /(?:有偏见|带偏见)(?:地|的)?(?:驳回|撤诉)/u;
 const hedgeRules = [
@@ -132,12 +133,16 @@ const hedgeRules = [
       || (/\bclaims about tariff impacts are based on publicly available\b/i.test(source)
         && (source.match(/\bclaims?\b|\bclaimed\s+scale\b/gi) ?? []).length === 1
         && /(?<!并非\s*|不是\s*|非\s*|不\s*)关税影响论断基于/u.test(target)),
-    excludeContext: new RegExp(`${insuranceClaimNouns.source}|${patentClaimNouns.source}|${marketSizingClaimContexts.source}|${legalCounterclaimContexts.source}|${rightsClaimContexts.source}|${evidenceAssessmentClaimContexts.source}|${procurementSequenceDisclaimer.source}|\\bclaims\\s+in\\s+this\\s+table\\s+are\\s+minted\\s+locally\\b|\\bsynthesized\\s+from\\s+the\\s+cited\\s+claims\\b|\\bpublic[- ]claims?\\s+dispersion\\b|\\brather\\s+than\\s+a\\s+single\\s+["“][^"“”\\n]{1,180}["”]\\s+claim\\b|\\bwarranty\\s+claims?\\b(?=\\s*(?:[,.;:]|$)|\\s+(?:history|rates?|response|frequency|data|targets?|resolved|triggered|processing|handling|costs?|by|if|and|or)\\b)`, 'gi'),
+    excludeContext: new RegExp(`${insuranceClaimNouns.source}|${patentClaimNouns.source}|${marketSizingClaimContexts.source}|${legalCounterclaimContexts.source}|${rightsClaimContexts.source}|${evidenceAssessmentClaimContexts.source}|${procurementSequenceDisclaimer.source}|${valuationMultiplesDisclaimer.source}|\\bclaims\\s+in\\s+this\\s+table\\s+are\\s+minted\\s+locally\\b|\\bsynthesized\\s+from\\s+the\\s+cited\\s+claims\\b|\\bpublic[- ]claims?\\s+dispersion\\b|\\brather\\s+than\\s+a\\s+single\\s+["“][^"“”\\n]{1,180}["”]\\s+claim\\b|\\bwarranty\\s+claims?\\b(?=\\s*(?:[,.;:]|$)|\\s+(?:history|rates?|response|frequency|data|targets?|resolved|triggered|processing|handling|costs?|by|if|and|or)\\b)`, 'gi'),
     exclude: /\b(?:(?:for|in|of|on)\s+claims?\s+(?:modeling|modelling|processing|handling|management|adjudication|submission|settlement|opening|setup|negotiation)|patent\s+claims?\s+(?:drafting|construction|interpretation|scope)|small[- ]claims?\s+(?:processing|courts?)|clinical\s*,\s*claims?\s*,?\s+and\s+operational\s+(?:data|systems)|EHRs?\s*,\s*claims?\s+systems|fraud\s+claims?\s+handling|government\s+guarantee\s+claims?\s+status|insurance\s+coverage\s+limits?\s+and\s+claims\s+history|premium\s+and\s+claims\s+expenditure|high[- ]cost\s+claims?\s+(?:concentration|categories)|million[- ]dollar[- ]plus\s+claims|highest[- ]ROI\s+claims|claims[- ]data[- ]driven|\d+(?:\.\d+)?%\s+claims\s+cost\s+reduction|real[- ]time\s+claims\s+data|claims\s+data\s+latency(?=\s*(?:[.;]|$))|do(?:es)?\s+not\s+reveal\s+claims?\s+quality\s+or\s+jurisdictions|qualitative\s+directional\s+claim|(?:personal|bodily)[ -]injury\s+claims?|(?:anchor|inflate|weaken)\s+claims?\s+values?|claims?-inflation|InsurTech\s+claims?\s+processing|insurance\s+carriers?\s+claims?\s+automation|claims?\s+setup(?=\s*,\s*care\s+coordination\b)|per\s+claims?|open\s+claims|return(?:s|ing)?\s+claims?\s+numbers|handle\s+claims?\s+negotiation|trained\s+on\s+(?:hundreds|thousands|millions)\s+of\s+claims|malpractice\s+claims|customer\s+compensation\s+claims|billing\s+documentation\s*[;,]\s*claims?\s+validation|claims?\s+denial\s+reduction\s+data|not\s+marketing\s+claims)\b/gi,
   },
   {
     en: procurementSequenceDisclaimer,
     zh: /(?:^|[。！？；，：\n])\s*(?:这|该图|该模型)?(?:并不是说|不是说|不代表|并非表明)每个客户都(?:严格)?按(?:照)?同一采购顺序(?:推进|进行)(?=\s*(?:[。！？；，.!?;,]|$))/u,
+  },
+  {
+    en: valuationMultiplesDisclaimer,
+    zh: /(?:^|[。！？；，：\n])\s*(?:而不是|并不是说|不代表|并不代表)(?:该)?公司已经凭(?:借)?(?:已)?披露(?:的)?基本面(?:赚到|获得)(?:了)?(?:公开市场软件|上市软件)(?:公司|企业)?(?:的)?(?:估值)?倍数(?=\s*(?:[。！？；，.!?;,]|$))/u,
   },
   {
     en: /\bnot yet\b/i,

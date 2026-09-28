@@ -493,6 +493,11 @@ separate public-disclosure gap remain distinct. A procurement diagram described
 as `not a claim that every customer follows the exact same procurement sequence`
 is a disclaimer, not a company assertion. Its Chinese must still disclaim a
 universal sequence; reversing it or omitting a separate assertion fails.
+Likewise, `not a claim that the company has already earned public-market software
+multiples on disclosed fundamentals` is a valuation disclaimer, not a company
+assertion. Retain the denial and its disclosed-fundamentals basis; a positive
+claim, negated disclaimer, different basis or separate omitted assertion still
+fails. This scoped check does not establish that the valuation itself is sound.
 
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json

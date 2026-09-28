@@ -289,6 +289,27 @@ const checks = [
     `source confirmation, segmented benchmarks and procurement disclaimers retain their predicates (strict=${strictEditor}): ${en} / ${zh}`,
   ])),
   ...[
+    ['This is a valuation view, not a claim that the company has already earned public-market software multiples on disclosed fundamentals.', '这是估值判断，而不是公司已经凭披露基本面赚到公开市场软件倍数。', false],
+    ['This is not a claim that the company has already earned public-market software multiples on disclosed fundamentals.', '并不代表公司已经凭借披露的基本面获得上市软件企业的估值倍数。', false],
+    ['This is not a claim that the company has already earned public-market software multiples on disclosed fundamentals.', '不代表该公司已经凭已披露的基本面获得了上市软件公司的估值倍数。', false],
+    ['This is not a claim that the company has already earned public-market software multiples on disclosed fundamentals.', '公司已经凭披露基本面赚到公开市场软件倍数。', true],
+    ['This is not a claim that the company has already earned public-market software multiples on disclosed fundamentals.', '公司声称已经凭披露基本面赚到公开市场软件倍数。', true],
+    ['This is not a claim that the company has already earned public-market software multiples on disclosed fundamentals.', '并非不代表公司已经凭披露基本面赚到公开市场软件倍数。', true],
+    ['This is not a claim that the company has already earned public-market software multiples on disclosed fundamentals.', '不是 而不是公司已经凭披露基本面赚到公开市场软件倍数。', true],
+    ['This is not a claim that the company has already earned public-market software multiples on disclosed fundamentals.', '而不是公司已经凭披露基本面赚到公开市场软件倍数的判断不成立。', true],
+    ['This is not a claim that the company has already earned public-market software multiples on disclosed fundamentals.', '而不是公司已经凭营销材料赚到公开市场软件倍数。', true],
+    ['This is not a claim that the company has already earned public-market software multiples on disclosed fundamentals.', '而不是公司已经凭披露基本面赚到利润；公开市场软件倍数已经实现。', true],
+    ['This is not a claim that the company has already earned public-market software multiples on disclosed fundamentals; the company claims its revenue doubled.', '而不是公司已经凭披露基本面赚到公开市场软件倍数；收入翻倍。', true],
+    ['This is not a claim that the company has already earned public-market software multiples on disclosed fundamentals; the company claims its revenue doubled.', '而不是公司已经凭披露基本面赚到公开市场软件倍数；公司声称收入翻倍。', false],
+    ['This is not a claim that the company has already earned public-market software multiples on disclosed fundamentals; no public ARR is disclosed.', '而不是公司已经凭披露基本面赚到公开市场软件倍数；ARR 已披露。', true],
+    ['The company claims it has already earned public-market software multiples on disclosed fundamentals.', '公司已经凭披露基本面赚到公开市场软件倍数。', true],
+    ['The company claims it has already earned public-market software multiples on disclosed fundamentals.', '公司声称已经凭披露基本面赚到公开市场软件倍数。', false],
+  ].flatMap(([en, zh, expected]) => [false, true].map(strictEditor => [
+    checkPairQuality(fullReport(`${en} This is a source-reviewed diligence observation.`), fullReport(zh), { strictEditor })
+      .some(issue => issue.code === 'hedge-preservation') === expected,
+    `valuation disclaimers retain negation, fundamentals and separate assertions (strict=${strictEditor}): ${en} / ${zh}`,
+  ])),
+  ...[
     ['供应链集中在印度合同制造，一方面缓释风险，另一方面增加执行难度。', false],
     ['产能集中在印度制造：一方面缓释风险，另一方面增加执行难度。', false],
     ['产能集中在印度制造, 一方面缓释风险。', false],
