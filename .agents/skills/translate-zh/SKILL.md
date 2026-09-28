@@ -227,6 +227,13 @@ their values and occurrence counts. These checks do not establish award
 identity, issuer independence, or the truth of the recognition.
 Other unit or currency conversions still require source
 comparison; do not remove faithful units merely to make token-level checks pass.
+For a table heading `Exit Multiple at 5.6B Entry`, an explicit dollar sign in
+`以 $5.6B 入场的退出倍数` can retain the source table's currency context.
+The checker accepts this specific heading form only with one dated valuation
+column, nonempty entirely dollar-denominated valuation cells, and no conflicting
+currency labels. Standalone text, ambiguous columns, mixed currencies, changed
+amounts, and added qualifications remain outside this inference. Review the
+table's assumptions separately; this does not validate its valuation or returns.
 An exact fallback accepts positive dollar scalars such as `$50M` and
 `5,000 万美元`, comparing all numeric occurrences and paired month/year anchors.
 It shifts decimal text without floating-point rounding. Shared-unit ranges,

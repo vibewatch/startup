@@ -503,6 +503,25 @@ function isLongProse(path, value) {
   return value.length >= 60 && !['label', 'title'].includes(leaf) && !path.includes('columns');
 }
 
+function metricSourceInTable(source, target, path, document) {
+  if (path.length !== 4 || path[0] !== 'tables' || path[2] !== 'columns') return source;
+  const entry = /^Exit Multiple at (\d+(?:\.\d+)?[KMBT]) Entry$/i.exec(source);
+  if (!entry || !/^以\s*\$\d+(?:\.\d+)?[KMBT]\s*入场的退出倍数$/i.test(target)) return source;
+  const table = document.tables?.[path[1]];
+  if (!Array.isArray(table?.columns) || !Array.isArray(table.rows) || !table.rows.length) return source;
+  const valuationColumns = table.columns.flatMap((column, index) => (
+    typeof column === 'string' && /^Valuation by (?:19|20)\d{2}$/i.test(column) ? [index] : []
+  ));
+  if (valuationColumns.length !== 1 || !table.rows.every(row => (
+    Array.isArray(row) && typeof row[valuationColumns[0]] === 'string'
+    && /^\$\d+(?:\.\d+)?[KMBT](?:\s*[-–—]\s*\$\d+(?:\.\d+)?[KMBT])?$/i.test(row[valuationColumns[0]])
+  ))) return source;
+  const context = JSON.stringify(table);
+  if (/[€£¥￥₦₹]|\b(?:EUR|GBP|JPY|CNY|RMB|HKD|AUD|CAD|SGD|INR|KRW|TWD|CHF|NGN|NZD|euros?|yen|renminbi)\b/i.test(context)
+      || /\b(?:(?:Australian|Canadian|Singapore|Hong Kong|New Zealand|Taiwan) dollars?|pounds? sterling|Swiss francs?|Korean won|Indian rupees?)\b/i.test(context)) return source;
+  return source.replace(entry[1], `$${entry[1]}`);
+}
+
 function walk(en, zh, path, whitelist, issues, options) {
   if (Array.isArray(en)) {
     for (let i = 0; i < en.length; i += 1) walk(en[i], zh?.[i], [...path, i], whitelist, issues, options);
@@ -525,7 +544,8 @@ function walk(en, zh, path, whitelist, issues, options) {
     });
   }
   if (options.strictEditor) {
-    const sourceMetrics = normalizedMetricTokens(en);
+    const metricSource = metricSourceInTable(en, zh, path, options.document);
+    const sourceMetrics = normalizedMetricTokens(metricSource);
     let targetMetrics = normalizedMetricTokens(numericTarget);
     // Resolve written ratios only against an otherwise mismatched numeric anchor.
     if (JSON.stringify(sourceMetrics) !== JSON.stringify(targetMetrics)) {
@@ -533,16 +553,16 @@ function walk(en, zh, path, whitelist, issues, options) {
     }
     if (JSON.stringify(sourceMetrics) !== JSON.stringify(targetMetrics)) {
       const equivalentCounts = [false, true].some((normalizeGroupedCounts) => [false, true].some((normalizeMonths) => {
-        const sourceCounts = normalizedCountMetrics(en, { normalizeMonths, normalizeGroupedCounts });
+        const sourceCounts = normalizedCountMetrics(metricSource, { normalizeMonths, normalizeGroupedCounts });
         const targetCounts = normalizedCountMetrics(numericTarget, { normalizeMonths, normalizeGroupedCounts });
         return sourceCounts && targetCounts && JSON.stringify(sourceCounts) === JSON.stringify(targetCounts);
       }));
-      const sourceDollars = equivalentCounts ? null : normalizedDollarMetrics(en);
+      const sourceDollars = equivalentCounts ? null : normalizedDollarMetrics(metricSource);
       const targetDollars = equivalentCounts ? null : normalizedDollarMetrics(numericTarget);
       const equivalentDollars = sourceDollars && targetDollars
         && JSON.stringify(sourceDollars) === JSON.stringify(targetDollars);
-      if (!equivalentCounts && !equivalentDollars && !equivalentTripledMetrics(en, numericTarget)
-          && !equivalentAwardCounts(en, numericTarget)) {
+      if (!equivalentCounts && !equivalentDollars && !equivalentTripledMetrics(metricSource, numericTarget)
+          && !equivalentAwardCounts(metricSource, numericTarget)) {
         pushIssue(issues, {
           path: path.join('/'),
           kind: 'semantic',
@@ -639,7 +659,7 @@ function walk(en, zh, path, whitelist, issues, options) {
 
 export function checkPairQuality(en, zh, options = {}) {
   const issues = [];
-  walk(en, zh, [], whitelistFor(en), issues, { strictEditor: options.strictEditor === true });
+  walk(en, zh, [], whitelistFor(en), issues, { strictEditor: options.strictEditor === true, document: en });
   return issues;
 }
 

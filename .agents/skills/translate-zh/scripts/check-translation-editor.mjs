@@ -63,7 +63,55 @@ const legalClaimNounPairs = [
   ['Reputational risk; likely customer compensation claims; pause adoption pending resolution.', '声誉风险；可能引发客户赔偿索赔；问题解决前暂停采用。'],
 ].map(([en, zh]) => [`${en} This is a diligence observation.`, `${zh} 这是尽调观察。`]);
 
+function entryMultiplePair({ header = 'Exit Multiple at 5.6B Entry', target = '以 $5.6B 入场的退出倍数',
+  valuationHeader = 'Valuation by 2028', values = ['$8B–$15B', '$2B–$4B'], notes = '', duplicateColumn = false } = {}) {
+  const en = { ...fullReport(''), tables: [{
+    columns: [valuationHeader, header, ...(duplicateColumn ? [valuationHeader] : [])],
+    rows: values.map(value => [value, '1.4×', ...(duplicateColumn ? [value] : [])]),
+    notes,
+  }] };
+  const zh = structuredClone(en);
+  zh.tables[0].columns[1] = target;
+  return [en, zh];
+}
+
 const checks = [
+  ...[
+    [{}, false],
+    [{ target: '以$5.6B入场的退出倍数' }, false],
+    [{ header: 'Exit Multiple at 5.6M Entry', target: '以 $5.6M 入场的退出倍数' }, false],
+    [{ target: '以 5.6B 入场的退出倍数' }, false],
+    [{ target: '以 $5.7B 入场的退出倍数' }, true],
+    [{ target: '以 $5.6M 入场的退出倍数' }, true],
+    [{ target: '退出倍数' }, true],
+    [{ target: '以 $5.6B 或 $11B 入场的退出倍数' }, true],
+    [{ target: '以 HK$5.6B 入场的退出倍数' }, true],
+    [{ target: '以 $5.6B 加元入场的退出倍数' }, true],
+    [{ target: '以约 $5.6B 入场的退出倍数' }, true],
+    [{ valuationHeader: 'Robot count by 2028' }, true],
+    [{ values: [] }, true],
+    [{ values: ['$8B–$15B', 'Not disclosed'] }, true],
+    [{ values: ['$8B–$15B', '€2B–€4B'] }, true],
+    [{ values: ['HK$8B–HK$15B'] }, true],
+    [{ values: ['$8B–$15B'], notes: 'Entry is denominated in HKD.' }, true],
+    [{ values: ['$8B–$15B'], notes: 'Entry is priced in Hong Kong dollars.' }, true],
+    [{ duplicateColumn: true }, true],
+    [{ header: 'Exit Multiple at approximately 5.6B Entry' }, true],
+    [{ header: 'Robot count at 5.6B Entry' }, true],
+    [{ header: 'Exit Multiple at $5.6B Entry' }, false],
+  ].flatMap(([options, expected]) => [false, true].map(strictEditor => {
+    const [en, zh] = entryMultiplePair(options);
+    return [
+      checkPairQuality(en, zh, { strictEditor }).some(issue => issue.path === 'tables/0/columns/1' && issue.code === 'metric-preservation')
+        === (strictEditor && expected),
+      `entry currency needs an unambiguous dollar valuation table (strict=${strictEditor}): ${JSON.stringify(options)}`,
+    ];
+  })),
+  [
+    checkPairQuality(fullReport('Exit Multiple at 5.6B Entry'), fullReport('以 $5.6B 入场的退出倍数'), { strictEditor: true })
+      .some(issue => issue.code === 'metric-preservation'),
+    'a standalone heading cannot invent dollar context',
+  ],
   ...[
     ['Customer notices and some indemnity from Insider for narrow claim classes.', '客户通知，以及 Insider 对狭窄索赔类别提供的部分赔偿。', false],
     ['Indemnity is available for narrow claim classes.', '部分特定类别的索赔可获赔偿。', false],
