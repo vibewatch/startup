@@ -855,6 +855,16 @@ const financialRegistryShellBodies = [
   'Title: BrokerCheck - Find a broker, investment or financial advisor\n\nURL Source: https://brokercheck.finra.org/firm/summary/299398\n\nMarkdown Content:\nBrokerCheck - Find a broker, investment or financial advisor',
   '<html><head><title>BrokerCheck - Find a broker, investment or financial advisor</title></head><body><!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-base">Wayback Machine: June 25, 2026</div><!-- END WAYBACK TOOLBAR INSERT --><bc-root></bc-root></body></html>',
 ];
+const waybackBanner = 'The Wayback Machine - https://web.archive.org/web/20260825120613/https://example.com/financials';
+const waybackShellBodies = [
+  waybackBanner,
+  'Wayback Machine',
+  `<html><head><title>Wayback Machine</title></head><body><div id="wm-ipp-print">${waybackBanner}</div></body></html>`,
+  `<html><head><title>Wayback Machine</title></head><body><!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-base">21 captures</div><div id="wm-ipp-print">${waybackBanner}</div><!-- END WAYBACK TOOLBAR INSERT --><iframe id="playback" src="https://web.archive.org/web/20260825120613if_/https://example.com/financials"></iframe><script>window.playback = true;</script></body></html>`,
+  '<html><head><title>Wayback Machine</title></head><body><iframe id="playback"></iframe></body></html>',
+  `Title: Wayback Machine\n\nURL Source: https://web.archive.org/web/20260825120613/https://example.com/financials\n\nMarkdown Content:\n${waybackBanner}`,
+  'Title: Wayback Machine\n\nURL Source: https://example.com/financials\n\nWarning: This is a cached snapshot of the original page, consider retry with caching opt-out.\n\nMarkdown Content:\n',
+];
 const accessErrorBodies = [
   '<html><head><title>Client Challenge</title></head><body>A required part of this site couldn’t load.</body></html>',
   "Title:\n\nURL Source: https://example.com/thread\n\nWarning: Target URL returned error 403: Forbidden\n\nMarkdown Content:\nYou've been blocked by network security.",
@@ -867,6 +877,7 @@ const accessErrorBodies = [
   ...signupShellBodies,
   ...trackingPixelBodies,
   ...financialRegistryShellBodies,
+  ...waybackShellBodies,
   '<html><head><title></title></head><body><div>Powered and protected by</div><div>Privacy</div></body></html>',
   '<html><body><!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-base">Wayback Machine: April 16, 2026</div><!-- END WAYBACK TOOLBAR INSERT --><div>Powered and protected by</div><div>Privacy</div></body></html>',
   'Powered and protected by\n\nPrivacy',
@@ -1084,6 +1095,7 @@ test('HTTP-200 challenge pages are not successful source retrievals', () => {
   assert.equal(isAccessErrorResponse({ status: 200, title: '404 | Page Not Found', body: '' }), true);
   assert.equal(isAccessErrorResponse({ status: 200, title: 'DO NOT DELETE - 404 Page', body: '' }), true);
   assert.equal(isAccessErrorResponse({ status: 200, title: 'ClinicalTrials.gov', body: 'Show glossary' }), true);
+  assert.equal(isAccessErrorResponse({ status: 200, title: 'Wayback Machine', body: '' }), true);
 });
 
 test('access-error detection preserves real articles about security and PDF bodies', () => {
@@ -1120,6 +1132,10 @@ test('access-error detection preserves real articles about security and PDF bodi
     'Title: ClinicalTrials.gov\n\nURL Source: https://clinicaltrials.gov/study/NCT00000001\n\nMarkdown Content:\nShow glossary\n\nStudy enrollment: 60 estimated participants.',
     'ClinicalTrials.gov\n\nShow glossary\n\nThis article describes a JavaScript shell rather than serving one.',
     'Show glossary',
+    `${waybackBanner}\n\nReported revenue: $288M in 2025, with estimated growth of 5-10% in 2026.`,
+    `<html><head><title>Wayback Machine</title></head><body><!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-print">${waybackBanner}</div><!-- END WAYBACK TOOLBAR INSERT --><article>Reported revenue: $288M in 2025.</article></body></html>`,
+    'Title: Wayback Machine\n\nURL Source: https://example.com/financials\n\nMarkdown Content:\nReported revenue: $288M in 2025.',
+    'Wayback Machine\n\nThis article explains how archived pages are retrieved.',
     Buffer.from('%PDF-1.7\nTitle: Vercel Security Checkpoint'),
     Buffer.from('%PDF-1.7\nTitle: 页面未找到'),
     Buffer.from('%PDF-1.7\nTitle: 404 | Page Not Found'),
@@ -1131,6 +1147,7 @@ test('access-error detection preserves real articles about security and PDF bodi
     Buffer.from('%PDF-1.7\nBrokerCheck - Find a broker, investment or financial advisor'),
     Buffer.from('%PDF-1.7\nPowered and protected by\n\nPrivacy'),
     Buffer.from('%PDF-1.7\nClinicalTrials.gov\n\nShow glossary'),
+    Buffer.from(`%PDF-1.7\n${waybackBanner}`),
   ]) assert.equal(isAccessErrorResponse({ status: 200, body }), false);
 });
 
@@ -1194,7 +1211,7 @@ test('fetch CLI rejects origin, reader, archived, and cached access-error pages 
 });
 
 test('fetch CLI recovers an access-error page through a valid reader response', () => {
-  for (const body of [accessErrorBodies[0], ...clinicalTrialShellBodies, ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, signupChromeBody]) {
+  for (const body of [accessErrorBodies[0], ...clinicalTrialShellBodies, ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, ...waybackShellBodies, signupChromeBody]) {
     const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
       import assert from 'node:assert/strict';
       import { main } from './.agents/skills/fetch-url/scripts/fetch.mjs';
@@ -1220,7 +1237,7 @@ test('fetch CLI refreshes blocked reader and archive fallback caches', () => {
   const folder = mkdtempSync(join(tmpdir(), 'source-fallback-cache-check-'));
   const url = 'https://example.com/page';
   try {
-    const cases = ['Powered and protected by\n\nPrivacy', clinicalTrialShellBodies[0], ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, signupChromeBody]
+    const cases = ['Powered and protected by\n\nPrivacy', clinicalTrialShellBodies[0], ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, ...waybackShellBodies, signupChromeBody]
       .flatMap((body) => ['reader', 'wayback'].map((variant) => [body, variant]));
     for (const [body, variant] of cases) {
       writeFileSync(join(folder, `${canonicalCacheKey(url, variant)}.json`), JSON.stringify({

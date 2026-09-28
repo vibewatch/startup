@@ -112,6 +112,13 @@ as substantive source content.
 The same footer inside a substantive article does not trigger this check.
 Invalid origin, reader, and archive cache entries trigger fresh retrieval attempts
 rather than preventing a fallback from recovering useful content.
+
+An archive response containing only `Wayback Machine` or its
+`The Wayback Machine - https://web.archive.org/web/...` banner is unusable too.
+This includes empty playback-iframe pages titled `Wayback Machine`, reader
+wrappers and old cached or prefetched copies. Substantive archived text remains
+eligible even with that banner or title. A snapshot date alone does not establish
+that the archived source content was retrieved.
 ClinicalTrials.gov responses containing only the site title and glossary controls
 are also unusable JavaScript shells; they trigger the existing fallbacks rather
 than counting as study evidence. Substantive study records remain valid.

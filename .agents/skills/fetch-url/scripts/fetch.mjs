@@ -987,6 +987,8 @@ export function isAccessErrorResponse(result) {
     .replace(/[‘’]/gu, "'");
   if (/^(?:404\s*[-:：]?\s*)?(?:没有找到此种页面|页面未找到|页面不存在|找不到页面|page not found|not found)[.!。]?\s*$/iu.test(text)) return true;
   const unwrappedText = text.replace(/^Title:[^\n]*\n+URL Source:\s*https?:\/\/[^\n]+\n+(?:(?:Published Time:[^\n]*|Warning: This is a cached snapshot of the original page, consider retry with caching opt-out\.)\n+)*Markdown Content:\s*/i, '');
+  if (/^(?:The )?Wayback Machine(?:\s*-\s*https?:\/\/web\.archive\.org\/web\/\S+)?\s*$/i.test(unwrappedText)
+      || (title === 'wayback machine' && !unwrappedText.trim())) return true;
   if (/^You are now being redirected to shortly\.{3,}\s*$/i.test(unwrappedText)) return true;
   if (/^(?:New to Earnings Whispers\?\s+)?Create FREE account to continue\.\s*$/i.test(unwrappedText)) return true;
   if (/^A 1x1 image, likely be a (?:tracker|tacker) probe\.?\s*$/i.test(unwrappedText)) return true;
