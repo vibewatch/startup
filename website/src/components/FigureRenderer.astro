@@ -141,7 +141,7 @@ const chartPayloadJson = chartPayload
 
 <script>
   import * as d3 from 'd3';
-  import { figureDetail, figureItemNotes, figureValueNotes, flowTopology, formatRangeValue, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails } from '../lib/figures.mjs';
+  import { figureDetail, figureItemNotes, figureValueNotes, flowTopology, formatRangeValue, matrixCellText, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails } from '../lib/figures.mjs';
 
   const palette = {
     claret: '#990f3d',
@@ -1929,10 +1929,27 @@ const chartPayloadJson = chartPayload
   };
 
   const renderHeatmap = (element, payload) => {
-    const columns = arr(payload.data.columns);
-    const rows = arr(payload.data.rows);
-    const cellDetail = (cell) => (cell && typeof cell === 'object') ? (cell.detail ?? cell.note ?? '') : '';
-    const cellTone = (cell) => (cell && typeof cell === 'object') ? cell.tone : undefined;
+    const columns = arr(payload.data.columns).map((column) => ({
+      label: safeText(column), notes: figureItemNotes({ detail: column?.detail }),
+    }));
+    const rows = arr(payload.data.rows).map((row) => {
+      const label = safeText(row?.label);
+      const notes = figureItemNotes({ note: row?.note });
+      return {
+        label, notes,
+        cells: arr(row?.values).map((cell, colIndex) => {
+          const rawText = matrixCellText(cell);
+          const cellNotes = figureItemNotes({ detail: cell?.detail, note: cell?.note });
+          const column = columns[colIndex];
+          return {
+            row: label, column: column?.label ?? '', text: rawText || '—',
+            isEmpty: rawText === '', tone: cell?.tone, notes: cellNotes,
+            columnNotes: column?.notes ?? [],
+            tooltipNotes: [...new Set([...notes, ...(column?.notes ?? []), ...cellNotes])],
+          };
+        }),
+      };
+    });
     d3.select(element).selectAll('*').remove();
     const root = d3.select(element).append('div').attr('class', 'matrix-table');
     root.style('--matrix-cols', String(Math.max(columns.length, 1)));
@@ -1943,45 +1960,52 @@ const chartPayloadJson = chartPayload
     headerRow.selectAll('div.matrix-col-head').data(columns).join('div')
       .attr('class', 'matrix-cell matrix-col-head')
       .attr('role', 'columnheader')
-      .text((d) => safeText(d));
+      .each(function (column) {
+        const header = d3.select(this);
+        header.append('div').attr('class', 'matrix-col-label').text(column.label);
+        header.selectAll('div.matrix-column-detail').data(column.notes).join('div')
+          .attr('class', 'matrix-column-detail matrix-qualification').text((note) => note);
+      });
     rows.forEach((row) => {
       const rowEl = grid.append('div').attr('class', 'matrix-row matrix-row-body').attr('role', 'row');
-      rowEl.append('div').attr('class', 'matrix-cell matrix-rowlabel').attr('role', 'rowheader').text(safeText(row?.label));
-      arr(row?.values).forEach((cell, colIndex) => {
-        const rawText = safeText(cell);
-        const isEmpty = cell == null || rawText === '';
-        const text = isEmpty ? '—' : rawText;
-        const detail = cellDetail(cell);
+      const header = rowEl.append('div').attr('class', 'matrix-cell matrix-rowlabel').attr('role', 'rowheader');
+      header.append('div').attr('class', 'matrix-row-name').text(row.label);
+      header.selectAll('div.matrix-row-note').data(row.notes).join('div')
+        .attr('class', 'matrix-row-note matrix-qualification').text((note) => note);
+      row.cells.forEach((cell) => {
         const dataCell = rowEl.append('div')
-          .attr('class', `matrix-cell matrix-data matrix-tone-${cellTone(cell) || 'neutral'}${isEmpty ? ' matrix-empty' : ''}`)
+          .attr('class', `matrix-cell matrix-data matrix-tone-${cell.tone || 'neutral'}${cell.isEmpty ? ' matrix-empty' : ''}`)
           .attr('role', 'cell')
-          .text(text);
-        dataCell.datum({ row: safeText(row?.label), column: safeText(columns[colIndex]), text: isEmpty ? 'No data' : text, detail });
+          .datum(cell);
+        dataCell.append('div').attr('class', 'matrix-cell-value').text(cell.text);
+        dataCell.selectAll('div.matrix-cell-detail').data(cell.notes).join('div')
+          .attr('class', 'matrix-cell-detail matrix-qualification').text((note) => note);
       });
     });
-    withTooltip(grid.selectAll('.matrix-data'), (d) => tooltipHtml(`${d.row} × ${d.column}`, [d.text, d.detail]));
+    withTooltip(grid.selectAll('.matrix-data'), (d) => tooltipHtml(`${d.row} × ${d.column}`, [d.text, ...d.tooltipNotes]));
     // Narrow viewports: card-per-row layout (one card per data row, listing
     // each column as a labelled key/value). CSS picks which one is visible.
     const cards = root.append('div').attr('class', 'matrix-cards');
     rows.forEach((row) => {
       const card = cards.append('div').attr('class', 'matrix-card');
-      card.append('div').attr('class', 'matrix-card-title').text(safeText(row?.label));
-      arr(row?.values).forEach((cell, colIndex) => {
-        const rawText = safeText(cell);
-        const isEmpty = cell == null || rawText === '';
+      card.append('div').attr('class', 'matrix-card-title').text(row.label);
+      card.selectAll('div.matrix-row-note').data(row.notes).join('div')
+        .attr('class', 'matrix-row-note matrix-qualification').text((note) => note);
+      row.cells.forEach((cell) => {
         // Skip drawing a card row entry when the cell is empty AND has no
-        // tone signal worth showing. Keeps the mobile card list tight.
-        if (isEmpty && !cellTone(cell)) return;
-        const text = isEmpty ? '—' : rawText;
-        const detail = cellDetail(cell);
-        const item = card.append('div').attr('class', `matrix-card-item matrix-tone-${cellTone(cell) || 'neutral'}${isEmpty ? ' matrix-empty' : ''}`);
-        item.datum({ row: safeText(row?.label), column: safeText(columns[colIndex]), text: isEmpty ? 'No data' : text, detail });
-        item.append('div').attr('class', 'matrix-card-key').text(safeText(columns[colIndex]));
-        item.append('div').attr('class', 'matrix-card-val').text(text);
-        if (detail) item.append('div').attr('class', 'matrix-card-detail').text(detail);
+        // tone or qualification worth showing.
+        if (cell.isEmpty && !cell.tone && !cell.notes.length && !cell.columnNotes.length) return;
+        const item = card.append('div').attr('class', `matrix-card-item matrix-tone-${cell.tone || 'neutral'}${cell.isEmpty ? ' matrix-empty' : ''}`);
+        item.datum(cell);
+        item.append('div').attr('class', 'matrix-card-key').text(cell.column);
+        item.selectAll('div.matrix-column-detail').data(cell.columnNotes).join('div')
+          .attr('class', 'matrix-column-detail matrix-qualification').text((note) => note);
+        item.append('div').attr('class', 'matrix-card-val').text(cell.text);
+        item.selectAll('div.matrix-card-detail').data(cell.notes).join('div')
+          .attr('class', 'matrix-card-detail matrix-qualification').text((note) => note);
       });
     });
-    withTooltip(cards.selectAll('.matrix-card-item'), (d) => tooltipHtml(`${d.row} × ${d.column}`, [d.text, d.detail]));
+    withTooltip(cards.selectAll('.matrix-card-item'), (d) => tooltipHtml(`${d.row} × ${d.column}`, [d.text, ...d.tooltipNotes]));
   };
 
   const renderCohort = (element, payload) => {
@@ -2223,7 +2247,7 @@ const chartPayloadJson = chartPayload
   :global(.chart-matrix .matrix-cell) { min-width: 0; padding: 0.55rem 0.6rem; font-family: var(--font-sans); font-size: var(--chart-fs-caption); line-height: 1.3; color: var(--ink-page, #33302e); overflow-wrap: anywhere; word-break: break-word; hyphens: auto; }
   :global(.chart-matrix .matrix-corner) { background: transparent; }
   :global(.chart-matrix .matrix-col-head) { font-weight: var(--chart-fw-strong, 800); text-align: center; color: var(--ink-page, #33302e); border-bottom: 1px solid var(--rule, #d8ccc2); padding-bottom: 0.4rem; }
-  :global(.chart-matrix .matrix-rowlabel) { font-weight: var(--chart-fw-strong, 800); display: flex; align-items: center; padding-right: 0.75rem; }
+  :global(.chart-matrix .matrix-rowlabel) { font-weight: var(--chart-fw-strong, 800); display: flex; flex-direction: column; justify-content: center; align-items: flex-start; padding-right: 0.75rem; }
   :global(.chart-matrix .matrix-data) { border-radius: var(--radius-card, 0.5rem); background: var(--matrix-cell-bg, var(--matrix-tone-neutral)); }
   :global(.chart-matrix .matrix-tone-positive), :global(.chart-matrix .matrix-tone-low) { --matrix-cell-bg: var(--matrix-tone-positive); }
   :global(.chart-matrix .matrix-tone-warning), :global(.chart-matrix .matrix-tone-medium) { --matrix-cell-bg: var(--matrix-tone-warning); }
@@ -2239,7 +2263,7 @@ const chartPayloadJson = chartPayload
   :global(.chart-matrix .matrix-card-item + .matrix-card-item) { margin-top: 0.35rem; }
   :global(.chart-matrix .matrix-card-key) { font-size: var(--chart-fs-kicker); font-weight: var(--chart-fw-strong, 800); text-transform: uppercase; letter-spacing: var(--chart-tracking-subtle); color: var(--caption-gray, #6b625c); }
   :global(.chart-matrix .matrix-card-val) { font-size: var(--chart-fs-caption); color: var(--ink-page, #33302e); overflow-wrap: anywhere; }
-  :global(.chart-matrix .matrix-card-detail) { font-size: var(--chart-fs-kicker); color: var(--caption-gray, #6b625c); margin-top: 0.2rem; }
+  :global(.chart-matrix .matrix-qualification) { font-size: var(--chart-fs-caption); font-weight: 400; font-style: normal; line-height: 1.4; color: var(--caption-gray, #6b625c); margin-top: 0.2rem; overflow-wrap: anywhere; }
   /* Below ~520px container width, switch from grid to card layout. */
   @container (max-width: 520px) { :global(.chart-matrix .matrix-grid) { display: none; } :global(.chart-matrix .matrix-cards) { display: block; } }
   :global(.chart-kpi .kpi-grid) { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 11rem), 1fr)); gap: 0.75rem; }

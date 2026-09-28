@@ -12,9 +12,59 @@ import { KNOWN_DIMENSIONS, WARNING_DIMENSIONS } from './validation-catalog.mjs';
 import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
 import { checkRefreshReadback, refreshArtifactsAreInSync } from './refresh-readback.mjs';
 import { reportsDir } from './utils.mjs';
-import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
+import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, matrixCellText, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
 import { isTranslatableLeaf, TRANSLATE_PATHS } from '../../translate-zh/scripts/whitelist.mjs';
 import { claimRefs } from '../../../../website/src/lib/report-types.ts';
+
+test('matrix renderer and validator share canonical display aliases and preserve explicit empty labels', () => {
+  const cases = [
+    [null, ''], ['', ''], ['Not disclosed', 'Not disclosed'], [0, '0'], [-2.5, '-2.5'],
+    [{ label: 'Canonical', text: 'Text', name: 'Name', displayValue: 'Display', value: 7, score: 3 }, 'Canonical'],
+    [{ label: null, text: 'Text', name: 'Name', displayValue: 'Display', value: 7, score: 3 }, 'Text'],
+    [{ name: 'Name', displayValue: 'Display', value: 7, score: 3 }, 'Name'],
+    [{ displayValue: 'Display', value: 7, score: 3 }, 'Display'],
+    [{ value: 0, score: 3 }, '0'], [{ score: 0 }, '0'],
+    [{ label: '', text: 'Must not replace the blank', score: 3, tone: 'neutral' }, ''],
+    [{ text: '', value: 3, tone: 'warning' }, ''],
+    [{ text: '无公开证据', detail: '不代表事件未发生', note: '仅为公司口径' }, '无公开证据'],
+  ];
+  for (const [cell, expected] of cases) {
+    const before = structuredClone(cell);
+    if (cell && typeof cell === 'object') Object.freeze(cell);
+    assert.equal(matrixCellText(cell), expected);
+    assert.deepEqual(cell, before);
+    assert.deepEqual(checkFigureDeep({
+      id: 'FR001', title: 'Matrix', type: 'matrix',
+      data: { columns: ['Column'], rows: [{ label: 'Row', values: [cell] }] },
+    }, { path: 'matrix-test' }).errors, []);
+  }
+});
+
+test('matrix qualifications retain both distinct notes without treating unknown fields as prose', () => {
+  for (const [cell, expected] of [
+    [{ detail: 'Estimated', note: 'Company assertion' }, ['Estimated', 'Company assertion']],
+    [{ detail: 'Same qualification', note: 'Same qualification' }, ['Same qualification']],
+    [{ detail: '', note: 'Disclosure gap' }, ['Disclosure gap']],
+    [{ detail: null, note: null, unknown: 'Not a supported prose field' }, []],
+  ]) {
+    assert.deepEqual(figureItemNotes({ detail: cell.detail, note: cell.note }), expected);
+  }
+});
+
+test('matrix grids and cards expose qualifications and preserve them in cell tooltips', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const matrix = source.slice(source.indexOf('const renderHeatmap ='), source.indexOf('const renderCohort ='));
+  assert.match(matrix, /matrixCellText\(cell\)/);
+  assert.match(matrix, /figureItemNotes\(\{ detail: column\?\.detail \}\)/);
+  assert.match(matrix, /figureItemNotes\(\{ note: row\?\.note \}\)/);
+  assert.match(matrix, /figureItemNotes\(\{ detail: cell\?\.detail, note: cell\?\.note \}\)/);
+  for (const className of ['matrix-column-detail', 'matrix-row-note', 'matrix-cell-detail', 'matrix-card-detail']) {
+    assert.ok(matrix.includes(`'${className} matrix-qualification'`), className);
+  }
+  assert.equal((matrix.match(/\[d\.text, \.\.\.d\.tooltipNotes\]/g) ?? []).length, 2);
+  assert.match(matrix, /!cell\.notes\.length && !cell\.columnNotes\.length/);
+  assert.doesNotMatch(matrix, /'No data'|const cellDetail =/);
+});
 
 test('range axis keeps domain endpoints and only interior labels with measured clearance', () => {
   for (const [bounds, expected] of [

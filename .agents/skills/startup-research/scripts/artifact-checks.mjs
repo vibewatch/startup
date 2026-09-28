@@ -16,6 +16,7 @@ import {
   FIGURE_CONTRACTS,
   FIGURE_DATA_FIELDS,
   FIGURE_TYPES,
+  matrixCellText,
 } from '../../../../website/src/lib/figures.mjs';
 import { hasText } from './utils.mjs';
 import {
@@ -261,7 +262,7 @@ export function checkFigureDeep(figure, { path }) {
           c.fail(`${figurePath} matrix row ${index + 1} (${row?.label ?? '?'}) cell ${colIndex + 1} must be a string, number, or object, got ${typeof cell}`, { figureId: id, rowIndex: index, colIndex });
           continue;
         }
-        const text = cell.label ?? cell.text ?? cell.name ?? cell.displayValue ?? cell.value ?? cell.score;
+        const text = matrixCellText(cell);
         const hasEmptyTextWithTone = (cell.label === '' || cell.text === '') && cell.tone != null;
         if ((text == null || String(text).trim() === '') && !hasEmptyTextWithTone) {
           c.fail(`${figurePath} matrix row ${index + 1} (${row?.label ?? '?'}) cell ${colIndex + 1} is missing a text field; provide one of label/text/value/score (label is canonical), or use null / '' for a no-data placeholder`, { figureId: id, rowIndex: index, colIndex });

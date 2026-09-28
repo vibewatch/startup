@@ -57,6 +57,13 @@ export const FIGURE_ALLOWED_POPULATED_FIELDS = {
 
 export const RENDERED_FIGURE_TYPES = FIGURE_TYPES.filter((type) => type !== 'other');
 
+export function matrixCellText(cell) {
+  const value = cell && typeof cell === 'object'
+    ? cell.label ?? cell.text ?? cell.name ?? cell.displayValue ?? cell.value ?? cell.score
+    : cell;
+  return value == null ? '' : String(value);
+}
+
 export const figureDetail = (item) => item.detail ?? item.description;
 
 export function figureValueNotes(item) {

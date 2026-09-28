@@ -208,6 +208,15 @@ every declared claim reference in authored order, without a display-count cap.
 Enable the evidence toggle to inspect the links; print hides inline links but
 retains the evidence index. Link presence does not establish source support.
 
+**Matrix completeness:** resolve cell display aliases in the same order as the
+validator: `label`, `text`, `name`, `displayValue`, `value`, then `score`.
+Do not turn accepted text cells into no-data placeholders. Column `detail`,
+row `note`, and distinct cell `detail` / `note` qualifications remain visible
+in the desktop grid, narrow-screen cards and print. Cell hover/tap tooltips
+retain the corresponding row, column and cell qualifications. Preserve
+authored tones, ordering and empty-value semantics; displaying the matrix
+does not verify its risk assessments or source claims.
+
 **Stack completeness:** compact layer diagrams are previews, not the full
 data display. Retain every ordered item, module and output, including duplicate
 labels, values, units and qualifications, in visible layer details and matching
