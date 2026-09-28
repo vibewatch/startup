@@ -83,6 +83,8 @@ const marketSizingClaimContexts = /\bcan\s+claim\s+every\s+(?:BaaS|DBaaS)(?:\s+o
 const legalCounterclaimContexts = /\bconsumer[- ]protection\s+claims?\b|\bcounter-claims?\b|\b(?:arbitration|non-competition\s+and\s+non-solicitation)\s+claims?\s+against\b/gi;
 const evidenceAssessmentClaimContexts = /\bevidence\s+does\s+not\s+support\s+a\s+clear\s+positive\s+claim\b|\bpublic\s+evidence\s+can\s+(?:therefore\s+)?support\s+the\s+claim\s+that\b/gi;
 const procurementSequenceDisclaimer = /\bnot a claim that every customer follows the exact same procurement sequence\b/i;
+const withPrejudiceDisposition = /\b(?:dismiss(?:ed|al)|withdraw(?:n|al))\b[^.!?;\n]{0,220}\bwith prejudice\b|\bwith-prejudice (?:dismissal|withdrawal)\b/i;
+const literalDismissalBias = /(?:有偏见|带偏见)(?:地|的)?(?:驳回|撤诉)/u;
 const hedgeRules = [
   {
     en: /\b(?:approximately|roughly)\b/i,
@@ -574,6 +576,19 @@ function walk(en, zh, path, whitelist, issues, options) {
     return;
   }
   if (typeof en !== 'string' || typeof zh !== 'string' || !isTranslatableLeaf(path, whitelist)) return;
+  if (withPrejudiceDisposition.test(en)) {
+    const legalClauses = en.split(/[.!?;\n]+/).filter(clause => withPrejudiceDisposition.test(clause) || /\b(?:court|judge|judicial)\b/i.test(clause));
+    const dispositionText = zh.replace(/(?<!并非\s*|不是\s*|不\s*)(?:并非|不是|不等于|不表示|并不意味着)\s*[「“"]?(?:有偏见|带偏见)(?:地|的)?(?:驳回|撤诉)[」”"]?/gu, '');
+    if (!legalClauses.some(clause => /\b(?:bias(?:ed)?|unfair(?:ly)?|discriminat\w*)\b/i.test(clause))
+        && literalDismissalBias.test(dispositionText)) {
+      pushIssue(issues, {
+        path: path.join('/'),
+        kind: 'semantic',
+        code: 'legal-terminology',
+        message: 'with-prejudice dismissal is a refiling restriction, not judicial bias',
+      });
+    }
+  }
   const numericTarget = expandSourceFiscalYears(zh, en);
   const targetTokens = normalizedTokens(numericTarget);
   const missingNumbers = normalizedTokens(en).filter((token) => !targetTokens.includes(token));

@@ -77,6 +77,45 @@ function entryMultiplePair({ header = 'Exit Multiple at 5.6B Entry', target = '�
 
 const checks = [
   ...[
+    ['Dismissed with prejudice.', '有偏见驳回。', true],
+    ['Voluntary dismissal with prejudice.', '自愿带偏见撤诉。', true],
+    ['The case was dismissed with prejudice by stipulated order.', '案件依双方约定有偏见地驳回。', true],
+    ['The court dismissed non-competition and non-solicitation claims against an advisor with prejudice.', '法院有偏见地驳回了针对顾问的诉讼请求。', true],
+    ['With-prejudice dismissal.', '有偏见的驳回。', true],
+    ['The case was withdrawn with prejudice.', '案件以带偏见撤诉终结。', true],
+    ['Dismissed with prejudice.', '案件被驳回，同一请求不得再诉。', false],
+    ['Dismissed with prejudice.', '以不得再诉方式驳回。', false],
+    ['Voluntary dismissal with prejudice.', '不可再诉的自愿撤诉。', false],
+    ['Dismissed with prejudice by stipulated order.', '法院依双方约定驳回，同一请求不得再诉。', false],
+    ['Dismissed with prejudice.', '案件带既判力驳回。', false],
+    ['Dismissed with prejudice.', '案件终局驳回。', false],
+    ['The case was dismissed with prejudice. Clinical trials remain vulnerable to sponsor bias.', '案件有偏见驳回。临床试验仍容易受到赞助方偏差影响。', true],
+    ['The case was dismissed with prejudice. Clinical trials remain vulnerable to sponsor bias.', '案件被驳回，同一请求不得再诉。临床试验仍容易受到赞助方偏差影响。', false],
+    ['Dismissed without prejudice.', '案件被驳回，但不影响再诉。', false],
+    ['Dismissed with prejudice; new claims on different grounds remain possible.', '同一请求不得再诉，但仍可能基于不同理由提出新请求。', false],
+    ['Dismissed with prejudice.', '同一请求不得再诉，并非有偏见地驳回。', false],
+    ['Dismissed with prejudice.', '同一请求不得再诉，不是「带偏见撤诉」。', false],
+    ['Dismissed with prejudice.', '这一术语不等于有偏见驳回。', false],
+    ['Dismissed with prejudice.', '这一术语并不意味着“有偏见驳回”。', false],
+    ['Dismissed with prejudice.', '案件并非不是有偏见驳回。', true],
+    ['Dismissed with prejudice.', '案件并非 不是「有偏见驳回」。', true],
+    ['The first case was dismissed with prejudice; the second was also dismissed with prejudice.', '第一案并非有偏见驳回，同一请求不得再诉；第二案有偏见驳回。', true],
+    ['The court was biased when it dismissed the case with prejudice.', '法院有偏见地驳回案件，同一请求不得再诉。', false],
+    ['The court unfairly dismissed the case with prejudice.', '法院有偏见地驳回案件，同一请求不得再诉。', false],
+    ['The case was dismissed with prejudice. The judge was biased.', '法官有偏见地驳回案件，同一请求不得再诉。', false],
+    ['The judge was biased. The case was dismissed with prejudice.', '法官有偏见地驳回案件，同一请求不得再诉。', false],
+    ['The case was dismissed with prejudice. The court was accused of unfair treatment.', '法院遭指控有偏见地驳回案件，同一请求不得再诉。', false],
+    ['The judgment found discriminatory treatment before dismissal with prejudice.', '判决认定此前存在歧视，随后作出有偏见的驳回。', false],
+    ['The court dismissed the case because the judge was biased.', '法院有偏见地驳回案件。', false],
+  ].flatMap(([en, zh, expected]) => [false, true].flatMap(strictEditor => ['subtitle', 'table'].map(surface => {
+    const source = surface === 'subtitle' ? fullReport(en) : { ...fullReport(''), tables: [{ rows: [[en]] }] };
+    const target = surface === 'subtitle' ? fullReport(zh) : { ...fullReport(''), tables: [{ rows: [[zh]] }] };
+    return [
+      checkPairQuality(source, target, { strictEditor }).some(issue => issue.code === 'legal-terminology') === expected,
+      `literal legal-bias guard distinguishes refiling restrictions and explicit bias discussion (strict=${strictEditor}, surface=${surface}): ${en} / ${zh}`,
+    ];
+  }))),
+  ...[
     ['Customer validates fabric claim in gym, yoga studio, or daily life.', '客户在健身房、瑜伽馆或日常生活中验证面料承诺。', false],
     ['The customer validates the fabric claim in daily life.', '客户在日常生活中验证面料承诺。', false],
     ['Customer validates fabric claim in daily life.', '客户在日常生活中使用面料。', true],

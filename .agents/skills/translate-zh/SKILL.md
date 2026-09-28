@@ -156,6 +156,12 @@ voluntary or stipulated, and any exceptions for different claims or parties.
 `Without prejudice` instead preserves the possibility of refiling. Neither
 disposition alone proves that the court ruled on infringement or that every
 underlying IP risk disappeared.
+The quality gate rejects demonstrated literal forms such as `有偏见驳回` and
+`带偏见撤诉` when the English explicitly describes a with-prejudice disposition,
+including short table cells. Explicit English bias allegations and Chinese
+explanations rejecting the literal reading remain outside this conservative
+guard. Passing it does not establish that refiling rights, parties, dates or
+the disposition itself were translated completely; review those separately.
 
 Use `npm run audit:translations-zh -- --limit 20` for a non-blocking corpus sample. The audit reports hard semantic/style errors separately from advisory glossary drift, untranslated ordinary descriptors, half-width Chinese punctuation, and dense `的` chains. Use the report to target only weak leaves; do not rewrite clean overlays.
 
