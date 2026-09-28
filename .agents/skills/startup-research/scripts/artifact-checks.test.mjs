@@ -81,6 +81,49 @@ test('timeline rows use shared pointer tooltips with full date and detail', () =
   assert.match(timeline, /renderLineBlock\(d3\.select\(this\), d\.detailLines/);
 });
 
+test('pyramid layers use shared pointer tooltips with full label and detail', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const pyramid = source.slice(source.indexOf('const renderPyramid ='), source.indexOf('const renderJourneyMap ='));
+  assert.match(pyramid, /withTooltip\(groups, \(entry\) => tooltipHtml\(entry\.item\.label, \[entry\.item\.detail\]\)\)/);
+  assert.match(pyramid, /renderLineBlock\(d3\.select\(this\), entry\.detailLines/);
+  assert.match(pyramid, /createSvgTextWrapper\(svg\)/);
+  assert.match(pyramid, /wrap\(item\.label, \{[^}]*maxWidth: w - padX \* 2/);
+  assert.match(pyramid, /wrap\(item\.detail, \{[^}]*maxWidth: w - padX \* 2/);
+});
+
+test('measured SVG wrapping preserves complete mixed-script text at each layer width and font', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const start = source.indexOf('const createSvgTextWrapper =');
+  assert(start >= 0, 'timeline and pyramid must share measured text wrapping');
+  const helper = source.slice(start, source.indexOf('const renderTimeline =', start));
+  const createWrapper = new Function('chartFont', `${helper}; return createSvgTextWrapper;`)({ family: 'test-font' });
+  const attributes = new Map();
+  let text = '';
+  let removed = false;
+  const measure = (value, size, weight) => Array.from(value).reduce(
+    (width, character) => width + size * (/\p{Script=Han}/u.test(character) ? 1 : 0.55) * (weight / 400), 0,
+  );
+  const probe = {
+    attr(key, value) { attributes.set(key, value); return this; },
+    text(value) { text = value; return this; },
+    node() { return { getComputedTextLength: () => measure(text, attributes.get('font-size'), attributes.get('font-weight')) }; },
+    remove() { removed = true; },
+  };
+  const wrapper = createWrapper({ append: () => probe });
+  for (const maxWidth of [40, 80, 160]) {
+    for (const [fontSize, fontWeight] of [[10, 400], [14, 700]]) {
+      for (const input of ['Mordor 2026 $28.13B CX services', '客户互动解决方案规模包含更宽的服务元素', '2026 年 $28.13B，包含 CX 和服务元素。', 'UninterruptedLongEnglishToken', '', '  ']) {
+        const lines = wrapper.wrap(input, { fontSize, fontWeight, maxWidth });
+        assert.equal(lines.join('').replace(/\s/gu, ''), input.replace(/\s/gu, ''));
+        for (const line of lines) assert(measure(line, fontSize, fontWeight) <= maxWidth);
+        assert.deepEqual(wrapper.wrap(input, { fontSize, fontWeight, maxWidth }), lines);
+      }
+    }
+  }
+  wrapper.remove();
+  assert.equal(removed, true);
+});
+
 test('stack details retain complete ordered groups, duplicate labels, values and qualifications', () => {
   const data = { layers: [{
     label: 'Layer', detail: 'Primary context', description: 'Additional context', note: 'Not verified', unit: '%', value: 0,

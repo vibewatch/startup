@@ -65,6 +65,36 @@ const legalClaimNounPairs = [
 
 const checks = [
   ...[
+    ['Customer notices and some indemnity from Insider for narrow claim classes.', '客户通知，以及 Insider 对狭窄索赔类别提供的部分赔偿。', false],
+    ['Indemnity is available for narrow claim classes.', '部分特定类别的索赔可获赔偿。', false],
+    ['Indemnity is available for narrow claim classes; the company claims all losses are covered.', '特定类别索赔可获赔偿；所有损失均获保障。', true],
+    ['The company claims classes of customers receive full coverage.', '不同客户类别均获完整保障。', true],
+    ['The company claims narrow indemnity coverage.', '保障只覆盖特定赔偿责任。', true],
+    ['No public revenue-band split by retail sub-vertical or region.', '未按零售子垂直或区域公开收入档位拆分。', false],
+    ['No public revenue-band split by retail sub-vertical or region.', '已按零售子垂直或区域公开收入档位拆分。', true],
+    ['No public revenue-band split by retail sub-vertical or region.', '并非未按零售子垂直或区域公开收入档位拆分。', true],
+    ['No public revenue-band split by retail sub-vertical or region.', '不是 未按零售子垂直或区域公开收入档位拆分。', true],
+    ['No public revenue-band split by retail sub-vertical or region.', '未按零售子垂直或区域公开收入档位拆分的说法不成立。', true],
+    ['No public revenue-band split by retail sub-vertical or region.', '未按零售子垂直或区域分类；公开收入档位拆分。', true],
+    ['No public revenue-band split exists; no public valuation exists.', '未按零售子垂直或区域公开收入档位拆分；估值已披露。', true],
+    ['No public contract-size or renewal data exists.', '未按零售子垂直或区域公开收入档位拆分。', true],
+    ['No public contract-size or renewal data by telecom/media account.', '未按电信 / 媒体账户公开合同规模或续约数据。', false],
+    ['No public contract-size or renewal data by telecom/media account.', '已按电信 / 媒体账户公开合同规模或续约数据。', true],
+    ['No public contract-size or renewal data by telecom/media account.', '并非未按电信 / 媒体账户公开合同规模或续约数据。', true],
+    ['No public contract-size or renewal data by telecom/media account.', '不是 未按电信 / 媒体账户公开合同规模或续约数据。', true],
+    ['No public contract-size or renewal data by telecom/media account.', '未按电信 / 媒体账户公开合同规模或续约数据的说法不成立。', true],
+    ['No public contract-size or renewal data by telecom/media account.', '未按电信 / 媒体账户分类；公开合同规模或续约数据。', true],
+    ['No public contract-size or renewal data exists; no public valuation exists.', '未按电信 / 媒体账户公开合同规模或续约数据；估值已披露。', true],
+    ['No public revenue-band split exists.', '未按电信 / 媒体账户公开合同规模或续约数据。', true],
+    ['No public backlog exists.', '未按零售子垂直或区域公开收入档位拆分。', true],
+    ['No public revenue-band split exists.', '未按期公开收入档位拆分。', true],
+    ['No public contract-size or renewal data exists.', '未按期公开合同规模或续约数据。', true],
+  ].flatMap(([en, zh, expected]) => [false, true].map(strictEditor => [
+    checkPairQuality(fullReport(`${en} This is a source-reviewed diligence observation.`), fullReport(zh), { strictEditor })
+      .some(issue => issue.code === 'hedge-preservation') === expected,
+    `indemnity nouns and segmented disclosure gaps retain scope (strict=${strictEditor}): ${en} / ${zh}`,
+  ])),
+  ...[
     ['Public evidence can support the claim that users engage.', '公开证据可以支撑用户参与的判断。', false],
     ['Public evidence can therefore support the claim that users engage.', '公开证据因此可以支撑用户参与的判断。', false],
     ['Public evidence can support the claim that users engage; the company claims its revenue doubled.', '公开证据可以支撑用户参与的判断；公司收入翻倍。', true],

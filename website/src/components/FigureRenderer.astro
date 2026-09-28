@@ -1269,17 +1269,7 @@ const chartPayloadJson = chartPayload
   const firstNonEmpty = (...values) => values.find((value) => Array.isArray(value) && value.length > 0) ?? [];
   const normalizedItems = (data) => firstNonEmpty(data.items, data.nodes, data.layers, arr(data.series)[0]?.points, data.points).map((item, index) => ({ ...item, _index: index, label: item.label ?? item.name ?? item.id ?? `Item ${index + 1}`, detail: figureDetail(item) ?? item.summary }));
 
-  const renderTimeline = (element, payload) => {
-    const items = normalizedItems(payload.data);
-    const margin = { top: 26, right: 34, bottom: 32, left: 34 };
-    const containerWidth = Math.floor(element.getBoundingClientRect().width || 760);
-    const width = Math.max(containerWidth < 420 ? 420 : 520, containerWidth);
-    const { svg } = svgBase(element, 260);
-    const railX = margin.left + 20;
-    const cardX = railX + 26;
-    const cardW = width - railX - margin.right - 26;
-    const textX = railX + 44;
-    const textW = Math.max(80, cardW - 36);
+  const createSvgTextWrapper = (svg) => {
     const measureText = svg.append('text').attr('visibility', 'hidden').attr('x', -9999).attr('y', -9999);
     const measureNode = measureText.node();
     let activeFontSize = null;
@@ -1301,12 +1291,12 @@ const chartPayloadJson = chartPayload
       widthCache.set(key, w);
       return w;
     };
-    const splitTokenBySvgWidth = (token) => {
+    const splitTokenBySvgWidth = (token, maxWidth) => {
       const chunks = [];
       let chunk = '';
       Array.from(String(token ?? '')).forEach((char) => {
         const next = `${chunk}${char}`;
-        if (chunk && measuredWidth(next) > textW) {
+        if (chunk && measuredWidth(next) > maxWidth) {
           chunks.push(chunk);
           chunk = char;
         } else {
@@ -1317,9 +1307,9 @@ const chartPayloadJson = chartPayload
       return chunks;
     };
     const wrapCache = new Map();
-    const wrapWithSvgMeasure = (text, { fontSize, fontWeight }) => {
+    const wrap = (text, { fontSize, fontWeight, maxWidth }) => {
       const str = String(text ?? '');
-      const cacheKey = `${fontSize}|${fontWeight}|${textW}|${str}`;
+      const cacheKey = `${fontSize}|${fontWeight}|${maxWidth}|${str}`;
       const cached = wrapCache.get(cacheKey);
       if (cached) return cached;
       setFont(fontSize, fontWeight);
@@ -1330,9 +1320,9 @@ const chartPayloadJson = chartPayload
       }
       const lines = [];
       let line = '';
-      tokens.flatMap((token) => measuredWidth(token) > textW ? splitTokenBySvgWidth(token) : token).forEach((token) => {
+      tokens.flatMap((token) => measuredWidth(token) > maxWidth ? splitTokenBySvgWidth(token, maxWidth) : token).forEach((token) => {
         const next = line ? `${line} ${token}` : token;
-        if (line && measuredWidth(next) > textW) {
+        if (line && measuredWidth(next) > maxWidth) {
           lines.push(line);
           line = token;
         } else {
@@ -1343,12 +1333,27 @@ const chartPayloadJson = chartPayload
       wrapCache.set(cacheKey, lines);
       return lines;
     };
+    return { wrap, remove: () => measureText.remove() };
+  };
+
+  const renderTimeline = (element, payload) => {
+    const items = normalizedItems(payload.data);
+    const margin = { top: 26, right: 34, bottom: 32, left: 34 };
+    const containerWidth = Math.floor(element.getBoundingClientRect().width || 760);
+    const width = Math.max(containerWidth < 420 ? 420 : 520, containerWidth);
+    const { svg } = svgBase(element, 260);
+    const railX = margin.left + 20;
+    const cardX = railX + 26;
+    const cardW = width - railX - margin.right - 26;
+    const textX = railX + 44;
+    const textW = Math.max(80, cardW - 36);
+    const textWrapper = createSvgTextWrapper(svg);
     const rowGap = 24;
     let cursorY = margin.top;
     const rowsData = items.map((item) => {
-      const dateLines = wrapWithSvgMeasure(item.date ?? item.period ?? item.year ?? item.label, { fontSize: chartFont.small, fontWeight: 900 });
-      const labelLines = wrapWithSvgMeasure(item.label, { fontSize: chartFont.label, fontWeight: 900 });
-      const detailLines = wrapWithSvgMeasure(item.detail, { fontSize: chartFont.small, fontWeight: 400 });
+      const dateLines = textWrapper.wrap(item.date ?? item.period ?? item.year ?? item.label, { fontSize: chartFont.small, fontWeight: 900, maxWidth: textW });
+      const labelLines = textWrapper.wrap(item.label, { fontSize: chartFont.label, fontWeight: 900, maxWidth: textW });
+      const detailLines = textWrapper.wrap(item.detail, { fontSize: chartFont.small, fontWeight: 400, maxWidth: textW });
       const cardH = Math.max(78, 18 + dateLines.length * 15 + 8 + labelLines.length * 18 + 8 + detailLines.length * 15 + 16);
       const row = { ...item, dateLines, labelLines, detailLines, cardH, y: cursorY };
       cursorY += cardH + rowGap;
@@ -1357,7 +1362,7 @@ const chartPayloadJson = chartPayload
     const totalHeight = Math.max(260, cursorY - rowGap + margin.bottom);
     const displayHeight = Math.ceil(totalHeight * Math.min(1, containerWidth / width));
     svg.attr('viewBox', `0 0 ${width} ${totalHeight}`).attr('height', displayHeight);
-    measureText.remove();
+    textWrapper.remove();
     svg.append('line').attr('x1', railX).attr('x2', railX).attr('y1', margin.top + 8).attr('y2', totalHeight - margin.bottom - 8).attr('stroke', palette.claret).attr('stroke-width', 2.4).attr('opacity', 0.8);
     const rows = svg.append('g').selectAll('g').data(rowsData).join('g').attr('transform', (d) => `translate(0,${d.y})`);
     rows.append('circle').attr('cx', railX).attr('cy', (d) => Math.min(32, d.cardH / 2)).attr('r', 9).attr('fill', (d) => colorForTone(d.tone)).attr('stroke', '#fff7ef').attr('stroke-width', 3);
@@ -1490,13 +1495,11 @@ const chartPayloadJson = chartPayload
 
   const renderPyramid = (element, payload) => {
     const items = normalizedItems(payload.data);
-    // Probe container width up front so we can compute per-layer text wrapping
-    // before allocating the SVG canvas. We need final card heights to set
-    // svgBase height correctly.
     const containerWidth = Math.floor(element.getBoundingClientRect().width || 760);
-    const internalWidth = Math.max(containerWidth < 420 ? 420 : 520, containerWidth);
+    const { svg, width } = svgBase(element, 300);
+    const textWrapper = createSvgTextWrapper(svg);
     const margin = { top: 28, right: 34, bottom: 34, left: 34 };
-    const maxW = internalWidth - margin.left - margin.right;
+    const maxW = width - margin.left - margin.right;
     const padX = 22;
     const labelLineH = 22;
     const detailLineH = 16;
@@ -1506,24 +1509,21 @@ const chartPayloadJson = chartPayload
     const gapBetweenLayers = 10;
     const labelFont = chartFont.size.large;
     const detailFont = chartFont.small;
-    // Estimate characters that fit in a layer of width `w` for given font
-    // size; `0.55em` is a conservative average glyph width.
-    const charsPerLine = (w, fontSize) => Math.max(8, Math.floor((w - padX * 2) / (fontSize * 0.55)));
-    const wrap = (text, maxChars) => wrapWords(text, maxChars, 99);
     const layout = items.map((item, index) => {
       const w = maxW * (1 - index * 0.1);
-      const labelLines = wrap(item.label, charsPerLine(w, labelFont));
-      const detailLines = item.detail ? wrap(item.detail, charsPerLine(w, detailFont)) : [];
+      const labelLines = textWrapper.wrap(item.label, { fontSize: labelFont, fontWeight: fontWeight('emphasis'), maxWidth: w - padX * 2 });
+      const detailLines = item.detail ? textWrapper.wrap(item.detail, { fontSize: detailFont, fontWeight: fontWeight('medium'), maxWidth: w - padX * 2 }) : [];
       const cardH = Math.max(
         66,
         padTop + labelLines.length * labelLineH + (detailLines.length ? gapBetweenLabelDetail + detailLines.length * detailLineH : 0) + padBottom,
       );
       return { item, index, w, labelLines, detailLines, cardH };
     });
+    textWrapper.remove();
     let cursorY = margin.top;
     for (const entry of layout) { entry.y = cursorY; cursorY += entry.cardH + gapBetweenLayers; }
     const svgHeight = Math.max(300, cursorY - gapBetweenLayers + margin.bottom);
-    const { svg, width } = svgBase(element, svgHeight);
+    svg.attr('viewBox', `0 0 ${width} ${svgHeight}`).attr('height', Math.ceil(svgHeight * Math.min(1, containerWidth / width)));
     const groups = svg.append('g').selectAll('g').data(layout).join('g').attr('transform', (entry) => `translate(${(width - entry.w) / 2},${entry.y})`);
     groups.append('rect').attr('width', (entry) => entry.w).attr('height', (entry) => entry.cardH).attr('rx', 14).attr('fill', (_entry, index) => d3.interpolateRgb('#fff7ef', '#ead8cf')(index / Math.max(1, layout.length - 1))).attr('stroke', (entry) => colorForTone(entry.item.tone)).attr('stroke-width', 1.7);
     groups.append('text')
@@ -1543,6 +1543,7 @@ const chartPayloadJson = chartPayload
         renderLineBlock(d3.select(this), entry.detailLines, { x: padX, y: startY, lineHeight: detailLineH });
       });
     groups.each(function(entry) { addTitle(d3.select(this), `${entry.item.label}${entry.item.detail ? ` — ${entry.item.detail}` : ''}`); });
+    withTooltip(groups, (entry) => tooltipHtml(entry.item.label, [entry.item.detail]));
   };
 
   const renderJourneyMap = (element, payload) => {

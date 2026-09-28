@@ -408,6 +408,12 @@ not necessarily a company assertion. A separate company claim still needs attrib
 campus-recruiting TAM gap, and `没有按…公开分层` can retain a public-segmentation
 gap. These scoped alternatives do not clear negation, cross-clause matches or
 additional public-disclosure gaps in the same leaf.
+Indemnity `for narrow claim classes` concerns categories of legal demands, not
+a company assertion. A separate company claim still needs attribution.
+`未按零售子垂直或区域公开收入档位拆分` and
+`未按电信 / 媒体账户公开合同规模或续约数据` retain their respective
+public-segmentation gaps. These scoped aliases do not accept a different missing
+predicate, negation, another disclosure gap, or merely late publication (`未按期`).
 
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json
@@ -752,6 +758,12 @@ payloads and cannot validate client-rendered chart text.
 Timeline entries retain their full date, label and detail in visible text and
 shared hover/tap tooltips. Check both surfaces; an accessibility label alone
 does not prove the tooltip works, and print must retain the visible detail.
+Pyramid layers likewise expose their complete labels and details in shared
+hover/tap tooltips. Verify an actual pointer interaction rather than treating
+the native SVG title as proof of mobile tooltip support; printed details remain visible.
+Check visible text bounds as well: character-count wrapping can clip Chinese
+glyphs even when the complete string remains in the SVG text node. Pyramid and
+timeline wrapping use measured SVG glyph widths rather than assumed Latin widths.
 Approximation and evidence notes must remain visible on narrow screens and in
 print; they qualify the chart data rather than serving as optional decoration.
 Multi-series bars render as tables: check every series name and point, including

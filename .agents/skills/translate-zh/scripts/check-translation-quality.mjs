@@ -44,6 +44,7 @@ const strictEditorStylePatterns = [
 const insuranceClaimHeads = '(?:intake|communications?|orchestration|automation|processing|handling|journeys?|platforms?|systems?(?:-of-record)?|workflows?|intelligence|infrastructure|organizations?|executives?|officers?|leaders?|modules?|messaging|experiences?|stack|volume|throughput|transformation|severity|types?|facts|participants|sales|enablement|audit|budgets?|cost|core|domain|pain|software|tech|operating|management|tooling|operations|scale|possibilities|AI|CX|lifecycle|submission|creation|work|quality|logic|coding|corrections?|accuracy|errors?|status|issues|datasets|context|data|rates?|preparation|production|routing|APIs?|histor(?:y|ies)|growth|visibility)';
 const insuranceClaimModifiers = '(?:(?:AI(?:-native)?|digital|agentic|enterprise|incumbent|legacy|modern|full|complete|cloud(?:-native)?|core|narrow|broader|automated|conversational|messy|intelligent|insurance|strong|pilot|P&C|annual|manual|transactional|preventable|touchless|clean|API-based|AI-driven|rules-driven|usage-based|payer-by-payer)[ -]+)*';
 const insuranceClaimNouns = new RegExp([
+  '\\bfor\\s+narrow\\s+claim\\s+classes\\b',
   `^claims?(?=[ -]+${insuranceClaimHeads}\\b)`,
   `\\b(?:across|around|for|in|on|as|of|with|without|within|through|from|by|into|over|whether|because|where|buy|sells|satisfy|captures?|supports?|shows?|show(?:s|ed)? that|adopt|request|automates?|automating|correct|autocorrects?|influence|scale|exports?|disrupts?|causing|handle)\\s+${insuranceClaimModifiers}claims?(?=[ -]+${insuranceClaimHeads}\\b)`,
   `\\b(?:a|an|the|its|their|all|enough|insurance|P&C)\\s+claims?(?=[ -]+${insuranceClaimHeads}\\b)`,
@@ -144,6 +145,12 @@ const hedgeRules = [
       || (/\bno public segmentation\b/i.test(source)
         && (source.match(/\bno public\b/gi) ?? []).length === 1
         && /(?<!并非\s*|不是\s*|非\s*|不\s*)没有按[^。！？；，：\n.!?;,]{1,80}公开分层(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
+      || (/\bno public revenue-band split\b/i.test(source)
+        && (source.match(/\bno public\b/gi) ?? []).length === 1
+        && /(?<!并非\s*|不是\s*|非\s*|不\s*)未按零售子垂直或区域公开收入档位拆分(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
+      || (/\bno public contract-size or renewal data\b/i.test(source)
+        && (source.match(/\bno public\b/gi) ?? []).length === 1
+        && /(?<!并非\s*|不是\s*|非\s*|不\s*)未按电信\s*\/\s*媒体账户公开合同规模或续约数据(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
       || (/\bno public benchmark\b/i.test(source)
         && (source.match(/\bno public\b/gi) ?? []).length === 1
         && /(?<!并非\s*|不是\s*|非\s*|不\s*)缺少公开基准(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
