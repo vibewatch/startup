@@ -436,6 +436,13 @@ Likewise, `arbitration claims against` a party are arbitration demands, while
 `non-competition and non-solicitation claims against` a party are legal demands.
 Neither is a company assertion. A separate company or arbitration-provider
 assertion still requires attribution.
+Copyright demands that impose costs or are resolved against a party,
+surviving docket claims, and rights-claim cases describe legal matters.
+Claim-governance and claim-review processes are workflows. In an explicit
+YouTube rights context, false or duplicate claims and `claim and monetize UGC`
+concern rights management, not company assertions. A separate assertion still
+requires attribution. A dispute resolved in a party's favor is not necessarily
+a court victory; an adverse resolution need not be a merits judgment.
 In `customer validates fabric claim`, `客户在…验证面料承诺` retains the
 customer's testing of a fabric promise. This scoped rendering cannot satisfy
 a separate company assertion, a negated test, or a different claim; it does not

@@ -77,6 +77,36 @@ function entryMultiplePair({ header = 'Exit Multiple at 5.6B Entry', target = '�
 
 const checks = [
   ...[
+    ['Comparable copyright claims impose cost.', '类似版权索赔带来成本。'],
+    ['The copyright claim resolved against the company.', '版权索赔以不利于公司的结果解决。'],
+    ['Review copyright litigation and any similar claims.', '审阅版权诉讼及任何类似索赔。'],
+    ['False YouTube claims, wrongful uploads, contract inducement.', '虚假 YouTube 认领、错误上传、合同诱导。'],
+    ['Wrongful / duplicate YouTube claims from bad metadata or split errors.', '元数据或分账错误导致错误或重复的 YouTube 认领。'],
+    ['Confirm docket status, claims surviving, and reserves.', '确认案卷状态、仍存续的诉请及准备金。'],
+    ['Request the claim-review process.', '索取索赔审核流程。'],
+    ['Litigation requires disciplined claim governance.', '诉讼要求严格管理索赔。'],
+    ['Require a claim-governance overhaul.', '要求全面改进索赔治理。'],
+    ['A settlement in a rights-claim case.', '权利索赔案件的和解。'],
+    ['Fingerprint assets; claim and monetize UGC.', '为资产生成指纹；认领 UGC 并变现。'],
+  ].flatMap(([en, zh]) => [
+    [en, zh, false],
+    [`${en} The company claims its system never makes errors.`, `${zh} 系统从不出错。`, true],
+    [`${en} The company claims its system never makes errors.`, `${zh} 公司声称系统从不出错。`, false],
+  ]).concat([
+    ['YouTube claims its system never makes errors.', 'YouTube 的系统从不出错。', true],
+    ['The company claims governance is flawless.', '治理毫无问题。', true],
+    ['The company claims review takes one day.', '审核只需一天。', true],
+    ['The company claims it can monetize UGC perfectly.', '公司能完美变现 UGC。', true],
+    ['The company claims copyright protection is universal.', '版权保护适用于所有内容。', true],
+  ]).flatMap(([en, zh, expected]) => [false, true].flatMap(strictEditor => ['prose', 'table'].map(surface => [
+    checkPairQuality(
+      surface === 'prose' ? fullReport(`${en} This is a source-reviewed diligence observation.`) : { ...fullReport(''), tables: [{ rows: [[`${en} This is a source-reviewed diligence observation.`]] }] },
+      surface === 'prose' ? fullReport(zh) : { ...fullReport(''), tables: [{ rows: [[zh]] }] },
+      { strictEditor },
+    ).some(issue => issue.code === 'hedge-preservation') === expected,
+    `copyright and rights-workflow nouns must not exempt a separate assertion (${surface}, strict=${strictEditor}): ${en} / ${zh}`,
+  ]))),
+  ...[
     ['Request claims frequency, hub replacement rates, and reserve methodology.', '索取索赔频率、Hub 更换率和准备金方法。', false],
     ['Request claim frequency.', '索取理赔频率。', false],
     ['The company claims frequency is low.', '频率很低。', true],
