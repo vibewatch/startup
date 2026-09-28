@@ -987,6 +987,13 @@ export function isAccessErrorResponse(result) {
     .replace(/[‘’]/gu, "'");
   if (/^(?:404\s*[-:：]?\s*)?(?:没有找到此种页面|页面未找到|页面不存在|找不到页面|page not found|not found)[.!。]?\s*$/iu.test(text)) return true;
   const unwrappedText = text.replace(/^Title:[^\n]*\n+URL Source:\s*https?:\/\/[^\n]+\n+(?:(?:Published Time:[^\n]*|Warning: This is a cached snapshot of the original page, consider retry with caching opt-out\.)\n+)*Markdown Content:\s*/i, '');
+  if (!unwrappedText.trim()
+      && (/^(?:text\/(?:html|plain)|application\/xhtml\+xml)(?:;|$)/i.test(result.contentType ?? '')
+        || /^\s*(?:<!doctype\s+html\b|<html\b)/i.test(body)
+        || /^URL Source:\s*https?:\/\//im.test(body))) return true;
+  const archiveError = body.match(/<div\b[^>]*\bid=["']error["'][^>]*>([\s\S]*?)<\/div>\s*<\/section>\s*<div\b[^>]*\bid=["']errorBorder["']/i)?.[1];
+  const archiveText = archiveError ? htmlToText(archiveError) : unwrappedText;
+  if (/^Loading\.{3}\s+https?:\/\/\S+\s*\|\s+\d{2}:\d{2}:\d{2}\s+[a-z]+\s+\d{1,2},\s+\d{4}\s+Got an HTTP 30[12378] response at crawl time\s+Redirecting to\.{3}\s+https?:\/\/\S+\s+Impatient\?\s*$/i.test(archiveText)) return true;
   if (/^(?:The )?Wayback Machine(?:\s*-\s*https?:\/\/web\.archive\.org\/web\/\S+)?\s*$/i.test(unwrappedText)
       || (title === 'wayback machine' && !unwrappedText.trim())) return true;
   if (/^You are now being redirected to shortly\.{3,}\s*$/i.test(unwrappedText)) return true;

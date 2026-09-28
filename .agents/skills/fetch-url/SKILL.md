@@ -119,6 +119,15 @@ This includes empty playback-iframe pages titled `Wayback Machine`, reader
 wrappers and old cached or prefetched copies. Substantive archived text remains
 eligible even with that banner or title. A snapshot date alone does not establish
 that the archived source content was retrieved.
+The native archive interstitial that says `Loading...`, records an HTTP redirect
+at crawl time, and ends with `Redirecting to...` / `Impatient?` is not the original
+article either. Reader copies and the archive's navigation-wrapped error panel
+are rejected; substantive articles discussing redirects are not.
+
+Empty HTML, XHTML and plain-text responses also fail, including HTTP 202
+JavaScript challenge shells and empty reader wrappers. An HTML document's head
+title or scripts do not constitute readable source content. Raw PDF, image and
+SVG downloads remain eligible; this check does not parse or validate their data.
 ClinicalTrials.gov responses containing only the site title and glossary controls
 are also unusable JavaScript shells; they trigger the existing fallbacks rather
 than counting as study evidence. Substantive study records remain valid.

@@ -865,6 +865,20 @@ const waybackShellBodies = [
   `Title: Wayback Machine\n\nURL Source: https://web.archive.org/web/20260825120613/https://example.com/financials\n\nMarkdown Content:\n${waybackBanner}`,
   'Title: Wayback Machine\n\nURL Source: https://example.com/financials\n\nWarning: This is a cached snapshot of the original page, consider retry with caching opt-out.\n\nMarkdown Content:\n',
 ];
+const archiveRedirectText = 'Loading...\n\nhttps://example.com/article |\n17:11:17 January 07, 2026\n\n'
+  + 'Got an HTTP 302 response at crawl time\n\nRedirecting to...\n\nhttps://example.com/login\n\nImpatient?';
+const archiveRedirectBodies = [
+  archiveRedirectText,
+  `<html><body>${archiveRedirectText}</body></html>`,
+  `<html><body><nav>Internet Archive Texts Video Audio Donate</nav><section><div id="error"><script>location.href = "/login";</script>${archiveRedirectText}</div></section><div id="errorBorder"></div><footer>The Wayback Machine is an initiative of the Internet Archive.</footer></body></html>`,
+  `Title:\n\nURL Source: https://example.com/article\n\nMarkdown Content:\n${archiveRedirectText}`,
+];
+const emptyHtmlBodies = [
+  '<!DOCTYPE html><html><head><title></title><script>window.challenge = true;</script></head><body><div id="challenge-container"></div><script>window.reload = true;</script><noscript>JavaScript is disabled. Verify that you are not a robot.</noscript></body></html>',
+  '<html><head><title>Company profile</title></head><body><app-root></app-root></body></html>',
+  '<html><head><style>body { color: black; }</style></head><body> \n </body></html>',
+  'Title: Company profile\n\nURL Source: https://example.com/profile\n\nMarkdown Content:\n',
+];
 const accessErrorBodies = [
   '<html><head><title>Client Challenge</title></head><body>A required part of this site couldn’t load.</body></html>',
   "Title:\n\nURL Source: https://example.com/thread\n\nWarning: Target URL returned error 403: Forbidden\n\nMarkdown Content:\nYou've been blocked by network security.",
@@ -878,6 +892,8 @@ const accessErrorBodies = [
   ...trackingPixelBodies,
   ...financialRegistryShellBodies,
   ...waybackShellBodies,
+  ...archiveRedirectBodies,
+  ...emptyHtmlBodies,
   '<html><head><title></title></head><body><div>Powered and protected by</div><div>Privacy</div></body></html>',
   '<html><body><!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-base">Wayback Machine: April 16, 2026</div><!-- END WAYBACK TOOLBAR INSERT --><div>Powered and protected by</div><div>Privacy</div></body></html>',
   'Powered and protected by\n\nPrivacy',
@@ -1044,11 +1060,13 @@ test('fetch CLI keeps raw PDF and HTML files byte-exact without changing readabl
   const folder = mkdtempSync(join(tmpdir(), 'source-raw-check-'));
   const toolbar = '<!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-base">Archive</div><!-- END WAYBACK TOOLBAR INSERT -->';
   try {
-    for (const mode of ['pdf', 'html', 'archive-html', 'html-json', 'html-text']) {
+    for (const mode of ['pdf', 'svg', 'html', 'archive-html', 'html-json', 'html-text']) {
       const isPdf = mode === 'pdf';
       const raw = mode !== 'html-text';
       const fileMode = !['html-json', 'html-text'].includes(mode);
-      const html = `<html><title>Original</title><body>${toolbar}<p>Original source content.</p></body></html>`;
+      const html = mode === 'svg'
+        ? '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0L1 1"/></svg>'
+        : `<html><title>Original</title><body>${toolbar}<p>Original source content.</p></body></html>`;
       const body = Buffer.from(isPdf ? '%PDF-1.7\nOriginal binary \u00ff\n%%EOF' : html);
       const outputPath = join(folder, `${mode}.out`);
       const flags = [
@@ -1061,7 +1079,7 @@ test('fetch CLI keeps raw PDF and HTML files byte-exact without changing readabl
       const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
         import { main } from './.agents/skills/fetch-url/scripts/fetch.mjs';
         globalThis.fetch = async () => new Response(Buffer.from(${JSON.stringify(body.toString('base64'))}, 'base64'), {
-          status: 200, headers: { 'content-type': ${JSON.stringify(isPdf ? 'application/pdf' : 'text/html')} },
+          status: 200, headers: { 'content-type': ${JSON.stringify(isPdf ? 'application/pdf' : mode === 'svg' ? 'image/svg+xml' : 'text/html')} },
         });
         await main(${JSON.stringify(flags)});
       `], { encoding: 'utf8', env: { ...process.env, STARTUP_FETCH_LOG_PATH: '' } });
@@ -1136,6 +1154,11 @@ test('access-error detection preserves real articles about security and PDF bodi
     `<html><head><title>Wayback Machine</title></head><body><!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-print">${waybackBanner}</div><!-- END WAYBACK TOOLBAR INSERT --><article>Reported revenue: $288M in 2025.</article></body></html>`,
     'Title: Wayback Machine\n\nURL Source: https://example.com/financials\n\nMarkdown Content:\nReported revenue: $288M in 2025.',
     'Wayback Machine\n\nThis article explains how archived pages are retrieved.',
+    'The archive displayed "Got an HTTP 302 response at crawl time" and "Redirecting to..." instead of the original page.',
+    `${archiveRedirectText}\n\nThis article explains the archived redirect above; it is not an interstitial.`,
+    `<html><article><h1>Archived redirects</h1><p>This article discusses an error example:</p><pre>${archiveRedirectText}</pre><p>The company reported revenue of $288M in 2025.</p></article></html>`,
+    '<html><head><title>Company profile</title></head><body><p>Revenue: $288M in 2025.</p></body></html>',
+    'Title: Company profile\n\nURL Source: https://example.com/profile\n\nMarkdown Content:\nRevenue: $288M in 2025.',
     Buffer.from('%PDF-1.7\nTitle: Vercel Security Checkpoint'),
     Buffer.from('%PDF-1.7\nTitle: 页面未找到'),
     Buffer.from('%PDF-1.7\nTitle: 404 | Page Not Found'),
@@ -1148,7 +1171,74 @@ test('access-error detection preserves real articles about security and PDF bodi
     Buffer.from('%PDF-1.7\nPowered and protected by\n\nPrivacy'),
     Buffer.from('%PDF-1.7\nClinicalTrials.gov\n\nShow glossary'),
     Buffer.from(`%PDF-1.7\n${waybackBanner}`),
+    Buffer.from(`%PDF-1.7\n${archiveRedirectText}`),
   ]) assert.equal(isAccessErrorResponse({ status: 200, body }), false);
+});
+
+test('empty textual responses fail regardless of successful HTTP status, without rejecting raw media', () => {
+  for (const status of [200, 202]) {
+    for (const contentType of ['text/html', 'text/html; charset=UTF-8', 'application/xhtml+xml', 'text/plain; charset=utf-8']) {
+      for (const body of ['', ' \n\t ']) {
+        assert.equal(isAccessErrorResponse({ status, contentType, body }), true, `${status}: ${contentType}`);
+      }
+    }
+  }
+  for (const [contentType, body] of [
+    ['image/svg+xml', '<svg xmlns="http://www.w3.org/2000/svg"><path d="M0 0L1 1"/></svg>'],
+    ['application/xml', '<records><record id="1"/></records>'],
+    ['application/pdf', Buffer.from('%PDF-1.7\n%%EOF')],
+    ['image/png', Buffer.from('89504e470d0a1a0a0000000d49484452', 'hex')],
+    ['text/plain', '0'],
+    ['text/html', '<html><body>0</body></html>'],
+  ]) assert.equal(isAccessErrorResponse({ status: 200, contentType, body }), false, contentType);
+});
+
+test('fetch CLI records empty HTTP-200 and HTTP-202 text as failed, including old successful caches', () => {
+  const folder = mkdtempSync(join(tmpdir(), 'source-empty-text-check-'));
+  const url = 'https://example.com/empty';
+  try {
+    for (const status of [200, 202]) {
+      for (const contentType of ['text/html', 'application/xhtml+xml', 'text/plain']) {
+        for (const cached of [false, true]) {
+          const body = ' \n\t ';
+          const log = join(folder, 'fetch.jsonl');
+          const requests = join(folder, 'requests.txt');
+          rmSync(log, { force: true });
+          writeFileSync(requests, '');
+          if (cached) writeFileSync(join(folder, `${canonicalCacheKey(url)}.json`), JSON.stringify({
+            requestedUrl: url, finalUrl: url, status, ok: true, contentType,
+            body: Buffer.from(body).toString('base64'), source: 'origin', fetchedAt: new Date().toISOString(),
+          }));
+          const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
+            import { appendFileSync } from 'node:fs';
+            import { main } from './.agents/skills/fetch-url/scripts/fetch.mjs';
+            globalThis.fetch = async () => {
+              appendFileSync(${JSON.stringify(requests)}, 'request\\n');
+              return new Response(${JSON.stringify(body)}, {
+                status: ${status}, headers: { 'content-type': ${JSON.stringify(contentType)} },
+              });
+            };
+            await main(${JSON.stringify([
+              url, '--json', '--no-host-map', '--no-throttle', '--no-retry-profiles',
+              '--no-reader', '--no-wayback', ...(cached ? ['--cache-dir', folder] : ['--no-cache']),
+            ])});
+          `], { encoding: 'utf8', env: { ...process.env, STARTUP_FETCH_LOG_PATH: log } });
+          assert.equal(result.status, 1, result.stderr);
+          const output = JSON.parse(result.stdout);
+          assert.equal(output.status, status);
+          assert.equal(output.ok, false);
+          assert.equal(output.cache.hit, false);
+          assert.match(output.error, /access-error/);
+          assert.equal(output.output, '');
+          assert.equal(JSON.parse(readFileSync(log, 'utf8').trim()).ok, false);
+          assert.equal(readFileSync(requests, 'utf8'), 'request\n');
+          if (cached) assert.match(result.stderr, /cached access-error page is unusable/);
+        }
+      }
+    }
+  } finally {
+    rmSync(folder, { recursive: true, force: true });
+  }
 });
 
 test('reader URLs preserve the original scheme without adding a second one', () => {
@@ -1211,7 +1301,7 @@ test('fetch CLI rejects origin, reader, archived, and cached access-error pages 
 });
 
 test('fetch CLI recovers an access-error page through a valid reader response', () => {
-  for (const body of [accessErrorBodies[0], ...clinicalTrialShellBodies, ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, ...waybackShellBodies, signupChromeBody]) {
+  for (const body of [accessErrorBodies[0], ...clinicalTrialShellBodies, ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, ...waybackShellBodies, ...archiveRedirectBodies, ...emptyHtmlBodies, signupChromeBody]) {
     const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
       import assert from 'node:assert/strict';
       import { main } from './.agents/skills/fetch-url/scripts/fetch.mjs';
@@ -1237,7 +1327,7 @@ test('fetch CLI refreshes blocked reader and archive fallback caches', () => {
   const folder = mkdtempSync(join(tmpdir(), 'source-fallback-cache-check-'));
   const url = 'https://example.com/page';
   try {
-    const cases = ['Powered and protected by\n\nPrivacy', clinicalTrialShellBodies[0], ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, ...waybackShellBodies, signupChromeBody]
+    const cases = ['Powered and protected by\n\nPrivacy', clinicalTrialShellBodies[0], ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, ...waybackShellBodies, ...archiveRedirectBodies, ...emptyHtmlBodies, signupChromeBody]
       .flatMap((body) => ['reader', 'wayback'].map((variant) => [body, variant]));
     for (const [body, variant] of cases) {
       writeFileSync(join(folder, `${canonicalCacheKey(url, variant)}.json`), JSON.stringify({
@@ -1535,11 +1625,13 @@ test('prefetched quotation checks require readable successful source text', () =
     for (const body of accessErrorBodies) {
       writeFileSync(outputFile, body);
       for (const keyQuote of [body, null]) {
-        assert.deepEqual(checkPrefetchedSourceQuotes(
-          [{ ...source, keyQuote }],
-          [{ url, ok: true, outputFile }],
-          '01-company-overview.yaml',
-        ).map((issue) => issue.code), ['sourceContentBlocked']);
+        for (const file of ['01-company-overview.yaml', 'evidence.yaml']) {
+          assert.deepEqual(checkPrefetchedSourceQuotes(
+            [{ ...source, keyQuote }],
+            [{ url, ok: true, outputFile }],
+            file,
+          ).map((issue) => issue.code), ['sourceContentBlocked']);
+        }
       }
     }
     rmSync(outputFile);
