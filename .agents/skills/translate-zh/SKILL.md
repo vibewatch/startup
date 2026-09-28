@@ -440,6 +440,13 @@ The `在…方面` soundcheck distinguishes a later clause-leading
 `一方面…另一方面…` comparison after a comma or colon from that construction.
 Actual aspect phrases, including comma-separated lists and `在某一方面`,
 remain subject to the soundcheck.
+Reviewed-source confirmation gaps can read `已审阅公开来源均未确认`, including
+a bounded publisher-list apposition. `未按…公开基准` can retain an explicit
+benchmark-by-dimension gap, but not merely late publication. Negation and a
+separate public-disclosure gap remain distinct. A procurement diagram described
+as `not a claim that every customer follows the exact same procurement sequence`
+is a disclaimer, not a company assertion. Its Chinese must still disclaim a
+universal sequence; reversing it or omitting a separate assertion fails.
 
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json

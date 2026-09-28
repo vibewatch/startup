@@ -81,6 +81,7 @@ const patentClaimNouns = new RegExp([
 const marketSizingClaimContexts = /\bcan\s+claim\s+every\s+(?:BaaS|DBaaS)(?:\s+or\s+(?:BaaS|DBaaS))?\s+dollar\b|\brather\s+than\s+a\s+single\s+(?:expansive\s+)?TAM\s+claim\b/gi;
 const legalCounterclaimContexts = /\bconsumer[- ]protection\s+claims?\b|\bcounter-claims?\b/gi;
 const evidenceAssessmentClaimContexts = /\bevidence\s+does\s+not\s+support\s+a\s+clear\s+positive\s+claim\b|\bpublic\s+evidence\s+can\s+(?:therefore\s+)?support\s+the\s+claim\s+that\b/gi;
+const procurementSequenceDisclaimer = /\bnot a claim that every customer follows the exact same procurement sequence\b/i;
 const hedgeRules = [
   {
     en: /\b(?:approximately|roughly)\b/i,
@@ -110,8 +111,12 @@ const hedgeRules = [
       || (/\bclaims about tariff impacts are based on publicly available\b/i.test(source)
         && (source.match(/\bclaims?\b|\bclaimed\s+scale\b/gi) ?? []).length === 1
         && /(?<!并非\s*|不是\s*|非\s*|不\s*)关税影响论断基于/u.test(target)),
-    excludeContext: new RegExp(`${insuranceClaimNouns.source}|${patentClaimNouns.source}|${marketSizingClaimContexts.source}|${legalCounterclaimContexts.source}|${evidenceAssessmentClaimContexts.source}|\\bclaims\\s+in\\s+this\\s+table\\s+are\\s+minted\\s+locally\\b|\\bsynthesized\\s+from\\s+the\\s+cited\\s+claims\\b|\\bpublic[- ]claims?\\s+dispersion\\b|\\brather\\s+than\\s+a\\s+single\\s+["“][^"“”\\n]{1,180}["”]\\s+claim\\b|\\bwarranty\\s+claims?\\b(?=\\s*(?:[,.;:]|$)|\\s+(?:history|rates?|response|frequency|data|targets?|resolved|triggered|processing|handling|costs?|by|if|and|or)\\b)`, 'gi'),
+    excludeContext: new RegExp(`${insuranceClaimNouns.source}|${patentClaimNouns.source}|${marketSizingClaimContexts.source}|${legalCounterclaimContexts.source}|${evidenceAssessmentClaimContexts.source}|${procurementSequenceDisclaimer.source}|\\bclaims\\s+in\\s+this\\s+table\\s+are\\s+minted\\s+locally\\b|\\bsynthesized\\s+from\\s+the\\s+cited\\s+claims\\b|\\bpublic[- ]claims?\\s+dispersion\\b|\\brather\\s+than\\s+a\\s+single\\s+["“][^"“”\\n]{1,180}["”]\\s+claim\\b|\\bwarranty\\s+claims?\\b(?=\\s*(?:[,.;:]|$)|\\s+(?:history|rates?|response|frequency|data|targets?|resolved|triggered|processing|handling|costs?|by|if|and|or)\\b)`, 'gi'),
     exclude: /\b(?:(?:for|in|of|on)\s+claims?\s+(?:modeling|modelling|processing|handling|management|adjudication|submission|settlement|opening|setup|negotiation)|patent\s+claims?\s+(?:drafting|construction|interpretation|scope)|small[- ]claims?\s+(?:processing|courts?)|clinical\s*,\s*claims?\s*,?\s+and\s+operational\s+(?:data|systems)|EHRs?\s*,\s*claims?\s+systems|fraud\s+claims?\s+handling|government\s+guarantee\s+claims?\s+status|insurance\s+coverage\s+limits?\s+and\s+claims\s+history|premium\s+and\s+claims\s+expenditure|high[- ]cost\s+claims?\s+(?:concentration|categories)|million[- ]dollar[- ]plus\s+claims|highest[- ]ROI\s+claims|claims[- ]data[- ]driven|\d+(?:\.\d+)?%\s+claims\s+cost\s+reduction|real[- ]time\s+claims\s+data|claims\s+data\s+latency(?=\s*(?:[.;]|$))|do(?:es)?\s+not\s+reveal\s+claims?\s+quality\s+or\s+jurisdictions|qualitative\s+directional\s+claim|(?:personal|bodily)[ -]injury\s+claims?|(?:anchor|inflate|weaken)\s+claims?\s+values?|claims?-inflation|InsurTech\s+claims?\s+processing|insurance\s+carriers?\s+claims?\s+automation|claims?\s+setup(?=\s*,\s*care\s+coordination\b)|per\s+claims?|open\s+claims|return(?:s|ing)?\s+claims?\s+numbers|handle\s+claims?\s+negotiation|trained\s+on\s+(?:hundreds|thousands|millions)\s+of\s+claims|malpractice\s+claims|customer\s+compensation\s+claims|billing\s+documentation\s*[;,]\s*claims?\s+validation|claims?\s+denial\s+reduction\s+data|not\s+marketing\s+claims)\b/gi,
+  },
+  {
+    en: procurementSequenceDisclaimer,
+    zh: /(?:^|[。！？；，：\n])\s*(?:这|该图|该模型)?(?:并不是说|不是说|不代表|并非表明)每个客户都(?:严格)?按(?:照)?同一采购顺序(?:推进|进行)(?=\s*(?:[。！？；，.!?;,]|$))/u,
   },
   {
     en: /\bnot yet\b/i,
@@ -168,6 +173,12 @@ const hedgeRules = [
       || (/\bno public reference\b/i.test(source)
         && (source.match(/\bno public\b/gi) ?? []).length === 1
         && /(?<!并非\s*|不是\s*|非\s*|不\s*)未见[^。！？；，：\n.!?;,]{1,80}的公开引用(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
+      || (/\bno public sources?\b[^.;!?]{0,320}\bconfirms?\b/i.test(source)
+        && (source.match(/\bno public\b/gi) ?? []).length === 1
+        && /(?:^|[。！？；，：\n])\s*(?:但)?(?:已审阅|研究语料中的)?公开来源(?:——包括[^。！？；，：\n.!?;]{1,180}——)?(?:均|都)(?:未|没有)确认(?![^。！？；，：\n]{0,100}不成立)/u.test(target))
+      || (/\bno public benchmark by\b/i.test(source)
+        && (source.match(/\bno public\b/gi) ?? []).length === 1
+        && /(?:^|[。！？；，：\n])\s*(?:尚|仍)?未按(?!期|时|计划)[^。！？；，：\n.!?;,]{1,80}公开基准(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
       || (/\bno public\b[^.;!?,]{0,160}\b(?:proof|evidence)\b/i.test(source)
         && (source.match(/\bno public\b/gi) ?? []).length === 1
         && /(?<!并非\s*|不是\s*|非\s*|不\s*)(?:仍|尚)缺公开[^。！？；，：\n.!?;,]{0,60}(?:证明|证据)(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
