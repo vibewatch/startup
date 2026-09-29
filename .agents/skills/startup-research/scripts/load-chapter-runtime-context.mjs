@@ -23,6 +23,7 @@ import {
   workflowSnapshotPathFor,
 } from './utils.mjs';
 import { RESTRICTED_ACCESS_STATUSES } from './validation-catalog.mjs';
+import { loadRefreshContext } from './refresh-context.mjs';
 
 function usage() {
   console.error(`Usage: node .agents/skills/startup-research/scripts/load-chapter-runtime-context.mjs [--order <n> | --key <key> | --file <artifact.yaml> | --list] [--report-folder <path>] [--include-context]
@@ -222,8 +223,7 @@ function runCacheContext(reportFolder) {
     cacheDir,
     refreshContext: null,
   };
-  const refresh = tryReadYaml(join(cacheDir, 'refresh-context.yaml'));
-  if (refresh.ok) out.refreshContext = refresh.value;
+  out.refreshContext = loadRefreshContext(runId).context;
   return out;
 }
 

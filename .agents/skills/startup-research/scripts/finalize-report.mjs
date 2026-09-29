@@ -29,6 +29,7 @@ import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { checkPrefetchedSourceQuotes } from './source-quote-checks.mjs';
 import { checkSearchQueryProvenance, executedSearchQueries } from './search-query-checks.mjs';
+import { loadRefreshContext } from './refresh-context.mjs';
 import {
   EXIT,
   FINAL_ARTIFACTS,
@@ -262,24 +263,30 @@ function detectStaleEvidence() {
 // sync. We make the second pass optional: when finalize-report receives no
 // --refresh-reason, we backfill from the cached refresh-context.yaml so the
 // agent only has to remember the string once. When the caller does pass a
-// value, we still enforce the original consistency check.
+// value, it must match the effective context, including an explicit reason review.
 function ensureRefreshReasonMatchesCache() {
   if (!refresh) return;
   const runId = basename(reportFolder);
   if (!isRunId(runId)) return;
-  const ctxPath = join(researchCacheDir(runId), 'refresh-context.yaml');
-  const result = tryReadYaml(ctxPath);
-  if (!result.ok) return; // create-report-run --refresh always writes it; absent means a refresh started without create-report-run, leave it to link-refresh
-  const cached = result.value?.refreshReason ?? null;
+  let state;
+  try {
+    state = loadRefreshContext(runId);
+  } catch (error) {
+    console.error(`[finalize-report] ${error.message}`);
+    process.exit(EXIT.failure);
+  }
+  if (!state.context) return;
+  const cached = state.context.refreshReason ?? null;
   if (!refreshReason && cached) {
     refreshReason = cached;
-    console.error(`[finalize-report] using cached --refresh-reason from refresh-context.yaml: ${JSON.stringify(cached)}`);
+    const source = state.review ? 'reviewed --refresh-reason from refresh-reason-review.json' : 'cached --refresh-reason from refresh-context.yaml';
+    console.error(`[finalize-report] using ${source}: ${JSON.stringify(cached)}`);
     return;
   }
   const provided = refreshReason || null;
   if ((cached ?? '') !== (provided ?? '')) {
-    console.error(`[finalize-report] --refresh-reason mismatch: refresh-context.yaml has ${JSON.stringify(cached)} but finalize-report was given ${JSON.stringify(provided)}.`);
-    console.error('[finalize-report] omit --refresh-reason to reuse the cached value, or pass the same string both times.');
+    console.error(`[finalize-report] --refresh-reason mismatch: effective refresh context has ${JSON.stringify(cached)} but finalize-report was given ${JSON.stringify(provided)}.`);
+    console.error('[finalize-report] omit --refresh-reason to reuse the effective value, or pass that exact string.');
     process.exit(EXIT.failure);
   }
 }

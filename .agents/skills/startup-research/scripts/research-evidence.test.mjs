@@ -43,6 +43,7 @@ for (const workflowFile of ['company.yml', 'refresh-company.yml', 'research-unic
           originals.set(`${cache}/worker-inputs/01-company-overview-pool.json`, Buffer.from('{"recommended":[]}\n'));
           originals.set(`${cache}/_fetch-log.jsonl`, Buffer.from('{"source":"run-local fixture"}\n'));
           originals.set(`${cache}/refresh-context.yaml`, Buffer.from(`refreshOfRunId: ${previousId}\n`));
+          originals.set(`${cache}/refresh-reason-review.json`, Buffer.from('{"schemaVersion":"refresh-reason-review-v1","reviewedReason":"Reader-facing correction"}\n'));
         }
 
         for (const [path, bytes] of originals) write(path, bytes);
