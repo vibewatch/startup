@@ -373,6 +373,12 @@ about warranty coverage or product performance still requires attribution.
 Requests for `claims frequency` and hyphenated `warranty-claim rate` or history
 likewise describe claim activity, not company assertions. Check the metric
 separately: claim frequency is not a payout ratio.
+Likewise, `gross profit` is a monetary amount (`毛利` or `毛利润`), not
+`gross margin` (`毛利率`). The strict editor rejects demonstrated amount-to-rate
+substitutions, including short figure labels. Leaves that also name a margin or
+explicit ratio/percentage remain outside that conservative guard; compare their
+complete propositions manually. A clean numeric-token check does not establish
+metric-head fidelity.
 `claims in this table are minted locally` describes this report's evidence
 ledger, not a company assertion; a separate company claim still needs attribution.
 Likewise, scores `synthesized from the cited claims` refer to cited evidence,
@@ -507,6 +513,9 @@ different predicates and separate omitted company assertions still fail.
 Source-identical `Tiger Global Management` and `IBM (watsonx Orchestrate)` are
 proper names, not untranslated descriptors. Ordinary text beside those names,
 such as `platform`, and `Pricing Guide` beside a publisher still needs translation.
+`Continuity of historical shareholder claims` concerns shareholder rights,
+not a company assertion. A shareholder who `claims` a return or a separate
+company assertion still requires attribution.
 
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json
@@ -893,6 +902,10 @@ Stack diagrams retain their complete ordered items, modules and outputs in
 visible layer details and matching tooltips, even when the diagram previews
 only a few pills. Check every label, value, unit and qualification in both
 locales, on narrow screens and in print; duplicate labels are not merged.
+Flow and stack previews fit measured SVG glyph widths, with explicit ellipses
+when bounded previews are necessary; their full text remains in the supplements
+and tooltips. Check actual glyph bounds, not just text presence. Mobile table
+captions must use the full card width rather than collapsing into a vertical strip.
 Also verify report-level `coverageNotes`, displayed before cover facts with
 the same Chinese-leaf / English-fallback behavior as other report text.
 Flow edge aliases resolve from English before overlays are merged. Non-sequential
