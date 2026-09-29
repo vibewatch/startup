@@ -107,6 +107,11 @@ controls and navigation make the body look substantive. Live responses and
 all cache variants use the same rejection and fallback checks.
 The exact title `DO NOT DELETE - 404 Page` is likewise unusable, including
 reader copies surrounded by publisher navigation and subscription links.
+The top-level heading `404: The article you are looking for cannot be found.`
+also identifies an unusable article response, even under a generic publisher
+title with extensive navigation. Origin, reader, archive, cached and retained
+prefetched copies share this check; ordinary articles quoting the notice under
+their own heading remain eligible.
 The redirect-only text `You are now being redirected to shortly.....`
 is also unusable, including reader wrappers and URLs ending in `.pdf`
 that actually serve HTML. It is not the requested source document.
@@ -145,6 +150,9 @@ This includes empty playback-iframe pages titled `Wayback Machine`, reader
 wrappers and old cached or prefetched copies. Substantive archived text remains
 eligible even with that banner or title. A snapshot date alone does not establish
 that the archived source content was retrieved.
+If only the extracted text contains a banner, inspect `--raw` before declaring
+the archived document empty: static extraction can omit hidden, client-rendered
+sections. Preserve the original bytes; the banner itself is not source evidence.
 The native archive interstitial that says `Loading...`, records an HTTP redirect
 at crawl time, and ends with `Redirecting to...` / `Impatient?` is not the original
 article either. Reader copies and the archive's navigation-wrapped error panel

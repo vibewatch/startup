@@ -979,6 +979,12 @@ const emptyHtmlBodies = [
   '<html><head><style>body { color: black; }</style></head><body> \n </body></html>',
   'Title: Company profile\n\nURL Source: https://example.com/profile\n\nMarkdown Content:\n',
 ];
+const articleNotFoundText = '404: The article you are looking for cannot be found.';
+const articleNotFoundBodies = [
+  articleNotFoundText,
+  `<html><head><title>Business News and Technology</title></head><body><nav>News Technology Subscribe</nav><main><h1><span>404:</span> The article you are looking for cannot be found.</h1><a>Back to home</a></main><footer>Privacy Terms</footer></body></html>`,
+  `Title: Business News and Technology\n\nURL Source: https://example.com/article\n\nMarkdown Content:\n[Subscribe](https://example.com/subscribe)\n\n#### News\n\n# ${articleNotFoundText}\n\n[Back to home](https://example.com/)\n\n#### Technology\n\nPrivacy Terms`,
+];
 const accessErrorBodies = [
   '<html><head><title>Client Challenge</title></head><body>A required part of this site couldn’t load.</body></html>',
   "Title:\n\nURL Source: https://example.com/thread\n\nWarning: Target URL returned error 403: Forbidden\n\nMarkdown Content:\nYou've been blocked by network security.",
@@ -994,6 +1000,7 @@ const accessErrorBodies = [
   ...waybackShellBodies,
   ...archiveRedirectBodies,
   ...emptyHtmlBodies,
+  ...articleNotFoundBodies,
   '<html><head><title></title></head><body><div>Powered and protected by</div><div>Privacy</div></body></html>',
   '<html><body><!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-base">Wayback Machine: April 16, 2026</div><!-- END WAYBACK TOOLBAR INSERT --><div>Powered and protected by</div><div>Privacy</div></body></html>',
   'Powered and protected by\n\nPrivacy',
@@ -1346,6 +1353,10 @@ test('access-error detection preserves real articles about security and PDF bodi
     '<html><title>Understanding 404 - Page Not Found</title><article>A guide to error handling.</article></html>',
     '<html><title>Understanding 404 | Page Not Found</title><article>A guide to error handling.</article></html>',
     '<html><title>Understanding DO NOT DELETE - 404 Page</title><article>A guide to error handling.</article></html>',
+    `<html><title>Missing articles</title><article><h1>How to diagnose missing articles</h1><p>${articleNotFoundText}</p><h2>${articleNotFoundText}</h2><p>This is an example notice.</p></article></html>`,
+    `# How to diagnose missing articles\n\n## ${articleNotFoundText}\n\nThis is an example notice.`,
+    `${articleNotFoundText}\n\nThis article explains the notice rather than serving an error page.`,
+    `Title: Missing articles\n\nURL Source: https://example.com/guide\n\nMarkdown Content:\n# Error handling\n\n\`\`\`html\n<h1>${articleNotFoundText}</h1>\n\`\`\`\n\nAn example of an error heading.`,
     '<html><title>Understanding Federal Register :: Request Access</title><article>A guide to the public API.</article></html>',
     `Federal Register access guide\n\n${federalRegisterAccessText}`,
     `${federalRegisterAccessText}\n\nThis article quotes an access notice; it does not serve the challenge.`,
@@ -1394,6 +1405,7 @@ test('access-error detection preserves real articles about security and PDF bodi
     Buffer.from('%PDF-1.7\nTitle: 页面未找到'),
     Buffer.from('%PDF-1.7\nTitle: 404 | Page Not Found'),
     Buffer.from('%PDF-1.7\nTitle: DO NOT DELETE - 404 Page'),
+    Buffer.from(`%PDF-1.7\n# ${articleNotFoundText}`),
     Buffer.from(`%PDF-1.7\nTitle: Federal Register :: Request Access\n${federalRegisterAccessText}`),
     Buffer.from(`%PDF-1.7\n${loginLockoutText}`),
     Buffer.from(`%PDF-1.7\n${orgChartControlText}`),
@@ -1535,7 +1547,7 @@ test('fetch CLI rejects origin, reader, archived, and cached access-error pages 
 });
 
 test('fetch CLI recovers an access-error page through a valid reader response', () => {
-  for (const body of [accessErrorBodies[0], ...clinicalTrialShellBodies, ...federalRegisterAccessBodies, ...loginLockoutBodies, ...orgChartControlBodies, ...clientBlockedBodies, ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, ...waybackShellBodies, ...archiveRedirectBodies, ...emptyHtmlBodies, signupChromeBody, loginLockoutChromeBody]) {
+  for (const body of [accessErrorBodies[0], ...clinicalTrialShellBodies, ...federalRegisterAccessBodies, ...loginLockoutBodies, ...orgChartControlBodies, ...clientBlockedBodies, ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, ...waybackShellBodies, ...archiveRedirectBodies, ...emptyHtmlBodies, ...articleNotFoundBodies, signupChromeBody, loginLockoutChromeBody]) {
     const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
       import assert from 'node:assert/strict';
       import { main } from './.agents/skills/fetch-url/scripts/fetch.mjs';
@@ -1561,7 +1573,7 @@ test('fetch CLI refreshes blocked reader and archive fallback caches', () => {
   const folder = mkdtempSync(join(tmpdir(), 'source-fallback-cache-check-'));
   const url = 'https://example.com/page';
   try {
-    const cases = ['Powered and protected by\n\nPrivacy', clinicalTrialShellBodies[0], ...federalRegisterAccessBodies, ...loginLockoutBodies, ...orgChartControlBodies, ...clientBlockedBodies, ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, ...waybackShellBodies, ...archiveRedirectBodies, ...emptyHtmlBodies, signupChromeBody, loginLockoutChromeBody]
+    const cases = ['Powered and protected by\n\nPrivacy', clinicalTrialShellBodies[0], ...federalRegisterAccessBodies, ...loginLockoutBodies, ...orgChartControlBodies, ...clientBlockedBodies, ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, ...waybackShellBodies, ...archiveRedirectBodies, ...emptyHtmlBodies, ...articleNotFoundBodies, signupChromeBody, loginLockoutChromeBody]
       .flatMap((body) => ['reader', 'wayback'].map((variant) => [body, variant]));
     for (const [body, variant] of cases) {
       writeFileSync(join(folder, `${canonicalCacheKey(url, variant)}.json`), JSON.stringify({
