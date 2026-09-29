@@ -77,6 +77,71 @@ function entryMultiplePair({ header = 'Exit Multiple at 5.6B Entry', target = '�
 
 const checks = [
   ...[
+    ['The credit gap is £65 billion.', '信贷缺口为 £65bn。', false],
+    ['The credit gap is £65bn.', '信贷缺口为 £65B。', false],
+    ['Revenue is €1.25 billion and funding is $2 billion.', '收入为 €1.25bn，融资为 $2bn。', false],
+    ['The amount is £1,500 billion.', '金额为 £1500bn。', false],
+    ['The amount is £9007199254740993 billion.', '金额为 £9007199254740993bn。', false],
+    ['The amount is £9007199254740993 billion.', '金额为 £9007199254740992bn。', true],
+    ['Revenue was £65 billion in April 2025.', '2025 年 4 月收入为 £65bn。', false],
+    ['The two markets each represent £65 billion, including 5 clients.', '两个市场分别为 £65bn，各含 5 个客户。', false],
+    ['Revenue is £65bn.', '收入为 £65。', true],
+    ['Revenue is £65bn.', '收入为 £65M。', true],
+    ['Revenue is £65bn.', '收入为 €65B。', true],
+    ['Revenue is £65 billion.', '收入为 £66bn。', true],
+    ['Revenue is £65 billion.', '收入为 £65bn2。', true],
+    ['Revenue is £65 billion.', '收入为 £65bn.5。', true],
+    ['Revenue is £65 billion.', '收入为 £65bna。', true],
+    ['Revenue is £650bn.', '收入为 £65,0B。', true],
+    ['Revenue is £650 billion.', '收入为 £65,0bn。', true],
+    ['Revenue is £65 billion.', '收入为 £65bps。', true],
+    ['Revenue is £65bn and funding is £65bn.', '收入与融资为 £65B。', true],
+    ['The market is £65 billion, including 5 clients.', '市场为 £65bn，含 6 个客户。', true],
+    ['Revenue was £65 billion in April 2025.', '2025 年 5 月收入为 £65bn。', true],
+    ['Revenue was £65 billion in April 2025 and £66 billion in May 2026.', '2025 年 5 月收入为 £65bn，2026 年 4 月收入为 £66bn。', true],
+    ['Losses are -£65bn.', '亏损为 -£65B。', true],
+    ['Revenue is £65bn.', '收入为 -£65B。', true],
+    ['Revenue is -£65B.', '收入为 £65bn。', true],
+    ['Losses are (£65bn).', '亏损为（£65B）。', true],
+    ['Revenue ranges from £1bn to £2bn.', '收入区间为 £1B 至 £2B。', true],
+    ['Revenue ranges from £1bn–£2bn.', '收入区间为 £1B–£2B。', true],
+    ['Revenue is £65bn+.', '收入为 £65B。', true],
+    ['Revenue is >£65bn.', '收入为 £65B。', true],
+    ['Revenue is approximately £65 billion.', '收入约为 £65bn。', true],
+    ['Funding is CAD $65bn.', '融资为 USD $65B。', true],
+    ['Funding is US$65B.', '融资为 AU$65bn。', true],
+    ['Funding is $65 billion.', '融资为 $65bn 加元。', true],
+    ['There are 1.5 million accounts.', '共有 1.5 百万账户。', false],
+    ['There are 1.5 million accounts and a £500k threshold.', '共有 1.5 百万账户，门槛为 £500k。', false],
+    ['There are 1.5 million accounts and 5 clients.', '共有 1.5 百万账户和 5 个客户。', false],
+    ['There are 1.5 million accounts.', '共有 1.6 百万账户。', true],
+    ['There are 1.5 million accounts and 5 clients.', '共有 1.5 百万账户和 6 个客户。', true],
+    ['There are -1.5 million accounts.', '共有 -1.5 百万账户。', true],
+    ['Revenue is £1.5 million.', '收入为 1.5 百万英镑。', true],
+  ].flatMap(([en, zh, expected]) => [false, true].flatMap(strictEditor => ['prose', 'table', 'figure'].map(surface => {
+    const wrap = value => surface === 'prose' ? fullReport(value)
+      : surface === 'table' ? { ...fullReport(''), tables: [{ rows: [[value]] }] }
+        : { ...fullReport(''), figures: [{ data: { nodes: [{ label: value }] } }] };
+    return [
+      checkPairQuality(wrap(en), wrap(zh), { strictEditor })
+        .some(issue => issue.code === 'metric-preservation') === (strictEditor && expected),
+      `bounded currency-billion aliases and million counts (${surface}, strict=${strictEditor}): ${en} / ${zh}`,
+    ];
+  }))),
+  ...[
+    ['Company campaign claim; independent verification not available in public sources', '公司活动口径；公开来源无法独立验证', false],
+    ['Company campaign claim; independent verification not available in public sources', '公司活动口径；公开来源无法独立验证。这是尽调观察。', false],
+    ['Company campaign claim; independent verification not available in public sources', '并非公司活动口径；公开来源无法独立验证', true],
+    ['Company campaign claim; independent verification not available in public sources', '这不是公司活动口径；公开来源无法独立验证', true],
+    ['Company campaign claim; independent verification not available in public sources', '活动表现很好；公开来源无法独立验证', true],
+    ['Independent campaign claim; independent verification not available in public sources', '公司活动口径；公开来源无法独立验证', true],
+    ['Company campaign claim; the company claims every account is active and profitable.', '公司活动口径；所有账户都活跃且盈利。', true],
+  ].flatMap(([en, zh, expected]) => [false, true].map(strictEditor => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor })
+      .some(issue => issue.code === 'hedge-preservation') === expected,
+    `campaign attribution stays source-scoped (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
     ['Gross profit', '毛利率', true],
     ['Gross profit', '毛利润率', true],
     ['Gross profit', '毛利', false],

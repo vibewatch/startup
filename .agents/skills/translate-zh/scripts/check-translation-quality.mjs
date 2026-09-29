@@ -10,8 +10,8 @@ function usage(code = 0) {
 
 const invariantToken = /\b(?:FY\s*)?(?:19|20)\d{2}E?\b/gi;
 const calendarDateToken = /\b((?:19|20)\d{2})(?:-(\d{1,2})-(\d{1,2})\b|\s*年\s*(\d{1,2})\s*月\s*(\d{1,2})\s*日)/gu;
-const metricToken = /(?:[$€£¥₦]\s*)?\d+(?:[.,]\d+)*(?:[KMBT](?![a-z])|\s?(?:x|×|倍|%|bps|ARR|MRR|GMV|TPV|NPL|IRR))?/gi;
-const quantityPowers = { k: 3, m: 6, b: 9, t: 12, 千: 3, 万: 4, 亿: 8, 万亿: 12 };
+const metricToken = /(?:[$€£¥₦]\s*)?\d+(?:[.,]\d+)*(?:\s*bn(?!\w|[.,]\d)|[KMBT](?![a-z])|\s?(?:x|×|倍|%|bps|ARR|MRR|GMV|TPV|NPL|IRR))?/gi;
+const quantityPowers = { k: 3, m: 6, b: 9, t: 12, 千: 3, 万: 4, 百万: 6, 亿: 8, 万亿: 12 };
 const stylePatterns = [
   /对于[^。！？；]{1,24}而言/u,
   /在[^。！？；]{1,20}(?<![，：,:]\s*(?:一|另一))(?:(?<!买)方面|方面(?!前))/u,
@@ -131,6 +131,9 @@ const hedgeRules = [
     en: /\bclaims?\b|\bclaimed\s+scale\b/i,
     zh: /声称|称|说法|主张|表述|断言|声明|自述|公司口径|网站口径|反方观点/u,
     alternative: (source, target) => /(?<!并非|不是|非)公司披露的(?:汇总|增长)口径|(?<!并非|不是|非)管理层口径/u.test(target)
+      || (/^\s*company campaign claim\s*(?:[;.]|$)/i.test(source)
+        && (source.match(/\bclaims?\b|\bclaimed\s+scale\b/gi) ?? []).length === 1
+        && /(?:^|[。！？；，：\n])\s*公司活动口径(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
       || (/\bcustomer validates (?:the )?fabric claim\b/i.test(source)
         && (source.match(/\bclaims?\b|\bclaimed\s+scale\b/gi) ?? []).length === 1
         && /(?:^|[。！？；，：\n])\s*客户在[^。！？；，：\n.!?;,]{1,60}(?:中|内)验证面料承诺(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
@@ -490,7 +493,7 @@ function normalizedCountMetrics(value, { normalizeMonths = false, allowUnconvert
   let converted = 0;
   let unsupported = false;
   const expanded = normalized.replace(
-    /(?<![\w.,])(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)(?:\s*(?:多|余)?\s*(万亿|亿|万|千)(?![十百千万亿兆])|([KMBT])(?![a-z])|(?<=\d,\d{3})(?![\w.,]))/giu,
+    /(?<![\w.,])(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)(?:\s*(?:多|余)?\s*(万亿|百万|亿|万|千)(?![十百千万亿兆])|([KMBT])(?![a-z])|(?<=\d,\d{3})(?![\w.,]))/giu,
     (match, number, chineseUnit, englishUnit, offset, text) => {
       const before = text.slice(0, offset);
       const after = text.slice(offset + match.length);
@@ -566,6 +569,23 @@ function equivalentAwardCounts(source, target) {
   const options = { normalizeMonths: true, allowUnconverted: true };
   const sourceTokens = normalizedCountMetrics(en.text, options);
   const targetTokens = normalizedCountMetrics(zh.text, options);
+  return sourceTokens && targetTokens && JSON.stringify(sourceTokens) === JSON.stringify(targetTokens);
+}
+
+function equivalentBillionAbbreviations(source, target) {
+  const billion = /([$€£¥₦]\s*)(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)\s*bn(?!\w|[.,]\d)/gi;
+  if (!source.match(billion) && !target.match(billion)) return false;
+  const quantities = normalizeQuantityWords(`${source}\n${target}`);
+  const amounts = [...quantities.matchAll(/[$€£¥₦]\s*(\d+(?:[.,]\d+)*)/gu)];
+  if (amounts.some(([, number]) => !/^(?:\d{1,3}(?:,\d{3})+|\d+)(?:\.\d+)?$/.test(number))) return false;
+  const amount = String.raw`[$€£¥₦]\s*\d+(?:[.,]\d+)*\s*(?:bn\b|[KMBT]\b)?`;
+  if (new RegExp(String.raw`[-+−–—~≈<>]\s*${amount}|${amount}\s*\+|${amount}\s*(?:[-–—]|to\b|至|到)\s*[$€£¥₦\d]|[(（]\s*${amount}\s*[)）]`, 'iu').test(quantities)
+      || new RegExp(String.raw`(?:\b(?:about|approximately|roughly|nearly|over|under|at least|at most|more than|less than|up to)|约|近|至少|至多|超过|不足|不低于|不超过)\s*${amount}`, 'iu').test(quantities)
+      || /[A-Za-z][$€£¥₦]|\b(?:USD|EUR|GBP|JPY|CNY|RMB|HKD|AUD|CAD|SGD|INR|KRW|TWD|CHF|NGN|NZD|dollars?|euros?|pounds?|yuan|yen|rupees?|won)\b|美元|美金|欧元|英镑|港币|港元|日元|人民币|新台币|台币|澳元|加元|新加坡元|新币|瑞郎|卢比|卢布|韩元|奈拉/iu.test(quantities)) return false;
+  const normalize = value => normalizeQuantityWords(value).replace(billion, '$1$2B');
+  const options = { normalizeMonths: true, allowUnconverted: true };
+  const sourceTokens = normalizedCountMetrics(normalize(source), options);
+  const targetTokens = normalizedCountMetrics(normalize(target), options);
   return sourceTokens && targetTokens && JSON.stringify(sourceTokens) === JSON.stringify(targetTokens);
 }
 
@@ -665,7 +685,8 @@ function walk(en, zh, path, whitelist, issues, options) {
       const equivalentDollars = sourceDollars && targetDollars
         && JSON.stringify(sourceDollars) === JSON.stringify(targetDollars);
       if (!equivalentCounts && !equivalentDollars && !equivalentTripledMetrics(metricSource, numericTarget)
-          && !equivalentAwardCounts(metricSource, numericTarget)) {
+          && !equivalentAwardCounts(metricSource, numericTarget)
+          && !equivalentBillionAbbreviations(metricSource, numericTarget)) {
         pushIssue(issues, {
           path: path.join('/'),
           kind: 'semantic',
