@@ -77,6 +77,52 @@ function entryMultiplePair({ header = 'Exit Multiple at 5.6B Entry', target = '�
 
 const checks = [
   ...[
+    [
+      'This analysis uses an inference-led market lens, not a claim that Groq currently offers only inference.',
+      '本分析以推理业务为主线，但并不表明 Groq 目前仅提供推理服务。',
+      [
+        'Groq 目前仅提供推理服务。',
+        '并非不代表 Groq 目前仅提供推理服务。',
+        '不代表 Groq 目前仅提供训练服务。',
+        '不代表其他公司的业务；Groq 目前仅提供推理服务。',
+      ],
+    ],
+    [
+      'The ordering is an analytical dependency map, not a claim that every Groq workload traverses both LPU and NVIDIA hardware.',
+      '该排序是分析性的依赖关系图，不代表 Groq 的每种工作负载都会同时经过 LPU 和 NVIDIA 硬件。',
+      [
+        '该排序表明 Groq 的每种工作负载都会同时经过 LPU 和 NVIDIA 硬件。',
+        '并非不代表 Groq 的每种工作负载都会同时经过 LPU 和 NVIDIA 硬件。',
+        '不代表 Groq 的每种工作负载都会同时经过 LPU 和 CPU 硬件。',
+        '不代表其他公司的架构；Groq 的每种工作负载都会同时经过 LPU 和 NVIDIA 硬件。',
+      ],
+    ],
+    [
+      'No claim of fairness, post-money basis, investor returns or confirmed cash availability is established by the financing mark.',
+      '融资估值本身不能证明定价公允、投后口径、投资者回报或现金确实可用。',
+      [
+        '融资估值本身能证明定价公允、投后口径、投资者回报或现金确实可用。',
+        '并非融资估值本身不能证明定价公允、投后口径、投资者回报或现金确实可用。',
+        '收入规模本身不能证明定价公允、投后口径、投资者回报或现金确实可用。',
+        '融资估值本身不能证明定价公允、投后口径、投资者回报或现金已确认到账。',
+        '融资估值本身不能证明定价公允、投后口径或现金确实可用。',
+      ],
+    ],
+  ].flatMap(([en, faithful, unsafe]) => [
+    [en, faithful, false],
+    ...unsafe.map(zh => [en, zh, true]),
+    [`${en} The company claims every customer renews.`, `${faithful} 每个客户都续约。`, true],
+    [`${en} The company claims every customer renews.`, `${faithful} 公司声称每个客户都续约。`, false],
+    ['The company claims every customer renews. This assertion requires independent customer-cohort evidence.', faithful, true],
+  ].flatMap(([source, target, expected]) => [false, true].flatMap(strictEditor => ['prose', 'table'].map(surface => [
+    checkPairQuality(
+      surface === 'prose' ? fullReport(source) : { ...fullReport(''), tables: [{ rows: [[source]] }] },
+      surface === 'prose' ? fullReport(target) : { ...fullReport(''), tables: [{ rows: [[target]] }] },
+      { strictEditor },
+    ).some(issue => issue.code === 'hedge-preservation') === expected,
+    `scoped inference, hardware and financing disclaimers preserve predicates and separate assertions (${surface}, strict=${strictEditor}): ${source} / ${target}`,
+  ])))),
+  ...[
     ['Comparable copyright claims impose cost.', '类似版权索赔带来成本。'],
     ['The copyright claim resolved against the company.', '版权索赔以不利于公司的结果解决。'],
     ['Review copyright litigation and any similar claims.', '审阅版权诉讼及任何类似索赔。'],
@@ -2140,6 +2186,8 @@ const checks = [
       && untranslatedMessage('Andreessen Horowitz (a16z)', 'Andreessen Horowitz (a16z)') === null
       && untranslatedMessage('Gao Jiyang (高继扬)', 'Gao Jiyang (高继扬)') === null
       && untranslatedMessage('Physical Intelligence (π0)', 'Physical Intelligence (π0)') === null
+      && untranslatedMessage('Tiger Global Management', 'Tiger Global Management') === null
+      && untranslatedMessage('IBM (watsonx Orchestrate)', 'IBM (watsonx Orchestrate)') === null
       && untranslatedMessage('Lee Seung-gun (SG Lee / 이승건)', 'Lee Seung-gun（SG Lee / 이승건）') === null
       && untranslatedMessage('16λ DWDM, 112G PAM4', '16λ DWDM、112G PAM4') === null,
     'strict structural check rejected a Latin proper noun',
@@ -2148,6 +2196,14 @@ const checks = [
     untranslatedMessage('Global retail sample', 'Global retail sample') === 'translation is identical to the English source',
     'strict structural check accepted untranslated ordinary descriptors',
   ],
+  ...[
+    'Tiger Global Management enterprise platform',
+    'IBM (watsonx Orchestrate) platform',
+    'eesel AI / Groq Pricing Guide',
+  ].map(value => [
+    untranslatedMessage(value, value) === 'translation is identical to the English source',
+    `proper-name recognition must not exempt adjacent descriptors: ${value}`,
+  ]),
   ...negativeExamples.map(([en, faithful, reversed]) => [
     checkPairQuality(fullReport(en), fullReport(faithful)).length === 0
       && checkPairQuality(fullReport(en), fullReport(reversed))

@@ -498,6 +498,15 @@ multiples on disclosed fundamentals` is a valuation disclaimer, not a company
 assertion. Retain the denial and its disclosed-fundamentals basis; a positive
 claim, negated disclaimer, different basis or separate omitted assertion still
 fails. This scoped check does not establish that the valuation itself is sound.
+The reviewed inference-only, universal LPU/NVIDIA-path and financing-mark
+disclaimers are likewise not positive company assertions. Their scope and
+negative predicates must remain intact; a financing mark establishes neither
+fairness, a post-money basis, investor returns nor confirmed cash availability.
+Cash arrival alone is not cash availability. Reversed or negated disclaimers,
+different predicates and separate omitted company assertions still fail.
+Source-identical `Tiger Global Management` and `IBM (watsonx Orchestrate)` are
+proper names, not untranslated descriptors. Ordinary text beside those names,
+such as `platform`, and `Pricing Guide` beside a publisher still needs translation.
 
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json
