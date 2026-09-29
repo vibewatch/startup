@@ -140,7 +140,7 @@ Resolve every listed issue against ${publishedDeepReview ? 'the available authen
 ` : ''}
 ${previousFailures ? `The preceding attempt failed independent acceptance. Read the complete diagnostic file at ${previousFailures} and repair those concrete failures within the original scope; do not repeat already-applied changes.\n` : ''}
 
-Do not report success unless summary-card.yaml, evidence.yaml, full-report.yaml, and report-meta.yaml exist and finalize-report prints its pipeline-complete line.`;
+Do not report success unless summary-card.yaml, evidence.yaml, full-report.yaml, and report-meta.yaml exist and finalize-report prints its pipeline-complete line. The caller independently reruns every chapter's strict gate after each attempt; existing artifacts cannot override a strict failure. If the authorized review scope cannot clear a gate, report that conflict rather than changing unapproved fields.`;
 }
 
 function terminate(child) {
@@ -202,6 +202,7 @@ if (reviewFindingsPath) {
   }
 }
 const requiredFiles = [
+  ...getAnalysisArtifacts(config).map((chapter) => chapter.file),
   REPORT_META_FILE,
   FINAL_ARTIFACTS.evidence.file,
   FINAL_ARTIFACTS.fullReport.file,
@@ -212,8 +213,7 @@ const bundlePath = existsSync(join(cacheDir, 'search-bundle.json')) ? join(cache
 const missingWorkerInputs = !resultsPath || !bundlePath;
 const publishedDeepReview = Boolean(missingWorkerInputs && reviewFindings
   && config.activeResearchProfile === 'deep'
-  && [...requiredFiles, ...getAnalysisArtifacts(config).map((chapter) => chapter.file)]
-    .every((file) => existsSync(join(reportFolder, file)))
+  && requiredFiles.every((file) => existsSync(join(reportFolder, file)))
   && hasCurrentPublishedRevision(reportFolder));
 if (missingWorkerInputs && !publishedDeepReview) {
   console.error(`[run-report-finalizer] missing worker results or search bundle under ${cacheDir}; only an explicit source review of a complete, current deep report can proceed without worker inputs`);
@@ -360,9 +360,33 @@ function inspectFinalReport() {
   if (missingFiles.length > 0) {
     return {
       missingFiles,
-      reportCheck: { ok: false, exitCode: null, error: '', reviewIssues, refreshIssues },
+      reportCheck: { ok: false, exitCode: null, error: '', chapterChecks: [], reviewIssues, refreshIssues },
     };
   }
+  const chapterChecks = getAnalysisArtifacts(config).map(({ file }) => {
+    const check = spawnSync(process.execPath, [
+      join(scriptDir, 'check-chapter.mjs'), reportFolder, file, '--strict', '--format', 'json',
+    ], {
+      cwd: repoRoot,
+      encoding: 'utf8',
+      env: { ...process.env, STARTUP_FETCH_LOG_PATH: fetchLogPath },
+    });
+    let validation = null;
+    let parseError = '';
+    try {
+      validation = JSON.parse(check.stdout);
+    } catch (error) {
+      parseError = `invalid JSON from strict chapter validation: ${error.message}`;
+    }
+    const ok = check.status === 0 && validation?.ok === true;
+    return {
+      file,
+      ok,
+      exitCode: check.status,
+      error: ok ? '' : (check.error?.message || check.stderr || parseError || 'strict chapter validation failed'),
+      validation,
+    };
+  });
   const check = spawnSync(process.execPath, [
     checkReportScript,
     reportFolder,
@@ -404,11 +428,16 @@ function inspectFinalReport() {
   return {
     missingFiles,
     reportCheck: {
-      ok: check.status === 0 && quoteIssues.length === 0 && queryIssues.length === 0 && reviewIssues.length === 0 && refreshIssues.length === 0,
+      ok: check.status === 0 && chapterChecks.every((chapter) => chapter.ok)
+        && quoteIssues.length === 0 && queryIssues.length === 0 && reviewIssues.length === 0 && refreshIssues.length === 0,
       exitCode: check.status,
-      error: check.status === 0
-        ? [...quoteIssues, ...queryIssues, ...reviewIssues, ...refreshIssues].map((issue) => `${issue.path}: ${issue.code}: ${issue.message}`).join('\n')
-        : (check.stderr || check.stdout),
+      error: [
+        ...chapterChecks.filter((chapter) => !chapter.ok).map((chapter) => `${chapter.file}: ${chapter.error}`),
+        ...(check.status === 0
+          ? [...quoteIssues, ...queryIssues, ...reviewIssues, ...refreshIssues].map((issue) => `${issue.path}: ${issue.code}: ${issue.message}`)
+          : [check.error?.message || check.stderr || check.stdout || `Report validation exited ${check.status}`]),
+      ].join('\n'),
+      chapterChecks,
       quoteIssues,
       queryIssues,
       reviewIssues,
