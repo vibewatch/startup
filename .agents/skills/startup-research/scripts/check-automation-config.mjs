@@ -127,11 +127,20 @@ if (models.success) {
 }
 const unicornWorkflow = readFileSync(resolve('.github/workflows/research-unicorns.yml'), 'utf8');
 const translationWorkflow = readFileSync(resolve('.github/workflows/translate-reports-zh.yml'), 'utf8');
-if (!unicornWorkflow.includes('name: Run authenticated research workers and finalizers')) {
-  issues.push('.github/workflows/research-unicorns.yml: missing workflow-owned authenticated worker/finalizer step');
-}
-if (!unicornWorkflow.includes('COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}')) {
-  issues.push('.github/workflows/research-unicorns.yml: authenticated worker/finalizer step must receive COPILOT_PAT');
+for (const path of [
+  '.github/workflows/company.yml',
+  '.github/workflows/refresh-company.yml',
+  '.github/workflows/research-unicorns.yml',
+]) {
+  const steps = Object.values(load(path).jobs).flatMap(job => job.steps ?? []);
+  const pipeline = steps.find(step =>
+    /^\s*npm run research:workers --/mu.test(step.run ?? '')
+    && /^\s*(?:if )?npm run research:finalize --/mu.test(step.run ?? ''));
+  if (!pipeline || /copilot --/u.test(pipeline.run)) {
+    issues.push(`${path}: workers and finalizers must run directly in a workflow-owned shell, not a parent Copilot tool`);
+  } else if (pipeline.env?.COPILOT_GITHUB_TOKEN !== '${{ secrets.COPILOT_PAT }}') {
+    issues.push(`${path}: the worker/finalizer step must receive COPILOT_PAT directly`);
+  }
 }
 if (!unicornWorkflow.includes('cron: "7 */6 * * *"')) {
   issues.push('.github/workflows/research-unicorns.yml: missing native six-hour new-report schedule');

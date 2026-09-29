@@ -70,6 +70,14 @@ Workflow narrative: what to run, in what order, with which flags. Two generated 
 
 **Automation fast path:** after the shared bootstrap, run `npm run research:workers -- --report-folder <reportFolder> --concurrency 8 --timeout-seconds 900`, then run `npm run research:finalize -- --report-folder <reportFolder> --timeout-seconds 900` even when the worker command exits nonzero with convergence-only failures. The worker runner launches one independent Copilot CLI process per chapter with exact profile routing, stores per-worker inputs/logs/results under `.research-cache/<runId>/`, and runs ordered strict checks. The bounded finalizer reads those results, repairs only named convergence failures, authors report metadata, finalizes, and mechanically rejects a success-shaped CLI exit when required artifacts or the report gate are missing. The parent orchestrator must not launch nested chapter subagents, rerun passing workers, or perform its own chapter repair/finalization loop.
 
+In GitHub Actions, invoke these runners directly from workflow-owned shell steps
+with `COPILOT_GITHUB_TOKEN` supplied from `COPILOT_PAT`. Do not delegate their
+execution to another Copilot process's tool shell: authentication available to
+that parent process is not necessarily inherited by its tools. Keep credentials
+out of prompts, source bundles and command-line arguments. Fresh-company and
+refresh workflows own creation, profiling, bootstrap, workers and finalization;
+the unicorn-discovery agent stops before the authenticated worker step.
+
 The bounded finalizer also reads cached refresh intent. Refresh runs must execute
 `finalize-report.mjs --refresh`; acceptance checks the new and previous reports'
 metadata, both English artifacts, and any existing Chinese revision fields.
