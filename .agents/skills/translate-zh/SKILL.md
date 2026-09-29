@@ -529,6 +529,9 @@ such as `platform`, and `Pricing Guide` beside a publisher still needs translati
 `Continuity of historical shareholder claims` concerns shareholder rights,
 not a company assertion. A shareholder who `claims` a return or a separate
 company assertion still requires attribution.
+Bank leverage `excluding claims on central banks` or `excluding central-bank
+claims` concerns assets, not assertions. Preserve the exclusion and the asset
+counterparty; a separate company or central-bank assertion still needs attribution.
 
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json
