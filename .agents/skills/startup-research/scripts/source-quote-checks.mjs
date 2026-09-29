@@ -1,6 +1,45 @@
-import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
+import { lstatSync, readFileSync } from 'node:fs';
+import { dirname, isAbsolute, join, resolve } from 'node:path';
 import { isAccessErrorResponse } from '../../fetch-url/scripts/fetch.mjs';
-import { canonicalSourceUrl, FINAL_ARTIFACTS, hasText } from './utils.mjs';
+import { canonicalSourceUrl, FINAL_ARTIFACTS, hasText, isRunId, researchCacheDir } from './utils.mjs';
+
+function readPrefetchedText(outputFile) {
+  const match = outputFile.match(/(?:^|\/)(\.research-cache\/([^/]+)\/fetched\/([a-f0-9]{16}\.txt))$/u);
+  if (!match || !isRunId(match[2])) return readFileSync(outputFile, 'utf8');
+  const [, sourcePath, runId, filename] = match;
+  const cache = researchCacheDir(runId);
+  const manifestPath = join(cache, 'source-evidence-manifest.json');
+  const manifestStat = lstatSync(manifestPath, { throwIfNoEntry: false });
+  if (!manifestStat) return readFileSync(outputFile, 'utf8');
+
+  // Replay original runner paths only through an explicitly restored, hash-checked archive.
+  const localFile = join(cache, 'fetched', filename);
+  for (const path of [dirname(cache), cache, manifestPath, dirname(localFile), localFile]) {
+    if (lstatSync(path).isSymbolicLink()) throw new Error('archived source replay rejects symlinked paths');
+  }
+  const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
+  if (manifest?.schemaVersion !== 'research-evidence-archive-v1' || manifest.runId !== runId
+      || typeof manifest.workspaceRoot !== 'string' || !isAbsolute(manifest.workspaceRoot)
+      || !Array.isArray(manifest.files)) {
+    throw new Error('invalid source archive manifest');
+  }
+  if (resolve(manifest.workspaceRoot, sourcePath) !== resolve(manifest.workspaceRoot, outputFile)) {
+    throw new Error('archive manifest does not match the original source path');
+  }
+  const entries = manifest.files.filter(entry => entry?.sourcePath === sourcePath);
+  const entry = entries[0];
+  if (entries.length !== 1 || entry.archivedPath !== `research-evidence/${runId}/fetched/${filename}`
+      || !Number.isSafeInteger(entry.bytes) || entry.bytes < 0
+      || typeof entry.sha256 !== 'string' || !/^[a-f0-9]{64}$/u.test(entry.sha256)) {
+    throw new Error('missing, ambiguous or invalid source archive manifest entry');
+  }
+  const bytes = readFileSync(localFile);
+  if (bytes.length !== entry.bytes || createHash('sha256').update(bytes).digest('hex') !== entry.sha256) {
+    throw new Error('archived source size or SHA-256 does not match the original manifest');
+  }
+  return bytes.toString('utf8');
+}
 
 function normalizeText(text) {
   return text.normalize('NFC')
@@ -76,7 +115,7 @@ export function checkPrefetchedSourceQuotes(sources, fetchedSources, file) {
     let text;
     try {
       if (!fetched?.ok || !hasText(fetched.outputFile)) throw new Error('no successful prefetched text file');
-      if (!textByFile.has(fetched.outputFile)) textByFile.set(fetched.outputFile, readFileSync(fetched.outputFile, 'utf8'));
+      if (!textByFile.has(fetched.outputFile)) textByFile.set(fetched.outputFile, readPrefetchedText(fetched.outputFile));
       text = textByFile.get(fetched.outputFile);
       if (!hasText(text)) throw new Error('prefetched source has no readable text');
     } catch (error) {

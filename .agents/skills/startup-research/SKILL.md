@@ -152,9 +152,23 @@ results, available finalizer/refresh metadata, and original fetch trails.
 `manifest.json` maps every archived file to its original workspace-relative path
 and records its SHA-256 hash. Environment files and raw model logs are excluded;
 hidden-file upload remains disabled. A partial archive lists missing inputs and
-does not synthesize execution records or approve publication. Retention remains
-14 days: download needed evidence before expiry. Restoring these files does not
-establish source support, and missing historical inputs remain a review blocker.
+does not synthesize execution records or approve publication. Workflows request
+14-day retention, but repository or organization limits may shorten it. Check the
+artifact's actual `expires_at` and download needed evidence before expiry.
+Restoring these files does not establish source support, and missing historical
+inputs remain a review blocker.
+
+For source review in another checkout, restore original cached inputs under
+`.research-cache/<runId>/` without rewriting paths inside their JSON. Copy the
+archive's unchanged `manifest.json` there as `source-evidence-manifest.json`.
+Quotation checks then resolve each original fetched-text path to the local
+`fetched/` file only when the manifest's run, original workspace/source path,
+archive path, byte count and SHA-256 agree. Missing mappings, changed text and
+symlinks fail; ordinary runs without this manifest retain their existing paths.
+Keep the original archive immutable, give review findings the local source-text
+paths, and point `STARTUP_FETCH_LOG_PATH` at the restored original trail rather
+than overwriting a shared trail. New review results are not original execution
+records. Literal quote checks still do not establish claim support.
 
 **Quotation fidelity:** `keyQuote` means a verbatim excerpt, not a summary or an analyst correction. The worker runner checks quotations against assigned prefetched text; fast finalization checks authored chapters and the assembled ledger before refresh linking, including reused evidence. The bounded finalizer independently checks both authored chapters and assembled evidence, so a successful model exit cannot skip this gate. `sourceQuoteMismatch` rejects changed wording, changed numbers, and reordered excerpts; `sourceQuoteTextMissing` requires restoration of the original fetched text. Whitespace and equivalent typography may differ, and ellipses may omit text without reordering it. Keep source files read-only. Copy an excerpt that actually supports the associated claim; do not delete quotations or choose irrelevant text just to clear the check. These checks establish literal provenance, not contextual fairness or factual support for every claim.
 
