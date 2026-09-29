@@ -1172,6 +1172,7 @@ const chartPayloadJson = chartPayload
       ? { top: hasDetails ? 14 : 12, right: 18, bottom: hasDetails ? 18 : 14, left: 16 }
       : { top: hasDetails ? 24 : 20, right: 34, bottom: hasDetails ? 30 : 22, left: 30 };
     const { svg, width, height } = svgBase(element, Math.max(260, margin.top + margin.bottom + nodes.length * cardH + Math.max(0, nodes.length - 1) * gap));
+    const textWrapper = createSvgTextWrapper(svg);
     const railX = margin.left + (compact ? 24 : 34);
     const cardX = margin.left + (compact ? 64 : 96);
     const cardW = width - cardX - margin.right;
@@ -1255,15 +1256,18 @@ const chartPayloadJson = chartPayload
     const labelLineHeight = hasDetails ? (compact ? chartFont.lineHeight.small : chartFont.lineHeight.title) : chartFont.lineHeight.label;
     cards.append('text').attr('x', textX).attr('y', eyebrowY).attr('fill', palette.claret).attr('font-size', compact ? chartFont.size.tiny : chartFont.size.caption).attr('font-weight', fontWeight('label')).attr('letter-spacing', chartFont.tracking.caps).text((node) => `${payload.flowLabels.node} ${node._index + 1}`);
     cards.append('text').attr('x', textX).attr('y', labelY).attr('fill', palette.ink).attr('font-size', labelFontSize).attr('font-weight', fontWeight('emphasis')).each(function(node) {
-      renderWrappedText(d3.select(this), node.label, { maxChars: Math.max(compact ? 22 : 24, Math.floor((cardW - textX * 2) / (compact ? 7.8 : 8.4))), maxLines: 2, lineHeight: labelLineHeight });
+      const lines = textWrapper.wrap(node.label, { fontSize: labelFontSize, fontWeight: fontWeight('emphasis'), maxWidth: cardW - textX * 2, maxLines: 2 });
+      renderLineBlock(d3.select(this), lines, { x: textX, y: labelY, lineHeight: labelLineHeight });
     });
     if (hasDetails) {
       cards.append('text').attr('x', textX).attr('y', compact ? 66 : 84).attr('fill', palette.muted).attr('font-size', compact ? chartFont.size.caption : chartFont.small).attr('font-weight', fontWeight('regular')).each(function(node) {
-        renderWrappedText(d3.select(this), node.detail, { maxChars: Math.max(compact ? 34 : 40, Math.floor((cardW - textX * 2) / (compact ? 6.2 : 6.5))), maxLines: compact ? 2 : 3, lineHeight: compact ? chartFont.lineHeight.compact : chartFont.lineHeight.small });
+        const lines = textWrapper.wrap(node.detail, { fontSize: compact ? chartFont.size.caption : chartFont.small, fontWeight: fontWeight('regular'), maxWidth: cardW - textX * 2, maxLines: compact ? 2 : 3 });
+        renderLineBlock(d3.select(this), lines, { x: textX, y: compact ? 66 : 84, lineHeight: compact ? chartFont.lineHeight.compact : chartFont.lineHeight.small });
       });
     }
     cards.each(function(node) { addTitle(d3.select(this), [node.label, node.displayValue ?? node.value, ...figureValueNotes(node)].map(safeText).filter(Boolean).join('; ')); });
     withTooltip(cards, (node) => tooltipHtml(node.label, [safeText(node.displayValue ?? node.value), ...figureValueNotes(node)]));
+    textWrapper.remove();
   };
 
   const firstNonEmpty = (...values) => values.find((value) => Array.isArray(value) && value.length > 0) ?? [];
@@ -1306,10 +1310,22 @@ const chartPayloadJson = chartPayload
       if (chunk) chunks.push(chunk);
       return chunks;
     };
-    const wrapCache = new Map();
-    const wrap = (text, { fontSize, fontWeight, maxWidth }) => {
+    const fit = (text, { fontSize, fontWeight, maxWidth }) => {
       const str = String(text ?? '');
-      const cacheKey = `${fontSize}|${fontWeight}|${maxWidth}|${str}`;
+      setFont(fontSize, fontWeight);
+      if (measuredWidth(str) <= maxWidth) return str;
+      if (measuredWidth('…') > maxWidth) return '';
+      let prefix = '';
+      for (const char of Array.from(str)) {
+        if (measuredWidth(`${prefix}${char}…`) > maxWidth) break;
+        prefix += char;
+      }
+      return `${prefix}…`;
+    };
+    const wrapCache = new Map();
+    const wrap = (text, { fontSize, fontWeight, maxWidth, maxLines = Infinity }) => {
+      const str = String(text ?? '');
+      const cacheKey = `${fontSize}|${fontWeight}|${maxWidth}|${maxLines}|${str}`;
       const cached = wrapCache.get(cacheKey);
       if (cached) return cached;
       setFont(fontSize, fontWeight);
@@ -1330,10 +1346,14 @@ const chartPayloadJson = chartPayload
         }
       });
       if (line) lines.push(line);
+      if (lines.length > maxLines) {
+        const last = fit(lines.slice(maxLines - 1).join(' '), { fontSize, fontWeight, maxWidth });
+        lines.splice(maxLines - 1, lines.length, last);
+      }
       wrapCache.set(cacheKey, lines);
       return lines;
     };
-    return { wrap, remove: () => measureText.remove() };
+    return { wrap, fit, remove: () => measureText.remove() };
   };
 
   const renderTimeline = (element, payload) => {
@@ -1398,6 +1418,8 @@ const chartPayloadJson = chartPayload
     const detailSize = compact ? chartFont.size.axis : chartFont.size.label;       // 13 / 14
     const pillSize = compact ? chartFont.size.caption : chartFont.size.small;      // 10.5 / 12
     const badgeSize = compact ? chartFont.size.value : chartFont.size.metric;      // 18 / 26
+    const textWrapper = createSvgTextWrapper(svg);
+    const layerWidth = (index) => Math.max(120, maxW - index * stackInset * 2);
     const groupText = (group) => `${payload.stackLabels[group.key]}: ${group.entries.map((lines) => lines.join(' — ')).join('; ')}`;
     const detailLines = (layer) => [...layer.fullDetails.notes, ...layer.fullDetails.groups.map(groupText)];
     svg.append('text')
@@ -1439,14 +1461,14 @@ const chartPayloadJson = chartPayload
       .attr('fill', palette.ink)
       .attr('font-size', titleSize)
       .attr('font-weight', fontWeight('emphasis'))
-      .text((d) => labelText(d.label, compact ? 28 : 38));
+      .text((d, index) => textWrapper.fit(d.label, { fontSize: titleSize, fontWeight: fontWeight('emphasis'), maxWidth: layerWidth(index) - 42 - badgeSize * 2 }));
     groups.append('text')
       .attr('x', 24)
       .attr('y', compact ? 50 : 56)
       .attr('fill', palette.muted)
       .attr('font-size', detailSize)
       .attr('font-weight', fontWeight('medium'))
-      .text((d) => labelText(d.detail, compact ? 46 : 64));
+      .text((d, index) => textWrapper.fit(d.detail, { fontSize: detailSize, fontWeight: fontWeight('medium'), maxWidth: layerWidth(index) - 48 }));
     groups.append('text')
       .attr('x', (d, index) => Math.max(104, maxW - index * stackInset * 2 - 18))
       .attr('y', compact ? 32 : 38)
@@ -1465,8 +1487,8 @@ const chartPayloadJson = chartPayload
       let xCursor = 0;
       const row = d3.select(this);
       pills.forEach((pill) => {
-        const text = labelText(pill.label, compact ? 14 : 20);
-        const pillW = Math.min(compact ? 110 : 150, Math.max(60, text.length * 8 + 22));
+        const pillW = Math.min(compact ? 110 : 150, Math.max(60, pill.label.length * 8 + 22));
+        const text = textWrapper.fit(pill.label, { fontSize: pillSize, fontWeight: fontWeight('strong'), maxWidth: pillW - 22 });
         if (xCursor + pillW > layerWidth - 54) return;
         const isOutput = pill.kind === 'output';
         const pillGroup = row.append('g').attr('transform', `translate(${xCursor},0)`);
@@ -1491,6 +1513,7 @@ const chartPayloadJson = chartPayload
       addTitle(d3.select(this), [d.label, ...detailLines(d)].join('; '));
     });
     withTooltip(groups, (d) => tooltipHtml(d.label, detailLines(d)));
+    textWrapper.remove();
   };
 
   const renderPyramid = (element, payload) => {

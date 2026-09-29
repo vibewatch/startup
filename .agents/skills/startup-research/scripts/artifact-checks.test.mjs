@@ -260,11 +260,46 @@ test('measured SVG wrapping preserves complete mixed-script text at each layer w
         assert.equal(lines.join('').replace(/\s/gu, ''), input.replace(/\s/gu, ''));
         for (const line of lines) assert(measure(line, fontSize, fontWeight) <= maxWidth);
         assert.deepEqual(wrapper.wrap(input, { fontSize, fontWeight, maxWidth }), lines);
+        const fitted = wrapper.fit(input, { fontSize, fontWeight, maxWidth });
+        assert(measure(fitted, fontSize, fontWeight) <= maxWidth);
+        if (measure(input, fontSize, fontWeight) <= maxWidth) assert.equal(fitted, input);
+        else assert(fitted.endsWith('…'));
+        for (const maxLines of [1, 2]) {
+          const preview = wrapper.wrap(input, { fontSize, fontWeight, maxWidth, maxLines });
+          assert(preview.length <= maxLines);
+          for (const line of preview) assert(measure(line, fontSize, fontWeight) <= maxWidth);
+          if (lines.length > maxLines) assert(preview.at(-1).endsWith('…'));
+          else assert.deepEqual(preview, lines);
+          assert.deepEqual(wrapper.wrap(input, { fontSize, fontWeight, maxWidth }), lines);
+        }
       }
     }
   }
   wrapper.remove();
   assert.equal(removed, true);
+});
+
+test('flow and stack previews fit measured widths without removing complete tooltip data', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const flow = source.slice(source.indexOf('const renderFlow ='), source.indexOf('const firstNonEmpty ='));
+  const stack = source.slice(source.indexOf('const renderStack ='), source.indexOf('const renderPyramid ='));
+  for (const renderer of [flow, stack]) {
+    assert.match(renderer, /createSvgTextWrapper\(svg\)/);
+    assert.match(renderer, /textWrapper\.remove\(\)/);
+  }
+  assert.match(flow, /wrap\(node\.label, \{[^}]*maxWidth: cardW - textX \* 2, maxLines: 2/);
+  assert.match(flow, /wrap\(node\.detail, \{[^}]*maxWidth: cardW - textX \* 2/);
+  assert.match(flow, /tooltipHtml\(node\.label, \[safeText\(node\.displayValue \?\? node\.value\), \.\.\.figureValueNotes\(node\)\]\)/);
+  assert.match(stack, /fit\(d\.label, \{[^}]*maxWidth: layerWidth\(index\) - 42 - badgeSize \* 2/);
+  assert.match(stack, /fit\(d\.detail, \{[^}]*maxWidth: layerWidth\(index\) - 48/);
+  assert.match(stack, /fit\(pill\.label, \{[^}]*maxWidth: pillW - 22/);
+  assert.match(stack, /tooltipHtml\(d\.label, detailLines\(d\)\)/);
+});
+
+test('mobile table captions use the full block table width rather than an anonymous caption column', () => {
+  const source = readFileSync('website/src/components/DataTable.astro', 'utf8');
+  const mobile = source.slice(source.indexOf('@media (max-width: 700px)'));
+  assert.match(mobile, /\.table-frame :global\(caption\) \{ display: block; width: 100%; \}/);
 });
 
 test('stack details retain complete ordered groups, duplicate labels, values and qualifications', () => {

@@ -77,6 +77,47 @@ function entryMultiplePair({ header = 'Exit Multiple at 5.6B Entry', target = '�
 
 const checks = [
   ...[
+    ['Gross profit', '毛利率', true],
+    ['Gross profit', '毛利润率', true],
+    ['Gross profit', '毛利', false],
+    ['Gross profit', '毛利润', false],
+    ['Gross profit', '毛利额', false],
+    ['Revenue model bridge and missing gross-profit inputs', '收入模型链路与缺失的毛利率输入项', true],
+    ['Public evidence supports the operating sequence, but the conversion from activity to recognized revenue and gross profit is not disclosed.', '公开证据支持这条运营链路，但未披露业务活动如何转化为确认收入和毛利率。', true],
+    ['Public evidence supports the operating sequence, but the conversion from activity to recognized revenue and gross profit is not disclosed.', '公开证据支持这条运营链路，但未披露业务活动如何转化为确认收入和毛利。', false],
+    ['Gross profit and gross margin', '毛利和毛利率', false],
+    ['Gross profit margin', '毛利率', false],
+    ['Gross margin', '毛利率', false],
+    ['Gross profit divided by revenue', '毛利率', false],
+    ['The ratio of gross profit to revenue', '毛利率', false],
+    ['Gross profit / revenue', '毛利率', false],
+    ['Gross profit is 40% of revenue', '毛利率为 40%', false],
+  ].flatMap(([en, zh, expected]) => [false, true].flatMap(strictEditor => ['prose', 'table', 'figure'].map(surface => {
+    const wrap = value => surface === 'prose' ? fullReport(value)
+      : surface === 'table' ? { ...fullReport(''), tables: [{ rows: [[value]] }] }
+        : { ...fullReport(''), figures: [{ data: { nodes: [{ label: value }] } }] };
+    return [
+      checkPairQuality(wrap(en), wrap(zh), { strictEditor })
+        .some(issue => issue.code === 'metric-head-preservation') === (strictEditor && expected),
+      `gross-profit amounts remain distinct from margins in strict editing (${surface}, strict=${strictEditor}): ${en} / ${zh}`,
+    ];
+  }))),
+  ...[
+    ['The financing does not establish continuity of historical shareholder claims.', '融资不能证明历史股东权益延续。', false],
+    ['The financing does not establish continuity of shareholder claims.', '融资不能证明股东权益延续。', false],
+    ['The shareholder claims that every investor receives a guaranteed return.', '每位投资者都能获得保证回报。', true],
+    ['The shareholder claims that every investor receives a guaranteed return.', '股东声称每位投资者都能获得保证回报。', false],
+    ['The financing does not establish continuity of historical shareholder claims; the company claims every investor earns a guaranteed return.', '融资不能证明历史股东权益延续；每位投资者都能获得保证回报。', true],
+    ['The financing does not establish continuity of historical shareholder claims; the company claims every investor earns a guaranteed return.', '融资不能证明历史股东权益延续；公司声称每位投资者都能获得保证回报。', false],
+  ].flatMap(([en, zh, expected]) => [false, true].flatMap(strictEditor => ['prose', 'table'].map(surface => [
+    checkPairQuality(
+      surface === 'prose' ? fullReport(en) : { ...fullReport(''), tables: [{ rows: [[en]] }] },
+      surface === 'prose' ? fullReport(zh) : { ...fullReport(''), tables: [{ rows: [[zh]] }] },
+      { strictEditor },
+    ).some(issue => issue.code === 'hedge-preservation') === expected,
+    `shareholder-rights continuity does not exempt an actual shareholder or company assertion (${surface}, strict=${strictEditor}): ${en} / ${zh}`,
+  ]))),
+  ...[
     [
       'This analysis uses an inference-led market lens, not a claim that Groq currently offers only inference.',
       '本分析以推理业务为主线，但并不表明 Groq 目前仅提供推理服务。',
