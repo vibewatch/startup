@@ -607,6 +607,47 @@ function equivalentAwardCounts(source, target) {
   return sourceTokens && targetTokens && JSON.stringify(sourceTokens) === JSON.stringify(targetTokens);
 }
 
+const currencyAliasContext = /[A-Za-z][$€£¥₦]|\b(?:USD|EUR|GBP|JPY|CNY|RMB|HKD|AUD|CAD|SGD|INR|KRW|TWD|CHF|NGN|NZD|dollars?|euros?|pounds?|yuan|yen|rupees?|won)\b|美元|美金|欧元|英镑|港币|港元|日元|人民币|新台币|台币|澳元|加元|新加坡元|新币|瑞郎|卢比|卢布|韩元|奈拉/iu;
+
+function equivalentRankedMetricLabels(source, target) {
+  if (!/\btop[- ]\d+\s+(?:ARR|MRR|GMV|TPV)\b/i.test(source)) return false;
+  const normalize = (value, pattern) => {
+    const ranks = [];
+    let unsupported = false;
+    const text = value.replace(pattern, (match, rank, metric, offset) => {
+      if (/(?:\b(?:not|about|around|roughly|approximately|nearly|over|under|above|below|at least|at most|up to|more than|less than)|不是|并非|不属于|约|近|至少|至多|最多|超过|不足|不到)\s*$/iu.test(value.slice(0, offset))) {
+        unsupported = true;
+        return match;
+      }
+      ranks.push(`${rank}:${metric.toUpperCase()}`);
+      return ';';
+    });
+    if (/\btop[- ]\d|前\s*\d/iu.test(text)) unsupported = true;
+    return { text, ranks: ranks.sort(), unsupported };
+  };
+  const en = normalize(source,
+    /(?<![\w./@-])top(?:-|[ \t]+)([1-9]\d*)[ \t]+(ARR|MRR|GMV|TPV)\b(?![/.][\p{L}\p{N}])/giu,
+  );
+  const zh = normalize(target,
+    /(?<![\d之此以早先目当向往提眼])前\s*([1-9]\d*)\s*(?:大\s*)?(?:(?:客户|账户|品牌|市场|卖家)\s*)?(ARR|MRR|GMV|TPV)\b(?![/.][\p{L}\p{N}])/giu,
+  );
+  if (en.unsupported || zh.unsupported || !en.ranks.length
+      || JSON.stringify(en.ranks) !== JSON.stringify(zh.ranks)) return false;
+  const remainder = normalizeQuantityWords(`${en.text}\n${zh.text}`);
+  if (currencyAliasContext.test(remainder)
+      || (remainder.match(/\p{Sc}/gu) ?? []).some(symbol => !'$€£¥₦'.includes(symbol))
+      || /[-+−–—~≈<>≤≥]\s*[$€£¥₦]?\s*\d|[(（]\s*[$€£¥₦]\s*\d|负\s*\d/u.test(remainder)
+      || /\d[\d.,]*(?:\s*[%％KMBT])?\s*(?:[-+−–—]|以上|以下|左右|多|余)/iu.test(remainder)
+      || /\d[\d.,]*(?:\s*[%％KMBT])?\s*(?:to|through|至|到)\s*[$€£¥₦]?\s*\d/iu.test(remainder)
+      || /(?:\b(?:about|around|roughly|approximately|nearly|over|under|above|below|at least|at most|up to|more than|less than)|约|近|至少|至多|最多|超过|不足|不到|不低于|不超过)\s*[$€£¥₦]?\s*\d/iu.test(remainder)) return false;
+  return [false, true].some(normalizeGroupedCounts => {
+    const options = { normalizeMonths: true, allowUnconverted: true, normalizeGroupedCounts };
+    const sourceTokens = normalizedCountMetrics(en.text, options);
+    const targetTokens = normalizedCountMetrics(zh.text, options);
+    return sourceTokens && targetTokens && JSON.stringify(sourceTokens) === JSON.stringify(targetTokens);
+  });
+}
+
 function equivalentBillionAbbreviations(source, target) {
   const billion = /([$€£¥₦]\s*)(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)\s*bn(?!\w|[.,]\d)/gi;
   if (!source.match(billion) && !target.match(billion)) return false;
@@ -616,7 +657,7 @@ function equivalentBillionAbbreviations(source, target) {
   const amount = String.raw`[$€£¥₦]\s*\d+(?:[.,]\d+)*\s*(?:bn\b|[KMBT]\b)?`;
   if (new RegExp(String.raw`[-+−–—~≈<>]\s*${amount}|${amount}\s*\+|${amount}\s*(?:[-–—]|to\b|至|到)\s*[$€£¥₦\d]|[(（]\s*${amount}\s*[)）]`, 'iu').test(quantities)
       || new RegExp(String.raw`(?:\b(?:about|approximately|roughly|nearly|over|under|at least|at most|more than|less than|up to)|约|近|至少|至多|超过|不足|不低于|不超过)\s*${amount}`, 'iu').test(quantities)
-      || /[A-Za-z][$€£¥₦]|\b(?:USD|EUR|GBP|JPY|CNY|RMB|HKD|AUD|CAD|SGD|INR|KRW|TWD|CHF|NGN|NZD|dollars?|euros?|pounds?|yuan|yen|rupees?|won)\b|美元|美金|欧元|英镑|港币|港元|日元|人民币|新台币|台币|澳元|加元|新加坡元|新币|瑞郎|卢比|卢布|韩元|奈拉/iu.test(quantities)) return false;
+      || currencyAliasContext.test(quantities)) return false;
   const normalize = value => normalizeQuantityWords(value).replace(billion, '$1$2B');
   const options = { normalizeMonths: true, allowUnconverted: true };
   const sourceTokens = normalizedCountMetrics(normalize(source), options);
@@ -722,6 +763,7 @@ function walk(en, zh, path, whitelist, issues, options) {
       if (!equivalentCounts && !equivalentDollars && !equivalentTripledMetrics(metricSource, numericTarget)
           && !equivalentHalfShareMetrics(metricSource, numericTarget)
           && !equivalentAwardCounts(metricSource, numericTarget)
+          && !equivalentRankedMetricLabels(metricSource, numericTarget)
           && !equivalentBillionAbbreviations(metricSource, numericTarget)) {
         pushIssue(issues, {
           path: path.join('/'),
