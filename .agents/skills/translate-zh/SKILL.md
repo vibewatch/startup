@@ -68,6 +68,14 @@ interpret relative periods such as `the first two quarters after IPO`.
 Version-style product labels are also separated: `v0 ARR` is not `0 ARR`.
 Actual zero-valued metrics still retain their numeric and currency anchors;
 this separation does not validate product-name identity.
+An explicit ranked label such as `top-10 ARR` can match `前 10 大客户 ARR`;
+the ten is a rank cutoff, not an ARR amount. This fallback pairs each positive
+integer rank with its ARR/MRR/GMV/TPV label and compares all remaining numeric
+occurrences and paired month/year anchors. Changed or missing ranks and metric
+labels still fail. Shared rank lists, written-number ranks, signed or bounded
+quantities, explicit currency labels, unrecognized currencies and unsupported
+ordering remain outside this comparison. It does not validate the ranked
+population, concentration figures, or disclosure claims.
 These token checks do not establish complete numeric or semantic fidelity;
 verify the source proposition and metric meaning as well.
 
