@@ -121,7 +121,7 @@ test('canonical builder checks detect stale artifacts without rewriting them', (
   }
 });
 
-test('a schema-successful model exit must pass readback and assembly before completion', () => {
+test('a schema-successful model exit must pass strict chapters, readback and assembly before completion', () => {
   const root = mkdtempSync(join(tmpdir(), 'review-runner-'));
   const isolatedScripts = join(root, '.agents/skills/startup-research/scripts');
   const runId = '20990101000000-fixture';
@@ -138,7 +138,7 @@ import {readFileSync} from 'node:fs';
 export const EXIT={ok:0,failure:1,notFound:4};
 export const FINAL_ARTIFACTS={evidence:{file:'evidence.yaml'},fullReport:{file:'full-report.yaml'},summaryCard:{file:'summary-card.yaml'}};
 export const REPORT_META_FILE='report-meta.yaml';
-export const getAnalysisArtifacts=()=>[{file:'chapter.yaml'}];
+export const getAnalysisArtifacts=()=>[{file:'chapter.yaml'},{file:'second.yaml'}];
 export const hasText=value=>typeof value==='string'&&value.trim().length>0;
 export const isRunId=()=>true;
 export const loadWorkflowConfig=()=>({activeResearchProfile:'fast'});
@@ -153,6 +153,28 @@ export const reportsDir=${JSON.stringify(join(root, 'reports'))};
     write(join(isolatedScripts, 'load-chapter-runtime-context.mjs'),
       `console.log(JSON.stringify({policy:{finalizerRouting:{model:'draft',reasoningEffort:'default',escalateTo:'repair'}}}));`);
     write(join(isolatedScripts, 'check-report.mjs'), 'console.log(JSON.stringify({ok:true}));');
+    const strictLog = join(cache, 'strict-checks.jsonl');
+    const repairedGate = join(cache, 'strict-repaired');
+    write(join(isolatedScripts, 'check-chapter.mjs'), `
+import assert from 'node:assert/strict';
+import {appendFileSync,existsSync} from 'node:fs';
+assert.deepEqual(process.argv.slice(2),[${JSON.stringify(folder)},process.argv[3],'--strict','--format','json']);
+assert.equal(process.env.STARTUP_FETCH_LOG_PATH,${JSON.stringify(join(cache, '_fetch-log.jsonl'))});
+appendFileSync(${JSON.stringify(strictLog)},JSON.stringify(process.argv.slice(2))+'\\n');
+const mode=process.env.REVIEW_TEST_MODE;
+const fail=process.argv[3]==='second.yaml' && mode.startsWith('strict-')
+  && !(mode==='strict-repaired' && existsSync(${JSON.stringify(repairedGate)}));
+if(fail && mode==='strict-crash'){console.error('strict validator unavailable');process.exit(2);}
+if(fail && mode==='strict-malformed'){console.log('not a validation envelope');process.exit(0);}
+const hard=mode==='strict-error';
+console.log(JSON.stringify({ok:!fail || mode==='strict-true-nonzero',
+  issues:fail && hard?[{dimension:'claimRefs',message:'Missing claim',fix:'Repair the claim reference.'}]:[],
+  warnings:fail && !hard?[{dimension:'figureType',message:'Intentional substitution needs acknowledgement',
+    fix:'Review the figure substitution before acknowledging it.'}]:[],
+  summary:{strict:true,failedDimensions:fail && hard?['claimRefs']:[],
+    unackedWarningDimensions:fail && !hard?['figureType']:[]}}));
+process.exit(fail && mode!=='strict-false-zero'?1:0);
+`);
     for (const file of ['build-report.mjs', 'build-evidence-ledger.mjs']) write(join(isolatedScripts, file),
       `if(!process.argv.includes('--check'))throw new Error('expected read-only check');process.exit(process.env.REVIEW_TEST_MODE==='stale-assembly'?1:0);`);
     for (const file of ['worker-results.json', 'search-bundle.json', '_fetch-log.jsonl']) write(join(cache, file), '{}');
@@ -164,35 +186,48 @@ export const reportsDir=${JSON.stringify(join(root, 'reports'))};
     const fake = join(cache, 'fake-copilot.mjs');
     const invocationLog = join(cache, 'invocations.jsonl');
     write(fake, `#!/usr/bin/env node
-import {appendFileSync,writeFileSync,readFileSync} from 'node:fs';
+import {appendFileSync,writeFileSync,readFileSync,rmSync} from 'node:fs';
 import assert from 'node:assert/strict';
 const prompt=process.argv[process.argv.indexOf('-p')+1];
 assert.ok(prompt.includes(${JSON.stringify(reviewPath)}));
 const review=JSON.parse(readFileSync(${JSON.stringify(reviewPath)},'utf8'));
 assert.ok(review.sourceProof.length>128*1024);
 appendFileSync(${JSON.stringify(invocationLog)},JSON.stringify(process.argv.slice(2))+'\\n');
-if(process.argv.includes('repair') && process.env.REVIEW_TEST_MODE!=='skip'){
+if((process.argv.includes('repair') || process.env.REVIEW_TEST_MODE.startsWith('strict-'))
+    && process.env.REVIEW_TEST_MODE!=='skip'){
 const path=${JSON.stringify(join(folder, 'chapter.yaml'))};
 const doc=JSON.parse(readFileSync(path,'utf8'));
 doc.claims[0].statement=review.issues[0].exactReplacement;
 if(process.env.REVIEW_TEST_MODE==='unrelated')doc.unchanged='Changed';
 writeFileSync(path,JSON.stringify(doc));
 }
+if(process.argv.includes('repair') && process.env.REVIEW_TEST_MODE==='strict-repaired'){
+writeFileSync(${JSON.stringify(repairedGate)},'repaired');
+}
+if(process.env.REVIEW_TEST_MODE==='missing-chapter'){
+rmSync(${JSON.stringify(join(folder, 'second.yaml'))},{force:true});
+}
 `);
     chmodSync(fake, 0o755);
-    for (const mode of ['repair', 'skip', 'unrelated', 'stale-assembly']) {
+    for (const mode of ['strict-warning', 'repair', 'skip', 'unrelated', 'stale-assembly',
+      'strict-error', 'strict-crash', 'strict-malformed',
+      'strict-false-zero', 'strict-true-nonzero', 'strict-repaired', 'missing-chapter']) {
       for (const [file, doc] of documents()) write(join(folder, file), JSON.stringify(doc));
+      write(join(folder, 'second.yaml'), '{}');
       for (const file of ['evidence.yaml', 'full-report.yaml', 'summary-card.yaml']) write(join(folder, file), '{}');
       write(invocationLog, '');
+      write(strictLog, '');
+      rmSync(repairedGate, { force: true });
       const result = spawnSync(process.execPath, [join(isolatedScripts, 'run-report-finalizer.mjs'),
         '--report-folder', folder, '--review-findings', reviewPath, '--copilot-bin', fake, '--format', 'json'], {
         encoding: 'utf8', env: { ...process.env, STARTUP_FETCH_LOG_PATH: join(cache, '_fetch-log.jsonl'), REVIEW_TEST_MODE: mode },
       });
-      assert.equal(result.status, mode === 'repair' ? 0 : 1, result.stderr || result.stdout);
+      const succeeds = mode === 'repair' || mode === 'strict-repaired';
+      assert.equal(result.status, succeeds ? 0 : 1, `${mode}: ${result.stderr || result.stdout}`);
       const output = JSON.parse(result.stdout);
       assert.equal(output.attempts.length, 2);
       assert.equal(output.exactReviewAssignmentCount, 1);
-      assert.equal(output.status, mode === 'repair' ? 'completed' : 'failed');
+      assert.equal(output.status, succeeds ? 'completed' : 'failed');
       const invocations = readFileSync(invocationLog, 'utf8').trim().split('\n').map((line) => JSON.parse(line));
       for (const invocation of invocations) {
         const prompt = invocation[invocation.indexOf('-p') + 1];
@@ -202,8 +237,33 @@ writeFileSync(path,JSON.stringify(doc));
       }
       const feedback = join(cache, 'finalizer-acceptance-attempt-1.json');
       assert.ok(invocations[1][invocations[1].indexOf('-p') + 1].includes(feedback));
-      assert.match(readFileSync(feedback, 'utf8'), /reviewReadbackMismatch/);
+      if (mode.startsWith('strict-')) {
+        const diagnostic = JSON.parse(readFileSync(feedback, 'utf8'));
+        assert.deepEqual(diagnostic.reportCheck.reviewIssues, []);
+        assert.equal(diagnostic.reportCheck.chapterChecks[1].ok, false);
+        assert.equal(diagnostic.reportCheck.chapterChecks[1].file, 'second.yaml');
+      } else {
+        assert.match(readFileSync(feedback, 'utf8'), /reviewReadbackMismatch/);
+      }
       assert.equal(output.attempts[1].previousFailuresPath, feedback);
+      if (mode === 'missing-chapter') {
+        assert.deepEqual(output.missingFiles, ['second.yaml']);
+        assert.deepEqual(output.reportCheck.chapterChecks, []);
+        assert.equal(readFileSync(strictLog, 'utf8'), '');
+      } else {
+        assert.deepEqual(readFileSync(strictLog, 'utf8').trim().split('\n').map((line) => JSON.parse(line)[1]),
+          ['chapter.yaml', 'second.yaml', 'chapter.yaml', 'second.yaml']);
+      }
+      if (mode === 'strict-warning') {
+        const strict = output.reportCheck.chapterChecks[1];
+        assert.equal(strict.exitCode, 1);
+        assert.deepEqual(strict.validation.issues, []);
+        assert.deepEqual(strict.validation.summary.unackedWarningDimensions, ['figureType']);
+        assert.match(strict.validation.warnings[0].fix, /Review the figure substitution/);
+      }
+      if (mode === 'strict-crash') assert.match(output.reportCheck.error, /strict validator unavailable/);
+      if (mode === 'strict-malformed') assert.match(output.reportCheck.error, /invalid JSON/);
+      if (mode === 'strict-repaired') assert.ok(output.reportCheck.chapterChecks.every((check) => check.ok));
       if (mode === 'stale-assembly') assert.ok(output.reportCheck.reviewIssues.some((issue) => issue.code === 'reviewAssemblyMismatch'));
       if (mode === 'unrelated') assert.ok(output.reportCheck.reviewIssues.some((issue) => issue.path === 'chapter.yaml:unchanged'));
     }

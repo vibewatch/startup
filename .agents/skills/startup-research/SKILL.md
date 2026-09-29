@@ -115,6 +115,14 @@ fallback through a saved `finalizer-acceptance-attempt-<n>.json` diagnostic;
 already-applied assignments must not be repeated. A remaining failure
 blocks completion. List all necessary dependent authored changes in the exact
 batch; do not mix exact assignments with open-ended review issues.
+After every model attempt, independent acceptance also reruns every configured
+chapter's strict gate with the run's fetch trail. A zero model exit, matching exact
+assignments and already-assembled artifacts cannot override a strict failure.
+The saved diagnostic retains each chapter's exit status and complete validation
+envelope, including warning-only failures and their repair hints. If an intentional
+figure substitution needs an acknowledgement outside the approved exact scope,
+stop and obtain a scoped review correction; do not silently add the acknowledgement
+or treat its removal as successful finalization.
 Legacy batches containing only `path`, `message`, and `fix` retain their existing
 behavior. Exact readback proves agreement with the approved correction, not
 that the correction's underlying facts are true; caller source review and
