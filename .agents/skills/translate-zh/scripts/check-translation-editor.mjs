@@ -172,6 +172,14 @@ const checks = [
     ];
   }))),
   ...[
+    ['Leverage excluding claims on central banks is disclosed.', '剔除对央行债权口径的杠杆率已披露。', false],
+    ['Leverage excluding central-bank claims is disclosed.', '剔除对央行债权口径的杠杆率已披露。', false],
+    ['The central bank claims that the lender faces no capital constraint.', '该贷款机构不存在资本约束。', true],
+    ['The central bank claims that the lender faces no capital constraint.', '央行声称该贷款机构不存在资本约束。', false],
+    ['Leverage excluding claims on central banks is disclosed; the company claims it faces no capital constraint.', '剔除对央行债权口径的杠杆率已披露；公司不存在资本约束。', true],
+    ['Leverage excluding claims on central banks is disclosed; the company claims it faces no capital constraint.', '剔除对央行债权口径的杠杆率已披露；公司声称不存在资本约束。', false],
+    ['Leverage excluding central-bank claims is disclosed and the company claims it faces no capital constraint.', '剔除对央行债权口径的杠杆率已披露，公司不存在资本约束。', true],
+    ['Leverage excluding central-bank claims is disclosed and the company claims it faces no capital constraint.', '剔除对央行债权口径的杠杆率已披露，公司声称不存在资本约束。', false],
     ['The financing does not establish continuity of historical shareholder claims.', '融资不能证明历史股东权益延续。', false],
     ['The financing does not establish continuity of shareholder claims.', '融资不能证明股东权益延续。', false],
     ['The shareholder claims that every investor receives a guaranteed return.', '每位投资者都能获得保证回报。', true],
@@ -184,7 +192,7 @@ const checks = [
       surface === 'prose' ? fullReport(zh) : { ...fullReport(''), tables: [{ rows: [[zh]] }] },
       { strictEditor },
     ).some(issue => issue.code === 'hedge-preservation') === expected,
-    `shareholder-rights continuity does not exempt an actual shareholder or company assertion (${surface}, strict=${strictEditor}): ${en} / ${zh}`,
+    `financial claims nouns do not exempt a separate assertion (${surface}, strict=${strictEditor}): ${en} / ${zh}`,
   ]))),
   ...[
     [
