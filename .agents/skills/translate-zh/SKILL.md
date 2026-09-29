@@ -220,6 +220,14 @@ remain outside this fallback, as do unsupported written quantities.
 Signed or accounting-style monetary amounts also keep their existing findings.
 This only resolves a quantity-token mismatch; attribution and the surrounding
 proposition still require source review.
+An explicit `50/50` split can also match `各占一半` in a mismatched count
+comparison. Every ratio occurrence, other numeric occurrence and paired
+month/year anchor must agree; matching must not join adjacent digits, currencies
+or units. Recognized negations, questions, conditional
+or target ratios, bounds, signed quantities and URL fragments stay outside
+this fallback. Preserve approximation and attribution separately, and review
+which categories the split describes; equal numeric shares do not prove a
+revenue mix or its underlying economics.
 `percent` and `per cent` match `%`, including both range
 endpoints. Common written percentages such as `百分之十三` and `超过八成`
 can resolve a mismatched numeric anchor only when the full metric-token sets
