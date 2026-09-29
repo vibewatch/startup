@@ -1002,6 +1002,9 @@ export function isAccessErrorResponse(result) {
     .replace(/[‘’]/gu, "'");
   if (/^(?:404\s*[-:：]?\s*)?(?:没有找到此种页面|页面未找到|页面不存在|找不到页面|page not found|not found)[.!。]?\s*$/iu.test(text)) return true;
   const unwrappedText = text.replace(/^Title:[^\n]*\n+URL Source:\s*https?:\/\/[^\n]+\n+(?:(?:Published Time:[^\n]*|Warning: This is a cached snapshot of the original page, consider retry with caching opt-out\.)\n+)*Markdown Content:\s*/i, '');
+  const mainHeading = unwrappedText.match(/^#[ \t]+([^\n]+)$/m)?.[1]
+    ?? body.match(/<h1\b[^>]*>([\s\S]*?)<\/h1\s*>/i)?.[1];
+  if (/^404:\s+The article you are looking for cannot be found\.$/i.test(htmlToText(mainHeading ?? unwrappedText).trim())) return true;
   if (isLoginLockoutNotice(unwrappedText)) return true;
   if (ORG_CHART_CONTROL_ONLY_RE.test(unwrappedText.trim())) return true;
   if (/^(?:#{1,6}\s+)?(?:\S+\s+is blocked\s+)?This page has been blocked by Chrome\s+ERR_BLOCKED_BY_CLIENT(?:\s+This page has been blocked by Chrome)?\s*$/i.test(unwrappedText)) return true;
