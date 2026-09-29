@@ -45,7 +45,7 @@ try {
   }
 
   copy(`reports/${runId}/.workflow-snapshot.yaml`, 'workflow-snapshot.yaml', true);
-  for (const name of ['search-plan.json', 'search-bundle.json', 'worker-results.json', 'finalizer-result.json', 'refresh-context.yaml']) {
+  for (const name of ['search-plan.json', 'search-bundle.json', 'worker-results.json', 'finalizer-result.json', 'refresh-context.yaml', 'refresh-reason-review.json']) {
     copy(`${cachePrefix}/${name}`, name, ['search-bundle.json', 'worker-results.json'].includes(name));
   }
   const localTrail = copy(`${cachePrefix}/_fetch-log.jsonl`, 'fetch-log.jsonl');
