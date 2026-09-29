@@ -638,6 +638,7 @@ function walk(en, zh, path, whitelist, issues, options) {
   if (options.strictEditor) {
     if (/\bgross[- ]profits?\b/i.test(en)
         && !/\bgross(?:[- ]profit)?[- ](?:margins?|ratios?|rates?|percentages?)\b|\b(?:divided by|percentage of|ratio of)\b|\b(?:over|to)\s+(?:net\s+|total\s+)?(?:revenue|sales)\b|[%/]/i.test(en)
+        && !/^\s*gross[- ]profit[- ]after[- ]risk[- ]margin\s*$/i.test(en)
         && /毛利(?:润)?率/u.test(zh) && !/毛利(?!润?率)/u.test(zh)) {
       pushIssue(issues, {
         path: path.join('/'),

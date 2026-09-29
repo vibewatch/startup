@@ -379,6 +379,10 @@ substitutions, including short figure labels. Leaves that also name a margin or
 explicit ratio/percentage remain outside that conservative guard; compare their
 complete propositions manually. A clean numeric-token check does not establish
 metric-head fidelity.
+The standalone label `Gross profit after risk margin` explicitly names a rate
+and may read `扣除风险成本后的毛利率`. Without `margin`, the same risk-adjusted
+profit is still an amount. This label exception does not clear a separate
+gross-profit amount in the same leaf or validate the underlying bank ratios.
 `claims in this table are minted locally` describes this report's evidence
 ledger, not a company assertion; a separate company claim still needs attribution.
 Likewise, scores `synthesized from the cited claims` refer to cited evidence,
