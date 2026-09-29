@@ -531,6 +531,39 @@ function normalizedCountMetrics(value, { normalizeMonths = false, allowUnconvert
     : null;
 }
 
+function equivalentHalfShareMetrics(source, target) {
+  if (!/50\s*\/\s*50/u.test(source) || !target.includes('各占一半')) return false;
+  if (/[-+−–—]\s*[$€£¥₦]?\s*\d|[(（]\s*[$€£¥₦]\s*\d|负\s*\d/u.test(`${source}\n${target}`)) return false;
+  const normalize = (value, pattern, unsupportedClause) => {
+    let count = 0;
+    let unsupported = false;
+    const text = value.split(/(?<=[.!?])\s+|(?<=[,;])\s+|(?<=[\n。；，！？])/u).map(clause => (
+      clause.replace(pattern, (match) => {
+        if (unsupportedClause.test(clause)) {
+          unsupported = true;
+          return match;
+        }
+        count += 1;
+        return ';';
+      })
+    )).join(' ');
+    return { text, count, unsupported };
+  };
+  const en = normalize(source,
+    /(?<![\w./=$€£¥₦])50\s*\/\s*50(?![\w/=%]|\.[\p{L}\p{N}]|,\d)/gu,
+    /\b(?:not|no|never|cannot|\w+n['’]t|without|whether|unclear|unconfirmed|unproven|if|unless|assum\w*|could|would|might|may(?!\s+(?:19|20)\d{2}\b)|over|under|more than|less than|at least|at most|up to|rather than|instead of|approach\w*|towards?|target\w*|expect\w*|forecast\w*)\b|\?/i,
+  );
+  const zh = normalize(target,
+    /各占一半(?!以上|以下|左右|上下|多|余)/gu,
+    /并非|不|未|没有|尚无|并无|无法|无从|缺少证据|缺乏证据|如果|假设|或许|可能|预计|至少|至多|最多|超过|不足|不到|高于|低于|目标|趋近|[？?]/u,
+  );
+  if (en.unsupported || zh.unsupported || !en.count || en.count !== zh.count) return false;
+  const options = { normalizeMonths: true, allowUnconverted: true };
+  const sourceTokens = normalizedCountMetrics(en.text, options);
+  const targetTokens = normalizedCountMetrics(zh.text, options);
+  return sourceTokens && targetTokens && JSON.stringify(sourceTokens) === JSON.stringify(targetTokens);
+}
+
 function equivalentTripledMetrics(source, target) {
   if (!/\btripl(?:e|ed|ing)\b/i.test(source)) return false;
   const quantities = normalizeQuantityWords(`${source}\n${target}`);
@@ -687,6 +720,7 @@ function walk(en, zh, path, whitelist, issues, options) {
       const equivalentDollars = sourceDollars && targetDollars
         && JSON.stringify(sourceDollars) === JSON.stringify(targetDollars);
       if (!equivalentCounts && !equivalentDollars && !equivalentTripledMetrics(metricSource, numericTarget)
+          && !equivalentHalfShareMetrics(metricSource, numericTarget)
           && !equivalentAwardCounts(metricSource, numericTarget)
           && !equivalentBillionAbbreviations(metricSource, numericTarget)) {
         pushIssue(issues, {
