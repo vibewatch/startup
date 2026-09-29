@@ -184,9 +184,15 @@ distinct from `B`. Additional normalization covers amounts with an explicit
 currency symbol, such as `$20+ billion` and `€580-million`. Bare-count forms such as `30+ million` and `30-million` are not expanded here;
 the scalar fallback below handles supported word-suffixed `-plus` forms.
 Never strip a faithful magnitude merely to clear a token mismatch.
+For an explicit currency amount, the strict checker retains `bn` as a billion
+unit and can match `£65bn` with `£65B` or `£65 billion`. This bounded comparison
+requires every numeric occurrence and paired month/year anchor to agree.
+Signed, ranged, bounded or approximate amounts, accounting parentheses and
+additional currency labels stay outside this alias fallback. It does not
+infer the implicit one in `per £bn` or validate the financial proposition.
 When ordinary metric tokens differ, a conservative fallback compares standalone
 non-currency counts across English scale words / `K`, `M`, `B`, `T` and Arabic
-numbers with `千`, `万`, `亿`, or `万亿`, including `100 多万`. It shifts decimal
+numbers with `千`, `万`, `百万`, `亿`, or `万亿`, including `100 多万`. It shifts decimal
 text exactly and requires the complete numeric token sets, including occurrence
 counts and nearby unscaled numbers, to agree. For example, `345 million` can
 match `3.45 亿`, and `per 1 million tokens` can match `每 100 万 tokens`.
@@ -298,6 +304,9 @@ evidence wording includes `未找到公开`, `没有找到公开`, `未发现针
 `government guarantee claim status` are financial claims nouns, not assertions.
 `声明` and `公司口径` can preserve an assertion, but a separate company assertion
 beside a financial claims noun still needs attribution.
+For a source label beginning `Company campaign claim`, clause-leading
+`公司活动口径` retains the company attribution. A negated attribution, a different
+issuer or a separate assertion in the same leaf must not be cleared by it.
 `网站口径` and an attributed `反方观点` can also preserve a claim. Insurance
 coverage limits and claims history refer to insurance, not assertions.
 `at most recent fiscal quarter-end` names the latest period, not an upper bound;
