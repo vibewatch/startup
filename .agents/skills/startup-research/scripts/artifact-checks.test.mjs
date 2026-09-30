@@ -104,7 +104,7 @@ test('range axes filter derived out-of-domain ticks and remeasure on font, size 
   assert.match(range, /layoutRangeAxis\(axis\.node\(\)\)/);
   assert.match(source, /rangeAxisTickIndices\(nodes\.map\(\(node\) => node\.getBoundingClientRect\(\)\)\)/);
   assert.match(source, /node\.hidden = !visible\.has\(index\)/);
-  assert.match(source, /document\.fonts\.ready\.then\(layoutRangeAxes\)/);
+  assert.match(source, /document\.fonts\.ready\.then\(\(\) => \{[\s\S]*?layoutRangeAxes\(\);/);
   assert.match(source, /addEventListener\('afterprint', layoutRangeAxes\)/);
   const print = source.slice(source.indexOf("window.addEventListener('beforeprint'"), source.indexOf("window.addEventListener('afterprint'"));
   assert.match(print, /layoutRangeAxes\(\)/);
@@ -337,6 +337,18 @@ test('pyramid layers retain their own ordered evidence references beside figure 
     assert.deepEqual(evidence(type, data, asArray, asRecord, claimRefs), expected);
     assert.deepEqual(data, before);
   }
+});
+
+test('font readiness remeasures existing charts before laying out range axes', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const callback = source.match(/document\.fonts\.ready\.then\(([\s\S]*?)\);\n  window\.addEventListener\('beforeprint'/)?.[1];
+  assert.ok(callback);
+  const calls = [];
+  const onReady = new Function('renderAllCharts', 'layoutRangeAxes', `return (${callback});`)(
+    options => calls.push(['render', options]), () => calls.push(['axes']),
+  );
+  onReady();
+  assert.deepEqual(calls, [['render', { force: true }], ['axes']]);
 });
 
 test('measured SVG wrapping preserves complete mixed-script text at each layer width and font', () => {

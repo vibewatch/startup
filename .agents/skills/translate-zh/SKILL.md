@@ -944,6 +944,10 @@ when evidence is disabled and in print.
 Check visible text bounds as well: character-count wrapping can clip Chinese
 glyphs even when the complete string remains in the SVG text node. Pyramid and
 timeline wrapping use measured SVG glyph widths rather than assumed Latin widths.
+Exercise a cold font load too: measurements made with fallback fonts must be
+recomputed once web fonts are ready, even if the chart container never resizes.
+Check the initial settled layout before any resize; a later resize must not be
+required to bring text back inside its layer.
 Approximation and evidence notes must remain visible on narrow screens and in
 print; they qualify the chart data rather than serving as optional decoration.
 Multi-series bars render as tables: check every series name and point, including
