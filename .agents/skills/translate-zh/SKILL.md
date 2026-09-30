@@ -228,6 +228,14 @@ remain outside this fallback, as do unsupported written quantities.
 Signed or accounting-style monetary amounts also keep their existing findings.
 This only resolves a quantity-token mismatch; attribution and the surrounding
 proposition still require source review.
+Within that exact-tripling comparison, conventional title/lowercase English
+month abbreviations such as `Apr 2025`, `apr. 2025`, and `Sept 2025` retain their
+paired month/year anchors. All other numeric occurrences must still agree.
+Wrong or omitted months, changed years and multipliers, and increment-based
+`增长 3 倍` do not gain acceptance. Uppercase labels such as `APR`, URL/file
+fragments, attached year suffixes and bare currency-prefix contexts stay outside
+this abbreviation expansion. This is not a general date-parser expansion or a
+check of which event a date qualifies.
 An explicit `50/50` split can also match `各占一半` in a mismatched count
 comparison. Every ratio occurrence, other numeric occurrence and paired
 month/year anchor must agree; matching must not join adjacent digits, currencies
