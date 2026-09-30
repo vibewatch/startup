@@ -1035,6 +1035,14 @@ links, and the mobile table's actual `td::before` labels. In print the readable
 table replaces the scaled diagram; verify full row text, row pagination and the
 complete figure caveat in physical PDFs. Unsupported legacy sidecars still need
 separate source/translation review; this display contract does not certify them.
+Quadrant figures plot authored coordinates without collision displacement,
+generated ranking zones or inferred benchmark thresholds. Honor declared numeric
+axis bounds; otherwise fit each axis independently to its data, without inferring
+a 0–10 or percentage scoring system. Preserve complete axis definitions, point
+labels, coordinates, qualifications and ordered evidence in the accompanying
+table. Coincident points stay coincident; use each legend entry to inspect them.
+Check exact plotted positions, both locales, mobile labels and physical PDFs.
+Print uses the readable coordinate table rather than a shrunken SVG.
 Funnel figures display ordered stage-value tables without deriving conversion
 rates or shared population, unit or time assumptions. Preserve explicitly
 authored rates and qualifications. Verify stage labels, raw values, units,

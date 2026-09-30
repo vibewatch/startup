@@ -1,7 +1,7 @@
 ---
 import ClaimRefs from './ClaimRefs.astro';
 import DataTable from './DataTable.astro';
-import { RENDERED_FIGURE_TYPES, barSeries, barSeriesTable, figureItemNotes, figureUnitsDiffer, flowRelationshipTable, flowTopology, funnelStageTable, stackLayerDetails, waterfallValueTable } from '../lib/figures.mjs';
+import { RENDERED_FIGURE_TYPES, barSeries, barSeriesTable, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, quadrantAxes, stackLayerDetails, waterfallValueTable } from '../lib/figures.mjs';
 import { t } from '../lib/i18n';
 import type { Locale } from '../lib/locale';
 import { asArray, asRecord, claimRefs, type Claim, type ReportFigure, type Source } from '../lib/report-types';
@@ -24,6 +24,7 @@ const dagDetails = dagTopology ? flowRelationshipTable(data, dagTopology, {
   contextLabel: t('reportFigureContext', locale),
 }) : null;
 const dagItems = dagDetails ? [...asArray(data.nodes), ...asArray(data.edges)] : [];
+const coordinateAxes = authoredType === 'quadrant' ? quadrantAxes(figure) : null;
 const relationshipTable = flow && !flow.sequence;
 const sequenceDetails = flow?.sequence ? flowRelationshipTable(data, flow, {
   nodeLabel: t('reportFigureNode', locale), connectionLabel: t('reportFigureConnection', locale),
@@ -101,6 +102,7 @@ const chartPayload = usesD3Chart ? {
   ...(authoredType === 'range' ? { rangeLabels } : {}),
   ...(authoredType === 'dag' ? { dagLabels } : {}),
   ...(dagTopology ? { dagTopology } : {}),
+  ...(coordinateAxes ? { quadrantAxes: coordinateAxes } : {}),
 } : null;
 const chartPayloadJson = chartPayload
   ? JSON.stringify(chartPayload).replace(/[<>&\u2028\u2029]/g, (char) => ({ '<': '\\u003c', '>': '\\u003e', '&': '\\u0026', '\u2028': '\\u2028', '\u2029': '\\u2029' }[char] ?? char))
@@ -115,6 +117,7 @@ const chartPayloadJson = chartPayload
   {relationshipTable && <p class="figure-note flow-relationship-notice" role="note">{t('reportFlowRelationshipNotice', locale)}</p>}
   {flow?.unresolved && <p class="figure-note flow-endpoint-notice" role="note">{t('reportFlowEndpointNotice', locale)}</p>}
   {dagTopology?.unresolved && <p class="figure-note dag-endpoint-notice" role="note">{t('reportFlowEndpointNotice', locale)}</p>}
+  {coordinateAxes && <p class="figure-note quadrant-coordinate-notice" role="note">{t('reportQuadrantNotice', locale)}</p>}
   {funnel && <p class="figure-note funnel-comparison-notice" role="note">{t('reportFunnelComparisonNotice', locale)}</p>}
   {waterfall && <p class="figure-note waterfall-comparison-notice" role="note">{t('reportWaterfallNotice', locale)}</p>}
   {authoredType === 'pyramid' && <p class="figure-note pyramid-layout-notice" role="note">{t('reportPyramidLayoutNotice', locale)}</p>}
@@ -129,6 +132,19 @@ const chartPayloadJson = chartPayload
   {usesD3Chart && <div id={chartId} class:list={['d3-figure', `chart-${type}`]}
     data-loading-label={t('reportFigureLoading', locale)}
     data-error-label={t('reportFigureRenderError', locale)}></div>}
+
+  {coordinateAxes && (
+    <div class="figure-note figure-item-notes quadrant-axis-definitions">
+      <dl>
+        {Object.entries(coordinateAxes).map(([key, axis]) => (
+          <div>
+            <dt>{key.toUpperCase()}: {axis.label}</dt>
+            {axis.definitions.map((definition) => <dd>{definition}</dd>)}
+          </div>
+        ))}
+      </dl>
+    </div>
+  )}
 
   {stageAnnotations.length > 0 && (
     <div class="figure-note figure-item-notes bar-point-notes">
@@ -187,6 +203,23 @@ const chartPayloadJson = chartPayload
             {row.values.map((value) => <td>{value && typeof value === 'object' ? value.label : value}</td>)}
           </tr>
         ))}
+      </DataTable>
+    </div>
+  )}
+
+  {coordinateAxes && (
+    <div class="quadrant-details">
+      <DataTable title={t('reportQuadrantValues', locale)}
+        columns={[t('reportFigureItem', locale), 'X', 'Y', t('reportFigureContext', locale)]}>
+        {asArray(data.points).map((item, index) => {
+          const point = asRecord(item);
+          return <tr>
+            <td>{index + 1}. {point.label}<ClaimRefs refs={claimRefs(point)} claims={claims} sources={sources} /></td>
+            <td>{formatRangeValue(point.x)}</td>
+            <td>{formatRangeValue(point.y)}</td>
+            <td>{figureValueNotes(point).join('\n')}</td>
+          </tr>;
+        })}
       </DataTable>
     </div>
   )}
@@ -1789,56 +1822,21 @@ const chartPayloadJson = chartPayload
 
   const renderQuadrant = (element, payload) => {
     const points = arr(payload.data.points);
-    const axisLabel = (raw, fallback) => {
-      if (raw == null) return fallback;
-      if (typeof raw === 'string' || typeof raw === 'number') return String(raw);
-      if (typeof raw === 'object' && typeof raw.label === 'string') return raw.label;
-      return fallback;
-    };
-    const xAxisLabel = axisLabel(payload.data.xAxis ?? payload.data.xLabel ?? payload.data.x, 'X');
-    const yAxisLabel = axisLabel(payload.data.yAxis ?? payload.data.yLabel ?? payload.data.y, 'Y');
-    const xs = points.map((p) => Number(p.x)).filter(Number.isFinite);
-    const ys = points.map((p) => Number(p.y)).filter(Number.isFinite);
-    const allValues = [...xs, ...ys];
-    const finiteMin = allValues.length ? Math.min(...allValues) : 0;
-    const finiteMax = allValues.length ? Math.max(...allValues) : 100;
-    const isTenPointScore = finiteMin >= 0 && finiteMax <= 10;
-    const isUnitScore = finiteMin >= 0 && finiteMax <= 1;
-    const isPercentScore = !isTenPointScore && !isUnitScore && finiteMin >= 0 && finiteMax <= 100;
-    const referenceValue = isTenPointScore ? 5 : isUnitScore ? 0.5 : 50;
-    const safeRange = (vals) => {
-      if (vals.length === 0) return isTenPointScore ? { min: 0, max: 10 } : isUnitScore ? { min: 0, max: 1 } : { min: 0, max: 100 };
-      if (isTenPointScore) return { min: 0, max: 10 };
-      if (isUnitScore) return { min: 0, max: 1 };
-      if (isPercentScore) return { min: 0, max: 100 };
-      const lo = Math.min(...vals);
-      const hi = Math.max(...vals);
-      const distance = Math.max(Math.abs(lo - referenceValue), Math.abs(hi - referenceValue), 10);
-      const roundedDistance = Math.ceil(distance / 5) * 5;
-      return { min: referenceValue - roundedDistance, max: referenceValue + roundedDistance };
-    };
-    const xRange = safeRange(xs);
-    const yRange = safeRange(ys);
+    const xAxis = payload.quadrantAxes.x;
+    const yAxis = payload.quadrantAxes.y;
+    const xAxisLabel = xAxis.label;
+    const yAxisLabel = yAxis.label;
     const containerWidth = element.getBoundingClientRect().width || 760;
     const compact = containerWidth < 640;
     const { svg, width, height } = svgBase(element, compact ? 420 : 380);
-    const margin = compact ? { top: 52, right: 34, bottom: 60, left: 52 } : { top: 54, right: 42, bottom: 60, left: 70 };
+    const margin = compact ? { top: 52, right: 34, bottom: 84, left: 76 } : { top: 54, right: 42, bottom: 84, left: 94 };
     const plotW = width - margin.left - margin.right;
     const plotH = height - margin.top - margin.bottom;
-    const x = d3.scaleLinear().domain([xRange.min, xRange.max]).range([margin.left, width - margin.right]);
-    const y = d3.scaleLinear().domain([yRange.min, yRange.max]).range([height - margin.bottom, margin.top]);
-    const refX = Math.max(margin.left, Math.min(width - margin.right, x(referenceValue)));
-    const refY = Math.max(margin.top, Math.min(height - margin.bottom, y(referenceValue)));
-    const defs = svg.append('defs');
-    const shadow = defs.append('filter').attr('id', `${payload.id}-quadrant-shadow`).attr('x', '-20%').attr('y', '-24%').attr('width', '140%').attr('height', '152%');
-    shadow.append('feDropShadow').attr('dx', 0).attr('dy', 5).attr('stdDeviation', 5).attr('flood-color', 'rgba(51,48,46,0.16)');
+    const x = d3.scaleLinear().domain(xAxis.domain).range([margin.left, width - margin.right]);
+    const y = d3.scaleLinear().domain(yAxis.domain).range([height - margin.bottom, margin.top]);
+    if (!xAxis.declared) x.nice(4);
+    if (!yAxis.declared) y.nice(4);
     const panel = svg.append('g');
-    const quadrants = [
-      { label: 'Specialist depth', x: margin.left, y: margin.top, w: refX - margin.left, h: refY - margin.top, fill: 'rgba(15,118,110,0.07)' },
-      { label: 'Leader zone', x: refX, y: margin.top, w: width - margin.right - refX, h: refY - margin.top, fill: 'rgba(153,15,61,0.07)' },
-      { label: 'Watchlist', x: margin.left, y: refY, w: refX - margin.left, h: height - margin.bottom - refY, fill: 'rgba(180,35,24,0.055)' },
-      { label: 'Scale path', x: refX, y: refY, w: width - margin.right - refX, h: height - margin.bottom - refY, fill: 'rgba(184,134,11,0.075)' },
-    ].filter((q) => q.w > 2 && q.h > 2);
     panel.append('rect')
       .attr('x', margin.left)
       .attr('y', margin.top)
@@ -1847,73 +1845,37 @@ const chartPayloadJson = chartPayload
       .attr('rx', 18)
       .attr('fill', '#fffaf5')
       .attr('stroke', palette.border);
-    panel.selectAll('rect.quadrant-zone').data(quadrants).join('rect')
-      .attr('class', 'quadrant-zone')
-      .attr('x', (q) => q.x)
-      .attr('y', (q) => q.y)
-      .attr('width', (q) => q.w)
-      .attr('height', (q) => q.h)
-      .attr('fill', (q) => q.fill)
-      .attr('clip-path', null);
-    panel.append('line').attr('x1', refX).attr('x2', refX).attr('y1', margin.top + 10).attr('y2', height - margin.bottom - 10).attr('stroke', palette.claret).attr('stroke-width', 1.5).attr('stroke-dasharray', '5 6').attr('opacity', 0.58);
-    panel.append('line').attr('x1', margin.left + 10).attr('x2', width - margin.right - 10).attr('y1', refY).attr('y2', refY).attr('stroke', palette.claret).attr('stroke-width', 1.5).attr('stroke-dasharray', '5 6').attr('opacity', 0.58);
-    panel.append('circle').attr('cx', refX).attr('cy', refY).attr('r', 5).attr('fill', '#fffaf5').attr('stroke', palette.claret).attr('stroke-width', 2).attr('opacity', 0.85);
-    panel.selectAll('text.quadrant-label').data(quadrants).join('text')
-      .attr('class', 'quadrant-label')
-      .attr('x', (q) => q.x + q.w / 2)
-      .attr('y', (q) => q.y + q.h / 2)
-      .attr('text-anchor', 'middle')
-      .attr('dominant-baseline', 'middle')
-      .attr('fill', palette.muted)
-      .attr('font-size', compact ? chartFont.size.caption : chartFont.size.label)
-      .attr('font-weight', fontWeight('label'))
-      .attr('letter-spacing', chartFont.tracking.caps)
-      .attr('opacity', 0.32)
-      .style('text-transform', 'uppercase')
-      .style('pointer-events', 'none')
-      .text((q) => q.label);
-    const tickValues = (range) => Array.from(new Set([range.min, referenceValue, range.max]));
-    const tickFormat = isUnitScore ? d3.format('.1f') : d3.format('~g');
+    const tickValues = (scale) => [...new Set([...scale.domain(), ...scale.ticks(2)])].sort((a, b) => a - b);
+    const tickFormat = d3.format('~g');
     svg.append('g')
+      .attr('class', 'quadrant-x-axis')
       .attr('transform', `translate(0,${height - margin.bottom})`)
-      .call(d3.axisBottom(x).tickValues(tickValues(xRange)).tickFormat(tickFormat).tickSizeOuter(0))
+      .call(d3.axisBottom(x).tickValues(tickValues(x)).tickFormat(tickFormat).tickPadding(18).tickSizeOuter(0))
       .call((axis) => axis.select('.domain').attr('stroke', palette.border))
       .call((axis) => axis.selectAll('line').attr('stroke', palette.border).attr('opacity', 0.65))
       .call((axis) => axis.selectAll('text').attr('fill', palette.muted).attr('font-size', chartFont.axis).attr('font-weight', fontWeight('strong')));
     svg.append('g')
+      .attr('class', 'quadrant-y-axis')
       .attr('transform', `translate(${margin.left},0)`)
-      .call(d3.axisLeft(y).tickValues(tickValues(yRange)).tickFormat(tickFormat).tickSizeOuter(0))
+      .call(d3.axisLeft(y).tickValues(tickValues(y)).tickFormat(tickFormat).tickPadding(18).tickSizeOuter(0))
       .call((axis) => axis.select('.domain').attr('stroke', palette.border))
       .call((axis) => axis.selectAll('line').attr('stroke', palette.border).attr('opacity', 0.65))
       .call((axis) => axis.selectAll('text').attr('fill', palette.muted).attr('font-size', chartFont.axis).attr('font-weight', fontWeight('strong')));
     svg.selectAll('.domain').attr('stroke', palette.border);
     svg.selectAll('.tick line').attr('stroke', palette.border).attr('opacity', 0.65);
-    svg.append('text').attr('x', margin.left + plotW / 2).attr('y', height - margin.bottom + 42).attr('text-anchor', 'middle').attr('fill', palette.ink).attr('font-size', chartFont.axis).attr('font-weight', fontWeight('label')).text(xAxisLabel);
-    svg.append('text').attr('transform', `translate(${compact ? 18 : 24},${margin.top + plotH / 2}) rotate(-90)`).attr('text-anchor', 'middle').attr('fill', palette.ink).attr('font-size', chartFont.axis).attr('font-weight', fontWeight('label')).text(yAxisLabel);
+    svg.append('text').attr('x', margin.left + plotW / 2).attr('y', height - margin.bottom + 64).attr('text-anchor', 'middle').attr('fill', palette.ink).attr('font-size', chartFont.axis).attr('font-weight', fontWeight('label')).text('X');
+    svg.append('text').attr('x', margin.left).attr('y', margin.top - 26).attr('text-anchor', 'middle').attr('fill', palette.ink).attr('font-size', chartFont.axis).attr('font-weight', fontWeight('label')).text('Y');
     const plotPoints = points.map((point, index) => {
-      const targetX = x(numberValue(point.x));
-      const targetY = y(numberValue(point.y));
-      return { ...point, _index: index, _valueX: point.x, _valueY: point.y, _targetX: targetX, _targetY: targetY, x: targetX, y: targetY };
-    });
-    d3.forceSimulation(plotPoints)
-      .force('x', d3.forceX((d) => d._targetX).strength(0.28))
-      .force('y', d3.forceY((d) => d._targetY).strength(0.28))
-      .force('collide', d3.forceCollide(compact ? 18 : 20))
-      .stop()
-      .tick(90);
-    plotPoints.forEach((point) => {
-      point.x = Math.max(margin.left + 18, Math.min(width - margin.right - 18, point.x));
-      point.y = Math.max(margin.top + 18, Math.min(height - margin.bottom - 18, point.y));
+      return { ...point, _index: index, _valueX: point.x, _valueY: point.y,
+        notes: figureValueNotes(point), x: x(point.x), y: y(point.y) };
     });
     const dots = svg.append('g').selectAll('g.quadrant-point').data(plotPoints).join('g').attr('class', 'quadrant-point').attr('transform', (d) => `translate(${d.x},${d.y})`);
     dots.append('circle').attr('r', compact ? 15 : 17).attr('fill', (d) => colorForTone(d.tone)).attr('stroke', '#fff7ef').attr('stroke-width', 3).attr('opacity', 0.96);
     dots.append('circle').attr('r', compact ? 7 : 8).attr('fill', '#fff7ef').attr('opacity', 0.18);
     dots.append('text').attr('text-anchor', 'middle').attr('dominant-baseline', 'middle').attr('fill', '#fff7ef').attr('font-size', compact ? chartFont.size.caption : chartFont.size.caption).attr('font-weight', fontWeight('emphasis')).text((d) => d._index + 1);
-    // Inline text labels next to each dot collide badly when points cluster
-    // along a quadrant boundary. Rely on the numbered badge inside the dot
-    // plus the HTML legend below for identification; tooltips handle hover.
+    // Coincident points keep their coordinates; the legend exposes every item.
     dots.each(function(d) { addTitle(d3.select(this), `${d.label}: ${xAxisLabel} ${d._valueX}; ${yAxisLabel} ${d._valueY}`); });
-    withTooltip(dots, (d) => tooltipHtml(d.label, [`${xAxisLabel}: ${d._valueX}`, `${yAxisLabel}: ${d._valueY}`, d.detail]));
+    withTooltip(dots, (d) => tooltipHtml(d.label, [`${xAxisLabel}: ${d._valueX}`, `${yAxisLabel}: ${d._valueY}`, ...d.notes]));
     // HTML legend: responsive flow grid, wraps cleanly across widths.
     const legendHost = d3.select(element).append('div').attr('class', 'quadrant-legend');
     const legendItems = legendHost.selectAll('div.quadrant-legend-item').data(plotPoints).join('div')
@@ -1923,7 +1885,7 @@ const chartPayloadJson = chartPayload
       .style('background', (d) => colorForTone(d.tone))
       .text((d) => d._index + 1);
     legendItems.append('span').attr('class', 'quadrant-legend-label').text((d) => d.label);
-    withTooltip(legendItems, (d) => tooltipHtml(d.label, [`${xAxisLabel}: ${d._valueX}`, `${yAxisLabel}: ${d._valueY}`, d.detail]));
+    withTooltip(legendItems, (d) => tooltipHtml(d.label, [`${xAxisLabel}: ${d._valueX}`, `${yAxisLabel}: ${d._valueY}`, ...d.notes]));
   };
 
   const renderHeatmap = (element, payload) => {
@@ -2204,6 +2166,7 @@ const chartPayloadJson = chartPayload
   .stack-layer-notes ul { margin: 0.2em 0; padding-left: 1.2em; }
   .flow-sequence-details :global(td) { white-space: pre-line; }
   .dag-details :global(td) { white-space: pre-line; }
+  .quadrant-details :global(td) { white-space: pre-line; }
   .timeline-event-evidence > .timeline-event-reference,
   .pyramid-layer-evidence > .pyramid-layer-reference,
   .waterfall-value-evidence > .waterfall-value-reference { display: block; margin: var(--space-2) 0; }
@@ -2246,7 +2209,7 @@ const chartPayloadJson = chartPayload
   :global(.chart-quadrant .quadrant-legend) { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 12rem), 1fr)); gap: 0.4rem 0.85rem; margin-top: 0.6rem; }
   :global(.chart-quadrant .quadrant-legend-item) { display: flex; align-items: center; gap: 0.45rem; min-width: 0; font-family: var(--font-sans); font-size: var(--chart-fs-caption); color: var(--ink-page, #33302e); }
   :global(.chart-quadrant .quadrant-legend-badge) { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 1.2rem; height: 1.2rem; border-radius: 999px; color: #fff7ef; font-size: var(--chart-fs-kicker); font-weight: var(--chart-fw-strong, 800); line-height: 1; }
-  :global(.chart-quadrant .quadrant-legend-label) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  :global(.chart-quadrant .quadrant-legend-label) { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
   /* ---- matrix figure (HTML grid + card fallback for narrow widths) ---- */
   :global(.chart-matrix .matrix-table) { --matrix-row-head-w: clamp(6rem, 22cqi, 10rem); --matrix-tone-positive: #dcebe7; --matrix-tone-warning: #f2d8a0; --matrix-tone-risk: #f4c7bd; --matrix-tone-critical: #e8a89a; --matrix-tone-high: #f4c7bd; --matrix-tone-opportunity: #f7e3b0; --matrix-tone-neutral: #fff3e3; }
   :global(.chart-matrix .matrix-grid) { display: grid; grid-template-columns: var(--matrix-row-head-w) repeat(var(--matrix-cols, 1), minmax(0, 1fr)); gap: 4px; }
