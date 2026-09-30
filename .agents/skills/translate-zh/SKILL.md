@@ -1043,6 +1043,9 @@ labels, coordinates, qualifications and ordered evidence in the accompanying
 table. Coincident points stay coincident; use each legend entry to inspect them.
 Check exact plotted positions, both locales, mobile labels and physical PDFs.
 Print uses the readable coordinate table rather than a shrunken SVG.
+Keep a real chart tooltip open when checking print transitions. Body-level
+tooltips must be hidden in print, not repeated over every PDF page; verify the
+physical output as well as underlying text and row geometry.
 Funnel figures display ordered stage-value tables without deriving conversion
 rates or shared population, unit or time assumptions. Preserve explicitly
 authored rates and qualifications. Verify stage labels, raw values, units,
