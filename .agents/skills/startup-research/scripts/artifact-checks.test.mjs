@@ -14,7 +14,7 @@ import { checkRefreshReadback, refreshArtifactsAreInSync } from './refresh-readb
 import { reportsDir } from './utils.mjs';
 import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, matrixCellText, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
 import { isTranslatableLeaf, TRANSLATE_PATHS } from '../../translate-zh/scripts/whitelist.mjs';
-import { claimRefs } from '../../../../website/src/lib/report-types.ts';
+import { asArray, asRecord, claimRefs } from '../../../../website/src/lib/report-types.ts';
 
 test('matrix renderer and validator share canonical display aliases and preserve explicit empty labels', () => {
   const cases = [
@@ -224,14 +224,119 @@ test('timeline rows use shared pointer tooltips with full date and detail', () =
   assert.match(timeline, /renderLineBlock\(d3\.select\(this\), d\.detailLines/);
 });
 
-test('pyramid layers use shared pointer tooltips with full label and detail', () => {
+test('pyramid layers expose authored values and all qualifications in visible text and pointer tooltips', () => {
   const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
   const pyramid = source.slice(source.indexOf('const renderPyramid ='), source.indexOf('const renderJourneyMap ='));
-  assert.match(pyramid, /withTooltip\(groups, \(entry\) => tooltipHtml\(entry\.item\.label, \[entry\.item\.detail\]\)\)/);
+  assert.match(pyramid, /fullValueLabel\(item\), \.\.\.figureValueNotes\(item\)/);
+  assert.match(pyramid, /withTooltip\(groups, \(entry\) => tooltipHtml\(entry\.item\.label, entry\.details\)\)/);
+  assert.match(pyramid, /addTitle\(d3\.select\(this\), \[entry\.item\.label, \.\.\.entry\.details\]/);
   assert.match(pyramid, /renderLineBlock\(d3\.select\(this\), entry\.detailLines/);
   assert.match(pyramid, /createSvgTextWrapper\(svg\)/);
   assert.match(pyramid, /wrap\(item\.label, \{[^}]*maxWidth: w - padX \* 2/);
-  assert.match(pyramid, /wrap\(item\.detail, \{[^}]*maxWidth: w - padX \* 2/);
+  assert.match(pyramid, /details\.flatMap\(\(detail\) => textWrapper\.wrap\(detail, \{[^}]*maxWidth: w - padX \* 2/);
+  assert.match(pyramid, /const w = maxW \* \(1 - index \* widthStep\)/);
+  assert.match(source, /class="figure-note pyramid-layout-notice"[^>]*>\{t\('reportPyramidLayoutNotice', locale\)\}/);
+});
+
+test('deep pyramids keep every layer at a positive readable width without changing ordinary layouts', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const pyramid = source.slice(source.indexOf('const renderPyramid ='), source.indexOf('const renderJourneyMap ='));
+  const expression = pyramid.match(/const widthStep = (.+);/)?.[1];
+  assert.ok(expression, 'the existing 12-layer report must not produce zero or negative widths');
+  const step = new Function('items', `return (${expression});`);
+  for (const count of [0, 1, 3, 4, 5, 6, 7, 12, 100]) {
+    const items = Object.freeze(Array.from({ length: count }, (_, index) => Object.freeze({ label: `Layer ${index}` })));
+    const before = structuredClone(items);
+    const widthStep = step(items);
+    assert(Number.isFinite(widthStep));
+    for (const [index] of items.entries()) {
+      const fraction = 1 - index * widthStep;
+      assert(fraction >= 0.5 - Number.EPSILON && fraction <= 1);
+      if (count <= 6) assert.equal(fraction, 1 - index * 0.1);
+      if (index) assert(fraction <= 1 - (index - 1) * widthStep);
+    }
+    assert.deepEqual(items, before);
+  }
+});
+
+test('pyramid content preserves explicit value aliases, zeros, precision and distinct notes without inventing quantities', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const pyramid = source.slice(source.indexOf('const renderPyramid ='), source.indexOf('const renderJourneyMap ='));
+  const expression = pyramid.match(/const details = ([\s\S]+?);\n/)?.[1];
+  assert.ok(expression, 'pyramid content must feed both measured text and tooltips');
+  const fullValueLabel = new Function(`return (${source.match(/const fullValueLabel = (.+);/)?.[1]});`)();
+  const details = new Function('item', 'fullValueLabel', 'figureValueNotes', 'safeText', `return (${expression});`);
+  const safeText = value => String(value ?? '');
+  const cases = [
+    [{ label: 'TAM', value: 15, unit: '$B', note: 'Government IT allocation.' }, ['15', 'Government IT allocation.', '$B']],
+    [{ label: 'SOM', value: 0.1, unit: '$B', note: 'ARR undisclosed.' }, ['0.1', 'ARR undisclosed.', '$B']],
+    [{ label: 'Zero', value: 0, unit: '%' }, ['0', '%']],
+    [{ label: '精确值', value: '0.042500000000000003', context: '未经审计' }, ['0.042500000000000003', '未经审计']],
+    [{ label: 'Large count', value: '9007199254740993' }, ['9007199254740993']],
+    [{ label: 'Loss', value: -139.6, unit: 'R$mn' }, ['-139.6', 'R$mn']],
+    [{ label: 'Value', displayValue: 'Authored display', value: 7, score: 3 }, ['Authored display']],
+    [{ label: 'Value', displayValue: 0, value: 7 }, ['0']],
+    [{ label: 'Value', displayValue: '', value: 7, note: 'Still qualified.' }, ['Still qualified.']],
+    [{ label: 'Score', displayValue: null, value: null, score: 0 }, ['0']],
+    [{ label: 'Concept only' }, []],
+    [{ label: 'Same text', value: 'Same text', detail: 'Same text' }, []],
+    [{ label: 'Qualified', value: 3, detail: 'Basis.', description: 'Definition.', note: 'Estimate.',
+      notes: 'Period.', context: 'Scope.', valueNote: 'Not a forecast.', unit: '$B' },
+    ['3', 'Basis.', 'Definition.', 'Estimate.', 'Period.', 'Scope.', 'Not a forecast.', '$B']],
+    [{ label: 'Dedupe', value: 'Unaudited.', note: 'Unaudited.', context: 'Unaudited.' }, ['Unaudited.']],
+    [{ label: 'Summary', summary: 'Limited sample.', note: 'Other scope.' }, ['Limited sample.', 'Other scope.']],
+    [{ label: 'Empty detail', detail: '', description: 'Known scope.', unit: '$B' }, ['Known scope.', '$B']],
+    [{ label: 'Escaped', note: '<b>Not markup</b> & a condition.' }, ['<b>Not markup</b> & a condition.']],
+  ];
+  for (const [item, expected] of cases) {
+    const before = structuredClone(item);
+    const normalized = Object.freeze({ ...item, detail: figureDetail(item) ?? item.summary });
+    assert.deepEqual(details(normalized, fullValueLabel, figureValueNotes, safeText), expected);
+    assert.deepEqual(item, before);
+  }
+});
+
+test('pyramid node notes are translatable while values, units and structured sidecars remain protected', () => {
+  for (const key of ['label', 'detail', 'details', 'description', 'note', 'notes']) {
+    assert.equal(isTranslatableLeaf(['figures', 0, 'data', 'nodes', 0, key], TRANSLATE_PATHS.fullReport), true);
+  }
+  for (const key of ['id', 'value', 'displayValue', 'score', 'unit', 'tone', 'claimRefs']) {
+    assert.equal(isTranslatableLeaf(['figures', 0, 'data', 'nodes', 0, key], TRANSLATE_PATHS.fullReport), false);
+  }
+  assert.equal(isTranslatableLeaf(['figures', 0, 'data', 'nodes', 0, 'notes', 'id'], TRANSLATE_PATHS.fullReport), false);
+  assert.equal(isTranslatableLeaf(['figures', 0, 'data', 'nodes', 0, 'notes', 0], TRANSLATE_PATHS.fullReport), false);
+});
+
+test('pyramid layers retain their own ordered evidence references beside figure references', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  assert.match(source, /pyramid-layer-evidence/);
+  assert.match(source, /pyramid-layer-reference/);
+  assert.match(source, /refs: claimRefs\(item\)/);
+  assert.match(source, /<ClaimRefs refs=\{layer\.refs\} claims=\{claims\} sources=\{sources\}/);
+  assert.match(source, /<ClaimRefs refs=\{claimRefs\(figure\)\}/);
+  const logic = source.slice(source.indexOf('const pyramidEvidence ='), source.indexOf('const stackLabels:'));
+  const evidence = new Function('authoredType', 'data', 'asArray', 'asRecord', 'claimRefs',
+    `${logic}; return pyramidEvidence;`);
+  const tenRefs = Array.from({ length: 10 }, (_, index) => `C${index + 1}`);
+  const cases = [
+    ['pyramid', { nodes: [{ label: 'TAM', claimRefs: tenRefs }] }, [{ label: 'TAM', refs: tenRefs }]],
+    ['pyramid', { items: [{ label: 'Items', claimRefs: ['C3', 'C1', 'C3'] }], nodes: [{ label: 'Nodes', claimRefs: ['C2'] }] },
+      [{ label: 'Items', refs: ['C3', 'C1', 'C3'] }]],
+    ['pyramid', { items: [], nodes: [{ name: 'Named', claimRefs: ['C2'] }] }, [{ label: 'Named', refs: ['C2'] }]],
+    ['pyramid', { nodes: [{ label: 'Repeated', claimRefs: ['C1'] }, { label: 'Repeated', claimRefs: ['C2'] }] },
+      [{ label: 'Repeated', refs: ['C1'] }, { label: 'Repeated', refs: ['C2'] }]],
+    ['pyramid', { nodes: [{ label: 'No refs' }, { id: 'N002', claimRefs: ['C2'] }, { claimRefs: ['C3'] }] },
+      [{ label: 'N002', refs: ['C2'] }, { label: 'Item 3', refs: ['C3'] }]],
+    ['pyramid', { nodes: [{ label: '', name: 'Ignored', claimRefs: ['C1'] }] }, [{ label: '', refs: ['C1'] }]],
+    ['pyramid', { items: {}, nodes: [{ label: 'TAM', claimRefs: ['C1'] }] }, [{ label: 'TAM', refs: ['C1'] }]],
+    ['pyramid', {}, []],
+    ['kpi', { items: [{ label: 'Other chart', claimRefs: ['C1'] }] }, []],
+  ];
+  for (const [type, data, expected] of cases) {
+    const before = structuredClone(data);
+    assert.deepEqual(evidence(type, data, asArray, asRecord, claimRefs), expected);
+    assert.deepEqual(data, before);
+  }
 });
 
 test('measured SVG wrapping preserves complete mixed-script text at each layer width and font', () => {

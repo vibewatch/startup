@@ -561,6 +561,23 @@ company assertion still requires attribution.
 Bank leverage `excluding claims on central banks` or `excluding central-bank
 claims` concerns assets, not assertions. Preserve the exclusion and the asset
 counterparty; a separate company or central-bank assertion still needs attribution.
+For an explicit retained-material gap, `未留存公开…` preserves
+`no public … retained`; it does not assert that no public material exists.
+`保留的…材料没有出现公开…` likewise retains a price's absence from the
+reviewed materials, not universal unavailability. Negation, retention prohibitions,
+clause boundaries and additional disclosure gaps remain separate.
+`目前还无法量化` can retain one `not yet quantifiable` predicate, not a different
+missing condition. The industrial-vertical customer-count/ACV and health-system
+account-data gaps can retain their scoped `没有按…披露公开…` and `没有…的公开…数据`
+forms; merely late publication and other missing disclosures remain distinct.
+Hyphenated warranty-claim disclosures concern warranty demands, not company
+assertions. An evidence-ledger `claim evidence` reference and an `absence claims`
+disclaimer need not invent company attribution. The reviewed alternatives retain
+the distinction between qualitative positions and statistical probabilities, and
+between missing public evidence and proof that private controls do not exist.
+Reversed predicates and a separate company assertion still fail these alternatives.
+These checks retain the existing long-prose/table/figure-note applicability;
+they do not add general semantic checking of short labels or certify source facts.
 
 ```sh
 npm run audit:translations-zh -- --report <run-id> --format json
@@ -910,9 +927,20 @@ tones or promoting a fallback value over an explicit empty label.
 Timeline entries retain their full date, label and detail in visible text and
 shared hover/tap tooltips. Check both surfaces; an accessibility label alone
 does not prove the tooltip works, and print must retain the visible detail.
-Pyramid layers likewise expose their complete labels and details in shared
-hover/tap tooltips. Verify an actual pointer interaction rather than treating
-the native SVG title as proof of mobile tooltip support; printed details remain visible.
+Pyramid layers expose their complete labels, authored values, units and every
+distinct qualification on the layer and in shared hover/tap tooltips. Preserve
+`displayValue` / `value` / `score` precedence, including zero and an explicitly
+empty display value; concept-only layers must not acquire a guessed quantity.
+Keep the localized notice that layer widths express hierarchy, not quantitative
+proportions visible on screen and in print. Verify an actual
+pointer interaction rather than treating the native SVG title as proof of mobile
+tooltip support; values and qualifications must remain visible in print.
+Check deep pyramids too: every authored layer must retain a positive readable
+width, rather than shrinking later layers to zero or negative widths.
+When evidence is enabled, verify each pyramid layer's own ordered claim links
+as well as the figure-level links. Labels and references follow the same
+items-before-nodes precedence as the chart; evidence-only rows stay hidden
+when evidence is disabled and in print.
 Check visible text bounds as well: character-count wrapping can clip Chinese
 glyphs even when the complete string remains in the SVG text node. Pyramid and
 timeline wrapping use measured SVG glyph widths rather than assumed Latin widths.
@@ -1022,6 +1050,9 @@ Style notes specific to figure text:
   with the topic, drop `对……来说`, prefer concrete verbs.
 - `data.items[].valueNote` and `data.series[].points[].valueNote` are
   translatable value qualifications, not numeric or enum fields.
+- `data.nodes[].notes` is translatable string prose, including pyramid
+  qualifications. Nested objects or arrays under `notes` are not editable;
+  node values, units, identifiers and references remain protected.
 - Pure model / version / SKU lists in figure details may stay Latin with
   Chinese separators: "GPT-5.x、GPT-4.1、o1、GPT-4o" is fine.
 - Axis labels often carry a parenthetical unit hint

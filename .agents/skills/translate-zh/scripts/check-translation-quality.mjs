@@ -45,7 +45,7 @@ const insuranceClaimHeads = '(?:intake|communications?|orchestration|automation|
 const insuranceClaimModifiers = '(?:(?:AI(?:-native)?|digital|agentic|enterprise|incumbent|legacy|modern|full|complete|cloud(?:-native)?|core|narrow|broader|automated|conversational|messy|intelligent|insurance|strong|pilot|P&C|annual|manual|transactional|preventable|touchless|clean|API-based|AI-driven|rules-driven|usage-based|payer-by-payer)[ -]+)*';
 const insuranceClaimNouns = new RegExp([
   '\\brequest claims? frequency\\b(?=\\s*(?:[,.;:]|$))',
-  '\\bwarranty-claims?\\b(?=\\s+(?:history|rates?|frequency)\\b)',
+  '\\bwarranty-claims?\\b(?=\\s+(?:history|rates?|frequency|disclosures?)\\b)',
   '\\bpayer denials (?:are )?documented in [<>]?\\s*\\d+(?:\\.\\d+)?% of claims\\b(?=\\s*(?:[,.;:]|$))',
   '\\bfor\\s+narrow\\s+claim\\s+classes\\b',
   `^claims?(?=[ -]+${insuranceClaimHeads}\\b)`,
@@ -140,7 +140,13 @@ const hedgeRules = [
         && /(?:^|[。！？；，：\n])\s*客户在[^。！？；，：\n.!?;,]{1,60}(?:中|内)验证面料承诺(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
       || (/\bclaims about tariff impacts are based on publicly available\b/i.test(source)
         && (source.match(/\bclaims?\b|\bclaimed\s+scale\b/gi) ?? []).length === 1
-        && /(?<!并非\s*|不是\s*|非\s*|不\s*)关税影响论断基于/u.test(target)),
+        && /(?<!并非\s*|不是\s*|非\s*|不\s*)关税影响论断基于/u.test(target))
+      || (/\bpositions are qualitative judgments derived from claim evidence, not statistical probabilities\b/i.test(source)
+        && (source.match(/\bclaims?\b|\bclaimed\s+scale\b/gi) ?? []).length === 1
+        && /(?:^|[。！？；，：\n])\s*位置是基于已列证据作出的定性判断[，,]\s*(?:并非|不是)统计概率(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
+      || (/\babsence claims refer to missing public evidence, not to proof that private controls do not exist\b/i.test(source)
+        && (source.match(/\bclaims?\b|\bclaimed\s+scale\b/gi) ?? []).length === 1
+        && /(?:^|[。！？；，：\n])\s*[“「"]?缺失[”」"]?指缺少公开证据[，,]\s*不等于证明私有控制不存在(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target)),
     excludeContext: new RegExp(`${insuranceClaimNouns.source}|${patentClaimNouns.source}|${marketSizingClaimContexts.source}|${legalCounterclaimContexts.source}|${rightsClaimContexts.source}|${evidenceAssessmentClaimContexts.source}|${procurementSequenceDisclaimer.source}|${valuationMultiplesDisclaimer.source}|${inferenceScopeDisclaimer.source}|${hardwareDependencyDisclaimer.source}|${financingMarkDisclaimer.source}|${shareholderRightsContexts.source}|${centralBankClaimContexts.source}|\\bclaims\\s+in\\s+this\\s+table\\s+are\\s+minted\\s+locally\\b|\\bsynthesized\\s+from\\s+the\\s+cited\\s+claims\\b|\\bpublic[- ]claims?\\s+dispersion\\b|\\brather\\s+than\\s+a\\s+single\\s+["“][^"“”\\n]{1,180}["”]\\s+claim\\b|\\bwarranty\\s+claims?\\b(?=\\s*(?:[,.;:]|$)|\\s+(?:history|rates?|response|frequency|data|targets?|resolved|triggered|processing|handling|costs?|by|if|and|or)\\b)`, 'gi'),
     exclude: /\b(?:(?:for|in|of|on)\s+claims?\s+(?:modeling|modelling|processing|handling|management|adjudication|submission|settlement|opening|setup|negotiation)|patent\s+claims?\s+(?:drafting|construction|interpretation|scope)|small[- ]claims?\s+(?:processing|courts?)|clinical\s*,\s*claims?\s*,?\s+and\s+operational\s+(?:data|systems)|EHRs?\s*,\s*claims?\s+systems|fraud\s+claims?\s+handling|government\s+guarantee\s+claims?\s+status|insurance\s+coverage\s+limits?\s+and\s+claims\s+history|premium\s+and\s+claims\s+expenditure|high[- ]cost\s+claims?\s+(?:concentration|categories)|million[- ]dollar[- ]plus\s+claims|highest[- ]ROI\s+claims|claims[- ]data[- ]driven|\d+(?:\.\d+)?%\s+claims\s+cost\s+reduction|real[- ]time\s+claims\s+data|claims\s+data\s+latency(?=\s*(?:[.;]|$))|do(?:es)?\s+not\s+reveal\s+claims?\s+quality\s+or\s+jurisdictions|qualitative\s+directional\s+claim|(?:personal|bodily)[ -]injury\s+claims?|(?:anchor|inflate|weaken)\s+claims?\s+values?|claims?-inflation|InsurTech\s+claims?\s+processing|insurance\s+carriers?\s+claims?\s+automation|claims?\s+setup(?=\s*,\s*care\s+coordination\b)|per\s+claims?|open\s+claims|return(?:s|ing)?\s+claims?\s+numbers|handle\s+claims?\s+negotiation|trained\s+on\s+(?:hundreds|thousands|millions)\s+of\s+claims|malpractice\s+claims|customer\s+compensation\s+claims|billing\s+documentation\s*[;,]\s*claims?\s+validation|claims?\s+denial\s+reduction\s+data|not\s+marketing\s+claims)\b/gi,
   },
@@ -177,7 +183,10 @@ const hedgeRules = [
         && /(?<!并非\s*|不是\s*|非\s*|不\s*)还谈不上便宜(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
       || (/\bnot yet publicly measurable\b/i.test(source)
         && (source.match(/\bnot yet\b/gi) ?? []).length === 1
-        && /(?<!并非\s*|不是\s*|非\s*|不\s*)(?:还|仍)无法从公开(?:材料|资料|信息)(?:中)?衡量/u.test(target)),
+        && /(?<!并非\s*|不是\s*|非\s*|不\s*)(?:还|仍)无法从公开(?:材料|资料|信息)(?:中)?衡量/u.test(target))
+      || (/\bnot yet quantifiable\b/i.test(source)
+        && (source.match(/\bnot yet\b/gi) ?? []).length === 1
+        && /(?:^|[。！？；，：\n])\s*(?:只是)?(?:目前)?(?:还|仍)无法量化(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target)),
   },
   {
     en: /\b(?:unproven|not proven)\b/i,
@@ -207,6 +216,12 @@ const hedgeRules = [
       || (/\bno public revenue, user-count, or repeat-purchase disclosure by segment\b/i.test(source)
         && (source.match(/\bno public\b/gi) ?? []).length === 1
         && /(?:^|[。！？；，：\n])\s*未按细分披露公开收入、用户数或复购情况(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
+      || (/\bno public customer-count or ACV disclosure by industrial vertical\b/i.test(source)
+        && (source.match(/\bno public\b/gi) ?? []).length === 1
+        && /(?:^|[。！？；，：\n])\s*没有按工业垂直披露公开客户数或\s*ACV(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
+      || (/\bno public\b[^.;!?]{0,160}\bdata for health-system accounts\b/i.test(source)
+        && (source.match(/\bno public\b/gi) ?? []).length === 1
+        && /(?:^|[。！？；，：\n])\s*没有医疗系统账户的公开[^。！？；，：\n.!?;,]{1,60}数据(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
       || (/\bno public benchmark\b/i.test(source)
         && (source.match(/\bno public\b/gi) ?? []).length === 1
         && /(?<!并非\s*|不是\s*|非\s*|不\s*)缺少公开基准(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target))
@@ -243,6 +258,13 @@ const hedgeRules = [
       || (/\bno public\b[^.;!?]{0,160}\bretained in chapter evidence\b/i.test(source)
         && !/\bno public\b/i.test(source.replace(/\bno public\b/i, ''))
         && /(?<!并非\s*|不是\s*|非\s*|不\s*)(?:本章|章节)证据中未收录公开/u.test(target))
+      || (/(?:^|[.;!?:])\s*no public\b[^.;!?]{0,160}\bretained\b/i.test(source)
+        && !/\bno public\b[^.;!?]{0,160}\b(?:may|might|can|could|should|must|shall|will|would|not|never)\b[^.;!?]{0,80}\bretained\b/i.test(source)
+        && (source.match(/\bno public\b/gi) ?? []).length === 1
+        && /(?:^|[。！？；，：\n])\s*未留存公开/u.test(target))
+      || (/\bno public\b[^.;!?]{0,160}\bappeared in (?:the )?retained\b/i.test(source)
+        && (source.match(/\bno public\b/gi) ?? []).length === 1
+        && /(?:^|[。！？；，：\n])\s*(?:保留|留存)(?:的)?[^。！？；，：\n.!?;,]{0,100}材料没有出现公开/u.test(target))
       || (/\bno public basis\b/i.test(source)
         && !/\bno public\b/i.test(source.replace(/\bno public basis\b/gi, ''))
         && /(?<!并非|不是|没有|非|不|无)公开(?:信息|资料|证据|依据)(?:仍|尚)?不足以/u.test(target))

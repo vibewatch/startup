@@ -78,6 +78,64 @@ function entryMultiplePair({ header = 'Exit Multiple at 5.6B Entry', target = '�
 const checks = [
   ...[
     ...[
+      ['No public pricing or customer-specific qualification data retained', '未留存公开定价或客户特定认证数据'],
+      ['No public quote sheet or exhaustive installed-base list retained', '未留存公开报价单或完整装机基础清单'],
+      ['No public production deployment references or quote examples retained', '未留存公开的生产部署引用或报价示例'],
+      ['No public software architecture or cybersecurity detail retained', '未留存公开的软件架构或网络安全细节'],
+      ['No public certification file package or field-service documentation retained', '未留存公开认证文件包或现场服务文档'],
+    ].map(([en, zh]) => [en, zh, false]),
+    ['No public quote sheet retained.', '已留存公开报价单。', true],
+    ['No public quote sheet retained.', '并非未留存公开报价单。', true],
+    ['No public quote sheet retained.', '不是 未留存公开报价单。', true],
+    ['No public quote sheet retained.', '未留存历史缓存，报价资料齐全。', true],
+    ['No public quote sheet retained; no public audit disclosed.', '未留存公开报价单；审计齐全。', true],
+    ['No public quote sheet exists.', '未留存公开报价单。', true],
+    ['No public customer information may be retained.', '未留存公开客户信息。', true],
+    ['No public quote sheet was not retained.', '未留存公开报价单。', true],
+    ['No public list price appeared in the retained materials.', '留存材料没有出现公开标价。', false],
+    ['No public list price appeared in the retained materials.', '留存材料并非没有出现公开标价。', true],
+    ['No public list price appeared in the retained materials.', '留存材料没有出现旧报价，公开标价齐全。', true],
+    ['No public list price appeared in the retained materials; no public audit exists.', '留存材料没有出现公开标价；审计齐全。', true],
+    ['No public list price exists.', '留存材料没有出现公开标价。', true],
+    ['The concentration risk is plausibly material but not yet quantifiable.', '集中度风险可能有实质影响，只是目前还无法量化。', false],
+    ['The concentration risk is not yet quantifiable.', '目前还无法量化。', false],
+    ['The concentration risk is not yet quantifiable.', '并非目前还无法量化。', true],
+    ['The concentration risk is not yet quantifiable.', '目前已经可以量化。', true],
+    ['The concentration risk is not yet quantifiable and revenue is not yet disclosed.', '目前还无法量化；收入齐全。', true],
+    ['The business is not yet profitable.', '目前还无法量化。', true],
+    ['No public customer-count or ACV disclosure by industrial vertical', '没有按工业垂直披露公开客户数或 ACV', false],
+    ['No public customer-count or ACV disclosure by industrial vertical', '并非没有按工业垂直披露公开客户数或 ACV', true],
+    ['No public customer-count or ACV disclosure by industrial vertical', '没有按时披露公开客户数或 ACV', true],
+    ['No public customer-count or ACV disclosure by industrial vertical', '没有按工业垂直披露公开收入或 ACV', true],
+    ['No public customer-count or ACV disclosure by industrial vertical; no public audit.', '没有按工业垂直披露公开客户数或 ACV；审计齐全。', true],
+    ['No public renewal, churn, or expansion-rate data for health-system accounts', '没有医疗系统账户的公开续约、流失或扩张率数据', false],
+    ['No public renewal data for health-system accounts.', '并非没有医疗系统账户的公开续约数据。', true],
+    ['No public renewal data for health-system accounts.', '没有医疗系统账户，但有公开续约数据。', true],
+    ['No public renewal data for health-system accounts; no public audit.', '没有医疗系统账户的公开续约数据；审计齐全。', true],
+    ['No public hardware failure-rate, MTBF, or warranty-claim disclosure', '未公开硬件故障率、MTBF 或保修索赔披露', false],
+    ['No public warranty-claim disclosure. The company claims superior reliability.', '未公开保修索赔信息；可靠性优越。', true],
+    ['The warranty provider claims disclosure is complete.', '保修供应商的披露完整。', true],
+    ['Positions are qualitative judgments derived from claim evidence, not statistical probabilities.', '位置是基于已列证据作出的定性判断，并非统计概率。', false],
+    ['Positions are qualitative judgments derived from claim evidence, not statistical probabilities.', '位置是基于已列证据作出的定性判断，是统计概率。', true],
+    ['Positions are qualitative judgments derived from claim evidence, not statistical probabilities.', '位置是基于已列证据作出的定性判断，并非不是统计概率。', true],
+    ['Positions are qualitative judgments derived from claim evidence, not statistical probabilities. The company claims superior accuracy.', '位置是基于已列证据作出的定性判断，并非统计概率；准确率更高。', true],
+    ['This table captures only controls visible in retained public materials; absence claims refer to missing public evidence, not to proof that private controls do not exist.', '本表只收录留存公开材料中可见的控制；“缺失”指缺少公开证据，不等于证明私有控制不存在。', false],
+    ['This table captures only controls visible in retained public materials; absence claims refer to missing public evidence, not to proof that private controls do not exist.', '本表只收录留存公开材料中可见的控制；“缺失”指缺少公开证据，证明私有控制不存在。', true],
+    ['This table captures only controls visible in retained public materials; absence claims refer to missing public evidence, not to proof that private controls do not exist.', '本表只收录留存公开材料中可见的控制；“缺失”指缺少公开证据，不等于证明私有控制存在。', true],
+    ['Absence claims refer to missing public evidence, not to proof that private controls do not exist. The company claims superior controls.', '“缺失”指缺少公开证据，不等于证明私有控制不存在；控制优越。', true],
+  ].flatMap(([en, zh, expected]) => ['prose', 'table', 'figure'].map(surface => {
+    const wrap = value => surface === 'prose' ? fullReport(value)
+      : surface === 'table' ? { ...fullReport(''), tables: [{ rows: [[value]] }] }
+        : { ...fullReport(''), figures: [{ approximationNotes: value }] };
+    const source = `${en.replace(/\.$/u, '')}. This is an observation from the retained diligence review.`;
+    const target = `${zh.replace(/。$/u, '')}。这是留存尽调报告中的观察。`;
+    return [
+      checkPairQuality(wrap(source), wrap(target), { strictEditor: true }).some(issue => issue.code === 'hedge-preservation') === expected,
+      `retained evidence, scope and nominal claims (${surface}): ${en} / ${zh}`,
+    ];
+  })),
+  ...[
+    ...[
       ['Jan', 1], ['Feb', 2], ['Mar', 3], ['Apr', 4], ['Jun', 6], ['Jul', 7],
       ['Aug', 8], ['Sep', 9], ['Sept', 9], ['Oct', 10], ['Nov', 11], ['Dec', 12],
     ].flatMap(([month, number]) => [
@@ -2668,6 +2726,15 @@ try {
       { title: 'Additional context', rows: [['Existing label', 'Existing detail'], ['New label', 'New detail']] },
       { title: 'Placeholder controls', rows: [['', '', null, '$10M', '—']] },
     ],
+    figures: [{
+      type: 'pyramid',
+      data: { nodes: [
+        { id: 'N001', label: 'TAM', value: 0, displayValue: '', score: 13, unit: '%',
+          notes: 'Limited sample; not independently audited.', claimRefs: ['C001'] },
+        { label: 'SAM', notes: { id: 'protected-note-id', description: 'Protected nested content' } },
+        { label: 'SOM', notes: ['Protected nested array'] },
+      ] },
+    }],
   };
   const repairTranslation = {
     ...fullReport('原有说明'),
@@ -2678,6 +2745,7 @@ try {
       { title: '补充背景', rows: [['原有项目', '原有说明']] },
       { title: '占位符对照', rows: [['—', '未经支持的旧断言', '—', '—', '未经支持的旧断言']] },
     ],
+    figures: structuredClone(repairSource.figures),
   };
   const repairSummary = { artifact: 'summary-card', summary: { headline: 'Existing conclusion' } };
   const repairSummaryZh = { artifact: 'summary-card', summary: { headline: '原有结论' } };
@@ -2701,6 +2769,8 @@ try {
   assert.equal(seeded.tables[0].rows[1][1], null, 'new mechanical source must not inherit stale translated prose');
   assert.equal(seeded.tables[0].rows.length, 2, 'removed source rows must not enter the cache');
   assert.deepEqual(seeded.tables[1].rows[1], ['New label', 'New detail'], 'new source rows must remain editable');
+  assert.equal(seeded.figures[0].data.nodes[0].notes, repairSource.figures[0].data.nodes[0].notes,
+    'newly whitelisted node notes must enter the editable sparse bundle');
   assert.equal(yaml.load(readFileSync(join(repairCache, 'summary-card.translate.yaml'), 'utf8')).summary.headline, '原有结论');
   for (const [file, doc] of Object.entries(repairInputs)) assert.equal(readFileSync(join(repairDir, file), 'utf8'), JSON.stringify(doc));
   runRepair('lint-parts');
@@ -2711,6 +2781,7 @@ try {
   part.coverageNotes = '修正后补充的背景';
   part.tables[0].rows[0][1] = '当前入场价口径约 27.1x';
   part.tables[1].rows[1] = ['新增项目', '新增说明'];
+  part.figures[0].data.nodes[0].notes = '样本有限，未经独立审计。';
   writeFileSync(partPath, yaml.dump(part));
   runRepair('lint-parts');
   runRepair('finalize-full', '--keep-cache');
@@ -2722,6 +2793,10 @@ try {
   assert.deepEqual(repaired.tables[2].rows[0], ['—', '', null, '$10M', '—'],
     'only existing dash placeholders for blank strings may survive; stale prose, nulls and quantities follow English');
   assert.equal(repaired.slug, '', 'non-translatable blanks must remain exactly English');
+  const expectedFigures = structuredClone(repairSource.figures);
+  expectedFigures[0].data.nodes[0].notes = '样本有限，未经独立审计。';
+  assert.deepEqual(repaired.figures, expectedFigures,
+    'node-note translation must preserve values, explicit blanks, units, refs and structured sidecars');
   assert.equal(readFileSync(join(repairDir, 'full-report.yaml'), 'utf8'), JSON.stringify(repairSource));
 
   const batchSource = fullReport('Approximately $10M revenue in 2025 is not yet audited by an independent auditor.');
