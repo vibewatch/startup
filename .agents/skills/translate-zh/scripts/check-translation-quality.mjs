@@ -491,7 +491,7 @@ function normalizedDollarMetrics(value) {
     : null;
 }
 
-function normalizedCountMetrics(value, { normalizeMonths = false, allowUnconverted = false, normalizeGroupedCounts = false } = {}) {
+function normalizedCountMetrics(value, { normalizeMonths = false, allowUnconverted = false, normalizeGroupedCounts = false, convertCounts = true } = {}) {
   const dated = normalizedDatedCounts(value);
   value = dated.text;
   const monthAnchors = new Set();
@@ -518,7 +518,7 @@ function normalizedCountMetrics(value, { normalizeMonths = false, allowUnconvert
   const normalized = normalizeQuantityWords(normalizeCalendarSpacing(normalizeWrittenPercentages(calendar)));
   let converted = 0;
   let unsupported = false;
-  const expanded = normalized.replace(
+  const expanded = convertCounts ? normalized.replace(
     /(?<![\w.,])(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)(?:\s*(?:多|余)?\s*(万亿|百万|亿|万|千)(?![十百千万亿兆])|([KMBT])(?![a-z])|(?<=\d,\d{3})(?![\w.,]))/giu,
     (match, number, chineseUnit, englishUnit, offset, text) => {
       const before = text.slice(0, offset);
@@ -549,10 +549,59 @@ function normalizedCountMetrics(value, { normalizeMonths = false, allowUnconvert
       converted += 1;
       return `${shiftDecimal(number, (unit ? quantityPowers[unit.toLowerCase()] : 0) - 6)}M `;
     },
-  );
+  ) : normalized;
   return (converted || allowUnconverted) && !unsupported
     ? [...normalizedMetricTokens(expanded, { includePlainNumbers: true }), ...monthAnchors, ...dated.tokens].sort()
     : null;
+}
+
+function equivalentBoundedPercentages(source, target) {
+  if (!/-percent-plus\b|-plus\s+percent\b/iu.test(source)) return null;
+  const normalize = (value, pattern) => {
+    const bounds = [];
+    let unsupported = false;
+    const text = value.replace(pattern, (match, number, offset) => {
+      const before = value.slice(0, offset);
+      const after = value.slice(offset + match.length);
+      // Identifier and URL fragments are not percentage quantities.
+      if (/[\w.,/@#]$/u.test(before)
+          || /^[\w/@]|^\.[\p{L}\p{N}]/u.test(after)) return match;
+      bounds.push(shiftDecimal(number, 0));
+      const clauseBefore = before.split(/[;!?\n，。；！？]|[,.](?!\d)/u).at(-1);
+      const clauseAfter = after.split(/[;!?\n，。；！？]|[,.](?!\d)/u)[0];
+      if (/[\p{Sc}+\-−–—~≈<>≤≥=]\s*$/u.test(before)
+          || /\b[A-Z]{3}\s*$/u.test(before)
+          || /^\s*(?:[\p{Sc}+\-−–—~≈<>≤≥=%/\d]|以上|以下|左右|上下|多|余)/u.test(after)
+          || /\d[\d.,]*\s*(?:to|through|至|到)\s*$/iu.test(before)
+          || /\b(?:not|no|never|cannot|whether|if|unless|assum\w*|could|would|might|may(?!\s+(?:19|20)\d{2}\b)|at most|less than|up to)\b|并非|不是|未|没有|如果|假设|假定|可能|或许|不足|不到|低于|不超过|至多|最多/iu.test(`${clauseBefore} ${clauseAfter}`)) {
+        unsupported = true;
+      }
+      return ';';
+    });
+    return { text, bounds: bounds.sort(), unsupported };
+  };
+  const en = normalize(source, /(\d+(?:\.\d+)?)(?:-percent-plus\b|-plus\s+percent\b)/giu);
+  if (!en.bounds.length) return null;
+  const zh = normalize(target, /(\d+(?:\.\d+)?)(?:-percent-plus\b|-plus\s+percent\b|\s*%\s*\+|\s*\+\s*%)/giu);
+  if (en.unsupported || zh.unsupported || JSON.stringify(en.bounds) !== JSON.stringify(zh.bounds)) return false;
+  const remainder = normalizeQuantityWords(`${en.text}\n${zh.text}`);
+  if (/[-+−–—~≈<>≤≥=]\s*(?:\p{Sc}|[A-Z]{3})?\s*\d|[(（]\s*(?:\p{Sc}|[A-Z]{3})\s*\d|(?:负|\b(?:minus|negative)\s+)\s*(?:\p{Sc}|[A-Z]{3})?\s*\d/iu.test(remainder)) return false;
+  const contextTokens = value => {
+    const normalized = normalizeQuantityWords(value);
+    return [
+      ...(normalized.match(/\p{Sc}/gu) ?? []),
+      ...(normalized.match(new RegExp(currencyAliasContext.source, 'giu')) ?? []),
+      ...(normalized.match(/\b[A-Z]{3}(?=\s*\d)/gu) ?? []),
+      ...[...normalized.matchAll(/\d[\d.,]*(?:\s*[KMBT])?\s*([A-Z]{3})\b/gu)].map(([, code]) => code),
+      ...[...normalized.matchAll(/(\d+(?:[.,]\d+)*(?:\s*[KMBT%])?)\s*(?:-plus\b|\+)/giu)]
+        .map(([, amount]) => `plus:${amount.replace(/[,\s]/gu, '').toLowerCase()}`),
+    ].sort();
+  };
+  if (JSON.stringify(contextTokens(en.text)) !== JSON.stringify(contextTokens(zh.text))) return false;
+  const options = { normalizeMonths: true, allowUnconverted: true, convertCounts: false };
+  const sourceTokens = normalizedCountMetrics(en.text, options);
+  const targetTokens = normalizedCountMetrics(zh.text, options);
+  return Boolean(sourceTokens && targetTokens && JSON.stringify(sourceTokens) === JSON.stringify(targetTokens));
 }
 
 function equivalentHalfShareMetrics(source, target) {
@@ -785,7 +834,15 @@ function walk(en, zh, path, whitelist, issues, options) {
     if (JSON.stringify(sourceMetrics) !== JSON.stringify(targetMetrics)) {
       targetMetrics = normalizedMetricTokens(normalizeWrittenPercentages(numericTarget));
     }
-    if (JSON.stringify(sourceMetrics) !== JSON.stringify(targetMetrics)) {
+    const boundedPercentages = equivalentBoundedPercentages(metricSource, numericTarget);
+    if (boundedPercentages === false) {
+      pushIssue(issues, {
+        path: path.join('/'),
+        kind: 'semantic',
+        code: 'metric-preservation',
+        message: 'bounded percentage values, + bounds or numeric context differ or are unsupported',
+      });
+    } else if (boundedPercentages !== true && JSON.stringify(sourceMetrics) !== JSON.stringify(targetMetrics)) {
       const equivalentCounts = [false, true].some((normalizeGroupedCounts) => [false, true].some((normalizeMonths) => {
         const sourceCounts = normalizedCountMetrics(metricSource, { normalizeMonths, normalizeGroupedCounts });
         const targetCounts = normalizedCountMetrics(numericTarget, { normalizeMonths, normalizeGroupedCounts });

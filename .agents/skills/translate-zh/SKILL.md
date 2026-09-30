@@ -256,7 +256,18 @@ this fallback. Preserve approximation and attribution separately, and review
 which categories the split describes; equal numeric shares do not prove a
 revenue mix or its underlying economics.
 `percent` and `per cent` match `%`, including both range
-endpoints. Common written percentages such as `百分之十三` and `超过八成`
+endpoints. The source forms `60-percent-plus` and `60-plus percent` can match
+`60%+` or `60+%` through a separate bounded comparison. It retains the exact percentage
+value, each `+` bound and repeated occurrences, and compares the remaining
+numeric tokens and paired month/year anchors. Missing units or bounds cannot
+be cleared by another scalar fallback, even when ordinary metric tokens agree.
+Identifier/URL fragments are not percentage quantities. Signed, currency-marked,
+shared-range, negated or conditional percentage expressions remain outside this
+alias; so do signed/accounting amounts, changed currency markers and unsupported
+bound conversions elsewhere in the leaf. It does not convert other scalar counts
+between English and Chinese magnitude units. This is not a general comparison of
+verbal bounds or a verification of the metric's population or proposition.
+Common written percentages such as `百分之十三` and `超过八成`
 can resolve a mismatched numeric anchor only when the full metric-token sets
 then agree; this does not validate all verbal ratios. `26-fold` and `26 倍`
 retain the same multiplier. A bare
