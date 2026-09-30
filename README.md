@@ -182,6 +182,22 @@ Both `--all` validators and the website loader are digest-keyed, so unchanged re
 
 In CI, [`validate-main.yml`](.github/workflows/validate-main.yml) runs full validation, builds the site, and deploys that same validated artifact to GitHub Pages. The retired `deploy.yml` workflow is no longer used.
 
+Model-driven publishers snapshot their checkout before generation and copy the
+committed publication-scope guard into the runner's temporary directory. Before
+approval, the guard rejects uncommitted code changes, unexpected staging,
+untracked files outside the output scope, and model-created commits rather than
+grading with unpublished scripts. Translation permits only the selected Chinese
+outputs; research permits report files, including legitimate refresh lineage
+updates. Ignored working caches remain available.
+
+Successful rebases rerun publication checks when the approved commit changes.
+Translations also retain hashes of both selected English inputs: changed source
+prose blocks publication even when its numbers remain identical. Changed
+dependency manifests trigger a clean install before revalidation. Report agents
+run their assigned per-report checks; the workflows own repository-wide checks
+and builds. This publication-integrity boundary is not an operating-system
+sandbox or an independent factual audit.
+
 From `website/`:
 
 ```bash

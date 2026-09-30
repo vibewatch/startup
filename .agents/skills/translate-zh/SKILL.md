@@ -24,6 +24,17 @@ required `.translate-cache/<runId>/` intermediates. Do not edit a
 `*.zh.yaml` file directly — the applier writes it from the imported
 sparse bundle.
 
+Validation code, schemas, policies, dependency manifests and skill instructions
+are read-only during a translation run. A demonstrated checker false positive
+belongs in a separate repository-maintenance change with regression coverage,
+not an unpublished worker patch. Report the blocker rather than inventing
+attribution or weakening a gate.
+
+In automated publication, run only the assigned per-report runner checks.
+Repository-wide validation, builds and dependency installation belong to the
+workflow. Its pre-worker snapshot restricts changes to the selected Chinese
+outputs and binds approval to the complete English source bytes.
+
 ## Start here
 
 The parent agent must use the orchestration runner. Do not reassemble the

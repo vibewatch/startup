@@ -2636,6 +2636,7 @@ if (failures.length) {
 }
 
 const fixtureRoot = mkdtempSync(join(tmpdir(), 'translation-quality-audit-'));
+const approvalRoot = mkdtempSync(join(tmpdir(), 'translation-publication-approval-'));
 try {
   const reportDir = join(fixtureRoot, 'reports', 'audit-fixture');
   mkdirSync(reportDir, { recursive: true });
@@ -2689,7 +2690,8 @@ try {
   assert.ok(verificationIndex >= 0 && publicationIndex > verificationIndex);
   const verificationStep = workflowSteps[verificationIndex];
   assert.equal(verificationStep['continue-on-error'], undefined);
-  for (const runId of ['publication-clean', 'publication-candidate']) {
+  const publicationIds = ['20990101000000-publication-clean', '20990101000001-publication-candidate'];
+  for (const runId of publicationIds) {
     const folder = join(fixtureRoot, 'reports', runId);
     mkdirSync(folder);
     for (const artifact of ['summary-card', 'full-report']) {
@@ -2699,17 +2701,37 @@ try {
       writeFileSync(join(folder, `${artifact}.zh.yaml`), JSON.stringify(document(clean.subtitle)));
     }
   }
+  const guardDirectory = join(fixtureRoot, '.agents/skills/startup-research/scripts');
+  mkdirSync(guardDirectory, { recursive: true });
+  cpSync(new URL('../../startup-research/scripts/check-publication-scope.mjs', import.meta.url),
+    join(guardDirectory, 'check-publication-scope.mjs'));
+  writeFileSync(join(fixtureRoot, '.gitignore'), 'node_modules\n');
+  for (const args of [
+    ['init', '--quiet', '--initial-branch=main'], ['config', 'user.name', 'Translation Fixture'],
+    ['config', 'user.email', 'translation@example.invalid'], ['config', 'commit.gpgsign', 'false'],
+    ['config', 'core.hooksPath', '/dev/null'], ['add', '.'], ['commit', '--quiet', '-m', 'Publication fixture baseline'],
+  ]) {
+    const child = spawnSync('git', args, { cwd: fixtureRoot, encoding: 'utf8' });
+    assert.equal(child.status, 0, child.stderr);
+  }
+  const publicationEnv = { ...process.env, REPORT_IDS: publicationIds.join('\n'), RUNNER_TEMP: approvalRoot };
+  const snapshotStep = workflowSteps.find(step => step.name === 'Snapshot publication approval inputs');
+  assert.ok(snapshotStep);
+  const snapshot = spawnSync('bash', ['-c', snapshotStep.run], {
+    cwd: fixtureRoot, encoding: 'utf8', env: publicationEnv,
+  });
+  assert.equal(snapshot.status, 0, snapshot.stderr);
   for (const artifact of ['summary-card', 'full-report']) {
     const document = (text) => artifact === 'full-report'
       ? fullReport(text) : { artifact, summary: { headline: text } };
-    const target = join(fixtureRoot, 'reports/publication-candidate', `${artifact}.zh.yaml`);
+    const target = join(fixtureRoot, 'reports', publicationIds[1], `${artifact}.zh.yaml`);
     for (const [candidate, expectedStatus] of [[changedMetric, 1], [strictTranslationese, 1], [clean, 0]]) {
       assert.equal(checkPairQuality(document(source.subtitle), document(candidate.subtitle))
         .filter((issue) => issue.severity === 'error').length, 0, 'fixture must pass the weaker draft gate');
       writeFileSync(target, JSON.stringify(document(candidate.subtitle)));
       const child = spawnSync('bash', ['-c', verificationStep.run], {
         cwd: fixtureRoot, encoding: 'utf8',
-        env: { ...process.env, REPORT_IDS: 'publication-clean\npublication-candidate' },
+        env: publicationEnv,
       });
       assert.equal(child.status, expectedStatus, `${artifact}: ${child.stdout}\n${child.stderr}`);
       if (expectedStatus !== 0) assert.ok(child.stderr.includes(`publication-candidate/${artifact}.zh.yaml`), child.stderr);
@@ -2957,6 +2979,7 @@ try {
   assert.equal(readFileSync(join(placeholdersDir, 'summary-card.yaml'), 'utf8'), JSON.stringify(placeholderSummary));
 } finally {
   rmSync(fixtureRoot, { recursive: true, force: true });
+  rmSync(approvalRoot, { recursive: true, force: true });
 }
 
 console.log('[check-translation-editor] ✓ source-anchored editor gates verified.');
