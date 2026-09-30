@@ -151,6 +151,24 @@ export function funnelStageTable(data, labels) {
   return table;
 }
 
+export function waterfallValueTable(data, labels) {
+  const table = funnelStageTable(data, labels);
+  const roles = (Array.isArray(data?.items) ? data.items : []).map(item =>
+    ['kind', 'role'].filter(key => typeof item[key] === 'string')
+      .map(key => `${key}: ${item[key]}`).join('\n'));
+  if (!roles.some(Boolean)) return table;
+  return {
+    columns: [table.columns[0], labels.roleLabel, ...table.columns.slice(1)],
+    rows: table.rows.map((row, index) => ({
+      ...row,
+      values: [{
+        ...row.values[0],
+        detail: [...new Set([row.values[0].detail, roles[index]].filter(Boolean))].join('\n'),
+      }, roles[index] || null, ...row.values.slice(1)],
+    })),
+  };
+}
+
 export function flowTopology(data) {
   const nodes = Array.isArray(data?.nodes) ? data.nodes : [];
   const edges = Array.isArray(data?.edges) ? data.edges : [];
