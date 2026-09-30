@@ -503,6 +503,34 @@ const checks = [
     `warranty-frequency requests and scoped segment disclosures retain their meanings (${surface}, strict=${strictEditor}): ${en} / ${zh}`,
   ]))),
   ...[
+    ['No single public issue is a clear thesis-breaker today, but privacy consent controls and claims-reduction proof must be verified before underwriting aggressive growth. The report treats unsupported private metrics as diligence asks, not as assumed strengths.',
+      '当前尚无单一公开问题足以彻底推翻投资逻辑，但在将激进增长计入投资判断前，必须先核查隐私知情同意管控与理赔压降证据。本报告将缺乏支撑的未公开指标视为尽调问询项，而非预设为既有优势。', false],
+    ['Claims-reduction proof must be verified.', '必须核查理赔减少的证据。', false],
+    ['Reduced claims, safer driving, and better operations feed renewal', '理赔减少、驾驶更安全、运营更好，反过来推动续约', false],
+    ['The company claims reductions exceed 25%.', '减少幅度超过 25%。', true],
+    ['The company claims reduced costs.', '成本有所降低。', true],
+    ['The company claims a reduction in claims.', '理赔有所减少。', true],
+    ['Claims-reduction proof is required; the company claims every fleet benefits.', '需要理赔减少的证据；所有车队均能受益。', true],
+    ['Claims-reduction proof is required; the company claims every fleet benefits.', '需要理赔减少的证据；公司声称所有车队均能受益。', false],
+    ['Reduced claims, safer driving, and better operations feed renewal; the company claims it guarantees renewal.', '理赔减少、驾驶更安全、运营更好，推动续约；续约有保证。', true],
+    ['Reduced claims, safer driving, and better operations feed renewal; the company claims it guarantees renewal.', '理赔减少、驾驶更安全、运营更好，推动续约；公司声称续约有保证。', false],
+    ['The company claims reduced claims, safer driving, and better operations feed renewal.', '理赔减少、驾驶更安全、运营更好，推动续约。', true],
+    ['The company claims reduced claims, safer driving, and better operations feed renewal.', '公司声称，理赔减少、驾驶更安全、运营更好，推动续约。', false],
+    ['Reduced claims its customer outcomes are proven.', 'Reduced 的客户成效已经得到验证。', true],
+  ].flatMap(([en, zh, expected]) => [false, true].flatMap(strictEditor => ['callout', 'table', 'figure'].map(surface => {
+    const document = text => ({
+      ...fullReport(''),
+      ...(surface === 'callout' ? { chapters: [{ sections: [{ blocks: [{ type: 'callout', body: text }] }] }] }
+        : surface === 'table' ? { tables: [{ rows: [[text]] }] }
+          : { figures: [{ type: 'flow', data: { nodes: [{ id: 'n1', detail: text }] } }] }),
+    });
+    return [
+      checkPairQuality(document(`${en} This is a source-reviewed diligence observation.`), document(zh), { strictEditor })
+        .some(issue => issue.code === 'hedge-preservation') === expected,
+      `claims-reduction nouns must not erase assertion verbs (${surface}, strict=${strictEditor}): ${en} / ${zh}`,
+    ];
+  }))),
+  ...[
     ['Dismissed with prejudice.', '有偏见驳回。', true],
     ['Voluntary dismissal with prejudice.', '自愿带偏见撤诉。', true],
     ['The case was dismissed with prejudice by stipulated order.', '案件依双方约定有偏见地驳回。', true],

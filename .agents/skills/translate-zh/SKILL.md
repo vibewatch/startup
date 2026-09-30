@@ -422,6 +422,10 @@ about warranty coverage or product performance still requires attribution.
 Requests for `claims frequency` and hyphenated `warranty-claim rate` or history
 likewise describe claim activity, not company assertions. Check the metric
 separately: claim frequency is not a payout ratio.
+`claims-reduction proof` and the outcome-list phrase `reduced claims, safer driving`
+refer to claim activity, not a company assertion. Keep the proof requirement and
+the complete outcome proposition; a separate `the company claims`, including
+`claims reduced costs` or `claims a reduction`, still requires attribution.
 Likewise, `gross profit` is a monetary amount (`毛利` or `毛利润`), not
 `gross margin` (`毛利率`). The strict editor rejects demonstrated amount-to-rate
 substitutions, including short figure labels. Leaves that also name a margin or
