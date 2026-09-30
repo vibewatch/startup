@@ -783,6 +783,12 @@ test('quadrant rendering removes fabricated rankings and plots exact positions w
   assert.match(print, /:global\(\.chart-quadrant > svg\)/);
 });
 
+test('print hides active chart tooltips outside the report shell', () => {
+  const source = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
+  const print = source.slice(source.indexOf('@media print'));
+  assert.match(print, /:global\(\.d3-chart-tooltip\),[^{}]*\{\s*display:\s*none\s*!important;/);
+});
+
 test('DAG topology and supplements preserve label-only Chinese endpoints, risk notes and edge qualifications', () => {
   const figure = { type: 'dag', data: {
     nodes: [{ label: 'First', risk: 'Not guaranteed' }, { label: 'Second', description: 'Limited scope' }],
