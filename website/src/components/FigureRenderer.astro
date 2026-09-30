@@ -17,6 +17,13 @@ const { figure, claims = [], sources = [], locale = 'en' } = Astro.props;
 const authoredType = figure?.type ?? 'flow';
 const data = figure?.data ?? {};
 const flow = authoredType === 'flow' ? figure._flowTopology ?? flowTopology(data) : null;
+const dagTopology = authoredType === 'dag' ? figure._flowTopology ?? flowTopology(data) : null;
+const dagDetails = dagTopology ? flowRelationshipTable(data, dagTopology, {
+  nodeLabel: t('reportFigureNode', locale), connectionLabel: t('reportFigureConnection', locale),
+  sourceLabel: t('reportFigureNodeOrFrom', locale), targetLabel: t('reportFigureTo', locale),
+  contextLabel: t('reportFigureContext', locale),
+}) : null;
+const dagItems = dagDetails ? [...asArray(data.nodes), ...asArray(data.edges)] : [];
 const relationshipTable = flow && !flow.sequence;
 const sequenceDetails = flow?.sequence ? flowRelationshipTable(data, flow, {
   nodeLabel: t('reportFigureNode', locale), connectionLabel: t('reportFigureConnection', locale),
@@ -93,6 +100,7 @@ const chartPayload = usesD3Chart ? {
   ...(authoredType === 'stack' ? { stackLabels } : {}),
   ...(authoredType === 'range' ? { rangeLabels } : {}),
   ...(authoredType === 'dag' ? { dagLabels } : {}),
+  ...(dagTopology ? { dagTopology } : {}),
 } : null;
 const chartPayloadJson = chartPayload
   ? JSON.stringify(chartPayload).replace(/[<>&\u2028\u2029]/g, (char) => ({ '<': '\\u003c', '>': '\\u003e', '&': '\\u0026', '\u2028': '\\u2028', '\u2029': '\\u2029' }[char] ?? char))
@@ -106,6 +114,7 @@ const chartPayloadJson = chartPayload
 
   {relationshipTable && <p class="figure-note flow-relationship-notice" role="note">{t('reportFlowRelationshipNotice', locale)}</p>}
   {flow?.unresolved && <p class="figure-note flow-endpoint-notice" role="note">{t('reportFlowEndpointNotice', locale)}</p>}
+  {dagTopology?.unresolved && <p class="figure-note dag-endpoint-notice" role="note">{t('reportFlowEndpointNotice', locale)}</p>}
   {funnel && <p class="figure-note funnel-comparison-notice" role="note">{t('reportFunnelComparisonNotice', locale)}</p>}
   {waterfall && <p class="figure-note waterfall-comparison-notice" role="note">{t('reportWaterfallNotice', locale)}</p>}
   {authoredType === 'pyramid' && <p class="figure-note pyramid-layout-notice" role="note">{t('reportPyramidLayoutNotice', locale)}</p>}
@@ -168,6 +177,20 @@ const chartPayloadJson = chartPayload
     </div>
   )}
 
+  {dagDetails && (
+    <div class="dag-details">
+      <DataTable title={t('reportFlowDetails', locale)}
+        columns={[`${t('reportFigureNode', locale)} / ${t('reportFigureConnection', locale)}`, ...dagDetails.columns]}>
+        {dagDetails.rows.map((row, index) => (
+          <tr>
+            <td>{row.label}<ClaimRefs refs={claimRefs(dagItems[index])} claims={claims} sources={sources} /></td>
+            {row.values.map((value) => <td>{value && typeof value === 'object' ? value.label : value}</td>)}
+          </tr>
+        ))}
+      </DataTable>
+    </div>
+  )}
+
   {type === 'other' && (
     <div class="figure-fallback" role="note">
       <strong>{t('reportFigureGenericTitle', locale)}</strong>
@@ -192,7 +215,7 @@ const chartPayloadJson = chartPayload
 
 <script>
   import * as d3 from 'd3';
-  import { figureDetail, figureItemNotes, figureValueNotes, flowTopology, formatRangeValue, matrixCellText, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails } from '../lib/figures.mjs';
+  import { figureDetail, figureItemNotes, figureValueNotes, flowTopology, formatRangeValue, graphItemNotes, matrixCellText, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails } from '../lib/figures.mjs';
 
   const palette = {
     claret: '#990f3d',
@@ -428,8 +451,11 @@ const chartPayloadJson = chartPayload
     }));
 
   const renderDag = (element, payload) => {
-    const nodes = arr(payload.data.nodes).map((node, index) => ({ ...node, _key: node.id ?? node.label ?? String(index + 1), _index: index }));
-    const edges = arr(payload.data.edges).map((edge, index) => ({ ...edge, _edgeIndex: index, from: edge.from ?? edge.source, to: edge.to ?? edge.target }));
+    const nodes = arr(payload.data.nodes).map((node, index) => ({ ...node, notes: graphItemNotes(node), _key: index, _index: index }));
+    const edges = arr(payload.data.edges).map((edge, index) => ({
+      ...edge, notes: graphItemNotes(edge), _edgeIndex: index,
+      from: payload.dagTopology.endpoints[index].fromIndex, to: payload.dagTopology.endpoints[index].toIndex,
+    }));
     if (!nodes.length) return;
     const byKey = new Map(nodes.map((node) => [node._key, node]));
     const incoming = d3.group(edges, (edge) => edge.to);
@@ -1152,8 +1178,10 @@ const chartPayloadJson = chartPayload
       .attr('fill', 'none')
       .attr('stroke', 'transparent')
       .attr('stroke-width', 16);
-    hitEdges.each(function(edge) { addTitle(d3.select(this), `${edge.source.label} → ${edge.target.label}${edge.label ? ` — ${edge.label}` : ''}`); });
-    withTooltip(hitEdges, (edge) => tooltipHtml(`${edge.source.label} → ${edge.target.label}`, [edge.label ? `${payload.dagLabels.dependency} ${edge.label}` : null, edge.source.detail, edge.target.detail]));
+    const edgeNotes = (edge) => [edge.label ? `${payload.dagLabels.dependency} ${edge.label}` : null,
+      edge.relationship, ...edge.notes, ...edge.source.notes, ...edge.target.notes].filter(Boolean);
+    hitEdges.each(function(edge) { addTitle(d3.select(this), [`${edge.source.label} → ${edge.target.label}`, ...edgeNotes(edge)].join(' — ')); });
+    withTooltip(hitEdges, (edge) => tooltipHtml(`${edge.source.label} → ${edge.target.label}`, edgeNotes(edge)));
     const cards = svg.append('g').selectAll('g.dependency-card').data(positions).join('g')
       .attr('class', 'dependency-card')
       .attr('transform', (node) => `translate(${node.x},${node.y})`);
@@ -1204,8 +1232,8 @@ const chartPayloadJson = chartPayload
         lineHeight: nodeLabelLineHeight,
       });
     });
-    cards.each(function(node) { addTitle(d3.select(this), `${node.label}${node.detail ? ` — ${node.detail}` : ''}`); });
-    withTooltip(cards, (node) => tooltipHtml(node.label, [node.detail, payload.dagLabels[node._role]]));
+    cards.each(function(node) { addTitle(d3.select(this), [node.label, ...node.notes].join(' — ')); });
+    withTooltip(cards, (node) => tooltipHtml(node.label, [...node.notes, payload.dagLabels[node._role]]));
   };
 
   const renderFlow = (element, payload) => {
@@ -2175,6 +2203,7 @@ const chartPayloadJson = chartPayload
   .figure-item-notes dd { margin: 0.2em 0 0; white-space: pre-line; overflow-wrap: anywhere; }
   .stack-layer-notes ul { margin: 0.2em 0; padding-left: 1.2em; }
   .flow-sequence-details :global(td) { white-space: pre-line; }
+  .dag-details :global(td) { white-space: pre-line; }
   .timeline-event-evidence > .timeline-event-reference,
   .pyramid-layer-evidence > .pyramid-layer-reference,
   .waterfall-value-evidence > .waterfall-value-reference { display: block; margin: var(--space-2) 0; }
