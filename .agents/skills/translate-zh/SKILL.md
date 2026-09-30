@@ -990,6 +990,10 @@ duplicating identical text; mixed-unit bar cards follow the same rule.
 Range-chart colors must agree across locales. The renderer resolves legacy
 English label hints before translation and gives explicit `tone` values priority;
 translated display labels must not change those colors.
+Renderer-owned range descriptors also follow the report locale: Chinese uses
+`低值 / 中间值 / 高值` in tooltips and `中间值` on the page and in print.
+These labels do not imply a statistical median, confidence interval or forecast;
+do not edit report values or protected fields to translate generated UI text.
 Range rows must also retain every distinct detail, note, context and unit on the
 page, in print and in hover/tap tooltips. Check the authored low, center and high
 values without inferring comparability or forecast confidence from the display.

@@ -15,6 +15,7 @@ import { reportsDir } from './utils.mjs';
 import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, matrixCellText, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
 import { isTranslatableLeaf, TRANSLATE_PATHS } from '../../translate-zh/scripts/whitelist.mjs';
 import { asArray, asRecord, claimRefs } from '../../../../website/src/lib/report-types.ts';
+import { t } from '../../../../website/src/lib/i18n.ts';
 
 test('table evidence references wrap instead of hiding later links and scrolling the whole table', () => {
   const table = readFileSync('website/src/components/DataTable.astro', 'utf8');
@@ -167,6 +168,21 @@ test('range renderer uses identical authored values in visible labels and pointe
     assert.match(range, new RegExp(`text\\([^\\n]*labels\\.${field}`));
     assert.match(range, new RegExp(`\\$\\{d\\.labels\\.${field}\\}`));
   }
+});
+
+test('range descriptors follow the report locale on screen and in pointer tooltips', () => {
+  const keys = ['reportRangeLow', 'reportRangeMid', 'reportRangeHigh', 'reportRangeMidInline'];
+  assert.deepEqual(keys.map(key => t(key, 'en')), ['Low:', 'Mid:', 'High:', 'mid']);
+  assert.deepEqual(keys.map(key => t(key, 'zh')), ['低值：', '中间值：', '高值：', '中间值']);
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  for (const key of keys) assert.ok(source.includes(`t('${key}', locale)`), key);
+  assert.match(source, /authoredType === 'range' \? \{ rangeLabels \} : \{\}/);
+  const range = source.slice(source.indexOf('const renderRange ='), source.indexOf('const renderQuadrant ='));
+  assert.match(range, /text\(`\$\{payload\.rangeLabels\.midInline\} \$\{labels\.mid\}`\)/);
+  for (const field of ['low', 'mid', 'high']) {
+    assert.match(range, new RegExp(`\\$\\{payload\\.rangeLabels\\.${field}\\} \\$\\{d\\.labels\\.${field}\\}`));
+  }
+  assert.doesNotMatch(range, /`(?:mid |Low:|Mid:|High:)/);
 });
 
 test('refresh acceptance checks both reports and existing overlays without rewriting history', () => {
