@@ -800,6 +800,17 @@ test('range print typography stays readable and paginates between complete rows 
   assert.match(print, /:global\(\.chart-range \.range-axis-tick:not\(:first-child\):not\(:last-child\)\)\s*\{\s*display:\s*none\s*!important;/);
 });
 
+test('range rows reserve numeric track width and wrap full summaries without clipping', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  assert.match(source, /:global\(\.chart-range \.range-row\)\s*\{[^}]*grid-template-columns:\s*minmax\(7rem, 14rem\) minmax\(min-content, 1fr\) fit-content\(14rem\)/);
+  const summary = source.match(/:global\(\.chart-range \.range-row-summary\)\s*\{([^}]+)\}/)?.[1];
+  assert.ok(summary);
+  assert.match(summary, /min-width:\s*6rem/);
+  assert.match(summary, /white-space:\s*normal/);
+  assert.match(summary, /overflow-wrap:\s*anywhere/);
+  assert.doesNotMatch(summary, /text-overflow|line-clamp|overflow:\s*hidden/);
+});
+
 test('DAG topology and supplements preserve label-only Chinese endpoints, risk notes and edge qualifications', () => {
   const figure = { type: 'dag', data: {
     nodes: [{ label: 'First', risk: 'Not guaranteed' }, { label: 'Second', description: 'Limited scope' }],

@@ -1053,6 +1053,11 @@ and dense figures. Print axes show only their domain endpoints to prevent
 page-width tick crowding. Keep a figure together when it fits; longer figures
 may break between complete rows, not through a row. Preserve screen layout,
 authored values, colors and hover/tap behavior.
+On screen, long range summaries must wrap without collapsing the numeric track.
+Check actual text bounds inside the track and summary, including widths near the
+stacked-layout breakpoint; non-overlapping labels alone do not prove containment.
+Keep full numeric strings and qualifications rather than clipping or shortening
+them, and verify that short summaries and printed rows retain their layout.
 Funnel figures display ordered stage-value tables without deriving conversion
 rates or shared population, unit or time assumptions. Preserve explicitly
 authored rates and qualifications. Verify stage labels, raw values, units,
