@@ -12,7 +12,7 @@ import { KNOWN_DIMENSIONS, WARNING_DIMENSIONS } from './validation-catalog.mjs';
 import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
 import { checkRefreshReadback, refreshArtifactsAreInSync } from './refresh-readback.mjs';
 import { reportsDir } from './utils.mjs';
-import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, graphItemNotes, matrixCellText, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails, waterfallValueTable, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
+import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, graphItemNotes, matrixCellText, quadrantAxes, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails, waterfallValueTable, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
 import { isTranslatableLeaf, TRANSLATE_PATHS } from '../../translate-zh/scripts/whitelist.mjs';
 import { asArray, asRecord, claimRefs } from '../../../../website/src/lib/report-types.ts';
 import { t } from '../../../../website/src/lib/i18n.ts';
@@ -719,6 +719,68 @@ test('DAG qualifications preserve distinct aliases, risk prose, values and expli
   assert.deepEqual(graphItemNotes({ displayValue: '', value: 12, detail: 'Scope' }), ['Scope']);
   assert.deepEqual(graphItemNotes({ detail: 'First', description: 'Second', risk: 'First' }), ['First', 'Second']);
   assert.deepEqual(graphItemNotes({ value: false, notes: { text: 'Unsupported nested prose' } }), ['false']);
+});
+
+test('quadrant axes use independent coordinate extents rather than inferred scores or thresholds', () => {
+  for (const points of [
+    [{ x: 0, y: 0 }, { x: 1, y: 1 }],
+    [{ x: 0.0425, y: 100 }, { x: 0.06, y: 1200 }],
+    [{ x: -30, y: -0.4 }, { x: -20, y: 0.25 }],
+    [{ x: 0, y: 7 }, { x: 0, y: 7 }],
+  ]) {
+    const before = structuredClone(points);
+    points.forEach(Object.freeze);
+    const axes = quadrantAxes({ data: { points: Object.freeze(points) } });
+    for (const key of ['x', 'y']) {
+      assert.deepEqual(axes[key].domain, [Math.min(...points.map(point => point[key])), Math.max(...points.map(point => point[key]))]);
+      assert.equal(axes[key].declared, false);
+    }
+    assert.deepEqual(points, before);
+  }
+});
+
+test('quadrant axes honor explicit bounds and retain literal endpoint definitions without inventing labels', () => {
+  const figure = {
+    id: 'FP001', xAxisLabel: 'Legacy X', yAxis: { label: 'Legacy Y' },
+    data: { points: [{ x: 0.25, y: 7 }, { x: 0.75, y: 8 }],
+      xAxis: { label: '', min: 0, max: 1, low: 'Not automated', high: 'Fully automated', description: 'Estimated', scale: 'ordinal' },
+    },
+  };
+  const before = structuredClone(figure);
+  const axes = quadrantAxes(figure);
+  assert.deepEqual(axes.x, {
+    label: '', declared: true, domain: [0, 1],
+    definitions: ['min: 0', 'max: 1', 'low: Not automated', 'high: Fully automated', 'description: Estimated', 'scale: ordinal'],
+  });
+  assert.equal(axes.y.label, 'Legacy Y');
+  assert.deepEqual(axes.y.domain, [7, 8]);
+  assert.deepEqual(figure, before);
+  assert.equal(quadrantAxes({ xLabel: 'Older X', data: { points: [{ x: 1, y: 2 }] } }).x.label, 'Older X');
+});
+
+test('quadrant axes surface invalid coordinates and conflicting authored bounds instead of clamping or substituting zero', () => {
+  for (const points of [[], [{ x: null, y: 2 }], [{ x: '1', y: 2 }], [{ x: Infinity, y: 2 }]]) {
+    assert.throws(() => quadrantAxes({ data: { points } }), /requires finite/);
+  }
+  for (const axis of [{ min: 0 }, { min: '0', max: 10 }, { min: 8, max: 3 }, { min: 3, max: 3 }, { min: 0, max: 1 }]) {
+    assert.throws(() => quadrantAxes({ data: { xAxis: axis, points: [{ x: 2, y: 2 }] } }), /invalid or conflicting x axis bounds/);
+  }
+});
+
+test('quadrant rendering removes fabricated rankings and plots exact positions without force displacement', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const quadrant = source.slice(source.indexOf('const renderQuadrant ='), source.indexOf('const renderHeatmap ='));
+  assert.doesNotMatch(quadrant, /Specialist depth|Leader zone|Watchlist|Scale path|forceSimulation|forceCollide|referenceValue|isTenPointScore|isUnitScore|numberValue\(/);
+  assert.match(quadrant, /x\(point\.x\)/);
+  assert.match(quadrant, /y\(point\.y\)/);
+  assert.match(quadrant, /payload\.quadrantAxes\.x/);
+  assert.match(quadrant, /payload\.quadrantAxes\.y/);
+  assert.equal((quadrant.match(/tickPadding\(18\)/g) ?? []).length, 2);
+  assert.match(source, /class="quadrant-details"/);
+  assert.match(source, /refs=\{claimRefs\(point\)\}/);
+  assert.match(source, /quadrant-axis-definitions/);
+  const print = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
+  assert.match(print, /:global\(\.chart-quadrant > svg\)/);
 });
 
 test('DAG topology and supplements preserve label-only Chinese endpoints, risk notes and edge qualifications', () => {

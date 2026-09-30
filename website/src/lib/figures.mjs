@@ -86,6 +86,34 @@ export function graphItemNotes(item) {
     .map(value => typeof value === 'object' ? JSON.stringify(value) : String(value)))];
 }
 
+export function quadrantAxes(figure) {
+  const data = figure.data ?? {};
+  const points = Array.isArray(data.points) ? data.points : [];
+  return Object.fromEntries(['x', 'y'].map(key => {
+    const raw = data[`${key}Axis`] ?? data[`${key}Label`] ?? data[key]
+      ?? figure[`${key}Axis`] ?? figure[`${key}AxisLabel`] ?? figure[`${key}Label`];
+    const axis = raw && typeof raw === 'object' ? raw : {};
+    const label = typeof raw === 'string' || typeof raw === 'number' ? String(raw)
+      : typeof axis.label === 'string' ? axis.label : key.toUpperCase();
+    const values = points.map(point => point[key]);
+    if (!values.length || values.some(value => !Number.isFinite(value))) {
+      throw new Error(`Quadrant ${figure.id ?? '?'} requires finite ${key} coordinates`);
+    }
+    const declared = axis.min != null || axis.max != null;
+    if (declared && (!Number.isFinite(axis.min) || !Number.isFinite(axis.max)
+      || axis.min >= axis.max || values.some(value => value < axis.min || value > axis.max))) {
+      throw new Error(`Quadrant ${figure.id ?? '?'} has invalid or conflicting ${key} axis bounds`);
+    }
+    return [key, {
+      label, declared,
+      domain: declared ? [axis.min, axis.max] : [Math.min(...values), Math.max(...values)],
+      definitions: ['min', 'max', 'low', 'high', 'lowLabel', 'highLabel', 'description', 'scale']
+        .filter(field => ['string', 'number', 'boolean'].includes(typeof axis[field]))
+        .map(field => `${field}: ${axis[field]}`),
+    }];
+  }));
+}
+
 export function stackLayerDetails(data) {
   const content = (value) => {
     if (value == null) return [];
