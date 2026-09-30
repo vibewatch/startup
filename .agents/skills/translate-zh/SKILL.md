@@ -1034,6 +1034,10 @@ Enable the evidence toggle when checking inline claim links, including the
 company profile. Every declared reference must remain reachable, including references after the eighth; their
 IDs and order do not change with translation. Print hides inline links while
 retaining the evidence index.
+Long table citation rows must wrap within the table width. Check the actual
+bounds of every link, not just DOM visibility: clipped later links can still
+report visible. Following the last reference must not horizontally scroll the
+table or leave its caption and cells shifted after print returns to screen.
 
 - **Translate**: `title`, `subtitle`, `summary`, `description`,
   `caption`, `insight`, `basis`, `notes`, `approximationNotes`, the
