@@ -339,6 +339,23 @@ test('pyramid layers retain their own ordered evidence references beside figure 
   }
 });
 
+test('pyramids print ordered complete layers at body-text size rather than shrinking dense SVGs', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const pyramid = source.slice(source.indexOf('const renderPyramid ='), source.indexOf('const renderJourneyMap ='));
+  assert.match(pyramid, /append\('ol'\)\.attr\('class', 'pyramid-print-layers'\)/);
+  assert.match(pyramid, /printLayers\.selectAll\('li'\)\.data\(layout\)\.join\('li'\)/);
+  assert.match(pyramid, /style\('border-left-color', \(entry\) => colorForTone\(entry\.item\.tone\)\)/);
+  assert.match(pyramid, /printRows\.append\('strong'\)\.text\(\(entry\) => entry\.item\.label\)/);
+  assert.match(pyramid, /printRows\.selectAll\('p'\)\.data\(\(entry\) => entry\.details\)\.join\('p'\)\.text\(\(detail\) => detail\)/);
+  assert.match(source, /:global\(\.pyramid-print-layers\) \{ display: none; \}/);
+  const report = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
+  const print = report.slice(report.indexOf('@media print'));
+  assert.match(print, /:global\(\.native-figure:has\(\.chart-pyramid\)\) \{ break-inside: auto; page-break-inside: auto; \}/);
+  assert.match(print, /:global\(\.chart-pyramid > svg\) \{ position: absolute; visibility: hidden; \}/);
+  assert.match(print, /:global\(\.pyramid-print-layers\) \{ display: block !important;[^}]*font-size: 10pt;/);
+  assert.match(print, /:global\(\.pyramid-print-layers > li\) \{[^}]*break-inside: avoid; page-break-inside: avoid;/);
+});
+
 test('font readiness remeasures existing charts before laying out range axes', () => {
   const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
   const callback = source.match(/document\.fonts\.ready\.then\(([\s\S]*?)\);\n  window\.addEventListener\('beforeprint'/)?.[1];

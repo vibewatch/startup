@@ -948,6 +948,10 @@ Exercise a cold font load too: measurements made with fallback fonts must be
 recomputed once web fonts are ready, even if the chart container never resizes.
 Check the initial settled layout before any resize; a later resize must not be
 required to bring text back inside its layer.
+Print pyramid layers as ordered text at the report's body-text size rather
+than shrinking a dense SVG until its values become illegible. Preserve every
+layer's label, value, qualification and tone hints in order, allow page breaks between
+layers, and inspect actual PDF type size and complete layer text.
 Approximation and evidence notes must remain visible on narrow screens and in
 print; they qualify the chart data rather than serving as optional decoration.
 Multi-series bars render as tables: check every series name and point, including

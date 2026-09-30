@@ -1588,6 +1588,11 @@ const chartPayloadJson = chartPayload
       });
     groups.each(function(entry) { addTitle(d3.select(this), [entry.item.label, ...entry.details].join(' — ')); });
     withTooltip(groups, (entry) => tooltipHtml(entry.item.label, entry.details));
+    const printLayers = d3.select(element).append('ol').attr('class', 'pyramid-print-layers');
+    const printRows = printLayers.selectAll('li').data(layout).join('li')
+      .style('border-left-color', (entry) => colorForTone(entry.item.tone));
+    printRows.append('strong').text((entry) => entry.item.label);
+    printRows.selectAll('p').data((entry) => entry.details).join('p').text((detail) => detail);
   };
 
   const renderJourneyMap = (element, payload) => {
@@ -2251,6 +2256,7 @@ const chartPayloadJson = chartPayload
   .stack-layer-notes ul { margin: 0.2em 0; padding-left: 1.2em; }
   .flow-sequence-details :global(td) { white-space: pre-line; }
   .pyramid-layer-evidence > .pyramid-layer-reference { display: block; margin: var(--space-2) 0; }
+  :global(.pyramid-print-layers) { display: none; }
   .d3-figure { position: relative; width: 100%; min-height: 0; margin: var(--space-3) 0; overflow: visible; }
   .d3-figure[data-render-state='pending'] { min-height: clamp(12rem, 34vh, 20rem); border-radius: var(--radius-card, 0.5rem); background: linear-gradient(110deg, rgba(212,196,184,0.12), rgba(255,250,245,0.52), rgba(212,196,184,0.12)); }
   .d3-figure[data-render-state='pending']::before { content: 'Loading figure…'; position: absolute; inset: 0; display: grid; place-items: center; color: var(--caption-gray); font-family: var(--font-sans); font-size: var(--chart-fs-caption); }
