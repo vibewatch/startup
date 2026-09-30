@@ -4,7 +4,7 @@ import DataTable from './DataTable.astro';
 import { RENDERED_FIGURE_TYPES, barSeries, barSeriesTable, figureItemNotes, figureUnitsDiffer, flowRelationshipTable, flowTopology, funnelStageTable, stackLayerDetails } from '../lib/figures.mjs';
 import { t } from '../lib/i18n';
 import type { Locale } from '../lib/locale';
-import { claimRefs, type Claim, type ReportFigure, type Source } from '../lib/report-types';
+import { asArray, asRecord, claimRefs, type Claim, type ReportFigure, type Source } from '../lib/report-types';
 
 interface Props {
   figure: ReportFigure;
@@ -49,6 +49,13 @@ const stageAnnotations = unitsDiffer ? [] : stages.map((item) => ({
 const chartTypes = new Set(RENDERED_FIGURE_TYPES);
 const usesD3Chart = chartTypes.has(type);
 const stackDetails = authoredType === 'stack' ? stackLayerDetails(data) : [];
+const pyramidEvidence = authoredType === 'pyramid'
+  ? ([data.items, data.nodes].map((items) => asArray(items)).find((items) => items.length) ?? [])
+    .map((item, index) => {
+      const layer = asRecord(item);
+      return { label: String(layer.label ?? layer.name ?? layer.id ?? `Item ${index + 1}`), refs: claimRefs(item) };
+    }).filter((layer) => layer.refs.length)
+  : [];
 const stackLabels: Record<string, string> = {
   overview: t('reportStackOverview', locale),
   items: t('reportStackItems', locale),
@@ -70,6 +77,7 @@ const chartPayloadJson = chartPayload
   {relationshipTable && <p class="figure-note flow-relationship-notice" role="note">{t('reportFlowRelationshipNotice', locale)}</p>}
   {flow?.unresolved && <p class="figure-note flow-endpoint-notice" role="note">{t('reportFlowEndpointNotice', locale)}</p>}
   {funnel && <p class="figure-note funnel-comparison-notice" role="note">{t('reportFunnelComparisonNotice', locale)}</p>}
+  {authoredType === 'pyramid' && <p class="figure-note pyramid-layout-notice" role="note">{t('reportPyramidLayoutNotice', locale)}</p>}
   {multipleBarSeries && <p class="figure-note bar-series-notice" role="note">{t('reportBarSeriesNotice', locale)}</p>}
   {authoredType === 'bar' && series.length === 1 && (series[0].label || series[0].name) && (
     <p class="figure-note bar-series-label">{series[0].label || series[0].name}</p>
@@ -135,6 +143,16 @@ const chartPayloadJson = chartPayload
   )}
 
   {figure.approximationNotes && <p class="figure-note">{figure.approximationNotes}</p>}
+  {pyramidEvidence.length > 0 && (
+    <div class="pyramid-layer-evidence">
+      {pyramidEvidence.map((layer) => (
+        <p class="claim-ref pyramid-layer-reference">
+          <span>{layer.label}</span>
+          <ClaimRefs refs={layer.refs} claims={claims} sources={sources} />
+        </p>
+      ))}
+    </div>
+  )}
   <ClaimRefs refs={claimRefs(figure)} claims={claims} sources={sources} />
   {chartPayloadJson && <script type="application/json" class="figure-chart-data" set:html={chartPayloadJson}></script>}
 </figure>
@@ -1532,15 +1550,18 @@ const chartPayloadJson = chartPayload
     const gapBetweenLayers = 10;
     const labelFont = chartFont.size.large;
     const detailFont = chartFont.small;
+    const widthStep = Math.min(0.1, 0.5 / Math.max(1, items.length - 1));
     const layout = items.map((item, index) => {
-      const w = maxW * (1 - index * 0.1);
+      const w = maxW * (1 - index * widthStep);
       const labelLines = textWrapper.wrap(item.label, { fontSize: labelFont, fontWeight: fontWeight('emphasis'), maxWidth: w - padX * 2 });
-      const detailLines = item.detail ? textWrapper.wrap(item.detail, { fontSize: detailFont, fontWeight: fontWeight('medium'), maxWidth: w - padX * 2 }) : [];
+      const details = [...new Set([fullValueLabel(item), ...figureValueNotes(item)]
+        .map(safeText).filter((text) => text && text !== safeText(item.label)))];
+      const detailLines = details.flatMap((detail) => textWrapper.wrap(detail, { fontSize: detailFont, fontWeight: fontWeight('medium'), maxWidth: w - padX * 2 }));
       const cardH = Math.max(
         66,
         padTop + labelLines.length * labelLineH + (detailLines.length ? gapBetweenLabelDetail + detailLines.length * detailLineH : 0) + padBottom,
       );
-      return { item, index, w, labelLines, detailLines, cardH };
+      return { item, index, w, labelLines, details, detailLines, cardH };
     });
     textWrapper.remove();
     let cursorY = margin.top;
@@ -1565,8 +1586,8 @@ const chartPayloadJson = chartPayload
         const startY = padTop + entry.labelLines.length * labelLineH + gapBetweenLabelDetail + detailFont;
         renderLineBlock(d3.select(this), entry.detailLines, { x: padX, y: startY, lineHeight: detailLineH });
       });
-    groups.each(function(entry) { addTitle(d3.select(this), `${entry.item.label}${entry.item.detail ? ` — ${entry.item.detail}` : ''}`); });
-    withTooltip(groups, (entry) => tooltipHtml(entry.item.label, [entry.item.detail]));
+    groups.each(function(entry) { addTitle(d3.select(this), [entry.item.label, ...entry.details].join(' — ')); });
+    withTooltip(groups, (entry) => tooltipHtml(entry.item.label, entry.details));
   };
 
   const renderJourneyMap = (element, payload) => {
@@ -2225,6 +2246,7 @@ const chartPayloadJson = chartPayload
   .figure-item-notes dd { margin: 0.2em 0 0; white-space: pre-line; overflow-wrap: anywhere; }
   .stack-layer-notes ul { margin: 0.2em 0; padding-left: 1.2em; }
   .flow-sequence-details :global(td) { white-space: pre-line; }
+  .pyramid-layer-evidence > .pyramid-layer-reference { display: block; margin: var(--space-2) 0; }
   .d3-figure { position: relative; width: 100%; min-height: 0; margin: var(--space-3) 0; overflow: visible; }
   .d3-figure[data-render-state='pending'] { min-height: clamp(12rem, 34vh, 20rem); border-radius: var(--radius-card, 0.5rem); background: linear-gradient(110deg, rgba(212,196,184,0.12), rgba(255,250,245,0.52), rgba(212,196,184,0.12)); }
   .d3-figure[data-render-state='pending']::before { content: 'Loading figure…'; position: absolute; inset: 0; display: grid; place-items: center; color: var(--caption-gray); font-family: var(--font-sans); font-size: var(--chart-fs-caption); }

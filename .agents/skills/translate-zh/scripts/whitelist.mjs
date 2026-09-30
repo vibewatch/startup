@@ -101,6 +101,7 @@ const FIGURE_PATHS = [
   'figures/[]/data/nodes/[]/details',
   'figures/[]/data/nodes/[]/description',
   'figures/[]/data/nodes/[]/note',
+  'figures/[]/data/nodes/[]/notes',
   'figures/[]/data/nodes/[]/risk',
   'figures/[]/data/nodes/[]/segment',
   // data.edges (flow, dag)
