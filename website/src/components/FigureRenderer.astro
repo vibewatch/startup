@@ -49,13 +49,16 @@ const stageAnnotations = unitsDiffer ? [] : stages.map((item) => ({
 const chartTypes = new Set(RENDERED_FIGURE_TYPES);
 const usesD3Chart = chartTypes.has(type);
 const stackDetails = authoredType === 'stack' ? stackLayerDetails(data) : [];
-const pyramidEvidence = authoredType === 'pyramid'
-  ? ([data.items, data.nodes].map((items) => asArray(items)).find((items) => items.length) ?? [])
-    .map((item, index) => {
-      const layer = asRecord(item);
-      return { label: String(layer.label ?? layer.name ?? layer.id ?? `Item ${index + 1}`), refs: claimRefs(item) };
-    }).filter((layer) => layer.refs.length)
-  : [];
+const evidenceItems = authoredType === 'pyramid' ? [data.items, data.nodes]
+  : authoredType === 'timeline'
+    ? [data.items, data.nodes, data.layers, asRecord(asArray(data.series)[0]).points, data.points]
+    : [];
+const itemEvidence = (evidenceItems.map((items) => asArray(items)).find((items) => items.length) ?? [])
+  .map((item, index) => {
+    const entry = asRecord(item);
+    return { label: String(entry.label ?? entry.name ?? entry.id ?? `Item ${index + 1}`), refs: claimRefs(item) };
+  }).filter((item) => item.refs.length);
+const evidenceClass = authoredType === 'timeline' ? 'timeline-event' : 'pyramid-layer';
 const stackLabels: Record<string, string> = {
   overview: t('reportStackOverview', locale),
   items: t('reportStackItems', locale),
@@ -143,12 +146,12 @@ const chartPayloadJson = chartPayload
   )}
 
   {figure.approximationNotes && <p class="figure-note">{figure.approximationNotes}</p>}
-  {pyramidEvidence.length > 0 && (
-    <div class="pyramid-layer-evidence">
-      {pyramidEvidence.map((layer) => (
-        <p class="claim-ref pyramid-layer-reference">
-          <span>{layer.label}</span>
-          <ClaimRefs refs={layer.refs} claims={claims} sources={sources} />
+  {itemEvidence.length > 0 && (
+    <div class={`${evidenceClass}-evidence`}>
+      {itemEvidence.map((item) => (
+        <p class={`claim-ref ${evidenceClass}-reference`}>
+          <span>{item.label}</span>
+          <ClaimRefs refs={item.refs} claims={claims} sources={sources} />
         </p>
       ))}
     </div>
@@ -1416,6 +1419,12 @@ const chartPayloadJson = chartPayload
     });
     rows.each(function(d) { addTitle(d3.select(this), `${d.date ?? ''} ${d.label}${d.detail ? ` — ${d.detail}` : ''}`); });
     withTooltip(rows, (d) => tooltipHtml(d.label, [d.date, d.detail]));
+    const printEvents = d3.select(element).append('ol').attr('class', 'timeline-print-events');
+    const printRows = printEvents.selectAll('li').data(rowsData).join('li')
+      .style('border-left-color', (d) => colorForTone(d.tone));
+    printRows.filter((d) => safeText(d.date ?? d.period ?? d.year).trim() !== '').append('p').text((d) => d.date ?? d.period ?? d.year);
+    printRows.append('strong').text((d) => d.label);
+    printRows.filter((d) => safeText(d.detail).trim() !== '').append('p').text((d) => d.detail);
   };
 
   const renderStack = (element, payload) => {
@@ -2255,8 +2264,10 @@ const chartPayloadJson = chartPayload
   .figure-item-notes dd { margin: 0.2em 0 0; white-space: pre-line; overflow-wrap: anywhere; }
   .stack-layer-notes ul { margin: 0.2em 0; padding-left: 1.2em; }
   .flow-sequence-details :global(td) { white-space: pre-line; }
+  .timeline-event-evidence > .timeline-event-reference,
   .pyramid-layer-evidence > .pyramid-layer-reference { display: block; margin: var(--space-2) 0; }
   :global(.pyramid-print-layers) { display: none; }
+  :global(.timeline-print-events) { display: none; }
   .d3-figure { position: relative; width: 100%; min-height: 0; margin: var(--space-3) 0; overflow: visible; }
   .d3-figure[data-render-state='pending'] { min-height: clamp(12rem, 34vh, 20rem); border-radius: var(--radius-card, 0.5rem); background: linear-gradient(110deg, rgba(212,196,184,0.12), rgba(255,250,245,0.52), rgba(212,196,184,0.12)); }
   .d3-figure[data-render-state='pending']::before { content: 'Loading figure…'; position: absolute; inset: 0; display: grid; place-items: center; color: var(--caption-gray); font-family: var(--font-sans); font-size: var(--chart-fs-caption); }

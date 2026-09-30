@@ -942,6 +942,14 @@ tones or promoting a fallback value over an explicit empty label.
 Timeline entries retain their full date, label and detail in visible text and
 shared hover/tap tooltips. Check both surfaces; an accessibility label alone
 does not prove the tooltip works, and print must retain the visible detail.
+Print timeline events as ordered date/label/detail entries at the report's
+body-text size, not as a long SVG shrunk to a page-height cap. Preserve authored
+order and tone, allow page breaks between complete events, and check actual PDF
+type size. A label containing a date must not become a second invented date row.
+Keep hidden SVGs measurable during print and check the restored screen.
+With evidence enabled, retain each timeline event's own ordered claim links
+beside the figure links, following the renderer's item-source precedence.
+Hide those evidence-only rows when evidence is disabled and in print.
 Pyramid layers expose their complete labels, authored values, units and every
 distinct qualification on the layer and in shared hover/tap tooltips. Preserve
 `displayValue` / `value` / `score` precedence, including zero and an explicitly

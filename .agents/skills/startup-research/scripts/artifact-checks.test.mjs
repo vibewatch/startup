@@ -224,6 +224,43 @@ test('timeline rows use shared pointer tooltips with full date and detail', () =
   assert.match(timeline, /renderLineBlock\(d3\.select\(this\), d\.detailLines/);
 });
 
+test('timelines print complete ordered events at body-text size without hiding measurable SVGs', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const timeline = source.slice(source.indexOf('const renderTimeline ='), source.indexOf('const renderStack ='));
+  assert.match(timeline, /append\('ol'\)\.attr\('class', 'timeline-print-events'\)/);
+  assert.match(timeline, /printEvents\.selectAll\('li'\)\.data\(rowsData\)\.join\('li'\)/);
+  assert.match(timeline, /style\('border-left-color', \(d\) => colorForTone\(d\.tone\)\)/);
+  const date = timeline.match(/printRows\.filter\(\(d\) => (.*?)\)\.append\('p'\)\.text\(\(d\) => (.*?)\);/);
+  assert.ok(date);
+  const dateRow = new Function('d', 'safeText', `return { visible: (${date[1]}), text: (${date[2]}) };`);
+  for (const [item, expected] of [
+    [{ label: '2026: Founded' }, { visible: false, text: undefined }],
+    [{ date: '2026-09-30' }, { visible: true, text: '2026-09-30' }],
+    [{ period: 'Q1 2026' }, { visible: true, text: 'Q1 2026' }],
+    [{ year: 2026 }, { visible: true, text: 2026 }],
+    [{ date: 0 }, { visible: true, text: 0 }],
+    [{ date: '', year: 2026 }, { visible: false, text: '' }],
+  ]) assert.deepEqual(dateRow(item, value => String(value ?? '')), expected);
+  assert.match(timeline, /printRows\.append\('strong'\)\.text\(\(d\) => d\.label\)/);
+  assert.match(timeline, /printRows\.filter\(\(d\) => safeText\(d\.detail\)\.trim\(\) !== ''\)\.append\('p'\)\.text\(\(d\) => d\.detail\)/);
+  assert.match(source, /:global\(\.timeline-print-events\) \{ display: none; \}/);
+  const report = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
+  const print = report.slice(report.indexOf('@media print {')).replace(/\/\*[\s\S]*?\*\//g, '');
+  const rule = (selector) => {
+    const match = [...print.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+      .find(([, selectors]) => selectors.split(',').some(value => value.trim() === selector));
+    assert.ok(match, `missing print rule for ${selector}`);
+    return match[2];
+  };
+  assert.match(rule(':global(.native-figure:has(.chart-timeline))'), /break-inside: auto; page-break-inside: auto;/);
+  const svg = rule(':global(.chart-timeline > svg)');
+  assert.match(svg, /position: absolute; visibility: hidden;/);
+  assert.doesNotMatch(svg, /display:\s*none/);
+  assert.match(rule(':global(.timeline-print-events)'), /display: block !important;[^}]*font-size: 10pt;/);
+  assert.match(rule(':global(.timeline-print-events > li)'), /break-inside: avoid; page-break-inside: avoid;/);
+  assert.match(rule(':global(.timeline-print-events p)'), /font-size: 10pt;/);
+});
+
 test('pyramid layers expose authored values and all qualifications in visible text and pointer tooltips', () => {
   const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
   const pyramid = source.slice(source.indexOf('const renderPyramid ='), source.indexOf('const renderJourneyMap ='));
@@ -307,16 +344,18 @@ test('pyramid node notes are translatable while values, units and structured sid
   assert.equal(isTranslatableLeaf(['figures', 0, 'data', 'nodes', 0, 'notes', 0], TRANSLATE_PATHS.fullReport), false);
 });
 
-test('pyramid layers retain their own ordered evidence references beside figure references', () => {
+test('pyramid layers and timeline events retain their own ordered evidence references beside figure references', () => {
   const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
   assert.match(source, /pyramid-layer-evidence/);
   assert.match(source, /pyramid-layer-reference/);
   assert.match(source, /refs: claimRefs\(item\)/);
-  assert.match(source, /<ClaimRefs refs=\{layer\.refs\} claims=\{claims\} sources=\{sources\}/);
+  assert.match(source, /timeline-event-evidence/);
+  assert.match(source, /timeline-event-reference/);
+  assert.match(source, /<ClaimRefs refs=\{item\.refs\} claims=\{claims\} sources=\{sources\}/);
   assert.match(source, /<ClaimRefs refs=\{claimRefs\(figure\)\}/);
-  const logic = source.slice(source.indexOf('const pyramidEvidence ='), source.indexOf('const stackLabels:'));
+  const logic = source.slice(source.indexOf('const evidenceItems ='), source.indexOf('const stackLabels:'));
   const evidence = new Function('authoredType', 'data', 'asArray', 'asRecord', 'claimRefs',
-    `${logic}; return pyramidEvidence;`);
+    `${logic}; return itemEvidence;`);
   const tenRefs = Array.from({ length: 10 }, (_, index) => `C${index + 1}`);
   const cases = [
     ['pyramid', { nodes: [{ label: 'TAM', claimRefs: tenRefs }] }, [{ label: 'TAM', refs: tenRefs }]],
@@ -330,6 +369,20 @@ test('pyramid layers retain their own ordered evidence references beside figure 
     ['pyramid', { nodes: [{ label: '', name: 'Ignored', claimRefs: ['C1'] }] }, [{ label: '', refs: ['C1'] }]],
     ['pyramid', { items: {}, nodes: [{ label: 'TAM', claimRefs: ['C1'] }] }, [{ label: 'TAM', refs: ['C1'] }]],
     ['pyramid', {}, []],
+    ['timeline', { items: [{ label: 'Event', claimRefs: tenRefs }] }, [{ label: 'Event', refs: tenRefs }]],
+    ['timeline', { items: [{ label: 'First', claimRefs: ['C3', 'C1', 'C3'] }], nodes: [{ label: 'Ignored', claimRefs: ['C2'] }] },
+      [{ label: 'First', refs: ['C3', 'C1', 'C3'] }]],
+    ['timeline', { items: [{ label: 'No refs' }], nodes: [{ label: 'Ignored', claimRefs: ['C2'] }] }, []],
+    ['timeline', { items: [], nodes: [{ name: 'Node', claimRefs: ['C1'] }] }, [{ label: 'Node', refs: ['C1'] }]],
+    ['timeline', { layers: [{ id: 'Layer', claimRefs: ['C2'] }], points: [{ label: 'Ignored', claimRefs: ['C3'] }] },
+      [{ label: 'Layer', refs: ['C2'] }]],
+    ['timeline', { series: [{ points: [{ label: 'Series', claimRefs: ['C1'] }] }], points: [{ label: 'Ignored', claimRefs: ['C2'] }] },
+      [{ label: 'Series', refs: ['C1'] }]],
+    ['timeline', { series: [{ points: [] }, { points: [{ label: 'Ignored', claimRefs: ['C1'] }] }],
+      points: [{ label: 'Point', claimRefs: ['C2'] }] }, [{ label: 'Point', refs: ['C2'] }]],
+    ['timeline', { points: [{ label: '', name: 'Ignored', claimRefs: ['C1'] }, { claimRefs: ['C2'] }] },
+      [{ label: '', refs: ['C1'] }, { label: 'Item 2', refs: ['C2'] }]],
+    ['timeline', {}, []],
     ['kpi', { items: [{ label: 'Other chart', claimRefs: ['C1'] }] }, []],
   ];
   for (const [type, data, expected] of cases) {
