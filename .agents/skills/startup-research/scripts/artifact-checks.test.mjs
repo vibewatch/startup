@@ -789,6 +789,17 @@ test('print hides active chart tooltips outside the report shell', () => {
   assert.match(print, /:global\(\.d3-chart-tooltip\),[^{}]*\{\s*display:\s*none\s*!important;/);
 });
 
+test('range print typography stays readable and paginates between complete rows without changing screen styles', () => {
+  const source = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
+  const index = source.indexOf('@media print');
+  const screen = source.slice(0, index), print = source.slice(index);
+  assert.doesNotMatch(screen, /--chart-fs-caption:\s*10pt|--chart-fs-kicker:\s*9pt/);
+  assert.match(print, /:global\(\.chart-range\)\s*\{\s*--chart-fs-caption:\s*10pt;\s*--chart-fs-kicker:\s*9pt;/);
+  assert.doesNotMatch(print, /:global\(\.native-figure:has\(\.chart-range\)\)\s*\{[^}]*break-inside:\s*auto/);
+  assert.match(print, /:global\(\.chart-range \.range-row\)\s*\{[^}]*break-inside:\s*avoid/);
+  assert.match(print, /:global\(\.chart-range \.range-axis-tick:not\(:first-child\):not\(:last-child\)\)\s*\{\s*display:\s*none\s*!important;/);
+});
+
 test('DAG topology and supplements preserve label-only Chinese endpoints, risk notes and edge qualifications', () => {
   const figure = { type: 'dag', data: {
     nodes: [{ label: 'First', risk: 'Not guaranteed' }, { label: 'Second', description: 'Limited scope' }],

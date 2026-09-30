@@ -1046,6 +1046,13 @@ Print uses the readable coordinate table rather than a shrunken SVG.
 Keep a real chart tooltip open when checking print transitions. Body-level
 tooltips must be hidden in print, not repeated over every PDF page; verify the
 physical output as well as underlying text and row geometry.
+Range print labels use 10pt type, with at least 9pt for numeric bounds, center
+labels, row notes and axis ticks. Verify actual PDF glyph sizes, complete source
+strings and non-overlapping endpoints, including long decimals, qualifications
+and dense figures. Print axes show only their domain endpoints to prevent
+page-width tick crowding. Keep a figure together when it fits; longer figures
+may break between complete rows, not through a row. Preserve screen layout,
+authored values, colors and hover/tap behavior.
 Funnel figures display ordered stage-value tables without deriving conversion
 rates or shared population, unit or time assumptions. Preserve explicitly
 authored rates and qualifications. Verify stage labels, raw values, units,
