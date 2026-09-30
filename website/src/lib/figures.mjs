@@ -153,18 +153,19 @@ export function funnelStageTable(data, labels) {
 
 export function waterfallValueTable(data, labels) {
   const table = funnelStageTable(data, labels);
-  const roles = (Array.isArray(data?.items) ? data.items : []).map(item =>
-    ['kind', 'role'].filter(key => typeof item[key] === 'string')
+  const metadata = (Array.isArray(data?.items) ? data.items : []).map(item =>
+    ['type', 'kind', 'role', 'isTotal', 'category', 'direction', 'status', 'base', 'cumulative']
+      .filter(key => ['string', 'number', 'boolean'].includes(typeof item[key]))
       .map(key => `${key}: ${item[key]}`).join('\n'));
-  if (!roles.some(Boolean)) return table;
+  if (!metadata.some(Boolean)) return table;
   return {
-    columns: [table.columns[0], labels.roleLabel, ...table.columns.slice(1)],
+    columns: [table.columns[0], labels.metadataLabel, ...table.columns.slice(1)],
     rows: table.rows.map((row, index) => ({
       ...row,
       values: [{
         ...row.values[0],
-        detail: [...new Set([row.values[0].detail, roles[index]].filter(Boolean))].join('\n'),
-      }, roles[index] || null, ...row.values.slice(1)],
+        detail: [...new Set([row.values[0].detail, metadata[index]].filter(Boolean))].join('\n'),
+      }, metadata[index] || null, ...row.values.slice(1)],
     })),
   };
 }

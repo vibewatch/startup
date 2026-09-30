@@ -196,7 +196,7 @@ test('generated chart UI uses localized text without translating structural role
     reportDagInput: ['Input dependency', '输入依赖'],
     reportDagImpact: ['Downstream impact', '下游影响'],
     reportDagCore: ['Core dependency', '核心依赖'],
-    reportWaterfallRoles: ['Declared kind / role', '原文 kind / role'],
+    reportWaterfallMetadata: ['Authored metadata', '原文标注'],
   };
   const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
   for (const [key, [en, zh]] of Object.entries(labels)) {
@@ -247,9 +247,9 @@ test('waterfall values retain order, precision, declared roles and qualification
   const before = structuredClone(items);
   items.forEach(Object.freeze);
   Object.freeze(items);
-  const labels = { valueLabel: 'Value', contextLabel: 'Context', roleLabel: 'Declared kind / role' };
+  const labels = { valueLabel: 'Value', contextLabel: 'Context', metadataLabel: 'Authored metadata' };
   const table = waterfallValueTable({ items }, labels);
-  assert.deepEqual(table.columns, ['Value', 'Declared kind / role', 'Context']);
+  assert.deepEqual(table.columns, ['Value', 'Authored metadata', 'Context']);
   assert.deepEqual(table.rows.map(row => row.label), items.map(item => item.label));
   assert.deepEqual(table.rows.map(row => row.values[0].value), [250, 215, 700, 0, -26.058, 5]);
   assert.deepEqual(table.rows.map(row => row.values[0].label), ['250', '215', '700', '0', '-26.058', '']);
@@ -262,9 +262,38 @@ test('waterfall values retain order, precision, declared roles and qualification
   assert.deepEqual(undeclared.columns, ['Value', 'Context']);
   assert.deepEqual(undeclared.rows.map(row => row.values[0].value), [250, 215, 700]);
   assert.deepEqual(waterfallValueTable({ items: [{ label: 'Only', value: 0 }] }, labels).columns, ['Value']);
-  const zh = waterfallValueTable({ items }, { valueLabel: '数值', contextLabel: '说明', roleLabel: '原文 kind / role' });
+  const zh = waterfallValueTable({ items }, { valueLabel: '数值', contextLabel: '说明', metadataLabel: '原文标注' });
   assert.deepEqual(zh.rows, table.rows);
-  assert.deepEqual(zh.columns, ['数值', '原文 kind / role', '说明']);
+  assert.deepEqual(zh.columns, ['数值', '原文标注', '说明']);
+});
+
+test('waterfall metadata retains literal conflicting declarations, zero bases and authored cumulative values', () => {
+  const items = [
+    { label: 'Conflicting', value: 3, type: 'delta', kind: 'total', role: 'unknown-role', isTotal: false,
+      category: 'debt', direction: 'up', status: 'estimated', base: 0, cumulative: -26.058, tone: 'risk' },
+    { label: 'Explicit total', value: 2, isTotal: true, cumulative: 99.0425 },
+    { label: 'No metadata', value: 1 },
+    { label: 'Empty status', value: 0, status: '', kind: null, unrelated: 'Not a declaration' },
+  ];
+  const before = structuredClone(items);
+  items.forEach(Object.freeze);
+  Object.freeze(items);
+  const table = waterfallValueTable({ items }, { valueLabel: 'Value', contextLabel: 'Context', metadataLabel: 'Authored metadata' });
+  const declarations = [
+    'type: delta\nkind: total\nrole: unknown-role\nisTotal: false\ncategory: debt\ndirection: up\nstatus: estimated\nbase: 0\ncumulative: -26.058',
+    'isTotal: true\ncumulative: 99.0425',
+    null,
+    'status: ',
+  ];
+  assert.deepEqual(table.columns, ['Value', 'Authored metadata']);
+  assert.deepEqual(table.rows.map(row => row.values[1]), declarations);
+  assert.deepEqual(table.rows.map(row => row.values[0].value), [3, 2, 1, 0]);
+  assert.deepEqual(table.rows.map(row => row.values[0].label), ['3', '2', '1', '0']);
+  for (const [index, declaration] of declarations.entries()) {
+    assert.equal(table.rows[index].values[0].detail, declaration ?? '');
+  }
+  assert.equal(table.rows[0].values[0].tone, 'risk');
+  assert.deepEqual(items, before);
 });
 
 test('waterfall rendering uses source-value tables and explicitly disclaims invented cumulative arithmetic', () => {
@@ -466,13 +495,15 @@ test('pyramid node notes are translatable while values, units and structured sid
   assert.equal(isTranslatableLeaf(['figures', 0, 'data', 'nodes', 0, 'notes', 0], TRANSLATE_PATHS.fullReport), false);
 });
 
-test('pyramid layers and timeline events retain their own ordered evidence references beside figure references', () => {
+test('pyramid layers, timeline events and waterfall values retain their own ordered evidence references beside figure references', () => {
   const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
   assert.match(source, /pyramid-layer-evidence/);
   assert.match(source, /pyramid-layer-reference/);
   assert.match(source, /refs: claimRefs\(item\)/);
   assert.match(source, /timeline-event-evidence/);
   assert.match(source, /timeline-event-reference/);
+  assert.match(source, /waterfall-value-evidence/);
+  assert.match(source, /waterfall-value-reference/);
   assert.match(source, /<ClaimRefs refs=\{item\.refs\} claims=\{claims\} sources=\{sources\}/);
   assert.match(source, /<ClaimRefs refs=\{claimRefs\(figure\)\}/);
   const logic = source.slice(source.indexOf('const evidenceItems ='), source.indexOf('const stackLabels:'));
@@ -505,6 +536,14 @@ test('pyramid layers and timeline events retain their own ordered evidence refer
     ['timeline', { points: [{ label: '', name: 'Ignored', claimRefs: ['C1'] }, { claimRefs: ['C2'] }] },
       [{ label: '', refs: ['C1'] }, { label: 'Item 2', refs: ['C2'] }]],
     ['timeline', {}, []],
+    ['waterfall', { items: [{ label: 'Tranche', claimRefs: tenRefs }] }, [{ label: 'Tranche', refs: tenRefs }]],
+    ['waterfall', { items: [{ label: 'Duplicate', claimRefs: ['C3', 'C1', 'C3'] }, { label: 'Duplicate', claimRefs: ['C2'] }],
+      nodes: [{ label: 'Ignored', claimRefs: ['C4'] }] },
+      [{ label: 'Duplicate', refs: ['C3', 'C1', 'C3'] }, { label: 'Duplicate', refs: ['C2'] }]],
+    ['waterfall', { items: [], nodes: [{ label: 'Ignored', claimRefs: ['C1'] }] }, []],
+    ['waterfall', { items: [{ label: '', name: 'Ignored', claimRefs: ['C1'] }, { claimRefs: ['C2'] },
+      { id: 'Not the table label', claimRefs: ['C3'] }] },
+      [{ label: '', refs: ['C1'] }, { label: '#2', refs: ['C2'] }, { label: '#3', refs: ['C3'] }]],
     ['kpi', { items: [{ label: 'Other chart', claimRefs: ['C1'] }] }, []],
   ];
   for (const [type, data, expected] of cases) {
@@ -515,6 +554,13 @@ test('pyramid layers and timeline events retain their own ordered evidence refer
   assert.deepEqual(evidence('pyramid', { items: [{ claimRefs: ['C2', 'C1'] }, { label: 'Item 2', claimRefs: ['C3'] }] },
     asArray, asRecord, claimRefs, t('reportFigureItem', 'zh')),
   [{ label: '条目 1', refs: ['C2', 'C1'] }, { label: 'Item 2', refs: ['C3'] }]);
+  const waterfallItems = [{ value: 0, id: 'ID1', claimRefs: ['C1'] },
+    { value: 2, name: 'Named', claimRefs: ['C2'] }, { value: 3, label: '', claimRefs: ['C3'] }];
+  const rows = waterfallValueTable({ items: waterfallItems }, { valueLabel: 'Value', contextLabel: 'Context', metadataLabel: 'Authored metadata' }).rows;
+  for (const locale of ['en', 'zh']) {
+    assert.deepEqual(evidence('waterfall', { items: waterfallItems }, asArray, asRecord, claimRefs, t('reportFigureItem', locale)).map(item => item.label),
+      rows.map(row => row.label));
+  }
 });
 
 test('pyramids print ordered complete layers at body-text size rather than shrinking dense SVGs', () => {
