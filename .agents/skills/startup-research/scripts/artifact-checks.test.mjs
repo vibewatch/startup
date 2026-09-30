@@ -16,6 +16,16 @@ import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDi
 import { isTranslatableLeaf, TRANSLATE_PATHS } from '../../translate-zh/scripts/whitelist.mjs';
 import { asArray, asRecord, claimRefs } from '../../../../website/src/lib/report-types.ts';
 
+test('table evidence references wrap instead of hiding later links and scrolling the whole table', () => {
+  const table = readFileSync('website/src/components/DataTable.astro', 'utf8');
+  const references = table.match(/\.table-frame :global\(\.claim-ref\)\s*\{([^}]*)\}/);
+  assert.ok(references);
+  assert.match(references[1], /white-space:\s*normal/);
+  assert.doesNotMatch(references[1], /white-space:\s*nowrap/);
+  const refs = Array.from({ length: 20 }, (_, index) => `CE${String(index + 1).padStart(3, '0')}`);
+  assert.deepEqual(claimRefs({ claimRefs: refs }), refs);
+});
+
 test('matrix renderer and validator share canonical display aliases and preserve explicit empty labels', () => {
   const cases = [
     [null, ''], ['', ''], ['Not disclosed', 'Not disclosed'], [0, '0'], [-2.5, '-2.5'],
