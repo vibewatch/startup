@@ -172,6 +172,20 @@ jobs:
           npm --prefix website ci || npm --prefix website install --no-audit --no-fund
           npm install -g @github/copilot
 
+      - name: Snapshot publication approval inputs
+        if: steps.targets.outputs.count != '0'
+        env:
+          REPORT_IDS: ${{ steps.targets.outputs.reportIds }}
+        run: |
+          set -euo pipefail
+          report_ids=()
+          while IFS= read -r report; do
+            [ -z "$report" ] && continue
+            report_ids+=("$report")
+          done <<< "$REPORT_IDS"
+          node .agents/skills/startup-research/scripts/check-publication-scope.mjs \
+            snapshot "$RUNNER_TEMP/publication-approval" translation "${report_ids[@]}"
+
       - name: Translate selected reports
         if: steps.targets.outputs.count != '0'
         env:
@@ -191,6 +205,8 @@ jobs:
           - Translate exactly these selected folders. If fewer than the requested batch size were selected, translate only the selected folders. If a selected folder already has both Chinese overlays by the time you inspect it, skip rewriting it.
           - Follow the translate-zh skill's orchestration runner. Initialize each selected report, enumerate the actual cached part files after init, and translate only paths that exist; never predict part numbers.
           - Finalize and verify both summary-card.zh.yaml and full-report.zh.yaml for every selected report before returning. A translated cache without both final overlays is a failure, not partial success.
+          - Change only the selected Chinese outputs through the runner and their translation caches. Never edit English reports, validation scripts, schemas, policies, workflows, dependencies, or skill documentation to clear a finding. Report a source or checker problem instead of changing the publication gate.
+          - Run only the selected-report runner checks. Repository-wide validation and website builds belong to the workflow; do not run npm run validate or install dependencies.
           - Do not run any git command (git add, git commit, git push, git stash, git checkout, etc.) at any point; leave generated Chinese overlays unstaged. The workflow itself owns commit/push decisions.
           EOF
           )
@@ -210,6 +226,10 @@ jobs:
               echo "- (no Copilot output captured)"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify draft publication scope
+        if: steps.targets.outputs.count != '0'
+        run: node "$RUNNER_TEMP/publication-approval/check-publication-scope.mjs" verify "$RUNNER_TEMP/publication-approval"
 
       - name: Prepare source-anchored editorial pass
         id: editorial_targets
@@ -259,6 +279,7 @@ jobs:
           - Compare every reader-facing Chinese leaf with its corresponding English source. Rewrite awkward or generic Chinese from the factual proposition, not English clause order.
           - Preserve exact schema, numbers, metric identity, dates, proper nouns, hedges, attribution, conditions, polarity, causal direction, and boundaries.
           - Do not run translation scripts and do not edit final files under reports/. The workflow will lint, finalize, strictly validate, and either accept or roll back your edits.
+          - Never change validation code, policies, schemas, dependencies or skill instructions to clear a finding. Do not run repository-wide validation or builds; the workflow owns those checks.
           - Do not run any git command.
           EOF
           )
@@ -267,7 +288,7 @@ jobs:
           copilot --yolo --autopilot --model gpt-6-luna -p "$PROMPT" 2>&1 | tee "$COPILOT_LOG"
 
       - name: Validate or roll back editorial pass
-        if: always() && steps.editorial_targets.outputs.count != '0'
+        if: always() && steps.editorial_targets.outputs.count != '' && steps.editorial_targets.outputs.count != '0'
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
           REPORT_IDS: ${{ steps.editorial_targets.outputs.reportIds }}
@@ -276,8 +297,13 @@ jobs:
           accepted=0
           repaired=0
           restored=0
+          assert_publication_scope() {
+            node "$RUNNER_TEMP/publication-approval/check-publication-scope.mjs" verify "$RUNNER_TEMP/publication-approval" || exit "$?"
+          }
+          assert_publication_scope
           validate_editor() {
             local report="$1"
+            assert_publication_scope
             npm run translate:zh -- lint-parts "$report" \
               && npm run translate:zh -- finalize-summary "$report" --skip-quality \
               && npm run translate:zh -- finalize-full "$report" --keep-cache --skip-quality \
@@ -299,11 +325,14 @@ jobs:
               - Repair every reported semantic or strict-style failure. Preserve exact numbers, metric identity, dates, proper nouns, uncertainty, attribution, conditions, polarity, and causal direction.
               - If you run check-translation-quality.mjs for confirmation, use --strict-editor --format json and inspect the complete JSON issue list.
               - Do not edit reports/$report/*.zh.yaml directly. Do not run editor-accept, editor-restore, cleanup, or any git command. The workflow will finalize and validate once more.
+              - Never edit validator code, English source, schemas, policies, dependencies, or skill instructions. Do not run repository-wide validation or builds.
           EOF
               )
               REPAIR_LOG="$RUNNER_TEMP/copilot-logs/translate-zh-editor-repair-$report.log"
-              if copilot --yolo --autopilot --model gpt-5.6-luna -p "$REPAIR_PROMPT" 2>&1 | tee "$REPAIR_LOG" \
-                && validate_editor "$report"; then
+              repair_status=0
+              copilot --yolo --autopilot --model gpt-5.6-luna -p "$REPAIR_PROMPT" 2>&1 | tee "$REPAIR_LOG" || repair_status=$?
+              assert_publication_scope
+              if [ "$repair_status" -eq 0 ] && validate_editor "$report"; then
                 accepted=$((accepted + 1))
                 repaired=$((repaired + 1))
               else
@@ -379,6 +408,7 @@ jobs:
           REPORT_IDS: ${{ steps.targets.outputs.reportIds }}
         run: |
           set -euo pipefail
+          node "$RUNNER_TEMP/publication-approval/check-publication-scope.mjs" verify "$RUNNER_TEMP/publication-approval"
           while IFS= read -r report; do
             [ -z "$report" ] && continue
             node .agents/skills/translate-zh/scripts/check-translation.mjs "reports/$report" --strict --require-final
@@ -399,6 +429,7 @@ jobs:
           REPORT_IDS: ${{ steps.targets.outputs.reportIds }}
         run: |
           set -euo pipefail
+          node "$RUNNER_TEMP/publication-approval/check-publication-scope.mjs" verify "$RUNNER_TEMP/publication-approval"
           git config user.name "startup-research-bot"
           git config user.email "startup-research-bot@users.noreply.github.com"
           BRANCH="${{ github.ref_name }}"
@@ -416,15 +447,36 @@ jobs:
             exit 0
           fi
           git commit -m "$MESSAGE"
+          validated_head="$(git rev-parse HEAD)"
 
           for attempt in 1 2 3; do
             echo "Push attempt $attempt/3 to $BRANCH"
             git fetch origin "$BRANCH"
-            if ! git rebase --autostash "origin/$BRANCH"; then
+            if ! git rebase "origin/$BRANCH"; then
               echo "Rebase failed; aborting and retrying." >&2
               git rebase --abort || true
               sleep $((attempt * 5))
               continue
+            fi
+            node "$RUNNER_TEMP/publication-approval/check-publication-scope.mjs" verify-inputs "$RUNNER_TEMP/publication-approval"
+            if [ "$(git rev-parse HEAD)" != "$validated_head" ]; then
+              if ! git diff --quiet "$validated_head" HEAD -- package.json package-lock.json; then
+                npm ci
+              fi
+              if ! git diff --quiet "$validated_head" HEAD -- website/package.json website/package-lock.json; then
+                npm --prefix website ci
+              fi
+              while IFS= read -r report; do
+                [ -z "$report" ] && continue
+                node .agents/skills/translate-zh/scripts/check-translation.mjs "reports/$report" --strict --require-final
+                for artifact in summary-card full-report; do
+                  node .agents/skills/translate-zh/scripts/check-translation-quality.mjs \
+                    "reports/$report/$artifact.yaml" "reports/$report/$artifact.zh.yaml" --strict-editor
+                done
+              done <<< "$REPORT_IDS"
+              npm run validate
+              node "$RUNNER_TEMP/publication-approval/check-publication-scope.mjs" verify-inputs "$RUNNER_TEMP/publication-approval"
+              validated_head="$(git rev-parse HEAD)"
             fi
             if git push origin "HEAD:$BRANCH"; then
               echo "Pushed to $BRANCH on attempt $attempt."

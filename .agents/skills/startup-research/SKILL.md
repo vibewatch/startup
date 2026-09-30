@@ -17,6 +17,7 @@ Workflow narrative: what to run, in what order, with which flags. Two generated 
 
 - Run every command from the repository root. Paths are repo-root relative unless a script prints an absolute path.
 - Treat validation commands as gates. Preserve full stdout/stderr and nonzero exit codes; do not pipe them through truncating filters.
+- During report generation, validation code, schemas, policies, dependencies and skill instructions are read-only. Surface a checker or source blocker instead of patching the gate. Automated agents run their assigned report checks; repository-wide validation and builds belong to the workflow. Publication rejects out-of-scope changes against its pre-worker snapshot.
 - Prefer `--format json` (or `--format compact`) on every `check-*` / `build-*` script. Read repair hints in this priority: `issues[].fix` → `objectFailures[].fixes` → `globalHints[].fix` → `retryOrder[]`. `suppressedDimensions[]` re-emit after their prerequisite is fixed. Conditional keys are omitted when empty — see *Validation result envelope* in [`contracts.md`](references/contracts.md).
 - The `hardRules` block in [`rules.md`](references/rules.md) → *Agent policy (binding)* binds every step (no git, no hand-edited `revision:` / `evidence.yaml` / `full-report.yaml` / `summary-card.yaml`, scratch only under `.research-cache/<runId>/`, no sibling-chapter edits). Read it once at session start.
 
