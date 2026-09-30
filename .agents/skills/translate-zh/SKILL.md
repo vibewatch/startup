@@ -930,6 +930,9 @@ Figures (`figures/[]`) are charts. The renderer reads everything from
 not from top-level keys, so reader-visible chart text is two layers
 deep. Translate every reader-facing string under `data/`; leave
 identifiers, enums, refs, and numerics alone.
+Generated item names, dependency roles, and loading/error
+messages follow the website locale. Do not rewrite authored labels or structural
+keys such as `input`, `impact`, `total`, or `subtotal` to translate this UI.
 Publication checks must exercise the hydrated charts and their hover/tap
 tooltips in a browser. Raw `script.figure-chart-data` payloads are not proof
 that a translated field is displayed; readable-page extraction omits those
@@ -1030,6 +1033,13 @@ authored rates and qualifications. Verify stage labels, raw values, units,
 series names and notes in the visible rows and hover/tap tooltips in both locales,
 including narrow screens and print; never invent a rate to replace the old
 renderer-generated percentages.
+Waterfall figures likewise display ordered source-value tables rather than
+inferring additive steps or cumulative totals. Preserve every raw value, unit,
+qualification and any declared `kind` / `role`, including conflicting or unfamiliar
+role strings. Keep the localized no-inference notice visible on screen and in
+print. Check physical PDFs: each value card must keep its label, value, declared
+roles and context together when the card fits on one page. A final financing tranche must not become a total merely because it is
+last; declared totals also remain authored values, not recalculated results.
 Item `valueNote` strings are also visible value qualifications, including
 `series[].points[]`. Translate them without changing the associated numeric
 value; preserve self-reporting, audit limitations and approximate-count wording

@@ -12,7 +12,7 @@ import { KNOWN_DIMENSIONS, WARNING_DIMENSIONS } from './validation-catalog.mjs';
 import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
 import { checkRefreshReadback, refreshArtifactsAreInSync } from './refresh-readback.mjs';
 import { reportsDir } from './utils.mjs';
-import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, matrixCellText, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
+import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, matrixCellText, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails, waterfallValueTable, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
 import { isTranslatableLeaf, TRANSLATE_PATHS } from '../../translate-zh/scripts/whitelist.mjs';
 import { asArray, asRecord, claimRefs } from '../../../../website/src/lib/report-types.ts';
 import { t } from '../../../../website/src/lib/i18n.ts';
@@ -183,6 +183,102 @@ test('range descriptors follow the report locale on screen and in pointer toolti
     assert.match(range, new RegExp(`\\$\\{payload\\.rangeLabels\\.${field}\\} \\$\\{d\\.labels\\.${field}\\}`));
   }
   assert.doesNotMatch(range, /`(?:mid |Low:|Mid:|High:)/);
+});
+
+test('generated chart UI uses localized text without translating structural roles', () => {
+  const labels = {
+    reportFigureItem: ['Item', '条目'],
+    reportFigureLoading: ['Loading figure…', '图表加载中…'],
+    reportFigureRenderError: ['Figure could not be rendered.', '图表无法显示。'],
+    reportFigureGenericTitle: ['Generic figure', '通用图表'],
+    reportFigureGenericDescription: ['Fallback renderer for generic figures.', '通用图表的备用显示区域。'],
+    reportDagDependency: ['Dependency:', '依赖关系：'],
+    reportDagInput: ['Input dependency', '输入依赖'],
+    reportDagImpact: ['Downstream impact', '下游影响'],
+    reportDagCore: ['Core dependency', '核心依赖'],
+    reportWaterfallRoles: ['Declared kind / role', '原文 kind / role'],
+  };
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  for (const [key, [en, zh]] of Object.entries(labels)) {
+    assert.equal(t(key, 'en'), en, key);
+    assert.equal(t(key, 'zh'), zh, key);
+    assert.ok(source.includes(`t('${key}', locale)`), key);
+  }
+  assert.match(source, /authoredType === 'dag' \? \{ dagLabels \} : \{\}/);
+  assert.match(source, /payload\.dagLabels\[node\._role\]/);
+  assert.match(source, /payload\.dagLabels\.dependency/);
+  assert.match(source, /content: attr\(data-loading-label\)/);
+  assert.match(source, /data-loading-label=\{t\('reportFigureLoading', locale\)\}/);
+  assert.match(source, /data-error-label=\{t\('reportFigureRenderError', locale\)\}/);
+  assert.match(source, /text\(element\.dataset\.errorLabel\)/);
+  assert.match(source, /console\.error\(`\[FigureRenderer\] Failed to render/);
+  assert.doesNotMatch(source, /\.text\('Waterfall bridge'\)|'Input dependency'|'Downstream impact'|'Core dependency'|content: 'Loading figure/);
+});
+
+test('localized item fallbacks preserve authored labels, identifiers, empty strings and input data', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const expression = source.match(/const normalizedItems = (.+);/)?.[1];
+  assert.ok(expression);
+  const normalize = new Function('firstNonEmpty', 'arr', 'figureDetail', `return (${expression});`)(
+    (...values) => values.find(value => Array.isArray(value) && value.length) ?? [],
+    value => Array.isArray(value) ? value : [], figureDetail);
+  const items = [{ label: '', name: 'Ignored', value: 0 }, { value: 2 }, { id: 'SKU-4', value: 4 }, { name: 'OpenAI', value: 7 }];
+  const before = structuredClone(items);
+  items.forEach(Object.freeze);
+  Object.freeze(items);
+  for (const [locale, expected] of [['en', 'Item 2'], ['zh', '条目 2']]) {
+    assert.deepEqual(normalize({ items }, t('reportFigureItem', locale)).map(item => item.label), ['', expected, 'SKU-4', 'OpenAI']);
+  }
+  assert.deepEqual(items, before);
+  assert.equal((source.match(/normalizedItems\(payload\.data, payload\.itemLabel\)/g) ?? []).length, 3);
+  assert.match(source, /normalizedItems\(\{ items: payload\.data\.items \?\? payload\.data\.nodes \}, payload\.itemLabel\)/);
+  assert.match(source, /entry\.label \?\? entry\.name \?\? entry\.id \?\? `\$\{itemLabel\} \$\{index \+ 1\}`/);
+});
+
+test('waterfall values retain order, precision, declared roles and qualifications without inferred totals', () => {
+  const items = [
+    { label: 'Tranche', value: 250, note: 'Estimated commitment, not drawn cash.', unit: 'EUR M' },
+    { label: 'Tranche', value: 215, unit: 'EUR M' },
+    { label: 'Last facility', value: 700, unit: 'EUR M' },
+    { label: 'Explicit total', value: 0, kind: 'total', unit: 'USD M', tone: 'risk' },
+    { label: 'Declared change', value: -26.058, kind: 'debt', role: 'decrease', detail: 'Reported.', context: 'Different period.', unit: 'USD M' },
+    { label: 'Blank display', value: 5, displayValue: '', role: 'delta' },
+  ];
+  const before = structuredClone(items);
+  items.forEach(Object.freeze);
+  Object.freeze(items);
+  const labels = { valueLabel: 'Value', contextLabel: 'Context', roleLabel: 'Declared kind / role' };
+  const table = waterfallValueTable({ items }, labels);
+  assert.deepEqual(table.columns, ['Value', 'Declared kind / role', 'Context']);
+  assert.deepEqual(table.rows.map(row => row.label), items.map(item => item.label));
+  assert.deepEqual(table.rows.map(row => row.values[0].value), [250, 215, 700, 0, -26.058, 5]);
+  assert.deepEqual(table.rows.map(row => row.values[0].label), ['250', '215', '700', '0', '-26.058', '']);
+  assert.deepEqual(table.rows.map(row => row.values[1]), [null, null, null, 'kind: total', 'kind: debt\nrole: decrease', 'role: delta']);
+  assert.equal(table.rows[0].values[0].detail, 'EUR M\nEstimated commitment, not drawn cash.');
+  assert.equal(table.rows[3].values[0].tone, 'risk');
+  assert.equal(table.rows[4].values[0].detail, 'USD M\nReported.\nDifferent period.\nkind: debt\nrole: decrease');
+  assert.deepEqual(items, before);
+  const undeclared = waterfallValueTable({ items: items.slice(0, 3) }, labels);
+  assert.deepEqual(undeclared.columns, ['Value', 'Context']);
+  assert.deepEqual(undeclared.rows.map(row => row.values[0].value), [250, 215, 700]);
+  assert.deepEqual(waterfallValueTable({ items: [{ label: 'Only', value: 0 }] }, labels).columns, ['Value']);
+  const zh = waterfallValueTable({ items }, { valueLabel: '数值', contextLabel: '说明', roleLabel: '原文 kind / role' });
+  assert.deepEqual(zh.rows, table.rows);
+  assert.deepEqual(zh.columns, ['数值', '原文 kind / role', '说明']);
+});
+
+test('waterfall rendering uses source-value tables and explicitly disclaims invented cumulative arithmetic', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  assert.match(source, /const waterfall = authoredType === 'waterfall'/);
+  assert.match(source, /const type = funnel \|\| waterfall \|\|/);
+  assert.match(source, /waterfall \? waterfallValueTable\(data,/);
+  assert.match(source, /class="figure-note waterfall-comparison-notice"[^>]*>\{t\('reportWaterfallNotice', locale\)\}/);
+  assert.doesNotMatch(source, /renderWaterfall|totalLike|waterfall-step|waterfallLabels/);
+  assert.match(t('reportWaterfallNotice', 'en'), /No additive steps, cumulative totals, or shared unit or time basis are inferred/);
+  assert.match(t('reportWaterfallNotice', 'zh'), /不推定各项可以相加，不计算累计值/);
+  const report = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
+  const print = report.slice(report.indexOf('@media print'));
+  assert.match(print, /\.native-figure:has\(\.waterfall-comparison-notice\) \.matrix-card\)\s*\{[^}]*break-inside: avoid;[^}]*page-break-inside: avoid;/);
 });
 
 test('refresh acceptance checks both reports and existing overlays without rewriting history', () => {
@@ -380,7 +476,7 @@ test('pyramid layers and timeline events retain their own ordered evidence refer
   assert.match(source, /<ClaimRefs refs=\{item\.refs\} claims=\{claims\} sources=\{sources\}/);
   assert.match(source, /<ClaimRefs refs=\{claimRefs\(figure\)\}/);
   const logic = source.slice(source.indexOf('const evidenceItems ='), source.indexOf('const stackLabels:'));
-  const evidence = new Function('authoredType', 'data', 'asArray', 'asRecord', 'claimRefs',
+  const evidence = new Function('authoredType', 'data', 'asArray', 'asRecord', 'claimRefs', 'itemLabel',
     `${logic}; return itemEvidence;`);
   const tenRefs = Array.from({ length: 10 }, (_, index) => `C${index + 1}`);
   const cases = [
@@ -413,9 +509,12 @@ test('pyramid layers and timeline events retain their own ordered evidence refer
   ];
   for (const [type, data, expected] of cases) {
     const before = structuredClone(data);
-    assert.deepEqual(evidence(type, data, asArray, asRecord, claimRefs), expected);
+    assert.deepEqual(evidence(type, data, asArray, asRecord, claimRefs, t('reportFigureItem', 'en')), expected);
     assert.deepEqual(data, before);
   }
+  assert.deepEqual(evidence('pyramid', { items: [{ claimRefs: ['C2', 'C1'] }, { label: 'Item 2', claimRefs: ['C3'] }] },
+    asArray, asRecord, claimRefs, t('reportFigureItem', 'zh')),
+  [{ label: '条目 1', refs: ['C2', 'C1'] }, { label: 'Item 2', refs: ['C3'] }]);
 });
 
 test('pyramids print ordered complete layers at body-text size rather than shrinking dense SVGs', () => {

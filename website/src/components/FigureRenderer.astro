@@ -1,7 +1,7 @@
 ---
 import ClaimRefs from './ClaimRefs.astro';
 import DataTable from './DataTable.astro';
-import { RENDERED_FIGURE_TYPES, barSeries, barSeriesTable, figureItemNotes, figureUnitsDiffer, flowRelationshipTable, flowTopology, funnelStageTable, stackLayerDetails } from '../lib/figures.mjs';
+import { RENDERED_FIGURE_TYPES, barSeries, barSeriesTable, figureItemNotes, figureUnitsDiffer, flowRelationshipTable, flowTopology, funnelStageTable, stackLayerDetails, waterfallValueTable } from '../lib/figures.mjs';
 import { t } from '../lib/i18n';
 import type { Locale } from '../lib/locale';
 import { asArray, asRecord, claimRefs, type Claim, type ReportFigure, type Source } from '../lib/report-types';
@@ -24,15 +24,19 @@ const sequenceDetails = flow?.sequence ? flowRelationshipTable(data, flow, {
   contextLabel: t('reportFigureContext', locale),
 }) : null;
 const funnel = authoredType === 'funnel';
+const waterfall = authoredType === 'waterfall';
 const series = authoredType === 'bar' ? barSeries(data) : [];
 const multipleBarSeries = series.length > 1;
 const stages = series.length === 1
   ? series[0].points.map((item) => item.unit == null && series[0].unit != null ? { ...item, unit: series[0].unit } : item)
   : [];
 const unitsDiffer = figureUnitsDiffer(stages);
-const type = funnel || multipleBarSeries || relationshipTable ? 'matrix' : unitsDiffer ? 'kpi' : authoredType;
+const type = funnel || waterfall || multipleBarSeries || relationshipTable ? 'matrix' : unitsDiffer ? 'kpi' : authoredType;
 const chartData = funnel ? funnelStageTable(data, {
   valueLabel: t('reportFigureValue', locale), contextLabel: t('reportFigureContext', locale),
+}) : waterfall ? waterfallValueTable(data, {
+  valueLabel: t('reportFigureValue', locale), contextLabel: t('reportFigureContext', locale),
+  roleLabel: t('reportWaterfallRoles', locale),
 }) : relationshipTable ? flowRelationshipTable(data, flow, {
   nodeLabel: t('reportFigureNode', locale), connectionLabel: t('reportFigureConnection', locale),
   sourceLabel: t('reportFigureNodeOrFrom', locale), targetLabel: t('reportFigureTo', locale),
@@ -48,6 +52,7 @@ const stageAnnotations = unitsDiffer ? [] : stages.map((item) => ({
 })).filter(({ item, notes }) => item.unit || notes.length);
 const chartTypes = new Set(RENDERED_FIGURE_TYPES);
 const usesD3Chart = chartTypes.has(type);
+const itemLabel = t('reportFigureItem', locale);
 const stackDetails = authoredType === 'stack' ? stackLayerDetails(data) : [];
 const evidenceItems = authoredType === 'pyramid' ? [data.items, data.nodes]
   : authoredType === 'timeline'
@@ -56,7 +61,7 @@ const evidenceItems = authoredType === 'pyramid' ? [data.items, data.nodes]
 const itemEvidence = (evidenceItems.map((items) => asArray(items)).find((items) => items.length) ?? [])
   .map((item, index) => {
     const entry = asRecord(item);
-    return { label: String(entry.label ?? entry.name ?? entry.id ?? `Item ${index + 1}`), refs: claimRefs(item) };
+    return { label: String(entry.label ?? entry.name ?? entry.id ?? `${itemLabel} ${index + 1}`), refs: claimRefs(item) };
   }).filter((item) => item.refs.length);
 const evidenceClass = authoredType === 'timeline' ? 'timeline-event' : 'pyramid-layer';
 const stackLabels: Record<string, string> = {
@@ -71,12 +76,19 @@ const rangeLabels = {
   high: t('reportRangeHigh', locale),
   midInline: t('reportRangeMidInline', locale),
 };
+const dagLabels = {
+  dependency: t('reportDagDependency', locale),
+  input: t('reportDagInput', locale),
+  impact: t('reportDagImpact', locale),
+  core: t('reportDagCore', locale),
+};
 const chartId = `chart-${String(figure?.id ?? 'figure').replace(/[^a-z0-9_-]/gi, '-')}-${Math.random().toString(36).slice(2, 9)}`;
 const chartPayload = usesD3Chart ? {
-  id: chartId, type, data: chartData,
+  id: chartId, type, data: chartData, itemLabel,
   ...(flow ? { flowTopology: flow, flowLabels: { node: t('reportFigureNode', locale) } } : {}),
   ...(authoredType === 'stack' ? { stackLabels } : {}),
   ...(authoredType === 'range' ? { rangeLabels } : {}),
+  ...(authoredType === 'dag' ? { dagLabels } : {}),
 } : null;
 const chartPayloadJson = chartPayload
   ? JSON.stringify(chartPayload).replace(/[<>&\u2028\u2029]/g, (char) => ({ '<': '\\u003c', '>': '\\u003e', '&': '\\u0026', '\u2028': '\\u2028', '\u2029': '\\u2029' }[char] ?? char))
@@ -91,6 +103,7 @@ const chartPayloadJson = chartPayload
   {relationshipTable && <p class="figure-note flow-relationship-notice" role="note">{t('reportFlowRelationshipNotice', locale)}</p>}
   {flow?.unresolved && <p class="figure-note flow-endpoint-notice" role="note">{t('reportFlowEndpointNotice', locale)}</p>}
   {funnel && <p class="figure-note funnel-comparison-notice" role="note">{t('reportFunnelComparisonNotice', locale)}</p>}
+  {waterfall && <p class="figure-note waterfall-comparison-notice" role="note">{t('reportWaterfallNotice', locale)}</p>}
   {authoredType === 'pyramid' && <p class="figure-note pyramid-layout-notice" role="note">{t('reportPyramidLayoutNotice', locale)}</p>}
   {multipleBarSeries && <p class="figure-note bar-series-notice" role="note">{t('reportBarSeriesNotice', locale)}</p>}
   {authoredType === 'bar' && series.length === 1 && (series[0].label || series[0].name) && (
@@ -100,7 +113,9 @@ const chartPayloadJson = chartPayload
     {t('reportBarUnitNotice', locale)}
   </p>}
 
-  {usesD3Chart && <div id={chartId} class:list={['d3-figure', `chart-${type}`]}></div>}
+  {usesD3Chart && <div id={chartId} class:list={['d3-figure', `chart-${type}`]}
+    data-loading-label={t('reportFigureLoading', locale)}
+    data-error-label={t('reportFigureRenderError', locale)}></div>}
 
   {stageAnnotations.length > 0 && (
     <div class="figure-note figure-item-notes bar-point-notes">
@@ -151,8 +166,8 @@ const chartPayloadJson = chartPayload
 
   {type === 'other' && (
     <div class="figure-fallback" role="note">
-      <strong>Generic figure</strong>
-      <p>Fallback renderer for generic figures.</p>
+      <strong>{t('reportFigureGenericTitle', locale)}</strong>
+      <p>{t('reportFigureGenericDescription', locale)}</p>
     </div>
   )}
 
@@ -1134,7 +1149,7 @@ const chartPayloadJson = chartPayload
       .attr('stroke', 'transparent')
       .attr('stroke-width', 16);
     hitEdges.each(function(edge) { addTitle(d3.select(this), `${edge.source.label} → ${edge.target.label}${edge.label ? ` — ${edge.label}` : ''}`); });
-    withTooltip(hitEdges, (edge) => tooltipHtml(`${edge.source.label} → ${edge.target.label}`, [edge.label ? `Dependency: ${edge.label}` : null, edge.source.detail, edge.target.detail]));
+    withTooltip(hitEdges, (edge) => tooltipHtml(`${edge.source.label} → ${edge.target.label}`, [edge.label ? `${payload.dagLabels.dependency} ${edge.label}` : null, edge.source.detail, edge.target.detail]));
     const cards = svg.append('g').selectAll('g.dependency-card').data(positions).join('g')
       .attr('class', 'dependency-card')
       .attr('transform', (node) => `translate(${node.x},${node.y})`);
@@ -1186,7 +1201,7 @@ const chartPayloadJson = chartPayload
       });
     });
     cards.each(function(node) { addTitle(d3.select(this), `${node.label}${node.detail ? ` — ${node.detail}` : ''}`); });
-    withTooltip(cards, (node) => tooltipHtml(node.label, [node.detail, node._role === 'input' ? 'Input dependency' : node._role === 'impact' ? 'Downstream impact' : 'Core dependency']));
+    withTooltip(cards, (node) => tooltipHtml(node.label, [node.detail, payload.dagLabels[node._role]]));
   };
 
   const renderFlow = (element, payload) => {
@@ -1303,7 +1318,7 @@ const chartPayloadJson = chartPayload
   };
 
   const firstNonEmpty = (...values) => values.find((value) => Array.isArray(value) && value.length > 0) ?? [];
-  const normalizedItems = (data) => firstNonEmpty(data.items, data.nodes, data.layers, arr(data.series)[0]?.points, data.points).map((item, index) => ({ ...item, _index: index, label: item.label ?? item.name ?? item.id ?? `Item ${index + 1}`, detail: figureDetail(item) ?? item.summary }));
+  const normalizedItems = (data, itemLabel) => firstNonEmpty(data.items, data.nodes, data.layers, arr(data.series)[0]?.points, data.points).map((item, index) => ({ ...item, _index: index, label: item.label ?? item.name ?? item.id ?? `${itemLabel} ${index + 1}`, detail: figureDetail(item) ?? item.summary }));
 
   const createSvgTextWrapper = (svg) => {
     const measureText = svg.append('text').attr('visibility', 'hidden').attr('x', -9999).attr('y', -9999);
@@ -1389,7 +1404,7 @@ const chartPayloadJson = chartPayload
   };
 
   const renderTimeline = (element, payload) => {
-    const items = normalizedItems(payload.data);
+    const items = normalizedItems(payload.data, payload.itemLabel);
     const margin = { top: 26, right: 34, bottom: 32, left: 34 };
     const containerWidth = Math.floor(element.getBoundingClientRect().width || 760);
     const width = Math.max(containerWidth < 420 ? 420 : 520, containerWidth);
@@ -1555,7 +1570,7 @@ const chartPayloadJson = chartPayload
   };
 
   const renderPyramid = (element, payload) => {
-    const items = normalizedItems(payload.data);
+    const items = normalizedItems(payload.data, payload.itemLabel);
     const containerWidth = Math.floor(element.getBoundingClientRect().width || 760);
     const { svg, width } = svgBase(element, 300);
     const textWrapper = createSvgTextWrapper(svg);
@@ -1616,7 +1631,7 @@ const chartPayloadJson = chartPayload
   };
 
   const renderJourneyMap = (element, payload) => {
-    const items = normalizedItems(payload.data);
+    const items = normalizedItems(payload.data, payload.itemLabel);
     const margin = { top: 34, right: 34, bottom: 46, left: 34 };
     const { svg, width, height } = svgBase(element, 360);
     const x = d3.scalePoint().domain(items.map((d) => d.label)).range([margin.left + 22, width - margin.right - 22]).padding(0.5);
@@ -1633,7 +1648,7 @@ const chartPayloadJson = chartPayload
   };
 
   const renderKpi = (element, payload) => {
-    const items = normalizedItems({ items: payload.data.items ?? payload.data.nodes });
+    const items = normalizedItems({ items: payload.data.items ?? payload.data.nodes }, payload.itemLabel);
     d3.select(element).selectAll('*').remove();
     const grid = d3.select(element).append('div').attr('class', 'kpi-grid');
     const cards = grid.selectAll('div.kpi-card').data(items).join('div')
@@ -1666,124 +1681,6 @@ const chartPayloadJson = chartPayload
     svg.append('g').selectAll('text').data(items).join('text')
       .attr('x', (d) => Math.min(width - margin.right + 6, x(numberValue(d.value)) + 8)).attr('y', (d) => y(d.label) + y.bandwidth() / 2 + 4)
       .attr('fill', palette.ink).attr('font-size', chartFont.label).attr('font-weight', fontWeight('strong')).text((d) => labelText(valueLabel(d), 16));
-  };
-
-  const renderWaterfall = (element, payload) => {
-    const items = arr(payload.data.items);
-    const totalLike = (item, index) => index === 0 || index === items.length - 1 || ['total', 'subtotal'].includes(String(item.kind ?? item.role ?? '').toLowerCase());
-    let running = 0;
-    const points = items.map((item, index) => {
-      const value = numberValue(item.value);
-      const isTotal = totalLike(item, index);
-      const from = isTotal ? 0 : running;
-      const to = isTotal ? value : running + value;
-      if (index === 0) running = value;
-      else if (!isTotal) running = to;
-      else running = value;
-      return { ...item, index, value, isTotal, from, to, low: Math.min(from, to), high: Math.max(from, to), cumulative: to };
-    });
-    const containerWidth = element.getBoundingClientRect().width || 760;
-    const compact = containerWidth < 640;
-    const { svg, width, height } = svgBase(element, compact ? 380 : 360);
-    const margin = compact ? { top: 54, right: 24, bottom: 104, left: 50 } : { top: 54, right: 38, bottom: 86, left: 62 };
-    const yMin = Math.min(0, d3.min(points, (d) => d.low) || 0);
-    const yMax = Math.max(1, d3.max(points, (d) => d.high) || 0);
-    const x = d3.scaleBand().domain(items.map((d) => d.label)).range([margin.left, width - margin.right]).padding(compact ? 0.26 : 0.32);
-    const y = d3.scaleLinear().domain([yMin, yMax]).nice().range([height - margin.bottom, margin.top]);
-    const defs = svg.append('defs');
-    const shadow = defs.append('filter').attr('id', `${payload.id}-waterfall-shadow`).attr('x', '-18%').attr('y', '-28%').attr('width', '136%').attr('height', '156%');
-    shadow.append('feDropShadow').attr('dx', 0).attr('dy', 4).attr('stdDeviation', 4).attr('flood-color', 'rgba(51,48,46,0.14)');
-    svg.append('rect')
-      .attr('x', margin.left)
-      .attr('y', margin.top)
-      .attr('width', width - margin.left - margin.right)
-      .attr('height', height - margin.top - margin.bottom)
-      .attr('rx', 18)
-      .attr('fill', 'rgba(255,250,245,0.55)')
-      .attr('stroke', 'none');
-    svg.append('line')
-      .attr('x1', margin.left + 8)
-      .attr('x2', width - margin.right - 8)
-      .attr('y1', y(0))
-      .attr('y2', y(0))
-      .attr('stroke', palette.border)
-      .attr('stroke-width', 1.4)
-      .attr('stroke-dasharray', '4 5');
-    svg.append('text')
-      .attr('x', margin.left + 10)
-      .attr('y', margin.top - 18)
-      .attr('fill', palette.muted)
-      .attr('font-size', chartFont.small)
-      .attr('font-weight', fontWeight('label'))
-      .attr('letter-spacing', chartFont.tracking.subtle)
-      .text('Waterfall bridge');
-    svg.append('text')
-      .attr('x', width - margin.right - 10)
-      .attr('y', margin.top - 18)
-      .attr('text-anchor', 'end')
-      .attr('fill', palette.muted)
-      .attr('font-size', chartFont.small)
-      .attr('font-weight', fontWeight('strong'))
-      .text(`${labelText(points[0]?.label ?? 'Start', 14)} → ${labelText(points.at(-1)?.label ?? 'End', 14)}`);
-    axisLeft(svg, y, margin.left);
-    svg.selectAll('.tick text').attr('font-size', chartFont.small);
-    const connectors = points.slice(0, -1).map((point, index) => ({ from: point, to: points[index + 1] }));
-    svg.append('g').selectAll('line.waterfall-connector').data(connectors).join('line')
-      .attr('class', 'waterfall-connector')
-      .attr('x1', (d) => x(d.from.label) + x.bandwidth())
-      .attr('x2', (d) => x(d.to.label))
-      .attr('y1', (d) => y(d.from.to))
-      .attr('y2', (d) => y(d.from.to))
-      .attr('stroke', palette.muted)
-      .attr('stroke-width', 1.4)
-      .attr('stroke-dasharray', '5 5')
-      .attr('opacity', 0.7);
-    const bars = svg.append('g').selectAll('g.waterfall-step').data(points).join('g')
-      .attr('class', 'waterfall-step');
-    bars.append('rect')
-      .attr('class', (d) => `waterfall-bar ${d.isTotal ? 'waterfall-total' : d.value < 0 ? 'waterfall-negative' : 'waterfall-positive'}`)
-      .attr('x', (d) => x(d.label))
-      .attr('width', x.bandwidth())
-      .attr('y', (d) => y(d.high))
-      .attr('height', (d) => Math.max(4, y(d.low) - y(d.high)))
-      .attr('fill', (d) => d.isTotal ? palette.claret : d.value < 0 ? palette.risk : colorForTone(d.tone ?? 'positive'))
-      .attr('stroke', '#fff7ef')
-      .attr('stroke-width', 2.5)
-      .attr('rx', 8);
-    bars.append('text')
-      .attr('x', (d) => x(d.label) + x.bandwidth() / 2)
-      .attr('y', (d) => {
-        const barTop = y(d.high);
-        const barBottom = y(d.low);
-        const inside = barBottom - barTop > 28;
-        if (inside) return barTop + (barBottom - barTop) / 2 + 5;
-        return d.value < 0 ? barBottom + 14 : barTop - 8;
-      })
-      .attr('text-anchor', 'middle')
-      .attr('fill', (d) => y(d.low) - y(d.high) > 28 ? '#fff7ef' : palette.ink)
-      .attr('font-size', compact ? chartFont.size.caption : chartFont.small)
-      .attr('font-weight', fontWeight('emphasis'))
-      .text((d) => labelText(valueLabel(d) || d.value, 9));
-    bars.append('text')
-      .attr('x', (d) => x(d.label) + x.bandwidth() / 2)
-      .attr('y', height - margin.bottom + 24)
-      .attr('text-anchor', 'middle')
-      .attr('fill', palette.ink)
-      .attr('font-size', compact ? chartFont.size.tiny : chartFont.small)
-      .attr('font-weight', fontWeight('strong'))
-      .each(function(d) {
-        renderWrappedText(d3.select(this), d.label, { maxChars: compact ? 8 : 10, maxLines: 2, lineHeight: chartFont.lineHeight.compact });
-      });
-    bars.append('text')
-      .attr('x', (d) => x(d.label) + x.bandwidth() / 2)
-      .attr('y', height - margin.bottom + (compact ? 54 : 50))
-      .attr('text-anchor', 'middle')
-      .attr('fill', palette.muted)
-      .attr('font-size', compact ? chartFont.size.micro : chartFont.size.tiny)
-      .attr('font-weight', fontWeight('strong'))
-      .text((d) => d.isTotal ? 'total' : d.value < 0 ? 'drag' : 'lift');
-    bars.each(function(d) { addTitle(d3.select(this), `${d.label}: ${valueLabel(d) || d.value}; cumulative ${d.to}`); });
-    withTooltip(bars, (d) => tooltipHtml(d.label, [d.isTotal ? `Total: ${valueLabel(d) || d.value}` : `Change: ${valueLabel(d) || d.value}`, `Cumulative: ${d.to}`]));
   };
 
   const layoutRangeAxis = (axis) => {
@@ -2128,7 +2025,6 @@ const chartPayloadJson = chartPayload
     pyramid: renderPyramid,
     'journey-map': renderJourneyMap,
     kpi: renderKpi,
-    waterfall: renderWaterfall,
     range: renderRange,
     bar: renderBar,
     matrix: renderHeatmap,
@@ -2159,7 +2055,7 @@ const chartPayloadJson = chartPayload
     } catch (error) {
       console.error(`[FigureRenderer] Failed to render ${payload?.id ?? payload?.type ?? 'figure'}`, error);
       d3.select(element).selectAll('*').remove();
-      d3.select(element).append('div').attr('class', 'figure-render-error').text('Figure could not be rendered.');
+      d3.select(element).append('div').attr('class', 'figure-render-error').text(element.dataset.errorLabel);
       return null;
     }
   };
@@ -2281,7 +2177,7 @@ const chartPayloadJson = chartPayload
   :global(.timeline-print-events) { display: none; }
   .d3-figure { position: relative; width: 100%; min-height: 0; margin: var(--space-3) 0; overflow: visible; }
   .d3-figure[data-render-state='pending'] { min-height: clamp(12rem, 34vh, 20rem); border-radius: var(--radius-card, 0.5rem); background: linear-gradient(110deg, rgba(212,196,184,0.12), rgba(255,250,245,0.52), rgba(212,196,184,0.12)); }
-  .d3-figure[data-render-state='pending']::before { content: 'Loading figure…'; position: absolute; inset: 0; display: grid; place-items: center; color: var(--caption-gray); font-family: var(--font-sans); font-size: var(--chart-fs-caption); }
+  .d3-figure[data-render-state='pending']::before { content: attr(data-loading-label); position: absolute; inset: 0; display: grid; place-items: center; color: var(--caption-gray); font-family: var(--font-sans); font-size: var(--chart-fs-caption); }
   .d3-figure svg text { pointer-events: none; user-select: none; }
   .d3-figure .is-hovered rect, .d3-figure .is-hovered circle, .d3-figure .is-hovered polygon, .d3-figure rect.is-hovered, .d3-figure circle.is-hovered, .d3-figure polygon.is-hovered { filter: none; stroke-width: 2.4px; }
   :global(.d3-chart-tooltip) { --tooltip-font: var(--chart-fs-caption, clamp(0.76rem, 0.25vw + 0.72rem, 0.9rem)); --tooltip-pointer-x: 1.4rem; position: fixed; z-index: 1000; display: grid; gap: 0.34rem; width: max-content; max-width: min(24rem, calc(100vw - 1.5rem)); border: 1px solid color-mix(in srgb, var(--claret) 18%, var(--rule)); border-radius: var(--radius-card, 0.5rem); background: color-mix(in srgb, var(--surface-paper) 94%, white); color: var(--ink-page); padding: 0.72rem 0.82rem; font-family: var(--font-sans); font-size: var(--tooltip-font); line-height: var(--chart-leading-caption, 1.36); box-shadow: none; opacity: 0; pointer-events: none; transform: translate3d(0, 0.35rem, 0) scale(0.98); transform-origin: var(--tooltip-pointer-x) top; transition: opacity 120ms ease, transform 120ms ease; }
