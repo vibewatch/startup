@@ -78,6 +78,14 @@ export function figureItemNotes(item) {
   ].filter((value) => typeof value === 'string' && value.trim()))];
 }
 
+export function graphItemNotes(item) {
+  return [...new Set([
+    item.displayValue ?? item.value, item.unit, ...figureValueNotes(item),
+    ...[item.risk, item.segment].filter(value => typeof value === 'string' && value.trim()),
+  ].filter(value => value != null && value !== '')
+    .map(value => typeof value === 'object' ? JSON.stringify(value) : String(value)))];
+}
+
 export function stackLayerDetails(data) {
   const content = (value) => {
     if (value == null) return [];
@@ -193,7 +201,7 @@ export function flowTopology(data) {
 }
 
 export function withFlowTopology(figure) {
-  return figure.type === 'flow' ? { ...figure, _flowTopology: flowTopology(figure.data) } : figure;
+  return figure.type === 'flow' || figure.type === 'dag' ? { ...figure, _flowTopology: flowTopology(figure.data) } : figure;
 }
 
 export function flowRelationshipTable(data, topology, { nodeLabel, connectionLabel, sourceLabel, targetLabel, contextLabel }) {
@@ -205,9 +213,7 @@ export function flowRelationshipTable(data, topology, { nodeLabel, connectionLab
     const name = text(node.label ?? node.name ?? node.id ?? `#${index + 1}`);
     return node.id != null && text(node.id) !== name ? `${name} [${text(node.id)}]` : name;
   };
-  const context = (item) => [...new Set([
-    item.displayValue ?? item.value, item.unit, ...figureValueNotes(item),
-  ].filter((value) => value != null && value !== '').map(text))].join('\n');
+  const context = (item) => graphItemNotes(item).join('\n');
   const endpoint = (value, index) => index == null ? text(value) : label(nodes[index], index);
   return {
     columns: [sourceLabel, targetLabel, contextLabel],

@@ -12,7 +12,7 @@ import { KNOWN_DIMENSIONS, WARNING_DIMENSIONS } from './validation-catalog.mjs';
 import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
 import { checkRefreshReadback, refreshArtifactsAreInSync } from './refresh-readback.mjs';
 import { reportsDir } from './utils.mjs';
-import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, matrixCellText, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails, waterfallValueTable, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
+import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, graphItemNotes, matrixCellText, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails, waterfallValueTable, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
 import { isTranslatableLeaf, TRANSLATE_PATHS } from '../../translate-zh/scripts/whitelist.mjs';
 import { asArray, asRecord, claimRefs } from '../../../../website/src/lib/report-types.ts';
 import { t } from '../../../../website/src/lib/i18n.ts';
@@ -703,6 +703,58 @@ test('implicit flow details retain full qualifications without inventing explici
   assert.equal(table.rows[0].values[2], '0\nUSD\nFull summary\nNot a forecast');
   assert.equal(table.rows[1].values[1], null);
   assert.equal(Object.hasOwn(data, 'edges'), false);
+});
+
+test('DAG qualifications preserve distinct aliases, risk prose, values and explicit blanks without mutation', () => {
+  const item = Object.freeze({
+    detail: '', description: 'Company claim', details: 'Not independently verified',
+    note: 'Company claim', notes: 'Historical scope', risk: 'License may change', segment: 'Enterprise only',
+    value: 0, unit: 'USD', body: 'Unsupported sidecar', claimRefs: ['CE001'],
+  });
+  const before = structuredClone(item);
+  assert.deepEqual(graphItemNotes(item), [
+    '0', 'USD', 'Company claim', 'Not independently verified', 'Historical scope', 'License may change', 'Enterprise only',
+  ]);
+  assert.deepEqual(item, before);
+  assert.deepEqual(graphItemNotes({ displayValue: '', value: 12, detail: 'Scope' }), ['Scope']);
+  assert.deepEqual(graphItemNotes({ detail: 'First', description: 'Second', risk: 'First' }), ['First', 'Second']);
+  assert.deepEqual(graphItemNotes({ value: false, notes: { text: 'Unsupported nested prose' } }), ['false']);
+});
+
+test('DAG topology and supplements preserve label-only Chinese endpoints, risk notes and edge qualifications', () => {
+  const figure = { type: 'dag', data: {
+    nodes: [{ label: 'First', risk: 'Not guaranteed' }, { label: 'Second', description: 'Limited scope' }],
+    edges: [{ from: 'First', to: 'Second', label: 'Connection', relationship: 'Authored relationship', detail: 'May fail' }],
+  } };
+  const before = structuredClone(figure);
+  const prepared = withFlowTopology(figure);
+  assert.deepEqual(figure, before);
+  const translated = { ...prepared, data: { ...prepared.data, nodes: [
+    { label: '起点', risk: '不保证' }, { label: '终点', description: '范围有限' },
+  ] } };
+  const table = flowRelationshipTable(translated.data, translated._flowTopology, {
+    nodeLabel: '节点', connectionLabel: '连接', sourceLabel: '节点 / 起点', targetLabel: '终点', contextLabel: '说明',
+  });
+  assert.equal(table.rows[0].values[2], '不保证');
+  assert.equal(table.rows[1].values[2], '范围有限');
+  assert.deepEqual(table.rows[2].values, ['起点', '终点', 'Connection\nAuthored relationship\nMay fail']);
+});
+
+test('DAG supplements retain evidence and print qualifications instead of relying on hover or shrunken diagrams', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const dag = source.slice(source.indexOf('const renderDag ='), source.indexOf('const renderFlow ='));
+  assert.match(source, /class="dag-details"/);
+  assert.match(source, /refs=\{claimRefs\(dagItems\[index\]\)\}/);
+  assert.match(source, /dagDetails\.rows\.map/);
+  assert.match(dag, /notes: graphItemNotes\(node\)/);
+  assert.match(dag, /notes: graphItemNotes\(edge\)/);
+  assert.match(dag, /\.\.\.edge\.notes/);
+  assert.match(dag, /\.\.\.node\.notes/);
+  assert.match(dag, /payload\.dagTopology\.endpoints\[index\]/);
+  const print = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
+  assert.match(print, /:global\(\.native-figure:has\(\.chart-dag\)\)/);
+  assert.match(print, /:global\(\.chart-dag > svg\)/);
+  assert.match(source, /\.dag-details :global\(td\) \{ white-space: pre-line;/);
 });
 
 test('report evidence links retain every declared reference in order without mutating the input', () => {

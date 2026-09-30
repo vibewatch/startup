@@ -1027,6 +1027,14 @@ unchanged endpoint identifiers must not be translated to repair a display issue.
 For ordered flow diagrams, also inspect the supplemental node/connection table:
 full node text, values, units and qualifications must remain visible on-page and
 in print even when diagram labels are shortened. Check the full tooltip text.
+DAG diagrams also retain an ordered node/connection table, including distinct
+description/detail aliases, risk prose and edge qualifications. Resolve endpoints
+from English before merging overlays; do not translate identifiers or guess
+missing links. Check node and edge hover/tap text, each item's ordered evidence
+links, and the mobile table's actual `td::before` labels. In print the readable
+table replaces the scaled diagram; verify full row text, row pagination and the
+complete figure caveat in physical PDFs. Unsupported legacy sidecars still need
+separate source/translation review; this display contract does not certify them.
 Funnel figures display ordered stage-value tables without deriving conversion
 rates or shared population, unit or time assumptions. Preserve explicitly
 authored rates and qualifications. Verify stage labels, raw values, units,
