@@ -1036,7 +1036,12 @@ renderer-generated percentages.
 Waterfall figures likewise display ordered source-value tables rather than
 inferring additive steps or cumulative totals. Preserve every raw value, unit,
 qualification and any declared `kind` / `role`, including conflicting or unfamiliar
-role strings. Keep the localized no-inference notice visible on screen and in
+role strings. Other authored `type`, `isTotal`, `category`, `direction`, `status`,
+`base` and `cumulative` fields also remain literal metadata, not instructions to
+recompute a bridge or validate its assumptions. With evidence enabled, retain each
+value's own ordered claim links; hide those evidence-only rows when disabled and
+in print. Evidence labels follow the value-table label precedence. Keep the
+localized no-inference notice visible on screen and in
 print. Check physical PDFs: each value card must keep its label, value, declared
 roles and context together when the card fits on one page. A final financing tranche must not become a total merely because it is
 last; declared totals also remain authored values, not recalculated results.

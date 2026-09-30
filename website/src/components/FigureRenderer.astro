@@ -36,7 +36,7 @@ const chartData = funnel ? funnelStageTable(data, {
   valueLabel: t('reportFigureValue', locale), contextLabel: t('reportFigureContext', locale),
 }) : waterfall ? waterfallValueTable(data, {
   valueLabel: t('reportFigureValue', locale), contextLabel: t('reportFigureContext', locale),
-  roleLabel: t('reportWaterfallRoles', locale),
+  metadataLabel: t('reportWaterfallMetadata', locale),
 }) : relationshipTable ? flowRelationshipTable(data, flow, {
   nodeLabel: t('reportFigureNode', locale), connectionLabel: t('reportFigureConnection', locale),
   sourceLabel: t('reportFigureNodeOrFrom', locale), targetLabel: t('reportFigureTo', locale),
@@ -54,16 +54,20 @@ const chartTypes = new Set(RENDERED_FIGURE_TYPES);
 const usesD3Chart = chartTypes.has(type);
 const itemLabel = t('reportFigureItem', locale);
 const stackDetails = authoredType === 'stack' ? stackLayerDetails(data) : [];
-const evidenceItems = authoredType === 'pyramid' ? [data.items, data.nodes]
+const evidenceItems = authoredType === 'waterfall' ? [data.items]
+  : authoredType === 'pyramid' ? [data.items, data.nodes]
   : authoredType === 'timeline'
     ? [data.items, data.nodes, data.layers, asRecord(asArray(data.series)[0]).points, data.points]
     : [];
 const itemEvidence = (evidenceItems.map((items) => asArray(items)).find((items) => items.length) ?? [])
   .map((item, index) => {
     const entry = asRecord(item);
-    return { label: String(entry.label ?? entry.name ?? entry.id ?? `${itemLabel} ${index + 1}`), refs: claimRefs(item) };
+    const label = authoredType === 'waterfall' ? entry.label ?? entry.name ?? `#${index + 1}`
+      : entry.label ?? entry.name ?? entry.id ?? `${itemLabel} ${index + 1}`;
+    return { label: String(label), refs: claimRefs(item) };
   }).filter((item) => item.refs.length);
-const evidenceClass = authoredType === 'timeline' ? 'timeline-event' : 'pyramid-layer';
+const evidenceClass = authoredType === 'timeline' ? 'timeline-event'
+  : authoredType === 'waterfall' ? 'waterfall-value' : 'pyramid-layer';
 const stackLabels: Record<string, string> = {
   overview: t('reportStackOverview', locale),
   items: t('reportStackItems', locale),
@@ -2172,7 +2176,8 @@ const chartPayloadJson = chartPayload
   .stack-layer-notes ul { margin: 0.2em 0; padding-left: 1.2em; }
   .flow-sequence-details :global(td) { white-space: pre-line; }
   .timeline-event-evidence > .timeline-event-reference,
-  .pyramid-layer-evidence > .pyramid-layer-reference { display: block; margin: var(--space-2) 0; }
+  .pyramid-layer-evidence > .pyramid-layer-reference,
+  .waterfall-value-evidence > .waterfall-value-reference { display: block; margin: var(--space-2) 0; }
   :global(.pyramid-print-layers) { display: none; }
   :global(.timeline-print-events) { display: none; }
   .d3-figure { position: relative; width: 100%; min-height: 0; margin: var(--space-3) 0; overflow: visible; }
