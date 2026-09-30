@@ -573,15 +573,26 @@ function equivalentTripledMetrics(source, target) {
       || /(?:超过|超出|不到|不足|接近|大约|约|至少|至多|最多|多于|少于)\s*\d+(?:\.\d+)?\s*(?:x\b|×|倍)|\d+(?:\.\d+)?\s*(?:x\b|×|倍)\s*(?:以上|以下|左右|上下|多|余)/iu.test(target)
       || /[-+−–—]\s*\d+(?:[.,]\d+)*\s*(?:x\b|×|倍)|\d+(?:[.,]\d+)*\s*(?:x\b|×|倍)\s*[-+−–—]/iu.test(quantities)
       || /[-+−–—]\s*[$€£¥₦]\s*\d|[(（]\s*[$€£¥₦]\s*\d+(?:[.,]\d+)*\s*[KMBT]?\s*[)）]/iu.test(quantities)) return false;
-  const expanded = source.replace(
+  const expandMonths = (text) => text.replace(
+    /(?<![\p{L}\p{N}_./@#+−–—-])([Jj]an|[Ff]eb|[Mm]ar|[Aa]pr|[Jj]un|[Jj]ul|[Aa]ug|[Ss]ept?|[Oo]ct|[Nn]ov|[Dd]ec)\.?\s+((?:19|20)\d{2})(?![\p{L}\p{N}_/]|[.-][\p{L}\p{N}])/gu,
+    (match, month, year, offset) => {
+      const before = text.slice(0, offset);
+      const prefix = before.match(/[A-Za-z]+\s*$/u)?.[0]?.trim();
+      if (/[\p{Sc}/@#]\s*$/u.test(before) || prefix && currencyAliasContext.test(prefix)) return match;
+      const fullMonth = calendarMonths.find((name) => name.startsWith(month.slice(0, 3).toLowerCase()));
+      return `${fullMonth} ${year}`;
+    },
+  );
+  const expanded = expandMonths(source).replace(
     /(?<![\w./@-])(?:tripled|tripling|triple(?=\s+(?:the|its|their|our)\b))\b(?![-/]|\.[a-z]|\s+(?:down|up)\b)/gi,
     '3x',
   );
   if (expanded === source || /\btripl(?:e|ed|ing)\b/i.test(expanded)) return false;
+  const expandedTarget = expandMonths(target);
   return [false, true].some((normalizeGroupedCounts) => {
     const options = { normalizeMonths: true, allowUnconverted: true, normalizeGroupedCounts };
     const sourceTokens = normalizedCountMetrics(expanded, options);
-    const targetTokens = normalizedCountMetrics(target, options);
+    const targetTokens = normalizedCountMetrics(expandedTarget, options);
     return sourceTokens && targetTokens && JSON.stringify(sourceTokens) === JSON.stringify(targetTokens);
   });
 }
