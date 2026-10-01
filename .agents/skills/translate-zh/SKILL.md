@@ -953,6 +953,13 @@ Distinct column `detail` / `note`, row `note`, and cell `detail` / `note` must s
 visible in desktop grids, mobile cards and print. Check that cell tooltips
 retain the matching row/column qualifications, without changing authored
 tones or promoting a fallback value over an explicit empty label.
+Matrix print uses 10pt row titles, values and qualifications, with 9pt column
+headings and figure captions. Check actual PDF glyph sizes and pagination:
+keep the caption with the first row and a fitting row card together. Let
+oversized cards break between complete cells rather than separating a column
+heading from its value and notes.
+Cells taller than a page must remain fully readable across pages, not clipped
+or shrunk. Check restored desktop/mobile layouts and pointer tooltips too.
 Timeline entries retain their full date, label and detail in visible text and
 shared hover/tap tooltips. Check both surfaces; an accessibility label alone
 does not prove the tooltip works, and print must retain the visible detail.

@@ -90,6 +90,31 @@ test('matrix grids and cards expose qualifications and preserve them in cell too
   assert.doesNotMatch(matrix, /'No data'|const cellDetail =/);
 });
 
+test('matrix print uses readable type and keeps fitting cards and cells together without capping tall figures', () => {
+  const source = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
+  const print = source.slice(source.indexOf('@media print'));
+  const figure = print.match(/:global\(\.native-figure:has\(\.chart-matrix\)\)\s*\{([^}]*)\}/)?.[1];
+  assert.ok(figure);
+  for (const key of ['body', 'caption', 'note']) {
+    assert.match(figure, new RegExp(`--chart-fs-${key}:\\s*10pt`));
+  }
+  assert.match(figure, /--chart-fs-kicker:\s*9pt/);
+  assert.doesNotMatch(figure, /break-inside:\s*auto|max-height|overflow:\s*hidden/);
+  assert.match(print, /:global\(\.native-figure\)\s*\{[^}]*break-inside:\s*avoid/);
+  assert.match(print, /:global\(\.native-figure:has\(\.chart-matrix\) > figcaption\)\s*\{[^}]*font-variant-caps:\s*normal/);
+  const card = print.match(/:global\(\.chart-matrix \.matrix-card\)\s*\{([^}]*)\}/)?.[1];
+  assert.ok(card);
+  assert.match(card, /display:\s*block/);
+  assert.match(card, /break-inside:\s*avoid/);
+  assert.match(card, /overflow-wrap:\s*anywhere/);
+  assert.match(print, /:global\(\.chart-matrix \.matrix-card-item\)\s*\{[^}]*break-inside:\s*avoid/);
+  for (const selector of ['.matrix-card-title', '.matrix-card > .matrix-row-note', '.matrix-card-key', '.matrix-column-detail']) {
+    const rule = print.slice(print.indexOf(`:global(.chart-matrix ${selector})`)).split('}')[0];
+    assert.ok(rule.startsWith(`:global(.chart-matrix ${selector})`), selector);
+    assert.match(rule, /break-after:\s*avoid/);
+  }
+});
+
 test('range axis keeps domain endpoints and only interior labels with measured clearance', () => {
   for (const [bounds, expected] of [
     [[], []],
@@ -307,7 +332,7 @@ test('waterfall rendering uses source-value tables and explicitly disclaims inve
   assert.match(t('reportWaterfallNotice', 'zh'), /不推定各项可以相加，不计算累计值/);
   const report = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
   const print = report.slice(report.indexOf('@media print'));
-  assert.match(print, /\.native-figure:has\(\.waterfall-comparison-notice\) \.matrix-card\)\s*\{[^}]*break-inside: avoid;[^}]*page-break-inside: avoid;/);
+  assert.match(print, /\.chart-matrix \.matrix-card\)\s*\{[^}]*break-inside: avoid;[^}]*page-break-inside: avoid;/);
 });
 
 test('refresh acceptance checks both reports and existing overlays without rewriting history', () => {
