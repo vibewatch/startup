@@ -905,6 +905,13 @@ For every prose leaf and every multi-word table cell:
 
 ## Table cells
 
+Standalone mechanical placeholders `unknown`, `none`, and `tbd` stay unchanged
+in report YAML and sparse bundles. Table and matrix/cohort cell renderers display
+them as `未知`, `无`, and `待定` in Chinese, including cell qualifications and
+tooltips. English spelling, larger prose strings, `n/a`, numbers and source
+metadata remain unchanged; `n/a` is not assumed to mean either not applicable or
+not available. Check the rendered cells rather than editing protected values.
+
 Most leaves in `full-report.yaml` come from `tables/[]/rows/[]/[]` —
 short cells, not sentences. They follow stricter rules than prose:
 

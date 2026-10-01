@@ -24,6 +24,19 @@ const BOOL_LABELS: Record<'true' | 'false', Record<Locale, string>> = {
   false: { en: 'No', zh: '否' },
 };
 
+const CELL_LABELS: Record<string, string> = {
+  unknown: ENUM_LABELS.unknown.zh,
+  none: '无',
+  tbd: '待定',
+};
+
+// These complete-cell placeholders are preserved by the translation exporter.
+export function displayCellText<T>(value: T, locale: Locale = 'en'): T | string {
+  if (locale !== 'zh' || typeof value !== 'string') return value;
+  const key = value.trim().toLowerCase();
+  return Object.hasOwn(CELL_LABELS, key) ? CELL_LABELS[key] : value;
+}
+
 export function displayLabel(value: unknown, locale: Locale = 'en'): string {
   if (value === null || value === undefined || value === '') return '';
   if (value instanceof Date && !Number.isNaN(value.valueOf())) return value.toISOString().slice(0, 10);
