@@ -449,6 +449,9 @@ profit is still an amount. This label exception does not clear a separate
 gross-profit amount in the same leaf or validate the underlying bank ratios.
 `claims in this table are minted locally` describes this report's evidence
 ledger, not a company assertion; a separate company claim still needs attribution.
+The same holds for `using locally minted claims rather than copied claim ids`:
+these are evidence statements and their identifiers. A separate company assertion
+or public-disclosure gap remains subject to its own check.
 Likewise, scores `synthesized from the cited claims` refer to cited evidence,
 not a new company assertion. `章节证据中未收录公开…` retains a single
 `no public … retained in chapter evidence` gap; it does not prove that no public
