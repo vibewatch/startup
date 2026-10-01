@@ -16,6 +16,46 @@ import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDi
 import { isTranslatableLeaf, TRANSLATE_PATHS } from '../../translate-zh/scripts/whitelist.mjs';
 import { asArray, asRecord, claimRefs } from '../../../../website/src/lib/report-types.ts';
 import { t } from '../../../../website/src/lib/i18n.ts';
+import { displayCellText } from '../../../../website/src/lib/display.ts';
+
+test('protected cell placeholders localize only whole strings in Chinese without changing source values', () => {
+  for (const [value, expected] of [
+    ['unknown', '未知'], [' Unknown ', '未知'], ['UNKNOWN', '未知'],
+    ['none', '无'], ['None', '无'], ['NONE', '无'],
+    ['tbd', '待定'], ['TBD', '待定'], ['\tTbd\n', '待定'],
+  ]) {
+    assert.equal(displayCellText(value, 'zh'), expected);
+    assert.equal(displayCellText(value, 'en'), value);
+    assert.equal(displayCellText(value), value);
+  }
+  for (const value of [
+    '', ' ', '未知', 'n/a', 'NA', 'null', '—', 'T+1', 'FY2026', '$130M', '0',
+    'unknown [CR001]', 'Unknown Ventures', 'None disclosed', 'TBD pending review',
+    'high', 'low', 'pass', 'https://example.com/unknown', 'constructor', '__proto__',
+    0, false, null, undefined, Object.freeze({ label: 'unknown', value: 0 }),
+    Object.freeze(['unknown']), new Date('2020-11-24T00:00:00Z'),
+  ]) {
+    assert.equal(displayCellText(value, 'zh'), value);
+    assert.equal(displayCellText(value, 'en'), value);
+  }
+});
+
+test('table, matrix and cohort display paths use shared placeholder labels without rewriting report data', () => {
+  const table = readFileSync('website/src/components/ReportBlock.astro', 'utf8');
+  assert.match(table, /splitClaimRefsText\(displayCellText\(cell, locale\)\)/);
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  assert.match(source, /id: chartId, type, data: chartData, itemLabel, locale/);
+  const matrix = source.slice(source.indexOf('const renderHeatmap ='), source.indexOf('const renderCohort ='));
+  assert.match(matrix, /displayCellText\(matrixCellText\(cell\), payload\.locale\)/);
+  assert.match(matrix, /\.map\(\(note\) => displayCellText\(note, payload\.locale\)\)/);
+  assert.equal((matrix.match(/\[d\.text, \.\.\.d\.tooltipNotes\]/g) ?? []).length, 2);
+  const cohort = source.slice(source.indexOf('const renderCohort ='), source.indexOf('const RENDERERS ='));
+  assert.match(cohort, /text: displayCellText\(safeText\(cell\), payload\.locale\)/);
+  assert.match(cohort, /detail: displayCellText\(cell\?\.detail, payload\.locale\)/);
+  assert.match(cohort, /const cellLabel = d\.text/);
+  assert.match(cohort, /addTitle\(.*d\.text \|\| d\.value/);
+  assert.match(cohort, /\[d\.text \|\| String\(d\.value\), d\.detail\]/);
+});
 
 test('table evidence references wrap instead of hiding later links and scrolling the whole table', () => {
   const table = readFileSync('website/src/components/DataTable.astro', 'utf8');

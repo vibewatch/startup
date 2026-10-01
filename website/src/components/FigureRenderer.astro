@@ -96,7 +96,7 @@ const dagLabels = {
 };
 const chartId = `chart-${String(figure?.id ?? 'figure').replace(/[^a-z0-9_-]/gi, '-')}-${Math.random().toString(36).slice(2, 9)}`;
 const chartPayload = usesD3Chart ? {
-  id: chartId, type, data: chartData, itemLabel,
+  id: chartId, type, data: chartData, itemLabel, locale,
   ...(flow ? { flowTopology: flow, flowLabels: { node: t('reportFigureNode', locale) } } : {}),
   ...(authoredType === 'stack' ? { stackLabels } : {}),
   ...(authoredType === 'range' ? { rangeLabels } : {}),
@@ -248,6 +248,7 @@ const chartPayloadJson = chartPayload
 
 <script>
   import * as d3 from 'd3';
+  import { displayCellText } from '../lib/display';
   import { figureDetail, figureItemNotes, figureValueNotes, flowTopology, formatRangeValue, graphItemNotes, matrixCellText, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails } from '../lib/figures.mjs';
 
   const palette = {
@@ -1898,8 +1899,9 @@ const chartPayloadJson = chartPayload
       return {
         label, notes,
         cells: arr(row?.values).map((cell, colIndex) => {
-          const rawText = matrixCellText(cell);
-          const cellNotes = figureItemNotes({ detail: cell?.detail, note: cell?.note });
+          const rawText = displayCellText(matrixCellText(cell), payload.locale);
+          const cellNotes = figureItemNotes({ detail: cell?.detail, note: cell?.note })
+            .map((note) => displayCellText(note, payload.locale));
           const column = columns[colIndex];
           return {
             row: label, column: column?.label ?? '', text: rawText || '—',
@@ -2000,16 +2002,20 @@ const chartPayloadJson = chartPayload
     const cells = [];
     rows.forEach((row) => arr(row.values).forEach((cell, colIndex) => {
       const value = Number(cell?.value ?? String(cell?.label ?? '').replace(/[^0-9.-]/g, ''));
-      cells.push({ row: row.label, column: columns[colIndex], cell, value: Number.isFinite(value) ? value : 0 });
+      cells.push({
+        row: row.label, column: columns[colIndex], cell, value: Number.isFinite(value) ? value : 0,
+        text: displayCellText(safeText(cell), payload.locale),
+        detail: displayCellText(cell?.detail, payload.locale),
+      });
     }));
     const g = svg.append('g').selectAll('g').data(cells).join('g');
     g.append('rect').attr('x', (d) => x(d.column)).attr('y', (d) => y(d.row)).attr('width', x.bandwidth()).attr('height', y.bandwidth()).attr('rx', 7).attr('fill', (d) => color(d.value)).attr('stroke', '#fff7ef').attr('stroke-width', 3);
     g.append('text').attr('x', (d) => x(d.column) + x.bandwidth() / 2).attr('y', (d) => y(d.row) + y.bandwidth() / 2).attr('text-anchor', 'middle').attr('dominant-baseline', 'middle').attr('fill', palette.ink).attr('font-size', chartFont.small).attr('font-weight', fontWeight('strong')).each(function(d) {
-      const cellLabel = safeText(d.cell) || (Number.isFinite(d.value) ? String(d.value) : '');
+      const cellLabel = d.text || (Number.isFinite(d.value) ? String(d.value) : '');
       renderWrappedText(d3.select(this), cellLabel, { maxChars: Math.max(7, Math.floor(x.bandwidth() / 7)), maxLines: Math.max(1, Math.floor(y.bandwidth() / 16)), lineHeight: chartFont.lineHeight.tight });
     });
-    g.each(function(d) { addTitle(d3.select(this), `${d.row} × ${d.column}: ${safeText(d.cell) || d.value}`); });
-    withTooltip(g, (d) => tooltipHtml(`${d.row} × ${d.column}`, [safeText(d.cell) || String(d.value), d.cell?.detail]));
+    g.each(function(d) { addTitle(d3.select(this), `${d.row} × ${d.column}: ${d.text || d.value}`); });
+    withTooltip(g, (d) => tooltipHtml(`${d.row} × ${d.column}`, [d.text || String(d.value), d.detail]));
   };
 
   const RENDERERS = {
