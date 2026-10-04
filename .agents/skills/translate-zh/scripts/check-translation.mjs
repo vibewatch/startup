@@ -69,6 +69,10 @@ const DESCRIPTOR_WORDS = new Set([
   'sample',
   'weights',
 ]);
+const PRESERVED_PROPER_NAMES = new Set([
+  'Tiger Global Management',
+  'IBM (watsonx Orchestrate)',
+]);
 
 function isTokenLike(value) {
   const s = value.trim();
@@ -102,6 +106,7 @@ function untranslatedMessage(en, zh) {
   // bundle-translatable.mjs skips it, and an empty ZH here is a faithful mirror.
   if (!source) return null;
   if (!target) return 'empty translation leaf; renderer would fall back to English';
+  if (source === target && PRESERVED_PROPER_NAMES.has(source)) return null;
   if (source === target && /[\u3400-\u9fff]/u.test(target)) return null;
   if (!/[A-Za-z]/.test(target)) return null;
   if (isTokenLike(target) || isProperNounPhrase(target) || isModelVersionList(target)) return null;

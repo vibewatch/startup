@@ -105,7 +105,7 @@ function hasCurrentPublishedRevision(reportFolder) {
   ));
 }
 
-function finalizerPrompt({ reportFolder, resultsPath, bundlePath, fetchLogPath, reviewFindingsPath, refreshContextPath, publishedDeepReview, previousFailures }) {
+function finalizerPrompt({ reportFolder, resultsPath, bundlePath, fetchLogPath, reviewFindingsPath, refreshContextPath, refreshReasonReviewPath, publishedDeepReview, previousFailures }) {
   return `Use the startup-research skill to converge and finalize the existing report at ${reportFolder}. Work directly; do not launch subagents or background agents.
 
 Inputs:
@@ -113,10 +113,12 @@ Inputs:
 - shared search bundle: ${bundlePath ?? 'not available for this published deep report'}
 - fetch trail: ${fetchLogPath}
 ${refreshContextPath ? `- refresh context: ${refreshContextPath}\n` : ''}
+${refreshReasonReviewPath ? `- approved public refresh-reason review: ${refreshReasonReviewPath}\n` : ''}
 
 Read references/rules.md and the report-meta section of references/contracts.md. ${publishedDeepReview
     ? 'This is a source review of a complete, current deep report, not worker convergence. Use the existing authored chapters and authentic source text supplied by the review. Missing evidence is a blocker: never manufacture worker results, a search bundle, or historical execution records.'
     : 'Inspect worker-results.json. Every worker process has already finished, so never rerun a passing worker or the whole worker command.'}
+${refreshReasonReviewPath ? '\nThe reason-review record preserves the original creation intent separately from the approved public description. Keep both cache files unchanged. Omit --refresh-reason when finalizing so the shared resolver uses the reviewed reason; do not copy the original instructions back into the report or create another reason review.\n' : ''}
 
 Binding sequence:
 1. Walk chapters in configured order and run normal then strict validation.
@@ -129,7 +131,7 @@ Binding sequence:
    ${publishedDeepReview
     ? 'Preserve existing search logs and source URLs. A later review fetch is not an original search execution; do not backfill or rewrite provenance. If a correction needs unavailable source evidence, report the blocker instead.'
     : 'Search logs must match actual search-bundle.json searches: literal query, response.provider, and response.results.length. retainedSourceRefs may name only chapter source URLs returned by that execution. Repair fabricated logs from the immutable execution records, not by changing the bundle or inventing new searches.'}
-4. Author report-meta.yaml only after every chapter passes strict, validate it, then run finalize-report.mjs${refreshContextPath ? ' with --refresh. Read the cached refresh context; preserve its target and reason. Do not hand-author revision fields: link-refresh must link the new report to its predecessor and synchronize the predecessor\'s preserved Chinese fields' : ''}.${reviewFindingsPath ? ' Preserve existing metadata except where a named finding or a corrected supporting claim requires an update.' : ''}
+4. Author report-meta.yaml only after every chapter passes strict, validate it, then run finalize-report.mjs${refreshContextPath ? ' with --refresh. Read the cached refresh context and any approved reason review; preserve the effective target and reason. Do not hand-author revision fields: link-refresh must link the new report to its predecessor and synchronize the predecessor\'s preserved Chinese fields' : ''}.${reviewFindingsPath ? ' Preserve existing metadata except where a named finding or a corrected supporting claim requires an update.' : ''}
 5. Fix only concrete validator findings${reviewFindingsPath ? ' or the supplied source-review findings' : ''} with already-prefetched evidence. Never invent a replacement source or fact to satisfy a gate. Do not inspect historical reports, modify repository code/config/docs, or use git.
 ${reviewFindingsPath ? `
 Source-review findings (human/agent review, not automated validator output):
@@ -140,7 +142,7 @@ Resolve every listed issue against ${publishedDeepReview ? 'the available authen
 ` : ''}
 ${previousFailures ? `The preceding attempt failed independent acceptance. Read the complete diagnostic file at ${previousFailures} and repair those concrete failures within the original scope; do not repeat already-applied changes.\n` : ''}
 
-Do not report success unless summary-card.yaml, evidence.yaml, full-report.yaml, and report-meta.yaml exist and finalize-report prints its pipeline-complete line.`;
+Do not report success unless summary-card.yaml, evidence.yaml, full-report.yaml, and report-meta.yaml exist and finalize-report prints its pipeline-complete line. The caller independently reruns every chapter's strict gate after each attempt; existing artifacts cannot override a strict failure. If the authorized review scope cannot clear a gate, report that conflict rather than changing unapproved fields.`;
 }
 
 function terminate(child) {
@@ -202,6 +204,7 @@ if (reviewFindingsPath) {
   }
 }
 const requiredFiles = [
+  ...getAnalysisArtifacts(config).map((chapter) => chapter.file),
   REPORT_META_FILE,
   FINAL_ARTIFACTS.evidence.file,
   FINAL_ARTIFACTS.fullReport.file,
@@ -212,8 +215,7 @@ const bundlePath = existsSync(join(cacheDir, 'search-bundle.json')) ? join(cache
 const missingWorkerInputs = !resultsPath || !bundlePath;
 const publishedDeepReview = Boolean(missingWorkerInputs && reviewFindings
   && config.activeResearchProfile === 'deep'
-  && [...requiredFiles, ...getAnalysisArtifacts(config).map((chapter) => chapter.file)]
-    .every((file) => existsSync(join(reportFolder, file)))
+  && requiredFiles.every((file) => existsSync(join(reportFolder, file)))
   && hasCurrentPublishedRevision(reportFolder));
 if (missingWorkerInputs && !publishedDeepReview) {
   console.error(`[run-report-finalizer] missing worker results or search bundle under ${cacheDir}; only an explicit source review of a complete, current deep report can proceed without worker inputs`);
@@ -222,6 +224,8 @@ if (missingWorkerInputs && !publishedDeepReview) {
 const context = runJson(contextScript, ['--order', '1', '--report-folder', reportFolder]);
 const refreshContextPath = existsSync(join(cacheDir, 'refresh-context.yaml'))
   ? join(cacheDir, 'refresh-context.yaml') : null;
+const refreshReasonReviewPath = existsSync(join(cacheDir, 'refresh-reason-review.json'))
+  ? join(cacheDir, 'refresh-reason-review.json') : null;
 const refreshContext = context.runCache?.refreshContext ?? null;
 if (refreshContextPath && (!refreshContext || refreshContext.mode !== 'refresh'
     || refreshContext.newRunId !== runId || !isRunId(refreshContext.refreshOfRunId)
@@ -258,6 +262,7 @@ const plan = {
   fetchLogPath,
   reviewFindingsPath,
   refreshContextPath,
+  refreshReasonReviewPath,
   refreshOfRunId: refreshContext?.refreshOfRunId ?? null,
   reviewFindingCount: reviewFindings?.issues.length ?? 0,
   exactReviewAssignmentCount: reviewReadback?.assignmentCount ?? 0,
@@ -302,7 +307,7 @@ async function runAttempt(attemptRoute, attemptNumber, previousFailures = null) 
     '--autopilot',
     '--excluded-tools', 'web_fetch',
     '--model', attemptRoute.model,
-    '-p', finalizerPrompt({ reportFolder, resultsPath, bundlePath, fetchLogPath, reviewFindingsPath, refreshContextPath, publishedDeepReview, previousFailures: previousFailuresPath }),
+    '-p', finalizerPrompt({ reportFolder, resultsPath, bundlePath, fetchLogPath, reviewFindingsPath, refreshContextPath, refreshReasonReviewPath, publishedDeepReview, previousFailures: previousFailuresPath }),
   ];
   if (attemptRoute.reasoningEffort !== 'default') {
     copilotArgs.splice(copilotArgs.indexOf('-p'), 0, '--effort', attemptRoute.reasoningEffort);
@@ -360,9 +365,33 @@ function inspectFinalReport() {
   if (missingFiles.length > 0) {
     return {
       missingFiles,
-      reportCheck: { ok: false, exitCode: null, error: '', reviewIssues, refreshIssues },
+      reportCheck: { ok: false, exitCode: null, error: '', chapterChecks: [], reviewIssues, refreshIssues },
     };
   }
+  const chapterChecks = getAnalysisArtifacts(config).map(({ file }) => {
+    const check = spawnSync(process.execPath, [
+      join(scriptDir, 'check-chapter.mjs'), reportFolder, file, '--strict', '--format', 'json',
+    ], {
+      cwd: repoRoot,
+      encoding: 'utf8',
+      env: { ...process.env, STARTUP_FETCH_LOG_PATH: fetchLogPath },
+    });
+    let validation = null;
+    let parseError = '';
+    try {
+      validation = JSON.parse(check.stdout);
+    } catch (error) {
+      parseError = `invalid JSON from strict chapter validation: ${error.message}`;
+    }
+    const ok = check.status === 0 && validation?.ok === true;
+    return {
+      file,
+      ok,
+      exitCode: check.status,
+      error: ok ? '' : (check.error?.message || check.stderr || parseError || 'strict chapter validation failed'),
+      validation,
+    };
+  });
   const check = spawnSync(process.execPath, [
     checkReportScript,
     reportFolder,
@@ -404,11 +433,16 @@ function inspectFinalReport() {
   return {
     missingFiles,
     reportCheck: {
-      ok: check.status === 0 && quoteIssues.length === 0 && queryIssues.length === 0 && reviewIssues.length === 0 && refreshIssues.length === 0,
+      ok: check.status === 0 && chapterChecks.every((chapter) => chapter.ok)
+        && quoteIssues.length === 0 && queryIssues.length === 0 && reviewIssues.length === 0 && refreshIssues.length === 0,
       exitCode: check.status,
-      error: check.status === 0
-        ? [...quoteIssues, ...queryIssues, ...reviewIssues, ...refreshIssues].map((issue) => `${issue.path}: ${issue.code}: ${issue.message}`).join('\n')
-        : (check.stderr || check.stdout),
+      error: [
+        ...chapterChecks.filter((chapter) => !chapter.ok).map((chapter) => `${chapter.file}: ${chapter.error}`),
+        ...(check.status === 0
+          ? [...quoteIssues, ...queryIssues, ...reviewIssues, ...refreshIssues].map((issue) => `${issue.path}: ${issue.code}: ${issue.message}`)
+          : [check.error?.message || check.stderr || check.stdout || `Report validation exited ${check.status}`]),
+      ].join('\n'),
+      chapterChecks,
       quoteIssues,
       queryIssues,
       reviewIssues,

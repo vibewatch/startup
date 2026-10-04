@@ -77,6 +77,374 @@ function entryMultiplePair({ header = 'Exit Multiple at 5.6B Entry', target = '�
 
 const checks = [
   ...[
+    ...[
+      ['No public pricing or customer-specific qualification data retained', '未留存公开定价或客户特定认证数据'],
+      ['No public quote sheet or exhaustive installed-base list retained', '未留存公开报价单或完整装机基础清单'],
+      ['No public production deployment references or quote examples retained', '未留存公开的生产部署引用或报价示例'],
+      ['No public software architecture or cybersecurity detail retained', '未留存公开的软件架构或网络安全细节'],
+      ['No public certification file package or field-service documentation retained', '未留存公开认证文件包或现场服务文档'],
+    ].map(([en, zh]) => [en, zh, false]),
+    ['No public quote sheet retained.', '已留存公开报价单。', true],
+    ['No public quote sheet retained.', '并非未留存公开报价单。', true],
+    ['No public quote sheet retained.', '不是 未留存公开报价单。', true],
+    ['No public quote sheet retained.', '未留存历史缓存，报价资料齐全。', true],
+    ['No public quote sheet retained; no public audit disclosed.', '未留存公开报价单；审计齐全。', true],
+    ['No public quote sheet exists.', '未留存公开报价单。', true],
+    ['No public customer information may be retained.', '未留存公开客户信息。', true],
+    ['No public quote sheet was not retained.', '未留存公开报价单。', true],
+    ['No public list price appeared in the retained materials.', '留存材料没有出现公开标价。', false],
+    ['No public list price appeared in the retained materials.', '留存材料并非没有出现公开标价。', true],
+    ['No public list price appeared in the retained materials.', '留存材料没有出现旧报价，公开标价齐全。', true],
+    ['No public list price appeared in the retained materials; no public audit exists.', '留存材料没有出现公开标价；审计齐全。', true],
+    ['No public list price exists.', '留存材料没有出现公开标价。', true],
+    ['The concentration risk is plausibly material but not yet quantifiable.', '集中度风险可能有实质影响，只是目前还无法量化。', false],
+    ['The concentration risk is not yet quantifiable.', '目前还无法量化。', false],
+    ['The concentration risk is not yet quantifiable.', '并非目前还无法量化。', true],
+    ['The concentration risk is not yet quantifiable.', '目前已经可以量化。', true],
+    ['The concentration risk is not yet quantifiable and revenue is not yet disclosed.', '目前还无法量化；收入齐全。', true],
+    ['The business is not yet profitable.', '目前还无法量化。', true],
+    ['No public customer-count or ACV disclosure by industrial vertical', '没有按工业垂直披露公开客户数或 ACV', false],
+    ['No public customer-count or ACV disclosure by industrial vertical', '并非没有按工业垂直披露公开客户数或 ACV', true],
+    ['No public customer-count or ACV disclosure by industrial vertical', '没有按时披露公开客户数或 ACV', true],
+    ['No public customer-count or ACV disclosure by industrial vertical', '没有按工业垂直披露公开收入或 ACV', true],
+    ['No public customer-count or ACV disclosure by industrial vertical; no public audit.', '没有按工业垂直披露公开客户数或 ACV；审计齐全。', true],
+    ['No public renewal, churn, or expansion-rate data for health-system accounts', '没有医疗系统账户的公开续约、流失或扩张率数据', false],
+    ['No public renewal data for health-system accounts.', '并非没有医疗系统账户的公开续约数据。', true],
+    ['No public renewal data for health-system accounts.', '没有医疗系统账户，但有公开续约数据。', true],
+    ['No public renewal data for health-system accounts; no public audit.', '没有医疗系统账户的公开续约数据；审计齐全。', true],
+    ['No public hardware failure-rate, MTBF, or warranty-claim disclosure', '未公开硬件故障率、MTBF 或保修索赔披露', false],
+    ['No public warranty-claim disclosure. The company claims superior reliability.', '未公开保修索赔信息；可靠性优越。', true],
+    ['The warranty provider claims disclosure is complete.', '保修供应商的披露完整。', true],
+    ['Positions are qualitative judgments derived from claim evidence, not statistical probabilities.', '位置是基于已列证据作出的定性判断，并非统计概率。', false],
+    ['Positions are qualitative judgments derived from claim evidence, not statistical probabilities.', '位置是基于已列证据作出的定性判断，是统计概率。', true],
+    ['Positions are qualitative judgments derived from claim evidence, not statistical probabilities.', '位置是基于已列证据作出的定性判断，并非不是统计概率。', true],
+    ['Positions are qualitative judgments derived from claim evidence, not statistical probabilities. The company claims superior accuracy.', '位置是基于已列证据作出的定性判断，并非统计概率；准确率更高。', true],
+    ['This table captures only controls visible in retained public materials; absence claims refer to missing public evidence, not to proof that private controls do not exist.', '本表只收录留存公开材料中可见的控制；“缺失”指缺少公开证据，不等于证明私有控制不存在。', false],
+    ['This table captures only controls visible in retained public materials; absence claims refer to missing public evidence, not to proof that private controls do not exist.', '本表只收录留存公开材料中可见的控制；“缺失”指缺少公开证据，证明私有控制不存在。', true],
+    ['This table captures only controls visible in retained public materials; absence claims refer to missing public evidence, not to proof that private controls do not exist.', '本表只收录留存公开材料中可见的控制；“缺失”指缺少公开证据，不等于证明私有控制存在。', true],
+    ['Absence claims refer to missing public evidence, not to proof that private controls do not exist. The company claims superior controls.', '“缺失”指缺少公开证据，不等于证明私有控制不存在；控制优越。', true],
+  ].flatMap(([en, zh, expected]) => ['prose', 'table', 'figure'].map(surface => {
+    const wrap = value => surface === 'prose' ? fullReport(value)
+      : surface === 'table' ? { ...fullReport(''), tables: [{ rows: [[value]] }] }
+        : { ...fullReport(''), figures: [{ approximationNotes: value }] };
+    const source = `${en.replace(/\.$/u, '')}. This is an observation from the retained diligence review.`;
+    const target = `${zh.replace(/。$/u, '')}。这是留存尽调报告中的观察。`;
+    return [
+      checkPairQuality(wrap(source), wrap(target), { strictEditor: true }).some(issue => issue.code === 'hedge-preservation') === expected,
+      `retained evidence, scope and nominal claims (${surface}): ${en} / ${zh}`,
+    ];
+  })),
+  ...[
+    ...[
+      ['Jan', 1], ['Feb', 2], ['Mar', 3], ['Apr', 4], ['Jun', 6], ['Jul', 7],
+      ['Aug', 8], ['Sep', 9], ['Sept', 9], ['Oct', 10], ['Nov', 11], ['Dec', 12],
+    ].flatMap(([month, number]) => [
+      [`Revenue tripled in ${month} 2025.`, `2025 年 ${number} 月收入增至 3 倍。`, false],
+      [`Revenue tripled in ${month.toLowerCase()}. 2025.`, `2025 年 ${number} 月收入增至 3 倍。`, false],
+    ]),
+    ['Flagship at commercial scale; tripled sales in 12 months to Apr 2025', '商业规模旗舰产品；截至 2025 年 4 月的 12 个月内，销售额增至原来的 3 倍', false],
+    ['Revenue tripled in Apr. 2025.', '2025 年 4 月收入增至 3 倍。', false],
+    ['Revenue tripled in May 2025.', '2025 年 5 月收入增至 3 倍。', false],
+    ['Revenue tripled in Jan 1900.', '1900 年 1 月收入增至 3 倍。', false],
+    ['Revenue tripled in Dec 2099.', '2099 年 12 月收入增至 3 倍。', false],
+    ['Revenue tripled in Apr 2025 and usage tripled in May 2026.', '2025 年 4 月收入增至 3 倍，2026 年 5 月用量增至 3 倍。', false],
+    ['Revenue tripled from $10M to $30M in Apr 2025.', '2025 年 4 月收入从 $10M 增至 $30M，为原来的 3 倍。', false],
+    ['Revenue tripled in Jan 2025 after 9007199254740993 events.', '9007199254740993 次事件后，2025 年 1 月收入增至 3 倍。', false],
+    ['Revenue tripled; filings: Aug 2015 ×2 and Sep 2016 ×3.', '收入增至 3 倍；备案：2015 年 8 月 ×2 及 2016 年 9 月 ×3。', false],
+    ['Revenue tripled in April 2025.', 'Apr. 2025 收入增至 3 倍。', false],
+    ['Revenue tripled in Apr 2025.', 'apr. 2025 收入增至 3 倍。', false],
+    ['Revenue tripled in Apr 2025 and usage tripled in May 2025.', '2025 年 4 月收入增至 3 倍，5 月用量增至 3 倍。', false],
+    ['Revenue tripled under the APR 2025 label.', 'APR 2025 口径下，收入增至 3 倍。', false],
+    ['Revenue tripled in Apr 2025.', '2025 年 5 月收入增至 3 倍。', true],
+    ['Revenue tripled in Apr 2025.', '2025 年收入增至 3 倍。', true],
+    ['Revenue tripled in Apr 2025.', '2026 年 4 月收入增至 3 倍。', true],
+    ['Revenue tripled in Apr 2025.', '2025 年 4 月收入增至 4 倍。', true],
+    ['Revenue tripled in Apr 2025 and usage tripled in May 2026.', '2025 年 5 月收入增至 3 倍，2026 年 4 月用量增至 3 倍。', true],
+    ['Revenue tripled in Apr 2025 after 12 deployments.', '13 次部署后，2025 年 4 月收入增至 3 倍。', true],
+    ['Revenue tripled in Jan 2025 after 9007199254740993 events.', '9007199254740992 次事件后，2025 年 1 月收入增至 3 倍。', true],
+    ['Revenue tripled from $10M to $30M in Apr 2025.', '2025 年 4 月收入从 $11M 增至 $30M，为原来的 3 倍。', true],
+    ['Revenue tripled from $10M to $30M in Apr 2025.', '2025 年 4 月收入从 €10M 增至 €30M，为原来的 3 倍。', true],
+    ['Revenue tripled in Apr 2025.', '2025 年 4 月收入增长 3 倍。', true],
+    ['Revenue tripled in Apr 2025.', '2025 年 4 月收入翻了 3 倍。', true],
+    ['Revenue tripled in Apr 2025.', '2025 年 4 月收入增至约 3 倍。', true],
+    ['Revenue tripled in Apr 2025.', '2025 年 4 月收入增至 3 倍以上。', true],
+    ['Revenue tripled in Apr 2025.', '2025 年 4 月收入增至 -3 倍。', true],
+    ['Revenue nearly tripled in Apr 2025.', '2025 年 4 月收入接近 3 倍。', true],
+    ['Revenue tripled and costs doubled in Apr 2025.', '2025 年 4 月收入增至 3 倍，成本上升。', true],
+    ['Revenue tripled; filings: Aug 2015 ×2.', '收入增至 3 倍；备案：2015 年 8 月 ×3。', true],
+    ['Revenue tripled under APR 2025.', '2025 年 4 月收入增至 3 倍。', true],
+    ['Revenue tripled under JAN 2025.', '2025 年 1 月收入增至 3 倍。', true],
+    ['Revenue tripled under ApR 2025.', '2025 年 4 月收入增至 3 倍。', true],
+    ['Revenue tripled under ſep 2025.', '2025 年 9 月收入增至 3 倍。', true],
+    ['Revenue tripled in Apr.2025.', '2025 年 4 月收入增至 3 倍。', true],
+    ['Revenue tripled under release-Apr 2025.', '2025 年 4 月收入增至 3 倍。', true],
+    ['Revenue tripled; file /Apr 2025.', '2025 年 4 月收入增至 3 倍。', true],
+    ['Revenue tripled; identifier @Apr 2025.', '2025 年 4 月收入增至 3 倍。', true],
+    ['Revenue tripled; file Apr 2025.pdf.', '2025 年 4 月收入增至 3 倍。', true],
+    ['Revenue tripled; path Apr 2025/data.', '2025 年 4 月收入增至 3 倍。', true],
+    ['Revenue tripled; version Apr 2025E.', '2025 年 4 月收入增至 3 倍。', true],
+    ['Revenue tripled; label $ Apr 2025 and 5M.', '2025 年 4 月收入增至 3 倍，另有 $5M。', true],
+    ['Revenue tripled; label GBP Apr 2025.', '2025 年 4 月收入增至 3 倍。', true],
+    ['Revenue tripled in April 2025.', 'May 2025 收入增至 3 倍。', true],
+    ['Revenue tripled in April 2025.', 'APR 2025 收入增至 3 倍。', true],
+    ['Revenue tripled in April. 2025.', '2025 年 4 月收入增至 3 倍。', true],
+    ['345 million transactions in Apr 2025.', '2025 年 4 月交易 3.45 亿笔。', true],
+    ['$5M revenue in Apr 2025.', '2025 年 4 月收入 500 万美元。', true],
+  ].flatMap(([en, zh, expected]) => ['prose', 'table', 'figure'].map(surface => {
+    const wrap = value => surface === 'prose' ? fullReport(value)
+      : surface === 'table' ? { ...fullReport(''), tables: [{ rows: [[value]] }] }
+        : { ...fullReport(''), figures: [{ data: { nodes: [{ label: value }] } }] };
+    return [
+      checkPairQuality(wrap(en), wrap(zh), { strictEditor: true }).some(issue => issue.code === 'metric-preservation') === expected,
+      `tripling month abbreviations retain dates, quantities and boundaries (${surface}): ${en} / ${zh}`,
+    ];
+  })),
+  [
+    checkPairQuality(
+      fullReport('Reportedly, revenue tripled in Apr 2025; the result remains an unaudited estimate.'),
+      fullReport('2025 年 4 月收入增至 3 倍；这一结果仍为未经审计的估算。'),
+      { strictEditor: true },
+    ).some(issue => issue.code === 'hedge-preservation'),
+    'tripling month equivalence must not clear an omitted reported attribution',
+  ],
+  ...[
+    ['Request top-10 ARR share and account-level expansion history.', '索取前 10 大客户 ARR 占比和账户级扩张历史。', false],
+    ['Top-20 ARR, renewal dates, margin profile, and hyperscaler exposure', '前 20 大 ARR、续约日期、利润率画像和超大规模云厂商敞口', false],
+    ['Request top 20 MRR concentration.', '索取前 20 大账户 MRR 集中度。', false],
+    ['Request top-10 GMV share.', '索取前 10 品牌 GMV 份额。', false],
+    ['Request top-10 TPV and revenue share.', '索取前 10 大客户 TPV 和收入占比。', false],
+    ['Request top-10 ARR concentration.', '索取前 10 大 ARR 集中度。', false],
+    ['No top-10 ARR share disclosed.', '未披露前 10 大客户 ARR 占比。', false],
+    ['Request top-10 ARR share and top-5 MRR share.', '索取前 10 大客户 ARR 占比和前 5 大客户 MRR 占比。', false],
+    ['Request top-10 ARR share and top-10 ARR concentration.', '索取前 10 大客户 ARR 占比及前 10 大客户 ARR 集中度。', false],
+    ['Request top-10 ARR share in April 2025 and May 2026 for 42 accounts totaling $5M.', '索取 2025 年 4 月和 2026 年 5 月的前 10 大客户 ARR 占比，覆盖 42 个账户，合计 $5M。', false],
+    ['Request top-9007199254740993 ARR share.', '索取前 9007199254740993 大客户 ARR 占比。', false],
+    ['Request top-10 ARR share.', '索取前 20 大客户 ARR 占比。', true],
+    ['Request top-10 ARR share.', '索取客户 ARR 占比。', true],
+    ['Request top-10 ARR share.', '索取前 10 大客户 MRR 占比。', true],
+    ['Request top-10 ARR share.', '索取 10 个客户的 ARR 占比。', true],
+    ['Request top-10 ARR share.', '索取此前 10 个客户的 ARR 占比。', true],
+    ['Request top-10 ARR share.', '索取此前 10 大客户 ARR 占比。', true],
+    ['Request top-10 ARR share.', '索取目前 10 大客户 ARR 占比。', true],
+    ['Request top-10 ARR share.', '索取的不是前 10 大客户 ARR 占比。', true],
+    ['Request not top-10 ARR share but a total.', '索取前 10 大客户 ARR 占比及总量。', true],
+    ['Request top-10 ARR share and top-10 ARR concentration.', '索取前 10 大客户 ARR 占比及集中度。', true],
+    ['Request top-10 ARR share and top-5 MRR share.', '索取前 5 大客户 ARR 占比及前 10 大客户 MRR 占比。', true],
+    ['Request top-10 ARR share for 42 accounts.', '索取 41 个账户的前 10 大客户 ARR 占比。', true],
+    ['Request top-10 ARR share totaling $5M.', '索取前 10 大客户 ARR 占比，合计 $6M。', true],
+    ['Request top-10 ARR share totaling $5M.', '索取前 10 大客户 ARR 占比，合计 €5M。', true],
+    ['Request top-10 ARR share totaling USD $5M.', '索取前 10 大客户 ARR 占比，合计 CAD $5M。', true],
+    ['Request top-10 ARR share totaling US$5M.', '索取前 10 大客户 ARR 占比，合计 AU$5M。', true],
+    ['Request top-10 ARR share totaling $5M.', '索取前 10 大客户 ARR 占比，合计 $5M 加元。', true],
+    ['Request top-10 ARR share totaling ₹5M.', '索取前 10 大客户 ARR 占比，合计 ₽5M。', true],
+    ['Request top-10 ARR share totaling ₹5M.', '索取前 10 大客户 ARR 占比，合计 ₹5M。', true],
+    ['Request top-10 ARR share across 5M to 10M users.', '索取前 10 大客户 ARR 占比，涉及 5M 和 10M 用户。', true],
+    ['Request top-10 ARR share; growth is 50%+.', '索取前 10 大客户 ARR 占比；增速为 50%。', true],
+    ['Request top-10 ARR share in April 2025.', '索取 2025 年 5 月的前 10 大客户 ARR 占比。', true],
+    ['Request top-10 ARR share in April 2025 and May 2026.', '索取 2025 年 5 月和 2026 年 4 月的前 10 大客户 ARR 占比。', true],
+    ['Request top-9007199254740993 ARR share.', '索取前 9007199254740992 大客户 ARR 占比。', true],
+    ['Request top-10 ARR share; cash flow was -$5M.', '索取前 10 大客户 ARR 占比；现金流为 $5M。', true],
+    ['Request top-10 ARR share; cash flow was ($5M).', '索取前 10 大客户 ARR 占比；现金流为 $5M。', true],
+    ['Request top-10 ARR share above 50%.', '索取前 10 大客户 ARR 占比 50%。', true],
+    ['Request at least top-10 ARR share.', '索取前 10 大客户 ARR 占比。', true],
+    ['Request top-10 ARR share.', '索取至少前 10 大客户 ARR 占比。', true],
+    ['Request top-10 ARR share.', '索取约前 10 大客户 ARR 占比。', true],
+    ['Request top-10 ARR share.', '索取前 10 大客户 ARR 占比超过 50%。', true],
+    ['Request top-10 and top-20 ARR share.', '索取前 10 和前 20 大客户 ARR 占比。', true],
+    ['Request top-10 ARR share.', '索取前十大客户 ARR 占比。', true],
+    ['Request top-01 ARR share.', '索取前 1 大客户 ARR 占比。', true],
+    ['Request top-2.5 ARR share.', '索取前 2.5 大客户 ARR 占比。', true],
+    ['Request top-10–20 ARR share.', '索取前 10–20 大客户 ARR 占比。', true],
+    ['Request top-10 to 20 ARR share.', '索取前 10 到 20 大客户 ARR 占比。', true],
+    ['The route is /top-10 ARR.', '索取前 10 大客户 ARR。', true],
+    ['The file is top-10 ARR.csv.', '索取前 10 大客户 ARR。', true],
+    ['There are 10 clients; request top-20 ARR share.', '客户为 1前20大ARR0。', true],
+    ['Request top-10 ARR share across 5M users.', '用户为 5前10大ARRM。', true],
+    ['Request top-10 ARR share totaling $5M.', '金额为 $前10大ARR5M。', true],
+    ['Request top-10 ARR share across 5M users.', '用户为 5 前10大ARR M。', true],
+    ['Request top-10 ARR share totaling $5M.', '金额为 $前10大ARR 5M。', true],
+  ].flatMap(([en, zh, expected]) => ['prose', 'table', 'figure'].map(surface => {
+    const wrap = value => surface === 'prose' ? fullReport(value)
+      : surface === 'table' ? { ...fullReport(''), tables: [{ rows: [[value]] }] }
+        : { ...fullReport(''), figures: [{ data: { nodes: [{ label: value }] } }] };
+    return [
+      checkPairQuality(wrap(en), wrap(zh), { strictEditor: true }).some(issue => issue.code === 'metric-preservation') === expected,
+      `ranked financial labels retain rank, metric identity and other quantities (${surface}): ${en} / ${zh}`,
+    ];
+  })),
+  [
+    checkPairQuality(
+      fullReport('Reportedly, top-10 ARR concentration remains an estimate rather than an audited result.'),
+      fullReport('前 10 大客户 ARR 集中度仍是估算，尚非审计结果。'),
+      { strictEditor: true },
+    ).some(issue => issue.code === 'hedge-preservation'),
+    'ranked-label normalization must not clear a separate omitted attribution',
+  ],
+  ...[
+    ['The credit gap is £65 billion.', '信贷缺口为 £65bn。', false],
+    ['The credit gap is £65bn.', '信贷缺口为 £65B。', false],
+    ['Revenue is €1.25 billion and funding is $2 billion.', '收入为 €1.25bn，融资为 $2bn。', false],
+    ['The amount is £1,500 billion.', '金额为 £1500bn。', false],
+    ['The amount is £9007199254740993 billion.', '金额为 £9007199254740993bn。', false],
+    ['The amount is £9007199254740993 billion.', '金额为 £9007199254740992bn。', true],
+    ['Revenue was £65 billion in April 2025.', '2025 年 4 月收入为 £65bn。', false],
+    ['The two markets each represent £65 billion, including 5 clients.', '两个市场分别为 £65bn，各含 5 个客户。', false],
+    ['Revenue is £65bn.', '收入为 £65。', true],
+    ['Revenue is £65bn.', '收入为 £65M。', true],
+    ['Revenue is £65bn.', '收入为 €65B。', true],
+    ['Revenue is £65 billion.', '收入为 £66bn。', true],
+    ['Revenue is £65 billion.', '收入为 £65bn2。', true],
+    ['Revenue is £65 billion.', '收入为 £65bn.5。', true],
+    ['Revenue is £65 billion.', '收入为 £65bna。', true],
+    ['Revenue is £650bn.', '收入为 £65,0B。', true],
+    ['Revenue is £650 billion.', '收入为 £65,0bn。', true],
+    ['Revenue is £65 billion.', '收入为 £65bps。', true],
+    ['Revenue is £65bn and funding is £65bn.', '收入与融资为 £65B。', true],
+    ['The market is £65 billion, including 5 clients.', '市场为 £65bn，含 6 个客户。', true],
+    ['Revenue was £65 billion in April 2025.', '2025 年 5 月收入为 £65bn。', true],
+    ['Revenue was £65 billion in April 2025 and £66 billion in May 2026.', '2025 年 5 月收入为 £65bn，2026 年 4 月收入为 £66bn。', true],
+    ['Losses are -£65bn.', '亏损为 -£65B。', true],
+    ['Revenue is £65bn.', '收入为 -£65B。', true],
+    ['Revenue is -£65B.', '收入为 £65bn。', true],
+    ['Losses are (£65bn).', '亏损为（£65B）。', true],
+    ['Revenue ranges from £1bn to £2bn.', '收入区间为 £1B 至 £2B。', true],
+    ['Revenue ranges from £1bn–£2bn.', '收入区间为 £1B–£2B。', true],
+    ['Revenue is £65bn+.', '收入为 £65B。', true],
+    ['Revenue is >£65bn.', '收入为 £65B。', true],
+    ['Revenue is approximately £65 billion.', '收入约为 £65bn。', true],
+    ['Funding is CAD $65bn.', '融资为 USD $65B。', true],
+    ['Funding is US$65B.', '融资为 AU$65bn。', true],
+    ['Funding is $65 billion.', '融资为 $65bn 加元。', true],
+    ['There are 1.5 million accounts.', '共有 1.5 百万账户。', false],
+    ['There are 1.5 million accounts and a £500k threshold.', '共有 1.5 百万账户，门槛为 £500k。', false],
+    ['There are 1.5 million accounts and 5 clients.', '共有 1.5 百万账户和 5 个客户。', false],
+    ['There are 1.5 million accounts.', '共有 1.6 百万账户。', true],
+    ['There are 1.5 million accounts and 5 clients.', '共有 1.5 百万账户和 6 个客户。', true],
+    ['There are -1.5 million accounts.', '共有 -1.5 百万账户。', true],
+    ['Revenue is £1.5 million.', '收入为 1.5 百万英镑。', true],
+  ].flatMap(([en, zh, expected]) => [false, true].flatMap(strictEditor => ['prose', 'table', 'figure'].map(surface => {
+    const wrap = value => surface === 'prose' ? fullReport(value)
+      : surface === 'table' ? { ...fullReport(''), tables: [{ rows: [[value]] }] }
+        : { ...fullReport(''), figures: [{ data: { nodes: [{ label: value }] } }] };
+    return [
+      checkPairQuality(wrap(en), wrap(zh), { strictEditor })
+        .some(issue => issue.code === 'metric-preservation') === (strictEditor && expected),
+      `bounded currency-billion aliases and million counts (${surface}, strict=${strictEditor}): ${en} / ${zh}`,
+    ];
+  }))),
+  ...[
+    ['Company campaign claim; independent verification not available in public sources', '公司活动口径；公开来源无法独立验证', false],
+    ['Company campaign claim; independent verification not available in public sources', '公司活动口径；公开来源无法独立验证。这是尽调观察。', false],
+    ['Company campaign claim; independent verification not available in public sources', '并非公司活动口径；公开来源无法独立验证', true],
+    ['Company campaign claim; independent verification not available in public sources', '这不是公司活动口径；公开来源无法独立验证', true],
+    ['Company campaign claim; independent verification not available in public sources', '活动表现很好；公开来源无法独立验证', true],
+    ['Independent campaign claim; independent verification not available in public sources', '公司活动口径；公开来源无法独立验证', true],
+    ['Company campaign claim; the company claims every account is active and profitable.', '公司活动口径；所有账户都活跃且盈利。', true],
+  ].flatMap(([en, zh, expected]) => [false, true].map(strictEditor => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor })
+      .some(issue => issue.code === 'hedge-preservation') === expected,
+    `campaign attribution stays source-scoped (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
+    ['Gross profit', '毛利率', true],
+    ['Gross profit', '毛利润率', true],
+    ['Gross profit', '毛利', false],
+    ['Gross profit', '毛利润', false],
+    ['Gross profit', '毛利额', false],
+    ['Revenue model bridge and missing gross-profit inputs', '收入模型链路与缺失的毛利率输入项', true],
+    ['Public evidence supports the operating sequence, but the conversion from activity to recognized revenue and gross profit is not disclosed.', '公开证据支持这条运营链路，但未披露业务活动如何转化为确认收入和毛利率。', true],
+    ['Public evidence supports the operating sequence, but the conversion from activity to recognized revenue and gross profit is not disclosed.', '公开证据支持这条运营链路，但未披露业务活动如何转化为确认收入和毛利。', false],
+    ['Gross profit and gross margin', '毛利和毛利率', false],
+    ['Gross profit margin', '毛利率', false],
+    ['Gross profit after risk margin', '扣除风险成本后的毛利率', false],
+    ['Gross profit after risk', '扣除风险成本后的毛利率', true],
+    ['Gross profit after risk; margin remains undisclosed', '扣除风险成本后的毛利率；利润率仍未披露', true],
+    ['Gross profit after risk margin and gross profit', '扣除风险成本后的毛利率', true],
+    ['Gross margin', '毛利率', false],
+    ['Gross profit divided by revenue', '毛利率', false],
+    ['The ratio of gross profit to revenue', '毛利率', false],
+    ['Gross profit / revenue', '毛利率', false],
+    ['Gross profit is 40% of revenue', '毛利率为 40%', false],
+  ].flatMap(([en, zh, expected]) => [false, true].flatMap(strictEditor => ['prose', 'table', 'figure'].map(surface => {
+    const wrap = value => surface === 'prose' ? fullReport(value)
+      : surface === 'table' ? { ...fullReport(''), tables: [{ rows: [[value]] }] }
+        : { ...fullReport(''), figures: [{ data: { nodes: [{ label: value }] } }] };
+    return [
+      checkPairQuality(wrap(en), wrap(zh), { strictEditor })
+        .some(issue => issue.code === 'metric-head-preservation') === (strictEditor && expected),
+      `gross-profit amounts remain distinct from margins in strict editing (${surface}, strict=${strictEditor}): ${en} / ${zh}`,
+    ];
+  }))),
+  ...[
+    ['Leverage excluding claims on central banks is disclosed.', '剔除对央行债权口径的杠杆率已披露。', false],
+    ['Leverage excluding central-bank claims is disclosed.', '剔除对央行债权口径的杠杆率已披露。', false],
+    ['The central bank claims that the lender faces no capital constraint.', '该贷款机构不存在资本约束。', true],
+    ['The central bank claims that the lender faces no capital constraint.', '央行声称该贷款机构不存在资本约束。', false],
+    ['Leverage excluding claims on central banks is disclosed; the company claims it faces no capital constraint.', '剔除对央行债权口径的杠杆率已披露；公司不存在资本约束。', true],
+    ['Leverage excluding claims on central banks is disclosed; the company claims it faces no capital constraint.', '剔除对央行债权口径的杠杆率已披露；公司声称不存在资本约束。', false],
+    ['Leverage excluding central-bank claims is disclosed and the company claims it faces no capital constraint.', '剔除对央行债权口径的杠杆率已披露，公司不存在资本约束。', true],
+    ['Leverage excluding central-bank claims is disclosed and the company claims it faces no capital constraint.', '剔除对央行债权口径的杠杆率已披露，公司声称不存在资本约束。', false],
+    ['The financing does not establish continuity of historical shareholder claims.', '融资不能证明历史股东权益延续。', false],
+    ['The financing does not establish continuity of shareholder claims.', '融资不能证明股东权益延续。', false],
+    ['The shareholder claims that every investor receives a guaranteed return.', '每位投资者都能获得保证回报。', true],
+    ['The shareholder claims that every investor receives a guaranteed return.', '股东声称每位投资者都能获得保证回报。', false],
+    ['The financing does not establish continuity of historical shareholder claims; the company claims every investor earns a guaranteed return.', '融资不能证明历史股东权益延续；每位投资者都能获得保证回报。', true],
+    ['The financing does not establish continuity of historical shareholder claims; the company claims every investor earns a guaranteed return.', '融资不能证明历史股东权益延续；公司声称每位投资者都能获得保证回报。', false],
+  ].flatMap(([en, zh, expected]) => [false, true].flatMap(strictEditor => ['prose', 'table'].map(surface => [
+    checkPairQuality(
+      surface === 'prose' ? fullReport(en) : { ...fullReport(''), tables: [{ rows: [[en]] }] },
+      surface === 'prose' ? fullReport(zh) : { ...fullReport(''), tables: [{ rows: [[zh]] }] },
+      { strictEditor },
+    ).some(issue => issue.code === 'hedge-preservation') === expected,
+    `financial claims nouns do not exempt a separate assertion (${surface}, strict=${strictEditor}): ${en} / ${zh}`,
+  ]))),
+  ...[
+    [
+      'This analysis uses an inference-led market lens, not a claim that Groq currently offers only inference.',
+      '本分析以推理业务为主线，但并不表明 Groq 目前仅提供推理服务。',
+      [
+        'Groq 目前仅提供推理服务。',
+        '并非不代表 Groq 目前仅提供推理服务。',
+        '不代表 Groq 目前仅提供训练服务。',
+        '不代表其他公司的业务；Groq 目前仅提供推理服务。',
+      ],
+    ],
+    [
+      'The ordering is an analytical dependency map, not a claim that every Groq workload traverses both LPU and NVIDIA hardware.',
+      '该排序是分析性的依赖关系图，不代表 Groq 的每种工作负载都会同时经过 LPU 和 NVIDIA 硬件。',
+      [
+        '该排序表明 Groq 的每种工作负载都会同时经过 LPU 和 NVIDIA 硬件。',
+        '并非不代表 Groq 的每种工作负载都会同时经过 LPU 和 NVIDIA 硬件。',
+        '不代表 Groq 的每种工作负载都会同时经过 LPU 和 CPU 硬件。',
+        '不代表其他公司的架构；Groq 的每种工作负载都会同时经过 LPU 和 NVIDIA 硬件。',
+      ],
+    ],
+    [
+      'No claim of fairness, post-money basis, investor returns or confirmed cash availability is established by the financing mark.',
+      '融资估值本身不能证明定价公允、投后口径、投资者回报或现金确实可用。',
+      [
+        '融资估值本身能证明定价公允、投后口径、投资者回报或现金确实可用。',
+        '并非融资估值本身不能证明定价公允、投后口径、投资者回报或现金确实可用。',
+        '收入规模本身不能证明定价公允、投后口径、投资者回报或现金确实可用。',
+        '融资估值本身不能证明定价公允、投后口径、投资者回报或现金已确认到账。',
+        '融资估值本身不能证明定价公允、投后口径或现金确实可用。',
+      ],
+    ],
+  ].flatMap(([en, faithful, unsafe]) => [
+    [en, faithful, false],
+    ...unsafe.map(zh => [en, zh, true]),
+    [`${en} The company claims every customer renews.`, `${faithful} 每个客户都续约。`, true],
+    [`${en} The company claims every customer renews.`, `${faithful} 公司声称每个客户都续约。`, false],
+    ['The company claims every customer renews. This assertion requires independent customer-cohort evidence.', faithful, true],
+  ].flatMap(([source, target, expected]) => [false, true].flatMap(strictEditor => ['prose', 'table'].map(surface => [
+    checkPairQuality(
+      surface === 'prose' ? fullReport(source) : { ...fullReport(''), tables: [{ rows: [[source]] }] },
+      surface === 'prose' ? fullReport(target) : { ...fullReport(''), tables: [{ rows: [[target]] }] },
+      { strictEditor },
+    ).some(issue => issue.code === 'hedge-preservation') === expected,
+    `scoped inference, hardware and financing disclaimers preserve predicates and separate assertions (${surface}, strict=${strictEditor}): ${source} / ${target}`,
+  ])))),
+  ...[
     ['Comparable copyright claims impose cost.', '类似版权索赔带来成本。'],
     ['The copyright claim resolved against the company.', '版权索赔以不利于公司的结果解决。'],
     ['Review copyright litigation and any similar claims.', '审阅版权诉讼及任何类似索赔。'],
@@ -134,6 +502,34 @@ const checks = [
       .some(issue => issue.code === 'hedge-preservation') === expected,
     `warranty-frequency requests and scoped segment disclosures retain their meanings (${surface}, strict=${strictEditor}): ${en} / ${zh}`,
   ]))),
+  ...[
+    ['No single public issue is a clear thesis-breaker today, but privacy consent controls and claims-reduction proof must be verified before underwriting aggressive growth. The report treats unsupported private metrics as diligence asks, not as assumed strengths.',
+      '当前尚无单一公开问题足以彻底推翻投资逻辑，但在将激进增长计入投资判断前，必须先核查隐私知情同意管控与理赔压降证据。本报告将缺乏支撑的未公开指标视为尽调问询项，而非预设为既有优势。', false],
+    ['Claims-reduction proof must be verified.', '必须核查理赔减少的证据。', false],
+    ['Reduced claims, safer driving, and better operations feed renewal', '理赔减少、驾驶更安全、运营更好，反过来推动续约', false],
+    ['The company claims reductions exceed 25%.', '减少幅度超过 25%。', true],
+    ['The company claims reduced costs.', '成本有所降低。', true],
+    ['The company claims a reduction in claims.', '理赔有所减少。', true],
+    ['Claims-reduction proof is required; the company claims every fleet benefits.', '需要理赔减少的证据；所有车队均能受益。', true],
+    ['Claims-reduction proof is required; the company claims every fleet benefits.', '需要理赔减少的证据；公司声称所有车队均能受益。', false],
+    ['Reduced claims, safer driving, and better operations feed renewal; the company claims it guarantees renewal.', '理赔减少、驾驶更安全、运营更好，推动续约；续约有保证。', true],
+    ['Reduced claims, safer driving, and better operations feed renewal; the company claims it guarantees renewal.', '理赔减少、驾驶更安全、运营更好，推动续约；公司声称续约有保证。', false],
+    ['The company claims reduced claims, safer driving, and better operations feed renewal.', '理赔减少、驾驶更安全、运营更好，推动续约。', true],
+    ['The company claims reduced claims, safer driving, and better operations feed renewal.', '公司声称，理赔减少、驾驶更安全、运营更好，推动续约。', false],
+    ['Reduced claims its customer outcomes are proven.', 'Reduced 的客户成效已经得到验证。', true],
+  ].flatMap(([en, zh, expected]) => [false, true].flatMap(strictEditor => ['callout', 'table', 'figure'].map(surface => {
+    const document = text => ({
+      ...fullReport(''),
+      ...(surface === 'callout' ? { chapters: [{ sections: [{ blocks: [{ type: 'callout', body: text }] }] }] }
+        : surface === 'table' ? { tables: [{ rows: [[text]] }] }
+          : { figures: [{ type: 'flow', data: { nodes: [{ id: 'n1', detail: text }] } }] }),
+    });
+    return [
+      checkPairQuality(document(`${en} This is a source-reviewed diligence observation.`), document(zh), { strictEditor })
+        .some(issue => issue.code === 'hedge-preservation') === expected,
+      `claims-reduction nouns must not erase assertion verbs (${surface}, strict=${strictEditor}): ${en} / ${zh}`,
+    ];
+  }))),
   ...[
     ['Dismissed with prejudice.', '有偏见驳回。', true],
     ['Voluntary dismissal with prejudice.', '自愿带偏见撤诉。', true],
@@ -735,6 +1131,14 @@ const checks = [
     ['All claims in this table\nare minted locally. Cash balance and burn are fully private.', '本表各项判断在本章内单独生成。现金余额和烧钱速度完全未公开。', false],
     ['All claims in this table are minted locally. The company claims national coverage.', '本表各项判断均单独生成。覆盖全国。', true],
     ['All claims in this table are minted locally. The company claims national coverage.', '本表各项判断均单独生成。公司声称覆盖全国。', false],
+    ['This table uses its own evidence, using locally minted claims rather than copied claim ids.', '本表使用本章单独建立的证据论断，而非复制其他章节的论断编号。', false],
+    ['This table uses its own evidence, using locally minted\nclaims rather than copied claim IDs.', '本表使用本章单独建立的证据论断，而非复制其他章节的论断编号。', false],
+    ['This table uses its own evidence, using locally minted claims rather than copied claim ids. The company claims national coverage.', '本表使用本章单独建立的证据论断，而非复制其他章节的论断编号。覆盖全国。', true],
+    ['This table uses its own evidence, using locally minted claims rather than copied claim ids. The company claims national coverage.', '本表使用本章单独建立的证据论断，而非复制其他章节的论断编号。公司声称覆盖全国。', false],
+    ['The company claims using locally minted claims rather than copied claim ids improves accuracy.', '使用本章单独建立的证据论断，而非复制论断编号，可以提高准确率。', true],
+    ['The company claims using locally minted claims rather than copied claim ids improves accuracy.', '公司声称使用本章单独建立的证据论断，而非复制论断编号，可以提高准确率。', false],
+    ['This table uses its own evidence, using locally minted claims rather than copied claim ids; no public cash data.', '本表使用本章单独建立的证据论断，而非复制其他章节的论断编号；现金数据已公开。', true],
+    ['The company claims locally minted software improves accuracy.', '本地生成的软件提高了准确率。', true],
     ['The company claims in this table that coverage is national.', '覆盖全国。', true],
     ['The company claims locally deployed software raises accuracy.', '本地部署的软件提高了准确率。', true],
     ['No public evidence available.', '公开证据缺失。', false],
@@ -1345,6 +1749,84 @@ const checks = [
     `dollar normalization must not accept changed amounts, currencies, counts, dates or unsupported signs/ranges: ${zh}`,
   ]),
   ...[
+    ['Annual administrative cost is 1.5 trillion dollars.', '每年行政成本为 1.5 万亿美元。', false],
+    ['Revenue is 50 million dollars.', '收入为 5000 万美元。', false],
+    ['Revenue is 1.234567890123 billion dollars.', '收入为 12.34567890123 亿美元。', false],
+    ['Revenue is 50 million dollars from 42 customers.', '收入为 5000 万美元，来自 42 家客户。', false],
+    ['Revenue is 50 million dollars; capital is 50 million dollars.', '收入为 5000 万美元；资本为 5000 万美元。', false],
+    ['April 2025 revenue was 50 million dollars; May 2026 revenue was 10 million dollars.', '2025 年 4 月收入为 5000 万美元；2026 年 5 月收入为 1000 万美元。', false],
+    ['Annual administrative cost is 1.5 trillion dollars.', '每年行政成本为 1.5 亿美元。', true],
+    ['Annual administrative cost is 1.5 trillion dollars.', '每年行政成本为 1.5 万亿元。', true],
+    ['Annual administrative cost is 1.5 trillion dollars.', '每年行政成本为 1.5 万亿加元。', true],
+    ['Revenue is 1.234567890123 billion dollars.', '收入为 12.34567890124 亿美元。', true],
+    ['Revenue is 50 million dollars from 42 customers.', '收入为 5000 万美元，来自 41 家客户。', true],
+    ['Revenue is 50 million dollars; capital is 50 million dollars.', '收入与资本为 5000 万美元。', true],
+    ['April 2025 revenue was 50 million dollars; May 2026 revenue was 10 million dollars.', '2025 年 5 月收入为 5000 万美元；2026 年 4 月收入为 1000 万美元。', true],
+    ['Revenue is -50 million dollars.', '收入为 5000 万美元。', true],
+    ['Revenue is 50 million dollars.', '收入为负 5000 万美元。', true],
+    ['Losses are (50 million dollars).', '亏损为 5000 万美元。', true],
+    ['Revenue ranges from 5 to 10 million dollars.', '收入为 5 至 1000 万美元。', true],
+    ['Revenue is CAD 50 million dollars.', '收入为 5000 万美元。', true],
+    ['Revenue is 50 million dollars (CAD).', '收入为 5000 万美元。', true],
+    ['Revenue is Canadian 50 million dollars.', '收入为 5000 万美元。', true],
+    ['Revenue is 50 million Australian dollars.', '收入为 5000 万美元。', true],
+    ['There are 1.5 million Dollar General customers.', '金额为 150 万美元。', true],
+  ].map(([en, zh, mismatch]) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor: true })
+      .some((issue) => issue.code === 'metric-preservation') === mismatch,
+    `English dollars suffixes retain exact amounts, currency, counts and paired dates: ${en} / ${zh}`,
+  ]),
+  ...[
+    ['The revenue mix is 50/50 enterprise and self-serve.', '企业与自助服务收入各占一半。', false],
+    ['The customer mix by revenue is approximately 50/50 enterprise and self-serve.', '企业与自助服务收入约各占一半。', false],
+    ['Revenue is split 50 / 50 between enterprise and self-serve.', '企业与自助服务收入各占一半。', false],
+    ['Revenue is split 50/50. Costs are split 50/50.', '两类收入各占一半。两类成本各占一半。', false],
+    ['The customer split is 50/50 across 42 customers.', '两类客户各占一半，共 42 家。', false],
+    ['The revenue split was 50/50 in April 2025 and May 2026.', '2025 年 4 月及 2026 年 5 月，两类收入各占一半。', false],
+    ['The split is 60/40.', '两类收入各占一半。', true],
+    ['The split is 50/50.', '两类收入分别占五成和四成。', true],
+    ['The split is 50/50.', '两类收入各占一半以上。', true],
+    ['The split is 50/50.', '两类收入并非各占一半。', true],
+    ['The split is 50/50.', '两类收入各占一半并非事实。', true],
+    ['The split is not 50/50.', '两类收入各占一半。', true],
+    ['A 50/50 split is not established.', '两类收入各占一半。', true],
+    ["A 50/50 split isn't established.", '两类收入各占一半。', true],
+    ['A 50/50 split isn’t established.', '两类收入各占一半。', true],
+    ['A 50/50 split cannot be confirmed.', '两类收入各占一半。', true],
+    ['The split is 50/50.', '两类收入各占一半尚无证据。', true],
+    ['There is no basis to decide whether the revenue split is 50/50.', '两类收入各占一半。', true],
+    ['The company proceeds without evidence of a 50/50 split.', '两类收入各占一半。', true],
+    ['The 50/50 revenue split is unproven.', '两类收入各占一半。', true],
+    ['If the split is 50/50, the plan works.', '两类收入各占一半，计划可行。', true],
+    ['The split is 50/50.', '假设两类收入各占一半。', true],
+    ['The revenue split approaches 50/50.', '两类收入各占一半。', true],
+    ['The revenue split is 50/50.', '两类收入预计各占一半。', true],
+    ['Is the revenue split 50/50?', '两类收入各占一半。', true],
+    ['The revenue split is 50/50.', '两类收入各占一半？', true],
+    ['The split is at least 50/50.', '两类收入各占一半。', true],
+    ['Revenue is split 50/50. Costs are split 50/50.', '两类收入各占一半。', true],
+    ['The customer split is 50/50 across 42 customers.', '两类客户各占一半，共 41 家。', true],
+    ['The revenue split was 50/50 in April 2025 and May 2026.', '2025 年 5 月及 2026 年 4 月，两类收入各占一半。', true],
+    ['The formula is -50/50.', '两类收入各占一半。', true],
+    ['The split is 150/50.', '两类收入各占一半。', true],
+    ['The split is 50/500.', '两类收入各占一半。', true],
+    ['The split is 50/50/50.', '两类收入各占一半。', true],
+    ['The route is /50/50.', '两类收入各占一半。', true],
+    ['The file is 50/50.txt.', '两类收入各占一半。', true],
+    ['The URL is https://example.com/?ratio=50/50.', '两类收入各占一半。', true],
+    ['The balance is -$5M and the split is 50/50.', '余额为 $5M，两类收入各占一半。', true],
+    ['There are 25 clients and the revenue split is 50/50.', '客户共有 2各占一半5 家。', true],
+    ['The split is 50/50 across 5M users.', '用户数为 5各占一半M。', true],
+    ['The balance is $5M and the split is 50/50.', '余额为 $各占一半5M。', true],
+  ].map(([en, zh, mismatch]) => [
+    checkPairQuality(
+      fullReport(`The platform serves 1M users. ${en}`),
+      fullReport(`平台服务 100 万名用户。${zh}`),
+      { strictEditor: true },
+    ).some((issue) => issue.code === 'metric-preservation') === mismatch,
+    `explicit half-share aliases retain ratio occurrences and all other numeric anchors: ${en} / ${zh}`,
+  ]),
+  ...[
     ['No public conformity assessment has been disclosed for this system.', '未见任何公开的系统合规评估披露。', false],
     ['No public conformity assessment has been disclosed for this system.', '已见公开的系统合规评估披露。', true],
     ['No public conformity assessment has been disclosed for this system.', '并非未见任何公开的系统合规评估披露。', true],
@@ -1894,6 +2376,96 @@ const checks = [
       .some((issue) => issue.code === 'metric-preservation'),
     `normalization must preserve percentage endpoints, units, years and amounts: ${zh}`,
   ]),
+  ...[
+    ['A 60-percent-plus share.', '份额为 60%+。'],
+    ['A 60-plus percent share.', '份额为 60%+。'],
+    ['An 80-plus percent rate.', '比例为 80+%。'],
+    ['A 1 billion-member network and an 80-plus percent completion rate.', '1 billion 会员网络，完成率为 80+%。'],
+    ['A 12.50-percent-plus share.', '份额为 12.5%+。'],
+    ['A 60.12345678901234567-percent-plus share.', '份额为 60.12345678901234567%+。'],
+    ['60-PERCENT-PLUS share', '60%+ 份额'],
+    ['A 60-percent-plus share and a 60-plus percent share.', '两项份额分别为 60%+ 和 60%+。'],
+    ['April 2025: 60-percent-plus share; May 2026: 70-plus percent share.', '2025 年 4 月：60%+ 份额；2026 年 5 月：70%+ 份额。'],
+    ['From a 44 percent to a 60-plus percent share, with 19,600 stores.', '份额从 44% 到 60%+，有 19,600 家店铺。'],
+    ['A 60-percent-plus share, 80,000-plus merchants, and $7 billion in March 2024.', '份额为 60%+，商户为 80,000+，2024 年 3 月为 $7 billion。'],
+    ['A 60-percent-plus share, SAR 21 billion and $10 billion.', '份额为 60%+，SAR 21 billion 和 $10 billion。'],
+    ['The route is /60-percent-plus/details.', '路径为 /60-percent-plus/details。'],
+    ['The identifier is plan60-plus percent.', '标识符为 plan60-plus percent。'],
+  ].flatMap(([en, zh]) => [
+    [fullReport(en), fullReport(zh)],
+    [en, zh].map(text => ({
+      ...fullReport(''), tables: [{ rows: [[text]] }],
+      figures: [{ summary: text }],
+    })),
+  ].map(([en, zh]) => [
+    !checkPairQuality(en, zh, { strictEditor: true }).some(issue => issue.code === 'metric-preservation'),
+    `bounded percentage aliases retain values, bounds, occurrences and numeric context: ${JSON.stringify(zh)}`,
+  ])),
+  ...[
+    ['A 60-percent-plus share.', '份额为 60%。'],
+    ['A 60-plus percent share.', '份额为 60。'],
+    ['A 60-percent-plus share.', '份额为 61%+。'],
+    ['A 60-percent-plus share.', '份额为 61+%。'],
+    ['A 60-percent-plus share.', '份额为 60+。'],
+    ['A 60-percent-plus share.', '份额为 -60+%。'],
+    ['A 60-percent-plus share.', '份额为 60+% 以下。'],
+    ['A 60-percent-plus share.', '份额为 60%−。'],
+    ['A 60-percent-plus share.', '份额为 60%+ 以下。'],
+    ['A 60-percent-plus share.', '份额为 -60%+。'],
+    ['A 60-percent-plus share.', '份额为 $60%+。'],
+    ['A 60-percent-plus share.', '份额并非 60%+。'],
+    ['A 60-percent-plus share.', '如果份额达到 60%+。'],
+    ['A 60-percent-plus share.', '份额为 60%+，另有 10 家。'],
+    ['A 60-percent-plus share.', '份额为 60%+10%。'],
+    ['A 60-percent-plus share.', '份额为 60%++。'],
+    ['A 60-percent-plus share.', '份额为 160%+。'],
+    ['A 60.50-percent-plus share.', '份额为 60%+。'],
+    ['A 60.12345678901234567-percent-plus share.', '份额为 60.12345678901234568%+。'],
+    ['A 60-percent-plus share.', '份额为 1,060%+。'],
+    ['A 60-percent-plus share and a 60-plus percent share.', '份额为 60%+。'],
+    ['A 60-percent-plus share and a 44 percent rate.', '份额为 60%，比例为 44%+。'],
+    ['A 60-percent-plus share with 10 stores.', '份额为 60%+，有 11 家店铺。'],
+    ['A 60-percent-plus share with 10 and 10 stores.', '份额为 60%+，有 10 家店铺。'],
+    ['April 2025: 60-percent-plus share.', '2025 年 5 月：60%+ 份额。'],
+    ['April 2025: 60-percent-plus share.', '2025 年：60%+ 份额。'],
+    ['April 2025: 60-percent-plus share.', '2026 年 4 月：60%+ 份额。'],
+    ['April 2025: 60-percent-plus share; May 2026: 70-plus percent share.', '2025 年 5 月：60%+ 份额；2026 年 4 月：70%+ 份额。'],
+    ['A 60-percent-plus share, $7 billion and 80,000-plus merchants.', '份额为 60%+，$7 billion 和 80,000 家商户。'],
+    ['A 60-percent-plus share and -$7M.', '份额为 60%+，$7M。'],
+    ['A 60-percent-plus share and ($7M).', '份额为 60%+，$7M。'],
+    ['A 60-percent-plus share and -10 stores.', '份额为 60%+，10 家店铺。'],
+    ['A 60-percent-plus share and minus 10 stores.', '份额为 60%+，10 家店铺。'],
+    ['A 60-percent-plus share and >10 stores.', '份额为 60%+，<10 家店铺。'],
+    ['A 60-percent-plus share and SAR 21 billion.', '份额为 60%+，USD 21 billion。'],
+    ['A 60-percent-plus share and 21 billion SAR.', '份额为 60%+，21 billion QAR。'],
+    ['A 60-percent-plus share and SAR21B.', '份额为 60%+，QAR21B。'],
+    ['A 60-percent-plus share and ₹10.', '份额为 60%+，10。'],
+    ['A 60-percent-plus share and $10M.', '份额为 60%+，1000 万欧元。'],
+    ['A 60-percent-plus share and 30 million stores.', '份额为 60%，3000 万家店铺。'],
+    ['A 60-percent-plus share and $10M.', '份额为 60%，1000 万美元。'],
+    ['A 60-percent-plus share; revenue tripled.', '份额为 60%，收入变为 3 倍。'],
+    ['A 60-percent-plus share and a 50/50 split.', '份额为 60%，其余各占一半。'],
+    ['A 60-percent-plus share; 4× champion.', '份额为 60%，4 次夺冠。'],
+    ['A 60-percent-plus share; top-10 ARR.', '份额为 60%，前 10 大客户 ARR。'],
+    ['A 60-percent-plus share and £65bn.', '份额为 60%，£65B。'],
+    ['A -60-percent-plus share.', '份额为 60%+。'],
+    ['A $60-percent-plus share.', '份额为 60%+。'],
+    ['A SAR 60-percent-plus share.', '份额为 60%+。'],
+    ['A 40-60-percent-plus share.', '份额为 40–60%+。'],
+    ['A 40 to 60-plus percent share.', '份额为 40 至 60%+。'],
+    ['Not a 60-percent-plus share.', '份额为 60%+。'],
+    ['If the share reaches 60-percent-plus.', '份额为 60%+。'],
+    ['If revenue reaches $7.5M and the share reaches 60-percent-plus.', '收入为 $7.5M，份额为 60%+。'],
+    ['If 12,000 stores produce a 60-percent-plus share.', '12,000 家店铺带来 60%+ 份额。'],
+    ['The share could reach 60-percent-plus.', '份额为 60%+。'],
+    ['Assuming a 60-percent-plus share.', '份额为 60%+。'],
+    ['A 60-percent-plus share.', '路径为 /60%+/details。'],
+    ['A 60-percent-plus share.', '标识符为 plan60%+。'],
+  ].map(([en, zh]) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor: true })
+      .some(issue => issue.code === 'metric-preservation'),
+    `bounded percentage comparison must not clear unsupported or changed anchors: ${en} -> ${zh}`,
+  ]),
   [
     checkPairQuality(
       fullReport('No public cloud LLM API allowed; no public renewal data has been disclosed.'),
@@ -2140,6 +2712,8 @@ const checks = [
       && untranslatedMessage('Andreessen Horowitz (a16z)', 'Andreessen Horowitz (a16z)') === null
       && untranslatedMessage('Gao Jiyang (高继扬)', 'Gao Jiyang (高继扬)') === null
       && untranslatedMessage('Physical Intelligence (π0)', 'Physical Intelligence (π0)') === null
+      && untranslatedMessage('Tiger Global Management', 'Tiger Global Management') === null
+      && untranslatedMessage('IBM (watsonx Orchestrate)', 'IBM (watsonx Orchestrate)') === null
       && untranslatedMessage('Lee Seung-gun (SG Lee / 이승건)', 'Lee Seung-gun（SG Lee / 이승건）') === null
       && untranslatedMessage('16λ DWDM, 112G PAM4', '16λ DWDM、112G PAM4') === null,
     'strict structural check rejected a Latin proper noun',
@@ -2148,6 +2722,14 @@ const checks = [
     untranslatedMessage('Global retail sample', 'Global retail sample') === 'translation is identical to the English source',
     'strict structural check accepted untranslated ordinary descriptors',
   ],
+  ...[
+    'Tiger Global Management enterprise platform',
+    'IBM (watsonx Orchestrate) platform',
+    'eesel AI / Groq Pricing Guide',
+  ].map(value => [
+    untranslatedMessage(value, value) === 'translation is identical to the English source',
+    `proper-name recognition must not exempt adjacent descriptors: ${value}`,
+  ]),
   ...negativeExamples.map(([en, faithful, reversed]) => [
     checkPairQuality(fullReport(en), fullReport(faithful)).length === 0
       && checkPairQuality(fullReport(en), fullReport(reversed))
@@ -2180,6 +2762,7 @@ if (failures.length) {
 }
 
 const fixtureRoot = mkdtempSync(join(tmpdir(), 'translation-quality-audit-'));
+const approvalRoot = mkdtempSync(join(tmpdir(), 'translation-publication-approval-'));
 try {
   const reportDir = join(fixtureRoot, 'reports', 'audit-fixture');
   mkdirSync(reportDir, { recursive: true });
@@ -2233,7 +2816,8 @@ try {
   assert.ok(verificationIndex >= 0 && publicationIndex > verificationIndex);
   const verificationStep = workflowSteps[verificationIndex];
   assert.equal(verificationStep['continue-on-error'], undefined);
-  for (const runId of ['publication-clean', 'publication-candidate']) {
+  const publicationIds = ['20990101000000-publication-clean', '20990101000001-publication-candidate'];
+  for (const runId of publicationIds) {
     const folder = join(fixtureRoot, 'reports', runId);
     mkdirSync(folder);
     for (const artifact of ['summary-card', 'full-report']) {
@@ -2243,17 +2827,37 @@ try {
       writeFileSync(join(folder, `${artifact}.zh.yaml`), JSON.stringify(document(clean.subtitle)));
     }
   }
+  const guardDirectory = join(fixtureRoot, '.agents/skills/startup-research/scripts');
+  mkdirSync(guardDirectory, { recursive: true });
+  cpSync(new URL('../../startup-research/scripts/check-publication-scope.mjs', import.meta.url),
+    join(guardDirectory, 'check-publication-scope.mjs'));
+  writeFileSync(join(fixtureRoot, '.gitignore'), 'node_modules\n');
+  for (const args of [
+    ['init', '--quiet', '--initial-branch=main'], ['config', 'user.name', 'Translation Fixture'],
+    ['config', 'user.email', 'translation@example.invalid'], ['config', 'commit.gpgsign', 'false'],
+    ['config', 'core.hooksPath', '/dev/null'], ['add', '.'], ['commit', '--quiet', '-m', 'Publication fixture baseline'],
+  ]) {
+    const child = spawnSync('git', args, { cwd: fixtureRoot, encoding: 'utf8' });
+    assert.equal(child.status, 0, child.stderr);
+  }
+  const publicationEnv = { ...process.env, REPORT_IDS: publicationIds.join('\n'), RUNNER_TEMP: approvalRoot };
+  const snapshotStep = workflowSteps.find(step => step.name === 'Snapshot publication approval inputs');
+  assert.ok(snapshotStep);
+  const snapshot = spawnSync('bash', ['-c', snapshotStep.run], {
+    cwd: fixtureRoot, encoding: 'utf8', env: publicationEnv,
+  });
+  assert.equal(snapshot.status, 0, snapshot.stderr);
   for (const artifact of ['summary-card', 'full-report']) {
     const document = (text) => artifact === 'full-report'
       ? fullReport(text) : { artifact, summary: { headline: text } };
-    const target = join(fixtureRoot, 'reports/publication-candidate', `${artifact}.zh.yaml`);
+    const target = join(fixtureRoot, 'reports', publicationIds[1], `${artifact}.zh.yaml`);
     for (const [candidate, expectedStatus] of [[changedMetric, 1], [strictTranslationese, 1], [clean, 0]]) {
       assert.equal(checkPairQuality(document(source.subtitle), document(candidate.subtitle))
         .filter((issue) => issue.severity === 'error').length, 0, 'fixture must pass the weaker draft gate');
       writeFileSync(target, JSON.stringify(document(candidate.subtitle)));
       const child = spawnSync('bash', ['-c', verificationStep.run], {
         cwd: fixtureRoot, encoding: 'utf8',
-        env: { ...process.env, REPORT_IDS: 'publication-clean\npublication-candidate' },
+        env: publicationEnv,
       });
       assert.equal(child.status, expectedStatus, `${artifact}: ${child.stdout}\n${child.stderr}`);
       if (expectedStatus !== 0) assert.ok(child.stderr.includes(`publication-candidate/${artifact}.zh.yaml`), child.stderr);
@@ -2270,6 +2874,15 @@ try {
       { title: 'Additional context', rows: [['Existing label', 'Existing detail'], ['New label', 'New detail']] },
       { title: 'Placeholder controls', rows: [['', '', null, '$10M', '—']] },
     ],
+    figures: [{
+      type: 'pyramid',
+      data: { nodes: [
+        { id: 'N001', label: 'TAM', value: 0, displayValue: '', score: 13, unit: '%',
+          notes: 'Limited sample; not independently audited.', claimRefs: ['C001'] },
+        { label: 'SAM', notes: { id: 'protected-note-id', description: 'Protected nested content' } },
+        { label: 'SOM', notes: ['Protected nested array'] },
+      ] },
+    }],
   };
   const repairTranslation = {
     ...fullReport('原有说明'),
@@ -2280,6 +2893,7 @@ try {
       { title: '补充背景', rows: [['原有项目', '原有说明']] },
       { title: '占位符对照', rows: [['—', '未经支持的旧断言', '—', '—', '未经支持的旧断言']] },
     ],
+    figures: structuredClone(repairSource.figures),
   };
   const repairSummary = { artifact: 'summary-card', summary: { headline: 'Existing conclusion' } };
   const repairSummaryZh = { artifact: 'summary-card', summary: { headline: '原有结论' } };
@@ -2303,6 +2917,8 @@ try {
   assert.equal(seeded.tables[0].rows[1][1], null, 'new mechanical source must not inherit stale translated prose');
   assert.equal(seeded.tables[0].rows.length, 2, 'removed source rows must not enter the cache');
   assert.deepEqual(seeded.tables[1].rows[1], ['New label', 'New detail'], 'new source rows must remain editable');
+  assert.equal(seeded.figures[0].data.nodes[0].notes, repairSource.figures[0].data.nodes[0].notes,
+    'newly whitelisted node notes must enter the editable sparse bundle');
   assert.equal(yaml.load(readFileSync(join(repairCache, 'summary-card.translate.yaml'), 'utf8')).summary.headline, '原有结论');
   for (const [file, doc] of Object.entries(repairInputs)) assert.equal(readFileSync(join(repairDir, file), 'utf8'), JSON.stringify(doc));
   runRepair('lint-parts');
@@ -2313,6 +2929,7 @@ try {
   part.coverageNotes = '修正后补充的背景';
   part.tables[0].rows[0][1] = '当前入场价口径约 27.1x';
   part.tables[1].rows[1] = ['新增项目', '新增说明'];
+  part.figures[0].data.nodes[0].notes = '样本有限，未经独立审计。';
   writeFileSync(partPath, yaml.dump(part));
   runRepair('lint-parts');
   runRepair('finalize-full', '--keep-cache');
@@ -2324,6 +2941,10 @@ try {
   assert.deepEqual(repaired.tables[2].rows[0], ['—', '', null, '$10M', '—'],
     'only existing dash placeholders for blank strings may survive; stale prose, nulls and quantities follow English');
   assert.equal(repaired.slug, '', 'non-translatable blanks must remain exactly English');
+  const expectedFigures = structuredClone(repairSource.figures);
+  expectedFigures[0].data.nodes[0].notes = '样本有限，未经独立审计。';
+  assert.deepEqual(repaired.figures, expectedFigures,
+    'node-note translation must preserve values, explicit blanks, units, refs and structured sidecars');
   assert.equal(readFileSync(join(repairDir, 'full-report.yaml'), 'utf8'), JSON.stringify(repairSource));
 
   const batchSource = fullReport('Approximately $10M revenue in 2025 is not yet audited by an independent auditor.');
@@ -2484,6 +3105,7 @@ try {
   assert.equal(readFileSync(join(placeholdersDir, 'summary-card.yaml'), 'utf8'), JSON.stringify(placeholderSummary));
 } finally {
   rmSync(fixtureRoot, { recursive: true, force: true });
+  rmSync(approvalRoot, { recursive: true, force: true });
 }
 
 console.log('[check-translation-editor] ✓ source-anchored editor gates verified.');

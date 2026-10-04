@@ -20,6 +20,7 @@ import { existsSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { refreshArtifactsAreInSync } from './refresh-readback.mjs';
+import { loadRefreshContext, recordRefreshReasonReview } from './refresh-context.mjs';
 import {
   EXIT,
   SUMMARY_CARD_FILE,
@@ -44,7 +45,7 @@ const syncPreservedFieldsScript = resolve(
 );
 
 function usage() {
-  console.error('Usage: node .agents/skills/startup-research/scripts/link-refresh.mjs <new-report-folder> [--refresh-reason <text>] [--prepare-current]');
+  console.error('Usage: node .agents/skills/startup-research/scripts/link-refresh.mjs <new-report-folder> [--refresh-reason <text>] [--prepare-current] | <new-report-folder> --review-refresh-reason <text>');
   process.exit(EXIT.failure);
 }
 
@@ -57,16 +58,18 @@ function abort(message, code) {
 }
 
 function parseArgs(argv) {
-  const args = { folder: null, refreshReason: '', prepareCurrent: false };
+  const args = { folder: null, refreshReason: '', prepareCurrent: false, reviewedReason: null };
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === '--refresh-reason') args.refreshReason = argv[++i] ?? '';
+    else if (arg === '--review-refresh-reason') args.reviewedReason = argv[++i] ?? '';
     else if (arg === '--prepare-current') args.prepareCurrent = true;
     else if (arg.startsWith('-')) usage();
     else if (!args.folder) args.folder = arg;
     else usage();
   }
-  if (!args.folder) usage();
+  if (!args.folder || (args.reviewedReason !== null
+      && (!args.reviewedReason.trim() || args.reviewedReason.startsWith('--') || args.prepareCurrent || args.refreshReason))) usage();
   return args;
 }
 
@@ -236,7 +239,31 @@ const { folder: newFolder, runId: newRunId } = resolveReportFolder(args.folder);
 const { doc: newMeta } = readReportMeta(newFolder);
 const oldRunId = resolvePreviousRunId({ newRunId, newMeta });
 if (oldRunId === newRunId) abort('new report cannot refresh itself', EXIT.failure);
-const refreshReason = args.refreshReason || normalizeRevision(newMeta.revision).refreshReason || '';
+let refreshState;
+try {
+  refreshState = loadRefreshContext(newRunId);
+  if (args.reviewedReason !== null) {
+    assertFinalizedRun(newRunId, 'reason-reviewed report');
+    const revision = normalizeRevision(newMeta.revision);
+    if (newMeta.revision?.status !== 'current' || revision.supersededByRunId !== null || revision.refreshOfRunId !== oldRunId
+        || refreshState.originalContext?.refreshOfRunId !== oldRunId
+        || ![refreshState.originalContext?.refreshReason, refreshState.context?.refreshReason].includes(revision.refreshReason)) {
+      abort('reason review requires the existing current refresh relationship and original or reviewed reason', EXIT.failure);
+    }
+    if (!refreshState.review && !refreshArtifactsAreInSync(newFolder, revision)) {
+      abort('reason review requires synchronized current report artifacts', EXIT.failure);
+    }
+    recordRefreshReasonReview(newRunId, args.reviewedReason);
+    refreshState = loadRefreshContext(newRunId);
+  }
+  if (refreshState.review && args.refreshReason && args.refreshReason !== refreshState.context.refreshReason) {
+    abort('explicit refresh reason conflicts with the recorded review', EXIT.failure);
+  }
+} catch (error) {
+  abort(error.message, EXIT.failure);
+}
+const refreshReason = args.refreshReason
+  || (refreshState.review ? refreshState.context.refreshReason : normalizeRevision(newMeta.revision).refreshReason) || '';
 
 const currentChanged = setCurrentRevision({ newFolder, newRunId, oldRunId, refreshReason });
 console.log(`[refresh] current report ${newRunId} refreshOfRunId=${oldRunId}${currentChanged ? ' (updated)' : ' (already set)'}`);
@@ -245,8 +272,10 @@ if (args.prepareCurrent) {
   process.exit(EXIT.ok);
 }
 
-if (currentChanged) {
+if (currentChanged || args.reviewedReason !== null
+    || (refreshState.review && !refreshArtifactsAreInSync(newFolder, normalizeRevision(readReportMeta(newFolder).doc.revision)))) {
   runScript('build-report.mjs', [newFolder]);
+  runScript(syncPreservedFieldsScript, [newFolder]);
   runScript('check-report.mjs', [newFolder]);
 }
 

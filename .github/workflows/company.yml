@@ -78,6 +78,9 @@ jobs:
           npm ci || npm install --no-audit --no-fund
           npm install -g @github/copilot
 
+      - name: Snapshot publication approval inputs
+        run: node .agents/skills/startup-research/scripts/check-publication-scope.mjs snapshot "$RUNNER_TEMP/publication-approval" research
+
       - name: Restore curl-impersonate cache
         uses: actions/cache@v5
         with:
@@ -221,6 +224,9 @@ jobs:
               echo "- fetch-url trail empty"
             fi
           } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify generated output scope
+        run: node "$RUNNER_TEMP/publication-approval/check-publication-scope.mjs" verify "$RUNNER_TEMP/publication-approval"
 
       - name: Finalize complete generated report folders
         # Safety net: if Copilot wrote every chapter YAML plus report-meta.yaml
@@ -466,6 +472,7 @@ jobs:
           STARTUP_FETCH_LOG_PATH: ${{ github.workspace }}/.research-cache/_fetch-log.jsonl
         run: |
           set -euo pipefail
+          node "$RUNNER_TEMP/publication-approval/check-publication-scope.mjs" verify "$RUNNER_TEMP/publication-approval"
           npm run check:automation-config
           npm run check:workflow-config
           npm run check:revision-graph
@@ -478,8 +485,10 @@ jobs:
         env:
           SAFE_LABEL: ${{ steps.inputs.outputs.safeLabel }}
           GH_TOKEN: ${{ secrets.STARTUP_PAT }}
+          STARTUP_FETCH_LOG_PATH: ${{ github.workspace }}/.research-cache/_fetch-log.jsonl
         run: |
           set -euo pipefail
+          node "$RUNNER_TEMP/publication-approval/check-publication-scope.mjs" verify "$RUNNER_TEMP/publication-approval"
           git config user.name "startup-research-bot"
           git config user.email "startup-research-bot@users.noreply.github.com"
           BRANCH="${{ github.ref_name }}"
@@ -493,19 +502,32 @@ jobs:
             exit 0
           fi
           git commit -m "$MESSAGE"
+          validated_head="$(git rev-parse HEAD)"
 
-          # Each report run only writes its own reports/<runId>/ folder; there
-          # is no derived cross-report file. Parallel runs cannot conflict
-          # unless two runs picked the exact same runId+slug, so a plain
-          # rebase loop is sufficient.
+          # Upstream changes invalidate the previous publication approval.
           for attempt in 1 2 3; do
             echo "Push attempt $attempt/3 to $BRANCH"
             git fetch origin "$BRANCH"
-            if ! git rebase --autostash "origin/$BRANCH"; then
+            if ! git rebase "origin/$BRANCH"; then
               echo "Rebase failed; aborting and retrying." >&2
               git rebase --abort || true
               sleep $((attempt * 5))
               continue
+            fi
+            node "$RUNNER_TEMP/publication-approval/check-publication-scope.mjs" verify-inputs "$RUNNER_TEMP/publication-approval"
+            if [ "$(git rev-parse HEAD)" != "$validated_head" ]; then
+              if ! git diff --quiet "$validated_head" HEAD -- package.json package-lock.json; then
+                npm ci
+              fi
+              npm run check:automation-config
+              npm run check:workflow-config
+              npm run check:revision-graph
+              while IFS= read -r folder; do
+                [ -n "$folder" ] || continue
+                node .agents/skills/startup-research/scripts/check-report.mjs "reports/$folder" --contract --format compact
+              done < "$RUNNER_TEMP/reports-new.txt"
+              node "$RUNNER_TEMP/publication-approval/check-publication-scope.mjs" verify-inputs "$RUNNER_TEMP/publication-approval"
+              validated_head="$(git rev-parse HEAD)"
             fi
             if git push origin "HEAD:$BRANCH"; then
               echo "Pushed to $BRANCH on attempt $attempt."

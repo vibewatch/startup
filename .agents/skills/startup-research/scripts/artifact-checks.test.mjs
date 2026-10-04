@@ -12,9 +12,60 @@ import { KNOWN_DIMENSIONS, WARNING_DIMENSIONS } from './validation-catalog.mjs';
 import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
 import { checkRefreshReadback, refreshArtifactsAreInSync } from './refresh-readback.mjs';
 import { reportsDir } from './utils.mjs';
-import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, matrixCellText, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
+import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, graphItemNotes, matrixCellText, quadrantAxes, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails, waterfallValueTable, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
 import { isTranslatableLeaf, TRANSLATE_PATHS } from '../../translate-zh/scripts/whitelist.mjs';
-import { claimRefs } from '../../../../website/src/lib/report-types.ts';
+import { asArray, asRecord, claimRefs } from '../../../../website/src/lib/report-types.ts';
+import { t } from '../../../../website/src/lib/i18n.ts';
+import { displayCellText } from '../../../../website/src/lib/display.ts';
+
+test('protected cell placeholders localize only whole strings in Chinese without changing source values', () => {
+  for (const [value, expected] of [
+    ['unknown', '未知'], [' Unknown ', '未知'], ['UNKNOWN', '未知'],
+    ['none', '无'], ['None', '无'], ['NONE', '无'],
+    ['tbd', '待定'], ['TBD', '待定'], ['\tTbd\n', '待定'],
+  ]) {
+    assert.equal(displayCellText(value, 'zh'), expected);
+    assert.equal(displayCellText(value, 'en'), value);
+    assert.equal(displayCellText(value), value);
+  }
+  for (const value of [
+    '', ' ', '未知', 'n/a', 'NA', 'null', '—', 'T+1', 'FY2026', '$130M', '0',
+    'unknown [CR001]', 'Unknown Ventures', 'None disclosed', 'TBD pending review',
+    'high', 'low', 'pass', 'https://example.com/unknown', 'constructor', '__proto__',
+    0, false, null, undefined, Object.freeze({ label: 'unknown', value: 0 }),
+    Object.freeze(['unknown']), new Date('2020-11-24T00:00:00Z'),
+  ]) {
+    assert.equal(displayCellText(value, 'zh'), value);
+    assert.equal(displayCellText(value, 'en'), value);
+  }
+});
+
+test('table, matrix and cohort display paths use shared placeholder labels without rewriting report data', () => {
+  const table = readFileSync('website/src/components/ReportBlock.astro', 'utf8');
+  assert.match(table, /splitClaimRefsText\(displayCellText\(cell, locale\)\)/);
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  assert.match(source, /id: chartId, type, data: chartData, itemLabel, locale/);
+  const matrix = source.slice(source.indexOf('const renderHeatmap ='), source.indexOf('const renderCohort ='));
+  assert.match(matrix, /displayCellText\(matrixCellText\(cell\), payload\.locale\)/);
+  assert.match(matrix, /\.map\(\(note\) => displayCellText\(note, payload\.locale\)\)/);
+  assert.equal((matrix.match(/\[d\.text, \.\.\.d\.tooltipNotes\]/g) ?? []).length, 2);
+  const cohort = source.slice(source.indexOf('const renderCohort ='), source.indexOf('const RENDERERS ='));
+  assert.match(cohort, /text: displayCellText\(safeText\(cell\), payload\.locale\)/);
+  assert.match(cohort, /detail: displayCellText\(cell\?\.detail, payload\.locale\)/);
+  assert.match(cohort, /const cellLabel = d\.text/);
+  assert.match(cohort, /addTitle\(.*d\.text \|\| d\.value/);
+  assert.match(cohort, /\[d\.text \|\| String\(d\.value\), d\.detail\]/);
+});
+
+test('table evidence references wrap instead of hiding later links and scrolling the whole table', () => {
+  const table = readFileSync('website/src/components/DataTable.astro', 'utf8');
+  const references = table.match(/\.table-frame :global\(\.claim-ref\)\s*\{([^}]*)\}/);
+  assert.ok(references);
+  assert.match(references[1], /white-space:\s*normal/);
+  assert.doesNotMatch(references[1], /white-space:\s*nowrap/);
+  const refs = Array.from({ length: 20 }, (_, index) => `CE${String(index + 1).padStart(3, '0')}`);
+  assert.deepEqual(claimRefs({ claimRefs: refs }), refs);
+});
 
 test('matrix renderer and validator share canonical display aliases and preserve explicit empty labels', () => {
   const cases = [
@@ -79,6 +130,31 @@ test('matrix grids and cards expose qualifications and preserve them in cell too
   assert.doesNotMatch(matrix, /'No data'|const cellDetail =/);
 });
 
+test('matrix print uses readable type and keeps fitting cards and cells together without capping tall figures', () => {
+  const source = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
+  const print = source.slice(source.indexOf('@media print'));
+  const figure = print.match(/:global\(\.native-figure:has\(\.chart-matrix\)\)\s*\{([^}]*)\}/)?.[1];
+  assert.ok(figure);
+  for (const key of ['body', 'caption', 'note']) {
+    assert.match(figure, new RegExp(`--chart-fs-${key}:\\s*10pt`));
+  }
+  assert.match(figure, /--chart-fs-kicker:\s*9pt/);
+  assert.doesNotMatch(figure, /break-inside:\s*auto|max-height|overflow:\s*hidden/);
+  assert.match(print, /:global\(\.native-figure\)\s*\{[^}]*break-inside:\s*avoid/);
+  assert.match(print, /:global\(\.native-figure:has\(\.chart-matrix\) > figcaption\)\s*\{[^}]*font-variant-caps:\s*normal/);
+  const card = print.match(/:global\(\.chart-matrix \.matrix-card\)\s*\{([^}]*)\}/)?.[1];
+  assert.ok(card);
+  assert.match(card, /display:\s*block/);
+  assert.match(card, /break-inside:\s*avoid/);
+  assert.match(card, /overflow-wrap:\s*anywhere/);
+  assert.match(print, /:global\(\.chart-matrix \.matrix-card-item\)\s*\{[^}]*break-inside:\s*avoid/);
+  for (const selector of ['.matrix-card-title', '.matrix-card > .matrix-row-note', '.matrix-card-key', '.matrix-column-detail']) {
+    const rule = print.slice(print.indexOf(`:global(.chart-matrix ${selector})`)).split('}')[0];
+    assert.ok(rule.startsWith(`:global(.chart-matrix ${selector})`), selector);
+    assert.match(rule, /break-after:\s*avoid/);
+  }
+});
+
 test('range axis keeps domain endpoints and only interior labels with measured clearance', () => {
   for (const [bounds, expected] of [
     [[], []],
@@ -104,7 +180,7 @@ test('range axes filter derived out-of-domain ticks and remeasure on font, size 
   assert.match(range, /layoutRangeAxis\(axis\.node\(\)\)/);
   assert.match(source, /rangeAxisTickIndices\(nodes\.map\(\(node\) => node\.getBoundingClientRect\(\)\)\)/);
   assert.match(source, /node\.hidden = !visible\.has\(index\)/);
-  assert.match(source, /document\.fonts\.ready\.then\(layoutRangeAxes\)/);
+  assert.match(source, /document\.fonts\.ready\.then\(\(\) => \{[\s\S]*?layoutRangeAxes\(\);/);
   assert.match(source, /addEventListener\('afterprint', layoutRangeAxes\)/);
   const print = source.slice(source.indexOf("window.addEventListener('beforeprint'"), source.indexOf("window.addEventListener('afterprint'"));
   assert.match(print, /layoutRangeAxes\(\)/);
@@ -157,6 +233,146 @@ test('range renderer uses identical authored values in visible labels and pointe
     assert.match(range, new RegExp(`text\\([^\\n]*labels\\.${field}`));
     assert.match(range, new RegExp(`\\$\\{d\\.labels\\.${field}\\}`));
   }
+});
+
+test('range descriptors follow the report locale on screen and in pointer tooltips', () => {
+  const keys = ['reportRangeLow', 'reportRangeMid', 'reportRangeHigh', 'reportRangeMidInline'];
+  assert.deepEqual(keys.map(key => t(key, 'en')), ['Low:', 'Mid:', 'High:', 'mid']);
+  assert.deepEqual(keys.map(key => t(key, 'zh')), ['低值：', '中间值：', '高值：', '中间值']);
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  for (const key of keys) assert.ok(source.includes(`t('${key}', locale)`), key);
+  assert.match(source, /authoredType === 'range' \? \{ rangeLabels \} : \{\}/);
+  const range = source.slice(source.indexOf('const renderRange ='), source.indexOf('const renderQuadrant ='));
+  assert.match(range, /text\(`\$\{payload\.rangeLabels\.midInline\} \$\{labels\.mid\}`\)/);
+  for (const field of ['low', 'mid', 'high']) {
+    assert.match(range, new RegExp(`\\$\\{payload\\.rangeLabels\\.${field}\\} \\$\\{d\\.labels\\.${field}\\}`));
+  }
+  assert.doesNotMatch(range, /`(?:mid |Low:|Mid:|High:)/);
+});
+
+test('generated chart UI uses localized text without translating structural roles', () => {
+  const labels = {
+    reportFigureItem: ['Item', '条目'],
+    reportFigureLoading: ['Loading figure…', '图表加载中…'],
+    reportFigureRenderError: ['Figure could not be rendered.', '图表无法显示。'],
+    reportFigureGenericTitle: ['Generic figure', '通用图表'],
+    reportFigureGenericDescription: ['Fallback renderer for generic figures.', '通用图表的备用显示区域。'],
+    reportDagDependency: ['Dependency:', '依赖关系：'],
+    reportDagInput: ['Input dependency', '输入依赖'],
+    reportDagImpact: ['Downstream impact', '下游影响'],
+    reportDagCore: ['Core dependency', '核心依赖'],
+    reportWaterfallMetadata: ['Authored metadata', '原文标注'],
+  };
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  for (const [key, [en, zh]] of Object.entries(labels)) {
+    assert.equal(t(key, 'en'), en, key);
+    assert.equal(t(key, 'zh'), zh, key);
+    assert.ok(source.includes(`t('${key}', locale)`), key);
+  }
+  assert.match(source, /authoredType === 'dag' \? \{ dagLabels \} : \{\}/);
+  assert.match(source, /payload\.dagLabels\[node\._role\]/);
+  assert.match(source, /payload\.dagLabels\.dependency/);
+  assert.match(source, /content: attr\(data-loading-label\)/);
+  assert.match(source, /data-loading-label=\{t\('reportFigureLoading', locale\)\}/);
+  assert.match(source, /data-error-label=\{t\('reportFigureRenderError', locale\)\}/);
+  assert.match(source, /text\(element\.dataset\.errorLabel\)/);
+  assert.match(source, /console\.error\(`\[FigureRenderer\] Failed to render/);
+  assert.doesNotMatch(source, /\.text\('Waterfall bridge'\)|'Input dependency'|'Downstream impact'|'Core dependency'|content: 'Loading figure/);
+});
+
+test('localized item fallbacks preserve authored labels, identifiers, empty strings and input data', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const expression = source.match(/const normalizedItems = (.+);/)?.[1];
+  assert.ok(expression);
+  const normalize = new Function('firstNonEmpty', 'arr', 'figureDetail', `return (${expression});`)(
+    (...values) => values.find(value => Array.isArray(value) && value.length) ?? [],
+    value => Array.isArray(value) ? value : [], figureDetail);
+  const items = [{ label: '', name: 'Ignored', value: 0 }, { value: 2 }, { id: 'SKU-4', value: 4 }, { name: 'OpenAI', value: 7 }];
+  const before = structuredClone(items);
+  items.forEach(Object.freeze);
+  Object.freeze(items);
+  for (const [locale, expected] of [['en', 'Item 2'], ['zh', '条目 2']]) {
+    assert.deepEqual(normalize({ items }, t('reportFigureItem', locale)).map(item => item.label), ['', expected, 'SKU-4', 'OpenAI']);
+  }
+  assert.deepEqual(items, before);
+  assert.equal((source.match(/normalizedItems\(payload\.data, payload\.itemLabel\)/g) ?? []).length, 3);
+  assert.match(source, /normalizedItems\(\{ items: payload\.data\.items \?\? payload\.data\.nodes \}, payload\.itemLabel\)/);
+  assert.match(source, /entry\.label \?\? entry\.name \?\? entry\.id \?\? `\$\{itemLabel\} \$\{index \+ 1\}`/);
+});
+
+test('waterfall values retain order, precision, declared roles and qualifications without inferred totals', () => {
+  const items = [
+    { label: 'Tranche', value: 250, note: 'Estimated commitment, not drawn cash.', unit: 'EUR M' },
+    { label: 'Tranche', value: 215, unit: 'EUR M' },
+    { label: 'Last facility', value: 700, unit: 'EUR M' },
+    { label: 'Explicit total', value: 0, kind: 'total', unit: 'USD M', tone: 'risk' },
+    { label: 'Declared change', value: -26.058, kind: 'debt', role: 'decrease', detail: 'Reported.', context: 'Different period.', unit: 'USD M' },
+    { label: 'Blank display', value: 5, displayValue: '', role: 'delta' },
+  ];
+  const before = structuredClone(items);
+  items.forEach(Object.freeze);
+  Object.freeze(items);
+  const labels = { valueLabel: 'Value', contextLabel: 'Context', metadataLabel: 'Authored metadata' };
+  const table = waterfallValueTable({ items }, labels);
+  assert.deepEqual(table.columns, ['Value', 'Authored metadata', 'Context']);
+  assert.deepEqual(table.rows.map(row => row.label), items.map(item => item.label));
+  assert.deepEqual(table.rows.map(row => row.values[0].value), [250, 215, 700, 0, -26.058, 5]);
+  assert.deepEqual(table.rows.map(row => row.values[0].label), ['250', '215', '700', '0', '-26.058', '']);
+  assert.deepEqual(table.rows.map(row => row.values[1]), [null, null, null, 'kind: total', 'kind: debt\nrole: decrease', 'role: delta']);
+  assert.equal(table.rows[0].values[0].detail, 'EUR M\nEstimated commitment, not drawn cash.');
+  assert.equal(table.rows[3].values[0].tone, 'risk');
+  assert.equal(table.rows[4].values[0].detail, 'USD M\nReported.\nDifferent period.\nkind: debt\nrole: decrease');
+  assert.deepEqual(items, before);
+  const undeclared = waterfallValueTable({ items: items.slice(0, 3) }, labels);
+  assert.deepEqual(undeclared.columns, ['Value', 'Context']);
+  assert.deepEqual(undeclared.rows.map(row => row.values[0].value), [250, 215, 700]);
+  assert.deepEqual(waterfallValueTable({ items: [{ label: 'Only', value: 0 }] }, labels).columns, ['Value']);
+  const zh = waterfallValueTable({ items }, { valueLabel: '数值', contextLabel: '说明', metadataLabel: '原文标注' });
+  assert.deepEqual(zh.rows, table.rows);
+  assert.deepEqual(zh.columns, ['数值', '原文标注', '说明']);
+});
+
+test('waterfall metadata retains literal conflicting declarations, zero bases and authored cumulative values', () => {
+  const items = [
+    { label: 'Conflicting', value: 3, type: 'delta', kind: 'total', role: 'unknown-role', isTotal: false,
+      category: 'debt', direction: 'up', status: 'estimated', base: 0, cumulative: -26.058, tone: 'risk' },
+    { label: 'Explicit total', value: 2, isTotal: true, cumulative: 99.0425 },
+    { label: 'No metadata', value: 1 },
+    { label: 'Empty status', value: 0, status: '', kind: null, unrelated: 'Not a declaration' },
+  ];
+  const before = structuredClone(items);
+  items.forEach(Object.freeze);
+  Object.freeze(items);
+  const table = waterfallValueTable({ items }, { valueLabel: 'Value', contextLabel: 'Context', metadataLabel: 'Authored metadata' });
+  const declarations = [
+    'type: delta\nkind: total\nrole: unknown-role\nisTotal: false\ncategory: debt\ndirection: up\nstatus: estimated\nbase: 0\ncumulative: -26.058',
+    'isTotal: true\ncumulative: 99.0425',
+    null,
+    'status: ',
+  ];
+  assert.deepEqual(table.columns, ['Value', 'Authored metadata']);
+  assert.deepEqual(table.rows.map(row => row.values[1]), declarations);
+  assert.deepEqual(table.rows.map(row => row.values[0].value), [3, 2, 1, 0]);
+  assert.deepEqual(table.rows.map(row => row.values[0].label), ['3', '2', '1', '0']);
+  for (const [index, declaration] of declarations.entries()) {
+    assert.equal(table.rows[index].values[0].detail, declaration ?? '');
+  }
+  assert.equal(table.rows[0].values[0].tone, 'risk');
+  assert.deepEqual(items, before);
+});
+
+test('waterfall rendering uses source-value tables and explicitly disclaims invented cumulative arithmetic', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  assert.match(source, /const waterfall = authoredType === 'waterfall'/);
+  assert.match(source, /const type = funnel \|\| waterfall \|\|/);
+  assert.match(source, /waterfall \? waterfallValueTable\(data,/);
+  assert.match(source, /class="figure-note waterfall-comparison-notice"[^>]*>\{t\('reportWaterfallNotice', locale\)\}/);
+  assert.doesNotMatch(source, /renderWaterfall|totalLike|waterfall-step|waterfallLabels/);
+  assert.match(t('reportWaterfallNotice', 'en'), /No additive steps, cumulative totals, or shared unit or time basis are inferred/);
+  assert.match(t('reportWaterfallNotice', 'zh'), /不推定各项可以相加，不计算累计值/);
+  const report = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
+  const print = report.slice(report.indexOf('@media print'));
+  assert.match(print, /\.chart-matrix \.matrix-card\)\s*\{[^}]*break-inside: avoid;[^}]*page-break-inside: avoid;/);
 });
 
 test('refresh acceptance checks both reports and existing overlays without rewriting history', () => {
@@ -224,14 +440,221 @@ test('timeline rows use shared pointer tooltips with full date and detail', () =
   assert.match(timeline, /renderLineBlock\(d3\.select\(this\), d\.detailLines/);
 });
 
-test('pyramid layers use shared pointer tooltips with full label and detail', () => {
+test('timelines print complete ordered events at body-text size without hiding measurable SVGs', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const timeline = source.slice(source.indexOf('const renderTimeline ='), source.indexOf('const renderStack ='));
+  assert.match(timeline, /append\('ol'\)\.attr\('class', 'timeline-print-events'\)/);
+  assert.match(timeline, /printEvents\.selectAll\('li'\)\.data\(rowsData\)\.join\('li'\)/);
+  assert.match(timeline, /style\('border-left-color', \(d\) => colorForTone\(d\.tone\)\)/);
+  const date = timeline.match(/printRows\.filter\(\(d\) => (.*?)\)\.append\('p'\)\.text\(\(d\) => (.*?)\);/);
+  assert.ok(date);
+  const dateRow = new Function('d', 'safeText', `return { visible: (${date[1]}), text: (${date[2]}) };`);
+  for (const [item, expected] of [
+    [{ label: '2026: Founded' }, { visible: false, text: undefined }],
+    [{ date: '2026-09-30' }, { visible: true, text: '2026-09-30' }],
+    [{ period: 'Q1 2026' }, { visible: true, text: 'Q1 2026' }],
+    [{ year: 2026 }, { visible: true, text: 2026 }],
+    [{ date: 0 }, { visible: true, text: 0 }],
+    [{ date: '', year: 2026 }, { visible: false, text: '' }],
+  ]) assert.deepEqual(dateRow(item, value => String(value ?? '')), expected);
+  assert.match(timeline, /printRows\.append\('strong'\)\.text\(\(d\) => d\.label\)/);
+  assert.match(timeline, /printRows\.filter\(\(d\) => safeText\(d\.detail\)\.trim\(\) !== ''\)\.append\('p'\)\.text\(\(d\) => d\.detail\)/);
+  assert.match(source, /:global\(\.timeline-print-events\) \{ display: none; \}/);
+  const report = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
+  const print = report.slice(report.indexOf('@media print {')).replace(/\/\*[\s\S]*?\*\//g, '');
+  const rule = (selector) => {
+    const match = [...print.matchAll(/([^{}]+)\{([^{}]*)\}/g)]
+      .find(([, selectors]) => selectors.split(',').some(value => value.trim() === selector));
+    assert.ok(match, `missing print rule for ${selector}`);
+    return match[2];
+  };
+  assert.match(rule(':global(.native-figure:has(.chart-timeline))'), /break-inside: auto; page-break-inside: auto;/);
+  const svg = rule(':global(.chart-timeline > svg)');
+  assert.match(svg, /position: absolute; visibility: hidden;/);
+  assert.doesNotMatch(svg, /display:\s*none/);
+  assert.match(rule(':global(.timeline-print-events)'), /display: block !important;[^}]*font-size: 10pt;/);
+  assert.match(rule(':global(.timeline-print-events > li)'), /break-inside: avoid; page-break-inside: avoid;/);
+  assert.match(rule(':global(.timeline-print-events p)'), /font-size: 10pt;/);
+});
+
+test('pyramid layers expose authored values and all qualifications in visible text and pointer tooltips', () => {
   const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
   const pyramid = source.slice(source.indexOf('const renderPyramid ='), source.indexOf('const renderJourneyMap ='));
-  assert.match(pyramid, /withTooltip\(groups, \(entry\) => tooltipHtml\(entry\.item\.label, \[entry\.item\.detail\]\)\)/);
+  assert.match(pyramid, /fullValueLabel\(item\), \.\.\.figureValueNotes\(item\)/);
+  assert.match(pyramid, /withTooltip\(groups, \(entry\) => tooltipHtml\(entry\.item\.label, entry\.details\)\)/);
+  assert.match(pyramid, /addTitle\(d3\.select\(this\), \[entry\.item\.label, \.\.\.entry\.details\]/);
   assert.match(pyramid, /renderLineBlock\(d3\.select\(this\), entry\.detailLines/);
   assert.match(pyramid, /createSvgTextWrapper\(svg\)/);
   assert.match(pyramid, /wrap\(item\.label, \{[^}]*maxWidth: w - padX \* 2/);
-  assert.match(pyramid, /wrap\(item\.detail, \{[^}]*maxWidth: w - padX \* 2/);
+  assert.match(pyramid, /details\.flatMap\(\(detail\) => textWrapper\.wrap\(detail, \{[^}]*maxWidth: w - padX \* 2/);
+  assert.match(pyramid, /const w = maxW \* \(1 - index \* widthStep\)/);
+  assert.match(source, /class="figure-note pyramid-layout-notice"[^>]*>\{t\('reportPyramidLayoutNotice', locale\)\}/);
+});
+
+test('deep pyramids keep every layer at a positive readable width without changing ordinary layouts', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const pyramid = source.slice(source.indexOf('const renderPyramid ='), source.indexOf('const renderJourneyMap ='));
+  const expression = pyramid.match(/const widthStep = (.+);/)?.[1];
+  assert.ok(expression, 'the existing 12-layer report must not produce zero or negative widths');
+  const step = new Function('items', `return (${expression});`);
+  for (const count of [0, 1, 3, 4, 5, 6, 7, 12, 100]) {
+    const items = Object.freeze(Array.from({ length: count }, (_, index) => Object.freeze({ label: `Layer ${index}` })));
+    const before = structuredClone(items);
+    const widthStep = step(items);
+    assert(Number.isFinite(widthStep));
+    for (const [index] of items.entries()) {
+      const fraction = 1 - index * widthStep;
+      assert(fraction >= 0.5 - Number.EPSILON && fraction <= 1);
+      if (count <= 6) assert.equal(fraction, 1 - index * 0.1);
+      if (index) assert(fraction <= 1 - (index - 1) * widthStep);
+    }
+    assert.deepEqual(items, before);
+  }
+});
+
+test('pyramid content preserves explicit value aliases, zeros, precision and distinct notes without inventing quantities', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const pyramid = source.slice(source.indexOf('const renderPyramid ='), source.indexOf('const renderJourneyMap ='));
+  const expression = pyramid.match(/const details = ([\s\S]+?);\n/)?.[1];
+  assert.ok(expression, 'pyramid content must feed both measured text and tooltips');
+  const fullValueLabel = new Function(`return (${source.match(/const fullValueLabel = (.+);/)?.[1]});`)();
+  const details = new Function('item', 'fullValueLabel', 'figureValueNotes', 'safeText', `return (${expression});`);
+  const safeText = value => String(value ?? '');
+  const cases = [
+    [{ label: 'TAM', value: 15, unit: '$B', note: 'Government IT allocation.' }, ['15', 'Government IT allocation.', '$B']],
+    [{ label: 'SOM', value: 0.1, unit: '$B', note: 'ARR undisclosed.' }, ['0.1', 'ARR undisclosed.', '$B']],
+    [{ label: 'Zero', value: 0, unit: '%' }, ['0', '%']],
+    [{ label: '精确值', value: '0.042500000000000003', context: '未经审计' }, ['0.042500000000000003', '未经审计']],
+    [{ label: 'Large count', value: '9007199254740993' }, ['9007199254740993']],
+    [{ label: 'Loss', value: -139.6, unit: 'R$mn' }, ['-139.6', 'R$mn']],
+    [{ label: 'Value', displayValue: 'Authored display', value: 7, score: 3 }, ['Authored display']],
+    [{ label: 'Value', displayValue: 0, value: 7 }, ['0']],
+    [{ label: 'Value', displayValue: '', value: 7, note: 'Still qualified.' }, ['Still qualified.']],
+    [{ label: 'Score', displayValue: null, value: null, score: 0 }, ['0']],
+    [{ label: 'Concept only' }, []],
+    [{ label: 'Same text', value: 'Same text', detail: 'Same text' }, []],
+    [{ label: 'Qualified', value: 3, detail: 'Basis.', description: 'Definition.', note: 'Estimate.',
+      notes: 'Period.', context: 'Scope.', valueNote: 'Not a forecast.', unit: '$B' },
+    ['3', 'Basis.', 'Definition.', 'Estimate.', 'Period.', 'Scope.', 'Not a forecast.', '$B']],
+    [{ label: 'Dedupe', value: 'Unaudited.', note: 'Unaudited.', context: 'Unaudited.' }, ['Unaudited.']],
+    [{ label: 'Summary', summary: 'Limited sample.', note: 'Other scope.' }, ['Limited sample.', 'Other scope.']],
+    [{ label: 'Empty detail', detail: '', description: 'Known scope.', unit: '$B' }, ['Known scope.', '$B']],
+    [{ label: 'Escaped', note: '<b>Not markup</b> & a condition.' }, ['<b>Not markup</b> & a condition.']],
+  ];
+  for (const [item, expected] of cases) {
+    const before = structuredClone(item);
+    const normalized = Object.freeze({ ...item, detail: figureDetail(item) ?? item.summary });
+    assert.deepEqual(details(normalized, fullValueLabel, figureValueNotes, safeText), expected);
+    assert.deepEqual(item, before);
+  }
+});
+
+test('pyramid node notes are translatable while values, units and structured sidecars remain protected', () => {
+  for (const key of ['label', 'detail', 'details', 'description', 'note', 'notes']) {
+    assert.equal(isTranslatableLeaf(['figures', 0, 'data', 'nodes', 0, key], TRANSLATE_PATHS.fullReport), true);
+  }
+  for (const key of ['id', 'value', 'displayValue', 'score', 'unit', 'tone', 'claimRefs']) {
+    assert.equal(isTranslatableLeaf(['figures', 0, 'data', 'nodes', 0, key], TRANSLATE_PATHS.fullReport), false);
+  }
+  assert.equal(isTranslatableLeaf(['figures', 0, 'data', 'nodes', 0, 'notes', 'id'], TRANSLATE_PATHS.fullReport), false);
+  assert.equal(isTranslatableLeaf(['figures', 0, 'data', 'nodes', 0, 'notes', 0], TRANSLATE_PATHS.fullReport), false);
+});
+
+test('pyramid layers, timeline events and waterfall values retain their own ordered evidence references beside figure references', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  assert.match(source, /pyramid-layer-evidence/);
+  assert.match(source, /pyramid-layer-reference/);
+  assert.match(source, /refs: claimRefs\(item\)/);
+  assert.match(source, /timeline-event-evidence/);
+  assert.match(source, /timeline-event-reference/);
+  assert.match(source, /waterfall-value-evidence/);
+  assert.match(source, /waterfall-value-reference/);
+  assert.match(source, /<ClaimRefs refs=\{item\.refs\} claims=\{claims\} sources=\{sources\}/);
+  assert.match(source, /<ClaimRefs refs=\{claimRefs\(figure\)\}/);
+  const logic = source.slice(source.indexOf('const evidenceItems ='), source.indexOf('const stackLabels:'));
+  const evidence = new Function('authoredType', 'data', 'asArray', 'asRecord', 'claimRefs', 'itemLabel',
+    `${logic}; return itemEvidence;`);
+  const tenRefs = Array.from({ length: 10 }, (_, index) => `C${index + 1}`);
+  const cases = [
+    ['pyramid', { nodes: [{ label: 'TAM', claimRefs: tenRefs }] }, [{ label: 'TAM', refs: tenRefs }]],
+    ['pyramid', { items: [{ label: 'Items', claimRefs: ['C3', 'C1', 'C3'] }], nodes: [{ label: 'Nodes', claimRefs: ['C2'] }] },
+      [{ label: 'Items', refs: ['C3', 'C1', 'C3'] }]],
+    ['pyramid', { items: [], nodes: [{ name: 'Named', claimRefs: ['C2'] }] }, [{ label: 'Named', refs: ['C2'] }]],
+    ['pyramid', { nodes: [{ label: 'Repeated', claimRefs: ['C1'] }, { label: 'Repeated', claimRefs: ['C2'] }] },
+      [{ label: 'Repeated', refs: ['C1'] }, { label: 'Repeated', refs: ['C2'] }]],
+    ['pyramid', { nodes: [{ label: 'No refs' }, { id: 'N002', claimRefs: ['C2'] }, { claimRefs: ['C3'] }] },
+      [{ label: 'N002', refs: ['C2'] }, { label: 'Item 3', refs: ['C3'] }]],
+    ['pyramid', { nodes: [{ label: '', name: 'Ignored', claimRefs: ['C1'] }] }, [{ label: '', refs: ['C1'] }]],
+    ['pyramid', { items: {}, nodes: [{ label: 'TAM', claimRefs: ['C1'] }] }, [{ label: 'TAM', refs: ['C1'] }]],
+    ['pyramid', {}, []],
+    ['timeline', { items: [{ label: 'Event', claimRefs: tenRefs }] }, [{ label: 'Event', refs: tenRefs }]],
+    ['timeline', { items: [{ label: 'First', claimRefs: ['C3', 'C1', 'C3'] }], nodes: [{ label: 'Ignored', claimRefs: ['C2'] }] },
+      [{ label: 'First', refs: ['C3', 'C1', 'C3'] }]],
+    ['timeline', { items: [{ label: 'No refs' }], nodes: [{ label: 'Ignored', claimRefs: ['C2'] }] }, []],
+    ['timeline', { items: [], nodes: [{ name: 'Node', claimRefs: ['C1'] }] }, [{ label: 'Node', refs: ['C1'] }]],
+    ['timeline', { layers: [{ id: 'Layer', claimRefs: ['C2'] }], points: [{ label: 'Ignored', claimRefs: ['C3'] }] },
+      [{ label: 'Layer', refs: ['C2'] }]],
+    ['timeline', { series: [{ points: [{ label: 'Series', claimRefs: ['C1'] }] }], points: [{ label: 'Ignored', claimRefs: ['C2'] }] },
+      [{ label: 'Series', refs: ['C1'] }]],
+    ['timeline', { series: [{ points: [] }, { points: [{ label: 'Ignored', claimRefs: ['C1'] }] }],
+      points: [{ label: 'Point', claimRefs: ['C2'] }] }, [{ label: 'Point', refs: ['C2'] }]],
+    ['timeline', { points: [{ label: '', name: 'Ignored', claimRefs: ['C1'] }, { claimRefs: ['C2'] }] },
+      [{ label: '', refs: ['C1'] }, { label: 'Item 2', refs: ['C2'] }]],
+    ['timeline', {}, []],
+    ['waterfall', { items: [{ label: 'Tranche', claimRefs: tenRefs }] }, [{ label: 'Tranche', refs: tenRefs }]],
+    ['waterfall', { items: [{ label: 'Duplicate', claimRefs: ['C3', 'C1', 'C3'] }, { label: 'Duplicate', claimRefs: ['C2'] }],
+      nodes: [{ label: 'Ignored', claimRefs: ['C4'] }] },
+      [{ label: 'Duplicate', refs: ['C3', 'C1', 'C3'] }, { label: 'Duplicate', refs: ['C2'] }]],
+    ['waterfall', { items: [], nodes: [{ label: 'Ignored', claimRefs: ['C1'] }] }, []],
+    ['waterfall', { items: [{ label: '', name: 'Ignored', claimRefs: ['C1'] }, { claimRefs: ['C2'] },
+      { id: 'Not the table label', claimRefs: ['C3'] }] },
+      [{ label: '', refs: ['C1'] }, { label: '#2', refs: ['C2'] }, { label: '#3', refs: ['C3'] }]],
+    ['kpi', { items: [{ label: 'Other chart', claimRefs: ['C1'] }] }, []],
+  ];
+  for (const [type, data, expected] of cases) {
+    const before = structuredClone(data);
+    assert.deepEqual(evidence(type, data, asArray, asRecord, claimRefs, t('reportFigureItem', 'en')), expected);
+    assert.deepEqual(data, before);
+  }
+  assert.deepEqual(evidence('pyramid', { items: [{ claimRefs: ['C2', 'C1'] }, { label: 'Item 2', claimRefs: ['C3'] }] },
+    asArray, asRecord, claimRefs, t('reportFigureItem', 'zh')),
+  [{ label: '条目 1', refs: ['C2', 'C1'] }, { label: 'Item 2', refs: ['C3'] }]);
+  const waterfallItems = [{ value: 0, id: 'ID1', claimRefs: ['C1'] },
+    { value: 2, name: 'Named', claimRefs: ['C2'] }, { value: 3, label: '', claimRefs: ['C3'] }];
+  const rows = waterfallValueTable({ items: waterfallItems }, { valueLabel: 'Value', contextLabel: 'Context', metadataLabel: 'Authored metadata' }).rows;
+  for (const locale of ['en', 'zh']) {
+    assert.deepEqual(evidence('waterfall', { items: waterfallItems }, asArray, asRecord, claimRefs, t('reportFigureItem', locale)).map(item => item.label),
+      rows.map(row => row.label));
+  }
+});
+
+test('pyramids print ordered complete layers at body-text size rather than shrinking dense SVGs', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const pyramid = source.slice(source.indexOf('const renderPyramid ='), source.indexOf('const renderJourneyMap ='));
+  assert.match(pyramid, /append\('ol'\)\.attr\('class', 'pyramid-print-layers'\)/);
+  assert.match(pyramid, /printLayers\.selectAll\('li'\)\.data\(layout\)\.join\('li'\)/);
+  assert.match(pyramid, /style\('border-left-color', \(entry\) => colorForTone\(entry\.item\.tone\)\)/);
+  assert.match(pyramid, /printRows\.append\('strong'\)\.text\(\(entry\) => entry\.item\.label\)/);
+  assert.match(pyramid, /printRows\.selectAll\('p'\)\.data\(\(entry\) => entry\.details\)\.join\('p'\)\.text\(\(detail\) => detail\)/);
+  assert.match(source, /:global\(\.pyramid-print-layers\) \{ display: none; \}/);
+  const report = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
+  const print = report.slice(report.indexOf('@media print'));
+  assert.match(print, /:global\(\.native-figure:has\(\.chart-pyramid\)\) \{ break-inside: auto; page-break-inside: auto; \}/);
+  assert.match(print, /:global\(\.chart-pyramid > svg\) \{ position: absolute; visibility: hidden; \}/);
+  assert.match(print, /:global\(\.pyramid-print-layers\) \{ display: block !important;[^}]*font-size: 10pt;/);
+  assert.match(print, /:global\(\.pyramid-print-layers > li\) \{[^}]*break-inside: avoid; page-break-inside: avoid;/);
+});
+
+test('font readiness remeasures existing charts before laying out range axes', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const callback = source.match(/document\.fonts\.ready\.then\(([\s\S]*?)\);\n  window\.addEventListener\('beforeprint'/)?.[1];
+  assert.ok(callback);
+  const calls = [];
+  const onReady = new Function('renderAllCharts', 'layoutRangeAxes', `return (${callback});`)(
+    options => calls.push(['render', options]), () => calls.push(['axes']),
+  );
+  onReady();
+  assert.deepEqual(calls, [['render', { force: true }], ['axes']]);
 });
 
 test('measured SVG wrapping preserves complete mixed-script text at each layer width and font', () => {
@@ -260,11 +683,46 @@ test('measured SVG wrapping preserves complete mixed-script text at each layer w
         assert.equal(lines.join('').replace(/\s/gu, ''), input.replace(/\s/gu, ''));
         for (const line of lines) assert(measure(line, fontSize, fontWeight) <= maxWidth);
         assert.deepEqual(wrapper.wrap(input, { fontSize, fontWeight, maxWidth }), lines);
+        const fitted = wrapper.fit(input, { fontSize, fontWeight, maxWidth });
+        assert(measure(fitted, fontSize, fontWeight) <= maxWidth);
+        if (measure(input, fontSize, fontWeight) <= maxWidth) assert.equal(fitted, input);
+        else assert(fitted.endsWith('…'));
+        for (const maxLines of [1, 2]) {
+          const preview = wrapper.wrap(input, { fontSize, fontWeight, maxWidth, maxLines });
+          assert(preview.length <= maxLines);
+          for (const line of preview) assert(measure(line, fontSize, fontWeight) <= maxWidth);
+          if (lines.length > maxLines) assert(preview.at(-1).endsWith('…'));
+          else assert.deepEqual(preview, lines);
+          assert.deepEqual(wrapper.wrap(input, { fontSize, fontWeight, maxWidth }), lines);
+        }
       }
     }
   }
   wrapper.remove();
   assert.equal(removed, true);
+});
+
+test('flow and stack previews fit measured widths without removing complete tooltip data', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const flow = source.slice(source.indexOf('const renderFlow ='), source.indexOf('const firstNonEmpty ='));
+  const stack = source.slice(source.indexOf('const renderStack ='), source.indexOf('const renderPyramid ='));
+  for (const renderer of [flow, stack]) {
+    assert.match(renderer, /createSvgTextWrapper\(svg\)/);
+    assert.match(renderer, /textWrapper\.remove\(\)/);
+  }
+  assert.match(flow, /wrap\(node\.label, \{[^}]*maxWidth: cardW - textX \* 2, maxLines: 2/);
+  assert.match(flow, /wrap\(node\.detail, \{[^}]*maxWidth: cardW - textX \* 2/);
+  assert.match(flow, /tooltipHtml\(node\.label, \[safeText\(node\.displayValue \?\? node\.value\), \.\.\.figureValueNotes\(node\)\]\)/);
+  assert.match(stack, /fit\(d\.label, \{[^}]*maxWidth: layerWidth\(index\) - 42 - badgeSize \* 2/);
+  assert.match(stack, /fit\(d\.detail, \{[^}]*maxWidth: layerWidth\(index\) - 48/);
+  assert.match(stack, /fit\(pill\.label, \{[^}]*maxWidth: pillW - 22/);
+  assert.match(stack, /tooltipHtml\(d\.label, detailLines\(d\)\)/);
+});
+
+test('mobile table captions use the full block table width rather than an anonymous caption column', () => {
+  const source = readFileSync('website/src/components/DataTable.astro', 'utf8');
+  const mobile = source.slice(source.indexOf('@media (max-width: 700px)'));
+  assert.match(mobile, /\.table-frame :global\(caption\) \{ display: block; width: 100%; \}/);
 });
 
 test('stack details retain complete ordered groups, duplicate labels, values and qualifications', () => {
@@ -310,6 +768,148 @@ test('implicit flow details retain full qualifications without inventing explici
   assert.equal(table.rows[0].values[2], '0\nUSD\nFull summary\nNot a forecast');
   assert.equal(table.rows[1].values[1], null);
   assert.equal(Object.hasOwn(data, 'edges'), false);
+});
+
+test('DAG qualifications preserve distinct aliases, risk prose, values and explicit blanks without mutation', () => {
+  const item = Object.freeze({
+    detail: '', description: 'Company claim', details: 'Not independently verified',
+    note: 'Company claim', notes: 'Historical scope', risk: 'License may change', segment: 'Enterprise only',
+    value: 0, unit: 'USD', body: 'Unsupported sidecar', claimRefs: ['CE001'],
+  });
+  const before = structuredClone(item);
+  assert.deepEqual(graphItemNotes(item), [
+    '0', 'USD', 'Company claim', 'Not independently verified', 'Historical scope', 'License may change', 'Enterprise only',
+  ]);
+  assert.deepEqual(item, before);
+  assert.deepEqual(graphItemNotes({ displayValue: '', value: 12, detail: 'Scope' }), ['Scope']);
+  assert.deepEqual(graphItemNotes({ detail: 'First', description: 'Second', risk: 'First' }), ['First', 'Second']);
+  assert.deepEqual(graphItemNotes({ value: false, notes: { text: 'Unsupported nested prose' } }), ['false']);
+});
+
+test('quadrant axes use independent coordinate extents rather than inferred scores or thresholds', () => {
+  for (const points of [
+    [{ x: 0, y: 0 }, { x: 1, y: 1 }],
+    [{ x: 0.0425, y: 100 }, { x: 0.06, y: 1200 }],
+    [{ x: -30, y: -0.4 }, { x: -20, y: 0.25 }],
+    [{ x: 0, y: 7 }, { x: 0, y: 7 }],
+  ]) {
+    const before = structuredClone(points);
+    points.forEach(Object.freeze);
+    const axes = quadrantAxes({ data: { points: Object.freeze(points) } });
+    for (const key of ['x', 'y']) {
+      assert.deepEqual(axes[key].domain, [Math.min(...points.map(point => point[key])), Math.max(...points.map(point => point[key]))]);
+      assert.equal(axes[key].declared, false);
+    }
+    assert.deepEqual(points, before);
+  }
+});
+
+test('quadrant axes honor explicit bounds and retain literal endpoint definitions without inventing labels', () => {
+  const figure = {
+    id: 'FP001', xAxisLabel: 'Legacy X', yAxis: { label: 'Legacy Y' },
+    data: { points: [{ x: 0.25, y: 7 }, { x: 0.75, y: 8 }],
+      xAxis: { label: '', min: 0, max: 1, low: 'Not automated', high: 'Fully automated', description: 'Estimated', scale: 'ordinal' },
+    },
+  };
+  const before = structuredClone(figure);
+  const axes = quadrantAxes(figure);
+  assert.deepEqual(axes.x, {
+    label: '', declared: true, domain: [0, 1],
+    definitions: ['min: 0', 'max: 1', 'low: Not automated', 'high: Fully automated', 'description: Estimated', 'scale: ordinal'],
+  });
+  assert.equal(axes.y.label, 'Legacy Y');
+  assert.deepEqual(axes.y.domain, [7, 8]);
+  assert.deepEqual(figure, before);
+  assert.equal(quadrantAxes({ xLabel: 'Older X', data: { points: [{ x: 1, y: 2 }] } }).x.label, 'Older X');
+});
+
+test('quadrant axes surface invalid coordinates and conflicting authored bounds instead of clamping or substituting zero', () => {
+  for (const points of [[], [{ x: null, y: 2 }], [{ x: '1', y: 2 }], [{ x: Infinity, y: 2 }]]) {
+    assert.throws(() => quadrantAxes({ data: { points } }), /requires finite/);
+  }
+  for (const axis of [{ min: 0 }, { min: '0', max: 10 }, { min: 8, max: 3 }, { min: 3, max: 3 }, { min: 0, max: 1 }]) {
+    assert.throws(() => quadrantAxes({ data: { xAxis: axis, points: [{ x: 2, y: 2 }] } }), /invalid or conflicting x axis bounds/);
+  }
+});
+
+test('quadrant rendering removes fabricated rankings and plots exact positions without force displacement', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const quadrant = source.slice(source.indexOf('const renderQuadrant ='), source.indexOf('const renderHeatmap ='));
+  assert.doesNotMatch(quadrant, /Specialist depth|Leader zone|Watchlist|Scale path|forceSimulation|forceCollide|referenceValue|isTenPointScore|isUnitScore|numberValue\(/);
+  assert.match(quadrant, /x\(point\.x\)/);
+  assert.match(quadrant, /y\(point\.y\)/);
+  assert.match(quadrant, /payload\.quadrantAxes\.x/);
+  assert.match(quadrant, /payload\.quadrantAxes\.y/);
+  assert.equal((quadrant.match(/tickPadding\(18\)/g) ?? []).length, 2);
+  assert.match(source, /class="quadrant-details"/);
+  assert.match(source, /refs=\{claimRefs\(point\)\}/);
+  assert.match(source, /quadrant-axis-definitions/);
+  const print = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
+  assert.match(print, /:global\(\.chart-quadrant > svg\)/);
+});
+
+test('print hides active chart tooltips outside the report shell', () => {
+  const source = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
+  const print = source.slice(source.indexOf('@media print'));
+  assert.match(print, /:global\(\.d3-chart-tooltip\),[^{}]*\{\s*display:\s*none\s*!important;/);
+});
+
+test('range print typography stays readable and paginates between complete rows without changing screen styles', () => {
+  const source = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
+  const index = source.indexOf('@media print');
+  const screen = source.slice(0, index), print = source.slice(index);
+  assert.doesNotMatch(screen, /--chart-fs-caption:\s*10pt|--chart-fs-kicker:\s*9pt/);
+  assert.match(print, /:global\(\.chart-range\)\s*\{\s*--chart-fs-caption:\s*10pt;\s*--chart-fs-kicker:\s*9pt;/);
+  assert.doesNotMatch(print, /:global\(\.native-figure:has\(\.chart-range\)\)\s*\{[^}]*break-inside:\s*auto/);
+  assert.match(print, /:global\(\.chart-range \.range-row\)\s*\{[^}]*break-inside:\s*avoid/);
+  assert.match(print, /:global\(\.chart-range \.range-axis-tick:not\(:first-child\):not\(:last-child\)\)\s*\{\s*display:\s*none\s*!important;/);
+});
+
+test('range rows reserve numeric track width and wrap full summaries without clipping', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  assert.match(source, /:global\(\.chart-range \.range-row\)\s*\{[^}]*grid-template-columns:\s*minmax\(7rem, 14rem\) minmax\(min-content, 1fr\) fit-content\(14rem\)/);
+  const summary = source.match(/:global\(\.chart-range \.range-row-summary\)\s*\{([^}]+)\}/)?.[1];
+  assert.ok(summary);
+  assert.match(summary, /min-width:\s*6rem/);
+  assert.match(summary, /white-space:\s*normal/);
+  assert.match(summary, /overflow-wrap:\s*anywhere/);
+  assert.doesNotMatch(summary, /text-overflow|line-clamp|overflow:\s*hidden/);
+});
+
+test('DAG topology and supplements preserve label-only Chinese endpoints, risk notes and edge qualifications', () => {
+  const figure = { type: 'dag', data: {
+    nodes: [{ label: 'First', risk: 'Not guaranteed' }, { label: 'Second', description: 'Limited scope' }],
+    edges: [{ from: 'First', to: 'Second', label: 'Connection', relationship: 'Authored relationship', detail: 'May fail' }],
+  } };
+  const before = structuredClone(figure);
+  const prepared = withFlowTopology(figure);
+  assert.deepEqual(figure, before);
+  const translated = { ...prepared, data: { ...prepared.data, nodes: [
+    { label: '起点', risk: '不保证' }, { label: '终点', description: '范围有限' },
+  ] } };
+  const table = flowRelationshipTable(translated.data, translated._flowTopology, {
+    nodeLabel: '节点', connectionLabel: '连接', sourceLabel: '节点 / 起点', targetLabel: '终点', contextLabel: '说明',
+  });
+  assert.equal(table.rows[0].values[2], '不保证');
+  assert.equal(table.rows[1].values[2], '范围有限');
+  assert.deepEqual(table.rows[2].values, ['起点', '终点', 'Connection\nAuthored relationship\nMay fail']);
+});
+
+test('DAG supplements retain evidence and print qualifications instead of relying on hover or shrunken diagrams', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const dag = source.slice(source.indexOf('const renderDag ='), source.indexOf('const renderFlow ='));
+  assert.match(source, /class="dag-details"/);
+  assert.match(source, /refs=\{claimRefs\(dagItems\[index\]\)\}/);
+  assert.match(source, /dagDetails\.rows\.map/);
+  assert.match(dag, /notes: graphItemNotes\(node\)/);
+  assert.match(dag, /notes: graphItemNotes\(edge\)/);
+  assert.match(dag, /\.\.\.edge\.notes/);
+  assert.match(dag, /\.\.\.node\.notes/);
+  assert.match(dag, /payload\.dagTopology\.endpoints\[index\]/);
+  const print = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
+  assert.match(print, /:global\(\.native-figure:has\(\.chart-dag\)\)/);
+  assert.match(print, /:global\(\.chart-dag > svg\)/);
+  assert.match(source, /\.dag-details :global\(td\) \{ white-space: pre-line;/);
 });
 
 test('report evidence links retain every declared reference in order without mutating the input', () => {
@@ -944,6 +1544,12 @@ const emptyHtmlBodies = [
   '<html><head><style>body { color: black; }</style></head><body> \n </body></html>',
   'Title: Company profile\n\nURL Source: https://example.com/profile\n\nMarkdown Content:\n',
 ];
+const articleNotFoundText = '404: The article you are looking for cannot be found.';
+const articleNotFoundBodies = [
+  articleNotFoundText,
+  `<html><head><title>Business News and Technology</title></head><body><nav>News Technology Subscribe</nav><main><h1><span>404:</span> The article you are looking for cannot be found.</h1><a>Back to home</a></main><footer>Privacy Terms</footer></body></html>`,
+  `Title: Business News and Technology\n\nURL Source: https://example.com/article\n\nMarkdown Content:\n[Subscribe](https://example.com/subscribe)\n\n#### News\n\n# ${articleNotFoundText}\n\n[Back to home](https://example.com/)\n\n#### Technology\n\nPrivacy Terms`,
+];
 const accessErrorBodies = [
   '<html><head><title>Client Challenge</title></head><body>A required part of this site couldn’t load.</body></html>',
   "Title:\n\nURL Source: https://example.com/thread\n\nWarning: Target URL returned error 403: Forbidden\n\nMarkdown Content:\nYou've been blocked by network security.",
@@ -959,6 +1565,7 @@ const accessErrorBodies = [
   ...waybackShellBodies,
   ...archiveRedirectBodies,
   ...emptyHtmlBodies,
+  ...articleNotFoundBodies,
   '<html><head><title></title></head><body><div>Powered and protected by</div><div>Privacy</div></body></html>',
   '<html><body><!-- BEGIN WAYBACK TOOLBAR INSERT --><div id="wm-ipp-base">Wayback Machine: April 16, 2026</div><!-- END WAYBACK TOOLBAR INSERT --><div>Powered and protected by</div><div>Privacy</div></body></html>',
   'Powered and protected by\n\nPrivacy',
@@ -1311,6 +1918,10 @@ test('access-error detection preserves real articles about security and PDF bodi
     '<html><title>Understanding 404 - Page Not Found</title><article>A guide to error handling.</article></html>',
     '<html><title>Understanding 404 | Page Not Found</title><article>A guide to error handling.</article></html>',
     '<html><title>Understanding DO NOT DELETE - 404 Page</title><article>A guide to error handling.</article></html>',
+    `<html><title>Missing articles</title><article><h1>How to diagnose missing articles</h1><p>${articleNotFoundText}</p><h2>${articleNotFoundText}</h2><p>This is an example notice.</p></article></html>`,
+    `# How to diagnose missing articles\n\n## ${articleNotFoundText}\n\nThis is an example notice.`,
+    `${articleNotFoundText}\n\nThis article explains the notice rather than serving an error page.`,
+    `Title: Missing articles\n\nURL Source: https://example.com/guide\n\nMarkdown Content:\n# Error handling\n\n\`\`\`html\n<h1>${articleNotFoundText}</h1>\n\`\`\`\n\nAn example of an error heading.`,
     '<html><title>Understanding Federal Register :: Request Access</title><article>A guide to the public API.</article></html>',
     `Federal Register access guide\n\n${federalRegisterAccessText}`,
     `${federalRegisterAccessText}\n\nThis article quotes an access notice; it does not serve the challenge.`,
@@ -1359,6 +1970,7 @@ test('access-error detection preserves real articles about security and PDF bodi
     Buffer.from('%PDF-1.7\nTitle: 页面未找到'),
     Buffer.from('%PDF-1.7\nTitle: 404 | Page Not Found'),
     Buffer.from('%PDF-1.7\nTitle: DO NOT DELETE - 404 Page'),
+    Buffer.from(`%PDF-1.7\n# ${articleNotFoundText}`),
     Buffer.from(`%PDF-1.7\nTitle: Federal Register :: Request Access\n${federalRegisterAccessText}`),
     Buffer.from(`%PDF-1.7\n${loginLockoutText}`),
     Buffer.from(`%PDF-1.7\n${orgChartControlText}`),
@@ -1500,7 +2112,7 @@ test('fetch CLI rejects origin, reader, archived, and cached access-error pages 
 });
 
 test('fetch CLI recovers an access-error page through a valid reader response', () => {
-  for (const body of [accessErrorBodies[0], ...clinicalTrialShellBodies, ...federalRegisterAccessBodies, ...loginLockoutBodies, ...orgChartControlBodies, ...clientBlockedBodies, ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, ...waybackShellBodies, ...archiveRedirectBodies, ...emptyHtmlBodies, signupChromeBody, loginLockoutChromeBody]) {
+  for (const body of [accessErrorBodies[0], ...clinicalTrialShellBodies, ...federalRegisterAccessBodies, ...loginLockoutBodies, ...orgChartControlBodies, ...clientBlockedBodies, ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, ...waybackShellBodies, ...archiveRedirectBodies, ...emptyHtmlBodies, ...articleNotFoundBodies, signupChromeBody, loginLockoutChromeBody]) {
     const result = spawnSync(process.execPath, ['--input-type=module', '-e', `
       import assert from 'node:assert/strict';
       import { main } from './.agents/skills/fetch-url/scripts/fetch.mjs';
@@ -1526,7 +2138,7 @@ test('fetch CLI refreshes blocked reader and archive fallback caches', () => {
   const folder = mkdtempSync(join(tmpdir(), 'source-fallback-cache-check-'));
   const url = 'https://example.com/page';
   try {
-    const cases = ['Powered and protected by\n\nPrivacy', clinicalTrialShellBodies[0], ...federalRegisterAccessBodies, ...loginLockoutBodies, ...orgChartControlBodies, ...clientBlockedBodies, ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, ...waybackShellBodies, ...archiveRedirectBodies, ...emptyHtmlBodies, signupChromeBody, loginLockoutChromeBody]
+    const cases = ['Powered and protected by\n\nPrivacy', clinicalTrialShellBodies[0], ...federalRegisterAccessBodies, ...loginLockoutBodies, ...orgChartControlBodies, ...clientBlockedBodies, ...notFoundTitleBodies, ...redirectShellBodies, ...signupShellBodies, ...trackingPixelBodies, ...financialRegistryShellBodies, ...waybackShellBodies, ...archiveRedirectBodies, ...emptyHtmlBodies, ...articleNotFoundBodies, signupChromeBody, loginLockoutChromeBody]
       .flatMap((body) => ['reader', 'wayback'].map((variant) => [body, variant]));
     for (const [body, variant] of cases) {
       writeFileSync(join(folder, `${canonicalCacheKey(url, variant)}.json`), JSON.stringify({

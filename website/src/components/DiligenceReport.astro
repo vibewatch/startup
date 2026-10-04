@@ -827,6 +827,7 @@ const card = {
     /* Hide site chrome and in-report controls. */
     :global(.bz-utility),
     :global(.bz-footer),
+    :global(.d3-chart-tooltip),
     .evidence-toggle,
     .print-pdf,
     .back-to-top,
@@ -979,16 +980,47 @@ const card = {
      * relying on container queries that won't fire at A4 width. */
     :global(.native-figure) { padding: 3mm !important; margin-block: 4mm !important; break-inside: avoid; page-break-inside: avoid; }
     /* range chart — stack rows */
-    :global(.chart-range .range-row) { grid-template-columns: 1fr !important; gap: 1mm !important; padding: 2mm 2.5mm !important; }
+    :global(.chart-range) { --chart-fs-caption: 10pt; --chart-fs-kicker: 9pt; }
+    :global(.chart-range .range-row) { grid-template-columns: 1fr !important; gap: 1mm !important; padding: 2mm 2.5mm !important; break-inside: avoid; page-break-inside: avoid; }
     :global(.chart-range .range-row-summary) { text-align: left !important; white-space: normal !important; }
+    :global(.chart-range .range-axis-tick:not(:first-child):not(:last-child)) { display: none !important; }
     /* matrix chart — swap to card list */
+    :global(.native-figure:has(.chart-matrix)) { --chart-fs-body: 10pt; --chart-fs-caption: 10pt; --chart-fs-kicker: 9pt; --chart-fs-note: 10pt; }
+    :global(.native-figure:has(.chart-matrix) > figcaption) { font-variant-caps: normal; }
     :global(.chart-matrix .matrix-grid) { display: none !important; }
     :global(.chart-matrix .matrix-cards) { display: block !important; }
+    :global(.chart-matrix .matrix-card) { display: block; line-height: 1.4; overflow-wrap: anywhere; break-inside: avoid; page-break-inside: avoid; }
+    :global(.chart-matrix .matrix-card-item) { break-inside: avoid; page-break-inside: avoid; }
+    :global(.chart-matrix .matrix-card-title),
+    :global(.chart-matrix .matrix-card > .matrix-row-note),
+    :global(.chart-matrix .matrix-card-key),
+    :global(.chart-matrix .matrix-column-detail) { break-after: avoid; page-break-after: avoid; }
     /* kpi chart — single column on A4 column */
     :global(.chart-kpi .kpi-grid) { grid-template-columns: repeat(2, 1fr) !important; gap: 2mm !important; }
     :global(.chart-kpi .kpi-card) { padding: 2.5mm 3mm !important; break-inside: avoid; }
     /* Generic SVG-based charts: cap height so they never own a whole page. */
     :global(.native-figure svg) { max-width: 100% !important; height: auto !important; max-height: 110mm; }
+    /* Dense diagrams need readable text, not an SVG shrunk to this cap. */
+    :global(.native-figure:has(.chart-timeline)),
+    :global(.native-figure:has(.chart-dag)),
+    :global(.native-figure:has(.chart-quadrant)),
+    :global(.native-figure:has(.chart-pyramid)) { break-inside: auto; page-break-inside: auto; }
+    /* Keep glyphs measurable if web fonts finish loading during print. */
+    :global(.chart-timeline > svg),
+    :global(.chart-dag > svg),
+    :global(.chart-quadrant > svg),
+    :global(.chart-pyramid > svg) { position: absolute; visibility: hidden; }
+    :global(.timeline-print-events),
+    :global(.pyramid-print-layers) { display: block !important; margin: 0; padding-left: 5mm; font-size: 10pt; line-height: 1.45; }
+    :global(.timeline-print-events > li),
+    :global(.pyramid-print-layers > li) { padding: 2mm 3mm; border-left: 2pt solid; overflow-wrap: anywhere; break-inside: avoid; page-break-inside: avoid; }
+    :global(.timeline-print-events > li + li),
+    :global(.pyramid-print-layers > li + li) { border-top: 0.4pt solid #ddd; }
+    :global(.timeline-print-events strong),
+    :global(.pyramid-print-layers strong) { display: block; color: #800020; }
+    :global(.chart-quadrant .quadrant-legend) { display: none !important; }
+    :global(.timeline-print-events p),
+    :global(.pyramid-print-layers p) { margin: 1mm 0 0; font-size: 10pt; line-height: 1.45; }
 
     /* Hide citation refs in the printout regardless of the in-page toggle. */
     .report-shell :global(.claim-ref) { display: none !important; }

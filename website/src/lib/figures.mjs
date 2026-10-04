@@ -78,6 +78,42 @@ export function figureItemNotes(item) {
   ].filter((value) => typeof value === 'string' && value.trim()))];
 }
 
+export function graphItemNotes(item) {
+  return [...new Set([
+    item.displayValue ?? item.value, item.unit, ...figureValueNotes(item),
+    ...[item.risk, item.segment].filter(value => typeof value === 'string' && value.trim()),
+  ].filter(value => value != null && value !== '')
+    .map(value => typeof value === 'object' ? JSON.stringify(value) : String(value)))];
+}
+
+export function quadrantAxes(figure) {
+  const data = figure.data ?? {};
+  const points = Array.isArray(data.points) ? data.points : [];
+  return Object.fromEntries(['x', 'y'].map(key => {
+    const raw = data[`${key}Axis`] ?? data[`${key}Label`] ?? data[key]
+      ?? figure[`${key}Axis`] ?? figure[`${key}AxisLabel`] ?? figure[`${key}Label`];
+    const axis = raw && typeof raw === 'object' ? raw : {};
+    const label = typeof raw === 'string' || typeof raw === 'number' ? String(raw)
+      : typeof axis.label === 'string' ? axis.label : key.toUpperCase();
+    const values = points.map(point => point[key]);
+    if (!values.length || values.some(value => !Number.isFinite(value))) {
+      throw new Error(`Quadrant ${figure.id ?? '?'} requires finite ${key} coordinates`);
+    }
+    const declared = axis.min != null || axis.max != null;
+    if (declared && (!Number.isFinite(axis.min) || !Number.isFinite(axis.max)
+      || axis.min >= axis.max || values.some(value => value < axis.min || value > axis.max))) {
+      throw new Error(`Quadrant ${figure.id ?? '?'} has invalid or conflicting ${key} axis bounds`);
+    }
+    return [key, {
+      label, declared,
+      domain: declared ? [axis.min, axis.max] : [Math.min(...values), Math.max(...values)],
+      definitions: ['min', 'max', 'low', 'high', 'lowLabel', 'highLabel', 'description', 'scale']
+        .filter(field => ['string', 'number', 'boolean'].includes(typeof axis[field]))
+        .map(field => `${field}: ${axis[field]}`),
+    }];
+  }));
+}
+
 export function stackLayerDetails(data) {
   const content = (value) => {
     if (value == null) return [];
@@ -151,6 +187,25 @@ export function funnelStageTable(data, labels) {
   return table;
 }
 
+export function waterfallValueTable(data, labels) {
+  const table = funnelStageTable(data, labels);
+  const metadata = (Array.isArray(data?.items) ? data.items : []).map(item =>
+    ['type', 'kind', 'role', 'isTotal', 'category', 'direction', 'status', 'base', 'cumulative']
+      .filter(key => ['string', 'number', 'boolean'].includes(typeof item[key]))
+      .map(key => `${key}: ${item[key]}`).join('\n'));
+  if (!metadata.some(Boolean)) return table;
+  return {
+    columns: [table.columns[0], labels.metadataLabel, ...table.columns.slice(1)],
+    rows: table.rows.map((row, index) => ({
+      ...row,
+      values: [{
+        ...row.values[0],
+        detail: [...new Set([row.values[0].detail, metadata[index]].filter(Boolean))].join('\n'),
+      }, metadata[index] || null, ...row.values.slice(1)],
+    })),
+  };
+}
+
 export function flowTopology(data) {
   const nodes = Array.isArray(data?.nodes) ? data.nodes : [];
   const edges = Array.isArray(data?.edges) ? data.edges : [];
@@ -174,7 +229,7 @@ export function flowTopology(data) {
 }
 
 export function withFlowTopology(figure) {
-  return figure.type === 'flow' ? { ...figure, _flowTopology: flowTopology(figure.data) } : figure;
+  return figure.type === 'flow' || figure.type === 'dag' ? { ...figure, _flowTopology: flowTopology(figure.data) } : figure;
 }
 
 export function flowRelationshipTable(data, topology, { nodeLabel, connectionLabel, sourceLabel, targetLabel, contextLabel }) {
@@ -186,9 +241,7 @@ export function flowRelationshipTable(data, topology, { nodeLabel, connectionLab
     const name = text(node.label ?? node.name ?? node.id ?? `#${index + 1}`);
     return node.id != null && text(node.id) !== name ? `${name} [${text(node.id)}]` : name;
   };
-  const context = (item) => [...new Set([
-    item.displayValue ?? item.value, item.unit, ...figureValueNotes(item),
-  ].filter((value) => value != null && value !== '').map(text))].join('\n');
+  const context = (item) => graphItemNotes(item).join('\n');
   const endpoint = (value, index) => index == null ? text(value) : label(nodes[index], index);
   return {
     columns: [sourceLabel, targetLabel, contextLabel],
