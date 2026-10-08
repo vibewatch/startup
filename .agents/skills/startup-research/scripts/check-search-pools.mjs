@@ -7,21 +7,21 @@ import { syncBuiltinESMExports } from 'node:module';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
-import { promoteReserveEvidence, successfulPoolMetrics } from './search-pool-recovery.mjs';
+import { promoteReserveEvidence, replenishReserveEvidence, successfulPoolMetrics } from './search-pool-recovery.mjs';
 import { canonicalSourceUrl, getCoreArtifacts, isSelfPublishedReportUrl, loadWorkflowConfig } from './utils.mjs';
 import { checkRun } from './check-report.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const urls = (entries) => new Set(entries.map((entry) => canonicalSourceUrl(entry.url)));
 
-async function bootstrapFixture(name, { chapters = 1, sources = 12, failed = [], aliases = false, selfPublished = [], redirects = [] }, verify) {
+async function bootstrapFixture(name, { chapters = 1, sources = 12, failed = [], lowSignal = [], aliases = false, selfPublished = [], redirects = [] }, verify) {
   const folder = resolve('.research-cache', `20990101000000-pool-check-${name}-${process.pid}`);
   const results = Array.from({ length: sources }, (_, index) => ({
     url: selfPublished.includes(index)
       ? `https://startup.genisisiq.com/acme-${index}/`
       : `https://publisher${index + 1}.example/acme`,
     title: `Acme evidence ${index + 1}`,
-    sourceQuality: { tier: 'high', score: 100 - index, reasons: [] },
+    sourceQuality: { tier: lowSignal.includes(index) ? 'low' : 'high', score: 100 - index, reasons: [] },
   }));
   const query = (id) => ({
     id, query: id, intent: 'broad', preferredProvider: 'fixture', maxResults: 10,
@@ -438,6 +438,48 @@ const tests = [
       assert(diagnostics.some((line) => line.includes('net-new=1/2')), 'missing net-new shortfall diagnostic');
     },
   )],
+  ['low-signal scarcity is diagnosed without assigning disallowed sources', () => bootstrapFixture(
+    'low-signal', { sources: 10, lowSignal: [1, 2, 3, 4, 5, 6, 7, 8, 9] }, ({ bundle, exitCode, diagnostics }) => {
+      assert.equal(exitCode, 1);
+      assert(diagnostics.some(line => line.includes('insufficient fetched evidence')));
+      assert(bundle.chapterPools.every(pool =>
+        [...pool.recommended, ...pool.reserve].every(candidate => candidate.sourceQuality.tier !== 'low')));
+    },
+  )],
+  ['exhausted initial reserves recover through bounded redistribution', () => bootstrapFixture(
+    'refill', { chapters: 8, sources: 64, failed: [0, 1, 3, 4] }, result => {
+      assertFloors(result);
+      assert(result.bundle.stats.recoveryPrefetchCount > 0);
+      assert(result.bundle.chapterPools.every(pool => pool.reserve.length <= 6));
+    },
+  )],
+  ['reserve refill redistributes only surplus backups within the six-source cap', () => {
+    const candidate = (id, allocation = 'net-new', tier = 'high') => ({
+      url: `https://${id}.example/acme`, allocation, sourceQuality: { tier },
+    });
+    const pools = [
+      { key: 'failed', evidenceTarget: { minSources: 2, minDomains: 2, minNetNewSources: 2 },
+        recommended: [candidate('failed')], reserve: [candidate('blocked', 'net-new-reserve')] },
+      { key: 'healthy', evidenceTarget: { minSources: 1, minDomains: 1, minNetNewSources: 1 },
+        recommended: [candidate('healthy')], reserve: [candidate('reserved', 'net-new-reserve')] },
+    ];
+    const fetched = new Map([['https://failed.example/acme', { ok: false }],
+      ['https://blocked.example/acme', { ok: false }], ['https://healthy.example/acme', { ok: true }]]);
+    const candidates = [candidate('blocked'), candidate('reserved'), candidate('low', 'reserve', 'low'),
+      ...Array.from({ length: 10 }, (_, i) => candidate(`new${i}`))];
+    const original = structuredClone(pools);
+    const replenished = replenishReserveEvidence(pools, candidates, fetched);
+    assert.deepEqual(pools, original, 'refill mutated its input');
+    assert.deepEqual(replenished[1].recommended, pools[1].recommended, 'healthy recommended evidence must remain protected');
+    assert.equal(replenished[1].reserve.length, 0, 'transferred backup must leave its former pool');
+    assert.equal(replenished[0].reserve.length, 6);
+    assert(replenished[0].reserve.every(entry =>
+      (entry.url.includes('//new') || entry.url.includes('//reserved')) && entry.allocation === 'net-new-reserve'));
+    for (const entry of replenished[0].reserve) fetched.set(entry.url, { ok: true });
+    const recovery = promoteReserveEvidence(replenished[0], fetched);
+    assert.equal(recovery.successful, 2);
+    assert.equal(recovery.successfulNetNew, 2);
+  }],
 ];
 
 const failures = [];

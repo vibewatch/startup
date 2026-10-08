@@ -62,3 +62,39 @@ export function promoteReserveEvidence(pool, fetchedByUrl) {
     ...metrics,
   };
 }
+
+export function replenishReserveEvidence(pools, candidates, fetchedByUrl) {
+  const deficient = new Set(pools.filter(pool => {
+    const metrics = successfulPoolMetrics(pool, fetchedByUrl);
+    return metrics.successful < pool.evidenceTarget.minSources
+      || metrics.successfulDomains.size < pool.evidenceTarget.minDomains
+      || metrics.successfulNetNew < pool.evidenceTarget.minNetNewSources;
+  }).map(pool => pool.key));
+  const protectedUrls = new Set(pools.flatMap(pool => [
+    ...pool.recommended, ...(deficient.has(pool.key) ? pool.reserve : []),
+  ].map(candidate => canonicalSourceUrl(candidate.url))));
+  const available = uniqueCandidates(candidates).filter(candidate =>
+    candidate.sourceQuality?.tier !== 'low'
+    && !protectedUrls.has(canonicalSourceUrl(candidate.url))
+    && (!fetchedByUrl.has(candidate.url) || fetchedByUrl.get(candidate.url)?.ok))
+    .sort((left, right) => Number(Boolean(fetchedByUrl.get(right.url)?.ok))
+      - Number(Boolean(fetchedByUrl.get(left.url)?.ok)));
+  const transferred = new Set();
+  const result = pools.map(pool => deficient.has(pool.key)
+    ? { ...pool, reserve: pool.reserve.filter(candidate => fetchedByUrl.get(candidate.url)?.ok) }
+    : pool);
+  // Release only surplus backups, never another chapter's recommended evidence.
+  for (let round = 0; round < 6 && available.length; round += 1) {
+    for (const pool of result) {
+      if (!deficient.has(pool.key) || pool.reserve.length >= 6 || !available.length) continue;
+      const candidate = available.shift();
+      pool.reserve.push({ ...candidate, allocation: 'net-new-reserve' });
+      transferred.add(canonicalSourceUrl(candidate.url));
+    }
+  }
+  return result.map(pool => {
+    if (deficient.has(pool.key)) return pool;
+    const reserve = pool.reserve.filter(candidate => !transferred.has(canonicalSourceUrl(candidate.url)));
+    return reserve.length === pool.reserve.length ? pool : { ...pool, reserve };
+  });
+}

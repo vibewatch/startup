@@ -433,6 +433,9 @@ function cleanup(runId) {
   console.log(`[translate-zh] removed cache: ${relative(repoRoot, cacheDir)}`);
 }
 
+if (process.env.STARTUP_TRANSLATION_EDITOR_WORKER === '1') {
+  fail('Editorial workers must edit only the prepared summary bundle and part files. The workflow owns runner commands, finalization, acceptance, rollback, and cleanup.');
+}
 const args = parseArgs(process.argv.slice(2));
 
 switch (args.command) {

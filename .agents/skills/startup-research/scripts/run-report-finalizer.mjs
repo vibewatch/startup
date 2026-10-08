@@ -362,12 +362,6 @@ function inspectFinalReport() {
   const reviewIssues = checkReviewReadback(reviewReadback, (file) => readYaml(join(reportFolder, file)));
   const refreshIssues = checkRefreshReadback({ reportFolder, runId, refreshContext });
   const missingFiles = requiredFiles.filter((file) => !existsSync(join(reportFolder, file)));
-  if (missingFiles.length > 0) {
-    return {
-      missingFiles,
-      reportCheck: { ok: false, exitCode: null, error: '', chapterChecks: [], reviewIssues, refreshIssues },
-    };
-  }
   const chapterChecks = getAnalysisArtifacts(config).map(({ file }) => {
     const check = spawnSync(process.execPath, [
       join(scriptDir, 'check-chapter.mjs'), reportFolder, file, '--strict', '--format', 'json',
@@ -415,11 +409,28 @@ function inspectFinalReport() {
       }
     }
   }
-  if (check.status === 0 && config.activeResearchProfile === 'fast') {
+  if (config.activeResearchProfile === 'fast') {
     const bundle = JSON.parse(readFileSync(bundlePath, 'utf8'));
     const queries = executedSearchQueries(bundle);
     for (const file of [...getAnalysisArtifacts(config).map((chapter) => chapter.file), FINAL_ARTIFACTS.evidence.file]) {
-      const document = readYaml(join(reportFolder, file));
+      if (!existsSync(join(reportFolder, file))) continue;
+      let document;
+      try {
+        document = readYaml(join(reportFolder, file));
+        const sources = file === FINAL_ARTIFACTS.evidence.file
+          ? document.sources : document.localEvidence?.sources;
+        if (sources != null && (!Array.isArray(sources)
+            || sources.some(source => !source || typeof source !== 'object'))) {
+          throw new Error('source evidence must be an array of source objects');
+        }
+      } catch (error) {
+        quoteIssues.push({
+          path: file, code: 'sourceEvidenceUnreadable',
+          message: `Cannot inspect source evidence: ${error.message}`,
+          fix: 'Repair this authored YAML before finalization; retain the original source inputs.',
+        });
+        continue;
+      }
       if (file !== FINAL_ARTIFACTS.evidence.file) {
         queryIssues.push(...checkSearchQueryProvenance(document.localEvidence, queries, file));
       }
@@ -433,14 +444,14 @@ function inspectFinalReport() {
   return {
     missingFiles,
     reportCheck: {
-      ok: check.status === 0 && chapterChecks.every((chapter) => chapter.ok)
+      ok: missingFiles.length === 0 && check.status === 0 && chapterChecks.every((chapter) => chapter.ok)
         && quoteIssues.length === 0 && queryIssues.length === 0 && reviewIssues.length === 0 && refreshIssues.length === 0,
       exitCode: check.status,
       error: [
+        ...(missingFiles.length ? [`Missing artifacts: ${missingFiles.join(', ')}`] : []),
         ...chapterChecks.filter((chapter) => !chapter.ok).map((chapter) => `${chapter.file}: ${chapter.error}`),
-        ...(check.status === 0
-          ? [...quoteIssues, ...queryIssues, ...reviewIssues, ...refreshIssues].map((issue) => `${issue.path}: ${issue.code}: ${issue.message}`)
-          : [check.error?.message || check.stderr || check.stdout || `Report validation exited ${check.status}`]),
+        ...[...quoteIssues, ...queryIssues, ...reviewIssues, ...refreshIssues].map((issue) => `${issue.path}: ${issue.code}: ${issue.message}`),
+        ...(check.status !== 0 ? [check.error?.message || check.stderr || check.stdout || `Report validation exited ${check.status}`] : []),
       ].join('\n'),
       chapterChecks,
       quoteIssues,

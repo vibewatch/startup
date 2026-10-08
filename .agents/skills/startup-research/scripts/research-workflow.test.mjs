@@ -3,12 +3,75 @@ import test from 'node:test';
 import { spawnSync } from 'node:child_process';
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import yaml from 'js-yaml';
 
 function workflowSteps(file) {
   const workflow = yaml.load(readFileSync(`.github/workflows/${file}`, 'utf8'));
   return Object.values(workflow.jobs).flatMap(job => job.steps ?? []);
+}
+
+test('workflow-only pushes trigger full main validation', () => {
+  const workflow = yaml.load(readFileSync('.github/workflows/validate-main.yml', 'utf8'));
+  assert(workflow.on.push.paths.includes('.github/workflows/**'));
+});
+
+for (const file of ['company.yml', 'refresh-company.yml', 'research-unicorns.yml', 'translate-reports-zh.yml', 'refresh-portfolio.yml']) {
+  test(`automation configuration fails before expensive work: ${file}`, () => {
+    const steps = workflowSteps(file);
+    const preflight = steps.findIndex(step => step.run === 'npm run check:automation-config');
+    const work = steps.findIndex(step => /npm run research:bootstrap|\bcopilot [^\n]* -p |plan-refresh-batch\.mjs/u.test(step.run ?? ''));
+    assert.ok(preflight >= 0 && work > preflight);
+    assert.notEqual(steps[preflight]['continue-on-error'], true);
+    if (file === 'translate-reports-zh.yml') {
+      assert.equal(steps[preflight].if, "steps.targets.outputs.count != '0'");
+    } else {
+      assert.equal(steps[preflight].if, undefined);
+    }
+  });
+}
+
+for (const scenario of ['current', 'draft-drift', 'editor-drift', 'repair-drift', 'policy-change']) {
+  test(`automation model checks distinguish draft, editor and escalation: ${scenario}`, t => {
+    const root = mkdtempSync(join(tmpdir(), 'automation-model-test-'));
+    t.after(() => rmSync(root, { recursive: true, force: true }));
+    const policyPath = '.agents/skills/startup-research/references/model-routing.yaml';
+    const translationPath = '.github/workflows/translate-reports-zh.yml';
+    for (const path of [
+      policyPath, translationPath,
+      '.agents/skills/startup-research/references/search-strategy.yaml',
+      '.agents/skills/startup-research/references/workflow-config.yaml',
+      '.agents/skills/startup-research/scripts/link-refresh.mjs',
+      '.github/workflows/company.yml', '.github/workflows/refresh-company.yml',
+      '.github/workflows/research-unicorns.yml',
+    ]) {
+      mkdirSync(dirname(join(root, path)), { recursive: true });
+      writeFileSync(join(root, path), readFileSync(path));
+    }
+    const models = yaml.load(readFileSync(join(root, policyPath), 'utf8'));
+    const source = readFileSync(translationPath, 'utf8');
+    let text = source;
+    if (scenario === 'draft-drift') text = text.replace(
+      `default: "${models.profiles['translation-draft'].defaultCopilotModel}"`, 'default: "stale-draft-model"');
+    if (scenario === 'editor-drift' || scenario === 'policy-change') text = text.replace(
+      `--model ${models.profiles['translation-qa'].defaultCopilotModel} -p "$PROMPT"`,
+      '--model fixture-editor-model -p "$PROMPT"');
+    if (scenario === 'repair-drift' || scenario === 'policy-change') text = text.replace(
+      `--model ${models.profiles['translation-qa'].escalateTo} -p "$REPAIR_PROMPT"`,
+      '--model fixture-repair-model -p "$REPAIR_PROMPT"');
+    if (scenario === 'policy-change') {
+      models.profiles['translation-qa'].defaultCopilotModel = 'fixture-editor-model';
+      models.profiles['translation-qa'].escalateTo = 'fixture-repair-model';
+      writeFileSync(join(root, policyPath), yaml.dump(models));
+    }
+    if (scenario !== 'current') assert.notEqual(text, source, 'fixture must actually change the workflow route');
+    writeFileSync(join(root, translationPath), text);
+    const checked = spawnSync(process.execPath, [resolve('.agents/skills/startup-research/scripts/check-automation-config.mjs')], {
+      cwd: root, encoding: 'utf8',
+    });
+    assert.equal(checked.status, scenario.endsWith('-drift') ? 1 : 0, checked.stderr);
+    if (scenario.endsWith('-drift')) assert.match(checked.stderr, /model must match model-routing profile/u);
+  });
 }
 
 function publicationFixture(t, runId = '20990101000000-fixture') {
@@ -89,6 +152,37 @@ fs.appendFileSync(process.env.GRADE_LOG, JSON.stringify(['npm', ...process.argv.
     grades: () => readFileSync(gradeLog, 'utf8').trim().split('\n').filter(Boolean).map(line => JSON.parse(line)),
   };
 }
+
+test('editorial workers cannot run lifecycle commands or delete the prepared cache', t => {
+  const { repo, runId, write } = publicationFixture(t);
+  const runner = resolve('.agents/skills/translate-zh/scripts/run-translation.mjs');
+  const checkpoint = `.translate-cache/${runId}/validated-draft/full-report.zh.yaml`;
+  const part = `.translate-cache/${runId}/parts/part.001.yaml`;
+  write(checkpoint, 'checkpoint: unchanged\n');
+  write(part, 'body: prepared\n');
+  for (const command of ['preflight', 'init', 'editor-init', 'finalize-full', 'editor-accept', 'editor-restore', 'cleanup']) {
+    const result = spawnSync(process.execPath, [runner, command, runId], {
+      cwd: repo, encoding: 'utf8',
+      env: { ...process.env, STARTUP_TRANSLATION_EDITOR_WORKER: '1' },
+    });
+    assert.equal(result.status, 1);
+    assert.match(result.stderr, /Editorial workers must edit only the prepared/u);
+    assert.equal(readFileSync(join(repo, checkpoint), 'utf8'), 'checkpoint: unchanged\n');
+    assert.equal(readFileSync(join(repo, part), 'utf8'), 'body: prepared\n');
+  }
+  const workflow = yaml.load(readFileSync('.github/workflows/translate-reports-zh.yml', 'utf8'));
+  const steps = workflow.jobs.translate.steps;
+  assert.equal(workflow.env?.STARTUP_TRANSLATION_EDITOR_WORKER, undefined);
+  assert.equal(workflow.jobs.translate.env?.STARTUP_TRANSLATION_EDITOR_WORKER, undefined);
+  assert.equal(steps.find(step => step.id === 'editor').env.STARTUP_TRANSLATION_EDITOR_WORKER, '1');
+  const acceptance = steps.find(step => step.name === 'Validate or roll back editorial pass');
+  assert.equal(acceptance.env.STARTUP_TRANSLATION_EDITOR_WORKER, undefined);
+  assert.match(acceptance.run, /STARTUP_TRANSLATION_EDITOR_WORKER=1 copilot .*"\$REPAIR_PROMPT"/u);
+  const parent = spawnSync(process.execPath, [runner, '--help'], {
+    encoding: 'utf8', env: { ...process.env, STARTUP_TRANSLATION_EDITOR_WORKER: '' },
+  });
+  assert.equal(parent.status, 0, parent.stderr);
+});
 
 for (const scenario of [
   'selected-overlays', 'checker-edit', 'staged-checker-edit', 'guard-edit', 'english-edit',

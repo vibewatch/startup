@@ -172,6 +172,10 @@ jobs:
           npm --prefix website ci || npm --prefix website install --no-audit --no-fund
           npm install -g @github/copilot
 
+      - name: Validate automation configuration before generation
+        if: steps.targets.outputs.count != '0'
+        run: npm run check:automation-config
+
       - name: Snapshot publication approval inputs
         if: steps.targets.outputs.count != '0'
         env:
@@ -265,6 +269,7 @@ jobs:
         continue-on-error: true
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
+          STARTUP_TRANSLATION_EDITOR_WORKER: "1"
           REPORT_IDS: ${{ steps.editorial_targets.outputs.reportIds }}
         run: |
           set -euo pipefail
@@ -273,7 +278,7 @@ jobs:
           $REPORT_IDS
 
           For each report:
-          - Follow the translate-zh skill's Mandatory editorial pass and translation philosophy.
+          - You are an editorial worker, not the parent orchestrator. The workflow has already run editor-init. Follow the translate-zh skill's editorial-worker scope and translation philosophy; do not execute its parent-runner commands.
           - Read the complete English summary-card.yaml and full-report.yaml plus the complete validated Chinese cache created by editor-init.
           - Enumerate the actual cached part files. Edit only .translate-cache/<runId>/summary-card.translate.yaml and its existing parts/part.NNN.yaml files.
           - Compare every reader-facing Chinese leaf with its corresponding English source. Rewrite awkward or generic Chinese from the factual proposition, not English clause order.
@@ -332,7 +337,7 @@ jobs:
               )
               REPAIR_LOG="$RUNNER_TEMP/copilot-logs/translate-zh-editor-repair-$report.log"
               repair_status=0
-              copilot --yolo --autopilot --model gpt-5.6-sol-fast -p "$REPAIR_PROMPT" 2>&1 | tee "$REPAIR_LOG" || repair_status=$?
+              STARTUP_TRANSLATION_EDITOR_WORKER=1 copilot --yolo --autopilot --model gpt-5.6-sol-fast -p "$REPAIR_PROMPT" 2>&1 | tee "$REPAIR_LOG" || repair_status=$?
               assert_publication_scope
               if [ "$repair_status" -eq 0 ] && validate_editor "$report"; then
                 accepted=$((accepted + 1))

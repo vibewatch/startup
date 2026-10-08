@@ -35,6 +35,17 @@ Repository-wide validation, builds and dependency installation belong to the
 workflow. Its pre-worker snapshot restricts changes to the selected Chinese
 outputs and binds approval to the complete English source bytes.
 
+### Editorial-worker scope
+
+When `STARTUP_TRANSLATION_EDITOR_WORKER=1`, you are the workflow's editor or
+bounded repair worker, not the parent orchestrator. The cache and validated-draft
+checkpoint already exist. Read the English source and edit only the assigned
+`summary-card.translate.yaml` and existing `parts/part.NNN.yaml` files.
+Do not run the commands below or any translation script, initialize or delete
+caches, accept or restore a draft, or edit final overlays. Leave the environment
+flag unchanged. Return after editing; the workflow owns all lifecycle commands.
+The runner rejects commands in this worker mode to prevent premature cleanup.
+
 ## Start here
 
 The parent agent must use the orchestration runner. Do not reassemble the
@@ -128,8 +139,9 @@ attribution, and the wider translationese soundcheck with zero hard errors.
 Advisory glossary/descriptor/punctuation findings must either reach zero or
 strictly decrease from the validated draft; equal or higher counts are rejected.
 If the first strict check reports exact failing paths, automation performs one
-bounded source-anchored repair with `gpt-5.6-luna` of only those cached leaves
-and validates again; the initial editor uses `gpt-6-luna`.
+bounded source-anchored repair with `gpt-5.6-sol-fast` of only those cached leaves
+and validates again; the initial editor uses `gpt-5.6-luna`. These stages follow
+the `translation-qa` profile's default and escalation routes respectively.
 `editor-accept` writes the complete cross-artifact issue set to
 `.translate-cache/<runId>/editor-findings.json`; the repair must address every
 listed error rather than stopping at the first failing artifact. `--skip-quality`

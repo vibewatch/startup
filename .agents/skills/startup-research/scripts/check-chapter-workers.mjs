@@ -361,7 +361,10 @@ process.exit(Number(process.env.FAKE_COPILOT_EXIT ?? 1));
   for (const file of ['report-meta.yaml', 'summary-card.yaml', 'full-report.yaml', 'evidence.yaml']) {
     writeFileSync(join(folder, file), '{}\n');
   }
-  for (const compiledOnly of [false, true]) {
+  for (const mode of ['authored', 'compiled', 'missing-artifacts', 'malformed-chapter']) {
+    const compiledOnly = mode === 'compiled';
+    const firstChapterPath = join(folder, roster.chapters[0].file);
+    const firstChapterBefore = readFileSync(firstChapterPath, 'utf8');
     if (compiledOnly) {
       for (const chapter of roster.chapters) {
         const path = join(folder, chapter.file);
@@ -375,6 +378,14 @@ process.exit(Number(process.env.FAKE_COPILOT_EXIT ?? 1));
         }],
       }));
     }
+    if (mode === 'missing-artifacts') {
+      for (const file of ['summary-card.yaml', 'full-report.yaml', 'evidence.yaml']) rmSync(join(folder, file));
+      const chapter = join(folder, roster.chapters[0].file);
+      const document = JSON.parse(readFileSync(chapter, 'utf8'));
+      document.localEvidence.sources[0].url = 'https://unfetched.example/missing-source';
+      writeFileSync(chapter, JSON.stringify(document));
+    }
+    if (mode === 'malformed-chapter') writeFileSync(firstChapterPath, 'localEvidence: [\n');
     const script = join(here, 'run-report-finalizer.mjs');
     const argv = [
       process.execPath, script, '--report-folder', folder,
@@ -404,8 +415,24 @@ process.exit(Number(process.env.FAKE_COPILOT_EXIT ?? 1));
     const output = JSON.parse(finalizerQuoteProbe.stdout);
     assert.equal(output.status, 'failed');
     assert.equal(output.reportCheck.ok, false);
-    assert(output.reportCheck.quoteIssues.every((issue) => issue.code === 'sourceQuoteMismatch'));
-    assert(output.reportCheck.quoteIssues.some((issue) => issue.path.startsWith(compiledOnly ? 'evidence.yaml:' : roster.chapters[0].file)));
+    if (mode === 'malformed-chapter') {
+      assert(output.reportCheck.quoteIssues.some(issue => issue.code === 'sourceEvidenceUnreadable'));
+      assert.match(output.reportCheck.error, /Cannot inspect source evidence/u);
+      writeFileSync(firstChapterPath, firstChapterBefore);
+    } else if (mode === 'missing-artifacts') {
+      assert.equal(output.missingFiles.length, 3);
+      assert(output.reportCheck.quoteIssues.some(issue => issue.code === 'sourceQuoteTextMissing'));
+      assert.match(output.reportCheck.error, /unfetched\.example\/missing-source/u);
+      assert.equal(output.reportCheck.chapterChecks.length, roster.totalChapters);
+      for (const file of ['summary-card.yaml', 'full-report.yaml', 'evidence.yaml']) writeFileSync(join(folder, file), '{}\n');
+      const chapter = join(folder, roster.chapters[0].file);
+      const document = JSON.parse(readFileSync(chapter, 'utf8'));
+      document.localEvidence.sources[0].url = quoteBundle.fetchedSources[0].url;
+      writeFileSync(chapter, JSON.stringify(document));
+    } else {
+      assert(output.reportCheck.quoteIssues.every((issue) => issue.code === 'sourceQuoteMismatch'));
+      assert(output.reportCheck.quoteIssues.some((issue) => issue.path.startsWith(compiledOnly ? 'evidence.yaml:' : roster.chapters[0].file)));
+    }
   }
   for (const [keyQuote, valid] of [
     ['Invented compiled quotation.', false],

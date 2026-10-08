@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import {
   NET_NEW_RESERVE_COUNT,
   promoteReserveEvidence,
+  replenishReserveEvidence,
   successfulPoolMetrics,
 } from './search-pool-recovery.mjs';
 import { canonicalSourceUrl, isSelfPublishedReportUrl, normalizeDomain } from './utils.mjs';
@@ -273,7 +274,9 @@ for (const chapter of plan.chapters) {
   );
   const netNew = [];
   const localNetNew = new Set();
-  const netNewCandidates = [...preferredCandidates, ...direct, ...allCandidates];
+  const netNewCandidates = args.profile === 'fast'
+    ? preferredCandidates
+    : [...preferredCandidates, ...direct, ...allCandidates];
   const allocationTarget = chapter.evidenceTarget.minNetNewSources;
   for (const candidate of netNewCandidates) {
     if (netNew.length >= allocationTarget) break;
@@ -298,7 +301,7 @@ for (const chapter of plan.chapters) {
   netNewByChapter.set(chapter.key, netNew);
 }
 
-const chapterPools = plan.chapters.map((chapter) => {
+let chapterPools = plan.chapters.map((chapter) => {
   const direct = directByChapter.get(chapter.key) ?? [];
   const netNew = netNewByChapter.get(chapter.key) ?? [];
   const availableToChapter = (candidate) => {
@@ -589,6 +592,34 @@ if (args.prefetch) {
     recoveryPrefetchCount = recoveryFetched.length;
     fetchedSources.push(...recoveryFetched);
     for (const entry of recoveryFetched) fetchedByUrl.set(entry.url, entry);
+  }
+  chapterPools = chapterPools.map(pool => {
+    const { recommended, reserve } = promoteReserveEvidence(pool, fetchedByUrl);
+    return { ...pool, recommended, reserve };
+  });
+  chapterPools = replenishReserveEvidence(chapterPools, allCandidates, fetchedByUrl);
+  const replenishedByUrl = new Map();
+  for (const pool of chapterPools) {
+    const metrics = promoteReserveEvidence(pool, fetchedByUrl);
+    pool.recommended = metrics.recommended;
+    pool.reserve = metrics.reserve;
+    if (metrics.successful >= pool.evidenceTarget.minSources
+        && metrics.successfulDomains.size >= pool.evidenceTarget.minDomains
+        && metrics.successfulNetNew >= pool.evidenceTarget.minNetNewSources) continue;
+    for (const candidate of pool.reserve) {
+      if (fetchedByUrl.has(candidate.url)) continue;
+      if (!replenishedByUrl.has(candidate.url)) {
+        replenishedByUrl.set(candidate.url, { candidate, chapters: [] });
+      }
+      replenishedByUrl.get(candidate.url).chapters.push(pool.key);
+    }
+  }
+  // One bounded refill from existing discovery results; never lower evidence floors.
+  if (replenishedByUrl.size > 0) {
+    const replenished = await fetchCandidates([...replenishedByUrl.values()]);
+    recoveryPrefetchCount += replenished.length;
+    fetchedSources.push(...replenished);
+    for (const entry of replenished) fetchedByUrl.set(entry.url, entry);
   }
   for (const pool of chapterPools) {
     const recovery = promoteReserveEvidence(pool, fetchedByUrl);

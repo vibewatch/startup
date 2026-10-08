@@ -428,12 +428,12 @@ rmSync(${JSON.stringify(join(folder, 'second.yaml'))},{force:true});
       assert.equal(output.attempts[1].previousFailuresPath, feedback);
       if (mode === 'missing-chapter') {
         assert.deepEqual(output.missingFiles, ['second.yaml']);
-        assert.deepEqual(output.reportCheck.chapterChecks, []);
-        assert.equal(readFileSync(strictLog, 'utf8'), '');
-      } else {
-        assert.deepEqual(readFileSync(strictLog, 'utf8').trim().split('\n').map((line) => JSON.parse(line)[1]),
-          ['chapter.yaml', 'second.yaml', 'chapter.yaml', 'second.yaml']);
+        assert.equal(output.reportCheck.chapterChecks.length, 2);
+        assert.equal(output.reportCheck.ok, false);
+        assert.match(output.reportCheck.error, /Missing artifacts: second\.yaml/u);
       }
+      assert.deepEqual(readFileSync(strictLog, 'utf8').trim().split('\n').map((line) => JSON.parse(line)[1]),
+        ['chapter.yaml', 'second.yaml', 'chapter.yaml', 'second.yaml']);
       if (mode === 'strict-warning') {
         const strict = output.reportCheck.chapterChecks[1];
         assert.equal(strict.exitCode, 1);

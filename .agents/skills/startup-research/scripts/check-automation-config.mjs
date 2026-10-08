@@ -111,17 +111,24 @@ const workflowModelChecks = [
   {
     path: '.github/workflows/translate-reports-zh.yml',
     profile: 'translation-qa',
+    marker: (model) => `copilot --yolo --autopilot --model ${model} -p "$PROMPT"`,
+  },
+  {
+    path: '.github/workflows/translate-reports-zh.yml',
+    profile: 'translation-qa',
+    field: 'escalateTo',
     marker: (model) => `copilot --yolo --autopilot --model ${model} -p "$REPAIR_PROMPT"`,
   },
 ];
 if (models.success) {
   for (const check of workflowModelChecks) {
     const text = readFileSync(resolve(check.path), 'utf8');
-    const model = models.data.profiles[check.profile]?.defaultCopilotModel;
+    const field = check.field ?? 'defaultCopilotModel';
+    const model = models.data.profiles[check.profile]?.[field];
     if (!model) {
       issues.push(`model-routing.yaml profiles.${check.profile}: missing required workflow route`);
     } else if (!text.includes(check.marker(model))) {
-      issues.push(`${check.path}: default model must match model-routing profile ${check.profile} (${model})`);
+      issues.push(`${check.path}: model must match model-routing profile ${check.profile}.${field} (${model})`);
     }
   }
 }
@@ -169,7 +176,6 @@ for (const required of [
   'npm run translate:zh -- editor-init',
   'npm run translate:zh -- editor-accept',
   'npm run translate:zh -- editor-restore',
-  'copilot --yolo --autopilot --model gpt-6-luna',
   'attempting one targeted repair',
 ]) {
   if (!translationWorkflow.includes(required)) {

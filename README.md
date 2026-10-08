@@ -60,8 +60,21 @@ visible in one place:
 - `research-unicorns.yml` discovers and generates one new report every six hours.
 - `refresh-portfolio.yml` refreshes the existing report portfolio daily.
 - `translate-reports-zh.yml` translates one report every two hours.
-- `validate-main.yml` validates each relevant push and deploys only the validated
+- `validate-main.yml` validates each relevant push, including workflow-only changes, and deploys only the validated
   site artifact.
+
+Generation and translation jobs check automation configuration before invoking
+models; the portfolio planner checks it before launching its refresh matrix.
+Translation uses the `translation-draft` default for drafting and the
+`translation-qa` default/escalation routes for editing and bounded repair.
+Keep the workflow and `model-routing.yaml` aligned when changing these models.
+Editorial workers edit prepared bundles only; the workflow owns acceptance,
+rollback and cache cleanup. Research bootstrap can refill exhausted reserves
+once from unused discovery results or surplus backups of healthy chapters
+(at most six per failing chapter), preserving exclusive URL ownership and
+every chapter's recommended evidence. It still requires the same successfully
+fetched source, domain and net-new evidence floors. Finalizer retries receive source diagnostics even when
+assembly stopped before producing final report artifacts.
 
 `cloudflare/worker.js` retains an optional dispatcher compatible with the old
 hourly Cloudflare trigger. It targets the current workflows, requests one report
