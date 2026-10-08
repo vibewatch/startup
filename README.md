@@ -75,6 +75,9 @@ once from unused discovery results or surplus backups of healthy chapters
 every chapter's recommended evidence. It still requires the same successfully
 fetched source, domain and net-new evidence floors. Finalizer retries receive source diagnostics even when
 assembly stopped before producing final report artifacts.
+New-company discovery starts with the repository's URL-based search tool; host
+search is supplementary. A search outage or lack of a verified new candidate
+still blocks generation rather than publishing an invented or duplicate report.
 
 `cloudflare/worker.js` retains an optional dispatcher compatible with the old
 hourly Cloudflare trigger. It targets the current workflows, requests one report

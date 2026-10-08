@@ -16,6 +16,16 @@ test('workflow-only pushes trigger full main validation', () => {
   assert(workflow.on.push.paths.includes('.github/workflows/**'));
 });
 
+test('unicorn discovery uses URL-based repository search without creating a report first', () => {
+  const discovery = workflowSteps('research-unicorns.yml')
+    .find(step => step.name === 'Generate recent-unicorn diligence reports');
+  assert.match(discovery.run, /DISCOVERY_FOLDER="\.research-cache\/\$\(date -u \+%Y%m%d%H%M%S\)-unicorn-discovery"/u);
+  assert.match(discovery.run, /search-web\.mjs --report-folder "\$DISCOVERY_FOLDER" --query/u);
+  assert.match(discovery.run, /Search snippets and generated summaries alone do not establish eligibility/u);
+  assert.match(discovery.run, /If both repository and host discovery are unavailable/u);
+  assert.match(discovery.run, /Discovery completed without creating a new report after the bounded retry/u);
+});
+
 for (const file of ['company.yml', 'refresh-company.yml', 'research-unicorns.yml', 'translate-reports-zh.yml', 'refresh-portfolio.yml']) {
   test(`automation configuration fails before expensive work: ${file}`, () => {
     const steps = workflowSteps(file);

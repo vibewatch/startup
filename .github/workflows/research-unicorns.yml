@@ -314,6 +314,7 @@ jobs:
           set -euo pipefail
           mkdir -p "$(dirname "$STARTUP_FETCH_LOG_PATH")"
           : > "$STARTUP_FETCH_LOG_PATH"
+          DISCOVERY_FOLDER=".research-cache/$(date -u +%Y%m%d%H%M%S)-unicorn-discovery"
           PROMPT=$(cat <<EOF
           Produce full diligence reports for up to $COUNT private startup unicorns.
           Research profile: ${PROFILE:-fast}
@@ -325,7 +326,9 @@ jobs:
           For each selected company, prepare one report run for the deterministic workflow. Create the report folder, run npm run research:profile -- --report-folder <folder> --profile ${PROFILE:-fast}, then run npm run research:bootstrap -- --report-folder <folder> --company "<company>" --website "<url>" --profile ${PROFILE:-fast}. Stop after bootstrap: do not run research:workers, research:finalize, chapter subagents, or manual chapter/report repairs. The workflow runs authenticated chapter workers and finalization after this Copilot session returns.
           Treat completion as an on-disk contract: every selected company must either have a report folder with .workflow-snapshot.yaml and a successful .research-cache/<runId>/search-bundle.json, or be skipped before creating a folder. Never delete a report folder after creating it; leave failed bootstrap artifacts for the workflow to preserve and diagnose.
 
-          Follow the startup-research skill's source-verification rules; this workflow provides STARTUP_FETCH_LOG_PATH so fetch-url calls are auditable. Use the host search/source-discovery capability before fetch-url; if no source-discovery capability is available, stop before creating report folders, print a clear source-discovery-unavailable note, and do not invent sources. Do not run any git command (git add, git commit, git push, git stash, git checkout, etc.) at any point in the workflow — leave every generated and modified file unstaged in the working tree; the workflow itself owns commit/push decisions.
+          Follow the startup-research skill's source-verification rules; this workflow provides STARTUP_FETCH_LOG_PATH so fetch-url calls are auditable. Start candidate discovery with node .agents/skills/startup-research/scripts/search-web.mjs --report-folder "$DISCOVERY_FOLDER" --query "<specific sector/geography funding query>" --intent broad --max-results 10. This scratch cache is not a selected report and its timestamp must not become a report run date. The repository search tool returns actual candidate URLs and supports an anonymous provider; no report folder needs to be created first.
+          Host search is supplementary, not the only discovery path. If it times out or returns generic summaries without verifiable URLs, switch back to the repository search tool instead of repeating the same host request. Fetch the original announcement or independent article for promising candidates, verify the date/private valuation, and check the complete identity index before creating a report. Search snippets and generated summaries alone do not establish eligibility.
+          If both repository and host discovery are unavailable, stop before creating report folders, print a clear source-discovery-unavailable note, and do not invent sources. If discovery works but no verified non-duplicate candidate qualifies, report that separately; never fabricate a candidate to make the job pass. Do not run any git command (git add, git commit, git push, git stash, git checkout, etc.) at any point in the workflow — leave every generated and modified file unstaged in the working tree; the workflow itself owns commit/push decisions.
           EOF
           )
           # tee the Copilot CLI output so the next step can parse the trailing
