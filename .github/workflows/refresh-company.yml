@@ -1,8 +1,8 @@
 # Manual single-company startup research refresh run.
 #
 # Produces a new diligence report for an existing startup company report,
-# keeps the previous report for auditability, and marks it superseded after
-# the new report passes validation.
+# retains the previous report until the replacement is accepted, then prunes it
+# after the new report passes validation.
 #
 # Required secrets:
 # - COPILOT_PAT — PAT for a Copilot-licensed account; consumed by the Copilot CLI.
@@ -560,11 +560,13 @@ jobs:
           node "$RUNNER_TEMP/publication-approval/check-publication-scope.mjs" verify "$RUNNER_TEMP/publication-approval"
           npm run check:automation-config
           npm run check:workflow-config
-          npm run check:revision-graph
           while IFS= read -r folder; do
             [ -n "$folder" ] || continue
             node .agents/skills/startup-research/scripts/check-report.mjs "reports/$folder" --contract --format compact
           done < "$RUNNER_TEMP/reports-new.txt"
+          npm run reports:prune -- --apply
+          node "$RUNNER_TEMP/publication-approval/check-publication-scope.mjs" verify "$RUNNER_TEMP/publication-approval"
+          npm run check:revision-graph
 
       - name: Commit and publish refreshed report
         env:

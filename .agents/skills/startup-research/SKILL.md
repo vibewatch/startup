@@ -86,6 +86,14 @@ metadata, both English artifacts, and any existing Chinese revision fields.
 Missing links, stale artifacts, changed targets/reasons, and malformed refresh
 contexts cannot pass as fresh reports. Only `link-refresh` owns revision edits;
 an old report may retain the reason from its own earlier refresh.
+After acceptance, the refresh workflow runs `npm run reports:prune -- --apply`
+to delete superseded report folders, including English and Chinese, without
+waiting for the current Chinese overlay. It retains only ID-to-ID records in
+`reports/.redirects/`; these preserve historical provenance and old URLs, not
+old report content. A re-finalized current report may have a retired predecessor:
+acceptance then requires its redirect record to point to this current run rather
+than requiring the deleted folder. Never recreate retired report folders.
+Pruning belongs to the workflow after report acceptance, not chapter workers.
 Idempotent linking repairs stale predecessor full-report or Chinese revisions
 even when its summary-card revision is already synchronized.
 

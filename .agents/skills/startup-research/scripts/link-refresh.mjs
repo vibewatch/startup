@@ -20,6 +20,7 @@ import { existsSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { refreshArtifactsAreInSync } from './refresh-readback.mjs';
+import { readReportRedirects } from './report-retention.mjs';
 import { loadRefreshContext, recordRefreshReasonReview } from './refresh-context.mjs';
 import {
   EXIT,
@@ -121,6 +122,10 @@ function reusablePriorRunId(runId, { newRunId, newMeta, label }) {
   if (!isRunId(runId)) abort(`${label} ${runId} is not a valid report run id.`, EXIT.failure);
   const folder = join(reportsDir, runId);
   if (!isFinalizedReportFolder(folder)) {
+    if (!existsSync(folder) && readReportRedirects()[runId] === newRunId
+        && isFinalizedReportFolder(join(reportsDir, newRunId))
+        && newMeta.revision?.status === 'current'
+        && normalizeRevision(newMeta.revision).refreshOfRunId === runId) return runId;
     abort(`${label} ${runId} is not a finalized report.`, EXIT.failure);
   }
   const card = readSummaryCard(runId);
@@ -280,6 +285,10 @@ if (currentChanged || args.reviewedReason !== null
 }
 
 assertFinalizedRun(newRunId, 'new refresh report');
+if (!existsSync(join(reportsDir, oldRunId)) && readReportRedirects()[oldRunId] === newRunId) {
+  console.log(`[refresh] ✓ ${oldRunId} already retired in favor of ${newRunId}; preserving historical provenance without recreating report files`);
+  process.exit(EXIT.ok);
+}
 const oldChanged = setOldRevision({ oldRunId, newRunId, refreshReason });
 console.log(`[refresh] previous report ${oldRunId} supersededByRunId=${newRunId}${oldChanged ? ' (updated)' : ' (already set)'}`);
 const { doc: oldMetaAfterLink } = readReportMeta(join(reportsDir, oldRunId));

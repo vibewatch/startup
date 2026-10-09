@@ -433,6 +433,28 @@ test('refresh acceptance checks both reports and existing overlays without rewri
   assert(check().some((issue) => issue.path === `${summaryPath}:revision`));
 });
 
+test('retired refresh parents require an exact redirect and leave all current revision checks mandatory', () => {
+  const runId = '20990101000000-retired-check';
+  const parent = '20980101000000-retired-check';
+  const reportFolder = join('.research-cache', runId);
+  const oldFolder = join(reportsDir, parent);
+  const refreshContext = { refreshOfRunId: parent, refreshReason: 'Accepted latest English evidence.' };
+  const revision = { status: 'current', refreshOfRunId: parent, supersededByRunId: null, refreshReason: refreshContext.refreshReason };
+  const documents = new Map(['report-meta.yaml', 'summary-card.yaml', 'full-report.yaml', 'summary-card.zh.yaml', 'full-report.zh.yaml']
+    .map(file => [join(reportFolder, file), { revision }]));
+  const check = redirects => checkRefreshReadback({ reportFolder, runId, refreshContext },
+    path => structuredClone(documents.get(path)), path => documents.has(path), redirects);
+  assert(check({}).length > 0, 'unknown missing report must still fail');
+  assert(check({ [parent]: '20990102000000-other' }).length > 0, 'wrong retirement target must still fail');
+  assert.deepEqual(check({ [parent]: runId }), []);
+  const path = join(reportFolder, 'full-report.zh.yaml');
+  documents.set(path, { revision: { ...revision, refreshReason: 'Changed without review' } });
+  assert(check({ [parent]: runId }).some(issue => issue.path === `${path}:revision`));
+  documents.set(path, { revision });
+  documents.set(join(oldFolder, 'summary-card.yaml'), { revision });
+  assert(check({ [parent]: runId }).length > 0, 'partially present old report cannot be treated as safely retired');
+});
+
 test('timeline rows use shared pointer tooltips with full date and detail', () => {
   const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
   const timeline = source.slice(source.indexOf('const renderTimeline ='), source.indexOf('const renderStack ='));

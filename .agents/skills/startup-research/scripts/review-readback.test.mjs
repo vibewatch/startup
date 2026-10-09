@@ -135,7 +135,7 @@ test('link-refresh reviews only the current reason, preserves provenance, and sy
     [join(isolatedScripts, 'link-refresh.mjs'), folder, ...args], { encoding: 'utf8' });
   try {
     mkdirSync(isolatedScripts, { recursive: true });
-    for (const file of ['link-refresh.mjs', 'refresh-context.mjs', 'refresh-readback.mjs']) {
+    for (const file of ['link-refresh.mjs', 'refresh-context.mjs', 'refresh-readback.mjs', 'report-retention.mjs']) {
       copyFileSync(join(scripts, file), join(isolatedScripts, file));
     }
     write(join(isolatedScripts, 'utils.mjs'), `
@@ -246,6 +246,18 @@ assert.ok(docs.every(d=>JSON.stringify(d.revision)===JSON.stringify(docs[0].revi
     for (const [path, bytes] of originals) {
       if (path.startsWith(`${previous}/`)) assert.deepEqual(readFileSync(path), bytes);
     }
+    const redirectPath = join(root, 'reports/.redirects', `${previousId}.json`);
+    write(redirectPath, JSON.stringify(runId));
+    rmSync(previous, { recursive: true });
+    for (const args of [[], ['--prepare-current'], ['--review-refresh-reason', reason]]) {
+      const replay = run(...args);
+      assert.equal(replay.status, 0, replay.stderr || replay.stdout);
+      assert(!existsSync(previous), 'idempotent refresh must not recreate retired English or Chinese');
+      assert.deepEqual(readFileSync(contextPath), originalContext);
+      assert.deepEqual(readFileSync(reviewPath), reviewBytes);
+    }
+    writeFileSync(redirectPath, JSON.stringify('20990103000000-fixture'));
+    assert.equal(run().status, 1, 'a missing predecessor needs this exact retirement relationship');
   } finally {
     rmSync(root, { recursive: true, force: true });
   }
@@ -309,7 +321,7 @@ test('a schema-successful model exit must pass strict chapters, readback and ass
   const cache = join(root, '.research-cache', runId);
   const write = (path, text) => { mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, text); };
   try {
-    for (const file of ['run-report-finalizer.mjs', 'review-readback.mjs', 'refresh-readback.mjs']) {
+    for (const file of ['run-report-finalizer.mjs', 'review-readback.mjs', 'refresh-readback.mjs', 'report-retention.mjs']) {
       mkdirSync(isolatedScripts, { recursive: true });
       copyFileSync(join(scripts, file), join(isolatedScripts, file));
     }
@@ -318,6 +330,10 @@ import {readFileSync} from 'node:fs';
 export const EXIT={ok:0,failure:1,notFound:4};
 export const FINAL_ARTIFACTS={evidence:{file:'evidence.yaml'},fullReport:{file:'full-report.yaml'},summaryCard:{file:'summary-card.yaml'}};
 export const REPORT_META_FILE='report-meta.yaml';
+export const SUMMARY_CARD_FILE='summary-card.yaml';
+export const isFinalizedReportFolder=()=>false;
+export const normalizeCompanyName=value=>String(value??'');
+export const normalizeDomain=value=>String(value??'');
 export const getAnalysisArtifacts=()=>[{file:'chapter.yaml'},{file:'second.yaml'}];
 export const hasText=value=>typeof value==='string'&&value.trim().length>0;
 export const isRunId=()=>true;

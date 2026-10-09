@@ -4,10 +4,12 @@
 // Read-only: writes nothing, owns no on-disk catalog.
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
+import { readReportRedirects } from './report-retention.mjs';
 import {
   EXIT,
   SUMMARY_CARD_FILE,
   hasText,
+  isFinalizedReportFolder,
   isRunId,
   listDirs,
   normalizeRevision,
@@ -72,7 +74,7 @@ function collectReports() {
   return { reports, issues };
 }
 
-function validateRevisionGraph(reports) {
+function validateRevisionGraph(reports, redirects) {
   const issues = [];
   const byRunId = new Map(reports.map((report) => [report.runId, report]));
   const push = (runId, message, code = 'revisionGraph.invalid', fix = null) => {
@@ -89,6 +91,10 @@ function validateRevisionGraph(reports) {
     const refreshOfRunId = report.refreshOfRunId;
     const supersededByRunId = report.supersededByRunId;
 
+    if (status === 'superseded') {
+      push(report.runId, 'superseded report folders must be pruned before publication', 'revisionGraph.supersededReportPresent',
+        'Run npm run reports:prune -- --apply after the replacement report is accepted.');
+    }
     if (status === 'current' && hasText(supersededByRunId)) {
       push(report.runId, `current reports must not set supersededByRunId`, 'revisionGraph.currentHasSuperseded',
         'Clear revision.supersededByRunId on current reports.');
@@ -109,7 +115,8 @@ function validateRevisionGraph(reports) {
       }
       if (!isRunId(value)) push(report.runId, `revision.${field}=${value} is not a valid report run id`, 'revisionGraph.invalidId');
       if (value === report.runId) push(report.runId, `revision.${field} cannot reference the same report run`, 'revisionGraph.selfReference');
-      if (!byRunId.has(value)) push(report.runId, `revision.${field} references a missing finalized report: ${value}`, 'revisionGraph.missingTarget');
+      const retiredParent = field === 'refreshOfRunId' && redirects[value] === report.runId;
+      if (!byRunId.has(value) && !retiredParent) push(report.runId, `revision.${field} references a missing finalized report: ${value}`, 'revisionGraph.missingTarget');
     }
 
     if (hasText(refreshOfRunId) && byRunId.has(refreshOfRunId)) {
@@ -125,6 +132,13 @@ function validateRevisionGraph(reports) {
         push(report.runId, `supersededByRunId=${supersededByRunId} must point to a report whose revision.refreshOfRunId is ${report.runId}`, 'revisionGraph.brokenLink',
           'Run link-refresh.mjs to fix the forward-pointer on the new report.');
       }
+    }
+  }
+  for (const [runId, target] of Object.entries(redirects)) {
+    if (existsSync(join(reportsDir, runId))) push(runId, 'retired reports must not retain a report folder', 'revisionGraph.retiredReportPresent');
+    const current = byRunId.get(target);
+    if (!current || current.revisionStatus !== 'current' || !isFinalizedReportFolder(join(reportsDir, target))) {
+      push(runId, `retired report must redirect directly to a current finalized report: ${target}`, 'revisionGraph.invalidRedirect');
     }
   }
   return issues;
@@ -158,13 +172,25 @@ function validateCurrentDuplicates(reports) {
 
 const args = parseArgs(process.argv.slice(2));
 const { reports, issues: parseIssues } = collectReports();
-const issues = [...parseIssues, ...validateRevisionGraph(reports), ...validateCurrentDuplicates(reports)];
+let redirects = {};
+try {
+  redirects = readReportRedirects();
+} catch (error) {
+  parseIssues.push(validationIssue({
+    path: 'reports/.redirects',
+    message: error.message,
+    dimension: 'revisionGraph',
+    code: 'revisionGraph.invalidRedirect',
+    fix: 'Restore valid run-ID redirect records; do not recreate retired report content.',
+  }));
+}
+const issues = [...parseIssues, ...validateRevisionGraph(reports, redirects), ...validateCurrentDuplicates(reports)];
 
 const result = validationEnvelope({
   ok: issues.length === 0,
   validator: 'check-revision-graph',
   issues,
-  summary: { reports: reports.length },
+  summary: { reports: reports.length, retiredReports: Object.keys(redirects).length },
 });
 
 if (args.format === 'json') console.log(JSON.stringify(result, null, 2));

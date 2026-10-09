@@ -21,6 +21,7 @@
 import { existsSync, statSync } from 'node:fs';
 import { basename, isAbsolute, join, resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { reportRedirectTarget } from './report-retention.mjs';
 import {
   EXIT,
   collectClaimRefs,
@@ -485,7 +486,15 @@ function checkRevisionShape(run, file, doc) {
     if (!isRunId(value)) fail(`${path}.${field}=${value} is not a valid report run id`, { path, dimension: 'revisionGraph', code: `revision.${field}.format`, fix: `Set revision.${field} to a YYYYMMDDhhmmss-<slug> runId.` });
     if (value === run) fail(`${path}.${field} cannot reference the same report run`, { path, dimension: 'revisionGraph', code: `revision.${field}.selfRef`, fix: `Point revision.${field} at a different report's runId.` });
     const targetDir = join(REPORTS_DIR, value);
-    if (!isFinalizedReportFolder(targetDir)) fail(`${path}.${field} references a missing or unfinalized report: ${value}`, { path, dimension: 'revisionGraph', code: `revision.${field}.targetMissing`, fix: `Verify ${value} exists under reports/ and is finalized; otherwise pick a valid finalized runId.` });
+    let retiredParent = false;
+    if (field === 'refreshOfRunId' && isRunId(value) && !existsSync(targetDir)) {
+      try {
+        retiredParent = reportRedirectTarget(value) === run;
+      } catch (error) {
+        fail(`${path}.${field}: ${error.message}`, { path, dimension: 'revisionGraph', code: 'revision.invalidRedirect', fix: 'Restore the exact retirement record for this current report; do not recreate old content.' });
+      }
+    }
+    if (!isFinalizedReportFolder(targetDir) && !retiredParent) fail(`${path}.${field} references a missing or unfinalized report: ${value}`, { path, dimension: 'revisionGraph', code: `revision.${field}.targetMissing`, fix: `Verify ${value} is finalized or has an exact retired-parent redirect to this current run.` });
   }
   if (status === 'current' && hasText(revision.supersededByRunId)) {
     fail(`${path}: current reports must not set supersededByRunId`, { path, dimension: 'revisionGraph', code: 'revision.currentHasSupersededBy', fix: 'Clear revision.supersededByRunId on current reports (link-refresh.mjs sets it only on superseded reports).' });

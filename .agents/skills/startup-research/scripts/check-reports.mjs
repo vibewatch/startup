@@ -17,12 +17,13 @@
 // Usage:
 //   node .agents/skills/startup-research/scripts/check-reports.mjs
 //   node .agents/skills/startup-research/scripts/check-reports.mjs --format json
-import { mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { checkRun } from './check-report.mjs';
-import { EXIT, FINAL_ARTIFACTS, isFinalizedReportFolder, isRunId, listDirs } from './utils.mjs';
+import { EXIT, FINAL_ARTIFACTS, isFinalizedReportFolder, isRunId, listDirs, readYaml } from './utils.mjs';
+import { REPORT_REDIRECTS_DIRECTORY } from './report-retention.mjs';
 import { validationEnvelope, validationIssue } from './contracts/validation-result.mjs';
 
 const REPORTS_DIR = resolve(dirname(fileURLToPath(import.meta.url)), '../../../../reports');
@@ -30,7 +31,7 @@ const REPO_ROOT = resolve(REPORTS_DIR, '..');
 const CACHE_FILE = join(REPO_ROOT, '.cache', 'check-reports.json');
 // Bump when check-report's validation rules change so cached digests
 // invalidate everywhere.
-const CHECK_VERSION = '2';
+const CHECK_VERSION = '3';
 const USE_CACHE = process.env.CHECK_REPORT_NO_CACHE !== '1';
 const SUMMARY_CARD_FILE = FINAL_ARTIFACTS.summaryCard.file;
 
@@ -52,9 +53,8 @@ function parseArgs(argv) {
 }
 
 // Digest of a finalized report folder. SHA-1 over CHECK_VERSION + each
-// sorted *.yaml filename + its raw bytes. Captures both the published
-// artifacts and the per-report .workflow-snapshot.yaml (it lives in the
-// folder), so any change that should re-trigger a check shows up here.
+// sorted *.yaml filename + its raw bytes and external revision dependencies.
+// Includes .workflow-snapshot.yaml and retired-parent record changes.
 function folderDigest(dir) {
   const hash = createHash('sha1').update(CHECK_VERSION).update('\0');
   let entries;
@@ -64,6 +64,20 @@ function folderDigest(dir) {
     hash.update(name).update('\0');
     try { hash.update(readFileSync(join(dir, name))); } catch { hash.update('<<unreadable>>'); }
     hash.update('\0');
+  }
+  try {
+    const revision = readYaml(join(dir, SUMMARY_CARD_FILE))?.revision;
+    for (const field of ['refreshOfRunId', 'supersededByRunId']) {
+      const runId = revision?.[field];
+      if (!isRunId(runId)) continue;
+      const path = join(REPORTS_DIR, REPORT_REDIRECTS_DIRECTORY, `${runId}.json`);
+      hash.update(field).update('\0').update(runId).update('\0');
+      const related = join(REPORTS_DIR, runId);
+      hash.update(isFinalizedReportFolder(related) ? 'live' : existsSync(related) ? 'unfinished' : 'missing').update('\0');
+      hash.update(existsSync(path) ? readFileSync(path) : 'no-retirement-record').update('\0');
+    }
+  } catch {
+    return null;
   }
   return hash.digest('hex');
 }

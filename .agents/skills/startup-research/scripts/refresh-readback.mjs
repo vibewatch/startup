@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { RevisionSchema } from './contracts/report-artifacts.schema.mjs';
+import { readReportRedirects } from './report-retention.mjs';
 import { FINAL_ARTIFACTS, REPORT_META_FILE, normalizeRevision, readYaml, reportsDir } from './utils.mjs';
 
 function artifactFiles(folder, fileExists) {
@@ -20,11 +21,16 @@ export function refreshArtifactsAreInSync(folder, expectedRevision, readDocument
   });
 }
 
-export function checkRefreshReadback({ reportFolder, runId, refreshContext }, readDocument = readYaml, fileExists = existsSync) {
+export function checkRefreshReadback({ reportFolder, runId, refreshContext }, readDocument = readYaml, fileExists = existsSync, redirects) {
   if (!refreshContext) return [];
+  const retired = redirects ?? readReportRedirects();
   const issues = [];
   for (const previous of [false, true]) {
     const folder = previous ? join(reportsDir, refreshContext.refreshOfRunId) : reportFolder;
+    if (previous && !fileExists(folder)
+        && ![REPORT_META_FILE, FINAL_ARTIFACTS.summaryCard.file, FINAL_ARTIFACTS.fullReport.file]
+          .some(file => fileExists(join(folder, file)))
+        && retired[refreshContext.refreshOfRunId] === runId) continue;
     const files = [REPORT_META_FILE, ...artifactFiles(folder, fileExists)];
     let referenceRevision;
     for (const file of files) {

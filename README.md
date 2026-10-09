@@ -63,6 +63,19 @@ visible in one place:
 - `validate-main.yml` validates each relevant push, including workflow-only changes, and deploys only the validated
   site artifact.
 
+Only current reports are retained in the working tree. After a refreshed English
+report is accepted, the refresh workflow prunes superseded folders, including
+their English, Chinese, evidence and chapter files; it does not wait for the new
+Chinese overlay. The existing translation workflow selects current untranslated
+reports, with English fallback until Chinese is ready.
+Small `reports/.redirects/<old-run-id>.json` records preserve historical run-ID
+provenance and redirect old English/Chinese URLs directly to the current report,
+without retaining old report content. Separate records avoid cross-company
+publication conflicts. Git history remains the recovery source for old versions.
+Use `npm run reports:prune` to preview and `npm run reports:prune -- --apply`
+to remove verified superseded chains; missing, inconsistent or unrelated
+replacements block pruning.
+
 Publication retries use `STARTUP_PAT` for checkout, push and PR fallback; give
 that PAT contents and pull-request write permissions. The fallback does not
 override it with the Actions token, which repository policy may forbid from

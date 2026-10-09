@@ -3,13 +3,14 @@ import { join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import yaml from 'js-yaml';
 import type { Loader } from 'astro/loaders';
+import { parseReportRunId } from '../lib/report-paths.mjs';
 
 const REPORTS_DIR = resolve(process.cwd(), '..', 'reports');
 const SCHEMA_VERSION = 'report-v2' as const;
 // Bump when the loader's parsing surface (loadReportCard / parseData inputs /
 // Zod schema in content.config.ts) changes so cached digests in
 // .astro/data-store.json invalidate everywhere.
-const LOADER_VERSION = '2' as const;
+const LOADER_VERSION = '3' as const;
 
 export type YamlRecord = Record<string, unknown>;
 
@@ -207,18 +208,13 @@ function parseYamlFile(path: string): YamlRecord | null {
   }
 }
 
-function shortHash(input: string): string {
-  return createHash('sha1').update(input).digest('hex').slice(0, 6);
-}
-
 function parseRunId(runId: string): { runTimestamp: string; folderSlug: string } {
-  const match = runId.match(RUN_ID_RE);
-  if (match) return { runTimestamp: match[1]!, folderSlug: `${match[2]!}-${shortHash(runId)}` };
-  return { runTimestamp: '00000000000000', folderSlug: `${runId}-${shortHash(runId)}` };
+  return parseReportRunId(runId);
 }
 
 function relatedFolderSlug(runId: unknown): string | null {
   if (typeof runId !== 'string' || !RUN_ID_RE.test(runId)) return null;
+  if (!existsSync(join(REPORTS_DIR, runId, 'summary-card.yaml'))) return null;
   return parseRunId(runId).folderSlug;
 }
 

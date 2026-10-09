@@ -304,6 +304,7 @@ test('editorial workers cannot run lifecycle commands or delete the prepared cac
       cwd: repo, encoding: 'utf8',
       env: { ...process.env, STARTUP_TRANSLATION_EDITOR_WORKER: '1' },
     });
+
     assert.equal(result.status, 1);
     assert.match(result.stderr, /Editorial workers must edit only the prepared/u);
     assert.equal(readFileSync(join(repo, checkpoint), 'utf8'), 'checkpoint: unchanged\n');
@@ -321,6 +322,41 @@ test('editorial workers cannot run lifecycle commands or delete the prepared cac
     encoding: 'utf8', env: { ...process.env, STARTUP_TRANSLATION_EDITOR_WORKER: '' },
   });
   assert.equal(parent.status, 0, parent.stderr);
+});
+
+test('translation selection skips retired reports before dependencies are installed', t => {
+  const root = mkdtempSync(join(tmpdir(), 'current-translation-targets-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  const output = join(root, 'targets.txt');
+  const ids = ['20980101000000-old', '20990101000000-current', '20990102000000-translated', '20990103000000-incomplete'];
+  for (const [index, runId] of ids.entries()) {
+    const folder = join(root, 'reports', runId);
+    mkdirSync(folder, { recursive: true });
+    writeFileSync(join(folder, 'summary-card.yaml'), JSON.stringify({ revision: { status: index === 0 ? 'superseded' : 'current' } }));
+    if (index !== 3) writeFileSync(join(folder, 'full-report.yaml'), '{}');
+    if (index === 2) for (const artifact of ['summary-card', 'full-report']) writeFileSync(join(folder, `${artifact}.zh.yaml`), '{}');
+  }
+  mkdirSync(join(root, 'reports/.redirects'));
+  writeFileSync(join(root, 'reports/.redirects', `${ids[0]}.json`), JSON.stringify(ids[1]));
+  const step = workflowSteps('translate-reports-zh.yml').find(entry => entry.id === 'targets');
+  const selected = spawnSync('bash', ['-c', step.run], {
+    cwd: root, encoding: 'utf8', env: { ...process.env, LIMIT: '1', GITHUB_OUTPUT: output },
+  });
+  assert.equal(selected.status, 0, selected.stderr);
+  assert.match(readFileSync(output, 'utf8'), /count=1\ntotal=1\nreportIds<<EOF\n20990101000000-current\nEOF/u);
+  assert(!selected.stdout.includes(ids[0]), 'do not spend translation work on obsolete English');
+});
+
+test('refresh publication validates replacements before pruning and verifies the resulting revision graph', t => {
+  const { steps, execute, grades } = publicationWorkflowFixture(t, 'refresh-company.yml');
+  const result = execute(steps.find(step => step.name === 'Validate refreshed reports'));
+  assert.equal(result.status, 0, result.stderr);
+  const calls = grades();
+  const accepted = calls.findIndex(args => args[0].endsWith('/check-report.mjs'));
+  const prune = calls.findIndex(args => args.includes('reports:prune'));
+  const graph = calls.findIndex(args => args.includes('check:revision-graph'));
+  assert(accepted >= 0 && prune > accepted && graph > prune,
+    'never remove a predecessor before the replacement passes its report gate');
 });
 
 for (const scenario of [
