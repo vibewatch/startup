@@ -277,6 +277,7 @@ fs.appendFileSync(process.env.GRADE_LOG, JSON.stringify(['npm', ...process.argv.
   const steps = workflowSteps(file);
   const execute = step => spawnSync('bash', ['-c', step.run
     .replaceAll('${{ github.ref_name }}', 'main')
+    .replaceAll('${{ github.run_id }}', '123')
     .replaceAll('${{ steps.targets.outputs.count }}', '1')
     .replaceAll('${{ secrets.GITHUB_TOKEN }}', 'fixture-only-token')], {
     cwd: repo, env, encoding: 'utf8', timeout: 20000,
@@ -563,6 +564,76 @@ process.exit(${scenario === 'failed-repair-edit' ? 1 : 0});
     if (scenario === 'editor-edit') assert.deepEqual(grades(), []);
     else assert.equal(grades().filter(args => args.includes('editor-accept')).length, 1,
       'the bounded repair must not be graded after it changes a checker');
+  });
+}
+
+for (const outcome of ['accepted', 'repaired', 'restored', 'process-failure']) {
+  test(`editorial diagnostics survive cache cleanup without granting approval: ${outcome}`, t => {
+    const { root, repo, runner, runId, steps, execute, write } = publicationWorkflowFixture(t, 'translate-reports-zh.yml');
+    const cache = join(repo, '.translate-cache', runId);
+    const findings = join(cache, 'editor-findings.json');
+    const bin = join(root, 'bin');
+    mkdirSync(join(cache, 'parts'), { recursive: true });
+    writeFileSync(findings, '{"errorCount":5,"findings":[{"code":"editor-translationese"}]}\n');
+    writeFileSync(join(cache, 'parts/part.000.yaml'), 'body: failed editor text\n');
+    mkdirSync(join(runner, 'copilot-logs'));
+    writeFileSync(join(runner, 'copilot-logs/translate-zh-editor.log'), 'Editor inspected the source.\n');
+    writeFileSync(join(bin, 'npm'), `#!${process.execPath}
+const fs = require('node:fs');
+const path = require('node:path');
+const cache = ${JSON.stringify(cache)};
+if (process.argv.includes('editor-accept')) {
+  const countPath = ${JSON.stringify(join(runner, 'accept-count'))};
+  const count = fs.existsSync(countPath) ? Number(fs.readFileSync(countPath, 'utf8')) + 1 : 1;
+  fs.writeFileSync(countPath, String(count));
+  if (${JSON.stringify(outcome)} === 'accepted' || (${JSON.stringify(outcome)} === 'repaired' && count === 2)) {
+    fs.rmSync(cache, { recursive: true, force: true });
+  } else {
+    fs.writeFileSync(path.join(cache, 'editor-findings.json'), JSON.stringify({ errorCount: count === 1 ? 5 : 1, findings: [{ code: count === 1 ? 'editor-translationese' : 'hedge-preservation' }] }));
+    process.exit(1);
+  }
+}
+if (process.argv.includes('editor-restore')) fs.rmSync(cache, { recursive: true, force: true });
+`);
+    writeFileSync(join(bin, 'copilot'), `#!${process.execPath}
+const fs = require('node:fs');
+fs.writeFileSync(${JSON.stringify(join(cache, 'parts/part.000.yaml'))}, 'body: attempted repair text\\n');
+console.log('Bounded repair inspected the complete findings.');
+process.exit(${outcome === 'process-failure' ? 7 : 0});
+`);
+    chmodSync(join(bin, 'copilot'), 0o755);
+    const editor = steps.find(step => step.name === 'Edit validated Chinese drafts');
+    assert.match(editor.run, /editor-findings\.json and quality\.before\.json first/u);
+    const validated = execute(steps.find(step => step.name === 'Validate or roll back editorial pass'));
+    assert.equal(validated.status, 0, validated.stderr);
+    assert(!existsSync(cache), 'accepted/restored cache cleanup should still run');
+    const evidence = join(runner, 'translation-editor-failures', runId);
+    if (outcome === 'accepted') assert(!existsSync(evidence));
+    else {
+      assert.equal(JSON.parse(readFileSync(join(evidence, 'before-repair/cache/editor-findings.json'), 'utf8')).errorCount, 5);
+      assert.equal(readFileSync(join(evidence, 'before-repair/cache/parts/part.000.yaml'), 'utf8'), 'body: failed editor text\n');
+      for (const suffix of ['yaml', 'zh.yaml']) {
+        assert.equal(readFileSync(join(evidence, `before-repair/full-report.${suffix}`), 'utf8'), 'amount: $10M\n');
+      }
+      if (outcome !== 'repaired') {
+        assert.equal(readFileSync(join(evidence, 'after-repair/cache/parts/part.000.yaml'), 'utf8'), 'body: attempted repair text\n');
+        assert.equal(JSON.parse(readFileSync(join(evidence, 'after-repair/cache/editor-findings.json'), 'utf8')).errorCount,
+          outcome === 'process-failure' ? 5 : 1);
+      }
+    }
+    write(`reports/${runId}/summary-card.zh.yaml`, 'amount: $10M\n');
+    write(`reports/${runId}/full-report.zh.yaml`, 'amount: $10M\n');
+    const staged = execute(steps.find(step => step.name === 'Stage new translated files artifact'));
+    assert.equal(staged.status, 0, staged.stderr);
+    const artifact = join(runner, 'translated-zh-artifact/translation-evidence');
+    assert.equal(readFileSync(join(artifact, 'copilot-logs/translate-zh-editor.log'), 'utf8'), 'Editor inspected the source.\n');
+    if (outcome !== 'accepted') assert(existsSync(join(artifact,
+      `translation-editor-failures/${runId}/before-repair/cache/editor-findings.json`)));
+    const upload = steps.find(step => step.name === 'Upload translated files artifact');
+    assert.equal(upload.if, "always() && steps.targets.outputs.count != '0'");
+    const verification = steps.find(step => step.name === 'Verify selected translations');
+    assert.match(verification.run, /--strict-editor/u);
+    assert.notEqual(verification['continue-on-error'], true, 'retained diagnostics must not weaken the final strict gate');
   });
 }
 

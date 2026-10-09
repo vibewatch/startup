@@ -82,7 +82,11 @@ Translation uses the `translation-draft` default for drafting and the
 `translation-qa` default/escalation routes for editing and bounded repair.
 Keep the workflow and `model-routing.yaml` aligned when changing these models.
 Editorial workers edit prepared bundles only; the workflow owns acceptance,
-rollback and cache cleanup. Research bootstrap can refill exhausted reserves
+rollback and cache cleanup. Editorial preparation exposes all strict draft
+findings before the editor starts, not only standard advisories. Failed editorial
+and repair caches, findings, source pairs and logs survive rollback in the
+translation workflow artifact for source-anchored diagnosis.
+Research bootstrap can refill exhausted reserves
 once from unused discovery results or surplus backups of healthy chapters
 (at most six per failing chapter), preserving exclusive URL ownership and
 every chapter's recommended evidence. It still requires the same successfully

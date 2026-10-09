@@ -2809,6 +2809,47 @@ try {
   cpSync(new URL('../references/glossary.zh.yaml', import.meta.url), join(references, 'glossary.zh.yaml'));
   symlinkSync(fileURLToPath(new URL('../../../../node_modules', import.meta.url)), join(fixtureRoot, 'node_modules'), 'dir');
   writeFileSync(join(fixtureRoot, 'package.json'), '{"type":"module"}');
+  const editorDir = join(fixtureRoot, 'reports', 'editor-baseline-fixture');
+  mkdirSync(editorDir);
+  const editorInputs = {
+    'summary-card.yaml': { artifact: 'summary-card', summary: { headline: source.subtitle } },
+    'summary-card.zh.yaml': { artifact: 'summary-card', summary: { headline: strictTranslationese.subtitle } },
+    'full-report.yaml': source,
+    'full-report.zh.yaml': changedMetric,
+  };
+  for (const [file, document] of Object.entries(editorInputs)) {
+    writeFileSync(join(editorDir, file), JSON.stringify(document));
+  }
+  const runEditor = command => spawnSync(process.execPath, [
+    join(scripts, 'run-translation.mjs'), command, 'editor-baseline-fixture',
+  ], { cwd: fixtureRoot, encoding: 'utf8' });
+  const preparedEditor = runEditor('editor-init');
+  assert.equal(preparedEditor.status, 0, `${preparedEditor.stdout}\n${preparedEditor.stderr}`);
+  const editorCache = join(fixtureRoot, '.translate-cache/editor-baseline-fixture');
+  const standardBaseline = JSON.parse(readFileSync(join(editorCache, 'quality.before.json'), 'utf8'));
+  assert.equal(standardBaseline.errorCount, 0, 'strict draft issues must not block editor preparation');
+  const strictBaseline = JSON.parse(readFileSync(join(editorCache, 'editor-findings.json'), 'utf8'));
+  assert.equal(strictBaseline.errorCount, 2, 'initial editor must see every strict failure, not just standard advisories');
+  assert(strictBaseline.findings.some(issue =>
+    issue.artifact === 'summary-card' && issue.path === 'summary/headline' && issue.code === 'editor-translationese'));
+  assert(strictBaseline.findings.some(issue =>
+    issue.artifact === 'full-report' && issue.path === 'subtitle' && issue.code === 'metric-preservation'));
+  for (const [file, document] of Object.entries(editorInputs)) {
+    assert.equal(readFileSync(join(editorDir, file), 'utf8'), JSON.stringify(document),
+      'editor preparation must not change source or final overlays');
+  }
+  const rejectedEditor = runEditor('editor-accept');
+  assert.equal(rejectedEditor.status, 1, 'a prepared findings list is not editorial acceptance');
+  assert.match(rejectedEditor.stderr, /editorial pass has 2 strict error/u);
+  assert.equal(JSON.parse(readFileSync(join(editorCache, 'editor-findings.json'), 'utf8')).errorCount, 2);
+  const restoredEditor = runEditor('editor-restore');
+  assert.equal(restoredEditor.status, 0, restoredEditor.stderr);
+  for (const [file, document] of Object.entries(editorInputs)) {
+    assert.equal(readFileSync(join(editorDir, file), 'utf8'), JSON.stringify(document));
+  }
+  assert.equal(checkPairQuality(source, changedMetric, { strictEditor: true })
+    .filter(issue => issue.severity === 'error').length, 1,
+  'restoring the standard-valid draft must not imply strict publication approval');
   const translationWorkflow = yaml.load(readFileSync(new URL('../../../../.github/workflows/translate-reports-zh.yml', import.meta.url), 'utf8'));
   const workflowSteps = translationWorkflow.jobs.translate.steps;
   const verificationIndex = workflowSteps.findIndex((step) => step.name === 'Verify selected translations');

@@ -282,6 +282,7 @@ jobs:
 
           For each report:
           - You are an editorial worker, not the parent orchestrator. The workflow has already run editor-init. Follow the translate-zh skill's editorial-worker scope and translation philosophy; do not execute its parent-runner commands.
+          - Read .translate-cache/<runId>/editor-findings.json and quality.before.json first. Address every strict error as well as the standard advisories; clearing advisories alone is not sufficient. These findings prioritize the full source-anchored review, not replace it.
           - Read the complete English summary-card.yaml and full-report.yaml plus the complete validated Chinese cache created by editor-init.
           - Enumerate the actual cached part files. Edit only .translate-cache/<runId>/summary-card.translate.yaml and its existing parts/part.NNN.yaml files.
           - Compare every reader-facing Chinese leaf with its corresponding English source. Rewrite awkward or generic Chinese from the factual proposition, not English clause order.
@@ -309,6 +310,21 @@ jobs:
           assert_publication_scope() {
             node "$RUNNER_TEMP/publication-approval/check-publication-scope.mjs" verify "$RUNNER_TEMP/publication-approval" || exit "$?"
           }
+          preserve_editor_failure() {
+            local report="$1" phase="$2"
+            local evidence="$RUNNER_TEMP/translation-editor-failures/$report/$phase"
+            mkdir -p "$evidence"
+            if [ -d ".translate-cache/$report" ]; then
+              cp -R --no-dereference ".translate-cache/$report" "$evidence/cache"
+            fi
+            for artifact in summary-card full-report; do
+              for suffix in yaml zh.yaml; do
+                local file="reports/$report/$artifact.$suffix"
+                [ ! -f "$file" ] || cp --no-dereference "$file" "$evidence/"
+              done
+            done
+            echo "Preserved failed editorial evidence: $evidence"
+          }
           assert_publication_scope
           validate_editor() {
             local report="$1"
@@ -323,6 +339,7 @@ jobs:
             if validate_editor "$report"; then
               accepted=$((accepted + 1))
             else
+              preserve_editor_failure "$report" before-repair
               echo "::warning::Editorial pass failed strict validation for $report; attempting one targeted repair."
               REPAIR_PROMPT=$(cat <<EOF
               Strict editorial validation failed for report $report.
@@ -346,6 +363,7 @@ jobs:
                 accepted=$((accepted + 1))
                 repaired=$((repaired + 1))
               else
+                preserve_editor_failure "$report" after-repair
                 echo "::warning::Editorial repair failed strict validation for $report; restoring the validated draft."
                 npm run translate:zh -- editor-restore "$report"
                 restored=$((restored + 1))
@@ -369,6 +387,13 @@ jobs:
           ARTIFACT_DIR="$RUNNER_TEMP/translated-zh-artifact"
           rm -rf "$ARTIFACT_DIR"
           mkdir -p "$ARTIFACT_DIR"
+          EVIDENCE_DIR="$ARTIFACT_DIR/translation-evidence"
+          mkdir -p "$EVIDENCE_DIR"
+          for folder in copilot-logs translation-editor-failures; do
+            if [ -d "$RUNNER_TEMP/$folder" ]; then
+              cp -R --no-dereference "$RUNNER_TEMP/$folder" "$EVIDENCE_DIR/"
+            fi
+          done
 
           if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1 || [ ! -d reports ]; then
             echo "No reports directory was available to package."
@@ -401,6 +426,7 @@ jobs:
             echo "### Preserved translated files artifact"
             echo "- Artifact: translated-zh-${{ github.run_id }}"
             echo "- New translated files copied: $copied"
+            echo "- Editorial logs, failed findings, source pairs and cache snapshots are retained when available, even after rollback."
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Upload translated files artifact

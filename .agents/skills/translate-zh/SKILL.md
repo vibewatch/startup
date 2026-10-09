@@ -134,7 +134,12 @@ npm run translate:zh -- editor-accept "$REPORT"
 ```
 
 `editor-init` checkpoints the already validated final overlays before seeding
-the sparse cache. `editor-accept` enforces metric-token fidelity, uncertainty,
+the sparse cache and writes the draft's complete strict findings to
+`.translate-cache/<runId>/editor-findings.json`. Read those findings and
+`quality.before.json` before editing: standard advisories do not include every
+strict publication failure. The findings prioritize, but do not replace, the
+full source-anchored editorial review.
+`editor-accept` enforces metric-token fidelity, uncertainty,
 attribution, and the wider translationese soundcheck with zero hard errors.
 Advisory glossary/descriptor/punctuation findings must either reach zero or
 strictly decrease from the validated draft; equal or higher counts are rejected.
@@ -160,6 +165,10 @@ or a skipped editorial pass, automation checks both final artifacts with
 `check-translation-quality.mjs --strict-editor`. Remaining hard findings fail
 the run and block commit/push; the restored draft is retained only as a workflow
 artifact. Advisory findings remain separate from hard publication failures.
+The workflow retains failed findings, cached leaves, source/output pairs and
+Copilot logs in `translation-evidence/` inside its translated-files artifact
+before rollback can remove the cache. Retained diagnostics are not publication
+approval; the final strict gates remain mandatory.
 
 Scheduled recovery translates one report per two-hour run. This keeps each draft
 and editorial context bounded while still clearing a monthly backlog comfortably.

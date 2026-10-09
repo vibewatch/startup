@@ -309,7 +309,10 @@ function editorInit(runId, options = {}) {
   ensureDir(paths.checkpointDir);
   copyFileSync(paths.summaryOut, paths.summaryCheckpoint);
   copyFileSync(paths.fullOut, paths.fullCheckpoint);
+  const strictQuality = qualityFor(paths, { strictEditor: true });
+  writeQuality(paths.editorFindings, strictQuality);
   console.log(`[translate-zh] validated draft checkpoint: ${relative(repoRoot, paths.checkpointDir)}`);
+  console.log(`[translate-zh] strict editorial baseline: ${strictQuality.errorCount} error(s), ${strictQuality.warningCount} warning(s); read ${relative(repoRoot, paths.editorFindings)}`);
   console.log('[translate-zh] editorial scope: compare every cached Chinese leaf with its English source and rewrite awkward prose source-first');
 }
 
