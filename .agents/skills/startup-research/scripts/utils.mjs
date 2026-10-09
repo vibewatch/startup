@@ -168,7 +168,7 @@ export function companySearchNames(name, domain) {
   const brands = [
     names[0].replace(/\([^)]*\)/g, ' '),
     ...Array.from(names[0].matchAll(/\(([^()]*)\)/g), ([, alias]) => alias),
-  ].map(value => normalizeCompanyName(value).replace(/\s+global$/, ''));
+  ].map(value => normalizeCompanyName(value).replace(/\s+(?:global|biosciences)$/, ''));
   const domainBrand = normalizeCompanyName(normalizeDomain(domain).split('.')[0]);
   const brand = brands.find(value => value && value === domainBrand);
   if (brand && brand !== names[0].toLowerCase()) {

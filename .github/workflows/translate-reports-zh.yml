@@ -7,7 +7,7 @@
 #
 # Required secrets:
 # - COPILOT_PAT — PAT for a Copilot-licensed account; consumed by the Copilot CLI.
-# - STARTUP_PAT — PAT with repo write access for checkout/push.
+# - STARTUP_PAT — PAT with contents and pull-request write access.
 
 name: Translate reports to Chinese
 
@@ -484,7 +484,13 @@ jobs:
                     "reports/$report/$artifact.yaml" "reports/$report/$artifact.zh.yaml" --strict-editor
                 done
               done <<< "$REPORT_IDS"
-              npm run validate
+              if git diff --quiet "$validated_head" HEAD -- . ':!reports/**'; then
+                npm run check:revision-graph
+                npm run check:reports-contract
+                npm run check:translations-zh
+              else
+                npm run validate
+              fi
               node "$RUNNER_TEMP/publication-approval/check-publication-scope.mjs" verify-inputs "$RUNNER_TEMP/publication-approval"
               validated_head="$(git rev-parse HEAD)"
             fi
@@ -498,6 +504,6 @@ jobs:
           PR_BRANCH="auto/translate-zh-${STAMP}-$(date -u +%H%M%S)"
           echo "Direct push to $BRANCH failed; pushing to $PR_BRANCH and opening PR." >&2
           git push origin "HEAD:$PR_BRANCH"
-          GH_TOKEN="${{ secrets.GITHUB_TOKEN }}" gh pr create --base "$BRANCH" --head "$PR_BRANCH" \
+          gh pr create --base "$BRANCH" --head "$PR_BRANCH" \
             --title "$MESSAGE" \
             --body "Automated Chinese translation batch for $COUNT report(s). Direct push to \`$BRANCH\` failed after 3 attempts; merging via PR instead."

@@ -63,6 +63,15 @@ visible in one place:
 - `validate-main.yml` validates each relevant push, including workflow-only changes, and deploys only the validated
   site artifact.
 
+Publication retries use `STARTUP_PAT` for checkout, push and PR fallback; give
+that PAT contents and pull-request write permissions. The fallback does not
+override it with the Actions token, which repository policy may forbid from
+creating PRs. Translation runs fully validate before publication. A report-only
+rebase reruns selected strict translation checks, corpus report/translation
+contracts and revision checks without rebuilding the unchanged site code;
+non-report changes still require full validation. Every accepted main push
+receives a fresh validated deployment.
+
 Generation and translation jobs check automation configuration before invoking
 models; the portfolio planner checks it before launching its refresh matrix.
 All Copilot jobs on Ubuntu x64 install the CLI and its matching native package
@@ -83,6 +92,8 @@ without moving its owner's evidence or counting it as net-new.
 Discovery expands a formal company name only with a shortened brand that
 matches its official domain; external alias matches require that brand in
 both the title and URL, not just a search snippet.
+This includes formal `Global` and `Biosciences` suffixes, not arbitrary
+company-name truncation.
 Refresh chapters rotate through retained unresolved gaps within their existing
 query budgets rather than all searching only the first gap.
 Finalizer retries receive source diagnostics even when

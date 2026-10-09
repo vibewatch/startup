@@ -4,7 +4,7 @@
 #
 # Required secrets:
 # - COPILOT_PAT — PAT for a Copilot-licensed account; consumed by the Copilot CLI.
-# - STARTUP_PAT — PAT with repo write access for checkout/push.
+# - STARTUP_PAT — PAT with contents and pull-request write access.
 
 name: Research company
 
@@ -545,8 +545,6 @@ jobs:
           PR_BRANCH="auto/research-company-${SAFE_LABEL:-startup}-${STAMP}-$(date -u +%H%M%S)"
           echo "Direct push to $BRANCH failed; pushing to $PR_BRANCH and opening PR." >&2
           git push origin "HEAD:$PR_BRANCH"
-          # The default GITHUB_TOKEN with `permissions: pull-requests: write`
-          # is what `gh pr create` needs; STARTUP_PAT lacks that scope.
-          GH_TOKEN="${{ secrets.GITHUB_TOKEN }}" gh pr create --base "$BRANCH" --head "$PR_BRANCH" \
+          gh pr create --base "$BRANCH" --head "$PR_BRANCH" \
             --title "$MESSAGE" \
             --body "Automated company research run. Direct push to \`$BRANCH\` failed after 3 attempts; merging via PR instead."

@@ -271,6 +271,7 @@ fs.appendFileSync(process.env.GRADE_LOG, JSON.stringify(['npm', ...process.argv.
   const env = {
     ...process.env, PATH: `${bin}:${process.env.PATH}`, REPORT_IDS: runId,
     RUNNER_TEMP: runner, GRADE_LOG: gradeLog, SAFE_LABEL: 'fixture', LABEL: 'fixture',
+    GH_TOKEN: 'fixture-startup-token',
     GITHUB_STEP_SUMMARY: join(runner, 'summary.txt'),
   };
   const steps = workflowSteps(file);
@@ -415,7 +416,8 @@ for (const file of ['company.yml', 'refresh-company.yml', 'research-unicorns.yml
     assert.doesNotMatch(publish.run, /--autostash|publishing existing local commit/u);
   });
 
-  for (const change of ['unrelated', 'dependencies', ...(file === 'translate-reports-zh.yml' ? ['english'] : [])]) {
+  for (const change of ['unrelated', 'dependencies', ...(file === 'translate-reports-zh.yml'
+    ? ['english', 'reports-only', 'reports-invalid', 'reports-and-code'] : [])]) {
     test(`publication workflow revalidates a real rebase: ${file}, ${change}`, t => {
       const { root, repo, steps, execute, grades, git, gitAt, runId } = publicationWorkflowFixture(t, file);
       const remote = join(root, 'remote.git');
@@ -430,6 +432,12 @@ for (const file of ['company.yml', 'refresh-company.yml', 'research-unicorns.yml
         writeFileSync(join(upstream, `reports/${runId}/full-report.yaml`), 'amount: $10M\nbasis: changed proposition\n');
       } else if (change === 'dependencies') {
         writeFileSync(join(upstream, 'package.json'), '{"name":"fixture","private":true}\n');
+      } else if (change.startsWith('reports-')) {
+        mkdirSync(join(upstream, 'reports/20990101000001-concurrent'));
+        writeFileSync(join(upstream, 'reports/20990101000001-concurrent/report-meta.yaml'), 'revision: current\n');
+        if (change === 'reports-and-code') {
+          writeFileSync(join(upstream, 'scripts/checker.mjs'), 'export const amount = "$20M";\n');
+        }
       } else {
         writeFileSync(join(upstream, 'README.md'), 'Unrelated upstream change\n');
       }
@@ -437,6 +445,15 @@ for (const file of ['company.yml', 'refresh-company.yml', 'research-unicorns.yml
       gitAt(upstream, 'commit', '--quiet', '-m', 'Concurrent upstream change');
       gitAt(upstream, 'push', '--quiet', 'origin', 'main');
       const upstreamHead = gitAt(upstream, 'rev-parse', 'HEAD');
+      if (change === 'reports-invalid') {
+        const npm = join(root, 'bin', 'npm');
+        writeFileSync(npm, `${readFileSync(npm, 'utf8')}
+if (process.argv.includes('check:reports-contract')) {
+  console.error('fixture: concurrent report contract violation');
+  process.exit(12);
+}
+`);
+      }
       const result = execute(steps.find(step => step.name.startsWith('Commit and publish')));
       assert.equal(result.error, undefined, result.error?.message);
       if (change === 'english') {
@@ -444,6 +461,13 @@ for (const file of ['company.yml', 'refresh-company.yml', 'research-unicorns.yml
         assert.match(result.stderr, /Selected English sources changed after translation/u);
         assert.equal(git('--git-dir', remote, 'rev-parse', 'main'), upstreamHead, 'source drift must block the push');
         assert.deepEqual(grades(), [], 'source drift must stop before grading against changed prose');
+      } else if (change === 'reports-invalid') {
+        assert.equal(result.status, 12, result.stderr);
+        assert.match(result.stderr, /concurrent report contract violation/u);
+        assert.equal(git('--git-dir', remote, 'rev-parse', 'main'), upstreamHead,
+          'failed report-only revalidation must block publication');
+        assert(!grades().some(args => args.includes('check:translations-zh') || args.includes('validate')),
+          'a failed contract must stop retries rather than fall back to success');
       } else {
         assert.equal(result.status, 0, result.stderr);
         assert.notEqual(git('rev-parse', 'HEAD'), upstreamHead);
@@ -453,9 +477,62 @@ for (const file of ['company.yml', 'refresh-company.yml', 'research-unicorns.yml
         assert.ok(grades().every(args => args.at(-1) === `HEAD:${git('rev-parse', 'HEAD')}`),
           'approval must inspect the rebased commit, not the pre-fetch tree');
         assert.equal(grades().some(args => args[0] === 'npm' && args[1] === 'ci'), change === 'dependencies');
+        if (file === 'translate-reports-zh.yml') {
+          const checks = grades().filter(args => args[0] === 'npm' && args[1] === 'run').map(args => args[2]);
+          assert.deepEqual(checks, change === 'reports-only'
+            ? ['check:revision-graph', 'check:reports-contract', 'check:translations-zh'] : ['validate']);
+        }
         assert.equal(git('status', '--porcelain'), '');
         assert.ok(existsSync(join(repo, `reports/${runId}/full-report.zh.yaml`)));
       }
+    });
+  }
+
+  for (const outcome of ['created', 'permission-denied']) {
+    test(`publication fallback uses the repository PAT and surfaces PR errors: ${file}/${outcome}`, t => {
+      const { root, steps, execute, git } = publicationWorkflowFixture(t, file);
+      const remote = join(root, 'remote.git');
+      const bin = join(root, 'bin');
+      const tokenLog = join(root, 'pr.json');
+      const realGit = spawnSync('which', ['git'], { encoding: 'utf8' }).stdout.trim();
+      git('init', '--quiet', '--bare', '--initial-branch=main', remote);
+      git('remote', 'add', 'origin', remote);
+      git('push', '--quiet', 'origin', 'HEAD:main');
+      for (const [name, body] of [
+        ['git', `
+const { spawnSync } = require('node:child_process');
+const args = process.argv.slice(2);
+if (args[0] === 'push' && args.at(-1) === 'HEAD:main') {
+  console.error('fixture: concurrent main publication rejected this push');
+  process.exit(1);
+}
+const result = spawnSync(${JSON.stringify(realGit)}, args, { stdio: 'inherit' });
+if (result.error) throw result.error;
+process.exit(result.status);
+`],
+        ['sleep', ''],
+        ['gh', `
+const fs = require('node:fs');
+fs.writeFileSync(${JSON.stringify(tokenLog)}, JSON.stringify({ args: process.argv.slice(2), token: process.env.GH_TOKEN }));
+if (${JSON.stringify(outcome)} === 'permission-denied') {
+  console.error('fixture: repository PAT needs pull-request write permission');
+  process.exit(9);
+}
+console.log('https://github.com/example/fixture/pull/1');
+`],
+      ]) {
+        writeFileSync(join(bin, name), `#!${process.execPath}\n${body}`);
+        chmodSync(join(bin, name), 0o755);
+      }
+      const publish = steps.find(step => step.name.startsWith('Commit and publish'));
+      assert.equal(publish.env.GH_TOKEN, '${{ secrets.STARTUP_PAT }}');
+      const result = execute(publish);
+      assert.equal(result.status, outcome === 'created' ? 0 : 9, result.stderr);
+      assert.deepEqual(JSON.parse(readFileSync(tokenLog, 'utf8')).token, 'fixture-startup-token',
+        'fallback reverted to the Actions token forbidden by repository policy');
+      const branches = git('--git-dir', remote, 'for-each-ref', '--format=%(refname:short)', 'refs/heads/');
+      assert.match(branches, /auto\//u, 'validated output must remain on its recovery branch');
+      if (outcome === 'permission-denied') assert.match(result.stderr, /pull-request write permission/u);
     });
   }
 }

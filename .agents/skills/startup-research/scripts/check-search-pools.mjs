@@ -214,12 +214,14 @@ const tests = [
   ['company search aliases require the official domain and preserve qualified names', () => {
     for (const [name, domain, expected] of [
       ['Articulate Global', 'articulate.com', ['Articulate Global', 'articulate']],
+      ['Enveda Biosciences', 'enveda.com', ['Enveda Biosciences', 'enveda']],
       ['Mujin, Inc.', 'mujin-corp.com', ['Mujin, Inc.', 'mujin']],
       ['Toss (Viva Republica)', 'toss.im', ['Toss (Viva Republica)', 'toss']],
       ['Energy Exploration Technologies, Inc. (EnergyX)', 'energyx.com',
         ['Energy Exploration Technologies, Inc. (EnergyX)', 'energyx']],
       ['Acme Robotics', 'acme.example', ['Acme Robotics']],
       ['Articulate Global', 'unrelated.example', ['Articulate Global']],
+      ['Enveda Biosciences', 'unrelated.example', ['Enveda Biosciences']],
       ['Articulate Global', '', ['Articulate Global']],
       ['Acme', 'acme.example', ['Acme']],
     ]) assert.deepEqual(companySearchNames(name, domain), expected);
@@ -253,6 +255,7 @@ const tests = [
   }],
   ...[
     ['Articulate Global', 'articulate.com', 'articulate'],
+    ['Enveda Biosciences', 'enveda.com', 'enveda'],
     ['Mujin, Inc.', 'mujin-corp.com', 'mujin'],
     ['Toss (Viva Republica)', 'toss.im', 'toss'],
     ['Energy Exploration Technologies, Inc. (EnergyX)', 'energyx.com', 'energyx'],
@@ -314,6 +317,24 @@ const tests = [
     }, result => {
       assertFloors(result);
       assert(!result.bundle.candidates.some(entry => entry.url.includes('publisher1.example')));
+    },
+  )],
+  ['domain-anchored biosciences brand retains financing and product coverage', () => bootstrapFixture(
+    'biosciences-brand', {
+      company: { name: 'Enveda Biosciences', domain: 'enveda.com' },
+      resultOverrides: {
+        0: { url: 'https://www.bruker.com/en/landingpages/bdal/customer-insight-enveda.html',
+          title: 'Customer Insight Enveda' },
+        1: { url: 'https://www.businesswire.com/news/home/20250904184822/en/Enveda-Raises-150M',
+          title: 'Enveda Raises $150M Series D Funding to Reach Unicorn Status' },
+        2: { url: 'https://publisher3.example/enveda', title: 'Another company raises funding',
+          snippet: 'Enveda Biosciences drug discovery' },
+      },
+    }, result => {
+      assertFloors(result);
+      assert(result.bundle.candidates.some(entry => entry.url.includes('bruker.com')));
+      assert(result.bundle.candidates.some(entry => entry.url.includes('businesswire.com')));
+      assert(!result.bundle.candidates.some(entry => entry.url.includes('publisher3.example')));
     },
   )],
   ['self-published URL matching preserves external sources', () => {
