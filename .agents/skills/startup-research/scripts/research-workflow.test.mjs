@@ -84,6 +84,75 @@ test('unicorn discovery uses URL-based repository search without creating a repo
   assert.match(discovery.run, /Discovery completed without creating a new report after the bounded retry/u);
 });
 
+for (const scenario of ['first-pass-success', 'retry-success', 'no-candidate', 'process-failure']) {
+  test(`unicorn discovery retains prior decisions without weakening failure gates: ${scenario}`, t => {
+    const { root, repo, runner, runId, write, commit } = publicationFixture(t);
+    const bin = join(root, 'bin');
+    const callsPath = join(root, 'discovery-calls.jsonl');
+    mkdirSync(bin);
+    writeFileSync(callsPath, '');
+    writeFileSync(join(runner, 'existing-report-identities.tsv'), 'RobCo\thttps://robco.de\n');
+    writeFileSync(join(runner, 'reports-before.txt'), `${runId}\n`);
+    write('.research-cache/_fetch-log.jsonl', '');
+    commit('Discovery fixture baseline');
+    const newRun = '20990101000001-new-company';
+    const copilot = join(bin, 'copilot');
+    writeFileSync(copilot, `#!${process.execPath}
+const fs = require('node:fs');
+const path = require('node:path');
+const args = process.argv.slice(2);
+const prompt = args[args.indexOf('-p') + 1];
+const priorCalls = fs.readFileSync(process.env.DISCOVERY_CALLS, 'utf8').trim().split('\\n').filter(Boolean).length;
+fs.appendFileSync(process.env.DISCOVERY_CALLS, JSON.stringify({ prompt, priorLog: fs.existsSync(path.join(process.env.RUNNER_TEMP, 'copilot-logs/run.log')) ? fs.readFileSync(path.join(process.env.RUNNER_TEMP, 'copilot-logs/run.log'), 'utf8') : '' }) + '\\n');
+const cache = prompt.match(/\\.research-cache\\/[0-9]{14}-unicorn-discovery/)[0];
+fs.mkdirSync(path.join(cache, 'search-results'), { recursive: true });
+fs.writeFileSync(path.join(cache, 'search-results/query.json'), '{"results":[{"url":"https://example.org/funding"}]}\\n');
+fs.writeFileSync(path.join(cache, 'candidate-review.json'), '{"candidates":[{"name":"RobCo","decision":"duplicate","reason":"Already in the identity index."}]}\\n');
+console.log('Rejected RobCo: already in the identity index.');
+if (process.env.SCENARIO === 'first-pass-success' || (process.env.SCENARIO === 'retry-success' && priorCalls === 1)) fs.mkdirSync('reports/${newRun}');
+if (process.env.SCENARIO === 'process-failure') process.exit(7);
+`);
+    chmodSync(copilot, 0o755);
+    const steps = workflowSteps('research-unicorns.yml');
+    const execute = step => spawnSync('bash', ['-c', step.run.replaceAll('${{ steps.inputs.outputs.safeLabel }}', 'fixture')], {
+      cwd: repo, encoding: 'utf8', timeout: 20000,
+      env: {
+        ...process.env, PATH: `${bin}:${process.env.PATH}`, SCENARIO: scenario,
+        DISCOVERY_CALLS: callsPath, RUNNER_TEMP: runner,
+        GITHUB_STEP_SUMMARY: join(runner, 'summary.txt'),
+        STARTUP_FETCH_LOG_PATH: join(repo, '.research-cache/_fetch-log.jsonl'),
+        COUNT: '1', INDUSTRY: 'Any', MODEL: 'fixture-model', PROFILE: 'fast',
+        INDUSTRY_RULE: 'Choose across different sectors.', CUTOFF_DATE: '2097-01-01',
+        COVERAGE_HINT: 'Prefer robotics.', EXISTING_IDENTITIES: join(runner, 'existing-report-identities.tsv'),
+      },
+    });
+    const generated = execute(steps.find(step => step.name === 'Generate recent-unicorn diligence reports'));
+    const calls = readFileSync(callsPath, 'utf8').trim().split('\n').map(line => JSON.parse(line));
+    assert.equal(generated.status, scenario === 'no-candidate' ? 1 : scenario === 'process-failure' ? 7 : 0, generated.stderr);
+    assert.equal(calls.length, ['first-pass-success', 'process-failure'].includes(scenario) ? 1 : 2);
+    assert.match(calls[0].prompt, /coverage hint is a preference, not an eligibility restriction/u);
+    assert.match(calls[0].prompt, /including AI \/ application software, infrastructure \/ devtools, fintech, and healthcare \/ biotech/u);
+    assert.match(calls[0].prompt, /candidate-review\.json/u);
+    if (calls.length === 2) {
+      assert.match(calls[1].prompt, /Read .*copilot-logs\/run\.log.*candidate-review\.json/u);
+      assert.match(calls[1].priorLog, /Rejected RobCo/u);
+      assert.match(calls[1].prompt, /Do not query cloud session history/u);
+    }
+    if (scenario === 'no-candidate') assert.match(generated.stdout, /Discovery completed without creating a new report after the bounded retry/u);
+    if (scenario === 'no-candidate' || scenario === 'process-failure') {
+      const staged = execute(steps.find(step => step.name === 'Stage new report files artifact'));
+      assert.equal(staged.status, 0, staged.stderr);
+      const evidence = join(runner, 'generated-reports-artifact/discovery-evidence');
+      assert.match(readFileSync(join(evidence, 'copilot-logs/run.log'), 'utf8'), /Rejected RobCo/u);
+      const cache = readFileSync(join(runner, 'unicorn-discovery-folder.txt'), 'utf8').trim();
+      assert(existsSync(join(evidence, cache.split('/').at(-1), 'candidate-review.json')));
+      assert(existsSync(join(evidence, cache.split('/').at(-1), 'search-results/query.json')));
+      const upload = steps.find(step => step.name === 'Preserve generated reports artifact');
+      assert.equal(upload.if, 'always()');
+    }
+  });
+}
+
 for (const file of ['company.yml', 'refresh-company.yml', 'research-unicorns.yml', 'translate-reports-zh.yml', 'refresh-portfolio.yml']) {
   test(`automation configuration fails before expensive work: ${file}`, () => {
     const steps = workflowSteps(file);

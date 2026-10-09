@@ -300,6 +300,7 @@ jobs:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
           COPILOT_TASK_WAIT_TIMEOUT_SECONDS: 5400
           COUNT: ${{ steps.inputs.outputs.count }}
+          INDUSTRY: ${{ steps.inputs.outputs.industry }}
           INDUSTRY_RULE: ${{ steps.inputs.outputs.industryRule }}
           MODEL: gpt-6-luna
           PROFILE: ${{ steps.inputs.outputs.profile }}
@@ -318,6 +319,8 @@ jobs:
           mkdir -p "$(dirname "$STARTUP_FETCH_LOG_PATH")"
           : > "$STARTUP_FETCH_LOG_PATH"
           DISCOVERY_FOLDER=".research-cache/$(date -u +%Y%m%d%H%M%S)-unicorn-discovery"
+          mkdir -p "$DISCOVERY_FOLDER"
+          printf '%s\n' "$DISCOVERY_FOLDER" > "$RUNNER_TEMP/unicorn-discovery-folder.txt"
           PROMPT=$(cat <<EOF
           Produce full diligence reports for up to $COUNT private startup unicorns.
           Research profile: ${PROFILE:-fast}
@@ -325,7 +328,9 @@ jobs:
           Do not use a workflow-provided report run date. For each selected company, after create-report-run.mjs use runtimeContext.run.runDate from load-chapter-runtime-context.mjs as the canonical research date, YAML runDate, and source-discovery freshness anchor. A company only qualifies as recent if its unicorn-confirming valuation or financing evidence is dated on or after $CUTOFF_DATE; use that cutoff only for candidate screening.
           $INDUSTRY_RULE
           Pick only companies with credible public evidence of a \$1B+ private valuation or unicorn-confirming financing in that window. Use this portfolio hint: $COVERAGE_HINT
+          Industry scope: $INDUSTRY. The coverage hint is a preference, not an eligibility restriction. When the industry is Any and three independent searches in preferred sectors yield only duplicates or unverifiable candidates, broaden to all eligible sectors, including AI / application software, infrastructure / devtools, fintech, and healthcare / biotech. For a specific industry, retain that restriction. A recent qualifying valuation or financing can establish eligibility even if it was not the company's first unicorn round.
           Before selecting candidates, read $EXISTING_IDENTITIES in full. It is the authoritative complete list of existing company names and websites; do not rely on glob output because large result sets are truncated. Never select a company whose normalized name or website domain is already listed. If one search has no qualifying candidate, broaden sectors and geographies and run at least two more independent searches before concluding none qualify.
+          Record candidate decisions in $DISCOVERY_FOLDER/candidate-review.json, including each company name, website, source URLs, decision and reason. Update it after each decision and before returning so a bounded retry can continue without repeating rejected candidates. Exclude known identities before fetching more valuation evidence for them. Do not stop immediately after a search or fetch: either bootstrap a verified candidate or record why none could be selected.
           For each selected company, prepare one report run for the deterministic workflow. Create the report folder, run npm run research:profile -- --report-folder <folder> --profile ${PROFILE:-fast}, then run npm run research:bootstrap -- --report-folder <folder> --company "<company>" --website "<url>" --profile ${PROFILE:-fast}. Stop after bootstrap: do not run research:workers, research:finalize, chapter subagents, or manual chapter/report repairs. The workflow runs authenticated chapter workers and finalization after this Copilot session returns.
           Treat completion as an on-disk contract: every selected company must either have a report folder with .workflow-snapshot.yaml and a successful .research-cache/<runId>/search-bundle.json, or be skipped before creating a folder. Never delete a report folder after creating it; leave failed bootstrap artifacts for the workflow to preserve and diagnose.
 
@@ -372,7 +377,7 @@ jobs:
               echo "::warning::The first discovery pass created no report; retrying once with the complete identity index."
               RETRY_PROMPT="$PROMPT
 
-          The previous discovery pass created no report folder. This is not a successful outcome. Read $EXISTING_IDENTITIES in full, exclude every listed company and domain, choose a different verified candidate, and create exactly one bootstrapped report run. Do not repeat a previously rejected duplicate."
+          The previous discovery pass created no report folder. This is not a successful outcome. Read $COPILOT_LOG and, if present, $DISCOVERY_FOLDER/candidate-review.json before searching; these local files contain the first pass's queries and rejected candidates. Do not query cloud session history to recover this run's decisions. Read $EXISTING_IDENTITIES in full, exclude every listed company and domain, and continue with different candidates and queries. For Any, broaden beyond the preferred sectors rather than repeating the same robotics, climate, consumer or regional roundups. Create exactly one bootstrapped report only if original sources verify eligibility; otherwise record the specific blocker. Do not repeat a previously rejected duplicate."
               RETRY_LOG="$RUNNER_TEMP/copilot-logs/retry.log"
               run_copilot "$RETRY_PROMPT" "$RETRY_LOG" || status=$?
               cat "$RETRY_LOG" >> "$COPILOT_LOG"
@@ -545,6 +550,27 @@ jobs:
           rm -rf "$ARTIFACT_DIR"
           mkdir -p "$ARTIFACT_DIR"
 
+          DISCOVERY_EVIDENCE="$ARTIFACT_DIR/discovery-evidence"
+          if [ -d "$RUNNER_TEMP/copilot-logs" ]; then
+            mkdir -p "$DISCOVERY_EVIDENCE"
+            cp -R --no-dereference "$RUNNER_TEMP/copilot-logs" "$DISCOVERY_EVIDENCE/"
+          fi
+          if [ -f "$RUNNER_TEMP/unicorn-discovery-folder.txt" ]; then
+            discovery_folder="$(cat "$RUNNER_TEMP/unicorn-discovery-folder.txt")"
+            if ! [[ "$discovery_folder" =~ ^\.research-cache/[0-9]{14}-unicorn-discovery$ ]]; then
+              echo "::error::Invalid discovery evidence folder: $discovery_folder"
+              exit 1
+            fi
+            if [ -d "$discovery_folder" ]; then
+              mkdir -p "$DISCOVERY_EVIDENCE"
+              cp -R --no-dereference "$discovery_folder" "$DISCOVERY_EVIDENCE/"
+            fi
+          fi
+          if [ -f .research-cache/_fetch-log.jsonl ]; then
+            mkdir -p "$DISCOVERY_EVIDENCE"
+            cp .research-cache/_fetch-log.jsonl "$DISCOVERY_EVIDENCE/fetch-log.jsonl"
+          fi
+
           if ! git rev-parse --is-inside-work-tree >/dev/null 2>&1 || [ ! -d reports ]; then
             echo "No reports directory was available to package."
             exit 0
@@ -598,6 +624,7 @@ jobs:
             echo "### Preserved generated files artifact"
             echo "- Artifact: research-reports-${{ steps.inputs.outputs.safeLabel }}"
             echo "- New report files copied: $copied"
+            echo "- Discovery logs, candidate decisions and cached sources are retained when available, even without a new report."
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Preserve generated reports artifact

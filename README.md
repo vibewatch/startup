@@ -80,7 +80,11 @@ every chapter's recommended evidence. It still requires the same successfully
 fetched source, domain and net-new evidence floors. Finalizer retries receive source diagnostics even when
 assembly stopped before producing final report artifacts.
 New-company discovery starts with the repository's URL-based search tool; host
-search is supplementary. A search outage or lack of a verified new candidate
+search is supplementary. For `Any`, portfolio coverage is a preference rather
+than a sector exclusion. The bounded retry reads the first pass's local log and
+candidate decisions; discovery logs and cached evidence remain in the run
+artifact even when no report folder was created.
+A search outage or lack of a verified new candidate
 still blocks generation rather than publishing an invented or duplicate report.
 
 `cloudflare/worker.js` retains an optional dispatcher compatible with the old
