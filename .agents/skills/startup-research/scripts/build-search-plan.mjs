@@ -4,6 +4,7 @@ import { basename, join, resolve } from 'node:path';
 import yaml from 'js-yaml';
 import {
   EXIT,
+  companySearchNames,
   getAnalysisArtifacts,
   isRunId,
   loadWorkflowConfig,
@@ -54,17 +55,17 @@ function sharedQueries({ company, domain, year, strategy, budget }) {
   return [
     {
       intent: 'primary',
-      query: `"${company}" ${domain ? `site:${domain}` : 'official'} product company`,
+      query: `${company} ${domain ? `site:${domain}` : 'official'} product company`,
       rationale: 'Establish the official product, positioning, and current company facts.',
     },
     {
       intent: 'freshness',
-      query: `"${company}" funding valuation revenue customers leadership launches ${year}`,
+      query: `${company} funding valuation revenue customers leadership launches ${year}`,
       rationale: 'Re-check volatile company facts using the canonical run year.',
     },
     {
       intent: 'adverse',
-      query: `"${company}" lawsuit regulatory outage breach complaints risks ${year}`,
+      query: `${company} lawsuit regulatory outage breach complaints risks ${year}`,
       rationale: 'Actively seek adverse and contradictory evidence.',
     },
   ].slice(0, budget.globalQueries).map((query, index) => ({
@@ -85,27 +86,27 @@ function chapterQueries({ company, year, chapter, mode, strategy, gaps, budget }
   const chapterQueries = [
     {
       intent: 'broad',
-      query: `"${company}" ${focus[0]}`,
+      query: `${company} ${focus[0]}`,
       rationale: `Discover chapter-specific evidence for ${chapter.key}.`,
     },
     {
       intent: 'semantic',
-      query: `"${company}" ${focus[1] ?? focus[0]}`,
+      query: `${company} ${focus[1] ?? focus[0]}`,
       rationale: 'Close the highest-priority content requirements with semantic search.',
     },
     {
       intent: 'primary',
-      query: `"${company}" official ${chapter.title}`,
+      query: `${company} official ${chapter.title}`,
       rationale: `Find first-party evidence specific to ${chapter.key}.`,
     },
     {
       intent: 'freshness',
-      query: `"${company}" ${focus[0]} latest developments ${year}`,
+      query: `${company} ${focus[0]} latest developments ${year}`,
       rationale: `Find recent chapter-specific evidence rather than relying on older coverage for ${chapter.key}.`,
     },
     {
       intent: 'adverse',
-      query: `"${company}" ${focus[0]} challenges limitations ${year}`,
+      query: `${company} ${focus[0]} challenges limitations ${year}`,
       rationale: `Seek contradictory evidence and limitations specific to ${chapter.key}.`,
     },
   ];
@@ -114,9 +115,12 @@ function chapterQueries({ company, year, chapter, mode, strategy, gaps, budget }
     queries.push(...chapterQueries.slice(0, budget.freshQueriesPerChapter));
   } else {
     if (gaps.length) {
-      queries.push(...gaps.slice(0, budget.maxGapQueriesPerChapter).map((gap) => ({
+      const start = (chapter.order - 1) % gaps.length;
+      const selectedGaps = [...gaps.slice(start), ...gaps.slice(0, start)]
+        .slice(0, budget.maxGapQueriesPerChapter);
+      queries.push(...selectedGaps.map((gap) => ({
         intent: 'semantic',
-        query: `"${company}" ${gap} ${year}`,
+        query: `${company} ${gap} ${year}`,
         rationale: 'Carry forward and close an unresolved gap from the prior report.',
       })));
     }
@@ -167,6 +171,10 @@ try {
   const url = new URL(website.startsWith('http') ? website : `https://${website}`);
   domain = url.hostname.replace(/^www\./, '');
 } catch {}
+const searchNames = companySearchNames(company, domain);
+const companyQuery = searchNames.length === 1
+  ? `"${searchNames[0]}"`
+  : `(${searchNames.map(name => `"${name}"`).join(' OR ')})`;
 const mode = refreshContext ? 'refresh' : 'fresh';
 const gaps = previousGaps(refreshContext);
 const runDate = runDateFromRunId(runId);
@@ -189,7 +197,7 @@ const output = {
     previousUnresolvedGaps: gaps,
   },
   globalQueries: sharedQueries({
-    company,
+    company: companyQuery,
     domain,
     year,
     strategy,
@@ -205,7 +213,7 @@ const output = {
       minDomains: chapter.gate.minSourceDomains,
     },
     queries: chapterQueries({
-      company,
+      company: companyQuery,
       year,
       chapter,
       mode,

@@ -163,6 +163,20 @@ export function normalizeCompanyName(value) {
     .replace(/\s+/g, ' ');
 }
 
+export function companySearchNames(name, domain) {
+  const names = [String(name ?? '').trim()];
+  const brands = [
+    names[0].replace(/\([^)]*\)/g, ' '),
+    ...Array.from(names[0].matchAll(/\(([^()]*)\)/g), ([, alias]) => alias),
+  ].map(value => normalizeCompanyName(value).replace(/\s+global$/, ''));
+  const domainBrand = normalizeCompanyName(normalizeDomain(domain).split('.')[0]);
+  const brand = brands.find(value => value && value === domainBrand);
+  if (brand && brand !== names[0].toLowerCase()) {
+    names.push(brand);
+  }
+  return names;
+}
+
 export function normalizeDomain(value) {
   try {
     const raw = String(value ?? '').trim();

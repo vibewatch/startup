@@ -11,7 +11,7 @@ import {
   replenishReserveEvidence,
   successfulPoolMetrics,
 } from './search-pool-recovery.mjs';
-import { canonicalSourceUrl, isSelfPublishedReportUrl, normalizeDomain } from './utils.mjs';
+import { canonicalSourceUrl, companySearchNames, isSelfPublishedReportUrl, normalizeDomain } from './utils.mjs';
 
 const execFileAsync = promisify(execFile);
 const scriptDir = dirname(fileURLToPath(import.meta.url));
@@ -112,18 +112,22 @@ function companyRelevant(result, company) {
     resultDomain === company.domain
     || resultDomain.endsWith(`.${company.domain}`)
   )) return true;
-  const companyWords = normalizedWords(company.name)
-    .filter((word) => word.length >= 2 && !companyStopwords.has(word));
-  if (companyWords.length === 0) return true;
   // Search snippets can contain namesakes or query-term leakage. Require the
   // company identity in the result title/URL unless it is an official domain.
-  const haystack = new Set(normalizedWords([
-    result.title,
-    result.url,
-  ].filter(Boolean).join(' ')));
-  const matches = companyWords.filter((word) => haystack.has(word)).length;
-  const requiredMatches = companyWords.length === 1 ? 1 : Math.min(2, companyWords.length);
-  return matches >= requiredMatches;
+  const titleWords = new Set(normalizedWords(result.title));
+  const urlWords = new Set(normalizedWords(result.url));
+  const haystack = new Set([...titleWords, ...urlWords]);
+  return companySearchNames(company.name, company.domain).some((name, index) => {
+    const companyWords = normalizedWords(name)
+      .filter((word) => word.length >= 2 && !companyStopwords.has(word));
+    if (companyWords.length === 0) return index === 0;
+    if (index > 0) {
+      return companyWords.every(word => titleWords.has(word) && urlWords.has(word));
+    }
+    const matches = companyWords.filter((word) => haystack.has(word)).length;
+    const requiredMatches = companyWords.length === 1 ? 1 : Math.min(2, companyWords.length);
+    return matches >= requiredMatches;
+  });
 }
 
 const args = parseArgs(process.argv.slice(2));

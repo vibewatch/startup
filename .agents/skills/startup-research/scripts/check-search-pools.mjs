@@ -8,26 +8,31 @@ import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 import { promoteReserveEvidence, replenishReserveEvidence, successfulPoolMetrics } from './search-pool-recovery.mjs';
-import { canonicalSourceUrl, getCoreArtifacts, isSelfPublishedReportUrl, loadWorkflowConfig } from './utils.mjs';
+import { canonicalSourceUrl, companySearchNames, getCoreArtifacts, isSelfPublishedReportUrl, loadWorkflowConfig } from './utils.mjs';
 import { checkRun } from './check-report.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const urls = (entries) => new Set(entries.map((entry) => canonicalSourceUrl(entry.url)));
 
-async function bootstrapFixture(name, { chapters = 1, sources = 12, failed = [], lowSignal = [], aliases = false, selfPublished = [], redirects = [] }, verify) {
+async function bootstrapFixture(name, {
+  chapters = 1, sources = 12, failed = [], lowSignal = [], aliases = false,
+  selfPublished = [], redirects = [], company = { name: 'Acme', domain: 'acme.example' },
+  resultOverrides = {},
+}, verify) {
   const folder = resolve('.research-cache', `20990101000000-pool-check-${name}-${process.pid}`);
   const results = Array.from({ length: sources }, (_, index) => ({
     url: selfPublished.includes(index)
       ? `https://startup.genisisiq.com/acme-${index}/`
       : `https://publisher${index + 1}.example/acme`,
-    title: `Acme evidence ${index + 1}`,
+    title: `${company.name} evidence ${index + 1}`,
     sourceQuality: { tier: lowSignal.includes(index) ? 'low' : 'high', score: 100 - index, reasons: [] },
+    ...resultOverrides[index],
   }));
   const query = (id) => ({
     id, query: id, intent: 'broad', preferredProvider: 'fixture', maxResults: 10,
   });
   const plan = {
-    company: { name: 'Acme', domain: 'acme.example' },
+    company,
     strategy: {
       concurrency: 4,
       reportEvidenceTarget: { minDistinctDomains: chapters === 8 ? 18 : 0 },
@@ -206,6 +211,111 @@ const tests = [
       }
     },
   ]),
+  ['company search aliases require the official domain and preserve qualified names', () => {
+    for (const [name, domain, expected] of [
+      ['Articulate Global', 'articulate.com', ['Articulate Global', 'articulate']],
+      ['Mujin, Inc.', 'mujin-corp.com', ['Mujin, Inc.', 'mujin']],
+      ['Toss (Viva Republica)', 'toss.im', ['Toss (Viva Republica)', 'toss']],
+      ['Energy Exploration Technologies, Inc. (EnergyX)', 'energyx.com',
+        ['Energy Exploration Technologies, Inc. (EnergyX)', 'energyx']],
+      ['Acme Robotics', 'acme.example', ['Acme Robotics']],
+      ['Articulate Global', 'unrelated.example', ['Articulate Global']],
+      ['Articulate Global', '', ['Articulate Global']],
+      ['Acme', 'acme.example', ['Acme']],
+    ]) assert.deepEqual(companySearchNames(name, domain), expected);
+  }],
+  ['refresh discovery covers retained gaps instead of repeating only the first across all chapters', () => {
+    const folder = resolve('.research-cache', `20990401000000-gap-check-${process.pid}`);
+    const gaps = ['Undisclosed revenue', 'Unconfirmed valuation', 'Unverified customer counts',
+      'Unknown investment terms', 'Missing retention data'];
+    try {
+      mkdirSync(folder, { recursive: true });
+      runJson('apply-research-profile.mjs', ['--report-folder', folder, '--profile', 'fast']);
+      const summaryCardPath = join(folder, 'previous-summary.yaml');
+      writeFileSync(summaryCardPath, JSON.stringify({ summary: { unresolvedGaps: gaps } }));
+      writeFileSync(join(folder, 'refresh-context.yaml'), JSON.stringify({
+        previousReport: { company: { name: 'Acme', website: 'https://acme.example' }, summaryCardPath },
+      }));
+      const plan = runJson('build-search-plan.mjs', ['--report-folder', folder, '--profile', 'fast']);
+      assert.deepEqual(plan.strategy.previousUnresolvedGaps, gaps);
+      for (const [index, chapter] of plan.chapters.entries()) {
+        assert.equal(chapter.queries.length, 3, 'refresh exceeded the per-chapter query budget');
+        assert(chapter.queries[0].query.includes(gaps[index % gaps.length]));
+        assert.match(chapter.queries[0].query, /\b2099\b/);
+      }
+      const queries = [...plan.globalQueries, ...plan.chapters.flatMap(chapter => chapter.queries)];
+      assert.equal(queries.length, 27);
+      assert.equal(new Set(queries.map(query => query.query)).size, 24,
+        'retained-gap discovery collapsed back to one shared query');
+    } finally {
+      rmSync(folder, { recursive: true, force: true });
+    }
+  }],
+  ...[
+    ['Articulate Global', 'articulate.com', 'articulate'],
+    ['Mujin, Inc.', 'mujin-corp.com', 'mujin'],
+    ['Toss (Viva Republica)', 'toss.im', 'toss'],
+    ['Energy Exploration Technologies, Inc. (EnergyX)', 'energyx.com', 'energyx'],
+  ].map(([company, domain, brand], index) => [
+    `formal-name discovery includes the domain-anchored ${brand} brand without expanding budgets`,
+    () => {
+      const folder = resolve('.research-cache', `20990401000000-brand-check-${index}-${process.pid}`);
+      try {
+        mkdirSync(folder, { recursive: true });
+        runJson('apply-research-profile.mjs', ['--report-folder', folder, '--profile', 'fast']);
+        const plan = runJson('build-search-plan.mjs', [
+          '--report-folder', folder, '--profile', 'fast',
+          '--company', company, '--website', `https://${domain}`,
+        ]);
+        const queries = [...plan.globalQueries, ...plan.chapters.flatMap(chapter => chapter.queries)];
+        assert.equal(queries.length, 19);
+        assert.equal(plan.company.name, company);
+        for (const query of queries) {
+          assert(query.query.startsWith(`("${company}" OR "${brand}")`), query.query);
+          assert.equal(query.maxResults, 8);
+        }
+        assert(plan.chapters.every(chapter =>
+          chapter.queries.length === 2
+          && chapter.evidenceTarget.minSources === 8
+          && chapter.evidenceTarget.minDomains === 4
+          && chapter.evidenceTarget.minNetNewSources === 2));
+      } finally {
+        rmSync(folder, { recursive: true, force: true });
+      }
+    },
+  ]),
+  ['brand relevance accepts Articulate coverage but rejects snippet and one-surface leakage', () => bootstrapFixture(
+    'brand-relevance', {
+      company: { name: 'Articulate Global', domain: 'articulate.com' },
+      resultOverrides: {
+        0: { url: 'https://siliconangle.com/articulate-raises-1-5b/',
+          title: 'Articulate raises $1.5B in funding for its cloud-based software' },
+        1: { url: 'https://publisher2.example/another-company', title: 'Another company raises funding',
+          snippet: 'Articulate Global cloud software' },
+        2: { url: 'https://publisher3.example/another-company', title: 'Articulate raises funding' },
+        3: { url: 'https://publisher4.example/articulate', title: 'Cloud software funding' },
+      },
+    }, result => {
+      assertFloors(result);
+      assert(result.bundle.candidates.some(entry => entry.url.includes('siliconangle.com')));
+      for (const domain of ['publisher2.example', 'publisher3.example', 'publisher4.example']) {
+        assert(!result.bundle.candidates.some(entry => entry.url.includes(domain)), domain);
+      }
+      assert(result.bundle.stats.rejectedIrrelevantCount >= 3);
+    },
+  )],
+  ['qualified company names still reject a different business sharing the first word', () => bootstrapFixture(
+    'brand-namesake', {
+      company: { name: 'Acme Robotics', domain: 'acme.example' },
+      resultOverrides: {
+        0: { url: 'https://publisher1.example/acme-logistics', title: 'Acme Logistics raises funding',
+          snippet: 'Acme Robotics funding news' },
+      },
+    }, result => {
+      assertFloors(result);
+      assert(!result.bundle.candidates.some(entry => entry.url.includes('publisher1.example')));
+    },
+  )],
   ['self-published URL matching preserves external sources', () => {
     for (const url of [
       'https://startup.genisisiq.com/acme/',
@@ -479,6 +589,65 @@ const tests = [
     const recovery = promoteReserveEvidence(replenished[0], fetched);
     assert.equal(recovery.successful, 2);
     assert.equal(recovery.successfulNetNew, 2);
+  }],
+  ['shared recovery repairs source and domain floors without moving or inflating exclusive evidence', () => {
+    const candidate = (id, allocation = 'shared', tier = 'high') => ({
+      url: `https://${id}.example/evidence`, allocation, sourceQuality: { tier },
+    });
+    const own = [candidate('own1', 'net-new'), candidate('own2', 'net-new'),
+      ...Array.from({ length: 5 }, (_, index) => ({
+        ...candidate(`ordinary${index}`), url: `https://ordinary.example/evidence-${index}`,
+      }))];
+    const sibling = [candidate('exclusive1', 'net-new'), candidate('exclusive2', 'net-new'),
+      ...Array.from({ length: 6 }, (_, index) => candidate(`shared${index}`))];
+    const blocked = candidate('blocked', 'net-new-reserve');
+    const pools = [
+      { key: 'deficient', evidenceTarget: { minSources: 8, minDomains: 4, minNetNewSources: 2 },
+        recommended: own, reserve: [blocked] },
+      { key: 'healthy', evidenceTarget: { minSources: 8, minDomains: 4, minNetNewSources: 2 },
+        recommended: sibling, reserve: [] },
+    ];
+    const low = candidate('low', 'shared', 'low');
+    const failed = candidate('failed', 'shared');
+    const candidates = [...own, ...sibling, blocked, low, failed];
+    const fetched = new Map(candidates.map(entry => [entry.url, {
+      ok: ![blocked.url, failed.url].includes(entry.url),
+    }]));
+    const original = structuredClone(pools);
+    const replenished = replenishReserveEvidence(pools, candidates, fetched);
+    assert.deepEqual(pools, original, 'shared recovery mutated its inputs');
+    assert.deepEqual(replenished[1], pools[1], 'shared reuse moved another chapter\'s evidence');
+    assert.equal(replenished[0].reserve.length, 6);
+    assert(replenished[0].reserve.every(entry =>
+      entry.url.includes('//shared') && entry.allocation === 'shared-recovery'));
+    const recovery = promoteReserveEvidence(replenished[0], fetched);
+    assert.equal(recovery.successful, 8);
+    assert.equal(recovery.successfulDomains.size, 4);
+    assert.equal(recovery.successfulNetNew, 2);
+    assert.equal(recovery.promoted.length, 1);
+    const extraOrdinary = { ...candidate('ordinary6'), url: 'https://ordinary.example/evidence-6' };
+    fetched.set(extraOrdinary.url, { ok: true });
+    const domainOnly = { ...pools[0], recommended: [...own, extraOrdinary] };
+    const domainRefill = replenishReserveEvidence(
+      [domainOnly, pools[1]], [...candidates, extraOrdinary], fetched,
+    );
+    const domainRecovery = promoteReserveEvidence(domainRefill[0], fetched);
+    assert.equal(domainRecovery.successful, 9, 'domain-only recovery stopped at the source floor');
+    assert.equal(domainRecovery.successfulDomains.size, 4);
+    assert.equal(domainRecovery.successfulNetNew, 2);
+    const insufficientNetNew = {
+      ...pools[0],
+      recommended: own.map(entry => entry.url === own[1].url ? { ...entry, allocation: 'shared' } : entry),
+    };
+    const short = replenishReserveEvidence([insufficientNetNew, pools[1]], candidates, fetched);
+    const partial = promoteReserveEvidence(short[0], fetched);
+    assert.equal(partial.successful, 8);
+    assert.equal(partial.successfulNetNew, 1, 'shared recovery invented a net-new source');
+    assert(partial.successfulNetNew < short[0].evidenceTarget.minNetNewSources);
+    const netNewOnly = { ...insufficientNetNew, recommended: partial.recommended };
+    const netNewRefill = replenishReserveEvidence([netNewOnly, pools[1]], candidates, fetched);
+    assert.equal(netNewRefill[0].reserve.length, 0,
+      'a net-new-only deficit allocated shared sources that cannot repair it');
   }],
 ];
 

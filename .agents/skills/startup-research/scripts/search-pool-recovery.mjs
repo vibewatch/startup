@@ -92,6 +92,29 @@ export function replenishReserveEvidence(pools, candidates, fetchedByUrl) {
       transferred.add(canonicalSourceUrl(candidate.url));
     }
   }
+  const exclusiveUrls = new Set(result.flatMap(pool => [
+    ...pool.recommended, ...pool.reserve,
+  ].filter(candidate => ['net-new', 'net-new-reserve'].includes(candidate.allocation))
+    .map(candidate => canonicalSourceUrl(candidate.url))));
+  for (const pool of result) {
+    if (!deficient.has(pool.key)) continue;
+    const metrics = successfulPoolMetrics(pool, fetchedByUrl);
+    if (metrics.successful >= pool.evidenceTarget.minSources
+        && metrics.successfulDomains.size >= pool.evidenceTarget.minDomains) continue;
+    const localUrls = new Set([...pool.recommended, ...pool.reserve]
+      .map(candidate => canonicalSourceUrl(candidate.url)));
+    const shared = uniqueCandidates(candidates).filter(candidate =>
+      candidate.sourceQuality?.tier !== 'low'
+      && fetchedByUrl.get(candidate.url)?.ok
+      && !exclusiveUrls.has(canonicalSourceUrl(candidate.url))
+      && !localUrls.has(canonicalSourceUrl(candidate.url)))
+      .sort((left, right) => Number(!metrics.successfulDomains.has(normalizeDomain(right.url)))
+        - Number(!metrics.successfulDomains.has(normalizeDomain(left.url))));
+    for (const candidate of shared) {
+      if (pool.reserve.length >= 6) break;
+      pool.reserve.push({ ...candidate, allocation: 'shared-recovery' });
+    }
+  }
   return result.map(pool => {
     if (deficient.has(pool.key)) return pool;
     const reserve = pool.reserve.filter(candidate => !transferred.has(canonicalSourceUrl(candidate.url)));

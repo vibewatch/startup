@@ -77,7 +77,15 @@ rollback and cache cleanup. Research bootstrap can refill exhausted reserves
 once from unused discovery results or surplus backups of healthy chapters
 (at most six per failing chapter), preserving exclusive URL ownership and
 every chapter's recommended evidence. It still requires the same successfully
-fetched source, domain and net-new evidence floors. Finalizer retries receive source diagnostics even when
+fetched source, domain and net-new evidence floors. Successfully fetched,
+nonexclusive evidence can also fill another chapter's source/domain shortfall
+without moving its owner's evidence or counting it as net-new.
+Discovery expands a formal company name only with a shortened brand that
+matches its official domain; external alias matches require that brand in
+both the title and URL, not just a search snippet.
+Refresh chapters rotate through retained unresolved gaps within their existing
+query budgets rather than all searching only the first gap.
+Finalizer retries receive source diagnostics even when
 assembly stopped before producing final report artifacts.
 New-company discovery starts with the repository's URL-based search tool; host
 search is supplementary. For `Any`, portfolio coverage is a preference rather
