@@ -65,6 +65,10 @@ visible in one place:
 
 Generation and translation jobs check automation configuration before invoking
 models; the portfolio planner checks it before launching its refresh matrix.
+All Copilot jobs on Ubuntu x64 install the CLI and its matching native package
+as required dependencies, then run `copilot --version` before generation.
+This prevents npm's optional-package handling from reporting a successful
+installation when the executable is missing.
 Translation uses the `translation-draft` default for drafting and the
 `translation-qa` default/escalation routes for editing and bounded repair.
 Keep the workflow and `model-routing.yaml` aligned when changing these models.

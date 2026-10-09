@@ -16,6 +16,64 @@ test('workflow-only pushes trigger full main validation', () => {
   assert(workflow.on.push.paths.includes('.github/workflows/**'));
 });
 
+for (const file of ['company.yml', 'refresh-company.yml', 'research-unicorns.yml', 'translate-reports-zh.yml', 'benchmark-synthesis-models.yml']) {
+  for (const scenario of ['healthy', 'version-lookup-failure', 'platform-download-failure', 'missing-platform']) {
+    test(`Copilot installation requires a working version-matched native package: ${file}/${scenario}`, t => {
+      const root = mkdtempSync(join(tmpdir(), 'copilot-install-test-'));
+      t.after(() => rmSync(root, { recursive: true, force: true }));
+      const log = join(root, 'commands.jsonl');
+      const writeCommand = (name, body) => {
+        const path = join(root, name);
+        writeFileSync(path, `#!${process.execPath}\n${body}\n`);
+        chmodSync(path, 0o755);
+      };
+      writeCommand('npm', `
+const fs = require('node:fs');
+const args = process.argv.slice(2);
+fs.appendFileSync(process.env.INSTALL_LOG, JSON.stringify(['npm', ...args]) + '\\n');
+if (args[0] === 'view') {
+  if (process.env.SCENARIO === 'version-lookup-failure') process.exit(9);
+  console.log('1.2.3');
+}
+if (args.includes('-g') && process.env.SCENARIO === 'platform-download-failure') process.exit(7);
+`);
+      writeCommand('copilot', `
+const fs = require('node:fs');
+fs.appendFileSync(process.env.INSTALL_LOG, JSON.stringify(['copilot', ...process.argv.slice(2)]) + '\\n');
+if (process.env.SCENARIO === 'missing-platform') {
+  console.error('GitHub Copilot CLI: no platform package found.');
+  process.exit(1);
+}
+console.log('GitHub Copilot CLI 1.2.3');
+`);
+      const workflow = yaml.load(readFileSync(`.github/workflows/${file}`, 'utf8'));
+      assert(Object.values(workflow.jobs).every(job => job['runs-on'] === 'ubuntu-latest'));
+      const install = workflowSteps(file).find(step => step.name === 'Install dependencies and Copilot CLI');
+      const result = spawnSync('bash', ['-e', '-c', install.run], {
+        cwd: root, encoding: 'utf8',
+        env: { ...process.env, PATH: `${root}:${process.env.PATH}`, INSTALL_LOG: log, SCENARIO: scenario },
+      });
+      const commands = readFileSync(log, 'utf8').trim().split('\n').map(line => JSON.parse(line));
+      if (scenario === 'version-lookup-failure') {
+        assert.equal(result.status, 9, result.stderr);
+        assert(!commands.some(command => command.includes('-g') || command[0] === 'copilot'));
+        return;
+      }
+      assert.deepEqual(commands.find(command => command.includes('-g')), [
+        'npm', 'install', '-g', '--include=optional', '@github/copilot@1.2.3', '@github/copilot-linux-x64@1.2.3',
+      ]);
+      if (scenario === 'platform-download-failure') {
+        assert.equal(result.status, 7, result.stderr);
+        assert(!commands.some(command => command[0] === 'copilot'));
+      } else {
+        assert.deepEqual(commands.at(-1), ['copilot', '--version']);
+        assert.equal(result.status, scenario === 'healthy' ? 0 : 1, result.stderr);
+        if (scenario === 'missing-platform') assert.match(result.stderr, /no platform package found/u);
+      }
+    });
+  }
+}
+
 test('unicorn discovery uses URL-based repository search without creating a report first', () => {
   const discovery = workflowSteps('research-unicorns.yml')
     .find(step => step.name === 'Generate recent-unicorn diligence reports');

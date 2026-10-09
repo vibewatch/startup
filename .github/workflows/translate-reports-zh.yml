@@ -168,9 +168,12 @@ jobs:
       - name: Install dependencies and Copilot CLI
         if: steps.targets.outputs.count != '0'
         run: |
+          set -euo pipefail
           npm ci || npm install --no-audit --no-fund
           npm --prefix website ci || npm --prefix website install --no-audit --no-fund
-          npm install -g @github/copilot
+          copilot_version="$(npm view @github/copilot version)"
+          npm install -g --include=optional "@github/copilot@$copilot_version" "@github/copilot-linux-x64@$copilot_version"
+          copilot --version
 
       - name: Validate automation configuration before generation
         if: steps.targets.outputs.count != '0'
