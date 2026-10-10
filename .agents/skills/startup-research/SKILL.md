@@ -48,6 +48,10 @@ Workflow narrative: what to run, in what order, with which flags. Two generated 
    Refresh runs infer company identity and prior gaps from `.research-cache/<runId>/refresh-context.yaml`. The bootstrap searches concurrently with provider fallback, allocates a mix of chapter-specific and shared high/medium-quality candidates, prefetches each allocated URL once with bounded concurrency, and promotes prefetched reserve candidates only when fetch failures would leave a chapter below its source, domain, or net-new evidence target. It allocates every chapter's mandatory evidence before reserving up to two exclusive net-new backups from surplus URLs; optional backups never remove recommended evidence from another chapter. Recommended and reserve pools stay disjoint, recovery counts canonical URLs once, and both pools retain fetch results so successful leftover reserves remain available for repair. It writes `.research-cache/<runId>/search-bundle.json` plus `.research-cache/<runId>/fetched/*.txt`. Reuse those files across every chapter; do not rerun bootstrap or refetch a shared URL inside workers. The orchestrator should not serially read every fetched file—hand each chapter pool directly to its worker. Use `--no-prefetch` only for diagnostics.
    Shared chapter-focus terms are industry-neutral; they must not inject one
    company's products, technology stack, or competitors into every report.
+   Discovery uses the domain-verified company brand rather than an ambiguous
+   Boolean expression. Refresh queries add at most twelve words from that same
+   retained company's business description to disambiguate namesakes; this
+   context does not establish any refreshed fact or grant source eligibility.
    The planner applies the snapshot's volatile-fact vocabulary and adds the
    canonical run year before searches execute, including global and refresh
    queries. Keep the actual executed query in the chapter log; never append
@@ -66,8 +70,18 @@ Workflow narrative: what to run, in what order, with which flags. Two generated 
    (at most nine queries for an eight-chapter report). Healthy runs execute
    none. The supplemental pass excludes dominant existing domains, uses the
    same provider fallback and result caps, preserves actual search provenance,
-   and prefetches new evidence. A report-wide successful domain shortage still
+   and prefetches new evidence. Source/domain recovery uses the same registrable
+   domains as chapter and publication gates. A report-wide successful domain shortage still
    fails before chapter workers launch; raw candidate counts cannot satisfy it.
+   If the bounded search pass still falls short, refresh bootstrap may re-fetch
+   at most six original-source URLs per prior chapter, using the current quality
+   policy and preferring previously independent sources and distinct domains.
+   Healthy runs fetch none. `priorSources` records URL discovery provenance
+   separately from actual searches. Only newly successful original text is
+   evidence; re-check relevance, issuer independence and publication date, never
+   copy historical claims or quotations or invent a search-result association.
+   Retain relevant `requiredForRefreshEvidence` originals in the assigned pool;
+   their allocation does not classify independence or change source caps.
    Workers retain relevant `report-diversity` and `requiredForReportDomains`
    candidates, without treating those allocations as independence classifications.
 7. **Export `STARTUP_FETCH_LOG_PATH` before any `fetch-url` invocation:**

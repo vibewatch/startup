@@ -8,12 +8,13 @@ import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
 import {
-  promoteReserveEvidence, recoverExclusiveEvidence, recoverReportDomains,
+  promoteReserveEvidence, recoverExclusiveEvidence, recoverRefreshEvidence, recoverReportDomains,
   replenishReserveEvidence, successfulPoolMetrics,
 } from './search-pool-recovery.mjs';
 import { canonicalSourceUrl, companySearchNames, getCoreArtifacts, isSelfPublishedReportUrl, loadWorkflowConfig } from './utils.mjs';
 import { checkRun } from './check-report.mjs';
-import { executedSearchQueries } from './search-query-checks.mjs';
+import { checkSearchQueryProvenance, executedSearchQueries } from './search-query-checks.mjs';
+import { sourceQuality } from './source-quality.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const urls = (entries) => new Set(entries.map((entry) => canonicalSourceUrl(entry.url)));
@@ -22,7 +23,7 @@ async function bootstrapFixture(name, {
   chapters = 1, sources = 12, failed = [], lowSignal = [], aliases = false,
   selfPublished = [], redirects = [], company = { name: 'Acme', domain: 'acme.example' },
   resultOverrides = {},
-  reportDomains, recoveryResults = [],
+  reportDomains, recoveryResults = [], refreshCandidates = [],
 }, verify) {
   const folder = resolve('.research-cache', `20990101000000-pool-check-${name}-${process.pid}`);
   const results = Array.from({ length: sources }, (_, index) => ({
@@ -38,6 +39,7 @@ async function bootstrapFixture(name, {
   });
   const plan = {
     company,
+    refreshCandidates,
     strategy: {
       concurrency: 4,
       reportEvidenceTarget: { minDistinctDomains: reportDomains ?? (chapters === 8 ? 18 : 0) },
@@ -281,7 +283,7 @@ const tests = [
     ['Toss (Viva Republica)', 'toss.im', 'toss'],
     ['Energy Exploration Technologies, Inc. (EnergyX)', 'energyx.com', 'energyx'],
   ].map(([company, domain, brand], index) => [
-    `formal-name discovery includes the domain-anchored ${brand} brand without expanding budgets`,
+    `formal-name discovery uses the domain-anchored ${brand} brand without Boolean ambiguity or expanded budgets`,
     () => {
       const folder = resolve('.research-cache', `20990401000000-brand-check-${index}-${process.pid}`);
       try {
@@ -295,7 +297,8 @@ const tests = [
         assert.equal(queries.length, 19);
         assert.equal(plan.company.name, company);
         for (const query of queries) {
-          assert(query.query.startsWith(`("${company}" OR "${brand}")`), query.query);
+          assert(query.query.startsWith(`"${brand}" `), query.query);
+          assert(!query.query.includes(' OR '), query.query);
           assert.equal(query.maxResults, 8);
         }
         assert(plan.chapters.every(chapter =>
@@ -308,6 +311,178 @@ const tests = [
       }
     },
   ]),
+  ['refresh query context comes only from the same retained company and stays bounded', () => {
+    const folder = resolve('.research-cache', `20990401000000-entity-check-${process.pid}`);
+    const company = { name: 'Game Science', website: 'https://www.gamesci.com.cn/',
+      shortDescription: 'Chinese AAA game studio behind Black Myth: Wukong. Extra words test the exact twelve word cap.' };
+    try {
+      mkdirSync(folder, { recursive: true });
+      runJson('apply-research-profile.mjs', ['--report-folder', folder, '--profile', 'fast']);
+      writeFileSync(join(folder, 'refresh-context.yaml'), JSON.stringify({ previousReport: { company } }));
+      const plan = runJson('build-search-plan.mjs', ['--report-folder', folder, '--profile', 'fast']);
+      assert.equal(plan.company.searchContext.split(/\s+/).length, 12);
+      assert(plan.company.searchContext.includes('Black Myth: Wukong.'));
+      const queries = [...plan.globalQueries, ...plan.chapters.flatMap(chapter => chapter.queries)];
+      assert.equal(queries.length, 19);
+      assert.equal(plan.recoveryQueries.length, 9);
+      for (const query of [...queries, ...plan.recoveryQueries]) {
+        assert(query.query.startsWith(`"Game Science" ${plan.company.searchContext}`));
+        assert.equal(query.maxResults, 8);
+      }
+      for (const overrides of [
+        ['--company', 'Another Studio'],
+        ['--website', 'https://unrelated.example'],
+      ]) {
+        const other = runJson('build-search-plan.mjs', [
+          '--report-folder', folder, '--profile', 'fast', ...overrides,
+        ]);
+        assert.equal(other.company.searchContext, '', 'prior-company context leaked to a different identity');
+        assert(!other.globalQueries.some(query => query.query.includes('Black Myth')));
+      }
+    } finally {
+      rmSync(folder, { recursive: true, force: true });
+    }
+  }],
+  ['two-word company relevance rejects scattered and reversed generic words', () => bootstrapFixture(
+    'entity-phrase', {
+      company: { name: 'Game Science', domain: 'gamesci.com.cn' },
+      resultOverrides: {
+        0: { url: 'https://publisher1.example/science-is-an-infinite-sum-game',
+          title: 'Science is an infinite sum game', snippet: 'Game Science' },
+        1: { url: 'https://publisher2.example/game', title: 'Science interview' },
+        2: { url: 'https://publisher3.example/game-science-company',
+          title: 'Game Science announces next title' },
+      },
+    }, result => {
+      assertFloors(result);
+      assert(!result.bundle.candidates.some(entry => /publisher[12]\.example/.test(entry.url)));
+      assert(result.bundle.candidates.some(entry => entry.url.includes('publisher3.example')));
+    },
+  )],
+  ['refresh source discovery uses current quality policy, original URL provenance and six seeds per chapter', () => {
+    const runId = `20990301000000-seed-source-${process.pid}`;
+    const previousFolder = resolve('reports', runId);
+    const folder = resolve('.research-cache', `20990401000000-seed-plan-${process.pid}`);
+    try {
+      mkdirSync(previousFolder);
+      mkdirSync(folder, { recursive: true });
+      runJson('apply-research-profile.mjs', ['--report-folder', folder, '--profile', 'fast']);
+      const company = { name: 'Acme', website: 'https://acme.example', shortDescription: 'Factory automation' };
+      const sources = Array.from({ length: 12 }, (_, index) => ({
+        id: `SO${index}`, url: `https://source${index}.example/acme`, title: `Acme source ${index}`,
+        date: `2099-02-${String(index + 1).padStart(2, '0')}`, accessStatus: 'ok',
+        independence: 'independent', reputationTier: 'high', keyQuote: 'An old quotation must not be copied.',
+      }));
+      sources.push({ ...sources[0], url: 'https://linkedin.com/acme', id: 'SO-low' });
+      sources.push({ ...sources[0], url: 'https://startup.genisisiq.com/acme', id: 'SO-circular' });
+      sources.push({ ...sources[0], url: 'https://blocked.example/acme', id: 'SO-blocked', accessStatus: 'blocked' });
+      sources.push({ ...sources[0], url: 'not a URL', id: 'SO-invalid' });
+      writeFileSync(join(previousFolder, '01-company-overview.yaml'), JSON.stringify({ localEvidence: { sources } }));
+      writeFileSync(join(previousFolder, '02-market-analysis.yaml'), JSON.stringify({ localEvidence: { sources } }));
+      writeFileSync(join(folder, 'refresh-context.yaml'), JSON.stringify({ previousReport: { runId, company } }));
+      const plan = runJson('build-search-plan.mjs', ['--report-folder', folder, '--profile', 'fast']);
+      assert.equal(plan.refreshCandidates.length, 6);
+      assert.equal(new Set(plan.refreshCandidates.map(entry => entry.url)).size, 6);
+      for (const candidate of plan.refreshCandidates) {
+        assert(!('keyQuote' in candidate));
+        assert(!('independence' in candidate), 'prior issuer classification became current evidence');
+        assert.equal(candidate.priorSources.length, 2);
+        assert(candidate.priorSources.every(source => source.runId === runId && source.sourceId));
+        assert(!/linkedin|startup\.genisisiq|blocked/.test(candidate.url));
+      }
+      const mismatched = runJson('build-search-plan.mjs', [
+        '--report-folder', folder, '--profile', 'fast', '--website', 'https://another.example',
+      ]);
+      assert.deepEqual(mismatched.refreshCandidates, []);
+      const quality = { highReputationDomains: ['reuters.com'], lowSignalDomains: ['linkedin.com'] };
+      assert.equal(sourceQuality({ url: 'https://reuters.com/acme', title: 'Acme' },
+        { officialDomain: 'acme.example', runYear: '2099' }, quality).score, 20);
+      assert.equal(sourceQuality({ url: 'https://linkedin.com/acme', title: 'Acme' },
+        { officialDomain: 'acme.example', runYear: '2099' }, quality).tier, 'low');
+      assert.equal(sourceQuality({ url: 'https://acme.example', title: 'Acme 2099' },
+        { officialDomain: 'acme.example', runYear: '2099' }, quality).score, 45);
+    } finally {
+      rmSync(previousFolder, { recursive: true, force: true });
+      rmSync(folder, { recursive: true, force: true });
+    }
+  }],
+  ['bounded refresh recovery refetches originals without inventing executed search results', () => {
+    const seed = (id, tier = 'medium') => ({
+      url: `https://${id}.example/acme`, title: 'Original source',
+      sourceQuality: { tier }, priorSources: [{ runId: '20990301000000-acme',
+        chapter: 'chapter-1', sourceId: `SO-${id}` }],
+    });
+    return bootstrapFixture('refresh-seeds', {
+      sources: 10, failed: [0, 8, 9], refreshCandidates: [
+        seed('seed1'), seed('seed2'), seed('low', 'low'),
+        { ...seed('alias'), url: 'https://www.publisher1.example/acme/?utm_source=previous' },
+        { ...seed('circular'), url: 'https://startup.genisisiq.com/acme' },
+      ],
+    }, result => {
+      assertFloors(result);
+      assert.equal(result.bundle.stats.refreshSeedPrefetchCount, 2);
+      assert(result.fetchCalls.includes('https://seed1.example/acme'));
+      assert(result.fetchCalls.includes('https://seed2.example/acme'));
+      assert(!result.fetchCalls.some(url => /low\.example|startup\.genisisiq/.test(url)));
+      const executed = executedSearchQueries(result.bundle);
+      assert(executed.every(query => !query.resultUrls.some(url => url.includes('seed'))));
+      const issues = checkSearchQueryProvenance({
+        sources: [{ id: 'S1', url: 'https://seed1.example/acme' }],
+        searchQueries: [{ ...executed[0], retainedSourceRefs: ['S1'] }],
+      }, executed, 'fixture');
+      assert(issues.some(issue => issue.code === 'searchQuerySourceMismatch'));
+      assert(result.bundle.candidates.find(candidate => candidate.url.includes('seed1')).priorSources);
+    });
+  }],
+  ['healthy refreshes do not fetch optional historical seeds', () => bootstrapFixture(
+    'healthy-seeds', { refreshCandidates: [{
+      url: 'https://seed.example/acme', sourceQuality: { tier: 'medium' },
+      priorSources: [{ chapter: 'chapter-1' }],
+    }] }, result => {
+      assertFloors(result);
+      assert.equal(result.bundle.stats.refreshSeedPrefetchCount, 0);
+      assert(!result.fetchCalls.includes('https://seed.example/acme'));
+    },
+  )],
+  ['source and report diversity use the same registrable domains as publication gates', () => {
+    const first = { url: 'https://one.publisher.co.uk/acme', allocation: 'net-new' };
+    const second = { url: 'https://two.publisher.co.uk/acme', allocation: 'net-new' };
+    const third = { url: 'https://independent.example/acme', sourceQuality: { tier: 'medium' } };
+    const fetched = new Map([first, second, third].map(entry => [entry.url, { ok: true }]));
+    const pool = { key: 'test', evidenceTarget: { minSources: 2, minDomains: 2, minNetNewSources: 2, maxSources: 3 },
+      recommended: [first, second], reserve: [] };
+    assert.equal(successfulPoolMetrics(pool, fetched).successfulDomains.size, 1,
+      'publisher subdomains inflated the chapter source floor');
+    const recovered = recoverReportDomains([pool], [third], fetched, 2);
+    assert.equal(successfulPoolMetrics(recovered[0], fetched).successfulDomains.size, 2);
+    assert(recovered[0].recommended.find(entry => entry.url === third.url).requiredForReportDomains);
+  }],
+  ['refresh recovery retains two relevant original inputs without borrowing exclusive URLs or exceeding caps', () => {
+    const seed = (id, chapters) => ({ url: `https://${id}.example/acme`, sourceQuality: { tier: 'medium' },
+      priorSources: chapters.map(chapter => ({ chapter })) });
+    const seeds = [seed('shared-original', ['one', 'two']), seed('one-original', ['one']),
+      seed('two-exclusive', ['two']), seed('spare', ['one', 'two'])];
+    const pools = ['one', 'two'].map(key => ({
+      key, evidenceTarget: { minSources: 2, minDomains: 2, minNetNewSources: 1, maxSources: 3 },
+      recommended: [{ url: `https://${key}.example/acme`, allocation: 'net-new' }], reserve: [],
+    }));
+    pools[1].reserve = [{ ...seeds[2], allocation: 'net-new-reserve' }];
+    const fetched = new Map([...seeds, ...pools.flatMap(pool => pool.recommended)].map(entry => [entry.url, { ok: true }]));
+    const before = structuredClone(pools);
+    const recovered = recoverRefreshEvidence(pools, seeds, fetched);
+    assert.deepEqual(pools, before);
+    for (const pool of recovered) {
+      assert.equal(pool.recommended.filter(entry => entry.requiredForRefreshEvidence).length, 2);
+      assert.equal(pool.recommended.length, 3);
+      assert(pool.reserve.every(entry => !urls(pool.recommended).has(entry.url)));
+    }
+    assert(!urls(recovered[0].recommended).has(seeds[2].url));
+    assert.equal(recovered[1].recommended.find(entry => entry.url === seeds[2].url).allocation, 'net-new');
+    const reassigned = recoverExclusiveEvidence(recovered.map(pool => ({ ...pool,
+      evidenceTarget: { ...pool.evidenceTarget, minNetNewSources: 2 } })), seeds, fetched);
+    assert(reassigned.every(pool => urls(pool.recommended).has(seeds[0].url)),
+      'exclusive recovery removed another chapter mandatory original-source input');
+  }],
   ['brand relevance accepts Articulate coverage but rejects snippet and one-surface leakage', () => bootstrapFixture(
     'brand-relevance', {
       company: { name: 'Articulate Global', domain: 'articulate.com' },

@@ -2,13 +2,18 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import yaml from 'js-yaml';
+import { sourceQuality } from './source-quality.mjs';
 import {
   EXIT,
+  canonicalSourceUrl,
   companySearchNames,
   getAnalysisArtifacts,
   isRunId,
+  isSelfPublishedReportUrl,
   loadWorkflowConfig,
   readYaml,
+  registrableDomain,
+  reportIdentityKey,
   researchCacheDir,
   runDateFromRunId,
   tryReadYaml,
@@ -48,6 +53,43 @@ function previousGaps(refreshContext) {
   const path = refreshContext?.previousReport?.summaryCardPath;
   if (!path || !existsSync(path)) return [];
   return readYaml(path)?.summary?.unresolvedGaps ?? [];
+}
+
+function refreshSourceCandidates(refreshContext, chapters, domain, year, quality) {
+  const runId = refreshContext?.previousReport?.runId;
+  if (!isRunId(runId)) return [];
+  const candidates = new Map();
+  for (const chapter of chapters) {
+    const path = resolve('reports', runId, chapter.file);
+    if (!existsSync(path)) continue;
+    const sources = (readYaml(path)?.localEvidence?.sources ?? [])
+      .filter(source => source.accessStatus === 'ok' && source.reputationTier !== 'low')
+      .map(source => {
+        const candidate = { url: canonicalSourceUrl(source.url), title: source.title };
+        return { source, candidate: { ...candidate,
+          sourceQuality: sourceQuality(candidate, { officialDomain: domain, runYear: year }, quality) } };
+      })
+      .filter(({ candidate }) => candidate.sourceQuality.tier !== 'low'
+        && !isSelfPublishedReportUrl(candidate.url))
+      .sort((left, right) => Number(right.source.independence === 'independent')
+        - Number(left.source.independence === 'independent')
+        || String(right.source.date ?? '').localeCompare(String(left.source.date ?? '')));
+    const selected = new Set();
+    const domains = new Set();
+    for (const distinctDomainsOnly of [true, false]) {
+      for (const { source, candidate } of sources) {
+        if (selected.size >= 6) break;
+        const sourceDomain = registrableDomain(candidate.url);
+        if (selected.has(candidate.url) || (distinctDomainsOnly && domains.has(sourceDomain))) continue;
+        selected.add(candidate.url);
+        domains.add(sourceDomain);
+        const entry = candidates.get(candidate.url) ?? { ...candidate, priorSources: [] };
+        entry.priorSources.push({ runId, chapter: chapter.key, sourceId: source.id });
+        candidates.set(candidate.url, entry);
+      }
+    }
+  }
+  return [...candidates.values()];
 }
 
 function sharedQueries({ company, domain, year, strategy, budget }) {
@@ -172,9 +214,14 @@ try {
   domain = url.hostname.replace(/^www\./, '');
 } catch {}
 const searchNames = companySearchNames(company, domain);
-const companyQuery = searchNames.length === 1
-  ? `"${searchNames[0]}"`
-  : `(${searchNames.map(name => `"${name}"`).join(' OR ')})`;
+const previousCompany = refreshContext?.previousReport?.company;
+const samePreviousCompany = Boolean(reportIdentityKey(previousCompany))
+  && reportIdentityKey(previousCompany) === reportIdentityKey({ name: company, website });
+const searchContext = samePreviousCompany
+  ? String(previousCompany?.shortDescription ?? '').replace(/["\r\n]/g, ' ').trim()
+    .split(/\s+/).slice(0, 12).join(' ')
+  : '';
+const companyQuery = [`"${searchNames.at(-1)}"`, searchContext].filter(Boolean).join(' ');
 const mode = refreshContext ? 'refresh' : 'fresh';
 const gaps = previousGaps(refreshContext);
 const runDate = runDateFromRunId(runId);
@@ -185,7 +232,7 @@ const output = {
   runDate,
   mode,
   profile: args.profile,
-  company: { name: company, website: website || null, domain: domain || null },
+  company: { name: company, website: website || null, domain: domain || null, searchContext },
   strategy: {
     concurrency: budget.concurrency,
     maxResultsPerQuery: budget.maxResultsPerQuery,
@@ -236,6 +283,8 @@ const output = {
     fallbackProviders: strategy.routing.broad.slice(1),
     maxResults: budget.maxResultsPerQuery,
   })),
+  refreshCandidates: samePreviousCompany
+    ? refreshSourceCandidates(refreshContext, chapters, domain, year, strategy.quality) : [],
 };
 const volatileTokens = (config.agentPolicy?.volatileFactQueryTokens ?? [])
   .map((token) => String(token).toLowerCase())

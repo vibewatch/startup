@@ -1,4 +1,4 @@
-import { canonicalSourceUrl, normalizeDomain } from './utils.mjs';
+import { canonicalSourceUrl, registrableDomain } from './utils.mjs';
 
 export const NET_NEW_RESERVE_COUNT = 2;
 
@@ -15,7 +15,7 @@ export function successfulPoolMetrics(pool, fetchedByUrl) {
   return {
     successful: successfulCandidates.length,
     successfulDomains: new Set(
-      successfulCandidates.map((candidate) => normalizeDomain(candidate.url)).filter(Boolean),
+      successfulCandidates.map((candidate) => registrableDomain(candidate.url)).filter(Boolean),
     ),
     successfulNetNew: successfulCandidates.filter(
       (candidate) => candidate.allocation === 'net-new',
@@ -38,7 +38,7 @@ export function promoteReserveEvidence(pool, fetchedByUrl) {
     if (sourcesSatisfied && domainsSatisfied && netNewSatisfied) break;
     if (!fetchedByUrl.get(candidate.url)?.ok) continue;
 
-    const domain = normalizeDomain(candidate.url);
+    const domain = registrableDomain(candidate.url);
     const addsNeededSource = !sourcesSatisfied;
     const addsNeededDomain = !domainsSatisfied && domain && !metrics.successfulDomains.has(domain);
     const addsNeededNetNew = (
@@ -108,8 +108,8 @@ export function replenishReserveEvidence(pools, candidates, fetchedByUrl) {
       && fetchedByUrl.get(candidate.url)?.ok
       && !exclusiveUrls.has(canonicalSourceUrl(candidate.url))
       && !localUrls.has(canonicalSourceUrl(candidate.url)))
-      .sort((left, right) => Number(!metrics.successfulDomains.has(normalizeDomain(right.url)))
-        - Number(!metrics.successfulDomains.has(normalizeDomain(left.url))));
+      .sort((left, right) => Number(!metrics.successfulDomains.has(registrableDomain(right.url)))
+        - Number(!metrics.successfulDomains.has(registrableDomain(left.url))));
     for (const candidate of shared) {
       if (pool.reserve.length >= 6) break;
       pool.reserve.push({ ...candidate, allocation: 'shared-recovery' });
@@ -139,11 +139,15 @@ export function recoverExclusiveEvidence(pools, candidates, fetchedByUrl) {
       if (successfulPoolMetrics(pool, fetchedByUrl).successfulNetNew >= pool.evidenceTarget.minNetNewSources) break;
       const url = canonicalSourceUrl(candidate.url);
       if (exclusive.has(url)) continue;
+      if (result.some(sibling => sibling !== pool && sibling.recommended.some(entry =>
+        canonicalSourceUrl(entry.url) === url && entry.requiredForRefreshEvidence))) continue;
       if (!pool.recommended.some(entry => canonicalSourceUrl(entry.url) === url)
           && successfulPoolMetrics(pool, fetchedByUrl).successful >= (pool.evidenceTarget.maxSources ?? Infinity)) continue;
       const requiredForReportDomains = result.some(entry => entry.recommended.some(selected =>
         canonicalSourceUrl(selected.url) === url
         && (selected.requiredForReportDomains || selected.allocation === 'report-diversity')));
+      const requiredForRefreshEvidence = result.some(entry => entry.recommended.some(selected =>
+        canonicalSourceUrl(selected.url) === url && selected.requiredForRefreshEvidence));
       const replacements = [];
       let safe = true;
       for (const sibling of result.filter(other => other !== pool)) {
@@ -186,10 +190,41 @@ export function recoverExclusiveEvidence(pools, candidates, fetchedByUrl) {
           && !sibling.recommended.some(selected => canonicalSourceUrl(selected.url) === canonicalSourceUrl(entry.url)));
       }
       const index = pool.recommended.findIndex(entry => canonicalSourceUrl(entry.url) === url);
-      const selected = { ...candidate, allocation: 'net-new', ...(requiredForReportDomains ? { requiredForReportDomains: true } : {}) };
+      const selected = { ...candidate, allocation: 'net-new',
+        ...(requiredForReportDomains ? { requiredForReportDomains: true } : {}),
+        ...(requiredForRefreshEvidence ? { requiredForRefreshEvidence: true } : {}) };
       if (index < 0) pool.recommended.push(selected);
       else pool.recommended[index] = selected;
       exclusive.add(url);
+    }
+  }
+  return result;
+}
+
+export function recoverRefreshEvidence(pools, candidates, fetchedByUrl) {
+  const result = pools.map(pool => ({
+    ...pool, recommended: [...pool.recommended], reserve: [...pool.reserve],
+  }));
+  const exclusiveOwner = new Map(result.flatMap(pool => [...pool.recommended, ...pool.reserve]
+    .filter(candidate => ['net-new', 'net-new-reserve'].includes(candidate.allocation))
+    .map(candidate => [canonicalSourceUrl(candidate.url), pool.key])));
+  for (const pool of result) {
+    let retained = 0;
+    for (const candidate of uniqueCandidates(candidates)) {
+      if (retained >= 2) break;
+      const url = canonicalSourceUrl(candidate.url);
+      const owner = exclusiveOwner.get(url);
+      if (candidate.sourceQuality?.tier === 'low' || !fetchedByUrl.get(candidate.url)?.ok
+          || (owner && owner !== pool.key)
+          || !candidate.priorSources?.some(source => source.chapter === pool.key)) continue;
+      const index = pool.recommended.findIndex(entry => canonicalSourceUrl(entry.url) === url);
+      if (index < 0 && successfulPoolMetrics(pool, fetchedByUrl).successful >= (pool.evidenceTarget.maxSources ?? Infinity)) continue;
+      const selected = { ...(index < 0 ? { ...candidate, allocation: owner ? 'net-new' : 'refresh-recovery' }
+        : pool.recommended[index]), requiredForRefreshEvidence: true };
+      if (index < 0) pool.recommended.push(selected);
+      else pool.recommended[index] = selected;
+      pool.reserve = pool.reserve.filter(entry => canonicalSourceUrl(entry.url) !== url);
+      retained += 1;
     }
   }
   return result;
@@ -201,10 +236,10 @@ export function recoverReportDomains(pools, candidates, fetchedByUrl, target) {
   }));
   const domains = new Set(result.flatMap(pool => pool.recommended
     .filter(candidate => fetchedByUrl.get(candidate.url)?.ok)
-    .map(candidate => normalizeDomain(candidate.url))));
+    .map(candidate => registrableDomain(candidate.url))));
   for (const candidate of uniqueCandidates(candidates)) {
     if (domains.size >= target) break;
-    const domain = normalizeDomain(candidate.url);
+    const domain = registrableDomain(candidate.url);
     if (!domain || domains.has(domain) || candidate.sourceQuality?.tier === 'low'
         || !fetchedByUrl.get(candidate.url)?.ok) continue;
     const url = canonicalSourceUrl(candidate.url);

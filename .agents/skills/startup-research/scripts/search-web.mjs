@@ -3,6 +3,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { basename, join, resolve } from 'node:path';
 import yaml from 'js-yaml';
+import { sourceQuality } from './source-quality.mjs';
 import {
   EXIT,
   isRunId,
@@ -38,9 +39,6 @@ function parseArgs(argv) {
   return args;
 }
 
-const highReputationDomains = new Set(strategy.quality.highReputationDomains);
-const lowSignalDomains = new Set(strategy.quality.lowSignalDomains);
-
 function excludeSelfPublishedReports(response) {
   const excluded = response.results.filter((result) => isSelfPublishedReportUrl(result.url));
   return {
@@ -50,48 +48,6 @@ function excludeSelfPublishedReports(response) {
       ...(response.excludedResults ?? []),
       ...excluded.map((result) => ({ url: result.url, reason: 'self-published-report' })),
     ],
-  };
-}
-
-function hostname(value) {
-  try { return new URL(value).hostname.toLowerCase().replace(/^www\./, ''); }
-  catch { return ''; }
-}
-
-function sourceQuality(result, args) {
-  const domain = hostname(result.url);
-  let score = 0;
-  const reasons = [];
-  const official = args.officialDomain.toLowerCase().replace(/^www\./, '');
-  if (official && (domain === official || domain.endsWith(`.${official}`))) {
-    score += 40;
-    reasons.push('official-domain');
-  }
-  if (domain.endsWith('.gov') || domain.endsWith('.gov.uk') || domain === 'sec.gov') {
-    score += 35;
-    reasons.push('government-or-regulator');
-  }
-  if (highReputationDomains.has(domain)) {
-    score += 20;
-    reasons.push('high-reputation-publisher');
-  }
-  if (lowSignalDomains.has(domain)) {
-    score -= 25;
-    reasons.push('low-signal-platform');
-  }
-  if ((result.content ?? result.snippet ?? '').length >= 200) {
-    score += 5;
-    reasons.push('substantive-preview');
-  }
-  const year = basename(resolve(args.folder)).slice(0, 4);
-  if (`${result.title} ${result.snippet} ${result.content}`.includes(year)) {
-    score += 5;
-    reasons.push('current-run-year');
-  }
-  return {
-    score,
-    tier: score >= 25 ? 'high' : score >= 0 ? 'medium' : 'low',
-    reasons,
   };
 }
 
@@ -283,7 +239,9 @@ try {
   const startedAt = Date.now();
   const response = excludeSelfPublishedReports(await searchers[provider](args));
   const rankedResults = response.results
-    .map((result) => ({ ...result, sourceQuality: sourceQuality(result, args) }))
+    .map((result) => ({ ...result, sourceQuality: sourceQuality(result, {
+      officialDomain: args.officialDomain, runYear: runId.slice(0, 4),
+    }, strategy.quality) }))
     .sort((a, b) => b.sourceQuality.score - a.sourceQuality.score);
   const output = {
     schemaVersion: 'startup-search-result-v1',

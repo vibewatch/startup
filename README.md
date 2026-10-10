@@ -114,14 +114,29 @@ Genuine shortages trigger one supplemental
 search per deficient chapter and, when needed, one report-wide query; healthy
 runs issue none. These searches exclude the dominant existing domains, retain
 actual provider/query records and prefetch new evidence. Bootstrap also requires
-the report-wide successful domain floor before starting chapter workers.
+the report-wide successful registrable-domain floor before starting chapter workers,
+using the same domain bookkeeping as chapter and publication validation.
 Domain-critical pool entries remain explicit worker requirements; hosting
 outside the official domain does not automatically establish independence.
-Discovery expands a formal company name only with a shortened brand that
-matches its official domain; external alias matches require that brand in
+Discovery uses a shortened formal-company brand only when it
+matches its official domain, without provider-dependent Boolean expressions;
+external alias matches require that brand in
 both the title and URL, not just a search snippet.
 This includes formal `Global` and `Biosciences` suffixes, not arbitrary
 company-name truncation.
+Refresh queries also carry up to twelve words of the same retained company's
+business description to disambiguate namesakes; descriptions are discovery
+context, never new evidence. Two-word company names must occur as a phrase,
+not as unrelated words scattered across the title and URL.
+If discovery still falls short, refresh bootstrap can re-fetch at most six
+original-source URLs per prior chapter, prioritizing previously independent
+sources and distinct domains under the current quality policy. Only newly
+successful originals count. Prior URL provenance is retained separately;
+old quotations, issuer classifications and publication dates are not copied
+into current evidence or fabricated executed-search records.
+Up to two successful originals remain explicit requirements in their relevant
+chapter pools, within existing source caps, so discovery does not discard them
+again after meeting a numeric domain floor.
 Refresh chapters rotate through retained unresolved gaps within their existing
 query budgets rather than all searching only the first gap.
 Finalizer retries receive source diagnostics even when

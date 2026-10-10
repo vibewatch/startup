@@ -9,11 +9,12 @@ import {
   NET_NEW_RESERVE_COUNT,
   promoteReserveEvidence,
   recoverExclusiveEvidence,
+  recoverRefreshEvidence,
   recoverReportDomains,
   replenishReserveEvidence,
   successfulPoolMetrics,
 } from './search-pool-recovery.mjs';
-import { canonicalSourceUrl, companySearchNames, isSelfPublishedReportUrl, normalizeDomain } from './utils.mjs';
+import { canonicalSourceUrl, companySearchNames, isSelfPublishedReportUrl, normalizeDomain, registrableDomain } from './utils.mjs';
 
 const execFileAsync = promisify(execFile);
 const scriptDir = dirname(fileURLToPath(import.meta.url));
@@ -125,6 +126,11 @@ function companyRelevant(result, company) {
     if (companyWords.length === 0) return index === 0;
     if (index > 0) {
       return companyWords.every(word => titleWords.has(word) && urlWords.has(word));
+    }
+    if (companyWords.length === 2) {
+      const phrase = companyWords.join(' ');
+      return [result.title, result.url].some(value =>
+        ` ${normalizedWords(value).join(' ')} `.includes(` ${phrase} `));
     }
     const matches = companyWords.filter((word) => haystack.has(word)).length;
     const requiredMatches = companyWords.length === 1 ? 1 : Math.min(2, companyWords.length);
@@ -293,7 +299,7 @@ for (const chapter of plan.chapters) {
   for (const candidate of netNewCandidates) {
     if (netNew.length >= allocationTarget) break;
     if (allocatedNetNewOwner.has(candidate.url) || localNetNew.has(candidate.url)) continue;
-    const domain = normalizeDomain(candidate.url);
+    const domain = registrableDomain(candidate.url);
     if (!domain || allocatedNetNewDomains.has(domain)) continue;
     netNew.push(candidate);
     localNetNew.add(candidate.url);
@@ -307,7 +313,7 @@ for (const chapter of plan.chapters) {
   }
   for (const candidate of netNew) {
     allocatedNetNewOwner.set(candidate.url, chapter.key);
-    const domain = normalizeDomain(candidate.url);
+    const domain = registrableDomain(candidate.url);
     if (domain) allocatedNetNewDomains.add(domain);
   }
   netNewByChapter.set(chapter.key, netNew);
@@ -348,11 +354,11 @@ let chapterPools = plan.chapters.map((chapter) => {
     ...otherFill,
   ];
   const selectedDomains = new Set(
-    [...selected.values()].map((candidate) => normalizeDomain(candidate.url)).filter(Boolean),
+    [...selected.values()].map((candidate) => registrableDomain(candidate.url)).filter(Boolean),
   );
   for (const candidate of domainFill) {
     if (selectedDomains.size >= chapter.evidenceTarget.minDomains) break;
-    const domain = normalizeDomain(candidate.url);
+    const domain = registrableDomain(candidate.url);
     if (!domain || selectedDomains.has(domain) || selected.has(candidate.url)) continue;
     selected.set(candidate.url, candidate);
     selectedDomains.add(domain);
@@ -384,7 +390,7 @@ let chapterPools = plan.chapters.map((chapter) => {
   const reserve = [];
   const reserveDomains = new Set(selectedDomains);
   for (const candidate of reserveCandidates) {
-    const domain = normalizeDomain(candidate.url);
+    const domain = registrableDomain(candidate.url);
     if (!domain || reserveDomains.has(domain)) continue;
     reserve.push(candidate);
     reserveDomains.add(domain);
@@ -401,7 +407,7 @@ let chapterPools = plan.chapters.map((chapter) => {
     recommended: [...selected.values()],
     reserve,
     recommendedDomains: new Set(
-      [...selected.values()].map((candidate) => normalizeDomain(candidate.url)).filter(Boolean),
+      [...selected.values()].map((candidate) => registrableDomain(candidate.url)).filter(Boolean),
     ).size,
   };
 });
@@ -410,7 +416,7 @@ function poolDomainCounts() {
   const counts = new Map();
   for (const pool of chapterPools) {
     for (const candidate of pool.recommended) {
-      const domain = normalizeDomain(candidate.url);
+      const domain = registrableDomain(candidate.url);
       if (domain) counts.set(domain, (counts.get(domain) ?? 0) + 1);
     }
   }
@@ -434,7 +440,7 @@ for (const candidate of allCandidates
   ))) {
   const domainCounts = poolDomainCounts();
   if (domainCounts.size >= reportDomainTarget) break;
-  const candidateDomain = normalizeDomain(candidate.url);
+  const candidateDomain = registrableDomain(candidate.url);
   if (!candidateDomain || domainCounts.has(candidateDomain)) continue;
   const matchingPools = chapterPools.filter((pool) => {
     const ids = chapterQueryIds.get(pool.key) ?? new Set();
@@ -448,7 +454,7 @@ for (const candidate of allCandidates
       .map((entry, index) => ({ entry, index }))
       .filter(({ entry }) => (
         entry.allocation !== 'net-new'
-        && (domainCounts.get(normalizeDomain(entry.url)) ?? 0) > 1
+        && (domainCounts.get(registrableDomain(entry.url)) ?? 0) > 1
       ))
       .sort((left, right) => (
         (left.entry.sourceQuality?.score ?? 0) - (right.entry.sourceQuality?.score ?? 0)
@@ -459,7 +465,7 @@ for (const candidate of allCandidates
       allocation: 'report-diversity',
     };
     pool.recommendedDomains = new Set(
-      pool.recommended.map((entry) => normalizeDomain(entry.url)).filter(Boolean),
+      pool.recommended.map((entry) => registrableDomain(entry.url)).filter(Boolean),
     ).size;
     replaced = true;
     break;
@@ -520,6 +526,7 @@ if (args.profile === 'fast') {
 const fetchedSources = [];
 let recoveryPrefetchCount = 0;
 let recoveryQueryCount = 0;
+let refreshSeedPrefetchCount = 0;
 if (args.prefetch) {
   const fetchDir = resolve('.research-cache', basename(folder), 'fetched');
   const fetchLog = process.env.STARTUP_FETCH_LOG_PATH
@@ -651,10 +658,10 @@ if (args.prefetch) {
   }).map(pool => pool.key));
   const reportDomains = new Set(chapterPools.flatMap(pool => pool.recommended
     .filter(candidate => fetchedByUrl.get(candidate.url)?.ok)
-    .map(candidate => normalizeDomain(candidate.url))));
+    .map(candidate => registrableDomain(candidate.url))));
   const domainCounts = new Map();
   for (const candidate of candidates.values()) {
-    const domain = normalizeDomain(candidate.url);
+    const domain = registrableDomain(candidate.url);
     if (domain) domainCounts.set(domain, (domainCounts.get(domain) ?? 0) + 1);
   }
   const excludeDomains = [...new Set([
@@ -684,6 +691,39 @@ if (args.prefetch) {
     chapterPools = replenishReserveEvidence(chapterPools, [...candidates.values()], fetchedByUrl);
     repairAllocation();
   }
+  const remainingDeficient = new Set(chapterPools.filter(pool => {
+    const metrics = successfulPoolMetrics(pool, fetchedByUrl);
+    return metrics.successful < pool.evidenceTarget.minSources
+      || metrics.successfulDomains.size < pool.evidenceTarget.minDomains
+      || metrics.successfulNetNew < pool.evidenceTarget.minNetNewSources;
+  }).map(pool => pool.key));
+  const remainingDomains = new Set(chapterPools.flatMap(pool => pool.recommended
+    .filter(candidate => fetchedByUrl.get(candidate.url)?.ok)
+    .map(candidate => registrableDomain(candidate.url))));
+  const alreadyFetched = new Set([...fetchedByUrl.keys()].map(canonicalSourceUrl));
+  const refreshTargets = (plan.refreshCandidates ?? []).filter(candidate =>
+    candidate.sourceQuality?.tier !== 'low' && !isSelfPublishedReportUrl(candidate.url)
+    && !alreadyFetched.has(canonicalSourceUrl(candidate.url))
+    && (candidate.priorSources.some(source => remainingDeficient.has(source.chapter))
+      || (remainingDomains.size < reportDomainTarget && !remainingDomains.has(registrableDomain(candidate.url)))))
+    .map(candidate => ({ candidate, chapters: [...new Set(candidate.priorSources.map(source => source.chapter))] }));
+  if (refreshTargets.length) {
+    console.error(`[execute-search-plan] bounded refresh recovery: refetching ${refreshTargets.length} original-source URL(s); prior report prose is not evidence`);
+    for (const { candidate } of refreshTargets) {
+      const key = canonicalSourceUrl(candidate.url);
+      const existing = candidates.get(key);
+      candidates.set(key, { ...(existing ?? candidate), priorSources: candidate.priorSources,
+        discoveredBy: existing?.discoveredBy ?? [] });
+    }
+    const refreshed = await fetchCandidates(refreshTargets);
+    refreshSeedPrefetchCount = refreshed.length;
+    recoveryPrefetchCount += refreshed.length;
+    fetchedSources.push(...refreshed);
+    for (const entry of refreshed) fetchedByUrl.set(entry.url, entry);
+    chapterPools = recoverRefreshEvidence(chapterPools, [...candidates.values()], fetchedByUrl);
+    chapterPools = replenishReserveEvidence(chapterPools, [...candidates.values()], fetchedByUrl);
+    repairAllocation();
+  }
   for (const pool of chapterPools) {
     const recovery = promoteReserveEvidence(pool, fetchedByUrl);
     pool.reserve = recovery.reserve;
@@ -698,14 +738,14 @@ if (args.prefetch) {
       }));
     }
     pool.recommendedDomains = new Set(
-      pool.recommended.map((candidate) => normalizeDomain(candidate.url)).filter(Boolean),
+      pool.recommended.map((candidate) => registrableDomain(candidate.url)).filter(Boolean),
     ).size;
   }
 }
 
 const fetchedReportDomains = new Set(chapterPools.flatMap(pool => pool.recommended
   .filter(candidate => candidate.fetch?.ok)
-  .map(candidate => normalizeDomain(candidate.url)))).size;
+  .map(candidate => registrableDomain(candidate.url)))).size;
 const bundle = {
   schemaVersion: 'startup-search-bundle-v1',
   generatedAt: new Date().toISOString(),
@@ -723,6 +763,7 @@ const bundle = {
     successfulPrefetchCount: fetchedSources.filter((source) => source.ok).length,
     recoveryPrefetchCount,
     recoveryQueryCount,
+    refreshSeedPrefetchCount,
     fetchedReportDomains,
   },
   searches,
@@ -755,6 +796,7 @@ console.log(JSON.stringify({
   prefetchedUrlCount: bundle.stats.prefetchedUrlCount,
   successfulPrefetchCount: bundle.stats.successfulPrefetchCount,
   recoveryQueryCount,
+  refreshSeedPrefetchCount,
   fetchedReportDomains,
 }));
 
