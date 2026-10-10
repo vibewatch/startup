@@ -101,7 +101,7 @@ Binding constraints:
 - Keep fetched source files read-only. Each keyQuote is checked against its original fetched text: copy literal excerpts in their original order, using ellipses only for omissions; never substitute a paraphrase or your own analysis.
 - Classify independence by the content's issuer and relationship, not its hosting domain: syndicated company releases, supplier listings, and company job reposts are still company-issued; competitor comparisons are not independent benchmarks.
 - Preserve source attribution, metric names, periods, denominators and uncertainty in every claim and exhibit. Revenue is not ARR, accounting loss is not cash burn, funding raised is not cash available, and absence of a recorded incident is not proof of absence. Mark unsupported quantities as gaps rather than inventing precise values.
-- Retain at least runtimeContext.chapter.gate.minNetNewSources relevant allocation:net-new sources and the relevant allocation:independent-candidate sources.
+- Retain at least runtimeContext.chapter.gate.minNetNewSources relevant allocation:net-new sources and all relevant allocation:independent-candidate, allocation:report-diversity and requiredForReportDomains:true sources. These allocations are evidence requirements, not automatic independence classifications.
 - Obey every fast cap, the exact chapter schema, source/claim IDs, and runtimeContext.policy.retryPolicy.
 - Run check-chapter normal and strict. The initial run plus at most maxChapterRetries repair attempts is a hard limit; stop with a failure result if the budget is exhausted or failures do not strictly decrease.
 - Do not inspect historical reports, edit sibling chapters, author report-meta or assembled artifacts, or use git.

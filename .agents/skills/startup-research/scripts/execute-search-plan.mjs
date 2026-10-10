@@ -8,6 +8,8 @@ import { fileURLToPath } from 'node:url';
 import {
   NET_NEW_RESERVE_COUNT,
   promoteReserveEvidence,
+  recoverExclusiveEvidence,
+  recoverReportDomains,
   replenishReserveEvidence,
   successfulPoolMetrics,
 } from './search-pool-recovery.mjs';
@@ -164,7 +166,7 @@ function isTransientProviderFailure(message) {
   return /HTTP (?:408|409|425|429|5\d\d)\b|timed? ?out|ECONNRESET|fetch failed/i.test(message);
 }
 
-const searches = await runPool(queries, plan.strategy.concurrency, async (query) => {
+async function executeQuery(query) {
   const startedAt = Date.now();
   let lastError = '';
   const providersTried = [];
@@ -215,29 +217,35 @@ const searches = await runPool(queries, plan.strategy.concurrency, async (query)
     error: lastError,
     response: null,
   };
-});
+}
+
+const searches = await runPool(queries, plan.strategy.concurrency, executeQuery);
 
 const candidates = new Map();
 let rejectedIrrelevantCount = 0;
 let rejectedSelfPublishedCount = searches.reduce((total, search) => (
   total + (search.response?.excludedResults ?? []).filter((entry) => entry.reason === 'self-published-report').length
 ), 0);
-for (const search of searches) {
-  for (const result of search.response?.results ?? []) {
-    if (isSelfPublishedReportUrl(result.url)) {
-      rejectedSelfPublishedCount += 1;
-      continue;
+function retainCandidates(records) {
+  for (const search of records) {
+    for (const result of search.response?.results ?? []) {
+      if (isSelfPublishedReportUrl(result.url)) {
+        rejectedSelfPublishedCount += 1;
+        continue;
+      }
+      if (!companyRelevant(result, plan.company)) {
+        rejectedIrrelevantCount += 1;
+        continue;
+      }
+      const key = canonicalSourceUrl(result.url);
+      const existing = candidates.get(key);
+      if (existing) {
+        if (!existing.discoveredBy.includes(search.id)) existing.discoveredBy.push(search.id);
+      } else candidates.set(key, { ...result, discoveredBy: [search.id] });
     }
-    if (!companyRelevant(result, plan.company)) {
-      rejectedIrrelevantCount += 1;
-      continue;
-    }
-    const key = canonicalSourceUrl(result.url);
-    const existing = candidates.get(key);
-    if (existing) existing.discoveredBy.push(search.id);
-    else candidates.set(key, { ...result, discoveredBy: [search.id] });
   }
 }
+retainCandidates(searches);
 
 function uniqueResults(searchList) {
   const seen = new Set();
@@ -409,7 +417,7 @@ function poolDomainCounts() {
   return counts;
 }
 
-const reportDomainTarget = plan.strategy.reportEvidenceTarget?.minDistinctDomains ?? 0;
+const reportDomainTarget = args.chapter ? 0 : plan.strategy.reportEvidenceTarget?.minDistinctDomains ?? 0;
 const chapterQueryIds = new Map(
   plan.chapters.map((chapter) => [
     chapter.key,
@@ -511,6 +519,7 @@ if (args.profile === 'fast') {
 
 const fetchedSources = [];
 let recoveryPrefetchCount = 0;
+let recoveryQueryCount = 0;
 if (args.prefetch) {
   const fetchDir = resolve('.research-cache', basename(folder), 'fetched');
   const fetchLog = process.env.STARTUP_FETCH_LOG_PATH
@@ -625,6 +634,56 @@ if (args.prefetch) {
     fetchedSources.push(...replenished);
     for (const entry of replenished) fetchedByUrl.set(entry.url, entry);
   }
+  const repairAllocation = () => {
+    chapterPools = chapterPools.map(pool => {
+      const { recommended, reserve } = promoteReserveEvidence(pool, fetchedByUrl);
+      return { ...pool, recommended, reserve };
+    });
+    chapterPools = recoverExclusiveEvidence(chapterPools, [...candidates.values()], fetchedByUrl);
+    chapterPools = recoverReportDomains(chapterPools, [...candidates.values()], fetchedByUrl, reportDomainTarget);
+  };
+  repairAllocation();
+  const deficient = new Set(chapterPools.filter(pool => {
+    const metrics = successfulPoolMetrics(pool, fetchedByUrl);
+    return metrics.successful < pool.evidenceTarget.minSources
+      || metrics.successfulDomains.size < pool.evidenceTarget.minDomains
+      || metrics.successfulNetNew < pool.evidenceTarget.minNetNewSources;
+  }).map(pool => pool.key));
+  const reportDomains = new Set(chapterPools.flatMap(pool => pool.recommended
+    .filter(candidate => fetchedByUrl.get(candidate.url)?.ok)
+    .map(candidate => normalizeDomain(candidate.url))));
+  const domainCounts = new Map();
+  for (const candidate of candidates.values()) {
+    const domain = normalizeDomain(candidate.url);
+    if (domain) domainCounts.set(domain, (domainCounts.get(domain) ?? 0) + 1);
+  }
+  const excludeDomains = [...new Set([
+    plan.company.domain,
+    ...[...domainCounts].sort((left, right) => right[1] - left[1]).map(([domain]) => domain),
+  ].filter(Boolean))].slice(0, 3);
+  const recoveryQueries = (plan.recoveryQueries ?? []).filter(query => query.scope === 'global'
+    ? reportDomains.size < reportDomainTarget
+    : deficient.has(query.chapter))
+    .map(query => ({ ...query, query: `${query.query} ${excludeDomains.map(domain => `-site:${domain}`).join(' ')}`.trim() }));
+  if (recoveryQueries.length) {
+    console.error(`[execute-search-plan] bounded evidence recovery: ${recoveryQueries.length} supplemental query(s), report domains=${reportDomains.size}/${reportDomainTarget}`);
+    const recoveredSearches = await runPool(recoveryQueries, plan.strategy.concurrency, executeQuery);
+    recoveryQueryCount = recoveredSearches.length;
+    searches.push(...recoveredSearches);
+    retainCandidates(recoveredSearches);
+    rejectedSelfPublishedCount += recoveredSearches.reduce((total, search) => total
+      + (search.response?.excludedResults ?? []).filter(entry => entry.reason === 'self-published-report').length, 0);
+    const newTargets = [...candidates.values()]
+      .filter(candidate => candidate.sourceQuality?.tier !== 'low' && !fetchedByUrl.has(candidate.url))
+      .map(candidate => ({ candidate, chapters: recoveredSearches.filter(search =>
+        candidate.discoveredBy.includes(search.id)).map(search => search.chapter).filter(Boolean) }));
+    const additionalFetched = await fetchCandidates(newTargets);
+    recoveryPrefetchCount += additionalFetched.length;
+    fetchedSources.push(...additionalFetched);
+    for (const entry of additionalFetched) fetchedByUrl.set(entry.url, entry);
+    chapterPools = replenishReserveEvidence(chapterPools, [...candidates.values()], fetchedByUrl);
+    repairAllocation();
+  }
   for (const pool of chapterPools) {
     const recovery = promoteReserveEvidence(pool, fetchedByUrl);
     pool.reserve = recovery.reserve;
@@ -644,6 +703,9 @@ if (args.prefetch) {
   }
 }
 
+const fetchedReportDomains = new Set(chapterPools.flatMap(pool => pool.recommended
+  .filter(candidate => candidate.fetch?.ok)
+  .map(candidate => normalizeDomain(candidate.url)))).size;
 const bundle = {
   schemaVersion: 'startup-search-bundle-v1',
   generatedAt: new Date().toISOString(),
@@ -660,6 +722,8 @@ const bundle = {
     prefetchedUrlCount: fetchedSources.length,
     successfulPrefetchCount: fetchedSources.filter((source) => source.ok).length,
     recoveryPrefetchCount,
+    recoveryQueryCount,
+    fetchedReportDomains,
   },
   searches,
   failures: searches
@@ -690,9 +754,13 @@ console.log(JSON.stringify({
   failedQueryCount: bundle.stats.failedQueryCount,
   prefetchedUrlCount: bundle.stats.prefetchedUrlCount,
   successfulPrefetchCount: bundle.stats.successfulPrefetchCount,
+  recoveryQueryCount,
+  fetchedReportDomains,
 }));
 
-const globalFailure = bundle.failures.some((failure) => failure.scope === 'global');
+const initialFailures = bundle.failures.filter(failure => !failure.id.startsWith('R-'));
+const initialSuccessCount = searches.filter(search => !search.id.startsWith('R-') && search.response).length;
+const globalFailure = initialFailures.some(failure => failure.scope === 'global');
 const minimumSuccess = Math.ceil(queries.length * 0.8);
 const insufficientPools = args.prefetch
   ? bundle.chapterPools.filter(
@@ -716,8 +784,11 @@ if (insufficientPools.length > 0) {
     }; inspect ${out}`,
   );
   process.exitCode = 1;
-} else if (globalFailure || bundle.stats.successfulQueryCount < minimumSuccess) {
-  console.error(`[execute-search-plan] insufficient discovery coverage: ${bundle.stats.successfulQueryCount}/${queries.length} queries succeeded; inspect ${out}`);
+} else if (args.prefetch && fetchedReportDomains < reportDomainTarget) {
+  console.error(`[execute-search-plan] insufficient report-wide fetched domains: ${fetchedReportDomains}/${reportDomainTarget}; inspect ${out}`);
+  process.exitCode = 1;
+} else if (globalFailure || initialSuccessCount < minimumSuccess) {
+  console.error(`[execute-search-plan] insufficient discovery coverage: ${initialSuccessCount}/${queries.length} initial queries succeeded; inspect ${out}`);
   process.exitCode = 1;
 } else if (bundle.failures.length) {
   console.error(`[execute-search-plan] warning: ${bundle.failures.length} chapter query failed after retries; continuing with ${bundle.stats.uniqueUrlCount} explicit candidates. Inspect ${out}.`);

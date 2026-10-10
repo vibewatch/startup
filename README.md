@@ -106,6 +106,17 @@ every chapter's recommended evidence. It still requires the same successfully
 fetched source, domain and net-new evidence floors. Successfully fetched,
 nonexclusive evidence can also fill another chapter's source/domain shortfall
 without moving its owner's evidence or counting it as net-new.
+If an exclusive fetch fails, shared evidence may become exclusive only after
+replacing it in every affected sibling without reducing that sibling's usable
+source/domain floors, external-candidate coverage, required evidence markers or
+net-new count. Failed fetch rows do not consume usable-source recovery slots.
+Genuine shortages trigger one supplemental
+search per deficient chapter and, when needed, one report-wide query; healthy
+runs issue none. These searches exclude the dominant existing domains, retain
+actual provider/query records and prefetch new evidence. Bootstrap also requires
+the report-wide successful domain floor before starting chapter workers.
+Domain-critical pool entries remain explicit worker requirements; hosting
+outside the official domain does not automatically establish independence.
 Discovery expands a formal company name only with a shortened brand that
 matches its official domain; external alias matches require that brand in
 both the title and URL, not just a search snippet.

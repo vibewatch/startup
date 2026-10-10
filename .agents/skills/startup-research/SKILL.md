@@ -55,8 +55,21 @@ Workflow narrative: what to run, in what order, with which flags. Two generated 
    Deep fresh and refresh runs use all five chapter discovery intents:
    broad, semantic, primary, freshness and adverse. Refresh gap queries
    supplement that coverage rather than replacing it. Fast query budgets
-   remain unchanged; broader discovery never reduces evidence thresholds
+   remain unchanged for the initial pass; broader discovery never reduces evidence thresholds
    or makes an irrelevant or inaccessible source eligible.
+   Recovery may make successfully fetched shared evidence exclusive only when
+   every affected sibling keeps its source/domain floors, external-candidate
+   coverage, required evidence markers and net-new count. Failed fetch rows do
+   not consume usable-source recovery slots.
+   A remaining shortage permits one supplemental query per deficient chapter
+   plus one report-wide query when the successful domain floor is missing
+   (at most nine queries for an eight-chapter report). Healthy runs execute
+   none. The supplemental pass excludes dominant existing domains, uses the
+   same provider fallback and result caps, preserves actual search provenance,
+   and prefetches new evidence. A report-wide successful domain shortage still
+   fails before chapter workers launch; raw candidate counts cannot satisfy it.
+   Workers retain relevant `report-diversity` and `requiredForReportDomains`
+   candidates, without treating those allocations as independence classifications.
 7. **Export `STARTUP_FETCH_LOG_PATH` before any `fetch-url` invocation:**
    ```sh
    RUN_ID=$(basename "$REPORT_FOLDER")

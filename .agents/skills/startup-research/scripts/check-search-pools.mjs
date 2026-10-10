@@ -7,9 +7,13 @@ import { syncBuiltinESMExports } from 'node:module';
 import { basename, dirname, join, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { promisify } from 'node:util';
-import { promoteReserveEvidence, replenishReserveEvidence, successfulPoolMetrics } from './search-pool-recovery.mjs';
+import {
+  promoteReserveEvidence, recoverExclusiveEvidence, recoverReportDomains,
+  replenishReserveEvidence, successfulPoolMetrics,
+} from './search-pool-recovery.mjs';
 import { canonicalSourceUrl, companySearchNames, getCoreArtifacts, isSelfPublishedReportUrl, loadWorkflowConfig } from './utils.mjs';
 import { checkRun } from './check-report.mjs';
+import { executedSearchQueries } from './search-query-checks.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const urls = (entries) => new Set(entries.map((entry) => canonicalSourceUrl(entry.url)));
@@ -18,6 +22,7 @@ async function bootstrapFixture(name, {
   chapters = 1, sources = 12, failed = [], lowSignal = [], aliases = false,
   selfPublished = [], redirects = [], company = { name: 'Acme', domain: 'acme.example' },
   resultOverrides = {},
+  reportDomains, recoveryResults = [],
 }, verify) {
   const folder = resolve('.research-cache', `20990101000000-pool-check-${name}-${process.pid}`);
   const results = Array.from({ length: sources }, (_, index) => ({
@@ -35,7 +40,7 @@ async function bootstrapFixture(name, {
     company,
     strategy: {
       concurrency: 4,
-      reportEvidenceTarget: { minDistinctDomains: chapters === 8 ? 18 : 0 },
+      reportEvidenceTarget: { minDistinctDomains: reportDomains ?? (chapters === 8 ? 18 : 0) },
     },
     globalQueries: [query('global')],
     chapters: Array.from({ length: chapters }, (_, index) => ({
@@ -43,6 +48,13 @@ async function bootstrapFixture(name, {
       evidenceTarget: { minSources: 8, minDomains: 4, minNetNewSources: 2 },
       queries: [query(`chapter-${index + 1}`)],
     })),
+    recoveryQueries: [
+      { ...query('R-global'), scope: 'global', chapter: null, query: 'recover-global' },
+      ...Array.from({ length: chapters }, (_, index) => ({
+        ...query(`R-chapter-${index + 1}`), scope: 'chapter',
+        chapter: `chapter-${index + 1}`, query: `recover-chapter-${index + 1}`,
+      })),
+    ],
   };
   const original = {
     execFile: childProcess.execFile,
@@ -52,6 +64,7 @@ async function bootstrapFixture(name, {
     error: console.error,
   };
   const fetchCalls = [];
+  const searchCalls = [];
   const diagnostics = [];
   function fakeExecFile() {
     throw new Error('Fixture only supports promisified subprocess calls');
@@ -62,11 +75,12 @@ async function bootstrapFixture(name, {
     if (script === 'build-search-plan.mjs') response = plan;
     else if (script === 'search-web.mjs') {
       const text = args[args.indexOf('--query') + 1];
+      searchCalls.push(text);
       const start = text === 'global' ? 0 : (Number(text.split('-')[1]) - 1) * 7 + 3;
       response = {
         query: text,
         provider: 'fixture',
-        results: Array.from({ length: 10 }, (_, index) => {
+        results: text.startsWith('recover-') ? recoveryResults : Array.from({ length: 10 }, (_, index) => {
           const result = results[(start + index) % results.length];
           return aliases && text !== 'global'
             ? { ...result, url: `${result.url.replace('https://', 'https://www.')}?utm_source=${text}` }
@@ -120,7 +134,7 @@ async function bootstrapFixture(name, {
         }
       }
     }
-    await verify({ folder, bundle, exitCode, diagnostics, fetchCalls });
+    await verify({ folder, bundle, exitCode, diagnostics, fetchCalls, searchCalls });
   } finally {
     childProcess.execFile = original.execFile;
     syncBuiltinESMExports();
@@ -183,6 +197,13 @@ const tests = [
         assert.equal(plan.chapters.length, 8);
         const policy = loadWorkflowConfig({ reportFolder: folder }).agentPolicy;
         const queries = [...plan.globalQueries, ...plan.chapters.flatMap((chapter) => chapter.queries)];
+        assert.equal(plan.recoveryQueries.length, 9, 'supplemental discovery exceeded one round');
+        for (const query of plan.recoveryQueries) {
+          assert.equal(query.maxResults, profile === 'fast' ? 8 : 10);
+          if (policy.volatileFactQueryTokens.some(token => query.query.toLowerCase().includes(token.toLowerCase()))) {
+            assert.match(query.query, /\b2099\b/, 'supplemental volatile lookup lost the run year');
+          }
+        }
         for (const query of queries) {
           assert(query.query.includes(`"${company}"`), 'query lost the company identity');
           assert.doesNotMatch(query.query, /\b(?:SQLite|libSQL|database|serverless|Cloudflare D1|PlanetScale|Neon|Supabase)\b/i,
@@ -564,9 +585,10 @@ const tests = [
     },
   )],
   ['exhausted net-new evidence fails early', () => bootstrapFixture(
-    'exhausted', { sources: 10, failed: [0, 8, 9] }, ({ exitCode, diagnostics }) => {
+    'exhausted', { sources: 10, failed: [0, 8, 9] }, ({ exitCode, diagnostics, bundle }) => {
       assert.equal(exitCode, 1);
-      assert(diagnostics.some((line) => line.includes('net-new=1/2')), 'missing net-new shortfall diagnostic');
+      assert(diagnostics.some(line => line.includes('sources=7/8')), 'missing usable-source shortfall diagnostic');
+      assert.equal(bundle.stats.recoveryQueryCount, 1, 'recovery must stop after one bounded search round');
     },
   )],
   ['low-signal scarcity is diagnosed without assigning disallowed sources', () => bootstrapFixture(
@@ -584,6 +606,131 @@ const tests = [
       assert(result.bundle.chapterPools.every(pool => pool.reserve.length <= 6));
     },
   )],
+  ['healthy evidence never launches supplemental searches', () => bootstrapFixture(
+    'healthy-no-search', {}, result => {
+      assertFloors(result);
+      assert.equal(result.bundle.stats.recoveryQueryCount, 0);
+      assert.equal(result.searchCalls.length, 2);
+    },
+  )],
+  ['bounded supplemental discovery fetches original evidence and preserves query provenance', () => bootstrapFixture(
+    'supplemental', {
+      sources: 10, failed: [0, 8, 9],
+      recoveryResults: [
+        { url: 'https://new1.example/acme', title: 'Acme customer interview', sourceQuality: { tier: 'high' } },
+        { url: 'https://new2.example/acme', title: 'Acme original reporting', sourceQuality: { tier: 'high' } },
+        { url: 'https://startup.genisisiq.com/acme/', title: 'Acme report', sourceQuality: { tier: 'high' } },
+        { url: 'https://unrelated.example/company', title: 'Another company', sourceQuality: { tier: 'high' } },
+        { url: 'https://low.example/acme', title: 'Acme listing', sourceQuality: { tier: 'low' } },
+      ],
+    }, result => {
+      assertFloors(result);
+      assert.equal(result.bundle.stats.recoveryQueryCount, 1);
+      assert.match(result.searchCalls.at(-1), /recover-chapter-1 -site:acme\.example/);
+      assert.equal(result.bundle.searches.at(-1).response.provider, 'fixture');
+      assert.equal(result.bundle.searches.at(-1).response.results.length, 5);
+      const executed = executedSearchQueries(result.bundle, result.bundle.chapterPools[0])
+        .find(record => record.query === result.searchCalls.at(-1));
+      assert.equal(executed.engine, 'fixture');
+      assert.equal(executed.hits, 5);
+      assert(executed.resultUrls.some(url => url.includes('new1.example')));
+      for (const domain of ['new1.example', 'new2.example']) {
+        assert(result.fetchCalls.some(url => url.includes(domain)), 'new original source was not fetched');
+        assert(result.bundle.candidates.find(candidate => candidate.url.includes(domain)).discoveredBy.includes('R-chapter-1'));
+      }
+      assert(!result.fetchCalls.some(url => /unrelated\.example|low\.example|startup\.genisisiq\.com/.test(url)));
+    },
+  )],
+  ['report-wide domain ceiling fails before workers despite healthy chapter floors', () => bootstrapFixture(
+    'domain-ceiling', { chapters: 2, sources: 12, reportDomains: 18 }, result => {
+      assert.equal(result.exitCode, 1);
+      assert(result.bundle.chapterPools.every(pool => pool.fetchedOk >= 8 && pool.fetchedNetNew >= 2));
+      assert.equal(result.bundle.stats.recoveryQueryCount, 1);
+      assert(result.diagnostics.some(line => line.includes('insufficient report-wide fetched domains')));
+      assert(result.bundle.stats.fetchedReportDomains < 18);
+    },
+  )],
+  ['supplemental domain recovery preserves the report floor instead of a raw-candidate proxy', () => bootstrapFixture(
+    'domain-recovery', { reportDomains: 10 }, result => {
+      assertFloors(result);
+      assert.equal(result.bundle.stats.recoveryQueryCount, 1);
+      assert.equal(result.bundle.stats.fetchedReportDomains, 10);
+      assert(result.bundle.chapterPools[0].recommended.some(candidate => candidate.requiredForReportDomains));
+    },
+  )],
+  ['exclusive recovery replaces shared donors safely and never invents another chapter net-new source', () => {
+    const candidate = (id, allocation = 'shared') => ({
+      url: `https://${id}.example/acme`, allocation, sourceQuality: { tier: 'high' },
+    });
+    const shared = candidate('shared');
+    const spare = candidate('spare');
+    const pools = [
+      { key: 'deficient', evidenceTarget: { minSources: 2, minDomains: 2, minNetNewSources: 1 },
+        recommended: [shared, candidate('local')], reserve: [] },
+      { key: 'donor', evidenceTarget: { minSources: 2, minDomains: 2, minNetNewSources: 1 },
+        recommended: [shared, candidate('exclusive', 'net-new')], reserve: [] },
+    ];
+    const candidates = [...pools.flatMap(pool => pool.recommended), spare];
+    const fetched = new Map(candidates.map(entry => [entry.url, { ok: true }]));
+    const before = structuredClone(pools);
+    const repaired = recoverExclusiveEvidence(pools, candidates, fetched);
+    assert.deepEqual(pools, before, 'exclusive repair mutated its input');
+    assert.equal(successfulPoolMetrics(repaired[0], fetched).successfulNetNew, 1);
+    assert.equal(successfulPoolMetrics(repaired[1], fetched).successfulNetNew, 1);
+    assert.equal(successfulPoolMetrics(repaired[1], fetched).successfulDomains.size, 2);
+    assert(!urls(repaired[1].recommended).has(shared.url));
+    const noSpare = recoverExclusiveEvidence(pools, [shared, candidate('exclusive', 'net-new')], fetched);
+    assert.equal(successfulPoolMetrics(noSpare[0], fetched).successfulNetNew, 0,
+      'repair removed mandatory donor evidence without a replacement');
+    const diversity = recoverReportDomains(repaired, candidates, fetched, 4);
+    assert.equal(new Set(diversity.flatMap(pool => pool.recommended.map(entry => new URL(entry.url).hostname))).size, 4);
+    assert.equal(recoverReportDomains(repaired.map(pool => ({ ...pool, evidenceTarget: { ...pool.evidenceTarget, maxSources: 2 } })),
+      candidates, fetched, 4).flatMap(pool => pool.recommended).length, 4, 'domain repair exceeded source caps');
+  }],
+  ['exclusive recovery preserves donor external coverage and required evidence markers', () => {
+    const candidate = (id, official = false) => ({
+      url: `https://${id}.example/acme`, allocation: 'shared',
+      sourceQuality: { tier: 'high', reasons: official ? ['official-domain'] : [] },
+    });
+    const shared = { ...candidate('shared'), allocation: 'report-diversity' };
+    const officialSpare = candidate('official-spare', true);
+    const externalSpare = candidate('external-spare');
+    const pools = [
+      { key: 'deficient', evidenceTarget: { minSources: 2, minDomains: 2, minNetNewSources: 1 },
+        recommended: [shared, candidate('local', true)], reserve: [] },
+      { key: 'donor', evidenceTarget: { minSources: 4, minDomains: 2, minNetNewSources: 1 },
+        recommended: [{ ...shared, allocation: 'independent-candidate' },
+          { ...candidate('exclusive'), allocation: 'net-new' },
+          ...Array.from({ length: 3 }, (_, index) => candidate(`official${index}`, true))], reserve: [] },
+    ];
+    const fetched = new Map([...pools.flatMap(pool => pool.recommended), officialSpare, externalSpare]
+      .map(entry => [entry.url, { ok: true }]));
+    const blocked = recoverExclusiveEvidence(pools, [shared, officialSpare], fetched);
+    assert(urls(blocked[1].recommended).has(shared.url), 'surplus source counts hid lost external coverage');
+    const repaired = recoverExclusiveEvidence(pools, [shared, officialSpare, externalSpare], fetched);
+    assert(!urls(repaired[1].recommended).has(shared.url));
+    assert.equal(repaired[1].recommended.find(entry => entry.url === externalSpare.url).allocation,
+      'independent-candidate', 'replacement lost the donor worker retention requirement');
+    assert(repaired[0].recommended.find(entry => entry.url === shared.url).requiredForReportDomains,
+      'exclusive conversion lost the report-diversity retention requirement');
+  }],
+  ['failed fetch rows do not consume usable-source recovery slots', () => {
+    const local = { url: 'https://local.example/acme', allocation: 'net-new' };
+    const failed = { url: 'https://failed.example/acme', allocation: 'net-new' };
+    const spare = { url: 'https://spare.example/acme', sourceQuality: { tier: 'high' } };
+    const pool = { key: 'deficient',
+      evidenceTarget: { minSources: 2, minDomains: 2, minNetNewSources: 2, maxSources: 2 },
+      recommended: [local, failed], reserve: [] };
+    const fetched = new Map([[local.url, { ok: true }], [failed.url, { ok: false }], [spare.url, { ok: true }]]);
+    const exclusive = recoverExclusiveEvidence([pool], [spare], fetched);
+    assert.equal(successfulPoolMetrics(exclusive[0], fetched).successfulNetNew, 2);
+    const diversity = recoverReportDomains([{ ...pool,
+      reserve: [{ ...spare, allocation: 'net-new-reserve' }] }], [spare], fetched, 2);
+    assert.equal(successfulPoolMetrics(diversity[0], fetched).successfulDomains.size, 2);
+    assert.equal(successfulPoolMetrics(diversity[0], fetched).successful, 2);
+    assert.equal(diversity[0].recommended.find(entry => entry.url === spare.url).allocation, 'net-new');
+    assert.deepEqual(pool.recommended, [local, failed], 'recovery mutated original failed-fetch evidence');
+  }],
   ['reserve refill redistributes only surplus backups within the six-source cap', () => {
     const candidate = (id, allocation = 'net-new', tier = 'high') => ({
       url: `https://${id}.example/acme`, allocation, sourceQuality: { tier },

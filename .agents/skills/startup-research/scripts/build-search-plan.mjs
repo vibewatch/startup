@@ -211,6 +211,7 @@ const output = {
       minSources: chapter.gate.minLocalSources,
       minNetNewSources: chapter.gate.minNetNewSources,
       minDomains: chapter.gate.minSourceDomains,
+      maxSources: chapter.gate.maxLocalSources,
     },
     queries: chapterQueries({
       company: companyQuery,
@@ -222,12 +223,25 @@ const output = {
       budget,
     }),
   })),
+  recoveryQueries: [
+    { id: 'R-global', scope: 'global', chapter: null, query: `${companyQuery} news interviews independent reporting` },
+    ...chapters.map(chapter => ({
+      id: `R-${chapter.key}`, scope: 'chapter', chapter: chapter.key,
+      query: `${companyQuery} ${(strategy.chapterFocus?.[chapter.key]?.[0] ?? chapter.title).split(' ').slice(0, 3).join(' ')}`,
+    })),
+  ].map(query => ({
+    ...query, intent: 'broad',
+    rationale: 'One bounded supplemental search for a demonstrated fetched-evidence shortfall.',
+    preferredProvider: strategy.routing.broad[0],
+    fallbackProviders: strategy.routing.broad.slice(1),
+    maxResults: budget.maxResultsPerQuery,
+  })),
 };
 const volatileTokens = (config.agentPolicy?.volatileFactQueryTokens ?? [])
   .map((token) => String(token).toLowerCase())
   .filter(Boolean);
 const runYearPattern = new RegExp(`\\b${year}\\b`);
-for (const query of [...output.globalQueries, ...output.chapters.flatMap((chapter) => chapter.queries)]) {
+for (const query of [...output.globalQueries, ...output.chapters.flatMap((chapter) => chapter.queries), ...output.recoveryQueries]) {
   if (volatileTokens.some((token) => query.query.toLowerCase().includes(token))
       && !runYearPattern.test(query.query)) {
     query.query = `${query.query} ${year}`;

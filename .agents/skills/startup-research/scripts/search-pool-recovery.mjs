@@ -121,3 +121,101 @@ export function replenishReserveEvidence(pools, candidates, fetchedByUrl) {
     return reserve.length === pool.reserve.length ? pool : { ...pool, reserve };
   });
 }
+
+export function recoverExclusiveEvidence(pools, candidates, fetchedByUrl) {
+  const result = pools.map(pool => ({
+    ...pool, recommended: [...pool.recommended], reserve: [...pool.reserve],
+  }));
+  const usable = uniqueCandidates(candidates).filter(candidate =>
+    candidate.sourceQuality?.tier !== 'low' && fetchedByUrl.get(candidate.url)?.ok);
+  const externalCount = recommended => recommended.filter(candidate =>
+    fetchedByUrl.get(candidate.url)?.ok
+    && !candidate.sourceQuality?.reasons?.includes('official-domain')).length;
+  const exclusive = new Set(result.flatMap(pool => [...pool.recommended, ...pool.reserve]
+    .filter(candidate => ['net-new', 'net-new-reserve'].includes(candidate.allocation))
+    .map(candidate => canonicalSourceUrl(candidate.url))));
+  for (const pool of result) {
+    for (const candidate of usable) {
+      if (successfulPoolMetrics(pool, fetchedByUrl).successfulNetNew >= pool.evidenceTarget.minNetNewSources) break;
+      const url = canonicalSourceUrl(candidate.url);
+      if (exclusive.has(url)) continue;
+      if (!pool.recommended.some(entry => canonicalSourceUrl(entry.url) === url)
+          && successfulPoolMetrics(pool, fetchedByUrl).successful >= (pool.evidenceTarget.maxSources ?? Infinity)) continue;
+      const requiredForReportDomains = result.some(entry => entry.recommended.some(selected =>
+        canonicalSourceUrl(selected.url) === url
+        && (selected.requiredForReportDomains || selected.allocation === 'report-diversity')));
+      const replacements = [];
+      let safe = true;
+      for (const sibling of result.filter(other => other !== pool)) {
+        const removed = sibling.recommended.find(entry => canonicalSourceUrl(entry.url) === url);
+        const recommended = sibling.recommended.filter(entry => canonicalSourceUrl(entry.url) !== url);
+        if (recommended.length === sibling.recommended.length) continue;
+        const minExternal = Math.min(Math.ceil(sibling.evidenceTarget.minSources / 2),
+          externalCount(sibling.recommended));
+        let metrics = successfulPoolMetrics({ ...sibling, recommended }, fetchedByUrl);
+        if (metrics.successful < sibling.evidenceTarget.minSources
+            || metrics.successfulDomains.size < sibling.evidenceTarget.minDomains
+            || externalCount(recommended) < minExternal
+            || removed.allocation === 'independent-candidate') {
+          const local = new Set(recommended.map(entry => canonicalSourceUrl(entry.url)));
+          const replacement = usable.find(entry => {
+            const key = canonicalSourceUrl(entry.url);
+            if (key === url || local.has(key) || exclusive.has(key)) return false;
+            if (!candidate.sourceQuality?.reasons?.includes('official-domain')
+                && entry.sourceQuality?.reasons?.includes('official-domain')) return false;
+            const restored = successfulPoolMetrics({ ...sibling, recommended: [...recommended, entry] }, fetchedByUrl);
+            return restored.successful >= sibling.evidenceTarget.minSources
+              && restored.successfulDomains.size >= sibling.evidenceTarget.minDomains
+              && externalCount([...recommended, entry]) >= minExternal;
+          });
+          if (!replacement) { safe = false; break; }
+          recommended.push({ ...replacement, allocation: removed.allocation === 'independent-candidate'
+            ? 'independent-candidate' : 'shared-recovery' });
+          metrics = successfulPoolMetrics({ ...sibling, recommended }, fetchedByUrl);
+        }
+        if (metrics.successfulNetNew < successfulPoolMetrics(sibling, fetchedByUrl).successfulNetNew) {
+          safe = false;
+          break;
+        }
+        replacements.push({ sibling, recommended });
+      }
+      if (!safe) continue;
+      for (const { sibling, recommended } of replacements) sibling.recommended = recommended;
+      for (const sibling of result) {
+        sibling.reserve = sibling.reserve.filter(entry => canonicalSourceUrl(entry.url) !== url
+          && !sibling.recommended.some(selected => canonicalSourceUrl(selected.url) === canonicalSourceUrl(entry.url)));
+      }
+      const index = pool.recommended.findIndex(entry => canonicalSourceUrl(entry.url) === url);
+      const selected = { ...candidate, allocation: 'net-new', ...(requiredForReportDomains ? { requiredForReportDomains: true } : {}) };
+      if (index < 0) pool.recommended.push(selected);
+      else pool.recommended[index] = selected;
+      exclusive.add(url);
+    }
+  }
+  return result;
+}
+
+export function recoverReportDomains(pools, candidates, fetchedByUrl, target) {
+  const result = pools.map(pool => ({
+    ...pool, recommended: [...pool.recommended], reserve: [...pool.reserve],
+  }));
+  const domains = new Set(result.flatMap(pool => pool.recommended
+    .filter(candidate => fetchedByUrl.get(candidate.url)?.ok)
+    .map(candidate => normalizeDomain(candidate.url))));
+  for (const candidate of uniqueCandidates(candidates)) {
+    if (domains.size >= target) break;
+    const domain = normalizeDomain(candidate.url);
+    if (!domain || domains.has(domain) || candidate.sourceQuality?.tier === 'low'
+        || !fetchedByUrl.get(candidate.url)?.ok) continue;
+    const url = canonicalSourceUrl(candidate.url);
+    const owner = result.find(pool => [...pool.recommended, ...pool.reserve].some(entry =>
+      canonicalSourceUrl(entry.url) === url && ['net-new', 'net-new-reserve'].includes(entry.allocation)));
+    const pool = (owner ? [owner] : result).toSorted((left, right) => left.recommended.length - right.recommended.length)
+      .find(entry => successfulPoolMetrics(entry, fetchedByUrl).successful < (entry.evidenceTarget.maxSources ?? Infinity));
+    if (!pool) continue;
+    pool.recommended.push({ ...candidate, allocation: owner ? 'net-new' : 'report-diversity', requiredForReportDomains: true });
+    pool.reserve = pool.reserve.filter(entry => canonicalSourceUrl(entry.url) !== url);
+    domains.add(domain);
+  }
+  return result;
+}
