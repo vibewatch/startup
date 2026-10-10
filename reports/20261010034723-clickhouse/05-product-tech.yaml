@@ -1,0 +1,647 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: clickhouse
+runDate: '2026-10-10'
+company:
+  name: ClickHouse
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: ClickHouse pairs a high-performance C++ vectorized columnar engine with decoupled cloud storage to deliver sub-second analytical queries across petabyte datasets, while expanding into AI observability and managing operational tradeoffs in write amplification.
+sections:
+  - id: product-definition-and-workflows
+    title: Product Definition & Core Analytical Workflows
+    body: 'ClickHouse delivers high-speed online analytical processing across structured telemetry, logs, metrics, and user-facing dashboards. The product portfolio comprises three primary deployment form factors: the open-source self-managed ClickHouse database engine, the zero-dependency ClickHouse Local command-line tool, and ClickHouse Cloud, a fully managed serverless platform. Across real-time telemetry and ad-hoc analytical workflows, ClickHouse replaces traditional row-oriented database bottlenecks by compressing columnar data and executing queries directly over raw immutable event streams. This eliminates complex batch pre-aggregation pipelines, allowing enterprises to ingest millions of events per second while maintaining sub-second query response times across multi-billion-row datasets.'
+    claimRefs:
+      - CE004
+      - CE005
+      - CE006
+      - CE009
+      - CE010
+    tableRefs:
+      - TE001
+      - TE002
+  - id: vectorized-columnar-architecture
+    title: Vectorized Columnar Architecture & Cloud Decoupling
+    body: 'ClickHouse is implemented in C++ as a single, statically-linked binary that operates without mandatory runtime dependencies or third-party coordination software. Its query processing architecture parses SQL queries into optimized logical and physical execution trees that evaluate column chunks using SIMD hardware vectorization and CPU cache locality. Persistent storage relies on the MergeTree engine family, which partitions data into immutable parts and utilizes sparse primary indexes with 8,192-row granules for rapid range filtering. In ClickHouse Cloud, compute execution is decoupled from persistent storage: stateless worker nodes handle query execution and local NVMe caching while underlying datasets reside in shared cloud object storage like AWS S3 or Google Cloud Storage, coordinated by ClickHouse Keeper.'
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE007
+      - CE008
+      - CE011
+    tableRefs:
+      - TE003
+    figureRefs:
+      - FE001
+  - id: technical-differentiation-and-ecosystem
+    title: Technical Differentiation & Ecosystem Expansion
+    body: ClickHouse differentiates its analytical engine through aggressive vectorized data processing, sparse index architectures, and flexible wire-protocol compatibility. Rather than maintaining heavy B-tree indexes that slow high-throughput streaming writes, ClickHouse uses lightweight primary keys that point to compressed data granules, maximizing sequential disk throughput. Client applications interact with ClickHouse through native TCP binary protocols, HTTP REST interfaces, or standard MySQL and PostgreSQL wire compatibility. In 2026, ClickHouse expanded its technological surface through the acquisition of open-source LLM observability platform Langfuse to capture non-deterministic AI application traces, alongside launching ClickHouse for PostgreSQL to bring columnar OLAP processing directly into existing operational database topologies.
+    claimRefs:
+      - CE003
+      - CE005
+      - CE009
+      - CE010
+      - CE011
+  - id: reliability-operational-constraints-and-risks
+    title: Operational Constraints, Multi-Tenancy & Technical Diligence Gaps
+    body: While ClickHouse excels at append-heavy analytical scans, its architectural design imposes distinct operational boundaries and technical tradeoffs. High-frequency individual row updates and mutations generate significant write amplification, as immutable parts must be rewritten asynchronously through background merge operations. Furthermore, wide distributed joins and high-cardinality groupings require substantial memory headroom, risking query termination when memory ceilings are exceeded. ClickHouse incorporates enterprise security controls including role-based access control, TLS network encryption, query quotas, and audit logging. However, independent benchmarks quantifying multi-tenant noisy-neighbor isolation and tail-latency guarantees under shared storage contention in ClickHouse Cloud remain undisclosed, representing an important area for technical diligence.
+    claimRefs:
+      - CE012
+      - CE013
+      - CE014
+tables:
+  - id: TE001
+    title: Product module / asset matrix
+    columns:
+      - Module / Product Line
+      - Target User / Workload
+      - Maturity / Status
+      - Core Differentiation
+      - Diligence Gap
+    rows:
+      - - ClickHouse Open Source Server
+        - Data engineers & infrastructure teams self-hosting analytical clusters
+        - Production (Mature)
+        - Vectorized SIMD C++ engine, extensive table engines, local disk caching
+        - Self-managed operational complexity and cluster rebalancing overhead
+      - - ClickHouse Cloud
+        - Enterprise data teams requiring serverless autoscaling OLAP
+        - Production (Commercial GA)
+        - Decoupled compute and shared object storage (S3/GCS/Azure), auto-scaling
+        - Private multi-tenant noisy neighbor isolation benchmarks remain undisclosed
+      - - ClickHouse Local
+        - Developers analyzing local data files via CLI without server deployment
+        - Production (Mature)
+        - Zero-dependency embedded analytical engine replacing awk/grep/sqlite
+        - Limited to single-host memory and core scale without distributed coordination
+      - - ClickHouse for PostgreSQL & Langfuse
+        - AI/ML application developers and Postgres operational database users
+        - Active Expansion (2026)
+        - Native PG wire integration and open-source LLM observability platform
+        - Long-term monetization model and technical integration depth with core OLAP engine
+    notes: Product portfolio status reflects commercial GA and open-source availability as of October 2026; private-cloud multi-tenant telemetry remains undisclosed.
+    claimRefs:
+      - CE004
+      - CE005
+      - CE009
+      - CE010
+  - id: TE002
+    title: Workflow / use-case table
+    columns:
+      - User Job / Objective
+      - Legacy / Alternative Workflow
+      - ClickHouse Solution
+      - Measurable Benefit
+      - Technical Limitation
+    rows:
+      - - Real-time telemetry and ad-hoc log exploration
+        - Row-oriented RDBMS or Elasticsearch clusters with heavy index overhead
+        - ClickHouse MergeTree with columnar compression and sparse primary index
+        - Sub-second scan queries across billions of rows with 3x to 5x storage compression
+        - Single-row point mutations cause significant write amplification and merge overhead
+      - - User-facing analytics and real-time dashboarding
+        - Pre-aggregated data marts or batch-computed caching layers
+        - Direct ad-hoc SQL execution over raw streaming event tables
+        - Eliminates batch pre-aggregation pipelines and reduces data latency to milliseconds
+        - Complex multi-table distributed joins require extensive memory and manual co-location
+      - - LLM application tracing and evaluation
+        - Fragmented third-party observability SaaS tools or disconnected vector stores
+        - Langfuse platform backed by ClickHouse columnar analytical storage
+        - Unified end-to-end trace analytics and evaluation at petabyte event scale
+        - Integration of LLM traces with core database schemas is in early adoption stages
+      - - Operational database analytics offloading
+        - ETL pipelines extracting transactional data into remote data lakes
+        - ClickHouse for PostgreSQL co-processing analytics alongside transactional data
+        - Zero-ETL real-time query offloading directly against operational databases
+        - Does not provide full transactional ACID semantics for operational write paths
+    notes: Performance benefits reflect columnar vectorized execution over structured analytical workloads; transactional and mutation workloads remain constrained.
+    claimRefs:
+      - CE006
+      - CE009
+      - CE010
+      - CE013
+      - CE014
+  - id: TE003
+    title: Technology / operating architecture table
+    columns:
+      - Architectural Layer
+      - Role & Functional Responsibility
+      - Underlying Technology / Dependency
+      - Operating & Scaling Risk
+    rows:
+      - - Client Connectivity & Ingestion
+        - Accepts queries and streaming batch ingest via native wire, HTTP REST, MySQL/Postgres protocols
+        - Statically-linked C++ networking stack, Kafka/Pulsar streaming connectors
+        - Connection pool exhaustion under bursty unpooled client traffic
+      - - Query Parser & Execution Engine
+        - Parses SQL, performs AST optimization, and executes vectorized processing over column chunks
+        - Vectorized query engine leveraging CPU caches and SIMD instruction sets
+        - Out-of-memory query failures on wide unpartitioned joins or high cardinality GROUP BY
+      - - Storage Engine & Partitioning
+        - Organizes columnar parts on disk with sparse primary indexes (8,192-row granules)
+        - MergeTree engine family with LZ4/ZSTD compression and background part merges
+        - Write amplification and filesystem I/O thrashing during frequent small batch inserts
+      - - Cloud Decoupled Storage & Consensus
+        - Decouples stateless compute nodes from persistent cloud object storage
+        - Shared cloud object stores (S3/GCS/Azure Blob) coordinated via ClickHouse Keeper
+        - Shared storage metadata latency and tail-latency variance across multi-cloud regions
+    notes: Architectural roles reflect the ClickHouse VLDB 2024 academic architecture and ClickHouse Cloud decoupled storage models.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE007
+      - CE008
+      - CE011
+figures:
+  - id: FE001
+    title: Product architecture map
+    type: stack
+    summary: ClickHouse multi-layer technical architecture spanning ingestion protocols, vectorized compute, MergeTree storage, and cloud decoupling.
+    data:
+      layers:
+        - label: Client Ingestion & Protocol Interfaces
+          detail: Native TCP wire protocol, HTTP REST API, MySQL and PostgreSQL compatibility wire protocols, and streaming ingest connectors (Kafka, Pulsar).
+          modules:
+            - Native Binary TCP Protocol
+            - HTTP REST Interface
+            - MySQL / PostgreSQL Wire Protocols
+            - Streaming Connectors (Kafka, Object Storage)
+        - label: Query Processing & Optimization Layer
+          detail: SQL parsing, abstract syntax tree (AST) generation, rule-based and cost-based query optimization, and logical plan transformation.
+          modules:
+            - SQL Parser & AST Builder
+            - Logical & Physical Query Optimizer
+            - Distributed Query Coordinator
+        - label: Vectorized Compute Execution Engine
+          detail: Column-oriented vectorized execution processing data in blocks, optimizing CPU instruction pipelines and hardware SIMD registers.
+          modules:
+            - Vectorized Operator Pipeline
+            - SIMD-accelerated Expressions
+            - Multi-threaded Worker Execution
+        - label: MergeTree Columnar Storage Engine
+          detail: Physical columnar storage format organized in immutable parts, sparse primary indexes with 8,192-row granules, and background asynchronous compaction.
+          modules:
+            - MergeTree Engine Core
+            - Sparse Primary Indexing
+            - LZ4 / ZSTD Columnar Compression
+            - Asynchronous Background Part Merging
+        - label: Cloud Decoupled Storage & Metadata Tier
+          detail: Stateless compute worker decoupling over shared object storage (S3, GCS, Azure Blob) coordinated by ClickHouse Keeper for distributed consensus.
+          modules:
+            - Shared Object Storage Abstraction
+            - ClickHouse Keeper (Raft Consensus)
+            - Local NVMe Cache & Prefetching
+        - label: Security, Compliance & Multi-Tenant Management Tier
+          detail: Role-based access control (RBAC), TLS encryption, query quotas, resource governances, and continuous cluster monitoring telemetry.
+          modules:
+            - Role-Based Access Control (RBAC)
+            - TLS/mTLS Network Encryption
+            - Query Resource Quotas & Limits
+            - Audit Logging & System Telemetry
+    approximationNotes: null
+    claimRefs:
+      - CE001
+      - CE002
+      - CE003
+      - CE007
+      - CE011
+      - CE012
+callouts:
+  - calloutType: strength
+    title: Vectorized SIMD Engine Delivers Unmatched Real-Time Scan Performance
+    body: By processing data column-by-column in vectorized chunks and utilizing SIMD instructions, ClickHouse scans billions of records in sub-second latencies with 3x to 5x data compression over row-oriented databases.
+    claimRefs:
+      - CE003
+      - CE006
+  - calloutType: risk
+    title: Asynchronous Part Merges Impose High Write Amplification on Point Updates
+    body: ClickHouse is strictly optimized for immutable batch ingestion; high-frequency individual row updates or mutations trigger asynchronous background rewrites of entire parts, causing disk thrashing and memory exhaustion.
+    claimRefs:
+      - CE013
+      - CE014
+localEvidence:
+  searchQueries:
+    - query: '"ClickHouse" site:clickhouse.com product company'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs:
+        - SE002
+    - query: '"ClickHouse" funding valuation revenue customers leadership launches 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs:
+        - SE003
+        - SE009
+    - query: '"ClickHouse" lawsuit regulatory outage breach complaints risks 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: '"ClickHouse" founders leadership funding headquarters company profile 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: '"ClickHouse" launch history investors team governance 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: '"ClickHouse" pricing funding revenue investors business model 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs:
+        - SE003
+    - query: '"ClickHouse" product architecture technology technical documentation'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs:
+        - SE001
+        - SE002
+        - SE004
+        - SE005
+    - query: '"ClickHouse" technical design integrations performance scalability'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs:
+        - SE004
+        - SE006
+        - SE007
+        - SE008
+    - query: '"ClickHouse" funding investors valuation financing 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs:
+        - SE003
+    - query: '"ClickHouse" funding round seed series acquisition 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs:
+        - SE003
+  researchQuestions:
+    - id: QE001
+      question: How does the ClickHouse vectorized query execution engine utilize SIMD instructions and columnar storage to accelerate analytical scans?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedFigures/product-architecture-map
+      status: answered
+    - id: QE002
+      question: What distinct product modules, hosted tiers, and open-source packages constitute the core ClickHouse commercial and open-source portfolio?
+      type: enumeration
+      targets:
+        - contentRequirements/1
+        - plannedTables/product-module-asset-matrix
+      status: answered
+    - id: QE003
+      question: What query latency and compression ratio benefits does ClickHouse deliver across real-time analytical workloads compared to row-oriented databases?
+      type: quantification
+      targets:
+        - contentRequirements/0
+        - plannedTables/workflow-use-case-table
+      status: answered
+    - id: QE004
+      question: How does ClickHouse Cloud decouple compute workers from shared object storage and coordinate metadata state across distributed clusters?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+    - id: QE005
+      question: What major product capabilities and ecosystem expansions were introduced with the 2026 Series D round, including the Langfuse acquisition and Postgres extension?
+      type: freshness
+      targets:
+        - contentRequirements/3
+      status: answered
+    - id: QE006
+      question: How does the MergeTree sparse primary index compare against traditional B-tree indexing in handling high-throughput analytical ingestion?
+      type: comparison
+      targets:
+        - contentRequirements/4
+      status: answered
+    - id: QE007
+      question: What enterprise compliance, role-based access control, encryption, and tenant isolation controls are supported in ClickHouse Cloud?
+      type: verification
+      targets:
+        - contentRequirements/5
+      status: answered
+    - id: QE008
+      question: What operational bottlenecks, query memory limits, and mutation overheads constrain ClickHouse performance in non-analytical transactional workloads?
+      type: adverse
+      targets:
+        - contentRequirements/4
+        - plannedTables/workflow-use-case-table
+      status: answered
+    - id: QE009
+      question: What private-cloud multi-tenant resource isolation benchmarks and tail-latency SLA data remain undisclosed for enterprise underwriting?
+      type: adverse
+      targets:
+        - contentRequirements/3
+      status: unresolved
+  sources:
+    - id: SE001
+      publisher: ClickHouse
+      title: Architecture overview - ClickHouse Documentation
+      url: https://clickhouse.com/docs/concepts/core-concepts/academic-overview
+      date: '2024-08-01'
+      accessDate: '2026-10-10'
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics:
+        - architecture
+        - vectorized-engine
+        - storage-engine
+        - interfaces
+      keyQuote: ClickHouse is built in C++ as a single, statically-linked binary without dependencies.
+    - id: SE002
+      publisher: ClickHouse
+      title: 'ClickHouse: Fast Open-Source OLAP DBMS'
+      url: https://clickhouse.com/
+      accessDate: '2026-10-10'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - product-portfolio
+        - real-time-analytics
+        - observability
+      keyQuote: Analyze billions of rows in real time with millisecond results.
+    - id: SE003
+      publisher: ClickHouse
+      title: ClickHouse raises $400M Series D led by Dragoneer to accelerate product innovation, acquires Langfuse, and launches ClickHouse for PostgreSQL
+      url: https://clickhouse.com/blog/clickhouse-raises-400-million-series-d-acquires-langfuse-launches-postgres
+      date: '2026-01-16'
+      accessDate: '2026-10-10'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - product-expansion
+        - langfuse
+        - postgresql-extension
+      keyQuote: ClickHouse is thrilled to announce the acquisition of Langfuse, the open-source LLM observability platform.
+    - id: SE004
+      publisher: Flexera
+      title: 'ClickHouse architecture 101: A comprehensive overview (2026)'
+      url: https://www.flexera.com/blog/finops/clickhouse-architecture/
+      accessDate: '2026-10-10'
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics:
+        - columnar-storage
+        - olap-architecture
+        - interfaces
+      keyQuote: ClickHouse is an open source, columnar database management system specifically designed for high-speed OLAP (Online Analytical Processing).
+    - id: SE005
+      publisher: Instaclustr
+      title: 'Understanding ClickHouse®: Products, architecture, tutorial and alternatives'
+      url: https://www.instaclustr.com/education/clickhouse/understanding-clickhouse-products-architecture-tutorial-and-alternatives/
+      accessDate: '2026-10-10'
+      accessStatus: ok
+      stance: neutral
+      sourceType: partner-proof
+      reputationTier: medium
+      independence: partner
+      topics:
+        - managed-service
+        - open-source-architecture
+        - products
+      keyQuote: ClickHouse is an open source columnar database management system for online analytical processing (OLAP) and real-time data analytics.
+    - id: SE006
+      publisher: Khimananda Oli
+      title: 'ClickHouse for Analytics Workloads: 2026 Performance Guide'
+      url: https://khimananda.com/blog/clickhouse-for-analytics-workloads
+      date: '2026-08-12'
+      accessDate: '2026-10-10'
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: independent
+      topics:
+        - performance-guide
+        - columnar-compression
+        - workload-optimization
+      keyQuote: ClickHouse for analytics workloads solves this specific bottleneck by storing data column-wise and compressing it aggressively, enabling billion-row scans in under a second.
+    - id: SE007
+      publisher: ChistaDATA
+      title: ClickHouse Performance Tuning and Optimization by ChistaDATA
+      url: https://chistadata.com/clickhouse-performance-tuning-and-optimization/
+      accessDate: '2026-10-10'
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: partner
+      topics:
+        - performance-tuning
+        - sort-key
+        - mergetree-settings
+        - mutations
+      keyQuote: The sort key and partition decide how many granules a query must read; the query shape decides how much work is done per granule; MergeTree settings decide write amplification
+    - id: SE008
+      publisher: Diacto
+      title: 'ClickHouse Cloud Architecture: Components, Scalability, and Best Practices'
+      url: https://www.diacto.com/clickhouse-cloud-architecture-components-scalability-and-best-practices/
+      accessDate: '2026-10-10'
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: partner
+      topics:
+        - cloud-architecture
+        - decoupled-storage
+        - stateless-compute
+      keyQuote: At its core, it separates management from execution, storage from compute, and, in advanced deployments, one workload’s compute from another.
+    - id: SE009
+      publisher: ClickHouse
+      title: ClickHouse raises $350 million Series C to power analytics for the AI era
+      url: https://clickhouse.com/blog/clickhouse-raises-350-million-series-c-to-power-analytics-for-ai-era
+      date: '2025-05-29'
+      accessDate: '2026-10-10'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - funding
+        - cloud-adoption
+        - ai-era-analytics
+      keyQuote: ClickHouse, Inc., a leader in real-time analytics, data warehousing, observability, and AI/ML, today announced it has raised $350 million in Series C financing.
+  claims:
+    - id: CE001
+      statement: ClickHouse is a columnar database management system engineered for high-speed online analytical processing and real-time data analytics.
+      type: observed
+      topic: architecture
+      sourceRefs:
+        - SE001
+        - SE004
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+    - id: CE002
+      statement: ClickHouse is implemented in C++ as a standalone statically-linked binary that executes queries without mandatory external runtimes or operational dependencies.
+      type: observed
+      topic: architecture
+      sourceRefs:
+        - SE001
+        - SE005
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+    - id: CE003
+      statement: The query engine evaluates analytical queries using vectorized execution over column data chunks, utilizing CPU caches and SIMD instructions for sub-second aggregations.
+      type: observed
+      topic: vectorized-engine
+      sourceRefs:
+        - SE001
+        - SE006
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+    - id: CE004
+      statement: ClickHouse core product offerings encompass open-source self-managed ClickHouse, ClickHouse Local CLI utility, and the fully managed ClickHouse Cloud service.
+      type: company-claimed
+      topic: product-portfolio
+      sourceRefs:
+        - SE001
+        - SE002
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE002
+    - id: CE005
+      statement: ClickHouse provides native binary wire protocols, HTTP REST endpoints, and compatibility layers for MySQL and PostgreSQL client connectivity.
+      type: observed
+      topic: interfaces
+      sourceRefs:
+        - SE001
+        - SE004
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE002
+    - id: CE006
+      statement: ClickHouse for analytics workloads replaces row-oriented query bottlenecks by compressing columnar data and scanning billions of rows in under one second.
+      type: third-party-reported
+      topic: analytical-performance
+      sourceRefs:
+        - SE006
+        - SE002
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE003
+    - id: CE007
+      statement: ClickHouse Cloud architecture decouples compute execution from shared object storage layers such as AWS S3, Google Cloud Storage, and Azure Blob Storage.
+      type: observed
+      topic: cloud-architecture
+      sourceRefs:
+        - SE001
+        - SE008
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE004
+    - id: CE008
+      statement: In ClickHouse Cloud deployments, stateless worker nodes execute queries while shared object storage provides durability and independent horizontal scaling.
+      type: third-party-reported
+      topic: cloud-architecture
+      sourceRefs:
+        - SE008
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE004
+    - id: CE009
+      statement: In January 2026, ClickHouse acquired open-source LLM observability platform Langfuse to extend its real-time analytics stack into non-deterministic AI application tracing.
+      type: company-claimed
+      topic: product-expansion
+      sourceRefs:
+        - SE003
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE005
+    - id: CE010
+      statement: ClickHouse launched ClickHouse for PostgreSQL to bring analytical columnar processing directly alongside operational Postgres database environments.
+      type: company-claimed
+      topic: product-expansion
+      sourceRefs:
+        - SE003
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE005
+    - id: CE011
+      statement: The MergeTree engine family uses sparse primary indexes with 8,192-row granules instead of traditional B-trees, optimizing sequential scans over random point updates.
+      type: observed
+      topic: storage-engine
+      sourceRefs:
+        - SE001
+        - SE007
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE006
+    - id: CE012
+      statement: ClickHouse includes integrated security capabilities comprising role-based access control, TLS encryption, quota management, and continuous monitoring.
+      type: observed
+      topic: security-compliance
+      sourceRefs:
+        - SE001
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE007
+    - id: CE013
+      statement: High-frequency single-row mutations and point updates cause heavy write amplification and merge overhead because data parts must be rewritten asynchronously.
+      type: third-party-reported
+      topic: technical-limitations
+      sourceRefs:
+        - SE007
+        - SE006
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE008
+    - id: CE014
+      statement: Memory headroom and concurrency ceilings enforce strict query limits, causing unoptimized joins and wide groupings to fail with out-of-memory errors if unpartitioned.
+      type: third-party-reported
+      topic: technical-limitations
+      sourceRefs:
+        - SE007
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE008
+  evidenceGaps:
+    - type: private-evidence-only
+      severity: material
+      topic: multi-tenant-isolation
+      missingEvidence: Audited multi-tenant noisy-neighbor isolation benchmarks and p99 tail-latency SLA guarantees for ClickHouse Cloud under shared storage contention.
+      whyItMatters: Enterprise buyers and underwriting diligence require empirical proof that concurrent large analytical scans do not degrade production ingestion or query SLAs.
+      diligencePath: Request confidential SOC 2 Type II reports, private-cloud benchmark suites, and customer tenant-isolation SLA agreements under NDA.
+      relatedQuestionRefs:
+        - QE009
+    - type: missing-source
+      severity: minor
+      topic: mutation-overhead-benchmarks
+      missingEvidence: Standardized independent benchmark data quantifying write amplification and merge latency when applying frequent lightweight updates in production MergeTree clusters.
+      whyItMatters: Assessing total cost of ownership for mixed analytical and transactional workloads requires transparent data part merge overhead metrics.
+      diligencePath: Review vendor-provided performance engineering benchmarks and run synthetic update-heavy stress tests on reference hardware.

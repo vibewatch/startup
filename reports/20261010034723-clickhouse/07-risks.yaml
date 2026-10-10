@@ -1,0 +1,702 @@
+schemaVersion: "report-v2"
+artifact: "risks"
+slug: "clickhouse"
+runDate: "2026-10-10"
+company:
+  name: "ClickHouse"
+chapter:
+  number: 7
+  title: "Risks"
+  summary: "Comprehensive diligence analysis of ClickHouse's regulatory, architectural, operational, partner, and financial risks. While open-source adoption and cloud ARR expansion remain exceptionally strong, residual exposures center on distributed coordination layer stability, client-side numeric calculation edge cases at massive scale, multi-cloud infrastructure dependencies, and undisclosed top-customer concentration."
+sections:
+  - id: "regulatory-legal-risk-governance"
+    title: "Regulatory, Legal, and Corporate Governance Risks"
+    body: "ClickHouse operates with an open-source core licensed under Apache 2.0, providing broad global distribution while avoiding restrictive copyleft obligations. Corporate formation occurred in Delaware in September 2021 after originating within Yandex in Russia, supported initially by venture investors including Index Ventures and Benchmark Capital. The separation into an independent US entity and Dutch subsidiary established clear corporate governance boundaries. Public legal filings and open-source audit logs reveal no outstanding patent assertion, trade secret litigation, or structural intellectual property disputes threatening the core database engine. Regulatory compliance risks primarily involve cross-border data transfer regulations, regional data sovereignty requirements, and SOC 2 / ISO certifications across international deployment zones. Furthermore, capital structure covenants associated with the $100 million venture debt facility led by Stifel and Goldman Sachs require continuous liquidity monitoring, though recent equity financing mitigates covenant strain."
+    claimRefs:
+      - CR001
+      - CR009
+      - CR010
+      - CR014
+    tableRefs:
+      - TR001
+  - id: "operational-technical-reliability-risks"
+    title: "Operational, Architectural, and Reliability Failure Modes"
+    body: "Operational reliability in distributed analytical databases presents severe engineering challenges at petabyte scale. ClickHouse Cloud mitigates resource contention by establishing soft operational guardrails across standalone services and shared warehouses, including caps on databases, tables, active parts, and replica counts. To preserve stability across shared metadata catalogs, warehouses enforce a soft ceiling of 50 combined replicas sharing a single ClickHouse Keeper ensemble. Coordination failures remain a critical failure mode: when ZooKeeper or Keeper sessions disconnect or epoch transaction counters roll over, leader re-election forces table replicas into read-only states, interrupting ingestion pipelines. At the application query layer, production shadowing by enterprise customers such as Temporal Cloud uncovered subtle numeric anomalies, including 64-bit integer accumulator overflow that resulted in negative billing totals until query-level casting was implemented. Automated pull request review tooling and diagnostic utilities such as clickhouse-diagnostics provide essential telemetry for investigating memory exhaustion, replica lag, and insert throttling."
+    claimRefs:
+      - CR002
+      - CR003
+      - CR004
+      - CR005
+      - CR006
+      - CR007
+      - CR008
+    tableRefs:
+      - TR002
+    figureRefs:
+      - FR001
+  - id: "partner-financial-concentration-risks"
+    title: "Partner Dependencies, Financial Leverage, and Diligence Path"
+    body: "ClickHouse Cloud is architecturally decoupled but operationally dependent on underlying hyperscaler cloud infrastructure across Amazon Web Services, Google Cloud Platform, and Microsoft Azure. Disruption to cloud object storage or virtualization layers directly impairs query latency and data ingestion SLAs. Strategic partnerships introduce operational dependencies, notably the enterprise integration with Ubicloud to provide managed PostgreSQL for hybrid transactional and analytical workloads, and the commercial assimilation of Langfuse for AI observability. From a financial perspective, ClickHouse raised $400 million in Series D equity funding in January 2026, creating substantial runway, yet long-term cash flow sustainability is tied to enterprise contract retention. Because customer concentration, gross revenue retention (GRR), and top-account billing distributions remain undisclosed in public records, institutional investors must seek verified disclosure schedules during confidential diligence to evaluate single-tenant exposure."
+    claimRefs:
+      - CR009
+      - CR010
+      - CR011
+      - CR012
+      - CR013
+      - CR014
+    tableRefs:
+      - TR003
+tables:
+  - id: TR001
+    title: "Regulatory / legal risk register"
+    columns:
+      - "Risk category / item"
+      - "Jurisdiction"
+      - "Status"
+      - "Likelihood"
+      - "Severity"
+      - "Mitigation"
+      - "Residual exposure"
+      - "Diligence path"
+    rows:
+      - - "Corporate formation and Yandex IP heritage"
+        - "United States / Delaware"
+        - "Historical / Resolved"
+        - "Low"
+        - "Medium"
+        - "Incorporated in Delaware in September 2021 with separate legal entity structure and venture financing"
+        - "Low residual IP claim risk under Apache 2.0 open-source license"
+        - "Inspect original contributor license agreements and intellectual property transfer documentation"
+      - - "Open-source commercialization and licensing"
+        - "Global / Multi-jurisdiction"
+        - "Active / Governed"
+        - "Low"
+        - "Low"
+        - "Core database engine distributed under Apache 2.0 license with cloud-specific management software proprietary"
+        - "Minimal; open-source core allows fork but managed cloud control plane provides commercial moat"
+        - "Review code audit logs and third-party dependency licensing scan reports"
+      - - "Venture debt credit facility covenants"
+        - "United States"
+        - "Active / Monitored"
+        - "Medium"
+        - "Medium"
+        - "$100M facility with Stifel and Goldman Sachs backstopped by $400M Series D cash reserves"
+        - "Debt service obligations dependent on liquidity covenants and operating cash burn"
+        - "Examine credit facility agreement terms, minimum liquidity covenants, and interest rate margins"
+      - - "Cross-border data privacy and cloud compliance"
+        - "US / EU / Global"
+        - "Active / Compliance in place"
+        - "Medium"
+        - "Medium"
+        - "Multi-region cloud availability across AWS, GCP, and Azure with regional data residency capabilities"
+        - "Regulatory changes in cross-border analytics data transfers require ongoing certification"
+        - "Confirm SOC 2 Type II, ISO 27001, and GDPR Data Processing Addendum documentation"
+    notes: "Evaluates public corporate formation, open-source licensing governance, and credit facility terms as of October 2026."
+    enumerationScope:
+      coverage: sample
+      basis: "Representative sampling of corporate formation milestones, Apache 2.0 licensing provisions, and debt covenants verified from public disclosures."
+    claimRefs:
+      - CR001
+      - CR009
+      - CR010
+      - CR011
+  - id: TR002
+    title: "Operational / quality / security risk register"
+    columns:
+      - "Failure mode"
+      - "Likelihood"
+      - "Severity"
+      - "Mitigation maturity"
+      - "Residual exposure"
+      - "Unresolved gap"
+    rows:
+      - - "Coordination session loss & replica read-only lock"
+        - "Medium"
+        - "High"
+        - "Established"
+        - "Transient write lock during ZooKeeper or Keeper reconnect and reconciliation"
+        - "Telemetry on session disconnect frequency in multi-region clusters"
+      - - "Keeper epoch counter rollover"
+        - "Low"
+        - "High"
+        - "Improving"
+        - "Unscheduled leader re-election leading to temporary write unavailability"
+        - "Keeper Raft consensus hardening vs legacy ZooKeeper 32-bit counter limits"
+      - - "64-bit integer accumulator overflow in billing aggregation"
+        - "Low"
+        - "High"
+        - "Resolved"
+        - "Application-level sign wrap producing negative aggregation values at extreme volumes"
+        - "Query casting discipline and automated integer width validation in client SQL"
+      - - "Table partition and active parts explosion (TOO_MANY_PARTS)"
+        - "Medium"
+        - "Medium"
+        - "Established"
+        - "Insert throttling when background merges cannot keep pace with high-frequency writes"
+        - "Diagnostic tooling (clickhouse-diagnostics) and soft limits of 10,000 parts per service"
+    notes: "Synthesizes operational failure modes and architectural limits documented across production incident post-mortems and diagnostic tooling."
+    claimRefs:
+      - CR002
+      - CR004
+      - CR005
+      - CR006
+      - CR007
+      - CR008
+  - id: TR003
+    title: "Partner / dependency risk register"
+    columns:
+      - "Dependency"
+      - "Counterparty"
+      - "Role"
+      - "Concentration"
+      - "Failure scenario"
+      - "Severity"
+      - "Mitigation"
+      - "Residual exposure"
+    rows:
+      - - "Public Cloud Infrastructure"
+        - "AWS / GCP / Azure"
+        - "Compute, network, and object storage hosting for ClickHouse Cloud"
+        - "Critical"
+        - "Regional cloud outage or object storage latency spike degrades query SLA"
+        - "High"
+        - "Multi-cloud architecture allows deployments across multiple major hyperscalers"
+        - "Medium"
+      - - "Managed Transactional Engine"
+        - "Ubicloud"
+        - "High-performance PostgreSQL engine powering unified transactional/analytical stack"
+        - "High"
+        - "Service degradation or latency in CDC replication pipeline disrupts hybrid analytics"
+        - "Medium"
+        - "Joint architecture with native CDC replication and decoupled analytical engine"
+        - "Medium"
+      - - "Venture Debt Financing"
+        - "Stifel & Goldman Sachs"
+        - "Providers of $100M credit facility"
+        - "Moderate"
+        - "Covenant breach or acceleration upon extreme operational dislocation"
+        - "Medium"
+        - "Substantial equity cash cushion from $400M Series D round"
+        - "Low"
+      - - "Open-Source LLM Ecosystem"
+        - "Langfuse community"
+        - "Open-source developer adoption and tracing SDK integration"
+        - "Moderate"
+        - "Ecosystem divergence or competitor fork of open-source tracing libraries"
+        - "Medium"
+        - "Deep integration into ClickStack and official corporate sponsorship"
+        - "Low"
+    notes: "Evaluates critical external platform, cloud infrastructure, and enterprise partner dependencies."
+    claimRefs:
+      - CR009
+      - CR010
+      - CR011
+      - CR012
+figures:
+  - id: FR001
+    title: "Risk heatmap"
+    type: matrix
+    summary: "Matrix evaluating primary risk domains across likelihood, severity, and mitigation maturity."
+    approximationNotes: "Severity and likelihood scores reflect qualitative synthesis of operational, financial, and regulatory evidence."
+    claimRefs:
+      - CR002
+      - CR003
+      - CR005
+      - CR007
+      - CR012
+      - CR013
+    data:
+      columns:
+        - "Likelihood"
+        - "Impact Severity"
+        - "Mitigation Status"
+      rows:
+        - label: "Replication & Keeper Desync"
+          values:
+            - label: "Medium"
+              tone: warning
+            - label: "High"
+              tone: critical
+            - label: "Improving"
+              tone: neutral
+        - label: "Client Ingest Integer Overflow"
+          values:
+            - label: "Low"
+              tone: positive
+            - label: "High"
+              tone: critical
+            - label: "Addressed"
+              tone: positive
+        - label: "Warehouse Replicas Cap"
+          values:
+            - label: "Medium"
+              tone: warning
+            - label: "Medium"
+              tone: warning
+            - label: "Guardrailed"
+              tone: positive
+        - label: "Cloud Provider Concentration"
+          values:
+            - label: "Low"
+              tone: positive
+            - label: "High"
+              tone: critical
+            - label: "Multi-Cloud"
+              tone: positive
+        - label: "Transactional CDC Pipeline Lag"
+          values:
+            - label: "Medium"
+              tone: warning
+            - label: "Medium"
+              tone: warning
+            - label: "Decoupled"
+              tone: neutral
+        - label: "Open-Source Tracing Ecosystem Drift"
+          values:
+            - label: "Low"
+              tone: positive
+            - label: "Low"
+              tone: positive
+            - label: "Sponsored"
+              tone: positive
+callouts:
+  - calloutType: risk
+    title: "Operational Blast Radius in Shared Warehouse Architecture"
+    body: "Because all services within a ClickHouse Cloud warehouse share a single ClickHouse Keeper ensemble and metadata catalog, exceeding soft ceilings on replicas or object counts poses systemic cluster-wide degradation risks."
+    claimRefs:
+      - CR002
+      - CR003
+localEvidence:
+  searchQueries:
+    - query: "\"ClickHouse\" site:clickhouse.com product company"
+      engine: "anysearch"
+      hits: 8
+      retainedSourceRefs:
+        - SR008
+        - SR009
+    - query: "\"ClickHouse\" funding valuation revenue customers leadership launches 2026"
+      engine: "anysearch"
+      hits: 8
+      retainedSourceRefs:
+        - SR006
+        - SR007
+    - query: "\"ClickHouse\" lawsuit regulatory outage breach complaints risks 2026"
+      engine: "anysearch"
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"ClickHouse\" founders leadership funding headquarters company profile 2026"
+      engine: "anysearch"
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"ClickHouse\" launch history investors team governance 2026"
+      engine: "anysearch"
+      hits: 8
+      retainedSourceRefs:
+        - SR009
+    - query: "\"ClickHouse\" pricing funding revenue investors business model 2026"
+      engine: "anysearch"
+      hits: 8
+      retainedSourceRefs:
+        - SR006
+    - query: "\"ClickHouse\" product architecture technology technical documentation"
+      engine: "anysearch"
+      hits: 8
+      retainedSourceRefs:
+        - SR008
+    - query: "\"ClickHouse\" operational financial regulatory legal risks limitations 2026"
+      engine: "anysearch"
+      hits: 8
+      retainedSourceRefs:
+        - SR001
+    - query: "\"ClickHouse\" reliability execution dependencies adverse evidence"
+      engine: "anysearch"
+      hits: 8
+      retainedSourceRefs:
+        - SR002
+        - SR003
+        - SR004
+        - SR005
+    - query: "\"ClickHouse\" funding investors valuation financing 2026"
+      engine: "anysearch"
+      hits: 8
+      retainedSourceRefs:
+        - SR006
+    - query: "\"ClickHouse\" funding round seed series acquisition 2026"
+      engine: "anysearch"
+      hits: 8
+      retainedSourceRefs:
+        - SR006
+  researchQuestions:
+    - id: QR001
+      question: "What specific regulatory and open-source licensing liabilities arise from ClickHouse's origins and corporate formation?"
+      type: enumeration
+      targets:
+        - contentRequirements/1
+        - plannedTables/regulatory-legal-risk-register
+      status: answered
+    - id: QR002
+      question: "What operational soft and hard service guardrails govern table, partition, and replica scale in ClickHouse Cloud?"
+      type: quantification
+      targets:
+        - contentRequirements/2
+        - plannedTables/operational-quality-security-risk-register
+      status: answered
+    - id: QR003
+      question: "How does coordination layer disruption or ZooKeeper/Keeper session loss degrade cluster write availability?"
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedFigures/risk-heatmap
+      status: answered
+    - id: QR004
+      question: "What production defects and numerical calculation anomalies have enterprise customers experienced when aggregating metrics at scale?"
+      type: adverse
+      targets:
+        - contentRequirements/0
+        - plannedTables/operational-quality-security-risk-register
+      status: answered
+    - id: QR005
+      question: "What operational synchronization and write-blocking risks stem from metadata log overflow and leader re-election in replication engines?"
+      type: adverse
+      targets:
+        - contentRequirements/2
+        - plannedTables/operational-quality-security-risk-register
+      status: answered
+    - id: QR006
+      question: "What counterparty and platform concentration risks exist across primary hyperscaler cloud providers and managed integration partners?"
+      type: adverse
+      targets:
+        - contentRequirements/3
+        - plannedTables/partner-dependency-risk-register
+      status: answered
+    - id: QR007
+      question: "What financial and capital structure obligations are created by ClickHouse's venture debt credit facility alongside equity financings?"
+      type: verification
+      targets:
+        - contentRequirements/4
+        - plannedTables/regulatory-legal-risk-register
+      status: answered
+    - id: QR008
+      question: "How do mitigation maturity and monitoring thresholds rank residual severity across technical, operational, and counterparty risks?"
+      type: comparison
+      targets:
+        - contentRequirements/0
+        - plannedFigures/risk-heatmap
+      status: answered
+    - id: QR009
+      question: "What customer account concentration and single-tenant exposure metrics exist among ClickHouse Cloud's top revenue-generating enterprises?"
+      type: adverse
+      targets:
+        - contentRequirements/5
+      status: unresolved
+  sources:
+    - id: SR001
+      publisher: "ClickHouse"
+      title: "Usage limits - ClickHouse Documentation"
+      url: "https://clickhouse.com/docs/products/cloud/guides/best-practices/usagelimits"
+      date: "2026-09-09"
+      accessDate: "2026-10-10"
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics:
+        - "cloud-quotas"
+        - "operational-limits"
+        - "reliability"
+      keyQuote: "To prevent this, ClickHouse Cloud enforces limits across several operational dimensions. Soft limits apply at three different scopes."
+    - id: SR002
+      publisher: "ClickHouse"
+      title: "GitHub - ClickHouse/clickhouse-diagnostics: Clickhouse diagnostics tooling"
+      url: "https://github.com/ClickHouse/clickhouse-diagnostics"
+      date: "2026-10-01"
+      accessDate: "2026-10-10"
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics:
+        - "diagnostics"
+        - "clustering-troubleshooting"
+        - "too-many-parts"
+      keyQuote: "When a ClickHouse server misbehaves — inserts rejected, queries running out of memory, a replica read-only, a disk filling up — the answers are already in its system tables, its logs and the host it runs on."
+    - id: SR003
+      publisher: "Altinity"
+      title: "ClickHouse® Keeper: The Long Road from “ZooKeeper in C++” to Something More"
+      url: "https://altinity.com/blog/clickhouse-keeper-the-long-road-from-zookeeper-in-c-to-something-more"
+      date: "2026-08-17"
+      accessDate: "2026-10-10"
+      accessStatus: ok
+      stance: adverse
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: partner
+      topics:
+        - "coordination-risk"
+        - "zookeeper-dependency"
+        - "clickhouse-keeper"
+        - "replication-failures"
+      keyQuote: "During that time, tables may still be available for reads, but writes can fail because the replicated table is temporarily read-only. Worse, this is not a scheduled maintenance window."
+    - id: SR004
+      publisher: "Temporal Technologies"
+      title: "Running out of runway: migrating Temporal Cloud's billing store to ClickHouse"
+      url: "https://temporal.io/blog/migrating-temporal-clouds-billing-store-to-clickhouse"
+      date: "2026-08-12"
+      accessDate: "2026-10-10"
+      accessStatus: ok
+      stance: adverse
+      sourceType: customer-proof
+      reputationTier: high
+      independence: customer
+      topics:
+        - "production-anomalies"
+        - "integer-overflow"
+        - "billing-accuracy"
+        - "aggregation-semantics"
+      keyQuote: "A couple of days into shadowing, the comparison began reporting negative usage totals from ClickHouse. Because usage totals can't be negative, the sign pointed immediately at an overflow — we didn't need the other system's answer to know this one was wrong."
+    - id: SR005
+      publisher: "SkillBundle"
+      title: "review skill by clickhouse | SkillBundle"
+      url: "https://skillbundle.dev/clickhouse/clickhouse/review"
+      date: "2026-09-27"
+      accessDate: "2026-10-10"
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: independent
+      topics:
+        - "pr-review"
+        - "code-compliance"
+        - "safety"
+      keyQuote: null
+    - id: SR006
+      publisher: "ClickHouse"
+      title: "ClickHouse raises $400M Series D led by Dragoneer to accelerate expansion across analytics and AI infrastructure | ClickHouse"
+      url: "https://clickhouse.com/blog/clickhouse-raises-400-million-series-d-acquires-langfuse-launches-postgres"
+      date: "2026-01-16"
+      accessDate: "2026-10-10"
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - "series-d"
+        - "langfuse-acquisition"
+        - "postgres-partnership"
+        - "capital-structure"
+      keyQuote: "SAN FRANCISCO — January 16, 2026 — ClickHouse, a leader in real-time analytics, data warehousing, observability, and AI/ML, announced today the close of its Series D financing, raising $400 million."
+    - id: SR007
+      publisher: "ClickHouse"
+      title: "ClickHouse raises $350 million Series C to power analytics for the AI era | ClickHouse"
+      url: "https://clickhouse.com/blog/clickhouse-raises-350-million-series-c-to-power-analytics-for-ai-era"
+      date: "2025-05-29"
+      accessDate: "2026-10-10"
+      accessStatus: ok
+      stance: neutral
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - "credit-facility"
+        - "series-c-financing"
+        - "financial-leverage"
+      keyQuote: "In addition to this financing, ClickHouse has secured a $100 million credit facility led by Stifel and Goldman Sachs."
+    - id: SR008
+      publisher: "ClickHouse"
+      title: "Fast Open-Source OLAP DBMS | ClickHouse"
+      url: "https://clickhouse.com/"
+      date: "2026-10-10"
+      accessDate: "2026-10-10"
+      accessStatus: ok
+      stance: neutral
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - "olap-architecture"
+        - "mission-critical-workloads"
+      keyQuote: "Column-oriented databases are better suited to OLAP scenarios. They are at least 100x faster in processing most queries. ClickHouse uses all available system resources to their full potential to process each analytical query as fast as possible."
+    - id: SR009
+      publisher: "Wikipedia"
+      title: "ClickHouse"
+      url: "https://en.wikipedia.org/wiki/ClickHouse"
+      date: "2026-09-30"
+      accessDate: "2026-10-10"
+      accessStatus: ok
+      stance: neutral
+      sourceType: other
+      reputationTier: medium
+      independence: independent
+      topics:
+        - "corporate-formation"
+        - "yandex-heritage"
+        - "apache-license"
+      keyQuote: "ClickHouse, Inc. was incorporated in San Francisco, California, in September 2021 to commercialize the open-source ClickHouse database."
+  claims:
+    - id: CR001
+      statement: "ClickHouse was originally developed at Yandex before ClickHouse, Inc. was incorporated in Delaware in September 2021 with backing from venture investors to commercialize the open-source Apache 2.0 database."
+      type: third-party-reported
+      topic: corporate-formation
+      sourceRefs:
+        - SR008
+        - SR009
+      confidence: high
+      freshness: historical
+      answersQuestionRefs:
+        - QR001
+    - id: CR002
+      statement: "ClickHouse Cloud enforces default soft guardrails including caps of 1,000 databases, 5,000 tables, 50,000 partitions, 10,000 parts, and 1,000 concurrent queries per replica."
+      type: observed
+      topic: operational-limits
+      sourceRefs:
+        - SR001
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR002
+    - id: CR003
+      statement: "ClickHouse Cloud warehouses impose a soft ceiling of 50 combined replicas per warehouse to protect the shared ClickHouse Keeper coordination ensemble from stability degradation."
+      type: observed
+      topic: operational-limits
+      sourceRefs:
+        - SR001
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR002
+        - QR003
+    - id: CR004
+      statement: "ClickHouse server failure modes include insert rejections, memory exhaustion, read-only replicas, and disk saturation requiring inspection of system tables and background merge logs."
+      type: observed
+      topic: operational-troubleshooting
+      sourceRefs:
+        - SR001
+        - SR002
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QR002
+        - QR008
+    - id: CR005
+      statement: "ZooKeeper and Keeper coordination interruptions force replica reconnection and reconciliation cycles during which replicated tables can become temporarily read-only for writes."
+      type: third-party-reported
+      topic: coordination-risk
+      sourceRefs:
+        - SR003
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs:
+        - QR003
+        - QR005
+    - id: CR006
+      statement: "Epoch counter rollover in coordination engines precipitates unscheduled leader re-elections and transient write unavailability across active database clusters."
+      type: third-party-reported
+      topic: coordination-risk
+      sourceRefs:
+        - SR003
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs:
+        - QR005
+    - id: CR007
+      statement: "In production shadowing at Temporal Cloud, 64-bit integer accumulators in ClickHouse summed large account storage totals into negative values due to integer overflow."
+      type: third-party-reported
+      topic: production-anomalies
+      sourceRefs:
+        - SR004
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs:
+        - QR004
+    - id: CR008
+      statement: "Validating ClickHouse against a legacy warehouse required six weeks of continuous query shadowing because floating-point summation differences and timing variations masked true logic mismatches."
+      type: third-party-reported
+      topic: production-anomalies
+      sourceRefs:
+        - SR004
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs:
+        - QR004
+    - id: CR009
+      statement: "ClickHouse completed a $400 million Series D financing round in January 2026 led by Dragoneer, expanding capital resources alongside the acquisition of Langfuse and launch of a managed Postgres service."
+      type: company-claimed
+      topic: capital-structure
+      sourceRefs:
+        - SR006
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR007
+    - id: CR010
+      statement: "ClickHouse secured a $100 million credit facility led by Stifel and Goldman Sachs in May 2025 to supplement Series C equity funding."
+      type: company-claimed
+      topic: capital-structure
+      sourceRefs:
+        - SR007
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs:
+        - QR007
+    - id: CR011
+      statement: "ClickHouse Cloud relies on hyperscaler object storage and managed compute infrastructure across AWS, Microsoft Azure, and Google Cloud Platform for cloud-hosted deployments."
+      type: company-claimed
+      topic: platform-dependencies
+      sourceRefs:
+        - SR001
+        - SR006
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QR006
+    - id: CR012
+      statement: "ClickHouse partners with third-party infrastructure providers including Ubicloud for managed Postgres and Stifel and Goldman Sachs for credit facilities, introducing partner operational dependencies."
+      type: company-claimed
+      topic: platform-dependencies
+      sourceRefs:
+        - SR006
+        - SR007
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QR006
+    - id: CR013
+      statement: "Automated pull request analysis and linting tools evaluate ClickHouse codebase modifications for safety, compliance, and correctness prior to merge."
+      type: observed
+      topic: code-governance
+      sourceRefs:
+        - SR005
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs:
+        - QR008
+    - id: CR014
+      statement: "ClickHouse Cloud enterprise customer revenue concentration remains undisclosed publicly, creating uncertainty regarding top-account churn exposure."
+      type: open-question
+      topic: customer-concentration
+      sourceRefs: []
+      confidence: low
+      freshness: current
+      answersQuestionRefs:
+        - QR009
+  evidenceGaps:
+    - type: private-evidence-only
+      severity: material
+      topic: customer-concentration
+      missingEvidence: "Audited top-customer revenue share, gross revenue retention (GRR), and cohort churn metrics for ClickHouse Cloud's largest enterprise deployments."
+      whyItMatters: "Without disclosure of top-account concentration, high revenue growth rates could conceal single-customer dependency or churn vulnerability."
+      diligencePath: "Request confidential customer concentration schedule and top-20 account billing records during formal diligence."
+      relatedQuestionRefs:
+        - QR009
+    - type: enumeration-incomplete
+      severity: minor
+      topic: regulatory-legal-risk-register
+      missingEvidence: "Exhaustive legal docket history, non-public intellectual property assignment documentation from early Yandex contributors, and complete export classification rulings across all international subsidiaries."
+      whyItMatters: "Public sources only reveal disclosed corporate formation milestones and standard Apache 2.0 terms; unpublicized patent assertions or trade compliance inquiries would not appear in general disclosures."
+      diligencePath: "Obtain representations and warranties disclosure schedules and litigation docket search reports during legal diligence."
+      relatedTableRefs:
+        - TR001
