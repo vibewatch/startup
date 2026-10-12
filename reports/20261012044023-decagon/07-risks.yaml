@@ -1,0 +1,779 @@
+schemaVersion: report-v2
+artifact: risks
+slug: decagon
+runDate: '2026-10-12'
+company:
+  name: Decagon
+chapter:
+  number: 7
+  title: Risks
+  summary: Decagon's enterprise AI agent platform introduces significant operational and commercial risks, including execution
+    vulnerabilities in complex multi-jurisdictional workflows, reliance on CRM/helpdesk integrations, and pricing opacity
+    with high contract commitments.
+sections:
+- id: regulatory-and-compliance-risks
+  title: Regulatory Compliance and Autonomous Authorization Risks
+  body: Deploying autonomous agents with direct write access to enterprise backends introduces critical regulatory and compliance
+    vulnerabilities. When Decagon agents handle financial inquiries, payment processing, or account modifications, any failure
+    in deterministic guardrails risks violating consumer protection and privacy frameworks across jurisdictions. Decagon mitigates
+    external agent intrusion risks through its Personal Agent Consent & Trust (PACT) protocol and dedicated Personal Agent
+    Gateway, which establish granular OAuth 2.0 authorization scopes for external agents. Furthermore, Decagon Assist implements
+    zero-data-retention security policies and human-in-the-loop copilot controls to prevent customer data exposure during
+    edge-case escalations. However, independent third-party compliance audits remain essential to verify whether these controls
+    withstand adversarial prompts and credential manipulation in live production environments.
+  claimRefs:
+  - CR001
+  - CR008
+  - CR009
+  - CR013
+  tableRefs:
+  - TR001
+- id: operational-and-reliability-risks
+  title: Operational Execution, Voice Latency, and Edge-Case Vulnerabilities
+  body: Decagon's core autonomy engine relies on Agent Operating Procedures (AOPs), where customer experience teams configure
+    natural language instructions and code workflows. While AOPs excel in structured and predictable support flows, industry
+    benchmarking highlights that they struggle when encountering long-tail edge cases, multi-state regulatory disclosures,
+    and multi-system verification logic. In complex environments like fintech and healthcare, edge cases represent the core
+    operational burden, meaning unhandled exceptions quickly spill over to human desks without achieving full resolution.
+    On voice channels, Decagon deployed its Voice 3 duplex architecture to decouple low-latency speech synthesis from background
+    reasoning, yet third-party evaluations and RFP analysis still note occasional voice latency and tooling degradations under
+    peak production traffic.
+  claimRefs:
+  - CR003
+  - CR005
+  - CR011
+  - CR012
+  tableRefs:
+  - TR002
+- id: partner-and-architectural-dependencies
+  title: Ecosystem Dependencies and Software Stack Friction
+  body: Decagon's integration model presents structural architectural and software budget dependencies. The platform sits
+    directly on top of established enterprise helpdesks like Zendesk and Salesforce rather than replacing them, creating a
+    dual-software cost burden alongside ongoing connector maintenance obligations. Crucially, Decagon lacks standard pre-built
+    connections for internal enterprise resource planning (ERP), human resources, and supply chain management systems, restricting
+    its operational deployment primarily to front-office customer service. Additionally, while Decagon runs over 80% of its
+    traffic on proprietary self-trained models to reduce generic LLM inference costs and latency, this internal model dependency
+    concentrates model fine-tuning, regression testing, and hallucination guardrail maintenance entirely on Decagon's engineering
+    organization.
+  claimRefs:
+  - CR001
+  - CR002
+  - CR004
+  - CR010
+  tableRefs:
+  - TR003
+- id: commercial-risks-and-monitoring-triggers
+  title: Commercial Pricing Friction and Diligence Monitoring Indicators
+  body: Decagon's commercial model creates distinct sales friction and budget forecasting challenges for enterprise buyers.
+    The vendor does not publish list pricing or self-serve evaluation tiers, relying instead on custom sales proposals with
+    usage-based conversation fees and high minimum annual spend commitments. Third-party procurement research observes mid-six-figure
+    typical contract values with a median near $432,750, leaving prospective customers unable to forecast total cost of ownership
+    accurately before vendor scoping. Furthermore, rollout velocity depends on forward-deployed engineers and dedicated internal
+    platform owners to configure and tune AOP workflows. Investors must monitor key thesis-break triggers, including customer
+    concentration among early tech-native adopters, escalating voice telephony charges, and unmitigated API execution errors.
+  claimRefs:
+  - CR006
+  - CR007
+  - CR014
+  figureRefs:
+  - FR001
+tables:
+- id: TR001
+  title: Regulatory / legal risk register
+  columns:
+  - Risk / Rule
+  - Jurisdiction
+  - Status
+  - Likelihood
+  - Severity
+  - Mitigation Strategy
+  - Residual Exposure
+  - Diligence Path
+  rows:
+  - - Consumer financial transaction liability
+    - US (CFPB) / State Banking
+    - Active scrutiny
+    - Medium
+    - High
+    - Human-in-the-loop approval thresholds on automated refunds
+    - Material financial loss on misrouted write actions
+    - Review transaction logging and refund authorization limits
+  - - Cross-border customer PII data leakage
+    - EU (GDPR) / US (CCPA)
+    - Regulatory baseline
+    - Low
+    - High
+    - Zero-data-retention policies and dedicated enterprise tenant isolation
+    - Sub-processor data access during model fine-tuning
+    - Audit third-party vendor DPAs and sub-processor lists
+  - - Unauthenticated external AI agent access
+    - Global
+    - Emerging threat
+    - Medium
+    - Medium
+    - PACT protocol and Personal Agent Gateway scope controls
+    - Impersonation of consumers by unverified bots
+    - Examine PACT cryptographic token verification mechanism
+  - - Healthcare data handling non-compliance
+    - US (HIPAA)
+    - Enforced standard
+    - Low
+    - High
+    - Role-based access control and encrypted transcript storage
+    - Accidental PHI ingestion in free-form customer chat
+    - Inspect HIPAA Business Associate Agreement provisions
+  notes: Severity reflects unmitigated legal exposure; residual exposure accounts for Decagon's PACT protocol and zero-retention
+    controls.
+  enumerationScope:
+    coverage: partial
+    basis: Sample of key US and EU data protection, consumer finance, and autonomous action liabilities identified from regulatory
+      frameworks and public filings.
+  claimRefs:
+  - CR001
+  - CR008
+  - CR009
+  - CR013
+- id: TR002
+  title: Operational / quality / security risk register
+  columns:
+  - Failure Mode
+  - Likelihood
+  - Severity
+  - Mitigation Maturity
+  - Residual Exposure
+  - Unresolved Gap
+  rows:
+  - - AOP branching collapse on multi-system edge cases
+    - High
+    - High
+    - Medium
+    - High deflection fallback causing human support backlogs
+    - Absence of public SLA resolution benchmarks
+  - - Voice telephony latency and mid-call tooling degradation
+    - Medium
+    - Medium
+    - Medium
+    - Caller drop-off and diminished CSAT during peak hours
+    - Lack of published concurrency stress-test data
+  - - Erroneous automated account or payment execution
+    - Low
+    - High
+    - High
+    - Direct financial loss and customer churn
+    - Independent audit of automated transaction rollback capabilities
+  - - Forward deployed engineering scaling bottleneck
+    - Medium
+    - Medium
+    - Low
+    - Extended multi-week enterprise implementation timelines
+    - Ratio of forward deployed engineers to enterprise deployments
+  notes: Ranked by unmitigated operational severity; mitigations reflect Duet testing, AOP iteration, and Voice 3 duplex architecture.
+  claimRefs:
+  - CR003
+  - CR005
+  - CR012
+  - CR013
+  - CR014
+- id: TR003
+  title: Partner / dependency risk register
+  columns:
+  - Dependency
+  - Counterparty
+  - Role
+  - Concentration
+  - Failure Scenario
+  - Severity
+  - Mitigation
+  - Residual Exposure
+  rows:
+  - - CRM and Helpdesk APIs
+    - Salesforce, Zendesk, Front
+    - Core integration layer
+    - High
+    - Upstream API deprecation or rate-limiting throttling
+    - High
+    - Multi-connector architecture and webhook caching
+    - Service interruption upon helpdesk API outages
+  - - Proprietary Model Hosting
+    - Cloud GPU Infrastructure
+    - Model inference compute
+    - High
+    - Compute cluster outage or GPU capacity shortages
+    - High
+    - Fallback routing to general-purpose LLM providers
+    - Increased inference cost and variable response latency
+  - - Telephony Carrier Gateways
+    - Enterprise Telephony Providers
+    - Voice channel transit
+    - Medium
+    - SIP trunk degradation and audio packet loss
+    - Medium
+    - Duplex Voice 3 architecture with local audio buffering
+    - Voice quality degradation in low-bandwidth regions
+  - - Enterprise Back-Office Systems
+    - SAP, Oracle, ERP suites
+    - Operational workflow execution
+    - High
+    - Inability to automate back-office operations
+    - Medium
+    - Forward-deployed custom API development
+    - Scope limitation to front-office CX interactions
+  notes: Evaluates upstream and downstream platform dependencies across LLM providers, CRM suites, and telephony carriers.
+  claimRefs:
+  - CR001
+  - CR002
+  - CR004
+  - CR010
+figures:
+- id: FR001
+  title: Risk heatmap
+  type: matrix
+  summary: Risk evaluation matrix mapping core organizational, technical, and commercial failure modes across likelihood,
+    impact, mitigation maturity, and residual risk.
+  data:
+    columns:
+    - Likelihood
+    - Impact
+    - Mitigation Maturity
+    - Residual Risk
+    rows:
+    - label: Edge-Case Policy Branching Failure
+      values:
+      - label: High
+        tone: warning
+      - label: High
+        tone: critical
+      - label: Medium
+        tone: neutral
+      - label: High
+        tone: critical
+    - label: Erroneous Write Action Execution
+      values:
+      - label: Low
+        tone: positive
+      - label: High
+        tone: critical
+      - label: High
+        tone: positive
+      - label: Medium
+        tone: warning
+    - label: Voice Telephony Latency Under Load
+      values:
+      - label: Medium
+        tone: neutral
+      - label: Medium
+        tone: neutral
+      - label: Medium
+        tone: neutral
+      - label: Medium
+        tone: warning
+    - label: Helpdesk API Dependency & Rate Limiting
+      values:
+      - label: Medium
+        tone: neutral
+      - label: High
+        tone: critical
+      - label: Medium
+        tone: neutral
+      - label: Medium
+        tone: warning
+    - label: Enterprise Pricing & Budget Volatility
+      values:
+      - label: High
+        tone: warning
+      - label: Medium
+        tone: neutral
+      - label: Low
+        tone: negative
+      - label: High
+        tone: critical
+    - label: Unauthorized External Agent Access
+      values:
+      - label: Medium
+        tone: neutral
+      - label: Medium
+        tone: neutral
+      - label: High
+        tone: positive
+      - label: Low
+        tone: positive
+  approximationNotes: Evaluations synthesize third-party benchmark observations, RFP comparisons, and vendor technical releases.
+  claimRefs:
+  - CR001
+  - CR003
+  - CR006
+  - CR008
+  - CR011
+  - CR013
+callouts:
+- calloutType: risk
+  title: Autonomous Action Liability at the Long Tail
+  body: Because Decagon agents execute real write actions like issuing refunds and modifying subscriptions across enterprise
+    CRMs, edge-case routing failures pose direct financial and regulatory liability if guardrails fail.
+  claimRefs:
+  - CR001
+  - CR003
+  - CR013
+- calloutType: insight
+  title: Dual-Software Cost Burden and Pricing Opacity
+  body: Decagon overlays existing helpdesk licenses rather than displacing Zendesk or Salesforce, adding mid-six-figure software
+    fees with usage-based volatility that complicates enterprise budget forecasting.
+  claimRefs:
+  - CR006
+  - CR007
+  - CR010
+localEvidence:
+  searchQueries:
+  - query: '"Decagon" Decagon builds AI-native customer service agents that integrate with backend systems to site:decagon.ai
+      product company 2026'
+    engine: anysearch
+    hits: 8
+    retainedSourceRefs: []
+  - query: '"Decagon" Decagon builds AI-native customer service agents that integrate with backend systems to funding valuation
+      revenue customers leadership launches 2026'
+    engine: anysearch
+    hits: 8
+    retainedSourceRefs: []
+  - query: '"Decagon" Decagon builds AI-native customer service agents that integrate with backend systems to lawsuit regulatory
+      outage breach complaints risks 2026'
+    engine: anysearch
+    hits: 7
+    retainedSourceRefs: []
+  - query: '"Decagon" Decagon builds AI-native customer service agents that integrate with backend systems to Gross margin,
+      inference-cost load, NRR, and overall unit-economics quality. 2026'
+    engine: anysearch
+    hits: 7
+    retainedSourceRefs: []
+  - query: '"Decagon" Decagon builds AI-native customer service agents that integrate with backend systems to market size
+      segmentation demand adoption 2026'
+    engine: anysearch
+    hits: 8
+    retainedSourceRefs: []
+  - query: '"Decagon" Decagon builds AI-native customer service agents that integrate with backend systems to alternatives
+      competitors positioning differentiation 2026'
+    engine: anysearch
+    hits: 7
+    retainedSourceRefs: []
+  - query: '"Decagon" Decagon builds AI-native customer service agents that integrate with backend systems to Full board,
+      cap-table, preference, and tender-economics disclosure. 2026'
+    engine: anysearch
+    hits: 7
+    retainedSourceRefs: []
+  - query: '"Decagon" Decagon builds AI-native customer service agents that integrate with backend systems to revenue model
+      profitability unit economics commercial traction 2026'
+    engine: anysearch
+    hits: 7
+    retainedSourceRefs: []
+  - query: '"Decagon" Decagon builds AI-native customer service agents that integrate with backend systems to product architecture
+      technology technical documentation 2026'
+    engine: anysearch
+    hits: 7
+    retainedSourceRefs: []
+  - query: '"Decagon" Decagon builds AI-native customer service agents that integrate with backend systems to customer outcomes
+      adoption demand commercial relationships 2026'
+    engine: anysearch
+    hits: 8
+    retainedSourceRefs: []
+  - query: '"Decagon" Decagon builds AI-native customer service agents that integrate with backend systems to operational
+      financial regulatory legal risks limitations 2026'
+    engine: anysearch
+    hits: 8
+    retainedSourceRefs: []
+  - query: '"Decagon" Decagon builds AI-native customer service agents that integrate with backend systems to reliability
+      execution dependencies adverse evidence 2026'
+    engine: anysearch
+    hits: 8
+    retainedSourceRefs: []
+  researchQuestions:
+  - id: QR001
+    question: What are the primary regulatory, privacy, and compliance risks associated with Decagon's autonomous action execution
+      across customer systems?
+    type: adverse
+    targets:
+    - contentRequirements/1
+    - plannedTables/regulatory-legal-risk-register
+    status: answered
+  - id: QR002
+    question: How do edge-case complexity and multi-jurisdictional policy branching limit the autonomous resolution capabilities
+      of Decagon's Agent Operating Procedures?
+    type: adverse
+    targets:
+    - contentRequirements/0
+    - plannedTables/operational-quality-security-risk-register
+    status: answered
+  - id: QR003
+    question: What operational reliability, latency, and tooling degradation risks have been observed during peak load in
+      Decagon voice and chat infrastructure?
+    type: adverse
+    targets:
+    - contentRequirements/2
+    - plannedTables/operational-quality-security-risk-register
+    status: answered
+  - id: QR004
+    question: What partner and vendor dependencies exist across Decagon's CRM, helpdesk, telephony, and underlying foundation
+      model providers?
+    type: mechanism
+    targets:
+    - contentRequirements/3
+    - plannedTables/partner-dependency-risk-register
+    status: answered
+  - id: QR005
+    question: How does Decagon mitigate unauthorized third-party agent access and data exposure via the PACT protocol and
+      Personal Agent Gateway?
+    type: verification
+    targets:
+    - contentRequirements/1
+    - plannedFigures/risk-heatmap
+    status: answered
+  - id: QR006
+    question: What financial and commercial risks arise from opaque pricing structures, high contract minimums, and usage-based
+      cost forecasting volatility?
+    type: quantification
+    targets:
+    - contentRequirements/4
+    - plannedFigures/risk-heatmap
+    status: answered
+  - id: QR007
+    question: What monitoring indicators, mitigation maturity levels, and thesis-break triggers exist for enterprise customer
+      concentration and critical workflow failures?
+    type: mechanism
+    targets:
+    - contentRequirements/5
+    - plannedTables/partner-dependency-risk-register
+    status: answered
+  - id: QR008
+    question: What is the severity ranking and residual exposure across Decagon's legal, operational, and architectural risk
+      surface?
+    type: enumeration
+    targets:
+    - contentRequirements/0
+    - plannedTables/regulatory-legal-risk-register
+    status: answered
+  sources:
+  - id: SR001
+    publisher: HappyRobot
+    title: 7 Best Decagon Alternatives for Enterprise AI Agents | HappyRobot
+    url: https://www.happyrobot.ai/hub/decagon-alternatives
+    date: '2026-09-28'
+    accessDate: '2026-10-12'
+    accessStatus: ok
+    stance: adverse
+    sourceType: review
+    reputationTier: medium
+    independence: competitor
+    topics:
+    - alternatives
+    - pricing-opacity
+    - integration-scope
+    - enterprise-operations
+    keyQuote: High minimum contract costs and usage-based pricing models make annual spending harder to forecast.
+  - id: SR002
+    publisher: Notch
+    title: 'Sierra vs Decagon vs Notch: Enterprise AI Customer Support Comparison (2026)'
+    url: https://www.notch.cx/learn/deep-dive-comparison-for-enterprise-ai-customer-support
+    date: '2026-09-29'
+    accessDate: '2026-10-12'
+    accessStatus: ok
+    stance: adverse
+    sourceType: review
+    reputationTier: medium
+    independence: competitor
+    topics:
+    - workflow-complexity
+    - edge-cases
+    - resolution-depth
+    - agent-operating-procedures
+    keyQuote: 'Decagon''s Agent Operating Procedures work beautifully for defined, predictable flows. The model assumes you
+      can map logic in advance and adjust as needed. That holds until you encounter the long tail: policy exceptions, jurisdiction-specific
+      requirements, cases where "it depends" has fifteen branches.'
+  - id: SR003
+    publisher: RFP.wiki
+    title: 'Decagon vs Amelia (2026): Data‑driven comparison'
+    url: https://www.rfp.wiki/artificial-intelligence/conversational-ai-platforms/decagon/amelia
+    date: '2026-09-15'
+    accessDate: '2026-10-12'
+    accessStatus: ok
+    stance: adverse
+    sourceType: analyst-market-data
+    reputationTier: medium
+    independence: independent
+    topics:
+    - reliability
+    - voice-latency
+    - pricing-opacity
+    - annual-contract-spend
+    keyQuote: Reliability feedback and status history flag occasional voice or tooling degradations under load.
+  - id: SR004
+    publisher: AI Engineer
+    title: 'Decagon: AI Customer Service Agents | AI Engineer'
+    url: https://ai.engineer/orgs/decagon
+    accessDate: '2026-10-12'
+    accessStatus: ok
+    stance: neutral
+    sourceType: developer-signal
+    reputationTier: medium
+    independence: independent
+    topics:
+    - enterprise-cx-adoption
+    - customer-growth
+    - market-traction
+    keyQuote: In January 2026, the company reported adding more than 100 new global enterprise customers during the preceding
+      fiscal year. It also raised a $250 million Series D led by Coatue Management and Index Ventures at a $4.5 billion valuation.
+  - id: SR005
+    publisher: Unite.AI
+    title: Decagon Expands AI Concierge Platform With Four New Releases
+    url: https://www.unite.ai/decagon-expands-ai-concierge-platform-with-four-new-releases/
+    date: '2026-10-01'
+    accessDate: '2026-10-12'
+    accessStatus: ok
+    stance: neutral
+    sourceType: news
+    reputationTier: medium
+    independence: independent
+    topics:
+    - pact-protocol
+    - personal-agents
+    - authorization-scopes
+    - voice-architecture
+    keyQuote: The gateway combines two capabilities. Personal agent detection flags likely personal agents across chat and
+      voice using signals from the business and the platform, with each business deciding what happens next and what those
+      agents can access.
+  - id: SR006
+    publisher: Decagon
+    title: 'Introducing Decagon Assist: Empower every representative to deliver concierge experiences'
+    url: https://decagon.ai/blog/decagon-assist
+    accessDate: '2026-10-12'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: medium
+    independence: company
+    topics:
+    - decagon-assist
+    - human-agent-copilot
+    - product-expansion
+    keyQuote: Decagon Assist is an AI copilot for the human representatives on your team.
+  - id: SR007
+    publisher: Decagon
+    title: Best AI customer service software that actually resolves tickets | Decagon
+    url: https://decagon.ai/blog/ai-customer-service
+    date: '2026-09-01'
+    accessDate: '2026-10-12'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - model-training
+    - proprietary-infrastructure
+    - resolution-mechanisms
+    keyQuote: Over 80% of model traffic runs on Decagon’s self-trained models, built for CX accuracy rather than adapted from
+      general-purpose LLMs.
+  - id: SR008
+    publisher: Decagon
+    title: 'Complete AI customer support setup: Tools, integrations, and launch strategy | Decagon'
+    url: https://decagon.ai/blog/ai-customer-support-setup
+    date: '2026-08-15'
+    accessDate: '2026-10-12'
+    accessStatus: ok
+    stance: confirming
+    sourceType: official
+    reputationTier: high
+    independence: company
+    topics:
+    - integration-risk
+    - crm-dependencies
+    - implementation-timeline
+    keyQuote: Integration depth matters more than integration count. You need AI that can read customer records, update account
+      information, trigger workflows, process transactions, and log interactions – without manual intervention.
+  claims:
+  - id: CR001
+    statement: Decagon agents require direct read and write API integrations into core enterprise systems including Salesforce,
+      Zendesk, and payment processors to autonomously execute transactions such as refunds and cancellations.
+    type: company-claimed
+    topic: integration-risk
+    sourceRefs:
+    - SR004
+    - SR008
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR004
+  - id: CR002
+    statement: Over 80% of Decagon model traffic runs on proprietary self-trained models rather than general-purpose LLMs,
+      reducing external model latency but concentrating architecture maintenance and tuning risk within Decagon.
+    type: company-claimed
+    topic: model-architecture
+    sourceRefs:
+    - SR005
+    - SR007
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR004
+  - id: CR003
+    statement: Decagon's Agent Operating Procedures rely on upfront natural language workflow mapping, which creates execution
+      failure risks when encountering complex edge cases, multi-layered policy exceptions, or jurisdiction-specific compliance
+      branches.
+    type: third-party-reported
+    topic: workflow-complexity
+    sourceRefs:
+    - SR002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR002
+  - id: CR004
+    statement: Decagon lacks pre-built standard connectors for legacy enterprise ERPs, employee management systems, or supply
+      chain platforms, restricting operational scope primarily to customer experience and helpdesk environments.
+    type: third-party-reported
+    topic: integration-scope
+    sourceRefs:
+    - SR001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR004
+  - id: CR005
+    statement: Third-party RFP data and user review tracking indicate occasional voice latency and tooling degradations under
+      peak production load for Decagon deployments.
+    type: third-party-reported
+    topic: reliability
+    sourceRefs:
+    - SR003
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR003
+  - id: CR006
+    statement: Decagon operates with opaque, sales-led enterprise pricing with no public rate cards, where observed annual
+      contract values cluster around a median near $432,750 and span roughly $105,000 to $923,183.
+    type: third-party-reported
+    topic: pricing-opacity
+    sourceRefs:
+    - SR001
+    - SR003
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR006
+  - id: CR007
+    statement: The combination of high minimum annual contract commitments and usage-based billing models complicates annual
+      customer expenditure forecasting and creates budget friction for prospective enterprise buyers.
+    type: third-party-reported
+    topic: commercial-risk
+    sourceRefs:
+    - SR001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR006
+  - id: CR008
+    statement: Decagon introduced the Personal Agent Consent & Trust protocol and Personal Agent Gateway to mitigate the risk
+      of unauthorized external personal AI agents accessing enterprise support channels without granular permission scopes.
+    type: observed
+    topic: protocol-security
+    sourceRefs:
+    - SR005
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR005
+  - id: CR009
+    statement: Decagon Assist deploys a shared knowledge base with zero-data-retention enterprise policies and human-in-the-loop
+      copilot controls to mitigate compliance and privacy risks during complex customer escalations.
+    type: company-claimed
+    topic: compliance-mitigation
+    sourceRefs:
+    - SR004
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR001
+  - id: CR010
+    statement: Decagon's platform overlays existing helpdesk tools rather than displacing them, generating a dual-software
+      cost structure and ongoing integration maintenance obligations for enterprise IT departments.
+    type: third-party-reported
+    topic: tco-risk
+    sourceRefs:
+    - SR001
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR004
+  - id: CR011
+    statement: In regulated sectors such as healthcare and financial services, the absence of public explicit resolution commitments
+      exposes buyers to operational bottlenecks when autonomous flows escalate to human support.
+    type: inferred
+    topic: sla-risk
+    sourceRefs:
+    - SR002
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR002
+  - id: CR012
+    statement: Decagon's Voice 3 architecture utilizes a duplex design separating conversational audio handling from a background
+      reasoning and tool-calling model to mitigate voice interruption and latency issues.
+    type: observed
+    topic: voice-mitigation
+    sourceRefs:
+    - SR005
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR003
+  - id: CR013
+    statement: Failure modes in automated action execution across payment and account modification APIs present material financial
+      loss and customer churn exposure if policy guardrails fail.
+    type: inferred
+    topic: execution-risk
+    sourceRefs:
+    - SR002
+    - SR008
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR001
+    - QR008
+  - id: CR014
+    statement: Enterprise reliance on dedicated forward-deployed engineering and vendor-assisted onboarding creates operational
+      scaling bottlenecks as Decagon expands its enterprise customer roster.
+    type: third-party-reported
+    topic: operational-scaling
+    sourceRefs:
+    - SR001
+    - SR003
+    confidence: medium
+    freshness: current
+    answersQuestionRefs:
+    - QR007
+    - QR008
+  evidenceGaps:
+  - type: private-evidence-only
+    severity: material
+    topic: regulatory-compliance
+    missingEvidence: Audited SOC 2 Type II reports, HIPAA business associate agreement terms, and specific third-party penetration
+      testing attestations for autonomous write-action execution.
+    whyItMatters: Without independent security audits, enterprise buyers cannot independently verify whether Decagon's zero-retention
+      policies and API token storage fully insulate enterprise backends from credential leakage or prompt injection attacks.
+    diligencePath: Request unredacted SOC 2 Type II audit report and standard DPA/BAA rider during confidential technical
+      diligence.
+    relatedQuestionRefs:
+    - QR001
+    relatedTableRefs:
+    - TR001
+  - type: missing-source
+    severity: material
+    topic: sla-commitments
+    missingEvidence: Official published SLA terms, contractual resolution rate commitments, and maximum voice latency guarantees
+      across production tiers.
+    whyItMatters: Decagon's competitors such as Notch publish explicit resolution milestones (30% in 90 days, 77% in 12 months),
+      while Decagon keeps resolution rates and latency SLAs private and negotiated on a per-customer basis.
+    diligencePath: Review executed customer order forms and master services agreements for contractual resolution warranties
+      and downtime penalty clauses.
+    relatedQuestionRefs:
+    - QR003
+    relatedTableRefs:
+    - TR002
