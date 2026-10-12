@@ -85,7 +85,7 @@ test('unicorn discovery uses URL-based repository search without creating a repo
   assert.match(discovery.run, /Discovery completed without creating a new report after the bounded retry/u);
 });
 
-for (const scenario of ['first-pass-success', 'retry-success', 'no-candidate', 'reviewed-no-candidate', 'discovery-unavailable', 'process-failure', 'retry-process-failure']) {
+for (const scenario of ['first-pass-success', 'retry-success', 'no-candidate', 'reviewed-no-candidate', 'unknown-website', 'discovery-unavailable', 'process-failure', 'retry-process-failure']) {
   test(`unicorn discovery retains prior decisions without weakening failure gates: ${scenario}`, t => {
     const { root, repo, runner, runId, write, commit } = publicationFixture(t);
     const bin = join(root, 'bin');
@@ -118,7 +118,7 @@ fs.writeFileSync(path.join(cache, 'candidate-review.json'), JSON.stringify({
   schemaVersion: 'unicorn-candidate-review-v1',
   status: process.env.SCENARIO === 'discovery-unavailable' ? 'discovery-unavailable' : process.env.SCENARIO === 'no-candidate' ? undefined : 'no-eligible-candidates',
   outcome: 'Searches returned only companies already in the identity index.', searches,
-  decisions: [{company: 'RobCo', website: 'https://robco.de', sourceUrls: ['https://example.org/funding'], decision: 'reject', reason: 'Already in the identity index.'}],
+  decisions: [{company: 'RobCo', website: process.env.SCENARIO === 'unknown-website' ? null : 'https://robco.de', sourceUrls: ['https://example.org/funding'], decision: 'reject', reason: 'No qualifying valuation evidence.'}],
 }));
 console.log('Rejected RobCo: already in the identity index.');
 if (process.env.SCENARIO === 'first-pass-success' || (process.env.SCENARIO === 'retry-success' && priorCalls === 1)) fs.mkdirSync('reports/${newRun}');
@@ -155,7 +155,8 @@ if (process.env.SCENARIO === 'process-failure' || (process.env.SCENARIO === 'ret
     }
     if (scenario === 'no-candidate') assert.match(generated.stdout, /Discovery completed without creating a new report after the bounded retry/u);
     const output = join(runner, 'output.txt');
-    if (scenario === 'reviewed-no-candidate') {
+    const validNoCandidate = ['reviewed-no-candidate', 'unknown-website'].includes(scenario);
+    if (validNoCandidate) {
       assert.match(readFileSync(output, 'utf8'), /outcome=no-eligible-candidates/u);
       assert.match(readFileSync(join(runner, 'summary.txt'), 'utf8'), /No eligible new candidates; no reports were generated or published/u);
       assert(!existsSync(join(repo, 'reports', newRun)));
@@ -169,7 +170,7 @@ if (process.env.SCENARIO === 'process-failure' || (process.env.SCENARIO === 'ret
     } else {
       assert(!existsSync(output), 'Failed discovery must not emit a successful outcome');
     }
-    if (invalidOutcome || processFailure || scenario === 'reviewed-no-candidate') {
+    if (invalidOutcome || processFailure || validNoCandidate) {
       const staged = execute(steps.find(step => step.name === 'Stage new report files artifact'));
       assert.equal(staged.status, 0, staged.stderr);
       const evidence = join(runner, 'generated-reports-artifact/discovery-evidence');
@@ -184,7 +185,7 @@ if (process.env.SCENARIO === 'process-failure' || (process.env.SCENARIO === 'ret
 }
 
 for (const scenario of [
-  'valid', 'generic-results', 'missing-review', 'invalid-json', 'unavailable', 'missing-outcome',
+  'valid', 'generic-results', 'unknown-website', 'missing-website', 'invalid-website', 'missing-review', 'invalid-json', 'unavailable', 'missing-outcome',
   'unresolved-candidate', 'incomplete-candidate', 'missing-search-cache', 'too-few-searches',
   'repeated-query', 'empty-results', 'invalid-result-url', 'invalid-schema', 'invalid-date',
   'query-mismatch', 'provider-mismatch',
@@ -204,6 +205,9 @@ for (const scenario of [
       }],
     };
     if (scenario === 'generic-results') review.decisions = [];
+    if (scenario === 'unknown-website') review.decisions[0].website = null;
+    if (scenario === 'missing-website') delete review.decisions[0].website;
+    if (scenario === 'invalid-website') review.decisions[0].website = 'not-a-url';
     if (scenario === 'unavailable') review.status = 'discovery-unavailable';
     if (scenario === 'missing-outcome') delete review.outcome;
     if (scenario === 'unresolved-candidate') review.decisions[0].decision = 'selected';
@@ -222,7 +226,7 @@ for (const scenario of [
       };
       writeFileSync(join(root, 'search-results', `${index}.json`), JSON.stringify(result));
     }
-    if (['valid', 'generic-results'].includes(scenario)) {
+    if (['valid', 'generic-results', 'unknown-website'].includes(scenario)) {
       assert.deepEqual(checkNoEligibleCandidates(root), {
         outcome: review.outcome, searchCount: 3, candidateCount: review.decisions.length,
       });

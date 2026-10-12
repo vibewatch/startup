@@ -16,10 +16,10 @@ export function checkNoEligibleCandidates(folder) {
   assert(Array.isArray(review.searches), 'Missing reviewed searches');
   assert(Array.isArray(review.decisions), 'Missing candidate decisions');
   for (const decision of review.decisions) {
-    assert(nonEmpty(decision.company) && httpUrl(decision.website)
+    assert(nonEmpty(decision.company) && (decision.website === null || httpUrl(decision.website))
       && decision.decision === 'reject' && nonEmpty(decision.reason)
       && Array.isArray(decision.sourceUrls) && decision.sourceUrls.length > 0
-      && decision.sourceUrls.every(httpUrl), 'Incomplete or unresolved candidate decision');
+      && decision.sourceUrls.every(httpUrl), `Incomplete or unresolved candidate decision: ${decision.company ?? '(unnamed)'}`);
   }
   const searches = new Map();
   for (const search of review.searches) {
@@ -36,7 +36,7 @@ export function checkNoEligibleCandidates(folder) {
       && nonEmpty(result.query) && nonEmpty(result.provider)
       && Number.isFinite(Date.parse(result.fetchedAt))
       && Array.isArray(result.results) && result.results.every(item => httpUrl(item.url)),
-    `Invalid repository search evidence: ${file}`);
+      `Invalid repository search evidence: ${file}`);
     const search = searches.get(result.query.trim());
     if (search?.provider === result.provider) {
       successfulQueries.add(result.query.trim());
