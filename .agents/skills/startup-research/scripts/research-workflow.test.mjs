@@ -5,6 +5,7 @@ import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, sy
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import yaml from 'js-yaml';
+import { checkNoEligibleCandidates } from './check-unicorn-discovery.mjs';
 
 function workflowSteps(file) {
   const workflow = yaml.load(readFileSync(`.github/workflows/${file}`, 'utf8'));
@@ -84,7 +85,7 @@ test('unicorn discovery uses URL-based repository search without creating a repo
   assert.match(discovery.run, /Discovery completed without creating a new report after the bounded retry/u);
 });
 
-for (const scenario of ['first-pass-success', 'retry-success', 'no-candidate', 'process-failure']) {
+for (const scenario of ['first-pass-success', 'retry-success', 'no-candidate', 'reviewed-no-candidate', 'discovery-unavailable', 'process-failure', 'retry-process-failure']) {
   test(`unicorn discovery retains prior decisions without weakening failure gates: ${scenario}`, t => {
     const { root, repo, runner, runId, write, commit } = publicationFixture(t);
     const bin = join(root, 'bin');
@@ -94,6 +95,8 @@ for (const scenario of ['first-pass-success', 'retry-success', 'no-candidate', '
     writeFileSync(join(runner, 'existing-report-identities.tsv'), 'RobCo\thttps://robco.de\n');
     writeFileSync(join(runner, 'reports-before.txt'), `${runId}\n`);
     write('.research-cache/_fetch-log.jsonl', '');
+    const checker = '.agents/skills/startup-research/scripts/check-unicorn-discovery.mjs';
+    write(checker, readFileSync(checker, 'utf8'));
     commit('Discovery fixture baseline');
     const newRun = '20990101000001-new-company';
     const copilot = join(bin, 'copilot');
@@ -106,11 +109,20 @@ const priorCalls = fs.readFileSync(process.env.DISCOVERY_CALLS, 'utf8').trim().s
 fs.appendFileSync(process.env.DISCOVERY_CALLS, JSON.stringify({ prompt, priorLog: fs.existsSync(path.join(process.env.RUNNER_TEMP, 'copilot-logs/run.log')) ? fs.readFileSync(path.join(process.env.RUNNER_TEMP, 'copilot-logs/run.log'), 'utf8') : '' }) + '\\n');
 const cache = prompt.match(/\\.research-cache\\/[0-9]{14}-unicorn-discovery/)[0];
 fs.mkdirSync(path.join(cache, 'search-results'), { recursive: true });
-fs.writeFileSync(path.join(cache, 'search-results/query.json'), '{"results":[{"url":"https://example.org/funding"}]}\\n');
-fs.writeFileSync(path.join(cache, 'candidate-review.json'), '{"candidates":[{"name":"RobCo","decision":"duplicate","reason":"Already in the identity index."}]}\\n');
+const searches = [1, 2, 3].map(index => ({query: 'Funding query ' + index, provider: 'fixture', result: 'Only indexed companies found.'}));
+for (const [index, search] of searches.entries()) fs.writeFileSync(path.join(cache, 'search-results/query' + index + '.json'), JSON.stringify({
+  schemaVersion: 'startup-search-result-v1', query: search.query, provider: search.provider,
+  fetchedAt: new Date().toISOString(), results: [{url: 'https://example.org/funding'}],
+}));
+fs.writeFileSync(path.join(cache, 'candidate-review.json'), JSON.stringify({
+  schemaVersion: 'unicorn-candidate-review-v1',
+  status: process.env.SCENARIO === 'discovery-unavailable' ? 'discovery-unavailable' : process.env.SCENARIO === 'no-candidate' ? undefined : 'no-eligible-candidates',
+  outcome: 'Searches returned only companies already in the identity index.', searches,
+  decisions: [{company: 'RobCo', website: 'https://robco.de', sourceUrls: ['https://example.org/funding'], decision: 'reject', reason: 'Already in the identity index.'}],
+}));
 console.log('Rejected RobCo: already in the identity index.');
 if (process.env.SCENARIO === 'first-pass-success' || (process.env.SCENARIO === 'retry-success' && priorCalls === 1)) fs.mkdirSync('reports/${newRun}');
-if (process.env.SCENARIO === 'process-failure') process.exit(7);
+if (process.env.SCENARIO === 'process-failure' || (process.env.SCENARIO === 'retry-process-failure' && priorCalls === 1)) process.exit(7);
 `);
     chmodSync(copilot, 0o755);
     const steps = workflowSteps('research-unicorns.yml');
@@ -120,6 +132,7 @@ if (process.env.SCENARIO === 'process-failure') process.exit(7);
         ...process.env, PATH: `${bin}:${process.env.PATH}`, SCENARIO: scenario,
         DISCOVERY_CALLS: callsPath, RUNNER_TEMP: runner,
         GITHUB_STEP_SUMMARY: join(runner, 'summary.txt'),
+        GITHUB_OUTPUT: join(runner, 'output.txt'),
         STARTUP_FETCH_LOG_PATH: join(repo, '.research-cache/_fetch-log.jsonl'),
         COUNT: '1', INDUSTRY: 'Any', MODEL: 'fixture-model', PROFILE: 'fast',
         INDUSTRY_RULE: 'Choose across different sectors.', CUTOFF_DATE: '2097-01-01',
@@ -128,7 +141,9 @@ if (process.env.SCENARIO === 'process-failure') process.exit(7);
     });
     const generated = execute(steps.find(step => step.name === 'Generate recent-unicorn diligence reports'));
     const calls = readFileSync(callsPath, 'utf8').trim().split('\n').map(line => JSON.parse(line));
-    assert.equal(generated.status, scenario === 'no-candidate' ? 1 : scenario === 'process-failure' ? 7 : 0, generated.stderr);
+    const processFailure = ['process-failure', 'retry-process-failure'].includes(scenario);
+    const invalidOutcome = ['no-candidate', 'discovery-unavailable'].includes(scenario);
+    assert.equal(generated.status, invalidOutcome ? 1 : processFailure ? 7 : 0, generated.stderr);
     assert.equal(calls.length, ['first-pass-success', 'process-failure'].includes(scenario) ? 1 : 2);
     assert.match(calls[0].prompt, /coverage hint is a preference, not an eligibility restriction/u);
     assert.match(calls[0].prompt, /including AI \/ application software, infrastructure \/ devtools, fintech, and healthcare \/ biotech/u);
@@ -139,17 +154,79 @@ if (process.env.SCENARIO === 'process-failure') process.exit(7);
       assert.match(calls[1].prompt, /Do not query cloud session history/u);
     }
     if (scenario === 'no-candidate') assert.match(generated.stdout, /Discovery completed without creating a new report after the bounded retry/u);
-    if (scenario === 'no-candidate' || scenario === 'process-failure') {
+    const output = join(runner, 'output.txt');
+    if (scenario === 'reviewed-no-candidate') {
+      assert.match(readFileSync(output, 'utf8'), /outcome=no-eligible-candidates/u);
+      assert.match(readFileSync(join(runner, 'summary.txt'), 'utf8'), /No eligible new candidates; no reports were generated or published/u);
+      assert(!existsSync(join(repo, 'reports', newRun)));
+      for (const name of [
+        'Run authenticated research workers and finalizers', 'Finalize complete generated report folders',
+        'Measure generated report quality', 'Remove incomplete report folders',
+        'Summarize finalized report folders', 'Validate generated reports', 'Commit and publish generated reports',
+      ]) assert.equal(steps.find(step => step.name === name).if, "steps.discovery.outputs.outcome == 'reports-created'");
+    } else if (!invalidOutcome && !processFailure) {
+      assert.match(readFileSync(output, 'utf8'), /outcome=reports-created/u);
+    } else {
+      assert(!existsSync(output), 'Failed discovery must not emit a successful outcome');
+    }
+    if (invalidOutcome || processFailure || scenario === 'reviewed-no-candidate') {
       const staged = execute(steps.find(step => step.name === 'Stage new report files artifact'));
       assert.equal(staged.status, 0, staged.stderr);
       const evidence = join(runner, 'generated-reports-artifact/discovery-evidence');
       assert.match(readFileSync(join(evidence, 'copilot-logs/run.log'), 'utf8'), /Rejected RobCo/u);
       const cache = readFileSync(join(runner, 'unicorn-discovery-folder.txt'), 'utf8').trim();
       assert(existsSync(join(evidence, cache.split('/').at(-1), 'candidate-review.json')));
-      assert(existsSync(join(evidence, cache.split('/').at(-1), 'search-results/query.json')));
+      assert(existsSync(join(evidence, cache.split('/').at(-1), 'search-results/query0.json')));
       const upload = steps.find(step => step.name === 'Preserve generated reports artifact');
       assert.equal(upload.if, 'always()');
     }
+  });
+}
+
+for (const scenario of [
+  'valid', 'generic-results', 'missing-review', 'invalid-json', 'unavailable', 'missing-outcome',
+  'unresolved-candidate', 'incomplete-candidate', 'missing-search-cache', 'too-few-searches',
+  'repeated-query', 'empty-results', 'invalid-result-url', 'invalid-schema', 'invalid-date',
+  'query-mismatch', 'provider-mismatch',
+]) {
+  test(`no-candidate approval requires successful reviewed discovery evidence: ${scenario}`, t => {
+    const root = mkdtempSync(join(tmpdir(), 'unicorn-outcome-test-'));
+    t.after(() => rmSync(root, { recursive: true, force: true }));
+    mkdirSync(join(root, 'search-results'));
+    const review = {
+      schemaVersion: 'unicorn-candidate-review-v1',
+      status: 'no-eligible-candidates',
+      outcome: 'All named candidates are already covered.',
+      searches: [1, 2, 3].map(index => ({ query: `Funding query ${index}`, provider: 'fixture', result: 'Duplicates only.' })),
+      decisions: [{
+        company: 'RobCo', website: 'https://robco.de', sourceUrls: ['https://example.org/funding'],
+        decision: 'reject', reason: 'Already indexed.',
+      }],
+    };
+    if (scenario === 'generic-results') review.decisions = [];
+    if (scenario === 'unavailable') review.status = 'discovery-unavailable';
+    if (scenario === 'missing-outcome') delete review.outcome;
+    if (scenario === 'unresolved-candidate') review.decisions[0].decision = 'selected';
+    if (scenario === 'incomplete-candidate') review.decisions[0].sourceUrls = [];
+    if (scenario !== 'missing-review') writeFileSync(join(root, 'candidate-review.json'),
+      scenario === 'invalid-json' ? '{' : JSON.stringify(review));
+    if (scenario === 'missing-search-cache') rmSync(join(root, 'search-results'), { recursive: true });
+    else for (const [index, search] of review.searches.entries()) {
+      if (scenario === 'too-few-searches' && index === 2) continue;
+      const result = {
+        schemaVersion: scenario === 'invalid-schema' ? 'invalid' : 'startup-search-result-v1',
+        query: scenario === 'repeated-query' ? review.searches[0].query : scenario === 'query-mismatch' ? 'Unreviewed query' : search.query,
+        provider: scenario === 'provider-mismatch' ? 'other-provider' : search.provider,
+        fetchedAt: scenario === 'invalid-date' ? 'invalid' : '2026-10-12T07:00:00Z',
+        results: scenario === 'empty-results' ? [] : [{ url: scenario === 'invalid-result-url' ? 'not-a-url' : 'https://example.org/funding' }],
+      };
+      writeFileSync(join(root, 'search-results', `${index}.json`), JSON.stringify(result));
+    }
+    if (['valid', 'generic-results'].includes(scenario)) {
+      assert.deepEqual(checkNoEligibleCandidates(root), {
+        outcome: review.outcome, searchCount: 3, candidateCount: review.decisions.length,
+      });
+    } else assert.throws(() => checkNoEligibleCandidates(root));
   });
 }
 
