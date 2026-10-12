@@ -430,7 +430,11 @@ function normalizedMetricTokens(value, { includePlainNumbers = false } = {}) {
     '$1$2%$3',
   );
   // A trailing multiplier or percentage applies to both endpoints of a range.
-  const expanded = retention.replace(/\b(\d+(?:[.,]\d+)*)[\s-]*fold\b/gi, '$1x').replace(
+  const financialMultiple = String.raw`(?:revenue|sales|ARR|MRR|EBITDA|EBIT|earnings|book\s+value)`;
+  const expanded = retention.replace(
+    new RegExp(String.raw`\b(\d+(?:[.,]\d+)*)\s+times(?=\s+(?:(?:to|and)\s+(?:(?:nearly|almost|approximately|roughly|about)\s+)?\d+(?:[.,]\d+)*\s+times\s+)?${financialMultiple}\b)`, 'gi'),
+    '$1x',
+  ).replace(/\b(\d+(?:[.,]\d+)*)[\s-]*fold\b/gi, '$1x').replace(
     /(\d+(?:[.,]\d+)*)\s*([-–—])\s*(\d+(?:[.,]\d+)*)\s*(x|×|倍|%)/gi,
     '$1$4$2$3$4',
   );

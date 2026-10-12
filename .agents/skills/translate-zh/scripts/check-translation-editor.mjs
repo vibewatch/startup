@@ -77,6 +77,22 @@ function entryMultiplePair({ header = 'Exit Multiple at 5.6B Entry', target = '�
 
 const checks = [
   ...[
+    ['Selected companies trade near 26 times revenue, with public references from below 1 times to nearly 20 times revenue.', '部分公司估值接近收入的 26 倍，上市参照从低于 1 倍到接近 20 倍收入。', false],
+    ['Selected companies trade near 26 times revenue, with public references from below 1 times to nearly 20 times revenue.', '部分公司估值接近收入的 25 倍，上市参照从低于 1 倍到接近 20 倍收入。', true],
+    ['Selected companies trade near 26 times revenue, with public references from below 1 times to nearly 20 times revenue.', '部分公司估值接近收入的 26 倍，上市参照接近 20 倍收入。', true],
+    ['Selected companies trade near 26 times revenue.', '部分公司估值接近收入的 26 倍和 26 倍。', true],
+    ['Selected companies trade near 2.5 times ARR and 10 times EBITDA.', '部分公司估值接近 2.5 倍 ARR 和 10 倍 EBITDA。', false],
+    ['Selected companies trade near 2.5 times ARR and 10 times EBITDA.', '部分公司估值接近 2.6 倍 ARR 和 10 倍 EBITDA。', true],
+    ['Selected companies trade near 5-10 times revenue.', '部分公司估值接近收入的 5–10 倍。', false],
+    ['Selected companies trade near 5-10 times revenue.', '部分公司估值接近收入的 6–10 倍。', true],
+    ['Customers logged in 26 times.', '客户登录了 26 次。', false],
+    ['Customers logged in 26 times.', '客户登录了 26 倍。', true],
+  ].map(([en, zh, fails]) => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor: true })
+      .some(issue => issue.code === 'metric-preservation') === fails,
+    `financial times multipliers must preserve quantities without treating occurrence counts as multiples: ${en} / ${zh}`,
+  ]),
+  ...[
     ...[
       ['No public pricing or customer-specific qualification data retained', '未留存公开定价或客户特定认证数据'],
       ['No public quote sheet or exhaustive installed-base list retained', '未留存公开报价单或完整装机基础清单'],

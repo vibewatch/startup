@@ -23,8 +23,11 @@ export function checkNoEligibleCandidates(folder) {
   }
   const searches = new Map();
   for (const search of review.searches) {
-    assert(nonEmpty(search.query) && nonEmpty(search.provider) && nonEmpty(search.result),
-      'Incomplete search review');
+    const structured = search.result && typeof search.result === 'object' && !Array.isArray(search.result)
+      && nonEmpty(search.result.note) && /^search-results\/[a-zA-Z0-9_-]+\.json$/.test(search.result.cacheFile)
+      && Number.isInteger(search.result.resultCount) && search.result.resultCount >= 0;
+    assert(nonEmpty(search.query) && nonEmpty(search.provider) && (nonEmpty(search.result) || structured),
+      `Incomplete search review: ${search.query ?? '(missing query)'}`);
     searches.set(search.query.trim(), search);
   }
   const successfulQueries = new Set();
@@ -39,6 +42,10 @@ export function checkNoEligibleCandidates(folder) {
       `Invalid repository search evidence: ${file}`);
     const search = searches.get(result.query.trim());
     if (search?.provider === result.provider) {
+      if (typeof search.result === 'object') {
+        assert.equal(search.result.cacheFile, `search-results/${file}`, 'Search review points to different cached evidence');
+        assert.equal(search.result.resultCount, result.results.length, 'Search review result count differs from cached evidence');
+      }
       successfulQueries.add(result.query.trim());
       resultCount += result.results.length;
     }

@@ -85,7 +85,7 @@ test('unicorn discovery uses URL-based repository search without creating a repo
   assert.match(discovery.run, /Discovery completed without creating a new report after the bounded retry/u);
 });
 
-for (const scenario of ['first-pass-success', 'retry-success', 'no-candidate', 'reviewed-no-candidate', 'unknown-website', 'discovery-unavailable', 'process-failure', 'retry-process-failure']) {
+for (const scenario of ['first-pass-success', 'retry-success', 'no-candidate', 'reviewed-no-candidate', 'structured-search-review', 'unknown-website', 'discovery-unavailable', 'process-failure', 'retry-process-failure']) {
   test(`unicorn discovery retains prior decisions without weakening failure gates: ${scenario}`, t => {
     const { root, repo, runner, runId, write, commit } = publicationFixture(t);
     const bin = join(root, 'bin');
@@ -114,6 +114,9 @@ for (const [index, search] of searches.entries()) fs.writeFileSync(path.join(cac
   schemaVersion: 'startup-search-result-v1', query: search.query, provider: search.provider,
   fetchedAt: new Date().toISOString(), results: [{url: 'https://example.org/funding'}],
 }));
+if (process.env.SCENARIO === 'structured-search-review') searches.forEach((search, index) => {
+  search.result = {cacheFile: 'search-results/query' + index + '.json', resultCount: 1, candidatesMentioned: [], note: 'Only indexed companies found.'};
+});
 fs.writeFileSync(path.join(cache, 'candidate-review.json'), JSON.stringify({
   schemaVersion: 'unicorn-candidate-review-v1',
   status: process.env.SCENARIO === 'discovery-unavailable' ? 'discovery-unavailable' : process.env.SCENARIO === 'no-candidate' ? undefined : 'no-eligible-candidates',
@@ -155,7 +158,7 @@ if (process.env.SCENARIO === 'process-failure' || (process.env.SCENARIO === 'ret
     }
     if (scenario === 'no-candidate') assert.match(generated.stdout, /Discovery completed without creating a new report after the bounded retry/u);
     const output = join(runner, 'output.txt');
-    const validNoCandidate = ['reviewed-no-candidate', 'unknown-website'].includes(scenario);
+    const validNoCandidate = ['reviewed-no-candidate', 'structured-search-review', 'unknown-website'].includes(scenario);
     if (validNoCandidate) {
       assert.match(readFileSync(output, 'utf8'), /outcome=no-eligible-candidates/u);
       assert.match(readFileSync(join(runner, 'summary.txt'), 'utf8'), /No eligible new candidates; no reports were generated or published/u);
@@ -189,6 +192,7 @@ for (const scenario of [
   'unresolved-candidate', 'incomplete-candidate', 'missing-search-cache', 'too-few-searches',
   'repeated-query', 'empty-results', 'invalid-result-url', 'invalid-schema', 'invalid-date',
   'query-mismatch', 'provider-mismatch',
+  'structured-search-review', 'missing-review-note', 'wrong-cache-file', 'wrong-result-count', 'arbitrary-review-object',
 ]) {
   test(`no-candidate approval requires successful reviewed discovery evidence: ${scenario}`, t => {
     const root = mkdtempSync(join(tmpdir(), 'unicorn-outcome-test-'));
@@ -212,6 +216,18 @@ for (const scenario of [
     if (scenario === 'missing-outcome') delete review.outcome;
     if (scenario === 'unresolved-candidate') review.decisions[0].decision = 'selected';
     if (scenario === 'incomplete-candidate') review.decisions[0].sourceUrls = [];
+    if (['structured-search-review', 'missing-review-note', 'wrong-cache-file', 'wrong-result-count', 'arbitrary-review-object'].includes(scenario)) {
+      review.searches.forEach((search, index) => {
+        search.result = {
+          cacheFile: scenario === 'wrong-cache-file' ? 'search-results/wrong.json' : `search-results/${index}.json`,
+          resultCount: scenario === 'wrong-result-count' ? 100 : 1,
+          candidatesMentioned: [],
+          note: 'Only indexed companies found.',
+        };
+        if (scenario === 'missing-review-note') delete search.result.note;
+        if (scenario === 'arbitrary-review-object') search.result = { arbitrary: true };
+      });
+    }
     if (scenario !== 'missing-review') writeFileSync(join(root, 'candidate-review.json'),
       scenario === 'invalid-json' ? '{' : JSON.stringify(review));
     if (scenario === 'missing-search-cache') rmSync(join(root, 'search-results'), { recursive: true });
@@ -226,7 +242,7 @@ for (const scenario of [
       };
       writeFileSync(join(root, 'search-results', `${index}.json`), JSON.stringify(result));
     }
-    if (['valid', 'generic-results', 'unknown-website'].includes(scenario)) {
+    if (['valid', 'generic-results', 'unknown-website', 'structured-search-review'].includes(scenario)) {
       assert.deepEqual(checkNoEligibleCandidates(root), {
         outcome: review.outcome, searchCount: 3, candidateCount: review.decisions.length,
       });
