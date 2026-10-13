@@ -85,7 +85,7 @@ test('unicorn discovery uses URL-based repository search without creating a repo
   assert.match(discovery.run, /Discovery completed without creating a new report after the bounded retry/u);
 });
 
-for (const scenario of ['first-pass-success', 'retry-success', 'no-candidate', 'reviewed-no-candidate', 'structured-search-review', 'unknown-website', 'discovery-unavailable', 'process-failure', 'retry-process-failure']) {
+for (const scenario of ['first-pass-success', 'retry-success', 'no-candidate', 'reviewed-no-candidate', 'diagnostic-repair', 'structured-search-review', 'unknown-website', 'discovery-unavailable', 'process-failure', 'retry-process-failure']) {
   test(`unicorn discovery retains prior decisions without weakening failure gates: ${scenario}`, t => {
     const { root, repo, runner, runId, write, commit } = publicationFixture(t);
     const bin = join(root, 'bin');
@@ -106,7 +106,7 @@ const path = require('node:path');
 const args = process.argv.slice(2);
 const prompt = args[args.indexOf('-p') + 1];
 const priorCalls = fs.readFileSync(process.env.DISCOVERY_CALLS, 'utf8').trim().split('\\n').filter(Boolean).length;
-fs.appendFileSync(process.env.DISCOVERY_CALLS, JSON.stringify({ prompt, priorLog: fs.existsSync(path.join(process.env.RUNNER_TEMP, 'copilot-logs/run.log')) ? fs.readFileSync(path.join(process.env.RUNNER_TEMP, 'copilot-logs/run.log'), 'utf8') : '' }) + '\\n');
+fs.appendFileSync(process.env.DISCOVERY_CALLS, JSON.stringify({ prompt, priorLog: fs.existsSync(path.join(process.env.RUNNER_TEMP, 'copilot-logs/run.log')) ? fs.readFileSync(path.join(process.env.RUNNER_TEMP, 'copilot-logs/run.log'), 'utf8') : '', diagnostics: fs.existsSync(path.join(process.env.RUNNER_TEMP, 'copilot-logs/discovery-check.log')) ? fs.readFileSync(path.join(process.env.RUNNER_TEMP, 'copilot-logs/discovery-check.log'), 'utf8') : '' }) + '\\n');
 const cache = prompt.match(/\\.research-cache\\/[0-9]{14}-unicorn-discovery/)[0];
 fs.mkdirSync(path.join(cache, 'search-results'), { recursive: true });
 const searches = [1, 2, 3].map(index => ({query: 'Funding query ' + index, provider: 'fixture', result: 'Only indexed companies found.'}));
@@ -117,6 +117,7 @@ for (const [index, search] of searches.entries()) fs.writeFileSync(path.join(cac
 if (process.env.SCENARIO === 'structured-search-review') searches.forEach((search, index) => {
   search.result = {cacheFile: 'search-results/query' + index + '.json', resultCount: 1, candidatesMentioned: [], note: 'Only indexed companies found.'};
 });
+if (process.env.SCENARIO === 'diagnostic-repair' && priorCalls === 0) searches[0].result = {arbitrary: true};
 fs.writeFileSync(path.join(cache, 'candidate-review.json'), JSON.stringify({
   schemaVersion: 'unicorn-candidate-review-v1',
   status: process.env.SCENARIO === 'discovery-unavailable' ? 'discovery-unavailable' : process.env.SCENARIO === 'no-candidate' ? undefined : 'no-eligible-candidates',
@@ -151,14 +152,18 @@ if (process.env.SCENARIO === 'process-failure' || (process.env.SCENARIO === 'ret
     assert.match(calls[0].prompt, /coverage hint is a preference, not an eligibility restriction/u);
     assert.match(calls[0].prompt, /including AI \/ application software, infrastructure \/ devtools, fintech, and healthcare \/ biotech/u);
     assert.match(calls[0].prompt, /candidate-review\.json/u);
+    assert.match(calls[0].prompt, /Use a plain nonempty string for each search result explanation/u);
+    assert.match(calls[0].prompt, /before returning run node .*check-unicorn-discovery\.mjs/u);
     if (calls.length === 2) {
       assert.match(calls[1].prompt, /Read .*copilot-logs\/run\.log.*candidate-review\.json/u);
       assert.match(calls[1].priorLog, /Rejected RobCo/u);
       assert.match(calls[1].prompt, /Do not query cloud session history/u);
+      assert.match(calls[1].prompt, /discovery-check\.log.*actual repository checker findings/u);
     }
+    if (scenario === 'diagnostic-repair') assert.match(calls[1].diagnostics, /Incomplete search review: Funding query 1/u);
     if (scenario === 'no-candidate') assert.match(generated.stdout, /Discovery completed without creating a new report after the bounded retry/u);
     const output = join(runner, 'output.txt');
-    const validNoCandidate = ['reviewed-no-candidate', 'structured-search-review', 'unknown-website'].includes(scenario);
+    const validNoCandidate = ['reviewed-no-candidate', 'diagnostic-repair', 'structured-search-review', 'unknown-website'].includes(scenario);
     if (validNoCandidate) {
       assert.match(readFileSync(output, 'utf8'), /outcome=no-eligible-candidates/u);
       assert.match(readFileSync(join(runner, 'summary.txt'), 'utf8'), /No eligible new candidates; no reports were generated or published/u);
@@ -193,6 +198,7 @@ for (const scenario of [
   'repeated-query', 'empty-results', 'invalid-result-url', 'invalid-schema', 'invalid-date',
   'query-mismatch', 'provider-mismatch',
   'structured-search-review', 'missing-review-note', 'wrong-cache-file', 'wrong-result-count', 'arbitrary-review-object',
+  'summary-cache-review', 'foreign-cache-folder', 'traversal-cache-path', 'missing-cache-reference', 'empty-summary',
 ]) {
   test(`no-candidate approval requires successful reviewed discovery evidence: ${scenario}`, t => {
     const root = mkdtempSync(join(tmpdir(), 'unicorn-outcome-test-'));
@@ -228,6 +234,18 @@ for (const scenario of [
         if (scenario === 'arbitrary-review-object') search.result = { arbitrary: true };
       });
     }
+    if (['summary-cache-review', 'foreign-cache-folder', 'traversal-cache-path', 'missing-cache-reference', 'empty-summary'].includes(scenario)) {
+      review.searches.forEach((search, index) => {
+        search.result = {
+          cachedResults: `.research-cache/${root.split('/').at(-1)}/search-results/${index}.json`,
+          summary: 'Only indexed companies found.',
+        };
+        if (scenario === 'foreign-cache-folder') search.result.cachedResults = `.research-cache/other-folder/search-results/${index}.json`;
+        if (scenario === 'traversal-cache-path') search.result.cachedResults = `.research-cache/${root.split('/').at(-1)}/search-results/../search-results/${index}.json`;
+        if (scenario === 'missing-cache-reference') delete search.result.cachedResults;
+        if (scenario === 'empty-summary') search.result.summary = '';
+      });
+    }
     if (scenario !== 'missing-review') writeFileSync(join(root, 'candidate-review.json'),
       scenario === 'invalid-json' ? '{' : JSON.stringify(review));
     if (scenario === 'missing-search-cache') rmSync(join(root, 'search-results'), { recursive: true });
@@ -242,7 +260,7 @@ for (const scenario of [
       };
       writeFileSync(join(root, 'search-results', `${index}.json`), JSON.stringify(result));
     }
-    if (['valid', 'generic-results', 'unknown-website', 'structured-search-review'].includes(scenario)) {
+    if (['valid', 'generic-results', 'unknown-website', 'structured-search-review', 'summary-cache-review'].includes(scenario)) {
       assert.deepEqual(checkNoEligibleCandidates(root), {
         outcome: review.outcome, searchCount: 3, candidateCount: review.decisions.length,
       });

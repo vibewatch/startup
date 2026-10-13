@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import assert from 'node:assert/strict';
 import { appendFileSync, readFileSync, readdirSync } from 'node:fs';
-import { join, resolve } from 'node:path';
+import { basename, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const nonEmpty = value => typeof value === 'string' && value.trim().length > 0;
@@ -23,12 +23,21 @@ export function checkNoEligibleCandidates(folder) {
   }
   const searches = new Map();
   for (const search of review.searches) {
+    const cacheFile = search.result?.cacheFile ?? search.result?.cachedResults;
+    const normalizedCacheFile = nonEmpty(cacheFile) && (
+      /^search-results\/[a-zA-Z0-9_-]+\.json$/.test(cacheFile) ? cacheFile
+        : cacheFile.startsWith(`.research-cache/${basename(resolve(folder))}/search-results/`)
+          && /^[a-zA-Z0-9_-]+\.json$/.test(basename(cacheFile))
+          && cacheFile === `.research-cache/${basename(resolve(folder))}/search-results/${basename(cacheFile)}`
+          ? `search-results/${basename(cacheFile)}` : null
+    );
     const structured = search.result && typeof search.result === 'object' && !Array.isArray(search.result)
-      && nonEmpty(search.result.note) && /^search-results\/[a-zA-Z0-9_-]+\.json$/.test(search.result.cacheFile)
-      && Number.isInteger(search.result.resultCount) && search.result.resultCount >= 0;
+      && nonEmpty(search.result.note ?? search.result.summary) && normalizedCacheFile
+      && (search.result.resultCount === undefined
+        || Number.isInteger(search.result.resultCount) && search.result.resultCount >= 0);
     assert(nonEmpty(search.query) && nonEmpty(search.provider) && (nonEmpty(search.result) || structured),
       `Incomplete search review: ${search.query ?? '(missing query)'}`);
-    searches.set(search.query.trim(), search);
+    searches.set(search.query.trim(), { ...search, cacheFile: normalizedCacheFile });
   }
   const successfulQueries = new Set();
   let resultCount = 0;
@@ -43,8 +52,10 @@ export function checkNoEligibleCandidates(folder) {
     const search = searches.get(result.query.trim());
     if (search?.provider === result.provider) {
       if (typeof search.result === 'object') {
-        assert.equal(search.result.cacheFile, `search-results/${file}`, 'Search review points to different cached evidence');
-        assert.equal(search.result.resultCount, result.results.length, 'Search review result count differs from cached evidence');
+        assert.equal(search.cacheFile, `search-results/${file}`, 'Search review points to different cached evidence');
+        if (search.result.resultCount !== undefined) {
+          assert.equal(search.result.resultCount, result.results.length, 'Search review result count differs from cached evidence');
+        }
       }
       successfulQueries.add(result.query.trim());
       resultCount += result.results.length;
