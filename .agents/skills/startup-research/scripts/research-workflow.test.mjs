@@ -17,6 +17,13 @@ test('workflow-only pushes trigger full main validation', () => {
   assert(workflow.on.push.paths.includes('.github/workflows/**'));
 });
 
+test('production deployment passes the configured Analytics ID to the website build', () => {
+  const steps = workflowSteps('validate-main.yml');
+  const validation = steps.find(step => step.name === 'Run full validation');
+  assert.equal(validation.env.PUBLIC_GA_ID, '${{ vars.PUBLIC_GA_ID }}');
+  assert.equal(validation.run, 'npm run validate');
+});
+
 for (const file of ['company.yml', 'refresh-company.yml', 'research-unicorns.yml', 'translate-reports-zh.yml', 'benchmark-synthesis-models.yml']) {
   for (const scenario of ['healthy', 'version-lookup-failure', 'platform-download-failure', 'missing-platform']) {
     test(`Copilot installation requires a working version-matched native package: ${file}/${scenario}`, t => {
