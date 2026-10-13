@@ -77,6 +77,24 @@ function entryMultiplePair({ header = 'Exit Multiple at 5.6B Entry', target = '�
 
 const checks = [
   ...[
+    ['失灵的原因：缺乏官方支持的系统、脆弱的物理控制过程。', false],
+    ['公司的产品，客户的系统，团队的流程。', false],
+    ['公司的产品,客户的系统,团队的流程。', false],
+    ['公司的产品\n客户的系统\n团队的流程。', false],
+    ['公司的产品的用户的需求。', true],
+    ['原因：公司的产品的用户的需求。', true],
+    ['系统、公司的产品的用户的需求。', true],
+  ].map(([zh, warned]) => [
+    checkPairQuality(fullReport('The workflow has industrial operating constraints.'), fullReport(zh))
+      .some(issue => issue.code === 'dense-de-chain') === warned,
+    `dense noun chains must stay within a phrase, without crossing punctuation or list boundaries: ${zh}`,
+  ]),
+  [
+    checkPairQuality(fullReport('The workflow has industrial operating constraints.'), fullReport('公司的产品的用户的需求。'))
+      .some(issue => issue.code === 'dense-de-chain' && issue.message.includes('的产品的用户的')),
+    'dense noun-chain diagnostics must identify the offending span for targeted repair',
+  ],
+  ...[
     ['Selected companies trade near 26 times revenue, with public references from below 1 times to nearly 20 times revenue.', '部分公司估值接近收入的 26 倍，上市参照从低于 1 倍到接近 20 倍收入。', false],
     ['Selected companies trade near 26 times revenue, with public references from below 1 times to nearly 20 times revenue.', '部分公司估值接近收入的 25 倍，上市参照从低于 1 倍到接近 20 倍收入。', true],
     ['Selected companies trade near 26 times revenue, with public references from below 1 times to nearly 20 times revenue.', '部分公司估值接近收入的 26 倍，上市参照接近 20 倍收入。', true],

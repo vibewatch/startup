@@ -915,12 +915,13 @@ function walk(en, zh, path, whitelist, issues, options) {
       message: 'half-width punctuation appears between Chinese characters',
     });
   }
-  if (/的[^。！？；]{0,10}的[^。！？；]{0,10}的/u.test(zh)) {
+  const denseDeChain = zh.match(/的[^。！？；，、：,.!?;:\n]{0,10}的[^。！？；，、：,.!?;:\n]{0,10}的/u);
+  if (denseDeChain) {
     pushWarning(issues, {
       path: path.join('/'),
       kind: 'style',
       code: 'dense-de-chain',
-      message: 'three 的 particles appear in a short span; flatten the noun phrase',
+      message: `three 的 particles appear in a short span; flatten the noun phrase: ${denseDeChain[0]}`,
     });
   }
   if (/[\u4e00-\u9fff]/u.test(zh)) {

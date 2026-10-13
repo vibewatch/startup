@@ -417,6 +417,10 @@ must not satisfy either check.
 The `在…层面` soundcheck does not cross a comma or colon: `风险在于，公开控制仍是政策层面的`
 is not that construction. A genuine `在政策层面` in another clause still needs
 rewriting.
+The dense-`的` advisory likewise stays within a phrase: colons, commas, list
+separators and line breaks separate phrases. `失灵的原因：缺乏官方支持的系统、脆弱的物理控制过程`
+is a list, not one stacked noun phrase. Diagnostics include the actual matched
+span; repair that phrase rather than rewriting an unrelated opening sentence.
 Descriptor checks preserve a relative route such as `/platform` only when the
 same route appears in the English leaf. A separate untranslated `platform` or
 `product` still produces an advisory. Price denominators such as
