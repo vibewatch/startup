@@ -266,7 +266,7 @@ Currency-marked amounts, accounting-style parentheses, signed values, and
 shared-unit ranges are not reinterpreted as grouped scalar counts. This fallback
 compares quantities and occurrences, not the meaning of the bounds or units.
 An otherwise mismatched metric set can recognize exact verbal tripling as
-`3x` / `3倍`, using complete numeric occurrences and paired month/year anchors.
+`3x` / `3倍`, including `threefold`, using complete numeric occurrences and paired month/year anchors.
 Existing explicit multiplier tokens that already agree are left alone.
 `triple-digit`, `triple-A`, and `tripling down` are not multipliers here.
 Signed, ranged, approximate, increment-based, and ambiguous `翻…倍` multiplier expressions

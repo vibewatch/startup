@@ -642,9 +642,9 @@ function equivalentHalfShareMetrics(source, target) {
 }
 
 function equivalentTripledMetrics(source, target) {
-  if (!/\btripl(?:e|ed|ing)\b/i.test(source)) return false;
+  if (!/\b(?:tripl(?:e|ed|ing)|threefold)\b/i.test(source)) return false;
   const quantities = normalizeQuantityWords(`${source}\n${target}`);
-  if (/\b(?:nearly|almost|roughly|about|approximately|over|more than|less than|at least|at most)\s+tripl(?:e|ed|ing)\b/i.test(source)
+  if (/\b(?:nearly|almost|roughly|about|approximately|over|more than|less than|at least|at most)\s+(?:tripl(?:e|ed|ing)|threefold)\b/i.test(source)
       || /\b(?:doubl(?:e|ed|es|ing)|quadrupl(?:e|ed|es|ing)|quintupl(?:e|ed|es|ing)|twice|thrice)\b/i.test(source)
       || /(?:增加|增长|提高|提升|上涨|上升|扩大|翻)(?:了)?\s*(?:约|大约)?\s*\d+(?:\.\d+)?\s*(?:x\b|×|倍)/iu.test(target)
       || /(?:超过|超出|不到|不足|接近|大约|约|至少|至多|最多|多于|少于)\s*\d+(?:\.\d+)?\s*(?:x\b|×|倍)|\d+(?:\.\d+)?\s*(?:x\b|×|倍)\s*(?:以上|以下|左右|上下|多|余)/iu.test(target)
@@ -661,10 +661,10 @@ function equivalentTripledMetrics(source, target) {
     },
   );
   const expanded = expandMonths(source).replace(
-    /(?<![\w./@-])(?:tripled|tripling|triple(?=\s+(?:the|its|their|our)\b))\b(?![-/]|\.[a-z]|\s+(?:down|up)\b)/gi,
+    /(?<![\w./@-])(?:threefold|tripled|tripling|triple(?=\s+(?:the|its|their|our)\b))\b(?![-/]|\.[a-z]|\s+(?:down|up)\b)/gi,
     '3x',
   );
-  if (expanded === source || /\btripl(?:e|ed|ing)\b/i.test(expanded)) return false;
+  if (expanded === source || /\b(?:tripl(?:e|ed|ing)|threefold)\b/i.test(expanded)) return false;
   const expandedTarget = expandMonths(target);
   return [false, true].some((normalizeGroupedCounts) => {
     const options = { normalizeMonths: true, allowUnconverted: true, normalizeGroupedCounts };
