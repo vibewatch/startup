@@ -1,0 +1,742 @@
+schemaVersion: report-v2
+artifact: risks
+slug: tempo
+runDate: '2026-10-13'
+company:
+  name: Tempo
+chapter:
+  number: 7
+  title: Risks
+  summary: Tempo specialized stablecoin payments architecture achieves sub-second deterministic finality and eliminates gas token friction, but carries significant structural risks. Chief among these are single-client operational vulnerability under Reth, governance concentration among an enterprise-whitelisted validator cartel, and commercial defection risks stemming from Stripe sponsor dominance.
+sections:
+  - id: legal-and-regulatory-exposure
+    title: Legal and Regulatory Exposure Across Multi-Jurisdiction Payments
+    body: Tempo strategic orientation toward global enterprise settlement places it squarely within complex and evolving regulatory perimeters. Unlike decentralized protocols that rely on jurisdictional ambiguity, Tempo deliberately embeds compliance infrastructure—including transaction allowlists, blocklists, and ISO 20022 message metadata—into its protocol layers. This design choice aims to reassure institutional partners such as Deutsche Bank and Standard Chartered by harmonizing on-chain flows with established anti-money laundering and know-your-customer regimes. However, this explicit regulatory accommodation creates its own distinct set of legal liabilities. By maintaining an identifiable, whitelisted validator consortium and protocol-level transaction screening, Tempo presents regulators with an unmistakable corporate counterparty structure. Prominent legal commentators and industry architects have noted that permissioned networks operate with single points of regulatory compulsion, making them susceptible to state enforcement actions, mandatory transaction freezing orders, and potential licensing reclassification under federal and international banking authorities.
+    claimRefs:
+      - CR002
+      - CR005
+      - CR009
+    tableRefs:
+      - TR001
+  - id: operational-and-infrastructure-vulnerabilities
+    title: Operational Reliability and Single-Client Protocol Fragility
+    body: On an operational level, Tempo technological design prioritizes extreme transaction throughput and sub-second finality over architectural redundancy. The network relies upon Paradigm Rust-based Reth execution client as its sole execution engine, combined with the Simplex Byzantine Fault Tolerant consensus protocol implemented via Commonware. While this tight integration achieves deterministic finality in approximately 500 milliseconds and supports theoretical capacities exceeding 100,000 transactions per second, it introduces acute single-client vulnerability. Ethereum historical resilience stems from a multi-client ecosystem where consensus bugs in one implementation do not halt the wider network. In contrast, an execution defect or state desynchronization bug in Reth would directly incapacitate Tempo entire validator set. Given that a critical bug in Reth previously caused synced Ethereum nodes to stall during testing, deploying institutional payment infrastructure on a monoculture client stack constitutes a material operational hazard that could interrupt real-time merchant payouts and commercial liquidity flows.
+    claimRefs:
+      - CR001
+      - CR007
+      - CR008
+      - CR011
+      - CR014
+    tableRefs:
+      - TR002
+  - id: partner-governance-and-sponsor-concentration
+    title: Partner Governance, Validator Centralization, and Sponsor Captivity
+    body: Governance dynamics and counterparty concentration represent another critical axis of structural exposure for Tempo. The project is heavily anchored by its incubating sponsors, Stripe and Paradigm. Matt Huang serves simultaneously as Tempo chief executive officer, managing partner of Paradigm, and a member of Stripe board of directors, concentrating strategic decision-making within a tightly knit leadership cadre. Furthermore, Stripe concurrent acquisitions of Bridge for stablecoin issuance and Privy for embedded wallet key management create a vertically integrated loop in which Tempo serves as the foundational settlement rail. While this alignment guarantees immediate distribution across Stripe merchant base, it creates acute channel conflict for external financial institutions. Competing payment processors, card networks, and regional banks may hesitate to route substantial transaction volume through a rail whose primary architect and beneficiary is their direct commercial adversary, risking structural adoption ceilings outside Stripe proprietary ecosystem.
+    claimRefs:
+      - CR003
+      - CR004
+      - CR010
+      - CR013
+    tableRefs:
+      - TR003
+  - id: financial-unit-economics-and-thesis-break-triggers
+    title: Financial Model Viability, Risk Synthesis, and Thesis-Break Triggers
+    body: Tempo long-term commercial viability depends on reconciling low-margin payment processing economics with its substantial $5 billion private valuation. Having raised $500 million in October 2025, the company possesses extensive capital reserves to subsidize network bootstrapping. However, its stablecoin-native fee model—which abstracts volatile gas tokens in favor of payment-token fees routed through an internal automated market maker—relies on high transaction velocity rather than speculative gas fee surges to generate sustainable network revenue. If corporate enterprise partners fail to transition from exploratory design partnerships into high-volume production corridors, or if incumbent payment rails compress take rates faster than on-chain volume expands, Tempo unit economics will face severe margin compression. Investors must monitor explicit thesis-break triggers, specifically persistent validator whitelist concentration beyond 2027, execution client downtime incidents, or defecting marquee design partners such as Visa or Shopify.
+    claimRefs:
+      - CR006
+      - CR012
+    figureRefs:
+      - FR001
+tables:
+  - id: TR001
+    title: Regulatory / legal risk register
+    columns:
+      - Risk & Rule / License / Case
+      - Jurisdiction
+      - Status
+      - Likelihood
+      - Severity
+      - Mitigation Maturity
+      - Residual Exposure
+      - Diligence Path
+    rows:
+      - - Money Transmission & Custodial Broker-Dealer Classification
+        - US (FinCEN / State MSB)
+        - Uncertain
+        - Medium
+        - Critical
+        - Developing
+        - High
+        - Audit state MSB licenses, FinCEN registrations, and FinCEN guidance compliance opinions.
+      - - Banking Sanctions & Protocol-Level Asset Freezing Directives
+        - US (OFAC) & EU
+        - Enacted
+        - High
+        - High
+        - Partial
+        - Medium
+        - Review protocol allowlist/blocklist architecture and compliance enforcement workflows.
+      - - Validator Liability & Unregistered Clearing Agency Exposure
+        - US (SEC / CFTC)
+        - Active Scrutiny
+        - Medium
+        - High
+        - Early
+        - High
+        - Examine legal memoranda regarding validator consortium exemption under securities laws.
+      - - Cross-Border Data Localization & ISO 20022 Privacy Compliance
+        - EU / Global
+        - Enacted
+        - Low
+        - Medium
+        - Robust
+        - Low
+        - Verify ISO 20022 messaging structures against GDPR and cross-border financial privacy rules.
+    enumerationScope:
+      coverage: partial
+      basis: Public regulatory disclosures, money transmitter licenses, and financial compliance frameworks across the US and international jurisdictions as of October 2026.
+    notes: Regulatory register synthesizes public compliance filings, banking messaging standards, and financial enforcement actions. Coverage is partial due to non-public state licensing applications.
+    claimRefs:
+      - CR002
+      - CR005
+      - CR009
+  - id: TR002
+    title: Operational / quality / security risk register
+    columns:
+      - Failure Mode
+      - Likelihood
+      - Severity
+      - Mitigation Maturity
+      - Residual Exposure
+      - Unresolved Diligence Gap
+    rows:
+      - - Reth Execution Client Monoculture Crash
+        - Medium
+        - Critical
+        - Early
+        - High
+        - Client multi-implementation roadmap and disaster recovery failover protocols.
+      - - Simplex BFT Liveness Halt Under Partition
+        - Low
+        - Critical
+        - Developing
+        - Medium
+        - Empirical testnet stress test results under adversarial network partition conditions.
+      - - Enshrined FeeAMM Liquidity Drain / Depeg
+        - Medium
+        - High
+        - Developing
+        - High
+        - Audited smart contract mechanics and on-chain oracle dependency specifications.
+      - - Validator Cartel Collusion / Governance Capture
+        - Low
+        - High
+        - Early
+        - High
+        - Validator operating agreements, slashing rules, and multi-party governance charters.
+    notes: Operational risk register assesses failure modes across consensus, execution, and economic abstraction layers. Residual exposure accounts for current permissioned testnet configurations.
+    claimRefs:
+      - CR001
+      - CR007
+      - CR008
+  - id: TR003
+    title: Partner / dependency risk register
+    columns:
+      - Dependency Category
+      - Key Counterparty
+      - Strategic Role
+      - Concentration Level
+      - Failure / Defection Scenario
+      - Severity
+      - Mitigation
+      - Residual Exposure
+    rows:
+      - - Core Technology Sponsor
+        - Paradigm
+        - Execution Engine & Research Backbone
+        - High
+        - Core developer allocation withdrawal or leadership transition
+        - Critical
+        - Open-source codebase and internal developer onboarding
+        - High
+      - - Commercial Distribution Sponsor
+        - Stripe
+        - Primary Merchant Volume & Settlement Channel
+        - Critical
+        - Stripe commercial deprioritization or rival rail acquisition
+        - Critical
+        - Third-party enterprise design partner diversification
+        - High
+      - - Card Network Distribution
+        - Visa
+        - Card Settlement & Validator Node Operator
+        - Medium
+        - Visa defection to alternative high-throughput rail
+        - High
+        - Dual settlement partnerships with Mastercard and Deutsche Bank
+        - Medium
+      - - Wallet Infrastructure
+        - Privy
+        - End-User Key Management & Account Abstraction
+        - High
+        - Privy security vulnerability or proprietary licensing restriction
+        - Medium
+        - EVM compatibility enabling alternative smart account standards
+        - Low
+    notes: Partner risk register evaluates concentration across governance, distribution, client engineering, and developer tooling. Ratings represent independent research synthesis.
+    claimRefs:
+      - CR003
+      - CR004
+      - CR010
+figures:
+  - id: FR001
+    title: Risk heatmap
+    type: matrix
+    summary: Comparative risk heatmap evaluating Tempo primary technical, regulatory, governance, and market risks across likelihood, impact, mitigation maturity, and residual severity.
+    data:
+      columns:
+        - Likelihood
+        - Impact
+        - Mitigation Maturity
+        - Residual Severity
+      rows:
+        - label: Client Monoculture / Node Bug
+          values:
+            - text: Medium
+              tone: warning
+            - text: Critical
+              tone: risk
+            - text: Early
+              tone: risk
+            - text: Critical
+              tone: risk
+        - label: Validator Cartel Centralization
+          values:
+            - text: High
+              tone: risk
+            - text: High
+              tone: risk
+            - text: Developing
+              tone: warning
+            - text: High
+              tone: risk
+        - label: Sponsor Captivity & Channel Conflict
+          values:
+            - text: High
+              tone: risk
+            - text: High
+              tone: risk
+            - text: Early
+              tone: risk
+            - text: High
+              tone: risk
+        - label: Regulatory Enforcement & Licensing Reclassification
+          values:
+            - text: Medium
+              tone: warning
+            - text: Critical
+              tone: risk
+            - text: Developing
+              tone: warning
+            - text: High
+              tone: risk
+        - label: FeeAMM Smart Contract Liquidity Depeg
+          values:
+            - text: Low
+              tone: positive
+            - text: Critical
+              tone: risk
+            - text: Developing
+              tone: warning
+            - text: Medium
+              tone: warning
+        - label: Enterprise Volume Inertia & Take Rate Compression
+          values:
+            - text: High
+              tone: risk
+            - text: Medium
+              tone: warning
+            - text: Developing
+              tone: warning
+            - text: Medium
+              tone: warning
+    approximationNotes: Qualitative risk scoring synthesized from comparative blockchain infrastructure failure modes, regulatory enforcement precedents, and reported sponsor architecture.
+    claimRefs:
+      - CR001
+      - CR007
+      - CR008
+      - CR012
+callouts:
+  - calloutType: risk
+    title: Single-Client Execution Vulnerability and Chain Halt Exposure
+    body: Tempo reliance on Paradigm Reth client as its sole execution layer creates acute systemic vulnerability. Unlike Ethereum, where client diversity cushions individual software bugs, an unpatched defect in Reth could trigger an immediate network-wide halt, paralyzing institutional settlement.
+    claimRefs:
+      - CR007
+      - CR008
+  - calloutType: insight
+    title: Corporate Governance Duality and Enterprise Partner Hesitation
+    body: While Stripe incubation provides immediate distribution and marquee design partners, competing financial institutions face structural channel conflict. Independent payment processors and rival banks risk becoming dependent on infrastructure steered by a key competitor.
+    claimRefs:
+      - CR003
+      - CR004
+      - CR010
+localEvidence:
+  searchQueries:
+    - query: '"Tempo" Private blockchain payments infrastructure company building an Ethereum-compatible Layer 1 optimized for site:tempo.xyz product company'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs:
+        - SR007
+    - query: '"Tempo" Private blockchain payments infrastructure company building an Ethereum-compatible Layer 1 optimized for funding valuation revenue customers leadership launches 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs:
+        - SR005
+        - SR002
+    - query: '"Tempo" Private blockchain payments infrastructure company building an Ethereum-compatible Layer 1 optimized for lawsuit regulatory outage breach complaints risks 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs:
+        - SR006
+        - SR008
+        - SR002
+    - query: '"Tempo" Private blockchain payments infrastructure company building an Ethereum-compatible Layer 1 optimized for Live paid production volume, take rate, and gross-margin evidence by major partner or corridor are still undisclosed. 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs:
+        - SR001
+    - query: '"Tempo" Private blockchain payments infrastructure company building an Ethereum-compatible Layer 1 optimized for founders leadership funding headquarters company profile 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: '"Tempo" Private blockchain payments infrastructure company building an Ethereum-compatible Layer 1 optimized for launch history investors team governance 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: '"Tempo" Private blockchain payments infrastructure company building an Ethereum-compatible Layer 1 optimized for Current cap table, liquidation preferences, board composition, and any token-linked economics senior to common equity remain private. 2026'
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs:
+        - SR005
+    - query: '"Tempo" Private blockchain payments infrastructure company building an Ethereum-compatible Layer 1 optimized for market size segmentation demand adoption'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs:
+        - SR005
+        - SR003
+    - query: '"Tempo" Private blockchain payments infrastructure company building an Ethereum-compatible Layer 1 optimized for industry trends buyer needs spending addressable market'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs:
+        - SR005
+        - SR003
+    - query: '"Tempo" Private blockchain payments infrastructure company building an Ethereum-compatible Layer 1 optimized for Design-partner conversion into contracted, revenue-bearing customers is still only partially evidenced in public sources. 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs:
+        - SR003
+    - query: '"Tempo" Private blockchain payments infrastructure company building an Ethereum-compatible Layer 1 optimized for alternatives competitors positioning differentiation'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs:
+        - SR005
+        - SR003
+    - query: '"Tempo" Private blockchain payments infrastructure company building an Ethereum-compatible Layer 1 optimized for competitive comparison pricing capabilities customer tradeoffs 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs:
+        - SR003
+    - query: '"Tempo" Private blockchain payments infrastructure company building an Ethereum-compatible Layer 1 optimized for revenue model profitability unit economics commercial traction 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs:
+        - SR003
+    - query: '"Tempo" Private blockchain payments infrastructure company building an Ethereum-compatible Layer 1 optimized for product architecture technology technical documentation'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs:
+        - SR005
+    - query: '"Tempo" Private blockchain payments infrastructure company building an Ethereum-compatible Layer 1 optimized for technical design integrations performance scalability'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs:
+        - SR003
+    - query: '"Tempo" Private blockchain payments infrastructure company building an Ethereum-compatible Layer 1 optimized for operational financial regulatory legal risks limitations 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs:
+        - SR001
+        - SR002
+        - SR003
+    - query: '"Tempo" Private blockchain payments infrastructure company building an Ethereum-compatible Layer 1 optimized for reliability execution dependencies adverse evidence'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs:
+        - SR004
+    - query: '"Tempo" Private blockchain payments infrastructure company building an Ethereum-compatible Layer 1 optimized for funding round seed series acquisition 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs:
+        - SR004
+  researchQuestions:
+    - id: QR001
+      question: How does Tempo permissioned validator whitelist structure affect network censorship resistance and regulatory exposure?
+      type: adverse
+      targets:
+        - contentRequirements/0
+        - plannedFigures/risk-heatmap
+      status: answered
+    - id: QR002
+      question: What specific regulatory compliance standards and money transmission frameworks does Tempo integrate into its protocol?
+      type: enumeration
+      targets:
+        - contentRequirements/1
+        - plannedTables/regulatory-legal-risk-register
+      status: answered
+    - id: QR003
+      question: What systemic failure modes arise from Tempo exclusive reliance on Paradigm Reth client as its primary execution engine?
+      type: adverse
+      targets:
+        - contentRequirements/2
+        - plannedTables/operational-quality-security-risk-register
+      status: answered
+    - id: QR004
+      question: How do overlapping governance roles between Stripe, Paradigm, and Tempo influence corporate neutrality and third-party bank adoption?
+      type: mechanism
+      targets:
+        - contentRequirements/3
+        - plannedTables/partner-dependency-risk-register
+      status: answered
+    - id: QR005
+      question: What capital reserves and valuation metrics underpin Tempo runway to subsidize stablecoin fee abstraction?
+      type: quantification
+      targets:
+        - contentRequirements/4
+      status: answered
+    - id: QR006
+      question: How does Tempo verify sub-second finality and 100,000 TPS claims under adversarial or congested network conditions?
+      type: verification
+      targets:
+        - contentRequirements/5
+      status: answered
+    - id: QR007
+      question: What legal liabilities do permissioned validator operators face under potential regulatory enforcement actions?
+      type: adverse
+      targets:
+        - contentRequirements/1
+        - contentRequirements/2
+      status: answered
+    - id: QR008
+      question: What commercial incentives prevent competing payment processors from routing transaction volume through a Stripe-incubated network?
+      type: mechanism
+      targets:
+        - contentRequirements/3
+      status: answered
+    - id: QR009
+      question: What quantitative take-rate economics and unit profitability thresholds are required for Tempo to sustain network operations?
+      type: quantification
+      targets:
+        - contentRequirements/4
+        - contentRequirements/5
+      status: unresolved
+  sources:
+    - id: SR001
+      publisher: Kiln
+      title: 'Inside Tempo: Stripe''s stablecoin payments blockchain'
+      url: https://www.kiln.fi/post/inside-tempo-stripes-stablecoin-payments-blockchain
+      date: '2026-06-23'
+      accessDate: '2026-10-13'
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: independent
+      topics:
+        - validators
+        - architecture
+        - settlement
+      keyQuote: Tempo launched with a permissioned validator set, with external validators including Visa, Stripe, and Zodia Custody (Standard Chartered). The network is expected to expand validator participation toward a more open model as it matures. Validator participation is currently by whitelist, based on a direct relationship with the Tempo team.
+    - id: SR002
+      publisher: OneBullEx
+      title: 'Tempo Blockchain: How Stripe’s $5B Payments Chain Is Reshaping Stablecoin Infrastructure in 2026 – OneBullEx Blog'
+      url: https://www.onebullex.com/blog/tempo-blockchain-stablecoin-payments
+      date: '2026-10-13'
+      accessDate: '2026-10-13'
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: low
+      independence: independent
+      topics:
+        - infrastructure
+        - payments
+      keyQuote: null
+    - id: SR003
+      publisher: Stablecoin Insider
+      title: 'Stripe Quietly Builds ‘Tempo’: A Merchant-Focused Blockchain to Rival Payments Infrastructure'
+      url: https://www.stablecoininsider.com/stripe-build-tempo-blockchain/
+      date: '2025-08-12'
+      accessDate: '2026-10-13'
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics:
+        - strategy
+        - blockchain-comparison
+        - acquisitions
+      keyQuote: In October 2024, the company acquired Bridge, a stablecoin issuance and infrastructure platform, in a $1.1 billion deal. More recently, Stripe purchased crypto wallet startup Privy, signaling a coordinated strategy to own more of the transaction stack particularly stablecoin flows end-to-end.
+    - id: SR004
+      publisher: insights4vc
+      title: 'Tempo: Stripe’s Blockchain for Stablecoin Payments'
+      url: https://insights4vc.substack.com/p/tempo-stripes-blockchain-for-stablecoin
+      date: '2025-09-04'
+      accessDate: '2026-10-13'
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics:
+        - acquisitions
+        - stack-integration
+        - decentralization-roadmap
+      keyQuote: 'Together, Bridge + Privy + Tempo form a vertically-integrated loop: Bridge handles stablecoin liquidity and compliance (including custody of reserves and KYC/AML checks), Privy handles wallet creation and key management for end-users, and Tempo will process the on-chain transactions.'
+    - id: SR005
+      publisher: Tempo
+      title: Tempo — Move money at internet speed
+      url: https://tempo.xyz/
+      date: '2026-10-13'
+      accessDate: '2026-10-13'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics:
+        - official-product
+        - kpis
+        - compliance
+      keyQuote: Tempo is a purpose-built blockchain for stablecoin financial products.
+    - id: SR006
+      publisher: BlockEden.xyz
+      title: 'Tempo Blockchain: How Stripe and Paradigm Are Rebuilding the $190T Settlement Layer - BlockEden.xyz'
+      url: https://blockeden.xyz/blog/2025/09/21/tempo-institutional-payment-chain-iso20022-stripe/
+      date: '2025-09-21'
+      accessDate: '2026-10-13'
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: independent
+      topics:
+        - simplex-bft
+        - iso20022
+        - payment-lanes
+      keyQuote: The transition to a permissionless model will be the critical test of whether Tempo can maintain enterprise-grade reliability while decentralizing. The sequencing suggests the team understands that institutional trust must be earned before it can be distributed.
+    - id: SR007
+      publisher: Atomic Wallet
+      title: What Is Tempo.xyz? Stripe’s Stablecoin Blockchain Explained
+      url: https://atomicwallet.io/academy/articles/what-is-tempo-xyz
+      date: '2025-09-11'
+      accessDate: '2026-10-13'
+      accessStatus: ok
+      stance: neutral
+      sourceType: other
+      reputationTier: medium
+      independence: independent
+      topics:
+        - architecture
+        - compliance-tooling
+        - gas-abstraction
+      keyQuote: Inbuilt compliance tooling, like allow/blocklists and KYT ... SELECTIVE privacy functionality for enterprise-level confidentiality ... Validator model starting with permissioned nodes, moving towards decentralization over time
+    - id: SR008
+      publisher: Blockworks
+      title: 'Upping Tempo: Stripe’s planned L1 challenges Ethereum to move faster'
+      url: https://blockworks.com/news/tempo-stripe-paradigm-planned-l1
+      date: '2025-09-09'
+      accessDate: '2026-10-13'
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics:
+        - validator-centralization
+        - single-client-risk
+        - regulatory-exposure
+      keyQuote: For Tempo, launching with Reth as its primary execution engine, an episode like that could plausibly halt the chain.
+  claims:
+    - id: CR001
+      statement: Tempo operates on a permissioned validator whitelist with initial participation restricted to designated enterprise partners including Visa, Stripe, and Zodia Custody.
+      type: observed
+      topic: validator-centralization
+      sourceRefs:
+        - SR001
+        - SR005
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QR001
+    - id: CR002
+      statement: Tempo integrates ISO 20022 messaging structures directly into its core protocol architecture to align on-chain transaction metadata with commercial banking reconciliation standards.
+      type: observed
+      topic: compliance-integration
+      sourceRefs:
+        - SR006
+        - SR005
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QR002
+    - id: CR003
+      statement: Stripe vertical integration of Bridge for stablecoin issuance and Privy for embedded wallets creates deep structural dependency on Stripe-controlled infrastructure for end-to-end payment flows.
+      type: third-party-reported
+      topic: sponsor-dependency
+      sourceRefs:
+        - SR003
+        - SR004
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR004
+    - id: CR004
+      statement: Matt Huang leads Tempo as chief executive while simultaneously serving as co-founder and managing partner of co-sponsor Paradigm and sitting on Stripe board of directors.
+      type: observed
+      topic: governance-concentration
+      sourceRefs:
+        - SR001
+        - SR004
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR004
+    - id: CR005
+      statement: Tempo protocol incorporates compliance tooling including address allowlists, blocklists, and know-your-transaction monitoring capabilities for regulated issuers.
+      type: company-claimed
+      topic: regulatory-compliance
+      sourceRefs:
+        - SR007
+        - SR005
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QR002
+    - id: CR006
+      statement: Tempo raised $500 million in a Series A financing round led by Thrive Capital and Greenoaks in October 2025 at a $5 billion post-money valuation.
+      type: third-party-reported
+      topic: financing-valuation
+      sourceRefs:
+        - SR001
+        - SR006
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs:
+        - QR005
+    - id: CR007
+      statement: Tempo utilizes Paradigm Rust-based Reth execution client as its primary execution engine rather than maintaining multiple independent client implementations.
+      type: observed
+      topic: client-monoculture
+      sourceRefs:
+        - SR001
+        - SR008
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR003
+    - id: CR008
+      statement: A single execution client architecture exposes Tempo to chain halts if critical consensus or state execution defects occur within Reth.
+      type: third-party-reported
+      topic: operational-resilience
+      sourceRefs:
+        - SR008
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR003
+        - QR007
+    - id: CR009
+      statement: Payment industry participants have criticized corporate-controlled blockchain consortia as creating identifiable targets vulnerable to regulatory enforcement and legal liability.
+      type: third-party-reported
+      topic: regulatory-exposure
+      sourceRefs:
+        - SR008
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR007
+    - id: CR010
+      statement: Stripe position as primary commercial sponsor creates channel conflict risks for competing payment processors and independent banks evaluating Tempo as neutral settlement infrastructure.
+      type: inferred
+      topic: channel-conflict
+      sourceRefs:
+        - SR008
+        - SR003
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR008
+    - id: CR011
+      statement: Tempo Simplex BFT consensus protocol pipelines proposal and voting phases to achieve deterministic finality in approximately 500 milliseconds without blockchain reorganizations.
+      type: company-claimed
+      topic: settlement-finality
+      sourceRefs:
+        - SR006
+        - SR001
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR006
+    - id: CR012
+      statement: Transaction fees on Tempo are denominated and settled in approved stablecoins via an integrated market maker rather than requiring a volatile native network token.
+      type: observed
+      topic: fee-model
+      sourceRefs:
+        - SR006
+        - SR007
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR005
+    - id: CR013
+      statement: Tempo launched with external design partners evaluating payment workflows including Visa, Deutsche Bank, Shopify, Revolut, Nubank, and DoorDash.
+      type: observed
+      topic: design-partners
+      sourceRefs:
+        - SR001
+        - SR004
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR001
+    - id: CR014
+      statement: Tempo claims theoretical throughput exceeding 100,000 transactions per second with dedicated payment lanes reserved for stablecoin settlement.
+      type: company-claimed
+      topic: throughput-capacity
+      sourceRefs:
+        - SR006
+        - SR007
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QR006
+  evidenceGaps:
+    - type: enumeration-incomplete
+      severity: material
+      topic: regulatory-compliance
+      missingEvidence: Comprehensive state-by-state money transmission license filings and international financial conduct authority approval documentation.
+      whyItMatters: Without public licensing disclosures, Tempo exposure to regulatory injunctions or mandatory operational suspension cannot be fully quantified.
+      diligencePath: Request legal regulatory opinion letters, state MSB application statuses, and FinCEN registration numbers under diligence confidentiality.
+      relatedTableRefs:
+        - TR001
+      relatedQuestionRefs:
+        - QR009
+    - type: missing-source
+      severity: material
+      topic: financial-model-risk
+      missingEvidence: Audited fee split agreements between Tempo, validator operators, and liquidity providers for stablecoin gas abstraction.
+      whyItMatters: Tempo subsidizes or abstracts native gas volatility via an enshrined AMM, creating financial margin risk if conversion spreads do not cover operating costs.
+      diligencePath: Review internal treasury model projections, validator compensation schedules, and AMM liquidity provider agreements with management.
+      relatedQuestionRefs:
+        - QR009
