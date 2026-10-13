@@ -2915,7 +2915,12 @@ try {
     const child = spawnSync('git', args, { cwd: fixtureRoot, encoding: 'utf8' });
     assert.equal(child.status, 0, child.stderr);
   }
-  const publicationEnv = { ...process.env, REPORT_IDS: publicationIds.join('\n'), RUNNER_TEMP: approvalRoot };
+  const publicationOutput = join(approvalRoot, 'publication-outputs.txt');
+  const publicationEnv = {
+    ...process.env, REPORT_IDS: publicationIds.join('\n'), EDITORIAL_REPORT_IDS: publicationIds.join('\n'),
+    RUNNER_TEMP: approvalRoot, GITHUB_OUTPUT: publicationOutput,
+    GITHUB_STEP_SUMMARY: join(approvalRoot, 'summary.md'),
+  };
   const snapshotStep = workflowSteps.find(step => step.name === 'Snapshot publication approval inputs');
   assert.ok(snapshotStep);
   const snapshot = spawnSync('bash', ['-c', snapshotStep.run], {
@@ -2926,16 +2931,36 @@ try {
     const document = (text) => artifact === 'full-report'
       ? fullReport(text) : { artifact, summary: { headline: text } };
     const target = join(fixtureRoot, 'reports', publicationIds[1], `${artifact}.zh.yaml`);
-    for (const [candidate, expectedStatus] of [[changedMetric, 1], [strictTranslationese, 1], [clean, 0]]) {
+    for (const [candidate, rejected] of [[changedMetric, true], [strictTranslationese, true], [clean, false]]) {
       assert.equal(checkPairQuality(document(source.subtitle), document(candidate.subtitle))
         .filter((issue) => issue.severity === 'error').length, 0, 'fixture must pass the weaker draft gate');
       writeFileSync(target, JSON.stringify(document(candidate.subtitle)));
+      writeFileSync(publicationOutput, '');
       const child = spawnSync('bash', ['-c', verificationStep.run], {
         cwd: fixtureRoot, encoding: 'utf8',
         env: publicationEnv,
       });
-      assert.equal(child.status, expectedStatus, `${artifact}: ${child.stdout}\n${child.stderr}`);
-      if (expectedStatus !== 0) assert.ok(child.stderr.includes(`publication-candidate/${artifact}.zh.yaml`), child.stderr);
+      assert.equal(child.status, 0, `${artifact}: ${child.stdout}\n${child.stderr}`);
+      const outputs = readFileSync(publicationOutput, 'utf8');
+      assert.ok(outputs.startsWith(`count=${rejected ? 1 : 2}\nfailedCount=${rejected ? 1 : 0}\n`), outputs);
+      const approvedIds = outputs.match(/(?:^|\n)reportIds<<REPORTS\n([\s\S]*?)\nREPORTS/u)[1].split('\n');
+      assert.deepEqual(approvedIds, rejected ? [publicationIds[0]] : publicationIds,
+        'strict metric/style failures must exclude only the failing report, not the clean control');
+      if (rejected) {
+        const diagnostic = readFileSync(join(approvalRoot, 'copilot-logs', `publication-check-${publicationIds[1]}.log`), 'utf8');
+        assert.ok(diagnostic.includes(`publication-candidate/${artifact}.zh.yaml`), diagnostic);
+        assert.equal(readFileSync(target, 'utf8'), JSON.stringify(document(clean.subtitle)),
+          'failed generated output must be restored before corpus validation');
+        const preserved = join(approvalRoot, 'translation-publication-failures', publicationIds[1], `${artifact}.zh.yaml`);
+        assert.equal(readFileSync(preserved, 'utf8'), JSON.stringify(document(candidate.subtitle)),
+          'the strict failure must remain inspectable after restoration');
+        const outcomeStep = workflowSteps.find(step => step.name === 'Report incomplete translation batch');
+        const outcome = spawnSync('bash', ['-c', outcomeStep.run], {
+          cwd: fixtureRoot, encoding: 'utf8',
+          env: { ...publicationEnv, FAILED_REPORT_IDS: publicationIds[1] },
+        });
+        assert.equal(outcome.status, 1, 'partial publication must retain an explicit failed-report signal');
+      }
     }
   }
   const repairDir = join(fixtureRoot, 'reports', 'repair-fixture');

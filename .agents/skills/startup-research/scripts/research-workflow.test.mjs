@@ -391,16 +391,18 @@ fs.appendFileSync(process.env.GRADE_LOG, JSON.stringify(['npm', ...process.argv.
   chmodSync(join(bin, 'npm'), 0o755);
   writeFileSync(join(runner, 'reports-new.txt'), `${runId}\n`);
   const env = {
-    ...process.env, PATH: `${bin}:${process.env.PATH}`, REPORT_IDS: runId,
+    ...process.env, PATH: `${bin}:${process.env.PATH}`, REPORT_IDS: runId, EDITORIAL_REPORT_IDS: runId,
     RUNNER_TEMP: runner, GRADE_LOG: gradeLog, SAFE_LABEL: 'fixture', LABEL: 'fixture',
     GH_TOKEN: 'fixture-startup-token',
     GITHUB_STEP_SUMMARY: join(runner, 'summary.txt'),
+    GITHUB_OUTPUT: join(runner, 'outputs.txt'),
   };
   const steps = workflowSteps(file);
   const execute = step => spawnSync('bash', ['-c', step.run
     .replaceAll('${{ github.ref_name }}', 'main')
     .replaceAll('${{ github.run_id }}', '123')
     .replaceAll('${{ steps.targets.outputs.count }}', '1')
+    .replaceAll('${{ steps.approved.outputs.count }}', '1')
     .replaceAll('${{ secrets.GITHUB_TOKEN }}', 'fixture-only-token')], {
     cwd: repo, env, encoding: 'utf8', timeout: 20000,
   });
@@ -412,6 +414,243 @@ fs.appendFileSync(process.env.GRADE_LOG, JSON.stringify(['npm', ...process.argv.
     ...fixture, steps, execute, gradeLog,
     grades: () => readFileSync(gradeLog, 'utf8').trim().split('\n').filter(Boolean).map(line => JSON.parse(line)),
   };
+}
+
+for (const scenario of ['healthy', 'incomplete-once', 'invalid-quality-once', 'incomplete-always', 'process-failure', 'recovery-process-failure', 'checker-edit', 'recovery-checker-edit']) {
+  test(`translation batches isolate draft failures without bypassing gates: ${scenario}`, t => {
+    const { root, repo, runner, approval, runId, script, write, run, commit } = publicationFixture(t);
+    const reports = [runId, '20990101000001-second', '20990101000002-third'];
+    const bin = join(root, 'bin');
+    const events = join(root, 'draft-events.jsonl');
+    mkdirSync(bin);
+    writeFileSync(events, '');
+    for (const report of reports.slice(1)) {
+      for (const artifact of ['summary-card', 'full-report']) write(`reports/${report}/${artifact}.yaml`, 'amount: $10M\n');
+    }
+    const checker = '.agents/skills/translate-zh/scripts/check-translation-quality.mjs';
+    write(checker, `
+import fs from 'node:fs';
+const output = process.argv[3];
+fs.appendFileSync(process.env.DRAFT_EVENTS, JSON.stringify({ kind: 'quality', output }) + '\\n');
+if (fs.readFileSync(output, 'utf8').includes('invalid-draft')) {
+  console.error('fixture: missing uncertainty qualifier');
+  process.exit(1);
+}
+`);
+    const commands = {
+      npm: `
+const fs = require('node:fs');
+const report = process.argv.at(-1);
+fs.appendFileSync(process.env.DRAFT_EVENTS, JSON.stringify({ kind: 'verify', report }) + '\\n');
+for (const artifact of ['summary-card', 'full-report']) {
+  if (!fs.existsSync('reports/' + report + '/' + artifact + '.zh.yaml')) {
+    console.error('fixture: missing ' + artifact + '.zh.yaml');
+    process.exit(1);
+  }
+}
+`,
+      copilot: `
+const fs = require('node:fs');
+const path = require('node:path');
+const args = process.argv.slice(2);
+const prompt = args[args.indexOf('-p') + 1];
+const report = prompt.match(/Assigned report folder: reports\\/([^\\s]+)/)[1];
+const prior = fs.readFileSync(process.env.DRAFT_EVENTS, 'utf8').trim().split('\\n').filter(Boolean).map(line => JSON.parse(line));
+const attempt = prior.filter(event => event.kind === 'copilot' && event.report === report).length + 1;
+const diagnostic = path.join(process.env.RUNNER_TEMP, 'copilot-logs', 'draft-check-' + report + '.log');
+fs.appendFileSync(process.env.DRAFT_EVENTS, JSON.stringify({ kind: 'copilot', report, attempt, prompt, diagnostics: fs.existsSync(diagnostic) ? fs.readFileSync(diagnostic, 'utf8') : '' }) + '\\n');
+const scenario = process.env.SCENARIO;
+const first = report === ${JSON.stringify(runId)};
+if (first && (scenario === 'process-failure' || (scenario === 'recovery-process-failure' && attempt === 2))) process.exit(7);
+const incomplete = first && (scenario === 'incomplete-always' || (attempt === 1 && ['incomplete-once', 'recovery-process-failure', 'recovery-checker-edit'].includes(scenario)));
+const invalid = first && scenario === 'invalid-quality-once' && attempt === 1;
+fs.writeFileSync('reports/' + report + '/summary-card.zh.yaml', 'amount: $10M\\n');
+if (incomplete) {
+  const cache = '.translate-cache/' + report + '/parts';
+  fs.mkdirSync(cache, { recursive: true });
+  fs.writeFileSync(cache + '/part.000.yaml', 'body: retained sparse draft\\n');
+} else fs.writeFileSync('reports/' + report + '/full-report.zh.yaml', invalid ? 'invalid-draft\\n' : 'amount: $10M\\n');
+if (scenario === 'checker-edit' || (scenario === 'recovery-checker-edit' && attempt === 2)) fs.writeFileSync(${JSON.stringify(checker)}, 'process.exit(0);\\n');
+console.log('Changes +1 -0');
+`,
+    };
+    for (const [name, body] of Object.entries(commands)) {
+      writeFileSync(join(bin, name), `#!${process.execPath}\n${body}`);
+      chmodSync(join(bin, name), 0o755);
+    }
+    commit('Per-report draft fixture inputs');
+    const snapshot = run(script, 'snapshot', approval, 'translation', ...reports);
+    assert.equal(snapshot.status, 0, snapshot.stderr);
+    const step = workflowSteps('translate-reports-zh.yml').find(step => step.name === 'Translate selected reports');
+    const result = spawnSync('bash', ['-c', step.run], {
+      cwd: repo, encoding: 'utf8', timeout: 20000,
+      env: {
+        ...process.env, PATH: `${bin}:${process.env.PATH}`, REPORT_IDS: reports.join('\n'),
+        RUNNER_TEMP: runner, GITHUB_STEP_SUMMARY: join(runner, 'summary.md'),
+        GITHUB_OUTPUT: join(runner, 'outputs.txt'),
+        MODEL: 'fixture', EFFORT: '', DRAFT_EVENTS: events, SCENARIO: scenario,
+      },
+    });
+    const recorded = readFileSync(events, 'utf8').trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
+    const calls = recorded.filter(event => event.kind === 'copilot');
+    const scopeViolation = scenario.includes('checker-edit');
+    const success = ['healthy', 'incomplete-once', 'invalid-quality-once'].includes(scenario);
+    assert.equal(result.status, scopeViolation ? 1 : 0, result.stderr);
+    for (const call of calls) {
+      assert.match(call.prompt, /Wait for every part worker to finish/u);
+      for (const other of reports.filter(report => report !== call.report)) assert(!call.prompt.includes(other));
+    }
+    if (success) {
+      assert.deepEqual(calls.map(call => call.report), scenario === 'healthy' ? reports : [runId, ...reports]);
+      for (const report of reports.slice(0, -1)) {
+        const next = reports[reports.indexOf(report) + 1];
+        const qualityIndex = recorded.findLastIndex(event => event.kind === 'quality' && event.output === `reports/${report}/full-report.zh.yaml`);
+        const nextIndex = recorded.findIndex(event => event.kind === 'copilot' && event.report === next);
+        assert(qualityIndex >= 0 && qualityIndex < nextIndex, 'the next report started before the previous draft passed quality');
+      }
+    } else if (scopeViolation) {
+      assert(calls.every(call => call.report === runId), 'scope violations must block subsequent drafts');
+    } else {
+      assert(calls.some(call => call.report === reports[1]), 'failed drafts must not prevent independent reports from being translated');
+      assert.match(readFileSync(join(runner, 'outputs.txt'), 'utf8'), /count=2\nreportIds<<REPORTS\n20990101000001-second\n20990101000002-third\nREPORTS/u);
+    }
+    if (['incomplete-once', 'invalid-quality-once', 'incomplete-always', 'recovery-process-failure', 'recovery-checker-edit'].includes(scenario)) {
+      assert.equal(calls.filter(call => call.report === runId).length, 2, 'completion retry must be bounded to one');
+      assert.match(calls[1].prompt, /Resume the existing sparse cache/u);
+      assert.match(calls[1].diagnostics, scenario === 'invalid-quality-once' ? /missing uncertainty qualifier/u : /missing full-report\.zh\.yaml/u);
+      const evidence = join(runner, 'translation-draft-failures', runId, 'before-recovery');
+      assert(existsSync(join(evidence, 'full-report.yaml')));
+      assert(existsSync(join(evidence, 'draft-check.log')));
+      if (scenario !== 'invalid-quality-once') assert(existsSync(join(evidence, 'cache/parts/part.000.yaml')));
+      if (['incomplete-always', 'recovery-process-failure'].includes(scenario)) {
+        assert(existsSync(join(runner, 'translation-draft-failures', runId, 'after-recovery/draft-check.log')));
+      }
+    }
+    if (scenario.includes('checker-edit')) {
+      assert.match(result.stderr, /outside publication output scope/u);
+      assert.equal(recorded.filter(event => event.kind === 'verify').length, scenario === 'checker-edit' ? 0 : 1,
+        'modified checkers must not grade draft output');
+    }
+    const packaging = workflowSteps('translate-reports-zh.yml').find(step => step.name === 'Stage new translated files artifact');
+    assert.match(packaging.run, /translation-draft-failures/u);
+  });
+}
+
+for (const scenario of ['all-valid', 'mixed', 'none-valid', 'unprepared', 'scope-violation']) {
+  test(`translation publication preserves independently approved reports: ${scenario}`, t => {
+    const { repo, runner, approval, runId, script, write, run, commit, git } = publicationFixture(t);
+    const reports = [runId, '20990101000001-invalid', '20990101000002-incomplete'];
+    const grades = join(runner, 'strict-checks.jsonl');
+    const output = join(runner, 'publication-outputs.txt');
+    writeFileSync(grades, '');
+    for (const report of reports.slice(1)) {
+      for (const artifact of ['summary-card', 'full-report']) write(`reports/${report}/${artifact}.yaml`, 'body: source\n');
+    }
+    const priorSummary = 'body: prior partial overlay\n';
+    write(`reports/${reports[2]}/summary-card.zh.yaml`, priorSummary);
+    write('.agents/skills/translate-zh/scripts/check-translation.mjs', `
+import fs from 'node:fs';
+const report = process.argv[2];
+fs.appendFileSync(process.env.STRICT_GRADES, JSON.stringify(process.argv.slice(2)) + '\\n');
+for (const artifact of ['summary-card', 'full-report']) {
+  if (!fs.existsSync(report + '/' + artifact + '.zh.yaml')) {
+    console.error('fixture: missing final overlay');
+    process.exit(1);
+  }
+}
+`);
+    const qualityChecker = '.agents/skills/translate-zh/scripts/check-translation-quality.mjs';
+    write(qualityChecker, `
+import fs from 'node:fs';
+fs.appendFileSync(process.env.STRICT_GRADES, JSON.stringify(process.argv.slice(2)) + '\\n');
+if (fs.readFileSync(process.argv[3], 'utf8').includes('invalid')) {
+  console.error('fixture: strict semantic failure');
+  process.exit(1);
+}
+`);
+    commit('Partial publication baseline');
+    const snapshot = run(script, 'snapshot', approval, 'translation', ...reports);
+    assert.equal(snapshot.status, 0, snapshot.stderr);
+    for (const [index, report] of reports.entries()) {
+      write(`reports/${report}/summary-card.zh.yaml`, 'body: new summary\n');
+      if (scenario === 'all-valid' || index < 2) {
+        write(`reports/${report}/full-report.zh.yaml`,
+          scenario === 'all-valid' || (index === 0 && scenario !== 'none-valid') ? 'body: good translation\n' : 'body: invalid translation\n');
+      }
+    }
+    if (scenario === 'scope-violation') write(qualityChecker, 'process.exit(0);\n');
+    const steps = workflowSteps('translate-reports-zh.yml');
+    const verify = steps.find(step => step.name === 'Verify selected translations');
+    assert.equal(verify.env.EDITORIAL_REPORT_IDS, '${{ steps.editorial_results.outputs.reportIds }}',
+      'publication candidates must finish editorial acceptance or successful draft restoration');
+    const env = {
+      ...process.env, REPORT_IDS: reports.join('\n'),
+      EDITORIAL_REPORT_IDS: (scenario === 'unprepared' ? reports.slice(1) : reports).join('\n'),
+      RUNNER_TEMP: runner, GITHUB_OUTPUT: output, GITHUB_STEP_SUMMARY: join(runner, 'summary.md'),
+      STRICT_GRADES: grades,
+    };
+    const execute = step => spawnSync('bash', ['-c', step.run
+      .replaceAll('${{ github.ref_name }}', 'main')
+      .replaceAll('${{ steps.approved.outputs.count }}', scenario === 'all-valid' ? '3' : '1')
+      .replaceAll('${{ github.run_id }}', 'fixture')], {
+      cwd: repo, env, encoding: 'utf8', timeout: 20000,
+    });
+    const checked = execute(verify);
+    assert.equal(checked.status, scenario === 'scope-violation' ? 1 : 0, checked.stderr);
+    if (scenario === 'scope-violation') {
+      assert.match(checked.stderr, /outside publication output scope/u);
+      assert.equal(readFileSync(grades, 'utf8'), '', 'modified graders must not be executed');
+      return;
+    }
+    const approved = scenario === 'all-valid' ? reports : scenario === 'mixed' ? [runId] : [];
+    const rejected = reports.filter(report => !approved.includes(report));
+    const outputs = readFileSync(output, 'utf8');
+    assert.match(outputs, new RegExp(`^count=${approved.length}\\nfailedCount=${rejected.length}\\n`, 'u'));
+    assert(outputs.includes(`reportIds<<REPORTS\n${approved.join('\n')}\nREPORTS`));
+    for (const report of rejected) {
+      assert(!existsSync(join(repo, `reports/${report}/full-report.zh.yaml`)), 'invalid or incomplete new overlays must not enter corpus validation');
+      if (report === reports[2]) assert.equal(readFileSync(join(repo, `reports/${report}/summary-card.zh.yaml`), 'utf8'), priorSummary);
+      else assert(!existsSync(join(repo, `reports/${report}/summary-card.zh.yaml`)));
+      assert(existsSync(join(runner, `translation-publication-failures/${report}/full-report.yaml`)));
+      assert(existsSync(join(runner, `translation-publication-failures/${report}/summary-card.zh.yaml`)));
+    }
+    const calls = readFileSync(grades, 'utf8').trim().split('\n').filter(Boolean).map(line => JSON.parse(line));
+    for (const report of approved) {
+      assert(calls.some(args => args[0] === `reports/${report}` && args.includes('--strict') && args.includes('--require-final')));
+      for (const artifact of ['summary-card', 'full-report']) {
+        assert(calls.some(args => args[0] === `reports/${report}/${artifact}.yaml` && args.includes('--strict-editor')));
+      }
+    }
+    const packaged = execute(steps.find(step => step.name === 'Stage new translated files artifact'));
+    assert.equal(packaged.status, 0, packaged.stderr);
+    for (const report of rejected) {
+      assert(existsSync(join(runner, `translated-zh-artifact/translation-evidence/translation-publication-failures/${report}/publication-check.log`)));
+    }
+    const validation = steps.find(step => step.name === 'Validate reports and website build');
+    const publish = steps.find(step => step.name === 'Commit and publish Chinese translations');
+    assert.equal(validation.if, "steps.approved.outputs.count != '' && steps.approved.outputs.count != '0'");
+    assert.equal(validation.run, 'npm run validate');
+    assert.equal(publish.if, validation.if);
+    assert.equal(publish.env.REPORT_IDS, '${{ steps.approved.outputs.reportIds }}');
+    if (approved.length) {
+      const remote = join(runner, 'remote.git');
+      git('init', '--quiet', '--bare', '--initial-branch=main', remote);
+      git('remote', 'add', 'origin', remote);
+      git('push', '--quiet', 'origin', 'HEAD:main');
+      env.REPORT_IDS = approved.join('\n');
+      const published = execute(publish);
+      assert.equal(published.status, 0, published.stderr);
+      const changed = git('diff-tree', '--no-commit-id', '--name-only', '-r', 'HEAD').split('\n').sort();
+      assert.deepEqual(changed, approved.flatMap(report => ['full-report', 'summary-card'].map(artifact => `reports/${report}/${artifact}.zh.yaml`)).sort());
+      assert.equal(git('rev-parse', 'HEAD'), git('--git-dir', remote, 'rev-parse', 'main'));
+    }
+    if (rejected.length) {
+      env.FAILED_REPORT_IDS = rejected.join('\n');
+      const outcome = execute(steps.find(step => step.name === 'Report incomplete translation batch'));
+      assert.equal(outcome.status, 1, outcome.stderr);
+      assert(rejected.every(report => outcome.stdout.includes(report)), 'partial publication must not hide failed reports');
+    }
+  });
 }
 
 test('editorial workers cannot run lifecycle commands or delete the prepared cache', t => {
@@ -725,7 +964,7 @@ process.exit(${scenario === 'failed-repair-edit' ? 1 : 0});
   });
 }
 
-for (const outcome of ['accepted', 'repaired', 'restored', 'process-failure']) {
+for (const outcome of ['accepted', 'repaired', 'restored', 'process-failure', 'restore-failure']) {
   test(`editorial diagnostics survive cache cleanup without granting approval: ${outcome}`, t => {
     const { root, repo, runner, runId, steps, execute, write } = publicationWorkflowFixture(t, 'translate-reports-zh.yml');
     const cache = join(repo, '.translate-cache', runId);
@@ -751,7 +990,10 @@ if (process.argv.includes('editor-accept')) {
     process.exit(1);
   }
 }
-if (process.argv.includes('editor-restore')) fs.rmSync(cache, { recursive: true, force: true });
+if (process.argv.includes('editor-restore')) {
+  if (${JSON.stringify(outcome)} === 'restore-failure') process.exit(9);
+  fs.rmSync(cache, { recursive: true, force: true });
+}
 `);
     writeFileSync(join(bin, 'copilot'), `#!${process.execPath}
 const fs = require('node:fs');
@@ -764,7 +1006,10 @@ process.exit(${outcome === 'process-failure' ? 7 : 0});
     assert.match(editor.run, /editor-findings\.json and quality\.before\.json first/u);
     const validated = execute(steps.find(step => step.name === 'Validate or roll back editorial pass'));
     assert.equal(validated.status, 0, validated.stderr);
-    assert(!existsSync(cache), 'accepted/restored cache cleanup should still run');
+    assert.equal(existsSync(cache), outcome === 'restore-failure', 'only successful acceptance/restoration may clean the cache');
+    const publicationCandidates = readFileSync(join(runner, 'outputs.txt'), 'utf8');
+    assert.equal(publicationCandidates.includes(runId), outcome !== 'restore-failure',
+      'failed restoration must not grant editorial eligibility');
     const evidence = join(runner, 'translation-editor-failures', runId);
     if (outcome === 'accepted') assert(!existsSync(evidence));
     else {

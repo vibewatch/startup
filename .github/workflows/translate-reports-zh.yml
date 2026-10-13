@@ -195,6 +195,7 @@ jobs:
             snapshot "$RUNNER_TEMP/publication-approval" translation "${report_ids[@]}"
 
       - name: Translate selected reports
+        id: drafts
         if: steps.targets.outputs.count != '0'
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
@@ -203,37 +204,99 @@ jobs:
           REPORT_IDS: ${{ steps.targets.outputs.reportIds }}
         run: |
           set -euo pipefail
-          PROMPT=$(cat <<EOF
-          Translate the selected finalized startup diligence reports into Simplified Chinese overlays.
+          mkdir -p "$RUNNER_TEMP/copilot-logs"
+          copilot_args=(--yolo --autopilot --model "$MODEL")
+          if [ -n "$EFFORT" ]; then
+            copilot_args+=(--effort "$EFFORT")
+          fi
+          draft_reports=()
+          validate_draft() {
+            npm run translate:zh -- verify "$report" \
+              && node .agents/skills/translate-zh/scripts/check-translation-quality.mjs \
+                "reports/$report/summary-card.yaml" "reports/$report/summary-card.zh.yaml" \
+              && node .agents/skills/translate-zh/scripts/check-translation-quality.mjs \
+                "reports/$report/full-report.yaml" "reports/$report/full-report.zh.yaml"
+          }
+          preserve_draft_failure() {
+            local evidence="$RUNNER_TEMP/translation-draft-failures/$report/$1"
+            mkdir -p "$evidence"
+            for artifact in summary-card.yaml full-report.yaml summary-card.zh.yaml full-report.zh.yaml; do
+              if [ -f "reports/$report/$artifact" ]; then
+                cp "reports/$report/$artifact" "$evidence/"
+              fi
+            done
+            if [ -d ".translate-cache/$report" ]; then
+              cp -R --no-dereference ".translate-cache/$report" "$evidence/cache"
+            fi
+            cp "$DIAGNOSTICS" "$evidence/draft-check.log"
+          }
+          while IFS= read -r report; do
+            [ -z "$report" ] && continue
+            PROMPT=$(cat <<EOF
+          Translate one finalized startup diligence report into Simplified Chinese overlays.
 
-          Selected report folders under reports/:
-          $REPORT_IDS
+          Assigned report folder: reports/$report
 
           Requirements:
-          - Translate exactly these selected folders. If fewer than the requested batch size were selected, translate only the selected folders. If a selected folder already has both Chinese overlays by the time you inspect it, skip rewriting it.
-          - Follow the translate-zh skill's orchestration runner. Initialize each selected report, enumerate the actual cached part files after init, and translate only paths that exist; never predict part numbers.
-          - Finalize and verify both summary-card.zh.yaml and full-report.zh.yaml for every selected report before returning. A translated cache without both final overlays is a failure, not partial success.
+          - Translate exactly this assigned folder. If it already has both Chinese overlays, verify them instead of rewriting them.
+          - Follow the translate-zh skill's orchestration runner. Initialize this report, enumerate the actual cached part files after init, and translate only paths that exist; never predict part numbers.
+          - Wait for every part worker to finish, then finalize and verify both summary-card.zh.yaml and full-report.zh.yaml before returning. A translated cache or pending background workers without both final overlays is a failure, not partial success.
           - Change only the selected Chinese outputs through the runner and their translation caches. Never edit English reports, validation scripts, schemas, policies, workflows, dependencies, or skill documentation to clear a finding. Report a source or checker problem instead of changing the publication gate.
           - Run only the selected-report runner checks. Repository-wide validation and website builds belong to the workflow; do not run npm run validate or install dependencies.
           - Do not run any git command (git add, git commit, git push, git stash, git checkout, etc.) at any point; leave generated Chinese overlays unstaged. The workflow itself owns commit/push decisions.
           EOF
           )
-          mkdir -p "$RUNNER_TEMP/copilot-logs"
-          COPILOT_LOG="$RUNNER_TEMP/copilot-logs/translate-zh.log"
-          copilot_args=(--yolo --autopilot --model "$MODEL")
-          if [ -n "$EFFORT" ]; then
-            copilot_args+=(--effort "$EFFORT")
-          fi
-          copilot "${copilot_args[@]}" -p "$PROMPT" 2>&1 | tee "$COPILOT_LOG"
-          {
-            echo
-            echo "### Copilot run stats"
-            if [ -s "$COPILOT_LOG" ]; then
-              tail -n 20 "$COPILOT_LOG" | grep -iE '^(changes?|requests?|tokens?)\b' | sed 's/^/- /' || echo "- (no stats line emitted)"
-            else
-              echo "- (no Copilot output captured)"
+            COPILOT_LOG="$RUNNER_TEMP/copilot-logs/translate-zh-$report.log"
+            DIAGNOSTICS="$RUNNER_TEMP/copilot-logs/draft-check-$report.log"
+            draft_status=0
+            copilot "${copilot_args[@]}" -p "$PROMPT" 2>&1 | tee "$COPILOT_LOG" || draft_status=$?
+            node "$RUNNER_TEMP/publication-approval/check-publication-scope.mjs" verify "$RUNNER_TEMP/publication-approval"
+            check_status=0
+            validate_draft > "$DIAGNOSTICS" 2>&1 || check_status=$?
+            echo "Copilot exit status: $draft_status" >> "$DIAGNOSTICS"
+            if [ "$draft_status" -ne 0 ] || [ "$check_status" -ne 0 ]; then
+              cat "$DIAGNOSTICS"
+              preserve_draft_failure before-recovery
+              echo "::warning::Incomplete or invalid draft for $report; attempting one bounded completion."
+              RECOVERY_PROMPT=$(cat <<EOF
+          $PROMPT
+
+          The previous invocation returned before this report passed its deterministic draft checks.
+          Read $DIAGNOSTICS for the exact failures. Inspect reports/$report and .translate-cache/$report.
+          Resume the existing sparse cache; do not reinitialize or discard translated parts. If no cache
+          exists and outputs are incomplete, initialize through the runner. Repair only this report,
+          await all workers, finalize both overlays and verify before returning. Do not return merely
+          because background translation workers were launched.
+          EOF
+          )
+              draft_status=0
+              copilot "${copilot_args[@]}" -p "$RECOVERY_PROMPT" 2>&1 \
+                | tee "$RUNNER_TEMP/copilot-logs/translate-zh-recovery-$report.log" || draft_status=$?
+              node "$RUNNER_TEMP/publication-approval/check-publication-scope.mjs" verify "$RUNNER_TEMP/publication-approval"
+              check_status=0
+              validate_draft > "$DIAGNOSTICS" 2>&1 || check_status=$?
+              echo "Copilot exit status: $draft_status" >> "$DIAGNOSTICS"
+              if [ "$draft_status" -ne 0 ] || [ "$check_status" -ne 0 ]; then
+                cat "$DIAGNOSTICS"
+                preserve_draft_failure after-recovery
+                echo "::warning::Draft for $report failed after bounded completion; excluding it and continuing the batch."
+                continue
+              fi
             fi
-          } >> "$GITHUB_STEP_SUMMARY"
+            draft_reports+=("$report")
+            cat "$DIAGNOSTICS"
+            {
+              echo
+              echo "### Copilot draft stats: $report"
+              tail -n 20 "$COPILOT_LOG" | grep -iE '^(changes?|requests?|tokens?)\b' | sed 's/^/- /' || echo "- (no stats line emitted)"
+            } >> "$GITHUB_STEP_SUMMARY"
+          done <<< "$REPORT_IDS"
+          {
+            echo "count=${#draft_reports[@]}"
+            echo "reportIds<<REPORTS"
+            printf '%s\n' "${draft_reports[@]}"
+            echo "REPORTS"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Verify draft publication scope
         if: steps.targets.outputs.count != '0'
@@ -241,9 +304,9 @@ jobs:
 
       - name: Prepare source-anchored editorial pass
         id: editorial_targets
-        if: steps.targets.outputs.count != '0'
+        if: steps.drafts.outputs.count != '' && steps.drafts.outputs.count != '0'
         env:
-          REPORT_IDS: ${{ steps.targets.outputs.reportIds }}
+          REPORT_IDS: ${{ steps.drafts.outputs.reportIds }}
         run: |
           set -euo pipefail
           editorial_reports=()
@@ -299,6 +362,7 @@ jobs:
           copilot --yolo --autopilot --model gpt-5.6-luna -p "$PROMPT" 2>&1 | tee "$COPILOT_LOG"
 
       - name: Validate or roll back editorial pass
+        id: editorial_results
         if: always() && steps.editorial_targets.outputs.count != '' && steps.editorial_targets.outputs.count != '0'
         env:
           COPILOT_GITHUB_TOKEN: ${{ secrets.COPILOT_PAT }}
@@ -308,6 +372,7 @@ jobs:
           accepted=0
           repaired=0
           restored=0
+          eligible_reports=()
           assert_publication_scope() {
             node "$RUNNER_TEMP/publication-approval/check-publication-scope.mjs" verify "$RUNNER_TEMP/publication-approval" || exit "$?"
           }
@@ -339,6 +404,7 @@ jobs:
             [ -z "$report" ] && continue
             if validate_editor "$report"; then
               accepted=$((accepted + 1))
+              eligible_reports+=("$report")
             else
               preserve_editor_failure "$report" before-repair
               echo "::warning::Editorial pass failed strict validation for $report; attempting one targeted repair."
@@ -363,14 +429,24 @@ jobs:
               if [ "$repair_status" -eq 0 ] && validate_editor "$report"; then
                 accepted=$((accepted + 1))
                 repaired=$((repaired + 1))
+                eligible_reports+=("$report")
               else
                 preserve_editor_failure "$report" after-repair
                 echo "::warning::Editorial repair failed strict validation for $report; restoring the validated draft."
-                npm run translate:zh -- editor-restore "$report"
-                restored=$((restored + 1))
+                if npm run translate:zh -- editor-restore "$report"; then
+                  restored=$((restored + 1))
+                  eligible_reports+=("$report")
+                else
+                  echo "::warning::Draft restoration failed for $report; excluding it from publication."
+                fi
               fi
             fi
           done <<< "$REPORT_IDS"
+          {
+            echo "reportIds<<REPORTS"
+            printf '%s\n' "${eligible_reports[@]}"
+            echo "REPORTS"
+          } >> "$GITHUB_OUTPUT"
           {
             echo
             echo "### Source-anchored editorial pass"
@@ -379,6 +455,76 @@ jobs:
             echo "- Accepted: $accepted"
             echo "- Accepted after targeted repair: $repaired"
             echo "- Rolled back safely: $restored"
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Verify selected translations
+        id: approved
+        if: steps.targets.outputs.count != '0'
+        env:
+          REPORT_IDS: ${{ steps.targets.outputs.reportIds }}
+          EDITORIAL_REPORT_IDS: ${{ steps.editorial_results.outputs.reportIds }}
+        run: |
+          set -euo pipefail
+          node "$RUNNER_TEMP/publication-approval/check-publication-scope.mjs" verify "$RUNNER_TEMP/publication-approval"
+          approved_reports=()
+          rejected_reports=()
+          declare -A editorial_reports=()
+          while IFS= read -r report; do
+            [ -z "$report" ] && continue
+            editorial_reports["$report"]=1
+          done <<< "$EDITORIAL_REPORT_IDS"
+          verify_report() {
+            node .agents/skills/translate-zh/scripts/check-translation.mjs "reports/$report" --strict --require-final \
+              && node .agents/skills/translate-zh/scripts/check-translation-quality.mjs \
+                "reports/$report/summary-card.yaml" "reports/$report/summary-card.zh.yaml" --strict-editor \
+              && node .agents/skills/translate-zh/scripts/check-translation-quality.mjs \
+                "reports/$report/full-report.yaml" "reports/$report/full-report.zh.yaml" --strict-editor
+          }
+          mkdir -p "$RUNNER_TEMP/copilot-logs"
+          while IFS= read -r report; do
+            [ -z "$report" ] && continue
+            diagnostic="$RUNNER_TEMP/copilot-logs/publication-check-$report.log"
+            echo "Report was not eligible for the mandatory editorial pass." > "$diagnostic"
+            if [ "${editorial_reports[$report]:-0}" = "1" ] && verify_report > "$diagnostic" 2>&1; then
+              cat "$diagnostic"
+              approved_reports+=("$report")
+              continue
+            fi
+            cat "$diagnostic"
+            rejected_reports+=("$report")
+            echo "::warning::Excluding failed translation $report from publication."
+            evidence="$RUNNER_TEMP/translation-publication-failures/$report"
+            mkdir -p "$evidence"
+            cp "$diagnostic" "$evidence/publication-check.log"
+            for artifact in summary-card full-report; do
+              for suffix in yaml zh.yaml; do
+                path="reports/$report/$artifact.$suffix"
+                [ ! -f "$path" ] || cp --no-dereference "$path" "$evidence/"
+              done
+              path="reports/$report/$artifact.zh.yaml"
+              if git ls-files --error-unmatch -- "$path" >/dev/null 2>&1; then
+                git restore --source=HEAD --staged --worktree -- "$path"
+              else
+                rm -f -- "$path"
+              fi
+            done
+          done <<< "$REPORT_IDS"
+          node "$RUNNER_TEMP/publication-approval/check-publication-scope.mjs" verify "$RUNNER_TEMP/publication-approval"
+          {
+            echo "count=${#approved_reports[@]}"
+            echo "failedCount=${#rejected_reports[@]}"
+            echo "reportIds<<REPORTS"
+            printf '%s\n' "${approved_reports[@]}"
+            echo "REPORTS"
+            echo "failedReportIds<<REPORTS"
+            printf '%s\n' "${rejected_reports[@]}"
+            echo "REPORTS"
+          } >> "$GITHUB_OUTPUT"
+          {
+            echo
+            echo "### Per-report publication"
+            echo "- Strictly validated reports: ${#approved_reports[@]}"
+            echo "- Failed reports retained in backlog: ${#rejected_reports[@]}"
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Stage new translated files artifact
@@ -390,7 +536,7 @@ jobs:
           mkdir -p "$ARTIFACT_DIR"
           EVIDENCE_DIR="$ARTIFACT_DIR/translation-evidence"
           mkdir -p "$EVIDENCE_DIR"
-          for folder in copilot-logs translation-editor-failures; do
+          for folder in copilot-logs translation-draft-failures translation-editor-failures translation-publication-failures; do
             if [ -d "$RUNNER_TEMP/$folder" ]; then
               cp -R --no-dereference "$RUNNER_TEMP/$folder" "$EVIDENCE_DIR/"
             fi
@@ -439,31 +585,15 @@ jobs:
           retention-days: 14
           if-no-files-found: ignore
 
-      - name: Verify selected translations
-        if: steps.targets.outputs.count != '0'
-        env:
-          REPORT_IDS: ${{ steps.targets.outputs.reportIds }}
-        run: |
-          set -euo pipefail
-          node "$RUNNER_TEMP/publication-approval/check-publication-scope.mjs" verify "$RUNNER_TEMP/publication-approval"
-          while IFS= read -r report; do
-            [ -z "$report" ] && continue
-            node .agents/skills/translate-zh/scripts/check-translation.mjs "reports/$report" --strict --require-final
-            for artifact in summary-card full-report; do
-              node .agents/skills/translate-zh/scripts/check-translation-quality.mjs \
-                "reports/$report/$artifact.yaml" "reports/$report/$artifact.zh.yaml" --strict-editor
-            done
-          done <<< "$REPORT_IDS"
-
       - name: Validate reports and website build
-        if: steps.targets.outputs.count != '0'
+        if: steps.approved.outputs.count != '' && steps.approved.outputs.count != '0'
         run: npm run validate
 
       - name: Commit and publish Chinese translations
-        if: steps.targets.outputs.count != '0'
+        if: steps.approved.outputs.count != '' && steps.approved.outputs.count != '0'
         env:
           GH_TOKEN: ${{ secrets.STARTUP_PAT }}
-          REPORT_IDS: ${{ steps.targets.outputs.reportIds }}
+          REPORT_IDS: ${{ steps.approved.outputs.reportIds }}
         run: |
           set -euo pipefail
           node "$RUNNER_TEMP/publication-approval/check-publication-scope.mjs" verify "$RUNNER_TEMP/publication-approval"
@@ -471,7 +601,7 @@ jobs:
           git config user.email "startup-research-bot@users.noreply.github.com"
           BRANCH="${{ github.ref_name }}"
           STAMP="$(date -u +%F)"
-          COUNT="${{ steps.targets.outputs.count }}"
+          COUNT="${{ steps.approved.outputs.count }}"
           MESSAGE="chore(reports): translate zh batch $STAMP"
 
           while IFS= read -r report; do
@@ -534,3 +664,13 @@ jobs:
           gh pr create --base "$BRANCH" --head "$PR_BRANCH" \
             --title "$MESSAGE" \
             --body "Automated Chinese translation batch for $COUNT report(s). Direct push to \`$BRANCH\` failed after 3 attempts; merging via PR instead."
+
+      - name: Report incomplete translation batch
+        if: always() && steps.approved.outputs.failedCount != '' && steps.approved.outputs.failedCount != '0'
+        env:
+          FAILED_REPORT_IDS: ${{ steps.approved.outputs.failedReportIds }}
+        run: |
+          echo "::error::Some reports failed translation and remain in the backlog:"
+          printf '%s\n' "$FAILED_REPORT_IDS"
+          echo "Independently validated reports were eligible for publication; see the publication step for its outcome."
+          exit 1

@@ -172,8 +172,22 @@ approval; the final strict gates remain mandatory.
 
 Scheduled recovery translates one report per two-hour run. This keeps each draft
 and editorial context bounded while still clearing a monthly backlog comfortably.
+Manual batches also draft reports sequentially in separate Copilot invocations.
+The workflow verifies both final overlays and standard quality immediately after
+each draft, before moving to another report. An incomplete or invalid draft gets
+one bounded completion using its existing sparse cache and exact diagnostics.
+Failed draft source/output pairs and caches are retained in
+`translation-evidence/translation-draft-failures/`; neither a zero CLI exit status
+nor launched background workers count as completed translation.
+Publication is per report, not all-or-nothing: only complete reports that underwent
+editorial preparation and pass the final strict checks enter the publication list.
+Rejected overlays are archived, then restored to their pre-run state before the
+repository-wide check and commit. Accepted reports still require the complete
+validation/build and source-bound rebase checks. A partial batch publishes its
+validated subset but ends with an explicit failed-report signal; rejected reports
+remain in the backlog rather than being counted as translated.
 Editorial preparation skips any selected report that did not produce both final
-overlays; downstream verification still fails the batch rather than publishing a
+overlays; downstream verification excludes those reports rather than publishing a
 partial report.
 
 During editing, audit the semantic head of each metric (accuracy, approval
