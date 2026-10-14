@@ -366,6 +366,14 @@ are not translation omissions or assertions. In medical-data lists such as
 `the company claims` in the same leaf still requires attribution. Correct a
 demonstrated checker false positive with regression coverage rather than adding
 unrelated attribution or changing preserved URLs merely to satisfy a pattern.
+The reviewed medical-data contexts also include closed medical/payer claims,
+EHR/claims/imaging lists, longitudinal claims history and static claims datasets.
+These are data assets, not company assertions. Do not exempt an assertion such
+as `the payer claims data coverage is complete`; a separate company assertion
+or disclosure gap still needs preservation. The explicit Truveta adjacency
+disclaimer treats exclusions as scope controls, not proof that the company
+can never enter adjacent fields. Retain that denial, its company and scope;
+neither this disclaimer nor medical-data nouns clear a separate assertion.
 The same distinction applies to high-cost claim concentration, real-time claims
 data, claims-data-driven rankings, and percentage-qualified claims cost
 reductions. `claims up to 50% cost trend reduction` instead asserts a benefit;

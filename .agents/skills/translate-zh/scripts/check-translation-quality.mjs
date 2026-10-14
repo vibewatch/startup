@@ -77,6 +77,22 @@ const insuranceClaimNouns = new RegExp([
   '\\bproduct[ -]liability\\s+claims?\\b',
   '\\binsurance\\s+and\\s+customer\\s+claims\\b(?=\\s*(?:[,.;:]|$))',
 ].join('|'), 'gi');
+const medicalDataClaimNouns = new RegExp([
+  '\\bclosed(?:/open)?\\s+(?:(?:medical|payer)\\s+)?claims\\b',
+  '\\b(?:clinical records|EHR|images)\\s*,\\s*claims(?=\\s*,\\s*(?:imaging|SDOH)\\b)',
+  '\\blegacy\\s+claims(?=-clearinghouse\\s+aggregators\\b|\\s+paradigm\\b)',
+  '\\b(?:public\\s+claims\\s+aggregators|unlike\\s+claims\\s+aggregators|longitudinal\\s+claims\\s+history|static\\s+(?:\\d+-to-\\d+-month-old\\s+)?claims\\s+(?:analysis|datasets)|claims-oriented\\s+datasets)\\b',
+  '\\bthird-party\\s+claims(?=\\s+or\\s+EHR\\s+extracts\\b)',
+  '\\bexternal\\s+claims(?=\\s*[.;]|\\s*$)',
+  '\\btoward\\s+claims(?=\\s+and\\s+administrative\\s+clearinghouse\\s+feeds\\b)',
+  '\\bEHR\\s+and\\s+claims(?=\\s+(?:data|coverage\\s+figures|covering)\\b)',
+  '\\blab\\s+results,\\s+and\\s+claims(?=\\s+for\\s+\\d+(?:[.,]\\d+)*M\\+?\\s+patients\\b)',
+  '\\bon\\s+claims(?=\\s+and\\s+prescription\\s+linkage\\b)',
+  '\\b(?:monthly|quarterly)\\s+claims\\s+lag\\b',
+  '\\bmatch\\s+rates\\s+and\\s+claims(?=\\s+adjudication\\s+lag\\b)',
+  '^payer\\s+claims\\s+feeds\\s+are\\b',
+  '\\b\\d+(?:[.,]\\d+)*M\\s+claims(?=\\s*[.;]|\\s*$)',
+].join('|'), 'gi');
 const patentClaimNouns = new RegExp([
   '\\b(?:for|handles?)\\s+(?:non-practicing\\s+entity\\s*\\(NPE\\)|NPE)\\s+claims(?=\\s*(?:[.;,]|$))',
   '\\bCourtListener[\\x27’]s\\s+\\d+\\s+cases\\s*/\\s*\\d+\\s+docket\\s+entries\\s+suggest\\s+additional\\s+claims(?=\\s+may\\s+follow\\b)',
@@ -97,6 +113,7 @@ const rightsClaimContexts = new RegExp([
 ].join('|'), 'gi');
 const evidenceAssessmentClaimContexts = /\bevidence\s+does\s+not\s+support\s+a\s+clear\s+positive\s+claim\b|\bpublic\s+evidence\s+can\s+(?:therefore\s+)?support\s+the\s+claim\s+that\b/gi;
 const procurementSequenceDisclaimer = /\bnot a claim that every customer follows the exact same procurement sequence\b/i;
+const adjacencyScopeDisclaimer = /\bexclusions are scope controls, not a claim that Truveta can never enter those adjacencies\b/i;
 const valuationMultiplesDisclaimer = /\bnot a claim that the company has already earned public-market software multiples on disclosed fundamentals\b/i;
 const inferenceScopeDisclaimer = /\bnot a claim that Groq currently offers only inference\b/i;
 const hardwareDependencyDisclaimer = /\bnot a claim that every Groq workload traverses both LPU and NVIDIA hardware\b/i;
@@ -150,8 +167,12 @@ const hedgeRules = [
       || (/\babsence claims refer to missing public evidence, not to proof that private controls do not exist\b/i.test(source)
         && (source.match(/\bclaims?\b|\bclaimed\s+scale\b/gi) ?? []).length === 1
         && /(?:^|[。！？；，：\n])\s*[“「"]?缺失[”」"]?指缺少公开证据[，,]\s*不等于证明私有控制不存在(?=\s*(?:[。！？；，.!?;,]|$))/u.test(target)),
-    excludeContext: new RegExp(`${insuranceClaimNouns.source}|${patentClaimNouns.source}|${marketSizingClaimContexts.source}|${legalCounterclaimContexts.source}|${rightsClaimContexts.source}|${evidenceAssessmentClaimContexts.source}|${procurementSequenceDisclaimer.source}|${valuationMultiplesDisclaimer.source}|${inferenceScopeDisclaimer.source}|${hardwareDependencyDisclaimer.source}|${financingMarkDisclaimer.source}|${shareholderRightsContexts.source}|${centralBankClaimContexts.source}|\\bclaims\\s+in\\s+this\\s+table\\s+are\\s+minted\\s+locally\\b|\\busing\\s+locally\\s+minted\\s+claims\\s+rather\\s+than\\s+copied\\s+claim\\s+ids\\b|\\bsynthesized\\s+from\\s+the\\s+cited\\s+claims\\b|\\bpublic[- ]claims?\\s+dispersion\\b|\\brather\\s+than\\s+a\\s+single\\s+["“][^"“”\\n]{1,180}["”]\\s+claim\\b|\\bwarranty\\s+claims?\\b(?=\\s*(?:[,.;:]|$)|\\s+(?:history|rates?|response|frequency|data|targets?|resolved|triggered|processing|handling|costs?|by|if|and|or)\\b)`, 'gi'),
+    excludeContext: new RegExp(`${insuranceClaimNouns.source}|${medicalDataClaimNouns.source}|${patentClaimNouns.source}|${marketSizingClaimContexts.source}|${legalCounterclaimContexts.source}|${rightsClaimContexts.source}|${evidenceAssessmentClaimContexts.source}|${procurementSequenceDisclaimer.source}|${adjacencyScopeDisclaimer.source}|${valuationMultiplesDisclaimer.source}|${inferenceScopeDisclaimer.source}|${hardwareDependencyDisclaimer.source}|${financingMarkDisclaimer.source}|${shareholderRightsContexts.source}|${centralBankClaimContexts.source}|\\bclaims\\s+in\\s+this\\s+table\\s+are\\s+minted\\s+locally\\b|\\busing\\s+locally\\s+minted\\s+claims\\s+rather\\s+than\\s+copied\\s+claim\\s+ids\\b|\\bsynthesized\\s+from\\s+the\\s+cited\\s+claims\\b|\\bpublic[- ]claims?\\s+dispersion\\b|\\brather\\s+than\\s+a\\s+single\\s+["“][^"“”\\n]{1,180}["”]\\s+claim\\b|\\bwarranty\\s+claims?\\b(?=\\s*(?:[,.;:]|$)|\\s+(?:history|rates?|response|frequency|data|targets?|resolved|triggered|processing|handling|costs?|by|if|and|or)\\b)`, 'gi'),
     exclude: /\b(?:(?:for|in|of|on)\s+claims?\s+(?:modeling|modelling|processing|handling|management|adjudication|submission|settlement|opening|setup|negotiation)|patent\s+claims?\s+(?:drafting|construction|interpretation|scope)|small[- ]claims?\s+(?:processing|courts?)|clinical\s*,\s*claims?\s*,?\s+and\s+operational\s+(?:data|systems)|EHRs?\s*,\s*claims?\s+systems|fraud\s+claims?\s+handling|government\s+guarantee\s+claims?\s+status|insurance\s+coverage\s+limits?\s+and\s+claims\s+history|premium\s+and\s+claims\s+expenditure|high[- ]cost\s+claims?\s+(?:concentration|categories)|million[- ]dollar[- ]plus\s+claims|highest[- ]ROI\s+claims|claims[- ]data[- ]driven|\d+(?:\.\d+)?%\s+claims\s+cost\s+reduction|real[- ]time\s+claims\s+data|claims\s+data\s+latency(?=\s*(?:[.;]|$))|do(?:es)?\s+not\s+reveal\s+claims?\s+quality\s+or\s+jurisdictions|qualitative\s+directional\s+claim|(?:personal|bodily)[ -]injury\s+claims?|(?:anchor|inflate|weaken)\s+claims?\s+values?|claims?-inflation|InsurTech\s+claims?\s+processing|insurance\s+carriers?\s+claims?\s+automation|claims?\s+setup(?=\s*,\s*care\s+coordination\b)|per\s+claims?|open\s+claims|return(?:s|ing)?\s+claims?\s+numbers|handle\s+claims?\s+negotiation|trained\s+on\s+(?:hundreds|thousands|millions)\s+of\s+claims|malpractice\s+claims|customer\s+compensation\s+claims|billing\s+documentation\s*[;,]\s*claims?\s+validation|claims?\s+denial\s+reduction\s+data|not\s+marketing\s+claims)\b/gi,
+  },
+  {
+    en: adjacencyScopeDisclaimer,
+    zh: /(?:^|[。！？；，：\n])\s*排除项是范围控制[，,]\s*(?:不代表|并不代表|并不是说)\s*Truveta\s*永远无法进入这些邻近领域(?=\s*(?:[。！？；，.!?;,]|$))/u,
   },
   {
     en: procurementSequenceDisclaimer,

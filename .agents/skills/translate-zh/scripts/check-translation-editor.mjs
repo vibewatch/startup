@@ -2691,6 +2691,74 @@ const checks = [
       && checkPairQuality(fullReport(en), fullReport(`公司称，${zh}`), { strictEditor }).length === 0,
     `medical noun exclusions must retain a separate company assertion (strict=${strictEditor}): ${en}`,
   ])),
+  ...[
+    ['The platform links clinical records, claims, imaging, mortality, and genomics data.', '平台关联临床记录、理赔、影像、死亡率和基因组学数据。', false],
+    ['The platform turns longitudinal EHR, claims, imaging, and genomics data into cohorts.', '平台将纵向 EHR、理赔、影像和基因组学数据转化为队列。', false],
+    ['Ingests multimodal feeds (structured EHR, 5B+ notes, 85M+ images, claims, SDOH).', '接入多模态数据流（结构化 EHR、5B+ 条笔记、85M+ 张影像、理赔、SDOH）。', false],
+    ['The platform links closed medical claims and closed payer claims with patient records.', '平台将已结案医疗理赔和付款方理赔与患者记录关联。', false],
+    ['National prescription feeds, closed/open payer claims, administrative billing', '全国处方数据流、已结案 / 未结案付款方理赔、行政计费', false],
+    ['Alternatives include legacy claims-clearinghouse aggregators and public claims aggregators.', '替代方案包括传统理赔清算聚合商和公开理赔聚合商。', false],
+    ['The platform competes with the legacy claims paradigm using clinical records.', '平台凭临床记录对标传统理赔模式。', false],
+    ['Decades of longitudinal claims history and massive global commercial distribution', '数十年的纵向理赔历史和庞大的全球商业分销网络', false],
+    ['Internal retrospective analysis, claims-oriented datasets, registries, and bespoke analytics', '内部回顾性分析、以理赔为导向的数据集、登记库和定制分析', false],
+    ['Static claims analysis and static claims datasets lack clinical notes.', '静态理赔分析和数据集缺少临床记录。', false],
+    ['Unlike claims aggregators that use delayed billing codes, the platform links clinical records.', '不同于依赖滞后计费代码的理赔聚合商，该平台关联临床记录。', false],
+    ['Licensing static 6-to-12-month-old claims datasets lacking unstructured clinical severity metrics.', '购买缺乏非结构化临床严重程度指标、已有 6-12 个月滞后的静态理赔数据集。', false],
+    ['Daily-refreshed multimodal EHR and claims covering 130M+ patients', '每日刷新的多模态 EHR 和理赔数据，覆盖 130M+ 名患者', false],
+    ['Aggregators purchase third-party claims or EHR extracts at market rates.', '聚合商按市场价购买第三方理赔或 EHR 抽取数据。', false],
+    ['Resolves patient identity across multiple health systems and external claims.', '跨多个医疗系统和外部理赔数据解析患者身份。', false],
+    ['Historical offerings skew toward claims and administrative clearinghouse feeds.', '历史产品偏向理赔和行政清算数据流。', false],
+    ['Denominator is not reconciled to EHR and claims coverage figures.', '分母未与 EHR 和理赔覆盖数字核对。', false],
+    ['Researchers access regulatory-grade EHR and claims data for epidemiologic studies.', '研究人员访问监管级 EHR 与理赔数据，开展流行病学研究。', false],
+    ['Links EHR notes, imaging metadata, lab results, and claims for 130M+ patients.', '为 130M+ 名患者关联 EHR 笔记、影像元数据、实验室结果和理赔。', false],
+    ['Moderate; strong on claims and prescription linkage, but sparse clinical text and imaging.', '中；理赔和处方关联能力强，但临床文本和影像稀疏。', false],
+    ['Low to Moderate; typically monthly or quarterly claims lag (often 60-90 days delayed)', '低至中；理赔通常按月或按季度滞后（通常延迟 60-90 天）', false],
+    ['Tokenization linkage match rates and claims adjudication lag vary across payer sources.', '令牌关联匹配率和理赔审核延迟因付款方来源而异。', false],
+    ['Payer claims feeds are commercially licensed third-party data rather than provider contributions.', '付款方理赔数据流是商业许可的第三方数据，而非医疗提供方贡献。', false],
+    ['The collective covers 120M-140M daily-updated patient records and 200M claims.', '联盟覆盖 120M 至 140M 条每日更新的患者记录和 200M 条理赔。', false],
+    ['The company claims data accuracy is superior across all health systems.', '所有医疗系统的数据准确性均领先。', true],
+    ['The payer claims data coverage is complete across all health systems.', '所有医疗系统的数据覆盖均完整。', true],
+    ['The company claims all closed medical claims are matched to patient records.', '全部已结案医疗理赔均已与患者记录匹配。', true],
+    ['Closed claims link with patient records; the company claims its coverage is complete.', '已结案理赔与患者记录关联；数据覆盖完整。', true],
+    ['The company claims it links EHR, claims, imaging, and genomics data into cohorts.', '它将 EHR、理赔、影像和基因组学数据关联为队列。', true],
+    ['The platform links EHR and claims data; the company claims all patient records are included.', '平台关联 EHR 和理赔数据；全部患者记录都已纳入。', true],
+    ['The company claims EHR and claims data improve research outcomes; no public benchmark is disclosed.', '公司称 EHR 与理赔数据改善研究结果；基准已公开。', true],
+  ].flatMap(([en, zh, expected]) => [false, true].flatMap(strictEditor => ['prose', 'table', 'figure'].map(surface => {
+    const wrap = value => surface === 'prose' ? fullReport(value)
+      : surface === 'table' ? { ...fullReport(''), tables: [{ rows: [[value]] }] }
+        : { ...fullReport(''), figures: [{ notes: value }] };
+    return [
+      checkPairQuality(wrap(en), wrap(zh), { strictEditor })
+        .some(issue => issue.code === 'hedge-preservation') === expected
+        && (expected || checkPairQuality(
+          wrap(`${en} The company claims its patient coverage is complete.`),
+          wrap(`${zh} 全部患者均已覆盖。`),
+          { strictEditor },
+        ).some(issue => issue.code === 'hedge-preservation')),
+      `medical data claims nouns retain separate assertions (${surface}, strict=${strictEditor}): ${en}`,
+    ];
+  }))),
+  ...[
+    ['排除项是范围控制，不代表 Truveta 永远无法进入这些邻近领域。', '', false],
+    ['排除项是范围控制，Truveta 永远无法进入这些邻近领域。', '', true],
+    ['排除项是范围控制，公司声称 Truveta 永远无法进入这些邻近领域。', '', true],
+    ['排除项是范围控制，并非不代表 Truveta 永远无法进入这些邻近领域。', '', true],
+    ['排除项是范围控制，不代表 Truveta 永远无法进入这些邻近领域的判断不成立。', '', true],
+    ['排除项是范围控制，不代表 Truveta 永远无法进入这些邻近市场。', '', true],
+    ['排除项是范围控制，不代表 OtherCo 永远无法进入这些邻近领域。', '', true],
+    ['排除项是范围控制，不代表 Truveta 永远无法进入这些邻近领域；覆盖完整。', ' The company claims its coverage is complete.', true],
+    ['排除项是范围控制，不代表 Truveta 永远无法进入这些邻近领域；公司称覆盖完整。', ' The company claims its coverage is complete.', false],
+    ['排除项是范围控制，不代表 Truveta 永远无法进入这些邻近领域；收入已披露。', ' No public revenue data is disclosed.', true],
+  ].flatMap(([zh, suffix, expected]) => [false, true].flatMap(strictEditor => ['prose', 'table', 'figure'].map(surface => {
+    const wrap = value => surface === 'prose' ? fullReport(value)
+      : surface === 'table' ? { ...fullReport(''), tables: [{ notes: value }] }
+        : { ...fullReport(''), figures: [{ notes: value }] };
+    return [
+      checkPairQuality(wrap(`Exclusions are scope controls, not a claim that Truveta can never enter those adjacencies.${suffix}`), wrap(zh), { strictEditor })
+        .some(issue => issue.code === 'hedge-preservation') === expected,
+      `adjacency disclaimers retain the source predicate and separate assertions (${surface}, strict=${strictEditor}): ${zh}`,
+    ];
+  }))),
   [
     checkPairQuality(patentSource, fullReport('商标检索分析、专利权利要求起草、自由实施检索')).length === 0
       && checkPairQuality(patentAssertionSource, fullReport('新产品改善了专利权利要求起草。'))
