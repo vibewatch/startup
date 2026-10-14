@@ -12,7 +12,7 @@ import { KNOWN_DIMENSIONS, WARNING_DIMENSIONS } from './validation-catalog.mjs';
 import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
 import { checkRefreshReadback, refreshArtifactsAreInSync } from './refresh-readback.mjs';
 import { reportsDir } from './utils.mjs';
-import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, graphItemNotes, matrixCellText, quadrantAxes, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails, waterfallValueTable, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
+import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, graphItemNotes, matrixCellText, quadrantAxes, quadrantLabelPositions, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails, waterfallValueTable, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
 import { isTranslatableLeaf, TRANSLATE_PATHS } from '../../translate-zh/scripts/whitelist.mjs';
 import { asArray, asRecord, claimRefs } from '../../../../website/src/lib/report-types.ts';
 import { t } from '../../../../website/src/lib/i18n.ts';
@@ -221,7 +221,8 @@ test('range axes filter derived out-of-domain ticks and remeasure on font, size 
   assert.match(source, /rangeAxisTickIndices\(nodes\.map\(\(node\) => node\.getBoundingClientRect\(\)\)\)/);
   assert.match(source, /node\.hidden = !visible\.has\(index\)/);
   assert.match(source, /document\.fonts\.ready\.then\(\(\) => \{[\s\S]*?layoutRangeAxes\(\);/);
-  assert.match(source, /addEventListener\('afterprint', layoutRangeAxes\)/);
+  const afterPrint = source.slice(source.indexOf("window.addEventListener('afterprint'"), source.indexOf('let resizeTimer'));
+  assert.match(afterPrint, /layoutRangeAxes\(\);/);
   const print = source.slice(source.indexOf("window.addEventListener('beforeprint'"), source.indexOf("window.addEventListener('afterprint'"));
   assert.match(print, /layoutRangeAxes\(\)/);
   const resize = source.slice(source.indexOf('const chartResizeObserver ='), source.indexOf('const renderChartScript ='));
@@ -309,7 +310,7 @@ test('generated chart UI uses localized text without translating structural role
     assert.equal(t(key, 'zh'), zh, key);
     assert.ok(source.includes(`t('${key}', locale)`), key);
   }
-  assert.match(source, /authoredType === 'dag' \? \{ dagLabels \} : \{\}/);
+  assert.match(source, /dagTopology \? \{ dagLabels \} : \{\}/);
   assert.match(source, /payload\.dagLabels\[node\._role\]/);
   assert.match(source, /payload\.dagLabels\.dependency/);
   assert.match(source, /content: attr\(data-loading-label\)/);
@@ -908,6 +909,54 @@ test('quadrant rendering removes fabricated rankings and plots exact positions w
   assert.match(source, /quadrant-axis-definitions/);
   const print = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
   assert.match(print, /:global\(\.chart-quadrant > svg\)/);
+});
+
+test('quadrant labels avoid mobile clusters and coincident points without moving their coordinates', () => {
+  const bounds = { left: 76, right: 298, top: 60, bottom: 308 };
+  for (const points of [
+    [[2, 9.5], [3.5, 8.8], [5, 7.5], [5.5, 7], [8.5, 6], [8, 6.2]]
+      .map(([x, y]) => ({ x: 76 + x * 22.2, y: 308 - y * 24.8 })),
+    [{ x: 180, y: 180 }, { x: 180, y: 180 }, { x: 180, y: 180 }],
+    [{ x: 76, y: 60 }, { x: 298, y: 308 }],
+  ]) {
+    const before = structuredClone(points);
+    const labels = quadrantLabelPositions(Object.freeze(points.map(Object.freeze)), bounds, 15);
+    assert.equal(labels.length, points.length);
+    assert.deepEqual(points, before);
+    labels.forEach((label, index) => {
+      assert.ok(label.x - 15 >= bounds.left && label.x + 15 <= bounds.right);
+      assert.ok(label.y - 15 >= bounds.top && label.y + 15 <= bounds.bottom);
+      labels.slice(index + 1).forEach(other => assert.ok(Math.hypot(label.x - other.x, label.y - other.y) >= 32));
+    });
+  }
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  assert.match(source, /quadrant-coordinate-dot/);
+  assert.match(source, /quadrant-label-leader/);
+  assert.match(source, /axisLines\(xAxisLabel\)/);
+  assert.match(source, /axisLines\(yAxisLabel\)/);
+});
+
+test('non-sequential flows use declared graph topology rather than a generic matrix', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  assert.match(source, /relationshipDiagram \? 'dag'/);
+  assert.match(source, /relationshipDiagram \? flow : null/);
+  assert.doesNotMatch(source, /relationshipTable \? flowRelationshipTable/);
+  assert.match(source, /payload\.authoredType === 'flow' \? 'core'/);
+  assert.match(source, /dependency: relationshipDiagram \? t\('reportFigureConnection', locale\)/);
+});
+
+test('diagram supplements use native disclosures and expand for print without losing reader state', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  for (const className of ['flow-sequence-details', 'dag-details', 'quadrant-details']) {
+    assert.match(source, new RegExp(`<details class="${className}">\\s*<summary>`));
+  }
+  assert.match(source, /printOpenedDetails\.add\(details\)/);
+  assert.match(source, /details\.open = true/);
+  assert.match(source, /printOpenedDetails\.forEach\(\(details\) => \{ details\.open = false;/);
+  assert.match(source, /printOpenedDetails\.clear\(\)/);
+  assert.doesNotMatch(source, /<DataTable title=\{t\('report(?:FlowDetails|QuadrantValues)'/);
+  const report = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
+  assert.match(report, /:global\(\.native-figure details > summary\) \{ break-after: avoid; page-break-after: avoid;/);
 });
 
 test('print hides active chart tooltips outside the report shell', () => {

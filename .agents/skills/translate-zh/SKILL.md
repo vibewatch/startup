@@ -1120,13 +1120,18 @@ canvas and its text; check node/card containment after this narrow-screen reflow
 Also verify report-level `coverageNotes`, displayed before cover facts with
 the same Chinese-leaf / English-fallback behavior as other report text.
 Flow edge aliases resolve from English before overlays are merged. Non-sequential
-explicit flows render as node/connection tables, with localized notices for
-missing or ambiguous endpoints. Verify all connection directions, duplicate
+explicit flows render as directed diagrams using declared topology, with localized
+notices for missing or ambiguous endpoints. Verify all connection directions, duplicate
 connections, node details and visible notes in both locales and in print;
 unchanged endpoint identifiers must not be translated to repair a display issue.
+Flow, DAG and quadrant supplements use native, initially collapsed disclosures
+so the diagram remains the primary presentation. Expand them to inspect complete
+source content, ordered evidence and mobile cell labels. Print must automatically
+expand them, then restore each disclosure's prior state on returning to screen.
+Caveats remain visible outside disclosures.
 For ordered flow diagrams, also inspect the supplemental node/connection table:
-full node text, values, units and qualifications must remain visible on-page and
-in print even when diagram labels are shortened. Check the full tooltip text.
+full node text, values, units and qualifications must remain available on-page and
+visible in print even when diagram labels are shortened. Check the full tooltip text.
 DAG diagrams also retain an ordered node/connection table, including distinct
 description/detail aliases, risk prose and edge qualifications. Resolve endpoints
 from English before merging overlays; do not translate identifiers or guess
@@ -1140,7 +1145,9 @@ generated ranking zones or inferred benchmark thresholds. Honor declared numeric
 axis bounds; otherwise fit each axis independently to its data, without inferring
 a 0–10 or percentage scoring system. Preserve complete axis definitions, point
 labels, coordinates, qualifications and ordered evidence in the accompanying
-table. Coincident points stay coincident; use each legend entry to inspect them.
+table. Restore descriptive axis labels on the plot. Only numbered annotation
+badges may move to avoid collisions, with leader lines anchored to unchanged
+coordinate dots; coincident dots stay coincident. Use each legend entry to inspect them.
 Check exact plotted positions, both locales, mobile labels and physical PDFs.
 Print uses the readable coordinate table rather than a shrunken SVG.
 Keep a real chart tooltip open when checking print transitions. Body-level

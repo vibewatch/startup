@@ -280,15 +280,15 @@ showing their notes does not establish comparability or validate a forecast.
 
 **Flow relationships:** an ordered flow with no explicit edges keeps its existing
 sequence layout. Explicit edges must form the complete, unambiguous adjacent-node
-chain to use that layout; otherwise the renderer lists every node and connection
-in a table, preserving branches, cycles, duplicates and disconnected nodes without
+chain to use that layout; otherwise the renderer draws a directed graph,
+preserving branches, cycles, duplicates and disconnected nodes without
 inventing links. Missing or ambiguous endpoints receive a visible notice and keep
 their raw identifiers. English label aliases resolve before Chinese overlays, so
 translation cannot change connectivity. Use `dag` when authoring an explicit
 graph intended for spatial layout. These presentation checks do not establish that
 the authored relationships are factually correct.
 Ordered sequence diagrams also retain their complete node text, values, units
-and declared connections in a supplemental table visible on-page and in print;
+and declared connections in an expandable supplemental table that opens for print;
 compact diagram labels may be previews, but tooltips retain the qualifications.
 The supplemental table does not invent explicit edges for an implicit sequence.
 Generic node positions and tone hints must not be relabeled as evidence,

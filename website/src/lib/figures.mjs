@@ -114,6 +114,30 @@ export function quadrantAxes(figure) {
   }));
 }
 
+export function quadrantLabelPositions(points, bounds, radius) {
+  const placed = [];
+  return points.map((point, index) => {
+    const candidates = [{ x: point.x, y: point.y }];
+    for (let ring = 1; ring <= 3; ring++) {
+      for (let direction = 0; direction < 8; direction++) {
+        const angle = direction * Math.PI / 4;
+        const distance = ring * (radius * 2 + 6);
+        candidates.push({ x: point.x + Math.cos(angle) * distance, y: point.y + Math.sin(angle) * distance });
+      }
+    }
+    const position = candidates.find(candidate =>
+      candidate.x - radius >= bounds.left && candidate.x + radius <= bounds.right
+      && candidate.y - radius >= bounds.top && candidate.y + radius <= bounds.bottom
+      && placed.every(label => Math.hypot(label.x - candidate.x, label.y - candidate.y) >= radius * 2 + 2)
+      && points.every((other, otherIndex) => otherIndex === index
+        || Math.hypot(other.x - candidate.x, other.y - candidate.y) >= radius + 6));
+    // Dense charts can still overlap labels; every point remains in the legend.
+    const label = position ?? candidates[0];
+    placed.push(label);
+    return label;
+  });
+}
+
 export function stackLayerDetails(data) {
   const content = (value) => {
     if (value == null) return [];
