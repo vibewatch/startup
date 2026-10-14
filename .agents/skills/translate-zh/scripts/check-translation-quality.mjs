@@ -435,6 +435,15 @@ function normalizedMetricTokens(value, { includePlainNumbers = false } = {}) {
   const expanded = retention.replace(
     new RegExp(String.raw`\b(\d+(?:[.,]\d+)*)\s+times(?=\s+(?:(?:to|and)\s+(?:(?:nearly|almost|approximately|roughly|about)\s+)?\d+(?:[.,]\d+)*\s+times\s+)?${financialMultiple}\b)`, 'gi'),
     '$1x',
+  ).replace(
+    /(?<![\w./@+$€£¥₦–—−-])(\d+(?:[.,]\d+)*)\s+times(?=\s+the\s+lending\s+scale\s+of\b)/gi,
+    '$1x',
+  ).replace(
+    /(?<![\w./@-])(oversubscribed\s+|超额认购\s*)(\d+(?:[.,]\d+)*)\s+times\b(?![/]|\.[a-z]|\s+(?:in|over|during)\s+(?:the\s+)?(?:last|past)\b)/gi,
+    '$1$2x',
+  ).replace(
+    /(?<![\w./@+$€£¥₦负正零〇一二两三四五六七八九十百千万亿点–—−-])(?:两百|二百)\s*倍(?![零〇一二两三四五六七八九十百千万亿点\d])/gu,
+    '200x',
   ).replace(/\b(\d+(?:[.,]\d+)*)[\s-]*fold\b/gi, '$1x').replace(
     /(\d+(?:[.,]\d+)*)\s*([-–—])\s*(\d+(?:[.,]\d+)*)\s*(x|×|倍|%)/gi,
     '$1$4$2$3$4',

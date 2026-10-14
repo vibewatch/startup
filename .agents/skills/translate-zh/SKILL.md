@@ -274,6 +274,16 @@ remain outside this fallback, as do unsupported written quantities.
 Signed or accounting-style monetary amounts also keep their existing findings.
 This only resolves a quantity-token mismatch; attribution and the surrounding
 proposition still require source review.
+An explicit numeric comparison such as `200 times the lending scale of Imprint`
+can match `Imprint 贷款规模的 200 倍`, including the exact written forms `两百倍`
+and `二百倍`. Written forms with additional magnitude, decimals or signs are not
+reinterpreted. Likewise, `oversubscribed 4.7 times` can match `超额认购 4.7 倍`;
+an unchanged `times` unit following `超额认购` also retains that multiplier.
+Bid submission counts are not oversubscription ratios. These scoped aliases
+preserve each multiplier occurrence; they do not reinterpret visit counts,
+explicit event frequencies over past periods, signed or ranged comparisons,
+currency-prefixed quantities or URL fragments. Approximation and attribution
+remain separately checked; compare each complete proposition with the source.
 Within that exact-tripling comparison, conventional title/lowercase English
 month abbreviations such as `Apr 2025`, `apr. 2025`, and `Sept 2025` retain their
 paired month/year anchors. All other numeric occurrences must still agree.

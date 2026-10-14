@@ -111,6 +111,79 @@ const checks = [
     `financial times multipliers must preserve quantities without treating occurrence counts as multiples: ${en} / ${zh}`,
   ]),
   ...[
+    ['The portfolio exceeds $100 billion, approximately 200 times the lending scale of Imprint.', '贷款组合超过 $100 billion，约为 Imprint 贷款规模的 200 倍。', false],
+    ['The portfolio exceeds $100 billion, approximately 200 times the lending scale of Imprint.', '贷款组合超过 $100 billion，约为 Imprint 贷款规模的两百倍。', false],
+    ['The portfolio exceeds $100 billion, approximately 200 times the lending scale of Imprint.', '贷款组合超过 $100 billion，约为 Imprint 贷款规模的二百倍。', false],
+    ['The portfolio is 200 times the lending scale of Imprint.', '贷款组合为 Imprint 贷款规模的一千两百倍。', true],
+    ['The portfolio is 200 times the lending scale of Imprint.', '贷款组合为 Imprint 贷款规模的两百点五倍。', true],
+    ['The portfolio is 200 times the lending scale of Imprint.', '贷款组合为 Imprint 贷款规模的负两百倍。', true],
+    ['The portfolio is 2.5 times the lending scale of Imprint.', '贷款组合为 Imprint 贷款规模的 2.5 倍。', false],
+    ['The portfolio is 200 times the lending scale of Imprint and 200 times the lending scale of another lender.', '贷款组合为 Imprint 贷款规模的 200 倍，也是另一家贷款机构的 200 倍。', false],
+    ['The portfolio exceeds $100 billion, approximately 200 times the lending scale of Imprint.', '贷款组合超过 $100 billion，约为 Imprint 贷款规模的 201 倍。', true],
+    ['The portfolio exceeds $100 billion, approximately 200 times the lending scale of Imprint.', '贷款组合超过 $101 billion，约为 Imprint 贷款规模的 200 倍。', true],
+    ['The portfolio is 2.5 times the lending scale of Imprint.', '贷款组合为 Imprint 贷款规模的 2.6 倍。', true],
+    ['The portfolio is 200 times the lending scale of Imprint.', '贷款组合为 Imprint 贷款规模的 200 次。', true],
+    ['The portfolio is 200 times the lending scale of Imprint.', '贷款组合为 Imprint 贷款规模的 200 倍和 200 倍。', true],
+    ['The portfolio is 200 times the lending scale of Imprint and 200 times the lending scale of another lender.', '贷款组合为 Imprint 贷款规模的 200 倍。', true],
+    ['The bank was visited 200 times.', '该银行接受了 200 次访问。', false],
+    ['The bank was visited 200 times.', '该银行接受了 200 倍访问。', true],
+    ['The bank was visited 200 times.', '该银行接受了两百倍访问。', true],
+    ['The portfolio is -200 times the lending scale of Imprint.', '贷款组合为 Imprint 贷款规模的 200 倍。', true],
+    ['The portfolio is 5-200 times the lending scale of Imprint.', '贷款组合为 Imprint 贷款规模的 5–200 倍。', true],
+    ['The portfolio is 200+ times the lending scale of Imprint.', '贷款组合为 Imprint 贷款规模的 200 倍。', true],
+    ['The portfolio is $200 times the lending scale of Imprint.', '贷款组合为 Imprint 贷款规模的 200 倍。', true],
+    ['The path is /200 times the lending scale of Imprint.', '路径为 /200 times the lending scale of Imprint；贷款组合为 200 倍。', true],
+  ].flatMap(([en, zh, expected]) => [false, true].flatMap(strictEditor => ['prose', 'table', 'figure'].map(surface => {
+    const wrap = value => surface === 'prose' ? fullReport(value)
+      : surface === 'table' ? { ...fullReport(''), tables: [{ rows: [[value]] }] }
+        : { ...fullReport(''), figures: [{ data: { nodes: [{ label: value }] } }] };
+    return [
+      checkPairQuality(wrap(en), wrap(zh), { strictEditor })
+        .some(issue => issue.code === 'metric-preservation') === (strictEditor && expected),
+      `lending-scale times aliases stay scoped and preserve multiplier tokens (${surface}, strict=${strictEditor}): ${en} / ${zh}`,
+    ];
+  }))),
+  ...[
+    ['The portfolio exceeds $100 billion, approximately 200 times the lending scale of Imprint.', '贷款组合超过 $100 billion，约为 Imprint 贷款规模的 200 倍。', false],
+    ['The portfolio exceeds $100 billion, approximately 200 times the lending scale of Imprint.', '贷款组合超过 $100 billion，为 Imprint 贷款规模的 200 倍。', true],
+    ['The portfolio is approximately 200 times the lending scale of Imprint; the company claims it can expand.', '贷款组合约为 Imprint 贷款规模的 200 倍；公司宣称可以扩张。', false],
+    ['The portfolio is approximately 200 times the lending scale of Imprint; the company claims it can expand.', '贷款组合约为 Imprint 贷款规模的 200 倍；可以扩张。', true],
+  ].flatMap(([en, zh, expected]) => [false, true].map(strictEditor => [
+    checkPairQuality(fullReport(en), fullReport(zh), { strictEditor })
+      .some(issue => issue.code === 'hedge-preservation') === expected,
+    `lending-scale multiplier recognition never clears an omitted approximation or attribution (strict=${strictEditor}): ${zh}`,
+  ])),
+  ...[
+    ['The $500M asset-backed securitization was oversubscribed 4.7 times.', '$500M 资产支持证券化超额认购 4.7 倍。', false],
+    ['The $500M asset-backed securitization was oversubscribed 4.7 times.', '$500M 资产支持证券化超额认购 4.7 times。', false],
+    ['The $500M asset-backed securitization was oversubscribed 4.7 times.', '$500M 资产支持证券化超额认购 4.8 times。', true],
+    ['The $500M asset-backed securitization was oversubscribed 4.7 times.', '$500M 资产支持证券化超额认购 4.8 倍。', true],
+    ['The $500M asset-backed securitization was oversubscribed 4.7 times.', '$501M 资产支持证券化超额认购 4.7 倍。', true],
+    ['The $500M asset-backed securitization was oversubscribed 4.7 times.', '$500M 资产支持证券化超额认购 4.7 次。', true],
+    ['The $500M asset-backed securitization was oversubscribed 4.7 times.', '$500M 资产支持证券化超额认购 4.7 倍和 4.7 倍。', true],
+    ['The deals were oversubscribed 4.7 times and oversubscribed 2.5 times.', '两笔交易分别超额认购 4.7 倍和 2.5 倍。', false],
+    ['The deals were oversubscribed 4.7 times and oversubscribed 2.5 times.', '两笔交易分别超额认购 4.7 倍。', true],
+    ['Investors submitted bids 4.7 times on average.', '投资者平均提交 4.7 次认购报价。', false],
+    ['Investors submitted bids 4.7 times on average.', '投资者平均提交 4.7 倍认购报价。', true],
+    ['Investors submitted bids 4.7 times on average.', '投资者平均提交报价；超额认购 4.7 times。', true],
+    ['The fund was oversubscribed 2 times over the past 3 years.', '基金在过去 3 年出现 2 次超额认购。', false],
+    ['The fund was oversubscribed 2 times over the past 3 years.', '基金在过去 3 年出现 2 倍超额认购。', true],
+    ['The securitization was oversubscribed -4.7 times.', '证券化超额认购 4.7 倍。', true],
+    ['The securitization was oversubscribed 2.5-4.7 times.', '证券化超额认购 2.5–4.7 倍。', true],
+    ['The securitization was oversubscribed $4.7 times.', '证券化超额认购 4.7 倍。', true],
+    ['The path is /oversubscribed 4.7 times.', '路径为 /oversubscribed 4.7 times；认购为 4.7 倍。', true],
+    ['The file is oversubscribed 4.7 times.pdf.', '文件为 oversubscribed 4.7 times.pdf；认购为 4.7 倍。', true],
+  ].flatMap(([en, zh, expected]) => [false, true].flatMap(strictEditor => ['prose', 'table', 'figure'].map(surface => {
+    const wrap = value => surface === 'prose' ? fullReport(value)
+      : surface === 'table' ? { ...fullReport(''), tables: [{ rows: [[value]] }] }
+        : { ...fullReport(''), figures: [{ data: { nodes: [{ label: value }] } }] };
+    return [
+      checkPairQuality(wrap(en), wrap(zh), { strictEditor })
+        .some(issue => issue.code === 'metric-preservation') === (strictEditor && expected),
+      `oversubscription times aliases preserve values without reinterpreting bid counts or identifiers (${surface}, strict=${strictEditor}): ${en} / ${zh}`,
+    ];
+  }))),
+  ...[
     ...[
       ['No public pricing or customer-specific qualification data retained', '未留存公开定价或客户特定认证数据'],
       ['No public quote sheet or exhaustive installed-base list retained', '未留存公开报价单或完整装机基础清单'],
