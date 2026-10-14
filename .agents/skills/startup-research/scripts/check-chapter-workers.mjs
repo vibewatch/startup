@@ -74,7 +74,7 @@ try {
   ]));
   const benchmarkPlan = JSON.parse(run('run-chapter-workers.mjs', [
     '--report-folder', folder,
-    '--model-override', 'gemini-3.8-flash',
+    '--model-override', 'gpt-5.4',
     '--effort-override', 'default',
     '--disable-escalation',
     '--dry-run',
@@ -125,7 +125,7 @@ try {
   ]));
   const benchmarkFinalizer = JSON.parse(run('run-report-finalizer.mjs', [
     '--report-folder', folder,
-    '--model-override', 'gemini-3.8-flash',
+    '--model-override', 'gpt-5.4',
     '--effort-override', 'default',
     '--disable-escalation',
     '--dry-run',
@@ -560,12 +560,12 @@ process.exit(Number(process.env.FAKE_COPILOT_EXIT ?? 1));
     [plan.concurrency === 8, 'runner default concurrency is not 8'],
     [plan.timeoutSeconds === 900, 'runner default timeout is not 900 seconds'],
     [plan.workers.length === roster.totalChapters, 'runner did not schedule every chapter'],
-    [plan.workers.every((worker) => worker.model === 'gemini-3.8-flash'), 'runner did not use Gemini'],
-    [plan.workers.every((worker) => worker.reasoningEffort === 'default'), 'runner did not use Gemini default effort'],
+    [plan.workers.every((worker) => worker.model === 'gpt-5.4'), 'runner did not use GPT-5.4'],
+    [plan.workers.every((worker) => worker.reasoningEffort === 'default'), 'runner did not use default effort'],
     [plan.workers.every((worker) => worker.escalateTo === 'gpt-5.6-sol-fast'), 'runner did not retain the Sol Fast quality fallback'],
     [workerPools.every((pool) => pool.recommended.length === 1), 'worker pool retained an unsuccessful recommended source'],
     [workerPools.every((pool) => pool.reserve.length === 0), 'worker pool retained an unfetched reserve source'],
-    [benchmarkPlan.workers.every((worker) => worker.model === 'gemini-3.8-flash'), 'benchmark model override did not reach every worker'],
+    [benchmarkPlan.workers.every((worker) => worker.model === 'gpt-5.4'), 'benchmark model override did not reach every worker'],
     [benchmarkPlan.workers.every((worker) => worker.reasoningEffort === 'default'), 'benchmark effort override did not reach every worker'],
     [benchmarkPlan.workers.every((worker) => worker.escalateTo === null), 'benchmark override retained a hidden escalation'],
     [benchmarkPlan.escalationEnabled === false, 'benchmark plan did not disable escalation'],
@@ -574,7 +574,7 @@ process.exit(Number(process.env.FAKE_COPILOT_EXIT ?? 1));
     [finalizer.escalateTo === 'gpt-5.6-sol-fast', 'finalizer did not retain the Sol Fast quality fallback'],
     [finalizer.escalationReasoningEffort === 'xhigh', 'finalizer escalation effort is not xhigh'],
     [finalizer.timeoutSeconds === 900, 'finalizer default timeout is not 900 seconds'],
-    [benchmarkFinalizer.model === 'gemini-3.8-flash', 'benchmark finalizer model override was ignored'],
+    [benchmarkFinalizer.model === 'gpt-5.4', 'benchmark finalizer model override was ignored'],
     [benchmarkFinalizer.reasoningEffort === 'default', 'benchmark finalizer effort override was ignored'],
     [benchmarkFinalizer.escalateTo === null, 'benchmark finalizer retained a hidden escalation'],
     [benchmarkFinalizer.escalationEnabled === false, 'benchmark finalizer did not disable escalation'],

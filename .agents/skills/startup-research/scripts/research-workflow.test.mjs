@@ -290,6 +290,32 @@ for (const file of ['company.yml', 'refresh-company.yml', 'research-unicorns.yml
   });
 }
 
+test('translation model normalization uses the remaining workflow choice and rejects retired choices', t => {
+  const workflow = yaml.load(readFileSync('.github/workflows/translate-reports-zh.yml', 'utf8'));
+  const model = workflow.on.workflow_dispatch.inputs.model;
+  assert.deepEqual(model.options, ['gpt-5.6-luna']);
+  assert.equal(model.default, model.options[0]);
+  const normalize = workflowSteps('translate-reports-zh.yml')
+    .find(step => step.name === 'Normalize translation inputs');
+  const root = mkdtempSync(join(tmpdir(), 'translation-model-test-'));
+  t.after(() => rmSync(root, { recursive: true, force: true }));
+  for (const [index, value] of ['', ` ${model.default} `, 'retired-model'].entries()) {
+    const output = join(root, `output-${index}`);
+    const result = spawnSync('bash', ['-e', '-c', normalize.run], {
+      encoding: 'utf8',
+      env: { ...process.env, EVENT_NAME: 'schedule', RAW_COUNT: '', RAW_MODEL: value, GITHUB_OUTPUT: output },
+    });
+    if (value === 'retired-model') {
+      assert.equal(result.status, 1);
+      assert.match(result.stderr, /Unsupported model/u);
+      assert(!existsSync(output));
+    } else {
+      assert.equal(result.status, 0, result.stderr);
+      assert.match(readFileSync(output, 'utf8'), /^model=gpt-5\.6-luna$/mu);
+    }
+  }
+});
+
 for (const scenario of ['current', 'draft-drift', 'editor-drift', 'repair-drift', 'policy-change']) {
   test(`automation model checks distinguish draft, editor and escalation: ${scenario}`, t => {
     const root = mkdtempSync(join(tmpdir(), 'automation-model-test-'));

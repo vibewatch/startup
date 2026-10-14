@@ -714,13 +714,12 @@ Review `.translate-cache/<runId>/batch-result.json` and `batch.log`, then run
 one integrated `npm run validate` for the accepted batch before publication.
 Archive the per-report evidence before using the runner's `cleanup` command.
 
-For low-cost model routing, use `gemini-3.8-flash` for summary and long-form
+For model routing, use `gpt-5.6-luna` for summary and long-form
 full-report drafts, then use `gpt-6-luna` for compact table/figure leaves
 where brevity matters. Run deterministic QA after translation and route only
 meaning-sensitive or still-awkward leaves to `gpt-5.6-luna`; reserve
-`gpt-5.6-sol-fast` for unresolved semantic conflicts. Keep
-`gemini-3.5-flash` for search planning and evidence extraction, where its
-lower-cost output is easier to verify. The shared policy is in
+`gpt-5.6-sol-fast` for unresolved semantic conflicts. Use
+`gpt-5.4` for search planning and evidence extraction. The shared policy is in
 `../startup-research/references/model-routing.yaml`.
 
 If both zh siblings already exist and no repair is requested, do not rewrite
