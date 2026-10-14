@@ -67,6 +67,46 @@ test('table evidence references wrap instead of hiding later links and scrolling
   assert.deepEqual(claimRefs({ claimRefs: refs }), refs);
 });
 
+test('tables respond to their container without leaking card layouts into print', () => {
+  const table = readFileSync('website/src/components/DataTable.astro', 'utf8');
+  assert.match(table, /\.table-frame \{ container-type: inline-size;/);
+  assert.match(table, /@media screen \{\s*@container \(max-width: 700px\)/);
+  assert.match(table, /@container \(max-width: 420px\) \{\s*\.table-frame :global\(tbody td\) \{ grid-template-columns: minmax\(0, 1fr\)/);
+  assert.match(table, /@media print \{\s*\.table-frame \{ container-type: normal;/);
+  assert.doesNotMatch(table, /@media \(max-width: 700px\)/);
+  const figure = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  assert.match(figure, /\.flow-sequence-details :global\(th:first-child\),\s*\.dag-details :global\(th:first-child\) \{ width: 15%;/);
+});
+
+test('wide matrices preserve readable column widths and contained keyboard scrolling', () => {
+  const figure = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  assert.match(figure, /repeat\(var\(--matrix-cols, 1\), minmax\(8rem, 1fr\)\)/);
+  assert.match(figure, /\.chart-matrix \.matrix-table\) \{ overflow-x: auto;/);
+  assert.match(figure, /\.attr\('tabindex', 0\)\.attr\('aria-label', element\.getAttribute\('aria-label'\)\)/);
+  assert.match(figure, /aria-label=\{figure\.title\}/);
+  const report = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
+  assert.match(report.slice(report.indexOf('@media print')), /\.chart-matrix \.matrix-table\) \{ overflow: visible !important;/);
+});
+
+test('compact SVGs retain authored font sizes and graph previews fit measured glyph widths', () => {
+  const figure = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  assert.match(figure, /const width = Math\.max\(containerWidth, minWidthOverride \?\? 0\);/);
+  assert.doesNotMatch(figure, /const minInternalWidth/);
+  const dag = figure.slice(figure.indexOf('const renderDag ='), figure.indexOf('const renderFlow ='));
+  assert.match(dag, /const textWrapper = createSvgTextWrapper\(svg\)/);
+  assert.match(dag, /textWrapper, maxWidth: nodeLabelMaxWidth/);
+  assert.match(dag, /textWrapper, maxWidth: compact \? width - 68 : stageGapW - 22/);
+  assert.doesNotMatch(dag, /nodeLabelFontSize \* 0\.58/);
+  const flow = figure.slice(figure.indexOf('const renderFlow ='), figure.indexOf('const firstNonEmpty'));
+  assert.match(flow, /const connectorLabelWidth = Math\.min\(84, railX \* 2 - 8\)/);
+  assert.match(flow, /textWrapper\.fit\(visibleEdgeLabel\(d\.edge\), .*maxWidth: connectorLabelWidth - 16/);
+  assert.match(flow, /withTooltip\(connectorLabels/);
+  assert.match(flow, /const detailY = compact \? 76 : 84/);
+  assert.match(flow, /const cardH = hasDetails \? \(compact \? 108 : 118\)/);
+  const timeline = figure.slice(figure.indexOf('const renderTimeline ='), figure.indexOf('const renderStack ='));
+  assert.match(timeline, /const width = containerWidth;/);
+});
+
 test('matrix renderer and validator share canonical display aliases and preserve explicit empty labels', () => {
   const cases = [
     [null, ''], ['', ''], ['Not disclosed', 'Not disclosed'], [0, '0'], [-2.5, '-2.5'],
@@ -743,7 +783,7 @@ test('flow and stack previews fit measured widths without removing complete tool
 
 test('mobile table captions use the full block table width rather than an anonymous caption column', () => {
   const source = readFileSync('website/src/components/DataTable.astro', 'utf8');
-  const mobile = source.slice(source.indexOf('@media (max-width: 700px)'));
+  const mobile = source.slice(source.indexOf('@container (max-width: 700px)'), source.indexOf('@media print'));
   assert.match(mobile, /\.table-frame :global\(caption\) \{ display: block; width: 100%; \}/);
 });
 

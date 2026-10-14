@@ -1005,6 +1005,11 @@ tooltips in a browser. Raw `script.figure-chart-data` payloads are not proof
 that a translated field is displayed; readable-page extraction omits those
 payloads and cannot validate client-rendered chart text.
 For matrices, verify `text`-backed cells as well as `label`-backed cells.
+Wide screen matrices keep readable columns in a keyboard-scrollable frame;
+check the last column after scrolling, without horizontal overflow of the report.
+Shared tables switch to cards by their available container width, not the viewport.
+Verify full-width values in narrow cards and that printing from a phone viewport
+restores table headers and cells without duplicate card labels.
 Distinct column `detail` / `note`, row `note`, and cell `detail` / `note` must stay
 visible in desktop grids, mobile cards and print. Check that cell tooltips
 retain the matching row/column qualifications, without changing authored
@@ -1091,6 +1096,9 @@ Flow and stack previews fit measured SVG glyph widths, with explicit ellipses
 when bounded previews are necessary; their full text remains in the supplements
 and tooltips. Check actual glyph bounds, not just text presence. Mobile table
 captions must use the full card width rather than collapsing into a vertical strip.
+DAG node and stage previews also use measured glyph widths, including Chinese.
+Compact SVGs use their actual container width instead of shrinking a minimum-width
+canvas and its text; check node/card containment after this narrow-screen reflow.
 Also verify report-level `coverageNotes`, displayed before cover facts with
 the same Chinese-leaf / English-fallback behavior as other report text.
 Flow edge aliases resolve from English before overlays are merged. Non-sequential

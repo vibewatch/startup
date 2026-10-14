@@ -31,9 +31,8 @@ const hasFooter = Astro.slots.has('footer');
 </div>
 
 <script>
-  // Mobile responsive enhancement:
-  //   1. Tag .table-frame with data-columns="N" so CSS can branch on
-  //      column count (card mode for ≤4 columns, sticky-first for ≥5).
+  // Responsive card enhancement:
+  //   1. Record the header count on .table-frame.
   //   2. Inject data-label="<column header>" on every <td> so the card
   //      mode can render the header label inline via ::before.
   // Runs once per table on page load. Idempotent — safe on re-execution.
@@ -57,7 +56,7 @@ const hasFooter = Astro.slots.has('footer');
 </script>
 
 <style>
-  .table-frame { width: 100%; max-width: 100%; margin: var(--space-5) 0; border: var(--report-rule); border-top: 3px solid var(--claret); background: var(--surface-paper); }
+  .table-frame { container-type: inline-size; width: 100%; max-width: 100%; margin: var(--space-5) 0; border: var(--report-rule); border-top: 3px solid var(--claret); background: var(--surface-paper); }
   .table-frame :global(table) { width: 100%; table-layout: fixed; border-collapse: separate; border-spacing: 0; background: transparent; font-family: var(--font-sans); }
   .table-frame :global(caption) { caption-side: top; text-align: left; padding: var(--space-3) var(--space-4); border-bottom: var(--report-rule); background: color-mix(in srgb, var(--claret) 6%, transparent); font-family: var(--font-sans); font-variant-caps: all-small-caps; font-size: var(--report-fs-kicker); font-weight: 800; letter-spacing: var(--tracking-eyebrow); color: var(--claret); }
   .table-frame :global(th),
@@ -74,12 +73,12 @@ const hasFooter = Astro.slots.has('footer');
 
   /* ------------------------------------------------------------------
    * Mobile responsive layout: every table — regardless of column count —
-   * collapses to a stacked card list on narrow viewports. Each row is
+   * collapses to a stacked card list in narrow containers. Each row is
    * one card; each cell renders its column header inline via the
    * data-label attribute injected by the hydration script above.
    * ------------------------------------------------------------------ */
-  @media (max-width: 700px) {
-    .table-frame { overflow-x: hidden; }
+  @media screen {
+   @container (max-width: 700px) {
     .table-frame :global(table) { min-width: 0; display: block; }
     .table-frame :global(caption) { display: block; width: 100%; }
     .table-frame :global(thead) { display: none; }
@@ -119,5 +118,12 @@ const hasFooter = Astro.slots.has('footer');
       content: '';
       display: none;
     }
+   }
+   @container (max-width: 420px) {
+    .table-frame :global(tbody td) { grid-template-columns: minmax(0, 1fr); row-gap: var(--space-1); }
+   }
+  }
+  @media print {
+    .table-frame { container-type: normal; }
   }
 </style>
