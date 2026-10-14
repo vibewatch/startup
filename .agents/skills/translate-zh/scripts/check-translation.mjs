@@ -55,7 +55,7 @@ function latinWords(value) {
 }
 
 function properNounWords(value) {
-  return value.match(/[\p{L}][\p{L}\p{N}'+-]*/gu) ?? [];
+  return value.match(/[\p{L}][\p{L}\p{N}'\u2019+-]*/gu) ?? [];
 }
 
 const DESCRIPTOR_WORDS = new Set([
@@ -84,7 +84,7 @@ function isProperNounPhrase(value) {
   const words = properNounWords(value);
   return words.length > 0
     && words.length <= 8
-    && words.every((word) => !/[A-Za-z]/.test(word) || /^\p{Lu}[\p{L}\p{N}.+-]*$/u.test(word) || /^(?=.*\d)[a-z][a-z0-9.+-]*$/i.test(word))
+    && words.every((word) => !/[A-Za-z]/.test(word) || /^\p{Lu}[\p{L}\p{N}.'\u2019+-]*$/u.test(word) || /^(?=.*\d)[a-z][a-z0-9.+-]*$/i.test(word))
     && !words.some((word) => DESCRIPTOR_WORDS.has(word.toLowerCase()));
 }
 

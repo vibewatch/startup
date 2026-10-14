@@ -626,6 +626,11 @@ different predicates and separate omitted company assertions still fail.
 Source-identical `Tiger Global Management` and `IBM (watsonx Orchestrate)` are
 proper names, not untranslated descriptors. Ordinary text beside those names,
 such as `platform`, and `Pricing Guide` beside a publisher still needs translation.
+Proper names also retain apostrophes and quoted nicknames, such as
+`Teachers' Venture Growth (TVG)` and `Jaroslaw 'Jarek' Kutylowski`.
+These punctuation forms do not exempt adjacent ordinary descriptors.
+An explicit `insurance, claims history` diligence list concerns insurance claims,
+not a company assertion; a separate assertion in the same leaf still needs attribution.
 `Continuity of historical shareholder claims` concerns shareholder rights,
 not a company assertion. A shareholder who `claims` a return or a separate
 company assertion still requires attribution.

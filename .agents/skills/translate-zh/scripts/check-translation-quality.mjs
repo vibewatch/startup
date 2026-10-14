@@ -73,6 +73,7 @@ const insuranceClaimNouns = new RegExp([
   ';\\s*claims(?= volume is approximate\\b)',
   '\\b(?:genomics to|from policy to|propagated to|propagate data to) claims(?=\\s*(?:[.,;:]|$))',
   '\\bcoverage\\s+(?:limits?\\s*,\\s*(?:exclusions?\\s*,\\s*and\\s+claims?\\s+procedures?|claims?\\s+triggers?)|terms\\s+and\\s+claims?\\s+histor(?:y|ies))\\b',
+  '\\binsurance\\s*,\\s*claims?\\s+history\\b',
   '\\bproduct[ -]liability\\s+claims?\\b',
   '\\binsurance\\s+and\\s+customer\\s+claims\\b(?=\\s*(?:[,.;:]|$))',
 ].join('|'), 'gi');
