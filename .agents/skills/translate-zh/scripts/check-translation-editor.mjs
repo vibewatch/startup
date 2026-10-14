@@ -1927,6 +1927,23 @@ const checks = [
       .some((issue) => issue.code === 'hedge-preservation'),
     `estimate aliases must not conceal certainty, negation or another missing qualifier (strict=${strictEditor}): ${zh}`,
   ])),
+  ...[
+    ['Active consent decree; late refund claims processing in 2026', '有效同意令；2026 年迟交退款申领处理仍在进行', false],
+    ['The workflow supports refund claim handling.', '该流程支持退款申领处理。', false],
+    ['Refund claims processing continues; the company claims all requests were paid.', '退款申领处理仍在进行；所有请求均已支付。', true],
+    ['Refund claims processing continues; the company claims all requests were paid.', '退款申领处理仍在进行；公司声称所有请求均已支付。', false],
+    ['The company claims processing refunds takes one day.', '处理退款耗时一天。', true],
+    ['The company claims refunds are fast.', '退款很快。', true],
+  ].flatMap(([en, zh, expected]) => [false, true].flatMap(strictEditor => ['prose', 'table', 'figure'].map(surface => {
+    const wrap = value => surface === 'prose' ? fullReport(value)
+      : surface === 'table' ? { ...fullReport(''), tables: [{ rows: [[value]] }] }
+        : { ...fullReport(''), figures: [{ notes: value }] };
+    return [
+      checkPairQuality(wrap(`${en} This is a source-reviewed diligence observation.`), wrap(zh), { strictEditor })
+        .some(issue => issue.code === 'hedge-preservation') === expected,
+      `refund-claim workflows must not exempt separate assertions (${surface}, strict=${strictEditor}): ${en}`,
+    ];
+  }))),
   ...legalClaimNounPairs.flatMap(([en, zh]) => [false, true].flatMap((strictEditor) => [
     [
       checkPairQuality(fullReport(en), fullReport(zh), { strictEditor }).length === 0,

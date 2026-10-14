@@ -548,6 +548,9 @@ need attribution. `关税影响论断基于` can retain one explicitly source-ba
 assertion; it cannot clear another claim in the leaf. `缺少公开基准` can preserve
 one explicit `no public benchmark` gap. Negation, clause boundaries and separate
 public-disclosure gaps remain distinct.
+`refund claims processing` and `refund claim handling` describe processing refund
+requests, not company assertions. A separate `the company claims`, including a
+claim about refund speed or processing time, still requires attribution.
 Likewise, `arbitration claims against` a party are arbitration demands, while
 `non-competition and non-solicitation claims against` a party are legal demands.
 Neither is a company assertion. A separate company or arbitration-provider
