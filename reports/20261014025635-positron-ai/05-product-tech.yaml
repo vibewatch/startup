@@ -1,0 +1,655 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: positron-ai
+runDate: '2026-10-14'
+company:
+  name: Positron AI
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: Positron AI develops memory-first AI inference hardware, shipping its air-cooled Atlas 8-card server appliance to production data centers while developing the custom Asimov ASIC and Titan system to deliver higher tokens per watt than GPUs using commodity LPDDR5X memory.
+sections:
+  - id: product-definition-workflow
+    title: Product Definition and Developer Workflow
+    body: Positron AI designs dedicated hardware systems tailored specifically for large language model inference workloads rather than general-purpose compute. Its initial commercial offering is the Atlas server appliance, a 4U rackmount system housing eight accelerator cards manufactured in partnership with BittWare. Rather than forcing software engineering teams to adopt a proprietary kernel compiler or rewrite existing production pipelines, Atlas provides a plug-and-play appliance deployment model. The platform directly ingests standard Hugging Face transformer model artifacts in SafeTensors and PyTorch formats, enabling engineering teams to deploy weights without specialized code restructuring. Atlas serves inference requests via a drop-in OpenAI-compatible REST API endpoint, allowing existing enterprise client applications and agentic orchestration frameworks to redirect API traffic by simply modifying their base URL. Production installations have demonstrated that an Atlas appliance can transition from initial physical unboxing to actively serving production large language model queries within approximately 38 minutes.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE004
+    tableRefs:
+      - TE001
+  - id: use-cases-and-operational-benefits
+    title: Inference Use Cases and Data Center Operational Economics
+    body: The core commercial use case for Positron hardware centers on autoregressive transformer decode operations, where traditional graphics processors experience significant performance degradation due to memory-bandwidth starvation. While general-purpose GPUs achieve substantial peak floating-point throughput during dense prefill and training phases, the token-by-token generation phase is heavily constrained by memory access speeds. On standardized benchmarks evaluating Meta's Llama 3.1 8B parameter model in BF16 precision, an eight-card Atlas server achieves 280 tokens per second per user while consuming 2,000 watts of electrical power. In comparison, a reference Nvidia DGX system consumes approximately 5,900 watts while delivering 182 tokens per second under similar evaluation parameters. This differential creates material economic and operational advantages for data center operators managing power-constrained facilities. In legacy enterprise data centers where rack power is capped at 10 kilowatts, operators can accommodate up to five Atlas 4U appliances within a single rack, whereas power draw limits those same racks to hosting only a single high-density GPU server.
+    claimRefs:
+      - CE001
+      - CE005
+      - CE006
+      - CE008
+    tableRefs:
+      - TE002
+  - id: architecture-silicon-roadmap
+    title: Memory-First Architecture and the Asimov Silicon Roadmap
+    body: Positron's architectural philosophy inverts conventional semiconductor design priorities by establishing memory capacity and realizable bandwidth as primary design constraints before sizing compute engines. The company asserts that modern generative inference workloads suffer from severe memory-bus underutilization, with conventional GPUs achieving less than 30% of theoretical memory bandwidth during real-world inference serving. Atlas counteracts this bottleneck through a specialized memory architecture that achieves approximately 93% realized bandwidth utilization on transformer inference. Furthermore, Positron avoids High Bandwidth Memory and chip-on-wafer-on-substrate packaging in favor of commodity LPDDR5X memory channels, significantly reducing bill-of-materials costs and avoiding fragile packaging supply lines. Building upon Atlas, Positron is developing Asimov, a custom ASIC targeting tape-out in late 2026. Asimov is engineered to deliver between 864 GB and 2,304 GB of RAM per device with 2.76 TB/s realizable bandwidth at a 400W thermal design power. Looking ahead to 2027, Positron plans to combine four Asimov ASICs into the Titan system, a 4U server delivering over 8 terabytes of accelerator memory and 11.8 TB/s of aggregate system bandwidth.
+    claimRefs:
+      - CE003
+      - CE009
+      - CE010
+      - CE011
+    tableRefs:
+      - TE003
+    figureRefs:
+      - FE001
+  - id: differentiation-and-technical-risks
+    title: Technical Differentiation, Supply Chain Dependencies, and Silicon Risks
+    body: Positron's primary technological differentiation stems from its memory-centric architecture, air-cooled operating model, and domestic production foundation. By designing Atlas to operate entirely within air-cooled data center thermal envelopes, Positron avoids the complex plumbing, liquid heat exchangers, and facility modifications required by contemporary Hopper and Blackwell GPU clusters. However, the company faces notable technical and operational risks as it executes its technology roadmap. Initial Atlas appliances rely on programmed FPGA silicon fabricated domestically through Intel facilities and assembled by BittWare. In contrast, the upcoming Asimov ASIC transition requires shifting complex tape-out and fabrication to TSMC advanced nodes, introducing significant execution complexity. Diligence must closely monitor tape-out milestones, non-recurring engineering costs, thermal dissipation in dense chassis configurations, and whether customer latency advantages persist as incumbent GPU vendors introduce next-generation architectures.
+    claimRefs:
+      - CE002
+      - CE007
+      - CE008
+      - CE012
+      - CE013
+      - CE014
+      - CE015
+tables:
+  - id: TE001
+    title: Product module / asset matrix
+    columns:
+      - Module / SKU
+      - Target User / Workload
+      - Maturity / Status
+      - Core Differentiation
+      - Diligence Gap / Risk
+    rows:
+      - - Atlas Server Appliance (4U 8-Card)
+        - Cloud service providers and enterprise inference clusters
+        - Production shipping (since Aug 2024; 50+ racks at OCI)
+        - 280 tokens/sec at 2,000W; 3x lower latency vs H100; air-cooled
+        - Customer concentration and reliance on Intel FPGA silicon
+      - - Atlas PCIe Accelerator Card
+        - OEM server integrators and high-volume data center operators
+        - Production shipping via BittWare / Molex partnership
+        - Modular PCIe form-factor; drop-in Hugging Face weight loading
+        - Standalone board sales volume and warranty terms undisclosed
+      - - Asimov Custom ASIC
+        - Frontier LLM providers and large-scale model inference data centers
+        - In development (tape-out planned late 2026, production 2027)
+        - 864 GB to 2.3 TB RAM per chip; 2.76 TB/s bandwidth; commodity LPDDR5X
+        - Unproven silicon tape-out and TSMC foundry allocation execution
+      - - Titan 4U System
+        - Supercomputing centers and long-context multi-trillion parameter serving
+        - Preview design (planned for 2027 production)
+        - 4x Asimov chips with 8+ TB memory; 11.8 TB/s system bandwidth
+        - High thermal density in 4U air-cooled chassis; unvalidated interconnect
+    notes: Maturity reflects public commercial status as of 2026. Specifications for Asimov and Titan are preliminary engineering targets subject to silicon tape-out verification.
+    claimRefs:
+      - CE001
+      - CE002
+      - CE007
+      - CE010
+      - CE011
+  - id: TE002
+    title: Workflow / use-case table
+    columns:
+      - User Job
+      - Current GPU Workflow
+      - Positron Solution
+      - Measurable Benefit
+      - Limitation / Trade-off
+    rows:
+      - - Autoregressive LLM Token Generation
+        - Nvidia H100/H200 DGX servers running Triton / vLLM
+        - Positron Atlas 8-card server with memory-first decode engine
+        - 280 tokens/sec at 2,000W (approx. 3x lower latency vs H100)
+        - Focuses primarily on transformer decode phase rather than training
+      - - Power-Constrained Enterprise Data Center Hosting
+        - 10 kW rack limited to 1x DGX server burning 6,000W
+        - Positron Atlas consuming 2,000W per 4U server
+        - Up to 5 Atlas servers per 10 kW rack; no liquid cooling retrofits
+        - Pre-2020 facility airflow management must still maintain standard CFM
+      - - Open-Source Transformer Model Deployment
+        - Complex CUDA compile pipelines and customized model kernels
+        - Direct drag-and-drop ingestion of Hugging Face .pt / SafeTensors
+        - Initial cluster setup in 38 minutes; drop-in OpenAI REST API
+        - Non-transformer model architectures not currently accelerated
+      - - Low-Latency Financial Signal Inference
+        - Multi-GPU clusters with complex inter-card communications
+        - Dedicated Atlas FPGA servers with low-latency memory pipelines
+        - Roughly 3x lower end-to-end latency validated by Jump Trading
+        - Production validation limited to specific customer-evaluated models
+    notes: Workflow benefits and power consumption comparisons are derived from company demonstrations and initial customer evaluations; performance varies across model architectures and batch sizes.
+    claimRefs:
+      - CE001
+      - CE004
+      - CE005
+      - CE006
+      - CE008
+  - id: TE003
+    title: Technology / operating architecture table
+    columns:
+      - Layer / Component
+      - Role & Functional Scope
+      - Key Technical Dependency
+      - Primary Risk / Challenge
+    rows:
+      - - Silicon & Memory Subsystem
+        - Commodity LPDDR5X memory channels providing high capacity and practical bandwidth
+        - LPDDR5X memory suppliers (Micron, Samsung) and memory PHYs
+        - Lower peak theoretical bandwidth than HBM if prefill compute dominates
+      - - Accelerator Board Hardware
+        - Programmed FPGA acceleration cards manufactured by BittWare
+        - Intel foundry / Altera FPGA component supply chains
+        - Higher unit production cost and board area relative to volume ASICs
+      - - System Chassis & Interconnect
+        - 4U rackmount server chassis with air cooling and PCIe Gen6 / CXL support
+        - Standard enterprise data center power and air distribution
+        - Ensuring adequate air cooling across high-density 400W ASIC modules
+      - - Software & Integration Layer
+        - OpenAI-compatible API gateway and Hugging Face transformer weight ingestion
+        - vLLM and Hugging Face open-source software ecosystem alignment
+        - Maintaining zero-overhead compatibility as transformer kernel architectures evolve
+    notes: Component roles and dependencies reflect published system architecture disclosures and partner announcements. Silicon dependencies transition from Intel FPGA to TSMC ASIC in next generation.
+    claimRefs:
+      - CE002
+      - CE003
+      - CE004
+      - CE009
+      - CE010
+      - CE012
+      - CE014
+figures:
+  - id: FE001
+    title: Product architecture map
+    type: stack
+    summary: Six-layer architectural stack of the Positron AI inference platform spanning software interfaces, execution runtimes, interconnect fabrics, board hardware, silicon architecture, and physical deployment.
+    approximationNotes: null
+    claimRefs:
+      - CE003
+      - CE004
+      - CE009
+      - CE010
+    data:
+      layers:
+        - label: Client & Application Interface
+          detail: OpenAI-compatible REST API endpoints and drop-in integration with enterprise LLM orchestration frameworks and client SDKs
+        - label: Software Runtime & Model Loading
+          detail: Direct ingestion of Hugging Face SafeTensors and PyTorch (.pt) weights without proprietary compiler re-training or custom CUDA code
+        - label: Interconnect & System Fabric
+          detail: High-throughput PCIe Gen6 x32 bus and CXL support enabling low-latency multi-accelerator data sharing and host memory expansion
+        - label: Server Chassis & Power Subsystem
+          detail: 4U rackmount enterprise server architecture drawing 2,000W at full inference load, engineered for 10 kW standard data center racks
+        - label: Accelerator Board & Memory Architecture
+          detail: Eight modular accelerator cards with commodity LPDDR5X memory achieving 93% realized bandwidth utilization on autoregressive decode
+        - label: Silicon Engine (Atlas FPGA & Asimov ASIC)
+          detail: First-generation programmed silicon shipping today, transitioning to custom Asimov ASIC targeting 864 GB to 2,304 GB RAM per device
+callouts:
+  - calloutType: insight
+    title: Memory-First Architecture Disruption
+    body: By prioritizing realizable memory bandwidth via commodity LPDDR5X over peak theoretical FLOPS and costly HBM/CoWoS packaging, Positron achieves up to 93% memory bandwidth utilization on autoregressive transformer decode workloads while operating within standard air-cooled data center power envelopes.
+    claimRefs:
+      - CE003
+      - CE009
+      - CE011
+  - calloutType: risk
+    title: Tape-Out and Foundry Transition Execution Risks
+    body: While Atlas relies on shipping Intel FPGA boards manufactured in the US, next-generation Asimov silicon depends on successful tape-out and a foundry transition to TSMC N3P, introducing potential schedule delays, NRE cost escalation, and fabrication allocation risks.
+    claimRefs:
+      - CE012
+      - CE013
+      - CE014
+localEvidence:
+  searchQueries:
+    - query: '"Positron AI" AI inference hardware startup selling Atlas FPGA-based servers and building the memory-first site:positron.ai product company'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: '"Positron AI" AI inference hardware startup selling Atlas FPGA-based servers and building the memory-first funding valuation revenue customers leadership launches 2026'
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs:
+        - SE004
+    - query: '"Positron AI" AI inference hardware startup selling Atlas FPGA-based servers and building the memory-first lawsuit regulatory outage breach complaints risks 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: '"Positron AI" AI inference hardware startup selling Atlas FPGA-based servers and building the memory-first founders leadership funding headquarters company profile 2026'
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: []
+    - query: '"Positron AI" AI inference hardware startup selling Atlas FPGA-based servers and building the memory-first launch history investors team governance 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs:
+        - SE002
+    - query: '"Positron AI" AI inference hardware startup selling Atlas FPGA-based servers and building the memory-first The current cap table, liquidation preferences, debt, information rights, and any secondary-market marks are undisclosed. 2026'
+      engine: anysearch
+      hits: 6
+      retainedSourceRefs:
+        - SE005
+    - query: '"Positron AI" AI inference hardware startup selling Atlas FPGA-based servers and building the memory-first market size segmentation demand adoption'
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: []
+    - query: '"Positron AI" AI inference hardware startup selling Atlas FPGA-based servers and building the memory-first industry trends buyer needs spending addressable market'
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs:
+        - SE004
+    - query: '"Positron AI" AI inference hardware startup selling Atlas FPGA-based servers and building the memory-first Foundry commitments, NRE burden, and unit economics for the Asimov and Titan ramp are not public. 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs:
+        - SE004
+    - query: '"Positron AI" AI inference hardware startup selling Atlas FPGA-based servers and building the memory-first pricing funding revenue investors business model 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: '"Positron AI" AI inference hardware startup selling Atlas FPGA-based servers and building the memory-first revenue model profitability unit economics commercial traction 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs:
+        - SE006
+    - query: '"Positron AI" AI inference hardware startup selling Atlas FPGA-based servers and building the memory-first Board composition and second-line leadership depth remain largely opaque. 2026'
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: []
+    - query: '"Positron AI" AI inference hardware startup selling Atlas FPGA-based servers and building the memory-first product architecture technology technical documentation'
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs:
+        - SE003
+        - SE001
+        - SE002
+    - query: '"Positron AI" AI inference hardware startup selling Atlas FPGA-based servers and building the memory-first technical design integrations performance scalability'
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: []
+    - query: '"Positron AI" AI inference hardware startup selling Atlas FPGA-based servers and building the memory-first customer outcomes adoption demand commercial relationships 2026'
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: []
+    - query: '"Positron AI" AI inference hardware startup selling Atlas FPGA-based servers and building the memory-first news interviews independent reporting -site:positron.ai -site:siliconvalleyinvestclub.com -site:linkedin.com'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+  researchQuestions:
+    - id: QE001
+      question: How does the Atlas appliance integrate into existing customer model workflows and inference software stacks?
+      type: mechanism
+      targets:
+        - contentRequirements/0
+        - plannedTables/workflow-use-case-table
+      status: answered
+    - id: QE002
+      question: What hardware modules, SKUs, and systems constitute Positron AI's commercial product catalog and development pipeline?
+      type: enumeration
+      targets:
+        - contentRequirements/1
+        - plannedTables/product-module-asset-matrix
+      status: answered
+    - id: QE003
+      question: How does the memory-first architectural design differ from conventional GPU compute-centric memory hierarchies?
+      type: mechanism
+      targets:
+        - contentRequirements/2
+        - plannedFigures/product-architecture-map
+        - plannedTables/technology-operating-architecture-table
+      status: answered
+    - id: QE004
+      question: What is the commercial deployment timeline and manufacturing roadmap from shipping Atlas servers to Asimov tape-out?
+      type: freshness
+      targets:
+        - contentRequirements/3
+      status: answered
+    - id: QE005
+      question: How does Atlas latency and energy efficiency compare against Nvidia H100 and H200 GPU platforms in production workloads?
+      type: comparison
+      targets:
+        - contentRequirements/4
+      status: answered
+    - id: QE006
+      question: What data center environmental, power, and air-cooling requirements govern deployment of Positron hardware?
+      type: verification
+      targets:
+        - contentRequirements/5
+      status: answered
+    - id: QE007
+      question: What unverified technical dependencies, foundry risks, and thermal constraints could disrupt the Asimov silicon ramp?
+      type: adverse
+      targets:
+        - contentRequirements/4
+        - plannedTables/technology-operating-architecture-table
+      status: unresolved
+    - id: QE008
+      question: What are the quantitative memory capacity, bandwidth, and power specifications for the Asimov chip and Titan system?
+      type: quantification
+      targets:
+        - contentRequirements/2
+        - plannedTables/product-module-asset-matrix
+      status: answered
+    - id: QE009
+      question: What customer testing infrastructure and proof-of-concept programs exist to validate hardware throughput before procurement?
+      type: verification
+      targets:
+        - contentRequirements/3
+      status: answered
+  sources:
+    - id: SE001
+      publisher: Silicon Valley Investment Club
+      title: Positron AI AS OF AUG 2026 COMPANY PROFILE
+      url: https://siliconvalleyinvestclub.com/companies/positron-ai/tear-sheet.pdf
+      date: '2026-08-01'
+      accessDate: '2026-10-14'
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics:
+        - atlas-appliance
+        - asimov-silicon
+        - hardware-specs
+        - benchmarks
+      keyQuote: Positron’s flagship product, Atlas, is the world’s first LLM-inference-first accelerator, built in just 18 months and shipping to production data centers. It delivers 3× lower end-to-end latency than comparable H100-based systems at 1/3 the power, achieving 280 tokens/sec on Llama 3.1 8B at 2,000W vs. an H200 DGX at 5,900W.
+    - id: SE002
+      publisher: BittWare (Molex)
+      title: Positron AI Acceleration
+      url: https://www.bittware-molex.com/products/positron-atlas/
+      date: '2026-05-15'
+      accessDate: '2026-10-14'
+      accessStatus: ok
+      stance: confirming
+      sourceType: partner-proof
+      reputationTier: medium
+      independence: partner
+      topics:
+        - atlas-server
+        - bittware-manufacturing
+        - power-envelope
+        - benchmarks
+      keyQuote: The product we’re shipping today is called Atlas. It is an eight-card system, so it has eight of these cards I mentioned before inside the server, and that is comparable to the eight-accelerator-card version of the DGX H100 box from NVIDIA.
+    - id: SE003
+      publisher: Positron AI
+      title: Positron | Vision
+      url: https://www.positron.ai/vision
+      date: '2026-02-04'
+      accessDate: '2026-10-14'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - memory-first
+        - lpddr-vs-hbm
+        - transformer-inference
+      keyQuote: 'We invert this: Asimov is designed around memory bandwidth and capacity first, with compute balanced to match. The result is over 90% realized memory bandwidth utilization versus under 30% for GPUs—and dramatically better economics for the workloads that matter.'
+    - id: SE004
+      publisher: Business Wire
+      title: Positron AI Raises $230 Million Series B at Over $1 Billion Valuation to Scale Energy-Efficient AI Inference
+      url: https://www.businesswire.com/news/home/20260204250472/en/Positron-AI-Raises-%24230-Million-Series-B-at-Over-%241-Billion-Valuation-to-Scale-Energy-Efficient-AI-Inference
+      date: '2026-02-04'
+      accessDate: '2026-10-14'
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics:
+        - asimov-silicon
+        - series-b
+        - hardware-roadmap
+      keyQuote: Funding accelerates Positron's roadmap from shipping Atlas systems today to next-generation Asimov silicon, targeting tape-out in late 2026 and production in early 2027; announced at Web Summit Qatar
+    - id: SE005
+      publisher: Venture Capital Tracker
+      title: Positron AI Funding, Valuation & Investors
+      url: https://venturecapitaltracker.com/startup/positron-ai
+      date: '2026-09-11'
+      accessDate: '2026-10-14'
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics:
+        - oracle-cloud-deployment
+        - tsmc-foundry
+        - lpddr5x
+      keyQuote: Atlas, its first-generation system, is deployed at more than 50 racks inside Oracle Cloud Infrastructure with customers including Parasail, Jump Trading, and i3d.net.
+    - id: SE006
+      publisher: HPCwire
+      title: Positron AI Raises $230M Series B to Scale Energy-Efficient AI Inference
+      url: https://www.hpcwire.com/aiwire/2026/02/04/positron-ai-raises-230m-series-b-to-scale-energy-efficient-ai-inference/
+      date: '2026-02-04'
+      accessDate: '2026-10-14'
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics:
+        - customer-benchmarks
+        - jump-trading
+        - semianalysis
+      keyQuote: In our testing, Positron Atlas delivered roughly 3x lower end-to-end latency than a comparable H100-based system on the inference workloads we evaluated, in an air-cooled, production-ready footprint
+    - id: SE007
+      publisher: IBS Electronics
+      title: Positron AI Raises $230M for Memory-First Inference | IBS Electronics
+      url: https://ibselectronics.com/resources/news/positron-ai-raises-$230m-for-memory-first-inference
+      date: '2026-02-05'
+      accessDate: '2026-10-14'
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: independent
+      topics:
+        - asimov-specs
+        - titan-specs
+        - memory-bandwidth
+      keyQuote: 'Asimov’s published spec highlights include: ... 864GB to 2.3TB memory per chip ... 2.76 TB/s realizable memory bandwidth ... PCIe Gen6 x32 with CXL ... 400W TDP with air-cooling support'
+    - id: SE008
+      publisher: VentureBeat
+      title: Positron Believes It Has Found the Secret to Take on Nvidia in AI Inference Chips
+      url: https://venturebeat.com/ai/positron-believes-it-has-found-the-secret-to-take-on-nvidia-in-ai-inference-chips-heres-how-it-could-benefit-enterprises
+      date: '2025-07-28'
+      accessDate: '2026-10-14'
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics:
+        - air-cooling
+        - memory-utilization
+        - foundry-pipeline
+        - market-competition
+      keyQuote: The company claims Atlas delivers 3.5x better performance per dollar and up to 66% lower power usage than Nvidia’s H100, while also achieving 93% memory bandwidth utilization—far above the typical 10–30% range seen in GPUs.
+  claims:
+    - id: CE001
+      statement: Positron AI's flagship commercial product is the Atlas server appliance, an eight-card hardware system designed specifically for transformer Large Language Model inference.
+      type: company-claimed
+      topic: atlas-product
+      sourceRefs:
+        - SE001
+        - SE002
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+        - QE002
+    - id: CE002
+      statement: Atlas accelerator boards are manufactured and assembled in partnership with hardware partner BittWare using programmed chips focused on inference acceleration.
+      type: company-claimed
+      topic: hardware-manufacturing
+      sourceRefs:
+        - SE001
+        - SE002
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+        - QE002
+    - id: CE003
+      statement: Positron claims Atlas achieves approximately 93% realized memory bandwidth utilization on transformer inference workloads compared to 10% to 30% for traditional GPUs.
+      type: company-claimed
+      topic: memory-efficiency
+      sourceRefs:
+        - SE001
+        - SE003
+        - SE008
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE003
+    - id: CE004
+      statement: Atlas ingests Hugging Face PyTorch and SafeTensors model files directly without custom compiler toolchains and provides an OpenAI-compatible REST API endpoint.
+      type: company-claimed
+      topic: software-integration
+      sourceRefs:
+        - SE001
+        - SE002
+        - SE008
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE001
+    - id: CE005
+      statement: On benchmark evaluations of Llama 3.1 8B in BF16, Positron reports Atlas achieves 280 tokens per second at 2,000 watts compared to 5,900 watts for an Nvidia DGX reference server.
+      type: company-claimed
+      topic: benchmarks-power
+      sourceRefs:
+        - SE001
+        - SE002
+        - SE007
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE005
+    - id: CE006
+      statement: Jump Trading evaluated Atlas in testing and reported approximately 3x lower end-to-end latency compared to a comparable H100-based reference system on evaluated workloads.
+      type: third-party-reported
+      topic: customer-benchmarks
+      sourceRefs:
+        - SE001
+        - SE004
+        - SE006
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE005
+    - id: CE007
+      statement: Atlas servers are deployed across more than 50 racks inside Oracle Cloud Infrastructure serving workloads for customers including Parasail, Jump Trading, and i3d.net.
+      type: third-party-reported
+      topic: datacenter-deployment
+      sourceRefs:
+        - SE005
+        - SE008
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE004
+    - id: CE008
+      statement: Atlas servers operate within standard air-cooled 10 kW data center rack footprints by drawing 2,000 watts per 4U server chassis without requiring liquid cooling infrastructure.
+      type: company-claimed
+      topic: cooling-infrastructure
+      sourceRefs:
+        - SE001
+        - SE002
+        - SE008
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE006
+    - id: CE009
+      statement: Positron's memory-first architecture employs commodity LPDDR5X memory to provide high memory capacity and energy efficiency while avoiding scarce HBM and CoWoS packaging supply chains.
+      type: company-claimed
+      topic: memory-architecture
+      sourceRefs:
+        - SE002
+        - SE003
+        - SE007
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE003
+    - id: CE010
+      statement: Next-generation Asimov silicon is designed as a custom accelerator chip with 864 GB to 2,304 GB RAM per device, 2.76 TB/s realizable bandwidth, and 400W TDP with air cooling support.
+      type: company-claimed
+      topic: asimov-silicon
+      sourceRefs:
+        - SE001
+        - SE004
+        - SE007
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE008
+    - id: CE011
+      statement: Positron previews Titan as a 4U next-generation inference server containing four Asimov chips with over 8 TB of accelerator memory and 11.8 TB/s system memory bandwidth.
+      type: company-claimed
+      topic: titan-system
+      sourceRefs:
+        - SE001
+        - SE007
+        - SE008
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE008
+    - id: CE012
+      statement: First-generation Atlas chips were fabricated in the United States using Intel facilities, while next-generation Asimov silicon fabrication is planned to transition to TSMC.
+      type: third-party-reported
+      topic: foundry-transition
+      sourceRefs:
+        - SE005
+        - SE008
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE004
+    - id: CE013
+      statement: Positron secured $230 million in Series B funding in February 2026 to finance in-house ASIC engineering, Credo interconnect chiplet partnerships, and Asimov silicon tape-out.
+      type: observed
+      topic: financing-rd
+      sourceRefs:
+        - SE001
+        - SE004
+        - SE007
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE004
+    - id: CE014
+      statement: Positron faces potential silicon tape-out schedule risks and TSMC foundry allocation constraints as it transitions from FPGA appliances to custom ASIC production.
+      type: third-party-reported
+      topic: execution-risks
+      sourceRefs:
+        - SE005
+        - SE007
+        - SE008
+      confidence: high
+      freshness: current
+      answersQuestionRefs:
+        - QE007
+    - id: CE015
+      statement: Positron operates the Positron Test Flight program offering dedicated hosted Atlas instances in its engineering facility for prospective customers to evaluate workloads before procurement.
+      type: company-claimed
+      topic: customer-testing
+      sourceRefs:
+        - SE002
+      confidence: medium
+      freshness: current
+      answersQuestionRefs:
+        - QE009
+  evidenceGaps:
+    - type: missing-source
+      severity: material
+      topic: asimov-foundry-and-tapeout
+      missingEvidence: Third-party audited tape-out verification reports, TSMC N3P wafer allocation agreements, and independent packaging thermal test results for Asimov silicon.
+      whyItMatters: Transitioning from FPGA-based Atlas appliances to custom ASIC tape-out and volume delivery introduces material schedule risk, thermal verification uncertainty, and non-recurring engineering cost escalation.
+      diligencePath: Request confidential foundry reservation schedules, engineering samples test data, and thermal bench validation results under NDA during technical diligence.
+      relatedQuestionRefs:
+        - QE007
+      relatedTableRefs:
+        - TE003
