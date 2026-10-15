@@ -12,7 +12,7 @@ import { KNOWN_DIMENSIONS, WARNING_DIMENSIONS } from './validation-catalog.mjs';
 import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
 import { checkRefreshReadback, refreshArtifactsAreInSync } from './refresh-readback.mjs';
 import { reportsDir } from './utils.mjs';
-import { RENDERED_FIGURE_TYPES, barSeries, barSeriesTable, chartNumericValue, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, graphItemNotes, matrixCellText, quadrantAxes, quadrantLabelPositions, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails, waterfallSpans, waterfallValueTable, withFlowTopology, withRangeTones, withWaterfallSpans } from '../../../../website/src/lib/figures.mjs';
+import { RENDERED_FIGURE_TYPES, barChartLayout, barSeries, barSeriesTable, chartNumericValue, chartTextColor, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, graphItemNotes, matrixCellText, quadrantAxes, quadrantLabelPositions, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails, waterfallSpans, waterfallValueTable, withFlowTopology, withRangeTones, withWaterfallSpans } from '../../../../website/src/lib/figures.mjs';
 import { isTranslatableLeaf, TRANSLATE_PATHS } from '../../translate-zh/scripts/whitelist.mjs';
 import { asArray, asRecord, claimRefs } from '../../../../website/src/lib/report-types.ts';
 import { t } from '../../../../website/src/lib/i18n.ts';
@@ -215,6 +215,75 @@ test('range axis keeps domain endpoints and only interior labels with measured c
     assert.deepEqual(rangeAxisTickIndices(Object.freeze(bounds)), expected);
     assert.deepEqual(bounds, before);
   }
+});
+
+test('numeric SVG axes measure final fonts and thin only interior ticks without changing the domain', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const axis = source.slice(source.indexOf('const axisBottom ='), source.indexOf('const axisLeft ='));
+  assert.match(axis, /const \[min, max\] = scale\.domain\(\)/);
+  assert.match(axis, /\[min, \.\.\.scale\.ticks\(ticks\)\.filter\(value => value > min && value < max\), max\]/);
+  assert.match(axis, /tickFormat\(scale\.tickFormat\(\)\)/);
+  assert.match(axis, /attr\('font-family', chartFont\.family\)\.attr\('font-weight', 400\)/);
+  assert.match(axis, /rangeAxisTickIndices\(labels\.map\(node => node\.getBoundingClientRect\(\)\)\)/);
+  assert.match(axis, /filter\(\(_value, index\) => !visible\.has\(index\)\)\.remove\(\)/);
+  const font = axis.indexOf("attr('font-family'");
+  assert(font < axis.indexOf('getBoundingClientRect()'));
+  const bounds = Object.freeze([
+    Object.freeze({ left: 0, right: 8 }),
+    Object.freeze({ left: 20, right: 110 }),
+    Object.freeze({ left: 92, right: 182 }),
+  ]);
+  assert.deepEqual(rangeAxisTickIndices(bounds), [0, 2]);
+});
+
+test('bar layouts reserve whole value tokens, readable tracks and complete endpoint labels at every width', () => {
+  for (const containerWidth of [100, 180, 262, 302, 332, 600, 900]) {
+    for (const valueWidth of [0, 64, 72, 96, 180, 500]) {
+      for (const endpointWidths of [[7, 84], [90, 90], [300, 700]]) {
+        const before = [...endpointWidths];
+        const layout = barChartLayout(containerWidth, 160, valueWidth, Object.freeze(endpointWidths));
+        assert(layout.width >= containerWidth);
+        assert(layout.width - layout.left - layout.right >= 80);
+        assert(layout.width - layout.left - layout.right >= (endpointWidths[0] + endpointWidths[1]) / 2 + 8);
+        assert(layout.left - endpointWidths[0] / 2 >= 16);
+        assert(layout.right - endpointWidths[1] / 2 >= 16);
+        assert((layout.stacked ? layout.width - 32 : layout.right - 12) >= valueWidth);
+        assert.deepEqual(endpointWidths, before);
+      }
+    }
+  }
+  assert.equal(barChartLayout(302, 160, 72, [7, 84]).stacked, false);
+  assert.equal(barChartLayout(262, 160, 180, [7, 84]).stacked, true);
+  assert.equal(barChartLayout(900, 160, 64, [7, 84]).width, 900);
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const bars = source.slice(source.indexOf('const renderBar ='), source.indexOf('const renderFunnel ='));
+  assert.match(bars, /value\.split\(\/\\s\+\/\)\.map\(measure\)/);
+  assert.match(bars, /barChartLayout\(/);
+  assert.match(bars, /maxWidth: stacked \? width - 32 : right - 12/);
+  assert.match(bars, /if \(width > containerWidth\) scrollableSvg\(panel\.node\(\)/);
+  assert.match(bars, /bar-print-values/);
+});
+
+test('cohort and funnel foregrounds exceed small-text contrast without changing background colors', () => {
+  const luminance = ({ r, g, b }) => [r, g, b].map(value => {
+    const channel = value / 255;
+    return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  }).reduce((sum, value, index) => sum + value * [0.2126, 0.7152, 0.0722][index], 0);
+  for (let r = 0; r <= 255; r += 17) for (let g = 0; g <= 255; g += 17) for (let b = 0; b <= 255; b += 17) {
+    const background = Object.freeze({ r, g, b });
+    const foreground = chartTextColor(background);
+    const a = luminance(background), bValue = foreground === '#ffffff' ? 1 : 0;
+    assert((Math.max(a, bValue) + 0.05) / (Math.min(a, bValue) + 0.05) >= 4.5);
+  }
+  assert.equal(chartTextColor({ r: 15, g: 118, b: 110 }), '#ffffff');
+  assert.equal(chartTextColor({ r: 209, g: 148, b: 47 }), '#000000');
+  assert.equal(chartTextColor({ r: 60, g: 138, b: 120 }), '#000000');
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  assert.match(source, /attr\('fill', stageColor\)/);
+  assert.match(source, /chartTextColor\(d3\.rgb\(stageColor\(stage\)\)\)/);
+  assert.match(source, /const cellColor = d => d\.value == null \? palette\.paper : color\(d\.value\)/);
+  assert.match(source, /attr\('fill', cellColor\)/);
+  assert.match(source, /chartTextColor\(d3\.rgb\(cellColor\(d\)\)\)/);
 });
 
 test('range axes filter derived out-of-domain ticks and remeasure on font, size and print changes', () => {
@@ -711,11 +780,11 @@ test('deep pyramids keep every layer at a positive readable width without changi
   const pyramid = source.slice(source.indexOf('const renderPyramid ='), source.indexOf('const renderJourneyMap ='));
   const expression = pyramid.match(/const widthStep = (.+);/)?.[1];
   assert.ok(expression, 'the existing 12-layer report must not produce zero or negative widths');
-  const step = new Function('items', `return (${expression});`);
+  const step = new Function('items', 'minimumLayerWidth', 'maxW', `return (${expression});`);
   for (const count of [0, 1, 3, 4, 5, 6, 7, 12, 100]) {
     const items = Object.freeze(Array.from({ length: count }, (_, index) => Object.freeze({ label: `Layer ${index}` })));
     const before = structuredClone(items);
-    const widthStep = step(items);
+    const widthStep = step(items, 320, 760);
     assert(Number.isFinite(widthStep));
     for (const [index] of items.entries()) {
       const fraction = 1 - index * widthStep;
@@ -724,6 +793,24 @@ test('deep pyramids keep every layer at a positive readable width without changi
       if (index) assert(fraction <= 1 - (index - 1) * widthStep);
     }
     assert.deepEqual(items, before);
+  }
+});
+
+test('pyramids preserve readable mobile layers and measured Latin words rather than fragmenting every lower layer', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const pyramid = source.slice(source.indexOf('const renderPyramid ='), source.indexOf('const renderJourneyMap ='));
+  assert.match(pyramid, /const sideMargin = width < 640 \? 16 : 34/);
+  assert.match(pyramid, /textWrapper\.tokens\(item\.label\)/);
+  assert.match(pyramid, /textWrapper\.measure\(token, \{ fontSize: labelFont, fontWeight: fontWeight\('emphasis'\) \}/);
+  const expression = pyramid.match(/const widthStep = (.+);/)?.[1];
+  const step = new Function('items', 'minimumLayerWidth', 'maxW', `return (${expression});`);
+  for (const maxW of [180, 230, 270, 700]) for (const count of [1, 5, 12, 100]) {
+    const minimumLayerWidth = Math.min(maxW, Math.max(maxW < 640 ? 220 : 320, 190 + 44));
+    const widthStep = step(Array(count), minimumLayerWidth, maxW);
+    const lastWidth = maxW * (1 - (count - 1) * widthStep);
+    assert(lastWidth >= minimumLayerWidth - 1e-9);
+    assert(widthStep >= 0);
+    assert(lastWidth <= maxW);
   }
 });
 
@@ -899,7 +986,7 @@ test('measured SVG wrapping preserves complete mixed-script text at each layer w
   const wrapper = createWrapper({ append: () => probe });
   for (const maxWidth of [40, 80, 160]) {
     for (const [fontSize, fontWeight] of [[10, 400], [14, 700]]) {
-      for (const input of ['Mordor 2026 $28.13B CX services', '客户互动解决方案规模包含更宽的服务元素', '2026 年 $28.13B，包含 CX 和服务元素。', 'UninterruptedLongEnglishToken', '', '  ']) {
+      for (const input of ['Mordor 2026 $28.13B CX services', '客户互动解决方案规模包含更宽的服务元素', '2026 年 $28.13B，包含 CX 和服务元素。', '收入：2024 年 $2.5T，供应量（2025-2026 年）', '人群：1.3B 无银行账户成年人', 'UninterruptedLongEnglishToken', '', '  ']) {
         const lines = wrapper.wrap(input, { fontSize, fontWeight, maxWidth });
         assert.equal(lines.join('').replace(/\s/gu, ''), input.replace(/\s/gu, ''));
         for (const line of lines) assert(measure(line, fontSize, fontWeight) <= maxWidth);
@@ -918,6 +1005,14 @@ test('measured SVG wrapping preserves complete mixed-script text at each layer w
         }
       }
     }
+  }
+  const mixed = wrapper.wrap('收入：2024 年 $2.5T，供应量（2025-2026 年）', { fontSize: 14, fontWeight: 400, maxWidth: 160 });
+  for (const token of ['2024', '$2.5T', '2025-2026']) assert(mixed.some(line => line.includes(token)), token);
+  assert.equal(wrapper.wrap('收入2024年', { fontSize: 14, fontWeight: 400, maxWidth: 160 }).join(''), '收入2024年');
+  assert.deepEqual(wrapper.wrap(' \t\n ', { fontSize: 14, fontWeight: 400, maxWidth: 160 }), ['']);
+  for (const value of ['$10–$20', 'R$2M', '2024、2025', '1.3B']) {
+    const lines = wrapper.wrap(`Estimated ${value} million`, { fontSize: 14, fontWeight: 400, maxWidth: 100 });
+    for (const token of wrapper.tokens(value).filter(token => token.trim())) assert(lines.some(line => line.includes(token)), token);
   }
   wrapper.remove();
   assert.equal(removed, true);
@@ -993,7 +1088,8 @@ test('architecture stacks keep a single screen diagram and complete print-only l
   assert.match(print, /:global\(\.native-figure:has\(\.chart-stack\)\)/);
   assert.match(print, /:global\(\.chart-stack > svg\),[^{}]*\{ position: absolute; visibility: hidden; \}/);
   assert.match(print, /:global\(\.stack-layer-notes\),\s*:global\(\.cohort-details\) \{ font-size: 10pt;/);
-  assert.match(print, /:global\(\.chart-waterfall \.bar-panel > svg\)/);
+  assert.match(print, /:global\(\.chart-waterfall \.bar-panel svg\)/);
+  assert.match(print, /:global\(\.bar-panel > \.chart-scroll-frame\)/);
   assert.match(print, /:global\(\.chart-waterfall \.bar-print-values\),[^{}]*\{ display: none !important; \}/);
   const labels = readFileSync('website/src/lib/i18n.ts', 'utf8');
   assert.doesNotMatch(labels, /reportStackOverview|reportWaterfallBridge/);

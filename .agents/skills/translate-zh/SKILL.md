@@ -1062,6 +1062,8 @@ pointer interaction rather than treating the native SVG title as proof of mobile
 tooltip support; values and qualifications must remain visible in print.
 Check deep pyramids too: every authored layer must retain a positive readable
 width, rather than shrinking later layers to zero or negative widths.
+On phones, retain readable lower-layer widths and fit measured Latin words:
+long labels must not become narrow columns of broken proper names.
 When evidence is enabled, verify each pyramid layer's own ordered claim links
 as well as the figure-level links. Labels and references follow the same
 items-before-nodes precedence as the chart; evidence-only rows stay hidden
@@ -1082,8 +1084,12 @@ print; they qualify the chart data rather than serving as optional decoration.
 Multi-series bars render as separate SVG bar panels with numeric axes and
 value labels: check every series name and point,
 including duplicate point labels, visible context and full hover/tap text.
-Single-series bars preserve point qualifications on the page and in print;
-differing explicit point units instead produce independently scaled panels with
+Single-series bars preserve point qualifications on the page and in print.
+Complete numeric tokens must stay on one line without rounding or abbreviation.
+Measure value space and axis-label collisions, including large signed amounts;
+use a stacked label/value layout or contained scrolling when necessary. Derived
+axes retain both domain endpoints while thinning overlapping interior ticks.
+Differing explicit point units instead produce independently scaled panels with
 a localized notice. These presentation changes preserve report YAML and do not certify the
 underlying metrics or comparability.
 KPI item detail, note, context and unit text qualify its value: verify every
@@ -1190,6 +1196,9 @@ authored rates and qualifications. Verify stage labels, raw values, units,
 series names and visible notes below the levels and in hover/tap tooltips in both locales,
 including narrow screens and print; never invent a rate to replace the old
 renderer-generated percentages.
+Check cohort values and funnel stage numbers against their actual filled
+backgrounds: small text needs at least 4.5:1 contrast. Preserve the background
+tones and data; choose a readable foreground instead.
 Waterfall figures draw cumulative spans only for exactly reconciled declared
 `base`/`cumulative` values or an explicitly described, exactly balanced same-unit
 from-to bridge. Resolve the mode from English before overlays. Other figures show

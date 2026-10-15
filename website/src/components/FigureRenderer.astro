@@ -266,7 +266,7 @@ const chartPayloadJson = chartPayload
 <script>
   import * as d3 from 'd3';
   import { displayCellText } from '../lib/display';
-  import { barSeries, chartNumericValue, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowTopology, formatRangeValue, graphItemNotes, matrixCellText, quadrantLabelPositions, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails, waterfallValueTable } from '../lib/figures.mjs';
+  import { barChartLayout, barSeries, chartNumericValue, chartTextColor, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowTopology, formatRangeValue, graphItemNotes, matrixCellText, quadrantLabelPositions, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails, waterfallValueTable } from '../lib/figures.mjs';
 
   const palette = {
     claret: '#990f3d',
@@ -496,12 +496,19 @@ const chartPayloadJson = chartPayload
       d3.select(element).append('p').attr('class', 'chart-scroll-hint').attr('id', `${payload.id}-scroll-hint`).text(payload.scrollLabel);
     }
   };
-  const axisBottom = (g, scale, y, ticks = 4) => g.append('g')
-    .attr('transform', `translate(0,${y})`)
-    .call(d3.axisBottom(scale).ticks(ticks).tickSizeOuter(0))
-    .call((axis) => axis.select('.domain').attr('stroke', palette.border))
-    .call((axis) => axis.selectAll('line').attr('stroke', palette.border))
-    .call((axis) => axis.selectAll('text').attr('fill', palette.muted).attr('font-size', chartFont.axis));
+  const axisBottom = (g, scale, y, ticks = 4) => {
+    const [min, max] = scale.domain();
+    const values = [min, ...scale.ticks(ticks).filter(value => value > min && value < max), max];
+    const axis = g.append('g').attr('transform', `translate(0,${y})`)
+      .call(d3.axisBottom(scale).tickValues(values).tickFormat(scale.tickFormat()).tickSizeOuter(0))
+      .attr('font-family', chartFont.family).attr('font-weight', 400);
+    axis.select('.domain').attr('stroke', palette.border);
+    axis.selectAll('line').attr('stroke', palette.border);
+    const labels = axis.selectAll('.tick text').attr('fill', palette.muted).attr('font-size', chartFont.axis).nodes();
+    const visible = new Set(rangeAxisTickIndices(labels.map(node => node.getBoundingClientRect())));
+    axis.selectAll('.tick').filter((_value, index) => !visible.has(index)).remove();
+    return axis;
+  };
   const axisLeft = (g, scale, x) => g.append('g')
     .attr('transform', `translate(${x},0)`)
     .call(d3.axisLeft(scale).tickSizeOuter(0))
@@ -1439,27 +1446,38 @@ const chartPayloadJson = chartPayload
       return `${prefix}…`;
     };
     const wrapCache = new Map();
+    // CJK can wrap between characters; preserve the original words, quantities and dates between them.
+    const tokensOf = text => String(text ?? '').trim().match(/\s+|[^\s\p{Script=Han}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Hangul}，。；：？！、（）「」《》【】]+|./gu) ?? [];
     const wrap = (text, { fontSize, fontWeight, maxWidth, maxLines = Infinity }) => {
       const str = String(text ?? '');
       const cacheKey = `${fontSize}|${fontWeight}|${maxWidth}|${maxLines}|${str}`;
       const cached = wrapCache.get(cacheKey);
       if (cached) return cached;
       setFont(fontSize, fontWeight);
-      const tokens = str.split(/\s+/).filter(Boolean);
+      const tokens = tokensOf(str);
       if (!tokens.length) {
         wrapCache.set(cacheKey, ['']);
         return [''];
       }
       const lines = [];
       let line = '';
-      tokens.flatMap((token) => measuredWidth(token) > maxWidth ? splitTokenBySvgWidth(token, maxWidth) : token).forEach((token) => {
-        const next = line ? `${line} ${token}` : token;
-        if (line && measuredWidth(next) > maxWidth) {
-          lines.push(line);
-          line = token;
-        } else {
-          line = next;
+      let space = '';
+      tokens.forEach((token) => {
+        if (/^\s+$/u.test(token)) {
+          space = line ? ' ' : '';
+          return;
         }
+        const chunks = measuredWidth(token) > maxWidth ? splitTokenBySvgWidth(token, maxWidth) : [token];
+        chunks.forEach(chunk => {
+          const next = `${line}${space}${chunk}`;
+          if (line && measuredWidth(next) > maxWidth) {
+            lines.push(line);
+            line = chunk;
+          } else {
+            line = next;
+          }
+          space = '';
+        });
       });
       if (line) lines.push(line);
       if (lines.length > maxLines) {
@@ -1470,7 +1488,7 @@ const chartPayloadJson = chartPayload
       return lines;
     };
     return {
-      wrap, fit,
+      wrap, fit, tokens: tokensOf,
       measure: (text, { fontSize, fontWeight }) => { setFont(fontSize, fontWeight); return measuredWidth(text); },
       remove: () => measureText.remove(),
     };
@@ -1646,7 +1664,8 @@ const chartPayloadJson = chartPayload
     const containerWidth = Math.floor(element.getBoundingClientRect().width || 760);
     const { svg, width } = svgBase(element, 300);
     const textWrapper = createSvgTextWrapper(svg);
-    const margin = { top: 28, right: 34, bottom: 34, left: 34 };
+    const sideMargin = width < 640 ? 16 : 34;
+    const margin = { top: 28, right: sideMargin, bottom: 34, left: sideMargin };
     const maxW = width - margin.left - margin.right;
     const padX = 22;
     const labelLineH = 22;
@@ -1657,7 +1676,10 @@ const chartPayloadJson = chartPayload
     const gapBetweenLayers = 10;
     const labelFont = chartFont.size.large;
     const detailFont = chartFont.small;
-    const widthStep = Math.min(0.1, 0.5 / Math.max(1, items.length - 1));
+    const tokenWidths = items.flatMap(item => textWrapper.tokens(item.label).filter(token => token.trim()))
+      .map(token => textWrapper.measure(token, { fontSize: labelFont, fontWeight: fontWeight('emphasis') }));
+    const minimumLayerWidth = Math.min(maxW, Math.max(width < 640 ? 220 : 320, ...tokenWidths.map(value => value + padX * 2)));
+    const widthStep = Math.min(0.1, 0.5 / Math.max(1, items.length - 1), (1 - minimumLayerWidth / maxW) / Math.max(1, items.length - 1));
     const layout = items.map((item, index) => {
       const w = maxW * (1 - index * widthStep);
       const labelLines = textWrapper.wrap(item.label, { fontSize: labelFont, fontWeight: fontWeight('emphasis'), maxWidth: w - padX * 2 });
@@ -1781,57 +1803,72 @@ const chartPayloadJson = chartPayload
     for (const group of series) {
       const panels = figureUnitsDiffer(group.points) ? group.points.map(point => [point]) : [group.points];
       for (const points of panels) {
-        const panel = root.append('section').attr('class', 'bar-panel');
+        const panel = root.append('section').attr('class', 'bar-panel').attr('aria-label', group.label || element.getAttribute('aria-label'));
         if (group.label) panel.append('h3').attr('class', 'bar-series-label').text(group.label);
         panel.selectAll('p.bar-series-note').data(figureItemNotes(group)).join('p').attr('class', 'bar-series-note').text(note => note);
         const numeric = points.map(point => chartNumericValue(point.value)).filter(value => value != null);
         const minimum = Math.min(0, ...numeric), maximum = Math.max(0, ...numeric);
-        const width = Math.floor(panel.node().getBoundingClientRect().width);
+        const containerWidth = Math.floor(panel.node().getBoundingClientRect().width);
         const svg = panel.append('svg').attr('role', 'img').attr('width', '100%').style('font-family', chartFont.family);
         const wrapper = createSvgTextWrapper(svg);
-        const compact = width < 640;
-        const left = compact ? Math.min(120, width * 0.36) : Math.min(220, Math.max(152, ...points.map(point => wrapper.measure(point.label, { fontSize: 13, fontWeight: 800 }) + 16)));
-        const right = compact ? 76 : 112;
-        let cursor = 18;
-        const layout = points.map(point => {
+        const values = points.map(point => {
           const rawValue = valueLabel(point);
-          const value = [rawValue === '' && point.value == null && point.displayValue == null ? '—' : rawValue, point.unit]
+          return [rawValue === '' && point.value == null && point.displayValue == null ? '—' : rawValue, point.unit]
             .filter(value => value != null && value !== '').join(' ');
-          const title = wrapper.wrap(point.label, { fontSize: 13, fontWeight: 800, maxWidth: left - 16 });
-          const valueLines = wrapper.wrap(value, { fontSize: 13, fontWeight: 800, maxWidth: right - 12 });
-          const height = Math.max(42, Math.max(title.length, valueLines.length) * 16 + 12);
+        });
+        const measure = text => wrapper.measure(text, { fontSize: 13, fontWeight: 800 });
+        const x = d3.scaleLinear().domain(minimum === maximum ? [0, 1] : [minimum, maximum]).nice();
+        const endpointWidths = x.domain().map(value => wrapper.measure(x.tickFormat()(value), { fontSize: chartFont.axis, fontWeight: 400 }));
+        const { width, compact, stacked, left, right } = barChartLayout(
+          containerWidth, Math.max(0, ...points.map(point => measure(point.label))),
+          Math.max(0, ...values.flatMap(value => value.split(/\s+/).map(measure))), endpointWidths,
+        );
+        let cursor = 18;
+        const layout = points.map((point, index) => {
+          const value = values[index];
+          const title = wrapper.wrap(point.label, { fontSize: 13, fontWeight: 800, maxWidth: stacked ? width - 32 : left - 16 });
+          const valueLines = wrapper.wrap(value, { fontSize: 13, fontWeight: 800, maxWidth: stacked ? width - 32 : right - 12 });
+          const height = stacked ? (title.length + valueLines.length) * 16 + 56 : Math.max(42, Math.max(title.length, valueLines.length) * 16 + 12);
           const item = { ...point, valueText: value, title, valueLines, top: cursor, height, number: chartNumericValue(point.value) };
           cursor += height;
           return item;
         });
-        const height = Math.max(260, cursor + 38);
+        const height = Math.max(stacked ? 0 : 260, cursor + 38);
         const extra = (height - 38 - cursor) / layout.length;
         layout.forEach((point, index) => { point.top += index * extra; point.height += extra; });
         cursor = height - 38;
         svg.attr('viewBox', `0 0 ${width} ${height}`).attr('height', height);
-        const x = d3.scaleLinear().domain(minimum === maximum ? [0, 1] : [minimum, maximum]).nice().range([left, width - right]);
+        if (width > containerWidth) scrollableSvg(panel.node(), svg, width, height, { ...payload, id: `${payload.id}-panel-${root.selectAll('.bar-panel').size()}` });
+        x.range([left, width - right]);
         if (numeric.length) axisBottom(svg, x, height - 38, compact ? 2 : 4).attr('class', 'bar-axis');
-        svg.append('line').attr('class', 'bar-zero').attr('x1', x(0)).attr('x2', x(0))
+        if (!stacked) svg.append('line').attr('class', 'bar-zero').attr('x1', x(0)).attr('x2', x(0))
           .attr('y1', 18).attr('y2', cursor).attr('stroke', palette.border);
         const rows = svg.append('g').selectAll('g').data(layout).join('g').attr('class', 'bar-row')
           .attr('data-value-state', point => point.number == null ? 'unavailable' : 'numeric');
-        rows.append('text').attr('class', 'bar-row-label').attr('text-anchor', 'end')
+        const barY = point => stacked ? point.top + (point.title.length + point.valueLines.length) * 16 + 16 : point.top + point.height * 0.13;
+        const barHeight = point => stacked ? 24 : point.height * 0.74;
+        if (stacked) rows.append('line').attr('class', 'bar-zero').attr('x1', x(0)).attr('x2', x(0))
+          .attr('y1', barY).attr('y2', point => barY(point) + barHeight(point)).attr('stroke', palette.border);
+        rows.append('text').attr('class', 'bar-row-label').attr('text-anchor', stacked ? 'start' : 'end')
           .attr('fill', palette.ink).attr('font-size', 13).attr('font-weight', 800)
           .each(function(point) {
-            renderLineBlock(d3.select(this), point.title, { x: left - 10, y: point.top + point.height / 2 - (point.title.length - 1) * 8 + 4, lineHeight: 16 });
+            renderLineBlock(d3.select(this), point.title, {
+              x: stacked ? 16 : left - 10,
+              y: stacked ? point.top + 14 : point.top + point.height / 2 - (point.title.length - 1) * 8 + 4, lineHeight: 16,
+            });
           });
         rows.filter(point => point.number != null).append('rect').attr('class', 'bar-fill')
-          .attr('x', point => x(Math.min(0, point.number))).attr('y', point => point.top + point.height * 0.13)
-          .attr('width', point => Math.abs(x(point.number) - x(0))).attr('height', point => point.height * 0.74)
+          .attr('x', point => x(Math.min(0, point.number))).attr('y', barY)
+          .attr('width', point => Math.abs(x(point.number) - x(0))).attr('height', barHeight)
           .attr('rx', 4).attr('fill', point => colorForTone(point.tone));
         rows.filter(point => point.number === 0).append('line').attr('class', 'bar-zero-value')
-          .attr('x1', x(0)).attr('x2', x(0)).attr('y1', point => point.top + point.height * 0.13).attr('y2', point => point.top + point.height * 0.87)
+          .attr('x1', x(0)).attr('x2', x(0)).attr('y1', barY).attr('y2', point => barY(point) + barHeight(point))
           .attr('stroke', palette.claret).attr('stroke-width', 2);
         rows.append('text').attr('class', 'bar-row-value').attr('fill', palette.ink).attr('font-size', 13).attr('font-weight', 800)
           .each(function(point) {
             renderLineBlock(d3.select(this), point.valueLines, {
-              x: minimum < 0 || point.number == null ? width - right + 8 : x(point.number) + 8,
-              y: point.top + point.height / 2 - (point.valueLines.length - 1) * 8 + 4, lineHeight: 16,
+              x: stacked ? 16 : minimum < 0 || point.number == null ? width - right + 8 : x(point.number) + 8,
+              y: stacked ? point.top + point.title.length * 16 + 16 : point.top + point.height / 2 - (point.valueLines.length - 1) * 8 + 4, lineHeight: 16,
             });
           });
         const notes = panel.append('dl').attr('class', 'bar-source-notes');
@@ -1884,13 +1921,14 @@ const chartPayloadJson = chartPayload
     const rows = svg.append('g').selectAll('g').data(stages).join('g').attr('class', 'funnel-stage')
       .attr('transform', stage => `translate(0,${stage.y})`);
     const barY = stage => compact ? stage.title.length * 16 + 8 : (stage.h - 44) / 2;
+    const stageColor = stage => stage.item.tone ? colorForTone(stage.item.tone) : colors[Math.min(stage.index, colors.length - 1)];
     rows.append('rect').attr('class', 'funnel-track').attr('x', left).attr('y', barY)
       .attr('width', maxWidth).attr('height', 44).attr('rx', 12).attr('fill', '#f9f1eb').attr('stroke', '#eadfd5');
     rows.append('rect').attr('class', 'funnel-band').attr('x', stage => left + (maxWidth - stage.w) / 2).attr('y', barY)
       .attr('width', stage => stage.w).attr('height', 44).attr('rx', 12)
-      .attr('fill', stage => stage.item.tone ? colorForTone(stage.item.tone) : colors[Math.min(stage.index, colors.length - 1)]);
+      .attr('fill', stageColor);
     rows.append('text').attr('class', 'funnel-number').attr('x', left + maxWidth / 2).attr('y', stage => barY(stage) + 27)
-      .attr('fill', palette.paper).attr('font-size', 13).attr('font-weight', 900).attr('text-anchor', 'middle').text(stage => stage.index + 1);
+      .attr('fill', stage => chartTextColor(d3.rgb(stageColor(stage)))).attr('font-size', 13).attr('font-weight', 900).attr('text-anchor', 'middle').text(stage => stage.index + 1);
     rows.append('text').attr('fill', palette.ink).attr('font-size', 12).attr('font-weight', 800).attr('text-anchor', compact ? 'start' : 'end')
       .each(function(stage) {
         renderLineBlock(d3.select(this), stage.title, {
@@ -2316,8 +2354,9 @@ const chartPayloadJson = chartPayload
       });
     }));
     const g = svg.append('g').selectAll('g').data(cells).join('g').attr('class', 'cohort-cell');
-    g.append('rect').attr('x', (d) => x(d.columnIndex)).attr('y', (d) => y(d.rowIndex)).attr('width', x.bandwidth()).attr('height', y.bandwidth()).attr('rx', 7).attr('fill', (d) => d.value == null ? palette.paper : color(d.value)).attr('stroke', '#fff7ef').attr('stroke-width', 3);
-    g.append('text').attr('x', (d) => x(d.columnIndex) + x.bandwidth() / 2).attr('y', (d) => y(d.rowIndex) + y.bandwidth() / 2).attr('text-anchor', 'middle').attr('dominant-baseline', 'middle').attr('fill', palette.ink).attr('font-size', chartFont.small).attr('font-weight', fontWeight('strong')).each(function(d) {
+    const cellColor = d => d.value == null ? palette.paper : color(d.value);
+    g.append('rect').attr('x', (d) => x(d.columnIndex)).attr('y', (d) => y(d.rowIndex)).attr('width', x.bandwidth()).attr('height', y.bandwidth()).attr('rx', 7).attr('fill', cellColor).attr('stroke', '#fff7ef').attr('stroke-width', 3);
+    g.append('text').attr('x', (d) => x(d.columnIndex) + x.bandwidth() / 2).attr('y', (d) => y(d.rowIndex) + y.bandwidth() / 2).attr('text-anchor', 'middle').attr('dominant-baseline', 'middle').attr('fill', d => chartTextColor(d3.rgb(cellColor(d)))).attr('font-size', chartFont.small).attr('font-weight', fontWeight('strong')).each(function(d) {
       renderWrappedText(d3.select(this), d.text, { textWrapper, maxWidth: x.bandwidth() - 14, maxLines: Math.max(1, Math.floor(y.bandwidth() / 16)), lineHeight: chartFont.lineHeight.tight });
     });
     g.each(function(d) { addTitle(d3.select(this), `${d.row} × ${d.column}: ${d.text}`); });

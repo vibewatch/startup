@@ -273,6 +273,10 @@ and units on the page, in print and
 in tooltips. Populated `items` retain precedence over the alternative `series`
 shape. These display safeguards do not establish metric accuracy or comparability
 when units, populations or time bases are missing or misleading in the source.
+Reserve measured space for complete value tokens; never split a number across
+lines or abbreviate authored values to fit. Narrow layouts may put labels and
+values above the bars. Thin derived axis ticks by measured text bounds while
+retaining both domain endpoints; text containment alone does not detect overlap.
 
 KPI cards retain distinct detail, note, context and unit text both on the card
 and in tooltips. Print must retain
@@ -302,6 +306,10 @@ dots. Expand crowded plots vertically instead of overlapping markers.
 Keep full axes, source coordinates, qualifications and
 evidence in tooltips, the evidence toggle and print-only source tables. Compare actual desktop/mobile screenshots
 against the historical renderer, not just chart hydration or absence of page overflow.
+Check small-text contrast against actual filled backgrounds (at least 4.5:1),
+including cohort cells and funnel stage numbers. Pyramid layers must retain a
+readable minimum width and accommodate measured Latin words on phones rather
+than fragmenting long labels into narrow columns.
 
 **Historical presentation:** journey maps retain the curved horizontal path,
 numbered circles and alternating compact title cards, not a serpentine card grid.

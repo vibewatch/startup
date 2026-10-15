@@ -171,6 +171,29 @@ export function chartNumericValue(value) {
   return Number.isFinite(number) ? number : null;
 }
 
+export function chartTextColor({ r, g, b }) {
+  const channels = [r, g, b].map(value => {
+    const channel = value / 255;
+    return channel <= 0.04045 ? channel / 12.92 : ((channel + 0.055) / 1.055) ** 2.4;
+  });
+  const luminance = channels.reduce((sum, channel, index) => sum + channel * [0.2126, 0.7152, 0.0722][index], 0);
+  return (luminance + 0.05) / 0.05 >= 1.05 / (luminance + 0.05) ? '#000000' : '#ffffff';
+}
+
+export function barChartLayout(containerWidth, labelWidth, valueWidth, endpointWidths) {
+  const [first, last] = endpointWidths;
+  const width = Math.max(containerWidth, Math.ceil(valueWidth + 32), Math.ceil(first + last + 48), Math.ceil((first + last) / 2 + 112));
+  const compact = containerWidth < 640;
+  const left = Math.max(compact ? Math.min(120, width * 0.36) : Math.min(220, Math.max(152, labelWidth + 16)), first / 2 + 16);
+  const right = Math.max(compact ? 76 : 112, Math.ceil(valueWidth + 24), last / 2 + 16);
+  const stacked = width - left - right < Math.max(80, (first + last) / 2 + 8);
+  return {
+    width, compact, stacked,
+    left: stacked ? first / 2 + 16 : left,
+    right: stacked ? last / 2 + 16 : right,
+  };
+}
+
 export function waterfallSpans(figure) {
   const items = Array.isArray(figure.data?.items) ? figure.data.items : [];
   const values = items.map(item => chartNumericValue(item.value));
