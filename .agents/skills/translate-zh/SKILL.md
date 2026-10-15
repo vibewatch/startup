@@ -1042,6 +1042,8 @@ or shrunk. Check restored desktop/mobile layouts and pointer tooltips too.
 Timeline entries retain their full date, label and detail in visible text and
 shared hover/tap tooltips. Check both surfaces; an accessibility label alone
 does not prove the tooltip works, and print must retain the visible detail.
+Include `details` aliases, summary-only context and every distinct qualification;
+check the same source strings in the visible card, tooltip and printed event.
 Print timeline events as ordered date/label/detail entries at the report's
 body-text size, not as a long SVG shrunk to a page-height cap. Preserve authored
 order and tone, allow page breaks between complete events, and check actual PDF
@@ -1108,14 +1110,19 @@ thin only interior tick labels using their measured bounds; retain both endpoint
 Check again after fonts load, small viewport resizes and print transitions.
 Tick thinning must not change row values, markers, summaries, notes or tooltips.
 Stack diagrams retain their complete ordered items, modules and outputs in
-visible layer details and matching tooltips, even when the diagram previews
-only a few pills. Check every label, value, unit and qualification in both
-locales, on narrow screens and in print; duplicate labels are not merged.
+hover/tap tooltips and print-only layer details, even when the diagram previews
+only a few pills. Do not repeat the entire architecture beneath the screen diagram
+or add a generic chart-type heading. In print, the complete layer list replaces the
+scaled SVG at body-text size. Check every label, value, unit and qualification in
+both locales, on narrow screens and in physical PDFs; duplicate labels are not merged.
+Inspect lower layers on phones and deep stacks: layer insets must preserve
+readable widths rather than leaving only the level badge and a few letters.
 Flow and stack previews fit measured SVG glyph widths, with explicit ellipses
 when bounded previews are necessary; their full text remains in the supplements
 and tooltips. Check actual glyph bounds, not just text presence. Mobile table
 captions must use the full card width rather than collapsing into a vertical strip.
-DAG node and stage previews also use measured glyph widths, including Chinese.
+DAG node previews also use measured glyph widths, including Chinese. Do not
+generate extra stage headings from internal node identifiers.
 Compact SVGs use their actual container width instead of shrinking a minimum-width
 canvas and its text; check node/card containment after this narrow-screen reflow.
 Also verify report-level `coverageNotes`, displayed before cover facts with
@@ -1131,6 +1138,11 @@ Do not add "Complete nodes and declared connections", "Authored coordinates and 
 Verify that these controls and duplicate tables are absent from desktop/mobile reading.
 Complete source text remains in hover/tap tooltips, ordered item evidence remains
 available through the evidence toggle, and authored caveats stay visible.
+Cohort grids also use measured glyph widths and horizontal scrolling on phones.
+Check full row/column labels and cell qualifications in tooltips; repeated labels
+remain separate rows/columns. Print uses complete source rows, not a tiny scaled
+grid. Empty or nonnumeric cells must not acquire an invented zero or override an
+explicit blank display label.
 For ordered flow diagrams, inspect the print-only node/connection table:
 full node text, values, units and qualifications must remain available in tooltips and
 print even when diagram labels are shortened.

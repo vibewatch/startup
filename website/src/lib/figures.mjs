@@ -253,7 +253,7 @@ export function barSeries(data) {
 
 export function barSeriesTable(series, { valueLabel, contextLabel }) {
   const rows = series.flatMap((group, groupIndex) => group.points.map((point, pointIndex) => {
-    const context = [...new Set([point.unit ?? group.unit, ...figureItemNotes(point)]
+    const context = [...new Set([point.unit ?? group.unit, ...figureValueNotes(point)]
       .filter((value) => typeof value === 'string' && value.trim()))].join('\n');
     return {
       label: `${group.label || group.name || `#${groupIndex + 1}`} / ${point.label ?? point.name ?? `#${pointIndex + 1}`}`,

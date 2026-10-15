@@ -329,6 +329,24 @@ Do not add screen disclosures such as "Complete nodes and declared connections",
 numbered node kickers or paragraphs explaining renderer implementation.
 Retain authored notes, real axis definitions and concise warnings for actual
 data limitations; do not duplicate source-value lists already provided in print.
+Apply this to every chart family, including product-architecture stacks:
+keep the layered diagram on screen, with complete layer/items/modules/outputs
+in hover/tap tooltips and a print-only list replacing the scaled SVG in print.
+Bound layer insets by the available width and layer count so lower layers
+remain readable on phones and deep stacks stay inside the canvas.
+Do not repeat the entire architecture as a second reading-view outline or add
+generic chart-type headings. Timeline date rows require an authored date, period
+or year; never repeat an event label as a guessed date. KPI value rows likewise
+require an authored display value, value or score, not a repeated card title.
+Keep timeline `details`, summary-only context and all distinct qualifications
+in the card, tooltip and print entry. Source-value tables likewise retain
+summary-only qualifications; an alias difference must not drop authored context.
+Directed graphs must not generate extra column headings from concatenated node
+identifiers; keep identifiers structural and authored node labels in their cards.
+Cohort grids use measured labels and readable horizontal scrolling rather than
+clipping Chinese text or squeezing columns. Preserve repeated row/column labels
+by position, complete cell aliases and qualifications in tooltips, and readable
+print-only source rows. Missing or nonnumeric cells must not acquire a zero.
 Print-only tables do not invent explicit edges for an implicit sequence.
 Generic node positions and tone hints must not be relabeled as evidence,
 constraints or decisions unless that role is actually authored.

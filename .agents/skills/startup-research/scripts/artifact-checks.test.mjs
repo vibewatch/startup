@@ -12,7 +12,7 @@ import { KNOWN_DIMENSIONS, WARNING_DIMENSIONS } from './validation-catalog.mjs';
 import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
 import { checkRefreshReadback, refreshArtifactsAreInSync } from './refresh-readback.mjs';
 import { reportsDir } from './utils.mjs';
-import { barSeries, barSeriesTable, chartNumericValue, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, graphItemNotes, matrixCellText, quadrantAxes, quadrantLabelPositions, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails, waterfallSpans, waterfallValueTable, withFlowTopology, withRangeTones, withWaterfallSpans } from '../../../../website/src/lib/figures.mjs';
+import { RENDERED_FIGURE_TYPES, barSeries, barSeriesTable, chartNumericValue, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, graphItemNotes, matrixCellText, quadrantAxes, quadrantLabelPositions, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails, waterfallSpans, waterfallValueTable, withFlowTopology, withRangeTones, withWaterfallSpans } from '../../../../website/src/lib/figures.mjs';
 import { isTranslatableLeaf, TRANSLATE_PATHS } from '../../translate-zh/scripts/whitelist.mjs';
 import { asArray, asRecord, claimRefs } from '../../../../website/src/lib/report-types.ts';
 import { t } from '../../../../website/src/lib/i18n.ts';
@@ -44,17 +44,18 @@ test('table, matrix and cohort display paths use shared placeholder labels witho
   const table = readFileSync('website/src/components/ReportBlock.astro', 'utf8');
   assert.match(table, /splitClaimRefsText\(displayCellText\(cell, locale\)\)/);
   const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
-  assert.match(source, /id: chartId, type, data: chartData, itemLabel, locale/);
+  assert.match(source, /id: chartId, type, data, itemLabel, locale/);
   const matrix = source.slice(source.indexOf('const renderHeatmap ='), source.indexOf('const renderCohort ='));
   assert.match(matrix, /displayCellText\(matrixCellText\(cell\), payload\.locale\)/);
   assert.match(matrix, /\.map\(\(note\) => displayCellText\(note, payload\.locale\)\)/);
   assert.equal((matrix.match(/\[d\.text, \.\.\.d\.tooltipNotes\]/g) ?? []).length, 2);
   const cohort = source.slice(source.indexOf('const renderCohort ='), source.indexOf('const RENDERERS ='));
-  assert.match(cohort, /text: displayCellText\(safeText\(cell\), payload\.locale\)/);
-  assert.match(cohort, /detail: displayCellText\(cell\?\.detail, payload\.locale\)/);
-  assert.match(cohort, /const cellLabel = d\.text/);
-  assert.match(cohort, /addTitle\(.*d\.text \|\| d\.value/);
-  assert.match(cohort, /\[d\.text \|\| String\(d\.value\), d\.detail\]/);
+  assert.match(cohort, /text: displayCellText\(matrixCellText\(cell\), payload\.locale\)/);
+  assert.match(cohort, /\.map\(note => displayCellText\(note, payload\.locale\)\)/);
+  assert.match(cohort, /renderWrappedText\(d3\.select\(this\), d\.text/);
+  assert.match(cohort, /addTitle\(.*\$\{d\.text\}/);
+  assert.match(cohort, /\[d\.text, \.\.\.d\.notes\]/);
+  assert.doesNotMatch(cohort, /d\.text \|\|/);
 });
 
 test('table evidence references wrap instead of hiding later links and scrolling the whole table', () => {
@@ -95,7 +96,7 @@ test('compact SVGs retain authored font sizes and graph previews fit measured gl
   const dag = figure.slice(figure.indexOf('const renderDag ='), figure.indexOf('const renderFlow ='));
   assert.match(dag, /const textWrapper = createSvgTextWrapper\(svg\)/);
   assert.match(dag, /textWrapper, maxWidth: nodeLabelMaxWidth/);
-  assert.match(dag, /textWrapper, maxWidth: compact \? width - 68 : stageGapW - 22/);
+  assert.doesNotMatch(dag, /stageLabels|stageNames|stageNodeLabel|toUpperCase\(\)/);
   assert.doesNotMatch(dag, /nodeLabelFontSize \* 0\.58/);
   const flow = figure.slice(figure.indexOf('const renderFlow ='), figure.indexOf('const firstNonEmpty'));
   assert.match(flow, /textWrapper\.wrap\(edge\?\.label \?\? ''/);
@@ -565,8 +566,93 @@ test('retired refresh parents require an exact redirect and leave all current re
 test('timeline rows use shared pointer tooltips with full date and detail', () => {
   const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
   const timeline = source.slice(source.indexOf('const renderTimeline ='), source.indexOf('const renderStack ='));
-  assert.match(timeline, /withTooltip\(rows, \(d\) => tooltipHtml\(d\.label, \[d\.date, d\.detail\]\)\)/);
+  assert.match(timeline, /withTooltip\(rows, \(d\) => tooltipHtml\(d\.label, \[safeText\(d\.date \?\? d\.period \?\? d\.year\), d\.detail\]\)\)/);
   assert.match(timeline, /renderLineBlock\(d3\.select\(this\), d\.detailLines/);
+});
+
+test('timeline details retain every distinct source qualification in screen, print and tooltip text', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const timeline = source.slice(source.indexOf('const renderTimeline ='), source.indexOf('const renderStack ='));
+  const expression = timeline.match(/const items = ([\s\S]+?);\n/)?.[1];
+  assert.ok(expression);
+  const normalize = new Function('normalizedItems', 'figureValueNotes', 'safeText', 'payload', `return (${expression});`);
+  const data = { items: [
+    { label: 'Details only', details: 'Preserve this event context.' },
+    { label: 'Summary only', summary: 'Reported, not independently verified.' },
+    { label: 'All qualifications', detail: 'Primary', description: 'Additional', details: 'Expanded',
+      note: 'Expanded', notes: 'Historical scope', context: 'Conditional', valueNote: 'Unaudited', unit: 'USD' },
+    { label: 'No detail' },
+    { label: 'Zero detail', detail: 0 },
+  ] };
+  const before = structuredClone(data);
+  const items = normalize(data => data.items.map(item => ({ ...item, detail: figureDetail(item) ?? item.summary })),
+    figureValueNotes, value => String(value ?? ''), { data, itemLabel: 'Item' });
+  assert.deepEqual(items.map(item => item.detail), [
+    'Preserve this event context.', 'Reported, not independently verified.',
+    'Primary\nAdditional\nExpanded\nHistorical scope\nConditional\nUnaudited\nUSD', '', '0',
+  ]);
+  assert.deepEqual(data, before);
+  assert.match(timeline, /textWrapper\.wrap\(item\.detail,/);
+  assert.match(timeline, /tooltipHtml\(d\.label, \[safeText\(d\.date \?\? d\.period \?\? d\.year\), d\.detail\]\)/);
+  assert.match(timeline, /printRows\.filter\(\(d\) => safeText\(d\.detail\)\.trim\(\) !== ''\)\.append\('p'\)\.text\(\(d\) => d\.detail\)/);
+});
+
+test('source-value tables retain summary-only qualifications without repeating units or mutating their inputs', () => {
+  const data = { items: [
+    { label: 'Revenue', value: 1200, unit: 'S$M', summary: 'Audited FY2025 revenue.' },
+    { label: 'Gross profit', value: 149, unit: 'S$M', summary: 'Includes financing operations.', note: 'Unaudited adjustment.' },
+  ] };
+  const before = structuredClone(data);
+  const table = waterfallValueTable(data, { valueLabel: 'Value', contextLabel: 'Context', metadataLabel: 'Metadata' });
+  assert.deepEqual(table.rows.map(row => row.values[0].detail),
+    ['S$M\nAudited FY2025 revenue.', 'S$M\nIncludes financing operations.\nUnaudited adjustment.']);
+  assert.deepEqual(table.rows.map(row => row.values[1]), table.rows.map(row => row.values[0].detail));
+  assert.deepEqual(data, before);
+});
+
+test('timeline date rows never repeat an event title when no authored date is present', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const timeline = source.slice(source.indexOf('const renderTimeline ='), source.indexOf('const renderStack ='));
+  const body = timeline.match(/const rowsData = items\.map\(\(item\) => \{([\s\S]*?)\n    \}\);/)?.[1];
+  assert.ok(body);
+  const layout = new Function('items', 'textWrapper', 'safeText', 'chartFont', 'textW', 'margin', 'rowGap',
+    `let cursorY = margin.top; return items.map((item) => {${body}});`);
+  const items = [
+    { label: '2026: Founded', detail: 'One event, not an invented date row' },
+    { label: 'Dated event', date: '2026-09-30' },
+    { label: 'Period event', period: 'Q1 2026' },
+    { label: 'Year event', year: 2026 },
+    { label: 'Zero date', date: 0 },
+    { label: 'Blank date', date: '', year: 2026 },
+    { label: 'Whitespace date', date: '  ' },
+  ];
+  const before = structuredClone(items);
+  const rows = layout(items, { wrap: value => [String(value ?? '')] }, value => String(value ?? ''),
+    { small: 12, label: 14, lineHeight: { small: 15, title: 18 } }, 240, { top: 26 }, 24);
+  assert.deepEqual(rows.map(row => row.dateLines), [[], ['2026-09-30'], ['Q1 2026'], ['2026'], ['0'], [], []]);
+  assert.equal(rows[0].labelY, 20);
+  assert.equal(rows[1].labelY, 45);
+  for (const row of rows) {
+    assert.ok(row.detailY > row.labelY);
+    assert.ok(row.cardH >= row.detailY + 15);
+  }
+  assert.match(timeline, /rows\.filter\(\(d\) => d\.dateLines\.length\)\.append\('text'\)/);
+  assert.deepEqual(items, before);
+});
+
+test('KPI cards do not invent a second value from their title when authored quantities are absent', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const kpi = source.slice(source.indexOf('const renderKpi ='), source.indexOf('const chartSeries ='));
+  const expression = kpi.match(/cards\.filter\(\(d\) => (.*?)\)\s*\.append\('div'\)\.attr\('class', 'kpi-card-value'\)/)?.[1];
+  assert.ok(expression);
+  const visible = new Function('d', 'safeText', `return (${expression});`);
+  for (const [item, expected] of [
+    [{ label: 'Concept only' }, false], [{ label: 'Zero', value: 0 }, true],
+    [{ label: 'Score', score: 0 }, true], [{ label: 'Explicit display', displayValue: 0, value: 5 }, true],
+    [{ label: 'Explicit blank', displayValue: '', value: 5 }, false],
+    [{ label: 'Actual text', value: 'Not disclosed' }, true],
+  ]) assert.equal(visible(item, value => String(value ?? '')), expected);
+  assert.match(kpi, /tooltipHtml\(d\.label, \[\s*safeText\(d\.displayValue \?\? d\.value \?\? d\.score\)/);
 });
 
 test('timelines print complete ordered events at body-text size without hiding measurable SVGs', () => {
@@ -891,6 +977,95 @@ test('stack details preserve aliases, zero-valued labels and display values with
   assert.deepEqual(result[2].groups[0].entries, [['raw-id', 'Context']]);
   assert.deepEqual(stackLayerDetails({ layers: [], items: layers }), []);
   assert.deepEqual(stackLayerDetails(null), []);
+});
+
+test('architecture stacks keep a single screen diagram and complete print-only layer details', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  assert.match(source, /class="figure-item-notes stack-layer-notes figure-print-details"/);
+  assert.match(source, /layer\.groups\.map\(\(group\)/);
+  assert.match(source, /group\.entries\.map\(\(lines\) => <li>\{lines\.join\(' — '\)\}/);
+  const stack = source.slice(source.indexOf('const renderStack ='), source.indexOf('const renderPyramid ='));
+  assert.match(stack, /attr\('class', 'stack-layer'\)/);
+  assert.match(stack, /tooltipHtml\(d\.label, detailLines\(d\)\)/);
+  assert.doesNotMatch(source, /reportStackOverview|stackLabels\.overview|reportWaterfallBridge|waterfallLabels\.bridge/);
+  const report = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
+  const print = report.slice(report.indexOf('@media print'));
+  assert.match(print, /:global\(\.native-figure:has\(\.chart-stack\)\)/);
+  assert.match(print, /:global\(\.chart-stack > svg\),[^{}]*\{ position: absolute; visibility: hidden; \}/);
+  assert.match(print, /:global\(\.stack-layer-notes\),\s*:global\(\.cohort-details\) \{ font-size: 10pt;/);
+  assert.match(print, /:global\(\.chart-waterfall \.bar-panel > svg\)/);
+  assert.match(print, /:global\(\.chart-waterfall \.bar-print-values\),[^{}]*\{ display: none !important; \}/);
+  const labels = readFileSync('website/src/lib/i18n.ts', 'utf8');
+  assert.doesNotMatch(labels, /reportStackOverview|reportWaterfallBridge/);
+});
+
+test('architecture stack insets preserve readable lower layers without moving deep layers off the canvas', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const stack = source.slice(source.indexOf('const renderStack ='), source.indexOf('const renderPyramid ='));
+  const expression = stack.match(/const stackInset = ([\s\S]+?);\n/)?.[1];
+  assert.ok(expression);
+  const insetFor = new Function('compact', 'maxW', 'layers', `return (${expression});`);
+  for (const compact of [false, true]) for (const maxW of [180, 284, 760]) for (const count of [1, 6, 24, 40]) {
+    const inset = insetFor(compact, maxW, Array(count));
+    const lastWidth = maxW - (count - 1) * inset * 2;
+    assert(inset >= 0);
+    assert(lastWidth >= Math.min(maxW, compact ? 240 : 320) - 1e-9);
+    assert(Math.abs(lastWidth + (count - 1) * inset * 2 - maxW) < 1e-9);
+  }
+});
+
+test('cohort grids preserve aliases, repeated row labels and measured labels without fabricating missing values', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const cohort = source.slice(source.indexOf('const renderCohort ='), source.indexOf('const RENDERERS ='));
+  assert.match(cohort, /domain\(columns\.map\(column => column\.index\)\)/);
+  assert.match(cohort, /domain\(rows\.map\(row => row\.index\)\)/);
+  assert.match(cohort, /textWrapper, maxWidth: margin\.left - 24/);
+  assert.match(cohort, /textWrapper, maxWidth: x\.bandwidth\(\) - 12/);
+  assert.match(cohort, /textWrapper, maxWidth: x\.bandwidth\(\) - 14/);
+  assert.match(cohort, /scrollableSvg\(element, svg, width, height, payload\)/);
+  assert.match(cohort, /withTooltip\(rowHeadings/);
+  assert.match(cohort, /withTooltip\(headings/);
+  assert.match(cohort, /\.\.\.\(columns\[colIndex\]\?\.notes \?\? \[\]\)/);
+  assert.match(cohort, /figureItemNotes\(cell \?\? \{\}\)/);
+  const expression = cohort.match(/const numericValue = ([\s\S]+?);\n/)?.[1];
+  assert.ok(expression);
+  const numericValue = new Function('chartNumericValue', 'matrixCellText', `return (${expression});`)(chartNumericValue, matrixCellText);
+  for (const [cell, expected] of [
+    [0, 0], [{ value: 0 }, 0], [{ text: '81%' }, 81], [{ label: '90%' }, 90],
+    [{ label: '', value: 81 }, 81], [{ label: '' }, null], [{ label: 'unknown' }, null],
+    [{ text: 'n/a' }, null], [{ label: 'Year 2' }, null], [{ value: -2 }, -2],
+  ]) assert.equal(numericValue(cell), expected);
+  assert.match(source, /class="cohort-details figure-print-details"/);
+  const report = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
+  assert.match(report.slice(report.indexOf('@media print')), /:global\(\.chart-cohort > \.chart-scroll-frame\)/);
+});
+
+test('single-series bars keep authored series labels and qualifications instead of flattening their source data', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  assert.doesNotMatch(source, /items: stages|data: chartData/);
+  const expression = source.match(/const chartSeries = ([\s\S]+?);\n\n  const renderBar/)?.[1];
+  assert.ok(expression);
+  const normalize = new Function('barSeries', 'figureDetail', `return (${expression});`)(barSeries, figureDetail);
+  const data = { series: [{ name: 'Authored series', unit: 'USD', note: 'Unaudited', summary: 'Series context',
+    points: [{ label: 'Repeated', value: 0, summary: 'Point context' }, { label: 'Repeated', value: 3, unit: 'EUR' }],
+  }] };
+  const before = structuredClone(data);
+  const [series] = normalize({ data, itemLabel: 'Item' });
+  assert.equal(series.label, 'Authored series');
+  assert.equal(series.note, 'Unaudited');
+  assert.deepEqual(figureItemNotes(series), ['Series context', 'Unaudited']);
+  assert.deepEqual(figureItemNotes(series.points[0]), ['Point context']);
+  assert.deepEqual(series.points.map(point => [point.label, point.value, point.unit, point._pointIndex]),
+    [['Repeated', 0, 'USD', 0], ['Repeated', 3, 'EUR', 1]]);
+  assert.deepEqual(data, before);
+});
+
+test('the renderer registry covers every supported chart family without generic substitutions', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const registry = source.slice(source.indexOf('const RENDERERS ='), source.indexOf('const normalizeRenderedTypography ='));
+  const types = [...registry.matchAll(/^\s*(['"]?)([\w-]+)\1: render\w+,?$/gm)].map(([, , type]) => type);
+  assert.deepEqual(types.sort(), [...RENDERED_FIGURE_TYPES].sort());
+  assert.match(source, /type === 'other' &&/);
 });
 
 test('implicit flow details retain full qualifications without inventing explicit connections', () => {
