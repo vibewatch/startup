@@ -471,6 +471,11 @@ and dollar-qualified annual claims volume describe workflows or processed
 amounts, not assertions. A separate `claims accuracy is superior`, an
 `NDR claim`, or `claimed scale` still requires attribution. A workflow-list
 exemption must not swallow an adjacent assertion.
+Health-insurance reimbursement, adjudication engines, paper submissions,
+percentage-qualified claim counts, medical claims inflation, and insurance
+claims in diligence lists likewise describe insurance activity. These scoped
+noun contexts do not exempt a separate company assertion or public-disclosure
+gap; unchanged quantities still require metric-fidelity checks.
 `未经证明` retains `unproven`, and `未发现 Candid 公开…` can retain a scoped
 public-evidence gap. `潜在进入者` can render the entrant category `likely entrants`;
 it cannot replace a separate `likely` or `probably` in the same source leaf.

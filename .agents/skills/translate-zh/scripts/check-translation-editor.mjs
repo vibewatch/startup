@@ -494,6 +494,55 @@ const checks = [
     ];
   }))),
   ...[
+    ['Supplementary health coverage, telemedicine, claims automation, and prevention services in one app.', '一款应用整合补充医疗保险、远程医疗、理赔自动化和预防服务。'],
+    ['Full-stack digital health insurance, claims reimbursement, telemedicine, and prevention services in one app.', '一款应用整合全栈数字健康保险、理赔报销、远程医疗和预防服务。'],
+    ['The insurer provides rapid automated claims reimbursement.', '保险商提供快速自动理赔报销。'],
+    ['Instant mobile claims adjudication and a digital-first clinic.', '即时移动理赔裁定和数字优先诊所。'],
+    ['Automated claims adjudication reduces administrative expense ratios.', '自动理赔裁定降低行政费用率。'],
+    ['Automated workflows process 50% of claims in under 5 minutes.', '自动工作流在 5 分钟内处理 50% 的理赔。'],
+    ['Manage subscriber care navigation and claims severity.', '管理会员医疗导航和理赔严重程度。'],
+    ['Members submit manual paper claims and endure weeks of reimbursement latency.', '会员提交纸质理赔，等待数周报销。'],
+    ['The platform delivers zero-friction claims processing.', '平台提供无摩擦的理赔处理。'],
+    ['The proprietary ledger and in-house claims processing pipeline support the member interface.', '专有账本和内部理赔处理流水线支撑会员界面。'],
+    ['The insurer highlights automated claims velocity and member satisfaction.', '保险商强调自动理赔速度和会员满意度。'],
+    ['The automated claims engine adjudicates 50% of reimbursements in under 5 minutes.', '自动理赔引擎在 5 分钟内裁定 50% 的报销。'],
+    ['Automated and AI-assisted claims processing resolves reimbursement requests.', '自动和 AI 辅助理赔处理报销请求。'],
+    ['Severe medical claims volatility obscures underwriting resilience.', '严重医疗理赔波动使承保韧性难以判断。'],
+    ['Medical claims inflation spikes; combined ratios deteriorate.', '医疗理赔通胀飙升；综合赔付率恶化。'],
+    ['Margins deteriorate if claims inflation accelerates.', '理赔通胀加速时，利润率恶化。'],
+    ['Full-stack digital policy underwriting, automated NOEMIE teletransmission, and OCR claims engine.', '全栈数字保单承保、自动 NOEMIE 电子传输和 OCR 理赔引擎。'],
+    ['Evidence of measurable claim reduction is not published.', '可量化理赔减少的证据尚未公开。'],
+    ['Paper claim submission via postal mail or fragmented broker portals; 2-4 week latency.', '通过邮寄或零散经纪人门户提交纸质理赔；延迟 2-4 周。'],
+    ['Member claims capture, telehealth chat, virtual card display, and wellness tracking.', '会员理赔采集、远程医疗聊天、虚拟卡展示和健康追踪。'],
+    ['False-positive claims rejections and automated invoice fraud vectors.', '误判理赔的拒绝和自动发票欺诈手法。'],
+    ['Drives preventative health habits and lowers claim incidents.', '促进预防性健康习惯并减少理赔事件。'],
+    ['Coordinated fraudulent claims exploitation prior to batch audit detection.', '批量审计发现前，欺诈团伙协同利用理赔流程。'],
+    ['AI reduces claims overhead.', 'AI 降低理赔开支。'],
+    ['Core claims adjudication and enterprise data infrastructure.', '核心理赔裁定和企业数据基础设施。'],
+    ['Review permits, safety cases, incident logs, training, and insurance claims.', '审查许可、安全论证、事故日志、培训及保险理赔。'],
+  ].flatMap(([en, zh]) => [
+    [en, zh, false],
+    [`${en} The company claims its service is flawless.`, `${zh} 服务毫无问题。`, true],
+    [`${en} The company claims its service is flawless.`, `${zh} 公司声称服务毫无问题。`, false],
+  ]).concat([
+    ['The company claims reimbursement is instantaneous.', '报销即刻完成。', true],
+    ['The insurer claims adjudication is flawless.', '理赔裁定毫无问题。', true],
+    ['The company claims inflation is low.', '通胀很低。', true],
+    ['The member claims capture is accurate.', '采集准确。', true],
+    ['The company claims 50% of claims are reimbursed instantly.', '50% 的理赔即刻报销。', true],
+    ['Medical claims inflation spikes; no public loss ratios are disclosed.', '医疗理赔通胀飙升；公开披露了赔付率。', true],
+    ['Review insurance claims; no public incident logs are disclosed.', '审查保险理赔；事故日志已公开。', true],
+  ]).flatMap(([en, zh, expected]) => [false, true].flatMap(strictEditor => ['prose', 'table', 'figure'].map(surface => {
+    const wrap = value => surface === 'prose' ? fullReport(value)
+      : surface === 'table' ? { ...fullReport(''), tables: [{ rows: [[value]] }] }
+        : { ...fullReport(''), figures: [{ data: { nodes: [{ detail: value }] } }] };
+    return [
+      checkPairQuality(wrap(`${en} This is a source-reviewed diligence observation.`), wrap(zh), { strictEditor })
+        .some(issue => issue.code === 'hedge-preservation') === expected,
+      `health-insurance claims nouns preserve separate assertions and disclosure gaps (${surface}, strict=${strictEditor}): ${en} / ${zh}`,
+    ];
+  }))),
+  ...[
     ['Leverage excluding claims on central banks is disclosed.', '剔除对央行债权口径的杠杆率已披露。', false],
     ['Leverage excluding central-bank claims is disclosed.', '剔除对央行债权口径的杠杆率已披露。', false],
     ['The central bank claims that the lender faces no capital constraint.', '该贷款机构不存在资本约束。', true],

@@ -44,6 +44,22 @@ const strictEditorStylePatterns = [
 const insuranceClaimHeads = '(?:intake|communications?|orchestration|automation|processing|handling|journeys?|platforms?|systems?(?:-of-record)?|workflows?|intelligence|infrastructure|organizations?|executives?|officers?|leaders?|modules?|messaging|experiences?|stack|volume|throughput|transformation|severity|types?|facts|participants|sales|enablement|audit|budgets?|cost|core|domain|pain|software|tech|operating|management|tooling|operations|scale|possibilities|AI|CX|lifecycle|submission|creation|work|quality|logic|coding|corrections?|accuracy|errors?|status|issues|datasets|context|data|rates?|preparation|production|routing|APIs?|histor(?:y|ies)|growth|visibility)';
 const insuranceClaimModifiers = '(?:(?:AI(?:-native)?|digital|agentic|enterprise|incumbent|legacy|modern|full|complete|cloud(?:-native)?|core|narrow|broader|automated|conversational|messy|intelligent|insurance|strong|pilot|P&C|annual|manual|transactional|preventable|touchless|clean|API-based|AI-driven|rules-driven|usage-based|payer-by-payer)[ -]+)*';
 const insuranceClaimNouns = new RegExp([
+  '\\b(?:telemedicine|(?:digital\\s+)?health\\s+insurance)\\s*,\\s*claims\\s+(?:automation|reimbursement)\\b',
+  '\\b(?:rapid\\s+automated|automated|AI-assisted|core|instant\\s+mobile|zero-friction)\\s+claims\\s+(?:reimbursement|adjudication|engine|velocity|processing)\\b',
+  '\\bin-house\\s+claims\\s+processing\\b',
+  '\\b\\d+(?:\\.\\d+)?%\\s+of\\s+claims\\b',
+  '\\band\\s+claims\\s+severity\\b',
+  '\\b(?:submit\\s+(?:manual\\s+)?paper\\s+claims|paper\\s+claim\\s+submission)\\b',
+  '\\b(?:severe\\s+)?medical\\s+claims\\s+(?:volatility|inflation)\\b',
+  '\\bif\\s+claims\\s+inflation\\b',
+  '\\bOCR\\s+claims\\s+engine\\b',
+  '\\bmeasurable\\s+claim\\s+reduction\\b',
+  '\\bmember\\s+claims\\s+capture(?=\\s*,\\s*telehealth\\b)',
+  '\\bfalse-positive\\s+claims\\s+rejections\\b',
+  '\\blowers\\s+claim\\s+incidents\\b',
+  '\\b(?:coordinated\\s+)?fraudulent\\s+claims\\s+exploitation\\b',
+  '\\breduces\\s+claims\\s+overhead\\b',
+  '\\binsurance\\s+claims(?=\\s*(?:[,.;:]|$))',
   '\\bclaims?-reduction\\s+proof\\b',
   '\\breduced\\s+claims(?=\\s*,\\s*safer\\s+driving\\b)',
   '\\brequest claims? frequency\\b(?=\\s*(?:[,.;:]|$))',
