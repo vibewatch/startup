@@ -1034,50 +1034,51 @@ test('quadrant full-name boxes stay inside mobile panels and avoid labels and au
     points.forEach(point => assert.ok(Math.abs(label.x - point.x) >= 56 || Math.abs(label.y - point.y) >= 31));
   });
 
-  test('quadrant numbered markers pack dense coincident boundary points without moving source coordinates', () => {
-    const bounds = { left: 72, right: 310, top: 54, bottom: 340 };
-    const nearBoundary = Object.freeze({ x: 180, y: 60 });
-    assert.deepEqual(quadrantLabelPositions([nearBoundary], bounds, 15), [{ x: 180, y: 69 }]);
-    assert.deepEqual(nearBoundary, { x: 180, y: 60 });
-    for (const corner of [{ x: 72, y: 54 }, { x: 310, y: 340 }]) {
-      const points = Object.freeze(Array.from({ length: 14 }, () => Object.freeze({ ...corner })));
-      const before = structuredClone(points);
-      const labels = quadrantLabelPositions(points, bounds, 15);
-      assert.deepEqual(points, before);
-      labels.forEach((label, index) => {
-        assert.ok(label.x - 15 >= bounds.left && label.x + 15 <= bounds.right);
-        assert.ok(label.y - 15 >= bounds.top && label.y + 15 <= bounds.bottom);
-        labels.slice(index + 1).forEach(other => assert.ok(Math.hypot(label.x - other.x, label.y - other.y) >= 32));
-      });
-    }
-  });
+});
 
-  test('original chart presentation retains numbered markers, curved journeys, SVG bar axes and colored funnel levels', () => {
-    const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
-    const journey = source.slice(source.indexOf('const renderJourneyMap ='), source.indexOf('const renderKpi ='));
-    assert.match(journey, /curveCatmullRom\.alpha\(0\.6\)/);
-    assert.match(journey, /domain\(layout\.map\(item => item\.index\)\)/);
-    assert.match(journey, /attr\('r', 18\)/);
-    assert.match(journey, /attr\('width', 144\)/);
-    assert.doesNotMatch(journey, /columns|serpentine|journey-arrow/);
-    const bars = source.slice(source.indexOf('const renderBar ='), source.indexOf('const renderFunnel ='));
-    assert.match(bars, /panel\.append\('svg'\)/);
-    assert.match(bars, /axisBottom\(svg, x/);
-    assert.match(bars, /Math\.abs\(x\(point\.number\) - x\(0\)\)/);
-    assert.match(bars, /bar-zero-value/);
-    assert.doesNotMatch(bars, /bar-track|style\('width',.*%/);
-    const funnel = source.slice(source.indexOf('const renderFunnel ='), source.indexOf('const renderWaterfall ='));
-    assert.match(funnel, /const colors = \['#a81749', '#b42351', '#c2415a', '#d1942f', '#0f766e'\]/);
-    assert.match(funnel, /rows\.append\('rect'\)\.attr\('class', 'funnel-track'\)/);
-    assert.match(funnel, /rows\.append\('rect'\)\.attr\('class', 'funnel-band'\)/);
-    const waterfall = source.slice(source.indexOf('const renderWaterfall ='), source.indexOf('const layoutRangeAxis ='));
-    assert.match(waterfall, /waterfall-panel/);
-    assert.match(waterfall, /point\.to < point\.from \? palette\.risk : palette\.positive/);
-    assert.match(waterfall, /attr\('rx', 8\)/);
-    assert.match(waterfall, /inside\(point\) \? palette\.paper : palette\.ink/);
-    assert.doesNotMatch(waterfall, /if \(compact\)/);
-    for (const renderer of [journey, waterfall]) assert.match(renderer, /scrollableSvg\(element, svg, width, height, payload\)/);
-  });
+test('quadrant numbered markers pack dense coincident boundary points without moving source coordinates', () => {
+  const bounds = { left: 72, right: 310, top: 54, bottom: 340 };
+  const nearBoundary = Object.freeze({ x: 180, y: 60 });
+  assert.deepEqual(quadrantLabelPositions([nearBoundary], bounds, 15), [{ x: 180, y: 69 }]);
+  assert.deepEqual(nearBoundary, { x: 180, y: 60 });
+  for (const corner of [{ x: 72, y: 54 }, { x: 310, y: 340 }]) {
+    const points = Object.freeze(Array.from({ length: 14 }, () => Object.freeze({ ...corner })));
+    const before = structuredClone(points);
+    const labels = quadrantLabelPositions(points, bounds, 15);
+    assert.deepEqual(points, before);
+    labels.forEach((label, index) => {
+      assert.ok(label.x - 15 >= bounds.left && label.x + 15 <= bounds.right);
+      assert.ok(label.y - 15 >= bounds.top && label.y + 15 <= bounds.bottom);
+      labels.slice(index + 1).forEach(other => assert.ok(Math.hypot(label.x - other.x, label.y - other.y) >= 32));
+    });
+  }
+});
+
+test('original chart presentation retains numbered markers, curved journeys, SVG bar axes and colored funnel levels', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  const journey = source.slice(source.indexOf('const renderJourneyMap ='), source.indexOf('const renderKpi ='));
+  assert.match(journey, /curveCatmullRom\.alpha\(0\.6\)/);
+  assert.match(journey, /domain\(layout\.map\(item => item\.index\)\)/);
+  assert.match(journey, /attr\('r', 18\)/);
+  assert.match(journey, /attr\('width', 144\)/);
+  assert.doesNotMatch(journey, /columns|serpentine|journey-arrow/);
+  const bars = source.slice(source.indexOf('const renderBar ='), source.indexOf('const renderFunnel ='));
+  assert.match(bars, /panel\.append\('svg'\)/);
+  assert.match(bars, /axisBottom\(svg, x/);
+  assert.match(bars, /Math\.abs\(x\(point\.number\) - x\(0\)\)/);
+  assert.match(bars, /bar-zero-value/);
+  assert.doesNotMatch(bars, /bar-track|style\('width',.*%/);
+  const funnel = source.slice(source.indexOf('const renderFunnel ='), source.indexOf('const renderWaterfall ='));
+  assert.match(funnel, /const colors = \['#a81749', '#b42351', '#c2415a', '#d1942f', '#0f766e'\]/);
+  assert.match(funnel, /rows\.append\('rect'\)\.attr\('class', 'funnel-track'\)/);
+  assert.match(funnel, /rows\.append\('rect'\)\.attr\('class', 'funnel-band'\)/);
+  const waterfall = source.slice(source.indexOf('const renderWaterfall ='), source.indexOf('const layoutRangeAxis ='));
+  assert.match(waterfall, /waterfall-panel/);
+  assert.match(waterfall, /point\.to < point\.from \? palette\.risk : palette\.positive/);
+  assert.match(waterfall, /attr\('rx', 8\)/);
+  assert.match(waterfall, /inside\(point\) \? palette\.paper : palette\.ink/);
+  assert.doesNotMatch(waterfall, /if \(compact\)/);
+  for (const renderer of [journey, waterfall]) assert.match(renderer, /scrollableSvg\(element, svg, width, height, payload\)/);
 });
 
 test('diagram supplements use native disclosures and expand for print without losing reader state', () => {
