@@ -517,7 +517,7 @@ function normalizedDollarMetrics(value) {
   let converted = 0;
   let unsupported = false;
   const expanded = normalizeQuantityWords(value).replace(
-    /(?<![\w.,])(?:(\$)\s*(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)\s*(万亿|亿|万|千|[KMBT])?|(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)\s*(万亿|亿|万|千|[KMBT])?\s*(?:美元|dollars\b))(?!\w|[.,]\d)/giu,
+    /(?<![\w.,])(?:(\$)\s*(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)\s*(万亿|亿|万|千|[KMBT])?|(\d{1,3}(?:,\d{3})+(?:\.\d+)?|\d+(?:\.\d+)?)\s*(万亿|亿|万|千|[KMBT])?\s*(?:美元|dollars\b|(?<=[KMBT]\s*)dollar\b))(?!\w|[.,]\d)/giu,
     (match, dollar, prefixNumber, prefixUnit, suffixNumber, suffixUnit, offset, text) => {
       const before = text.slice(0, offset);
       const after = text.slice(offset + match.length);
@@ -527,7 +527,8 @@ function normalizedDollarMetrics(value) {
           || /^\s*(?:to|至|到)\s*[$\d]/iu.test(after)
           || dollar && /\b(?:EUR|GBP|JPY|CNY|RMB|HKD|AUD|CAD|SGD|INR|KRW|TWD|CHF|NGN|NZD)\s*$/i.test(before)
           || dollar && /^\s*(?:EUR|GBP|JPY|CNY|RMB|HKD|AUD|CAD|SGD|INR|KRW|TWD|CHF|NGN|NZD)\b/i.test(after)
-          || /\bdollars$/i.test(match) && /[€£¥￥₦₹]|\b(?:EUR|GBP|JPY|CNY|RMB|HKD|AUD|CAD|SGD|INR|KRW|TWD|CHF|NGN|NZD|Australian|Canadian|Singapore|Hong Kong|New Zealand|Taiwan)\b/i.test(text)
+          || /dollar$/i.test(match) && !/dollar$/.test(match)
+          || /\bdollars?$/i.test(match) && /[€£¥￥₦₹]|\b(?:EUR|GBP|JPY|CNY|RMB|HKD|AUD|CAD|SGD|INR|KRW|TWD|CHF|NGN|NZD|Australian|Canadian|Singapore|Hong Kong|New Zealand|Taiwan)\b/i.test(text)
           || /[(（]\s*$/u.test(before) && /^\s*[)）]/u.test(after)) {
         unsupported = true;
         return match;

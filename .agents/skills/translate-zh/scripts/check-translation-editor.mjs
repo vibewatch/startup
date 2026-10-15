@@ -1918,6 +1918,10 @@ const checks = [
   ...[
     ['Annual administrative cost is 1.5 trillion dollars.', '每年行政成本为 1.5 万亿美元。', false],
     ['Revenue is 50 million dollars.', '收入为 5000 万美元。', false],
+    ['Following a 100 million dollar financing round at 1 billion dollars, subscribers reached 1.7 million.', '完成 $100 million 融资、估值达到 $1 billion 后，订阅用户达到 1.7 million。', false],
+    ['Following a 100 million dollar financing round at 1 billion dollars, subscribers reached 1.7 million.', '完成 1 亿美元融资、估值达到 10 亿美元后，订阅用户达到 170 万。', false],
+    ['Following a 100 million dollar financing round at 1 billion dollars, subscribers reached 1.7 million.', '完成 $10 million 融资、估值达到 $1 billion 后，订阅用户达到 1.7 million。', true],
+    ['Following a 100 million dollar financing round at 1 billion dollars in CAD, subscribers reached 1.7 million.', '完成 $100 million 融资、估值达到 $1 billion 后，订阅用户达到 1.7 million。', true],
     ['Revenue is 1.234567890123 billion dollars.', '收入为 12.34567890123 亿美元。', false],
     ['Revenue is 50 million dollars from 42 customers.', '收入为 5000 万美元，来自 42 家客户。', false],
     ['Revenue is 50 million dollars; capital is 50 million dollars.', '收入为 5000 万美元；资本为 5000 万美元。', false],

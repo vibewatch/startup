@@ -349,8 +349,10 @@ An exact fallback accepts positive dollar scalars such as `$50M` and
 It shifts decimal text without floating-point rounding. Shared-unit ranges,
 signed amounts, and conversion between different currencies remain outside
 this fallback; qualifiers and metric meaning still require source review.
-Scaled amounts with an English `dollars` suffix also retain their magnitude:
-`1.5 trillion dollars` can match `1.5 万亿美元`. Explicit foreign-currency
+Scaled amounts with an English `dollars` suffix (or attributive singular `dollar`
+after an explicit scale unit, such as `100 million dollar financing round`) also
+retain their magnitude: `1.5 trillion dollars` can match `1.5 万亿美元`, and
+`100 million dollar` can match `$100 million` or `1 亿美元`. Explicit foreign-currency
 labels and ambiguous non-US dollar contexts stay outside this additional alias.
 It does not reinterpret a proper name such as `Dollar General` as a currency,
 or establish that a cost estimate is an audited market size or company valuation.
