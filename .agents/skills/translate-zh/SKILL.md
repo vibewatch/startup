@@ -1125,14 +1125,15 @@ explicit flows render as directed diagrams using declared topology, with localiz
 notices for missing or ambiguous endpoints. Verify all connection directions, duplicate
 connections, node details and visible notes in both locales and in print;
 unchanged endpoint identifiers must not be translated to repair a display issue.
-Flow, DAG, quadrant and value supplements use native, initially collapsed disclosures
-so the diagram remains the primary presentation. Expand them to inspect complete
-source content, ordered evidence and mobile cell labels. Print must automatically
-expand them, then restore each disclosure's prior state on returning to screen.
-Caveats remain visible outside disclosures.
-For ordered flow diagrams, also inspect the supplemental node/connection table:
-full node text, values, units and qualifications must remain available on-page and
-visible in print even when diagram labels are shortened. Check the full tooltip text.
+Flow, DAG, quadrant and waterfall source tables are print-only, not screen disclosures.
+Do not add "Complete nodes and declared connections", "Authored coordinates and context",
+"Values and context", repeated axis labels or generic renderer-policy paragraphs.
+Verify that these controls and duplicate tables are absent from desktop/mobile reading.
+Complete source text remains in hover/tap tooltips, ordered item evidence remains
+available through the evidence toggle, and authored caveats stay visible.
+For ordered flow diagrams, inspect the print-only node/connection table:
+full node text, values, units and qualifications must remain available in tooltips and
+print even when diagram labels are shortened.
 DAG diagrams also retain an ordered node/connection table, including distinct
 description/detail aliases, risk prose and edge qualifications. Resolve endpoints
 from English before merging overlays; do not translate identifiers or guess
@@ -1192,12 +1193,13 @@ Preserve every raw value, unit,
 qualification and any declared `kind` / `role`, including conflicting or unfamiliar
 role strings. Other authored `type`, `isTotal`, `category`, `direction`, `status`,
 `base` and `cumulative` fields also remain literal metadata, not instructions to
-validate its assumptions. The complete source-value supplement opens for print.
+validate its assumptions. The complete source-value table is visible only in print.
 With evidence enabled, retain each
 value's own ordered claim links; hide those evidence-only rows when disabled and
 in print. Evidence labels follow the value-table label precedence. Keep the
-localized presentation notice visible on screen and in
-print. Check physical PDFs: each value card must keep its label, value, declared
+concise notice for independent-value mode visible on screen and in
+print; omit the generic explanation of cumulative-mode implementation.
+Check physical PDFs: each value card must keep its label, value, declared
 roles and context together when the card fits on one page. A final financing tranche must not become a total merely because it is
 last; declared totals also remain authored values, not recalculated results.
 Item `valueNote` strings are also visible value qualifications, including

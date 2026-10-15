@@ -290,8 +290,8 @@ a closing amount and the same-unit signed values exactly reconcile to that
 closing amount. Resolve this mode from English before overlays. A final financing
 tranche is not a total merely because it is last. Otherwise display independently
 scaled source-value bars with an explicit no-cumulative-bridge notice. Preserve
-authored values, units, qualifications and literal metadata in the expandable
-supplement, tooltips and print; the mode does not validate underlying assumptions.
+authored values, units, qualifications and literal metadata in tooltips and
+print-only source tables; the mode does not validate underlying assumptions.
 
 **Quadrant presentation:** retain four background panels and dashed domain-midpoint
 dividers without inventing ranking zones or benchmark thresholds. Plot exact
@@ -300,7 +300,7 @@ legend, compact plot proportions and rotated y-axis title. Move only numbered
 annotations when necessary, with leader lines anchored to unchanged coordinate
 dots. Expand crowded plots vertically instead of overlapping markers.
 Keep full axes, source coordinates, qualifications and
-evidence in the supplementary disclosure. Compare actual desktop/mobile screenshots
+evidence in tooltips, the evidence toggle and print-only source tables. Compare actual desktop/mobile screenshots
 against the historical renderer, not just chart hydration or absence of page overflow.
 
 **Historical presentation:** journey maps retain the curved horizontal path,
@@ -322,10 +322,14 @@ their raw identifiers. English label aliases resolve before Chinese overlays, so
 translation cannot change connectivity. Use `dag` when authoring an explicit
 graph intended for spatial layout. These presentation checks do not establish that
 the authored relationships are factually correct.
-Ordered sequence diagrams also retain their complete node text, values, units
-and declared connections in an expandable supplemental table that opens for print;
-compact diagram labels may be previews, but tooltips retain the qualifications.
-The supplemental table does not invent explicit edges for an implicit sequence.
+Ordered sequence diagrams retain their complete node text, values, units
+and declared connections in tooltips and print-only source tables.
+Do not add screen disclosures such as "Complete nodes and declared connections",
+"Authored coordinates and context" or "Values and context", repeated axis labels,
+numbered node kickers or paragraphs explaining renderer implementation.
+Retain authored notes, real axis definitions and concise warnings for actual
+data limitations; do not duplicate source-value lists already provided in print.
+Print-only tables do not invent explicit edges for an implicit sequence.
 Generic node positions and tone hints must not be relabeled as evidence,
 constraints or decisions unless that role is actually authored.
 

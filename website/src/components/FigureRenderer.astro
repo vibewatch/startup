@@ -1,7 +1,7 @@
 ---
 import ClaimRefs from './ClaimRefs.astro';
 import DataTable from './DataTable.astro';
-import { RENDERED_FIGURE_TYPES, barSeries, barSeriesTable, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, quadrantAxes, stackLayerDetails, waterfallSpans, waterfallValueTable } from '../lib/figures.mjs';
+import { RENDERED_FIGURE_TYPES, barSeries, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, quadrantAxes, stackLayerDetails, waterfallSpans, waterfallValueTable } from '../lib/figures.mjs';
 import { t } from '../lib/i18n';
 import type { Locale } from '../lib/locale';
 import { asArray, asRecord, claimRefs, type Claim, type ReportFigure, type Source } from '../lib/report-types';
@@ -24,7 +24,6 @@ const dagDetails = dagTopology ? flowRelationshipTable(data, dagTopology, {
   sourceLabel: t('reportFigureNodeOrFrom', locale), targetLabel: t('reportFigureTo', locale),
   contextLabel: t('reportFigureContext', locale),
 }) : null;
-const dagItems = dagDetails ? [...asArray(data.nodes), ...asArray(data.edges)] : [];
 const coordinateAxes = authoredType === 'quadrant' ? quadrantAxes(figure) : null;
 const sequenceDetails = flow?.sequence ? flowRelationshipTable(data, flow, {
   nodeLabel: t('reportFigureNode', locale), connectionLabel: t('reportFigureConnection', locale),
@@ -35,26 +34,23 @@ const funnel = authoredType === 'funnel';
 const waterfall = authoredType === 'waterfall';
 const waterfallLayout = waterfall ? figure._waterfallSpans ?? waterfallSpans(figure) : null;
 const series = authoredType === 'bar' ? barSeries(data) : [];
-const multipleBarSeries = series.length > 1;
 const stages = series.length === 1
   ? series[0].points.map((item) => item.unit == null && series[0].unit != null ? { ...item, unit: series[0].unit } : item)
   : [];
 const unitsDiffer = figureUnitsDiffer(stages);
 const type = relationshipDiagram ? 'dag' : authoredType;
-const valueDetails = funnel ? funnelStageTable(data, {
-  valueLabel: t('reportFigureValue', locale), contextLabel: t('reportFigureContext', locale),
-}) : waterfall ? waterfallValueTable(data, {
+const valueDetails = waterfall ? waterfallValueTable(data, {
   valueLabel: t('reportFigureValue', locale), contextLabel: t('reportFigureContext', locale),
   metadataLabel: t('reportWaterfallMetadata', locale),
-}) : multipleBarSeries ? barSeriesTable(series, {
-  valueLabel: t('reportFigureValue', locale), contextLabel: t('reportFigureContext', locale),
 }) : null;
 const chartData = authoredType === 'bar' && series.length === 1 ? { ...data, items: stages } : data;
 const chartTypes = new Set(RENDERED_FIGURE_TYPES);
 const usesD3Chart = chartTypes.has(type);
 const itemLabel = t('reportFigureItem', locale);
 const stackDetails = authoredType === 'stack' ? stackLayerDetails(data) : [];
-const evidenceItems = authoredType === 'waterfall' ? [data.items]
+const evidenceItems = authoredType === 'flow' || authoredType === 'dag' ? [[...asArray(data.nodes), ...asArray(data.edges)]]
+  : authoredType === 'quadrant' ? [data.points]
+  : authoredType === 'waterfall' ? [data.items]
   : authoredType === 'pyramid' ? [data.items, data.nodes]
   : authoredType === 'timeline'
     ? [data.items, data.nodes, data.layers, asRecord(asArray(data.series)[0]).points, data.points]
@@ -67,7 +63,8 @@ const itemEvidence = (evidenceItems.map((items) => asArray(items)).find((items) 
     return { label: String(label), refs: claimRefs(item) };
   }).filter((item) => item.refs.length);
 const evidenceClass = authoredType === 'timeline' ? 'timeline-event'
-  : authoredType === 'waterfall' ? 'waterfall-value' : 'pyramid-layer';
+  : authoredType === 'waterfall' ? 'waterfall-value'
+  : authoredType === 'pyramid' ? 'pyramid-layer' : 'figure-item';
 const stackLabels: Record<string, string> = {
   overview: t('reportStackOverview', locale),
   items: t('reportStackItems', locale),
@@ -89,7 +86,7 @@ const dagLabels = {
 const chartId = `chart-${String(figure?.id ?? 'figure').replace(/[^a-z0-9_-]/gi, '-')}-${Math.random().toString(36).slice(2, 9)}`;
 const chartPayload = usesD3Chart ? {
   id: chartId, type, data: chartData, itemLabel, locale, authoredType, scrollLabel: t('reportFigureScrollHint', locale),
-  ...(flow ? { flowTopology: flow, flowLabels: { node: t('reportFigureNode', locale) } } : {}),
+  ...(flow ? { flowTopology: flow } : {}),
   ...(authoredType === 'stack' ? { stackLabels } : {}),
   ...(authoredType === 'range' ? { rangeLabels } : {}),
   ...(dagTopology ? { dagLabels } : {}),
@@ -115,14 +112,10 @@ const chartPayloadJson = chartPayload
   {figure.summary && <p class="figure-summary">{figure.summary}</p>}
   {typeof figure.description === 'string' && figure.description !== figure.summary && <p class="figure-summary">{figure.description}</p>}
 
-  {relationshipDiagram && <p class="figure-note flow-relationship-notice" role="note">{t('reportFlowRelationshipNotice', locale)}</p>}
   {flow?.unresolved && <p class="figure-note flow-endpoint-notice" role="note">{t('reportFlowEndpointNotice', locale)}</p>}
   {dagTopology?.unresolved && !flow && <p class="figure-note dag-endpoint-notice" role="note">{t('reportFlowEndpointNotice', locale)}</p>}
-  {coordinateAxes && <p class="figure-note quadrant-coordinate-notice" role="note">{t('reportQuadrantNotice', locale)}</p>}
   {funnel && <p class="figure-note funnel-comparison-notice" role="note">{t('reportFunnelComparisonNotice', locale)}</p>}
-  {waterfall && <p class="figure-note waterfall-comparison-notice" role="note">{t('reportWaterfallNotice', locale)}</p>}
   {authoredType === 'pyramid' && <p class="figure-note pyramid-layout-notice" role="note">{t('reportPyramidLayoutNotice', locale)}</p>}
-  {multipleBarSeries && <p class="figure-note bar-series-notice" role="note">{t('reportBarSeriesNotice', locale)}</p>}
   {unitsDiffer && <p class="figure-note bar-unit-notice" role="note">
     {t('reportBarUnitNotice', locale)}
   </p>}
@@ -132,10 +125,10 @@ const chartPayloadJson = chartPayload
     data-loading-label={t('reportFigureLoading', locale)}
     data-error-label={t('reportFigureRenderError', locale)}></div>}
 
-  {coordinateAxes && (
+  {coordinateAxes && Object.values(coordinateAxes).some((axis) => axis.definitions.length) && (
     <div class="figure-note figure-item-notes quadrant-axis-definitions">
       <dl>
-        {Object.entries(coordinateAxes).map(([key, axis]) => (
+        {Object.entries(coordinateAxes).filter(([, axis]) => axis.definitions.length).map(([key, axis]) => (
           <div>
             <dt>{key.toUpperCase()}: {axis.label}</dt>
             {axis.definitions.map((definition) => <dd>{definition}</dd>)}
@@ -165,8 +158,7 @@ const chartPayloadJson = chartPayload
   )}
 
   {sequenceDetails && (
-    <details class="flow-sequence-details">
-      <summary>{t('reportFlowDetails', locale)}</summary>
+    <div class="flow-sequence-details figure-print-details">
       <DataTable columns={[`${t('reportFigureNode', locale)} / ${t('reportFigureConnection', locale)}`, ...sequenceDetails.columns]}>
         {sequenceDetails.rows.map((row) => (
           <tr>
@@ -175,43 +167,40 @@ const chartPayloadJson = chartPayload
           </tr>
         ))}
       </DataTable>
-    </details>
+    </div>
   )}
 
   {dagDetails && (
-    <details class="dag-details">
-      <summary>{t('reportFlowDetails', locale)}</summary>
+    <div class="dag-details figure-print-details">
       <DataTable columns={[`${t('reportFigureNode', locale)} / ${t('reportFigureConnection', locale)}`, ...dagDetails.columns]}>
-        {dagDetails.rows.map((row, index) => (
+        {dagDetails.rows.map((row) => (
           <tr>
-            <td>{row.label}<ClaimRefs refs={claimRefs(dagItems[index])} claims={claims} sources={sources} /></td>
+            <td>{row.label}</td>
             {row.values.map((value) => <td>{value && typeof value === 'object' ? value.label : value}</td>)}
           </tr>
         ))}
       </DataTable>
-    </details>
+    </div>
   )}
 
   {coordinateAxes && (
-    <details class="quadrant-details">
-      <summary>{t('reportQuadrantValues', locale)}</summary>
+    <div class="quadrant-details figure-print-details">
       <DataTable columns={[t('reportFigureItem', locale), 'X', 'Y', t('reportFigureContext', locale)]}>
         {asArray(data.points).map((item, index) => {
           const point = asRecord(item);
           return <tr>
-            <td>{index + 1}. {point.label}<ClaimRefs refs={claimRefs(point)} claims={claims} sources={sources} /></td>
+            <td>{index + 1}. {point.label}</td>
             <td>{formatRangeValue(point.x)}</td>
             <td>{formatRangeValue(point.y)}</td>
             <td>{figureValueNotes(point).join('\n')}</td>
           </tr>;
         })}
       </DataTable>
-    </details>
+    </div>
   )}
 
   {valueDetails && (
-    <details class="figure-value-details">
-      <summary>{t('reportFigureValues', locale)}</summary>
+    <div class="figure-value-details figure-print-details">
       <DataTable columns={[t('reportFigureItem', locale), ...valueDetails.columns]}>
         {valueDetails.rows.map((row) => (
           <tr>
@@ -223,7 +212,7 @@ const chartPayloadJson = chartPayload
           </tr>
         ))}
       </DataTable>
-    </details>
+    </div>
   )}
 
   {type === 'other' && (
@@ -1384,17 +1373,15 @@ const chartPayloadJson = chartPayload
       .attr('stroke', (node) => colorForTone(node.tone))
       .attr('stroke-width', 1.9);
     const textX = compact ? 18 : 24;
-    const eyebrowY = hasDetails ? (compact ? 18 : 26) : (compact ? 17 : 22);
-    const labelY = hasDetails ? (compact ? 40 : 52) : (compact ? 45 : 52);
+    const labelY = hasDetails ? (compact ? 32 : 36) : (compact ? 45 : 52);
     const labelFontSize = hasDetails ? (compact ? chartFont.label : chartFont.size.title) : (compact ? chartFont.axis : chartFont.label);
     const labelLineHeight = hasDetails ? (compact ? chartFont.lineHeight.small : chartFont.lineHeight.title) : chartFont.lineHeight.label;
-    cards.append('text').attr('x', textX).attr('y', eyebrowY).attr('fill', palette.claret).attr('font-size', compact ? chartFont.size.tiny : chartFont.size.caption).attr('font-weight', fontWeight('label')).attr('letter-spacing', chartFont.tracking.caps).text((node) => `${payload.flowLabels.node} ${node._index + 1}`);
     cards.append('text').attr('x', textX).attr('y', labelY).attr('fill', palette.ink).attr('font-size', labelFontSize).attr('font-weight', fontWeight('emphasis')).each(function(node) {
       const lines = textWrapper.wrap(node.label, { fontSize: labelFontSize, fontWeight: fontWeight('emphasis'), maxWidth: cardW - textX * 2, maxLines: 2 });
       renderLineBlock(d3.select(this), lines, { x: textX, y: labelY, lineHeight: labelLineHeight });
     });
     if (hasDetails) {
-      const detailY = compact ? 76 : 84;
+      const detailY = compact ? 62 : 68;
       cards.append('text').attr('x', textX).attr('y', detailY).attr('fill', palette.muted).attr('font-size', compact ? chartFont.size.caption : chartFont.small).attr('font-weight', fontWeight('regular')).each(function(node) {
         const lines = textWrapper.wrap(node.detail, { fontSize: compact ? chartFont.size.caption : chartFont.small, fontWeight: fontWeight('regular'), maxWidth: cardW - textX * 2, maxLines: compact ? 2 : 3 });
         renderLineBlock(d3.select(this), lines, { x: textX, y: detailY, lineHeight: compact ? chartFont.lineHeight.compact : chartFont.lineHeight.small });
@@ -2456,25 +2443,16 @@ const chartPayloadJson = chartPayload
     renderAllCharts();
   };
   initializeCharts();
-  const printOpenedDetails = new Set<HTMLDetailsElement>();
   document.fonts.ready.then(() => {
     // Font swaps change measured glyph widths without resizing the chart.
     renderAllCharts({ force: true });
     layoutRangeAxes();
   });
   window.addEventListener('beforeprint', () => {
-    document.querySelectorAll<HTMLDetailsElement>('details.flow-sequence-details, details.dag-details, details.quadrant-details, details.figure-value-details').forEach((details) => {
-      if (!details.open) {
-        printOpenedDetails.add(details);
-        details.open = true;
-      }
-    });
     renderAllCharts();
     layoutRangeAxes();
   });
   window.addEventListener('afterprint', () => {
-    printOpenedDetails.forEach((details) => { details.open = false; });
-    printOpenedDetails.clear();
     layoutRangeAxes();
   });
   let resizeTimer = null;
@@ -2508,8 +2486,7 @@ const chartPayloadJson = chartPayload
   .flow-sequence-details :global(td) { white-space: pre-line; }
   .dag-details :global(td) { white-space: pre-line; }
   .quadrant-details :global(td) { white-space: pre-line; }
-  .flow-sequence-details, .dag-details, .quadrant-details, .figure-value-details { margin-top: var(--space-3); }
-  .flow-sequence-details > summary, .dag-details > summary, .quadrant-details > summary, .figure-value-details > summary { cursor: pointer; color: var(--claret); font-family: var(--font-sans); font-size: var(--chart-fs-caption); font-weight: 700; padding-block: var(--space-2); }
+  .figure-print-details { display: none; }
   .figure-value-details :global(td) { white-space: pre-line; }
   .figure-value-details :global(td small) { display: block; margin-top: 0.3rem; }
   :global(.bar-panels) { display: grid; gap: 1.5rem; padding: 0.75rem 0; }
@@ -2524,6 +2501,7 @@ const chartPayloadJson = chartPayload
   .flow-sequence-details :global(th:first-child),
   .dag-details :global(th:first-child) { width: 15%; }
   .timeline-event-evidence > .timeline-event-reference,
+  .figure-item-evidence > .figure-item-reference,
   .pyramid-layer-evidence > .pyramid-layer-reference,
   .waterfall-value-evidence > .waterfall-value-reference { display: block; margin: var(--space-2) 0; }
   :global(.pyramid-print-layers) { display: none; }

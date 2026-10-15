@@ -410,7 +410,7 @@ test('waterfall rendering restores diagrams with source-value supplements and ex
   assert.match(source, /const waterfall = authoredType === 'waterfall'/);
   assert.match(source, /const type = relationshipDiagram \? 'dag' : authoredType/);
   assert.match(source, /waterfall \? waterfallValueTable\(data,/);
-  assert.match(source, /class="figure-note waterfall-comparison-notice"[^>]*>\{t\('reportWaterfallNotice', locale\)\}/);
+  assert.doesNotMatch(source, /waterfall-comparison-notice|reportWaterfallNotice/);
   assert.match(source, /waterfall: renderWaterfall/);
   assert.match(source, /layout\.mode === 'independent'/);
   assert.match(source, /waterfall-independent-notice/);
@@ -477,7 +477,7 @@ test('funnel and multiple-series bars retain dedicated diagrams instead of matri
   assert.match(source, /figureUnitsDiffer\(group\.points\) \? group\.points\.map/);
   assert.match(source, /attr\('class', 'funnel-band'\)/);
   assert.match(source, /attr\('data-value-state', point => point\.number == null \? 'unavailable' : 'numeric'\)/);
-  assert.match(source, /class="figure-value-details"/);
+  assert.match(source, /class="figure-value-details figure-print-details"/);
   const funnel = source.slice(source.indexOf('const renderFunnel ='), source.indexOf('const renderWaterfall ='));
   assert.doesNotMatch(funnel, /item\.value\s*\/|conversion|percentage/);
 });
@@ -689,7 +689,7 @@ test('pyramid node notes are translatable while values, units and structured sid
   assert.equal(isTranslatableLeaf(['figures', 0, 'data', 'nodes', 0, 'notes', 0], TRANSLATE_PATHS.fullReport), false);
 });
 
-test('pyramid layers, timeline events and waterfall values retain their own ordered evidence references beside figure references', () => {
+test('figure items retain their own ordered evidence references beside figure references without screen supplements', () => {
   const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
   assert.match(source, /pyramid-layer-evidence/);
   assert.match(source, /pyramid-layer-reference/);
@@ -705,6 +705,12 @@ test('pyramid layers, timeline events and waterfall values retain their own orde
     `${logic}; return itemEvidence;`);
   const tenRefs = Array.from({ length: 10 }, (_, index) => `C${index + 1}`);
   const cases = [
+    ['flow', { nodes: [{ label: 'Node', claimRefs: tenRefs }], edges: [{ label: 'Edge', claimRefs: ['C3', 'C1', 'C3'] }] },
+      [{ label: 'Node', refs: tenRefs }, { label: 'Edge', refs: ['C3', 'C1', 'C3'] }]],
+    ['dag', { nodes: [{ label: 'Node', claimRefs: ['C1'] }], edges: [{ claimRefs: ['C2'] }] },
+      [{ label: 'Node', refs: ['C1'] }, { label: 'Item 2', refs: ['C2'] }]],
+    ['quadrant', { points: [{ label: 'Point', claimRefs: tenRefs }, { label: 'Point', claimRefs: ['C2'] }] },
+      [{ label: 'Point', refs: tenRefs }, { label: 'Point', refs: ['C2'] }]],
     ['pyramid', { nodes: [{ label: 'TAM', claimRefs: tenRefs }] }, [{ label: 'TAM', refs: tenRefs }]],
     ['pyramid', { items: [{ label: 'Items', claimRefs: ['C3', 'C1', 'C3'] }], nodes: [{ label: 'Nodes', claimRefs: ['C2'] }] },
       [{ label: 'Items', refs: ['C3', 'C1', 'C3'] }]],
@@ -979,8 +985,8 @@ test('quadrant rendering removes fabricated rankings and plots exact positions w
   assert.ok(quadrant.indexOf("'quadrant-label-leader'") < quadrant.indexOf("'quadrant-point'"), 'Leader lines stay behind every numbered marker');
   assert.equal((quadrant.match(/tickPadding\(6\)/g) ?? []).length, 2);
   assert.match(quadrant, /rotate\(-90\)/);
-  assert.match(source, /class="quadrant-details"/);
-  assert.match(source, /refs=\{claimRefs\(point\)\}/);
+  assert.match(source, /class="quadrant-details figure-print-details"/);
+  assert.match(source, /authoredType === 'quadrant' \? \[data\.points\]/);
   assert.match(source, /quadrant-axis-definitions/);
   const print = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
   assert.match(print, /:global\(\.chart-quadrant > svg\)/);
@@ -1081,18 +1087,25 @@ test('original chart presentation retains numbered markers, curved journeys, SVG
   for (const renderer of [journey, waterfall]) assert.match(renderer, /scrollableSvg\(element, svg, width, height, payload\)/);
 });
 
-test('diagram supplements use native disclosures and expand for print without losing reader state', () => {
+test('diagrams omit added screen disclosures and renderer commentary while preserving print-only source tables', () => {
   const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
   for (const className of ['flow-sequence-details', 'dag-details', 'quadrant-details', 'figure-value-details']) {
-    assert.match(source, new RegExp(`<details class="${className}">\\s*<summary>`));
+    assert.match(source, new RegExp(`<div class="${className} figure-print-details">`));
   }
-  assert.match(source, /printOpenedDetails\.add\(details\)/);
-  assert.match(source, /details\.open = true/);
-  assert.match(source, /printOpenedDetails\.forEach\(\(details\) => \{ details\.open = false;/);
-  assert.match(source, /printOpenedDetails\.clear\(\)/);
-  assert.doesNotMatch(source, /<DataTable title=\{t\('report(?:FlowDetails|QuadrantValues)'/);
+  assert.doesNotMatch(source, /<details|<summary|printOpenedDetails|flowLabels/);
+  assert.doesNotMatch(source, /reportFlowDetails|reportQuadrantValues|reportFigureValues|reportQuadrantNotice|reportFlowRelationshipNotice|reportWaterfallNotice|reportBarSeriesNotice/);
+  assert.match(source, /\.figure-print-details \{ display: none; \}/);
+  assert.match(source, /Object\.values\(coordinateAxes\)\.some\(\(axis\) => axis\.definitions\.length\)/);
+  assert.match(source, /Object\.entries\(coordinateAxes\)\.filter\(\(\[, axis\]\) => axis\.definitions\.length\)/);
+  assert.match(source, /figure\.approximationNotes && <p class="figure-note">/);
+  assert.match(source, /flow\?\.unresolved &&/);
+  assert.match(source, /refs=\{item\.refs\}/);
+  assert.doesNotMatch(source, /barSeriesTable|funnelStageTable/);
   const report = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
-  assert.match(report, /:global\(\.native-figure details > summary\) \{ break-after: avoid; page-break-after: avoid;/);
+  assert.match(report.slice(report.indexOf('@media print')), /:global\(\.figure-print-details\) \{ display: block !important; \}/);
+  assert.match(report.slice(report.indexOf('@media print')), /:global\(\.chart-flow > svg\)/);
+  const labels = readFileSync('website/src/lib/i18n.ts', 'utf8');
+  assert.doesNotMatch(labels, /Complete nodes and declared connections|Authored coordinates and context|reportFigureValues|reportBarSeriesNotice/);
 });
 
 test('print hides active chart tooltips outside the report shell', () => {
@@ -1145,8 +1158,8 @@ test('DAG topology and supplements preserve label-only Chinese endpoints, risk n
 test('DAG supplements retain evidence and print qualifications instead of relying on hover or shrunken diagrams', () => {
   const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
   const dag = source.slice(source.indexOf('const renderDag ='), source.indexOf('const renderFlow ='));
-  assert.match(source, /class="dag-details"/);
-  assert.match(source, /refs=\{claimRefs\(dagItems\[index\]\)\}/);
+  assert.match(source, /class="dag-details figure-print-details"/);
+  assert.match(source, /authoredType === 'flow' \|\| authoredType === 'dag' \? \[\[\.\.\.asArray\(data\.nodes\), \.\.\.asArray\(data\.edges\)\]\]/);
   assert.match(source, /dagDetails\.rows\.map/);
   assert.match(dag, /notes: graphItemNotes\(node\)/);
   assert.match(dag, /notes: graphItemNotes\(edge\)/);
