@@ -116,9 +116,9 @@ const chartPayloadJson = chartPayload
 
   {flow?.unresolved && <p class="figure-note flow-endpoint-notice" role="note">{t('reportFlowEndpointNotice', locale)}</p>}
   {dagTopology?.unresolved && !flow && <p class="figure-note dag-endpoint-notice" role="note">{t('reportFlowEndpointNotice', locale)}</p>}
-  {funnel && <p class="figure-note funnel-comparison-notice" role="note">{t('reportFunnelComparisonNotice', locale)}</p>}
-  {authoredType === 'pyramid' && <p class="figure-note pyramid-layout-notice" role="note">{t('reportPyramidLayoutNotice', locale)}</p>}
-  {unitsDiffer && <p class="figure-note bar-unit-notice" role="note">
+  {funnel && <p class="figure-note funnel-comparison-notice figure-print-details" role="note">{t('reportFunnelComparisonNotice', locale)}</p>}
+  {authoredType === 'pyramid' && <p class="figure-note pyramid-layout-notice figure-print-details" role="note">{t('reportPyramidLayoutNotice', locale)}</p>}
+  {unitsDiffer && <p class="figure-note bar-unit-notice figure-print-details" role="note">
     {t('reportBarUnitNotice', locale)}
   </p>}
 
@@ -128,7 +128,7 @@ const chartPayloadJson = chartPayload
     data-error-label={t('reportFigureRenderError', locale)}></div>}
 
   {coordinateDefinitions.length > 0 && (
-    <div class="figure-note figure-item-notes quadrant-axis-definitions">
+    <div class="figure-note figure-item-notes quadrant-axis-definitions figure-print-details">
       <dl>
         {coordinateDefinitions.map((axis) => (
           <div>
@@ -618,14 +618,11 @@ const chartPayloadJson = chartPayload
      * vertical stacked mode. */
     const compact = containerWidth < (prefersWide ? 520 : 640) || (!prefersWide && stages.length >= 5);
     const maxRows = Math.max(...stages.map((stage) => stage.length), 1);
-    const cardH = compact ? 74 : 78;
-    const compactHeight = 74 + stages.reduce((sum, stage) => sum + stage.length * cardH + Math.max(0, stage.length - 1) * 16 + 36, 0);
     const horizontalMinWidth = compact ? null : Math.max(containerWidth, prefersWide && stages.length > 4 ? stages.length * 190 : 0, 760);
-    const { svg, width, height } = svgBase(element, compact ? Math.max(540, compactHeight) : Math.max(380, 126 + maxRows * (cardH + 42)), horizontalMinWidth);
+    const { svg, width } = svgBase(element, 380, horizontalMinWidth);
     const textWrapper = createSvgTextWrapper(svg);
     const margin = compact ? { top: 36, right: 24, bottom: 34, left: 24 } : { top: 42, right: 22, bottom: 40, left: 22 };
     const innerW = width - margin.left - margin.right;
-    const innerH = height - margin.top - margin.bottom;
     /* In compact (vertical) mode reserve horizontal gutter space around the
      * centered cards. Edges alternate between left and right gutters by
      * stage-pair so the chart does not collapse into one cable bundle. */
@@ -636,6 +633,17 @@ const chartPayloadJson = chartPayload
       ? (innerW - horizontalGap * Math.max(0, stages.length - 1)) / stages.length
       : preferredCardW;
     const cardW = compact ? Math.max(220, Math.min(420, innerW - 18 - compactGutter)) : Math.max(136, Math.min(preferredCardW, horizontalCardW));
+    const nodeLabelFontSize = compact ? chartFont.small : chartFont.axis;
+    const nodeLabelLineHeight = compact ? chartFont.lineHeight.tight : chartFont.lineHeight.small;
+    const nodeLabelMaxWidth = Math.max(72, cardW - 58);
+    const maxNodeLines = Math.max(1, ...nodes.map((node) => textWrapper.wrap(node.label, {
+      fontSize: nodeLabelFontSize, fontWeight: fontWeight('label'), maxWidth: nodeLabelMaxWidth, maxLines: 4,
+    }).length));
+    const cardH = Math.max(compact ? 74 : 78, maxNodeLines * nodeLabelLineHeight + 34);
+    const compactHeight = 74 + stages.reduce((sum, stage) => sum + stage.length * cardH + Math.max(0, stage.length - 1) * 16 + 36, 0);
+    const height = compact ? Math.max(540, compactHeight) : Math.max(380, 126 + maxRows * (cardH + 42));
+    svg.attr('viewBox', `0 0 ${width} ${height}`).attr('height', Math.ceil(height * Math.min(1, containerWidth / width)));
+    const innerH = height - margin.top - margin.bottom;
     const compactCenterX = width / 2;
     const stageCenterXs = compact ? [] : stages.map((_stage, stageIndex) => {
       if (stages.length <= 1) return compactCenterX;
@@ -1260,13 +1268,10 @@ const chartPayloadJson = chartPayload
       .attr('stroke-width', 2)
       .attr('stroke-linecap', 'round')
       .attr('stroke-linejoin', 'round');
-    const nodeLabelFontSize = compact ? chartFont.small : chartFont.axis;
-    const nodeLabelLineHeight = compact ? chartFont.lineHeight.tight : chartFont.lineHeight.small;
-    const nodeLabelMaxWidth = Math.max(72, cardW - 58);
     cards.append('text').attr('x', -cardW / 2 + 42).attr('y', compact ? 4 : 5).attr('fill', palette.ink).attr('font-size', nodeLabelFontSize).attr('font-weight', fontWeight('label')).each(function(node) {
       renderWrappedText(d3.select(this), node.label, {
         textWrapper, maxWidth: nodeLabelMaxWidth,
-        maxLines: compact ? 2 : 3,
+        maxLines: 4,
         lineHeight: nodeLabelLineHeight,
       });
     });
@@ -1384,7 +1389,7 @@ const chartPayloadJson = chartPayload
     if (hasDetails) {
       const detailY = compact ? 62 : 68;
       cards.append('text').attr('x', textX).attr('y', detailY).attr('fill', palette.muted).attr('font-size', compact ? chartFont.size.caption : chartFont.small).attr('font-weight', fontWeight('regular')).each(function(node) {
-        const lines = textWrapper.wrap(node.detail, { fontSize: compact ? chartFont.size.caption : chartFont.small, fontWeight: fontWeight('regular'), maxWidth: cardW - textX * 2, maxLines: compact ? 2 : 3 });
+        const lines = textWrapper.wrap(node.detail, { fontSize: compact ? chartFont.size.caption : chartFont.small, fontWeight: fontWeight('regular'), maxWidth: cardW - textX * 2, maxLines: 3 });
         renderLineBlock(d3.select(this), lines, { x: textX, y: detailY, lineHeight: compact ? chartFont.lineHeight.compact : chartFont.lineHeight.small });
       });
     }
@@ -1418,7 +1423,7 @@ const chartPayloadJson = chartPayload
       widthCache.set(key, w);
       return w;
     };
-    const splitTokenBySvgWidth = (token, maxWidth) => {
+    const splitCharsBySvgWidth = (token, maxWidth) => {
       const chunks = [];
       let chunk = '';
       Array.from(String(token ?? '')).forEach((char) => {
@@ -1432,6 +1437,14 @@ const chartPayloadJson = chartPayload
       });
       if (chunk) chunks.push(chunk);
       return chunks;
+    };
+    const splitTokenBySvgWidth = (token, maxWidth) => {
+      const str = String(token ?? '');
+      if (!/^[+-]?\d/u.test(str) && /[^-/][-/][^-]/u.test(str)) {
+        const parts = str.match(/[^-/]+[-/]?/gu) ?? [str];
+        if (parts.length > 1) return parts.flatMap((part) => measuredWidth(part) > maxWidth ? splitCharsBySvgWidth(part, maxWidth) : [part]);
+      }
+      return splitCharsBySvgWidth(str, maxWidth);
     };
     const fit = (text, { fontSize, fontWeight, maxWidth }) => {
       const str = String(text ?? '');
@@ -1667,18 +1680,18 @@ const chartPayloadJson = chartPayload
     const sideMargin = width < 640 ? 16 : 34;
     const margin = { top: 28, right: sideMargin, bottom: 34, left: sideMargin };
     const maxW = width - margin.left - margin.right;
-    const padX = 22;
-    const labelLineH = 22;
-    const detailLineH = 16;
+    const padX = width < 640 ? 14 : 22;
+    const labelLineH = width < 640 ? 19 : 22;
+    const detailLineH = width < 640 ? 14 : 16;
     const padTop = 12;
     const padBottom = 12;
     const gapBetweenLabelDetail = 8;
     const gapBetweenLayers = 10;
-    const labelFont = chartFont.size.large;
-    const detailFont = chartFont.small;
+    const labelFont = width < 640 ? chartFont.size.title : chartFont.size.large;
+    const detailFont = width < 640 ? chartFont.size.caption : chartFont.small;
     const tokenWidths = items.flatMap(item => textWrapper.tokens(item.label).filter(token => token.trim()))
       .map(token => textWrapper.measure(token, { fontSize: labelFont, fontWeight: fontWeight('emphasis') }));
-    const minimumLayerWidth = Math.min(maxW, Math.max(width < 640 ? 220 : 320, ...tokenWidths.map(value => value + padX * 2)));
+    const minimumLayerWidth = Math.min(maxW, Math.max(width < 640 ? 168 : 320, ...tokenWidths.map(value => value + padX * 2)));
     const widthStep = Math.min(0.1, 0.5 / Math.max(1, items.length - 1), (1 - minimumLayerWidth / maxW) / Math.max(1, items.length - 1));
     const layout = items.map((item, index) => {
       const w = maxW * (1 - index * widthStep);
@@ -1811,10 +1824,14 @@ const chartPayloadJson = chartPayload
         const containerWidth = Math.floor(panel.node().getBoundingClientRect().width);
         const svg = panel.append('svg').attr('role', 'img').attr('width', '100%').style('font-family', chartFont.family);
         const wrapper = createSvgTextWrapper(svg);
-        const values = points.map(point => {
+        const rawValues = points.map(point => {
           const rawValue = valueLabel(point);
           return [rawValue === '' && point.value == null && point.displayValue == null ? '—' : rawValue, point.unit]
             .filter(value => value != null && value !== '').join(' ');
+        });
+        const values = points.map((point, index) => {
+          if (point.displayValue != null || typeof point.value !== 'number' || !Number.isFinite(point.value)) return rawValues[index];
+          return [formatRangeValue(point.value), point.unit].filter(value => value != null && value !== '').join(' ');
         });
         const measure = text => wrapper.measure(text, { fontSize: 13, fontWeight: 800 });
         const x = d3.scaleLinear().domain(minimum === maximum ? [0, 1] : [minimum, maximum]).nice();
@@ -1829,7 +1846,7 @@ const chartPayloadJson = chartPayload
           const title = wrapper.wrap(point.label, { fontSize: 13, fontWeight: 800, maxWidth: stacked ? width - 32 : left - 16 });
           const valueLines = wrapper.wrap(value, { fontSize: 13, fontWeight: 800, maxWidth: stacked ? width - 32 : right - 12 });
           const height = stacked ? (title.length + valueLines.length) * 16 + 56 : Math.max(42, Math.max(title.length, valueLines.length) * 16 + 12);
-          const item = { ...point, valueText: value, title, valueLines, top: cursor, height, number: chartNumericValue(point.value) };
+          const item = { ...point, valueText: value, rawValueText: rawValues[index], title, valueLines, top: cursor, height, number: chartNumericValue(point.value) };
           cursor += height;
           return item;
         });
@@ -1867,7 +1884,7 @@ const chartPayloadJson = chartPayload
         rows.append('text').attr('class', 'bar-row-value').attr('fill', palette.ink).attr('font-size', 13).attr('font-weight', 800)
           .each(function(point) {
             renderLineBlock(d3.select(this), point.valueLines, {
-              x: stacked ? 16 : minimum < 0 || point.number == null ? width - right + 8 : x(point.number) + 8,
+              x: stacked ? 16 : point.number == null ? width - right + 8 : x(Math.max(0, point.number)) + 8,
               y: stacked ? point.top + point.title.length * 16 + 16 : point.top + point.height / 2 - (point.valueLines.length - 1) * 8 + 4, lineHeight: 16,
             });
           });
@@ -1879,7 +1896,7 @@ const chartPayloadJson = chartPayload
         }
         const print = panel.append('ol').attr('class', 'bar-print-values');
         const printRows = print.selectAll('li').data(layout).join('li');
-        printRows.append('strong').text(point => `${point.label}: ${point.valueText}`);
+        printRows.append('strong').text(point => `${point.label}: ${point.valueText}${point.rawValueText && point.rawValueText !== point.valueText ? ` (${point.rawValueText})` : ''}`);
         printRows.selectAll('p').data(figureItemNotes).join('p').text(note => note);
         withTooltip(rows, point => tooltipHtml(point.label, [group.label, point.valueText, ...figureItemNotes(point), ...figureItemNotes(group)]));
         wrapper.remove();
@@ -1908,19 +1925,21 @@ const chartPayloadJson = chartPayload
       group.points.forEach((item, index) => {
         const w = maxWidth * (1 - 0.65 * index / Math.max(1, group.points.length - 1));
         const title = wrapper.wrap(item.label, { fontSize: 12, fontWeight: 800, maxWidth: compact ? maxWidth : left - 26 });
-        const value = [valueLabel(item), item.unit].filter(value => value != null && value !== '').join(' ');
+        const rawValue = [valueLabel(item), item.unit].filter(value => value != null && value !== '').join(' ');
+        const formattedVal = item.displayValue == null && typeof item.value === 'number' && Number.isFinite(item.value) ? formatRangeValue(item.value) : valueLabel(item);
+        const value = [formattedVal, item.unit].filter(value => value != null && value !== '').join(' ');
         const valueLines = wrapper.wrap(value, { fontSize: 12, fontWeight: 800, maxWidth: compact ? maxWidth : right - 20 });
         const notes = [...new Set([...figureItemNotes(group), ...figureItemNotes(item)])];
-        const h = compact ? 56 + (title.length + valueLines.length) * 16 : Math.max(52, Math.max(title.length, valueLines.length) * 16 + 8);
-        stages.push({ item, group: group.label, index, notes, value, title, valueLines, y: cursor, w, h });
-        cursor += h + 8;
+        const h = compact ? 54 + (title.length + valueLines.length) * 16 : Math.max(52, Math.max(title.length, valueLines.length) * 16 + 8);
+        stages.push({ item, group: group.label, index, notes, value, rawValue, title, valueLines, y: cursor, w, h });
+        cursor += h + (compact ? 14 : 8);
       });
       cursor += 16;
     }
     svg.attr('viewBox', `0 0 ${width} ${cursor}`).attr('height', cursor);
     const rows = svg.append('g').selectAll('g').data(stages).join('g').attr('class', 'funnel-stage')
       .attr('transform', stage => `translate(0,${stage.y})`);
-    const barY = stage => compact ? stage.title.length * 16 + 8 : (stage.h - 44) / 2;
+    const barY = stage => compact ? (stage.title.length + stage.valueLines.length) * 16 + 10 : (stage.h - 44) / 2;
     const stageColor = stage => stage.item.tone ? colorForTone(stage.item.tone) : colors[Math.min(stage.index, colors.length - 1)];
     rows.append('rect').attr('class', 'funnel-track').attr('x', left).attr('y', barY)
       .attr('width', maxWidth).attr('height', 44).attr('rx', 12).attr('fill', '#f9f1eb').attr('stroke', '#eadfd5');
@@ -1932,13 +1951,13 @@ const chartPayloadJson = chartPayload
     rows.append('text').attr('fill', palette.ink).attr('font-size', 12).attr('font-weight', 800).attr('text-anchor', compact ? 'start' : 'end')
       .each(function(stage) {
         renderLineBlock(d3.select(this), stage.title, {
-          x: compact ? left : left - 14, y: compact ? 12 : stage.h / 2 - (stage.title.length - 1) * 8 + 4, lineHeight: 16,
+          x: compact ? left : left - 14, y: compact ? 14 : stage.h / 2 - (stage.title.length - 1) * 8 + 4, lineHeight: 16,
         });
       });
-    rows.append('text').attr('fill', palette.ink).attr('font-size', 12).attr('font-weight', 800)
+    rows.append('text').attr('fill', compact ? palette.claret : palette.ink).attr('font-size', 12).attr('font-weight', 800)
       .each(function(stage) {
         renderLineBlock(d3.select(this), stage.valueLines, {
-          x: compact ? left : width - right + 14, y: compact ? barY(stage) + 62 : stage.h / 2 - (stage.valueLines.length - 1) * 8 + 4, lineHeight: 16,
+          x: compact ? left : width - right + 14, y: compact ? 14 + stage.title.length * 16 + 2 : stage.h / 2 - (stage.valueLines.length - 1) * 8 + 4, lineHeight: 16,
         });
       });
     withTooltip(rows, stage => tooltipHtml(stage.item.label, [stage.group, stage.value, ...stage.notes]));
@@ -1951,7 +1970,7 @@ const chartPayloadJson = chartPayload
     const print = d3.select(element).append('ol').attr('class', 'funnel-print-stages');
     const printRows = print.selectAll('li').data(stages).join('li');
     printRows.append('strong').text(stage => [stage.group, stage.item.label].filter(Boolean).join(' / '));
-    printRows.append('p').text(stage => stage.value);
+    printRows.append('p').text(stage => `${stage.value}${stage.rawValue && stage.rawValue !== stage.value ? ` (${stage.rawValue})` : ''}`);
     printRows.selectAll('p.funnel-print-note').data(stage => stage.notes).join('p').attr('class', 'funnel-print-note').text(note => note);
     wrapper.remove();
   };
@@ -1960,7 +1979,7 @@ const chartPayloadJson = chartPayload
     const layout = payload.waterfallLayout;
     if (layout.mode === 'independent') {
       renderBar(element, payload);
-      d3.select(element).insert('p', ':first-child').attr('class', 'figure-note waterfall-independent-notice').text(payload.waterfallLabels.independent);
+      d3.select(element).insert('p', ':first-child').attr('class', 'figure-note waterfall-independent-notice figure-print-details').text(payload.waterfallLabels.independent);
       return;
     }
     const details = waterfallValueTable(payload.data, {
@@ -1979,7 +1998,9 @@ const chartPayloadJson = chartPayload
       point.endpoint = layout.mode === 'balanced' && (point.index === 0 || point.index === points.length - 1);
       point.color = point.tone ? colorForTone(point.tone) : point.endpoint ? palette.claret : point.to < point.from ? palette.risk : palette.positive;
       point.lines = wrapper.wrap(point.label, { fontSize: 12, fontWeight: 800, maxWidth: maximumLabelWidth, maxLines: 3 });
-      point.valueLines = wrapper.wrap([valueLabel(point), point.unit].filter(value => value != null && value !== '').join(' '),
+      const formattedVal = point.displayValue == null && typeof point.value === 'number' && Number.isFinite(point.value) ? formatRangeValue(point.value) : valueLabel(point);
+      point.valueText = [formattedVal, point.unit].filter(value => value != null && value !== '').join(' ');
+      point.valueLines = wrapper.wrap(point.valueText,
         { fontSize: 12, fontWeight: 800, maxWidth: maximumLabelWidth });
     });
     const bottom = 44 + Math.max(...points.map(point => point.lines.length)) * 15;
@@ -2314,11 +2335,26 @@ const chartPayloadJson = chartPayload
       label: matrixCellText(column), notes: figureItemNotes(column), index,
     }));
     const rows = arr(payload.data.rows).map((row, index) => ({ ...row, index }));
-    const { svg, width, height } = svgBase(element, Math.max(340, rows.length * 58 + 92), Math.max(520, 180 + columns.length * 112));
+    const containerWidth = Math.max(240, Math.floor(element.getBoundingClientRect().width || 720));
+    const compact = containerWidth < 640;
+    const leftMargin = compact ? Math.min(148, Math.max(118, Math.floor(containerWidth * 0.42))) : 188;
+    const colMinW = compact ? (columns.length <= 2 ? 84 : 102) : 112;
+    const minWidth = Math.max(containerWidth, leftMargin + 20 + columns.length * colMinW);
+    const { svg, width } = svgBase(element, Math.max(340, rows.length * 58 + 92), minWidth);
     const textWrapper = createSvgTextWrapper(svg);
-    scrollableSvg(element, svg, width, height, payload);
-    const margin = { top: 58, right: 24, bottom: 26, left: 156 };
+    const margin = { top: 58, right: compact ? 14 : 24, bottom: 26, left: leftMargin };
     const x = d3.scaleBand().domain(columns.map(column => column.index)).range([margin.left, width - margin.right]).padding(0.08);
+    const maxColLines = Math.max(1, ...columns.map(column => textWrapper.wrap(column.label, {
+      fontSize: chartFont.axis, fontWeight: fontWeight('strong'), maxWidth: x.bandwidth() - 12, maxLines: 3,
+    }).length));
+    const maxRowLines = Math.max(1, ...rows.map(row => textWrapper.wrap(row.label, {
+      fontSize: chartFont.axis, fontWeight: fontWeight('strong'), maxWidth: margin.left - 24, maxLines: 4,
+    }).length));
+    margin.top = Math.max(58, maxColLines * chartFont.lineHeight.tight + 24);
+    const rowBandH = Math.max(58, maxRowLines * chartFont.lineHeight.tight + 22);
+    const height = Math.max(260, margin.top + margin.bottom + rows.length * rowBandH);
+    svg.attr('viewBox', `0 0 ${width} ${height}`).attr('height', height);
+    scrollableSvg(element, svg, width, height, payload);
     const y = d3.scaleBand().domain(rows.map(row => row.index)).range([margin.top, height - margin.bottom]).padding(0.08);
     // Adaptive color scale. Default to retention percentages 0–100 (the
     // canonical cohort use case) but fall back to the observed numeric range
@@ -2336,12 +2372,12 @@ const chartPayloadJson = chartPayload
         ? [dataMin, dataMin, dataMax + 1]
         : [dataMin, (dataMin + dataMax) / 2, dataMax];
     const color = d3.scaleLinear().domain(colorDomain).range(['#f4c7bd', '#f2d8a0', '#0f766e']);
-    const headings = svg.append('g').selectAll('text').data(columns).join('text').attr('x', (d) => x(d.index) + x.bandwidth() / 2).attr('y', margin.top - 16).attr('text-anchor', 'middle').attr('fill', palette.ink).attr('font-size', chartFont.axis).attr('font-weight', fontWeight('strong')).each(function(d) {
-      renderWrappedText(d3.select(this), d.label, { textWrapper, maxWidth: x.bandwidth() - 12, maxLines: 2, lineHeight: chartFont.lineHeight.tight });
+    const headings = svg.append('g').selectAll('text').data(columns).join('text').attr('x', (d) => x(d.index) + x.bandwidth() / 2).attr('y', margin.top / 2 + 4).attr('text-anchor', 'middle').attr('fill', palette.ink).attr('font-size', chartFont.axis).attr('font-weight', fontWeight('strong')).each(function(d) {
+      renderWrappedText(d3.select(this), d.label, { textWrapper, maxWidth: x.bandwidth() - 12, maxLines: 3, lineHeight: chartFont.lineHeight.tight });
     });
     withTooltip(headings, d => tooltipHtml(d.label, d.notes));
     const rowHeadings = svg.append('g').selectAll('text').data(rows).join('text').attr('x', margin.left - 12).attr('y', (d) => y(d.index) + y.bandwidth() / 2 + 4).attr('text-anchor', 'end').attr('fill', palette.ink).attr('font-size', chartFont.axis).attr('font-weight', fontWeight('strong')).each(function(d) {
-      renderWrappedText(d3.select(this), d.label, { textWrapper, maxWidth: margin.left - 24, maxLines: 2, lineHeight: chartFont.lineHeight.tight });
+      renderWrappedText(d3.select(this), d.label, { textWrapper, maxWidth: margin.left - 24, maxLines: 4, lineHeight: chartFont.lineHeight.tight });
     });
     withTooltip(rowHeadings, d => tooltipHtml(d.label, figureItemNotes(d)));
     const cells = [];
@@ -2524,6 +2560,7 @@ const chartPayloadJson = chartPayload
   .dag-details :global(td) { white-space: pre-line; }
   .quadrant-details :global(td) { white-space: pre-line; }
   .figure-print-details { display: none; }
+  :global(.figure-print-details) { display: none; }
   .figure-value-details :global(td) { white-space: pre-line; }
   .figure-value-details :global(td small) { display: block; margin-top: 0.3rem; }
   :global(.bar-panels) { display: grid; gap: 1.5rem; padding: 0.75rem 0; }

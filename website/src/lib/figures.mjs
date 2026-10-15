@@ -186,7 +186,7 @@ export function barChartLayout(containerWidth, labelWidth, valueWidth, endpointW
   const compact = containerWidth < 640;
   const left = Math.max(compact ? Math.min(120, width * 0.36) : Math.min(220, Math.max(152, labelWidth + 16)), first / 2 + 16);
   const right = Math.max(compact ? 76 : 112, Math.ceil(valueWidth + 24), last / 2 + 16);
-  const stacked = width - left - right < Math.max(80, (first + last) / 2 + 8);
+  const stacked = width - left - right < Math.max(compact && first > 16 ? 140 : 80, (first + last) / 2 + 8);
   return {
     width, compact, stacked,
     left: stacked ? first / 2 + 16 : left,

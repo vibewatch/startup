@@ -253,6 +253,7 @@ test('bar layouts reserve whole value tokens, readable tracks and complete endpo
     }
   }
   assert.equal(barChartLayout(302, 160, 72, [7, 84]).stacked, false);
+  assert.equal(barChartLayout(302, 160, 72, [72, 84]).stacked, true);
   assert.equal(barChartLayout(262, 160, 180, [7, 84]).stacked, true);
   assert.equal(barChartLayout(900, 160, 64, [7, 84]).width, 900);
   const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
@@ -260,8 +261,13 @@ test('bar layouts reserve whole value tokens, readable tracks and complete endpo
   assert.match(bars, /value\.split\(\/\\s\+\/\)\.map\(measure\)/);
   assert.match(bars, /barChartLayout\(/);
   assert.match(bars, /maxWidth: stacked \? width - 32 : right - 12/);
+  assert.match(bars, /x\(Math\.max\(0, point\.number\)\) \+ 8/);
+  assert.match(bars, /formatRangeValue\(point\.value\)/);
   assert.match(bars, /if \(width > containerWidth\) scrollableSvg\(panel\.node\(\)/);
   assert.match(bars, /bar-print-values/);
+  const funnel = source.slice(source.indexOf('const renderFunnel ='), source.indexOf('const renderWaterfall ='));
+  assert.match(funnel, /const barY = stage => compact \? \(stage\.title\.length \+ stage\.valueLines\.length\) \* 16 \+ 10/);
+  assert.match(funnel, /14 \+ stage\.title\.length \* 16 \+ 2/);
 });
 
 test('cohort and funnel foregrounds exceed small-text contrast without changing background colors', () => {
@@ -772,7 +778,7 @@ test('pyramid layers expose authored values and all qualifications in visible te
   assert.match(pyramid, /wrap\(item\.label, \{[^}]*maxWidth: w - padX \* 2/);
   assert.match(pyramid, /details\.flatMap\(\(detail\) => textWrapper\.wrap\(detail, \{[^}]*maxWidth: w - padX \* 2/);
   assert.match(pyramid, /const w = maxW \* \(1 - index \* widthStep\)/);
-  assert.match(source, /class="figure-note pyramid-layout-notice"[^>]*>\{t\('reportPyramidLayoutNotice', locale\)\}/);
+  assert.match(source, /class="figure-note pyramid-layout-notice(?:\s+figure-print-details)?"[^>]*>\{t\('reportPyramidLayoutNotice', locale\)\}/);
 });
 
 test('deep pyramids keep every layer at a positive readable width without changing ordinary layouts', () => {
@@ -805,7 +811,7 @@ test('pyramids preserve readable mobile layers and measured Latin words rather t
   const expression = pyramid.match(/const widthStep = (.+);/)?.[1];
   const step = new Function('items', 'minimumLayerWidth', 'maxW', `return (${expression});`);
   for (const maxW of [180, 230, 270, 700]) for (const count of [1, 5, 12, 100]) {
-    const minimumLayerWidth = Math.min(maxW, Math.max(maxW < 640 ? 220 : 320, 190 + 44));
+    const minimumLayerWidth = Math.min(maxW, Math.max(maxW < 640 ? 168 : 320, 190 + (maxW < 640 ? 28 : 44)));
     const widthStep = step(Array(count), minimumLayerWidth, maxW);
     const lastWidth = maxW * (1 - (count - 1) * widthStep);
     assert(lastWidth >= minimumLayerWidth - 1e-9);
