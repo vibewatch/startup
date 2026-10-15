@@ -2957,6 +2957,14 @@ const checks = [
       fullReport('商业转化尚未验证，公司还没有发布经审计财务。'),
     ).length === 0
       && checkPairQuality(
+        fullReport('Review current terms, moderation policy, legal claims register, insurance, and reserve history.'),
+        fullReport('审阅现行条款、审核政策、法律索赔登记、保险和准备金历史。'),
+      ).length === 0
+      && checkPairQuality(
+        fullReport('Review the legal claims register; the company claims litigation exposure is immaterial.'),
+        fullReport('审阅法律索赔登记；诉讼敞口不重大。'),
+      ).some((issue) => issue.code === 'hedge-preservation')
+      && checkPairQuality(
         fullReport('No public evidence was found to confirm certification or any independent security audit.'),
         fullReport('未发现公开证据确认认证或任何独立安全审计。'),
       ).length === 0
@@ -2973,6 +2981,9 @@ const checks = [
       && untranslatedMessage('Physical Intelligence (π0)', 'Physical Intelligence (π0)') === null
       && untranslatedMessage('Tiger Global Management', 'Tiger Global Management') === null
       && untranslatedMessage('IBM (watsonx Orchestrate)', 'IBM (watsonx Orchestrate)') === null
+      && untranslatedMessage('dbt Labs, Inc.', 'dbt Labs, Inc.') === null
+      && untranslatedMessage('unchurned.gainsight.com', 'unchurned.gainsight.com') === null
+      && untranslatedMessage('https://www.strava.com/', 'https://www.strava.com/') === null
       && untranslatedMessage('Lee Seung-gun (SG Lee / 이승건)', 'Lee Seung-gun（SG Lee / 이승건）') === null
       && untranslatedMessage('16λ DWDM, 112G PAM4', '16λ DWDM、112G PAM4') === null,
     'strict structural check rejected a Latin proper noun',

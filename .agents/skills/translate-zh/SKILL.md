@@ -566,8 +566,9 @@ neither alias can stand in for another missing predicate. `can claim every
 BaaS or DBaaS dollar` describes capturing market spending, not making an
 assertion; `rather than a single expansive TAM claim` rejects a sizing shortcut.
 A separate company assertion still requires attribution.
-Consumer-protection claims and hyphenated counter-claims describe legal demands,
-not a separate company assertion. `evidence does not support a clear positive claim`
+Consumer-protection claims, legal claims registers, and hyphenated counter-claims
+describe legal demands or registers, not a separate company assertion.
+`evidence does not support a clear positive claim`
 is a negative assessment, not a positive company claim. Separate assertions still
 need attribution. `关税影响论断基于` can retain one explicitly source-based tariff
 assertion; it cannot clear another claim in the leaf. `缺少公开基准` can preserve
@@ -648,9 +649,11 @@ negative predicates must remain intact; a financing mark establishes neither
 fairness, a post-money basis, investor returns nor confirmed cash availability.
 Cash arrival alone is not cash availability. Reversed or negated disclaimers,
 different predicates and separate omitted company assertions still fail.
-Source-identical `Tiger Global Management` and `IBM (watsonx Orchestrate)` are
-proper names, not untranslated descriptors. Ordinary text beside those names,
-such as `platform`, and `Pricing Guide` beside a publisher still needs translation.
+Source-identical `Tiger Global Management`, `IBM (watsonx Orchestrate)`,
+`dbt Labs, Inc.`, and standalone URLs or domain names (such as
+`unchurned.gainsight.com`) are proper names or identifiers, not untranslated
+descriptors. Ordinary text beside those names, such as `platform`, and
+`Pricing Guide` beside a publisher still needs translation.
 Proper names also retain apostrophes and quoted nicknames, such as
 `Teachers' Venture Growth (TVG)` and `Jaroslaw 'Jarek' Kutylowski`.
 These punctuation forms do not exempt adjacent ordinary descriptors.

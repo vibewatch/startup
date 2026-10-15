@@ -117,7 +117,7 @@ const patentClaimNouns = new RegExp([
   '\\bUSPTO\\s+patent\\s+filing\\s+portfolio\\s+not\\s+fully\\s+disclosed;\\s+depth\\s+and\\s+quality\\s+of\\s+claims\\s+uncertain\\b',
 ].join('|'), 'gi');
 const marketSizingClaimContexts = /\bcan\s+claim\s+every\s+(?:BaaS|DBaaS)(?:\s+or\s+(?:BaaS|DBaaS))?\s+dollar\b|\brather\s+than\s+a\s+single\s+(?:expansive\s+)?TAM\s+claim\b/gi;
-const legalCounterclaimContexts = /\bconsumer[- ]protection\s+claims?\b|\bcounter-claims?\b|\b(?:arbitration|non-competition\s+and\s+non-solicitation)\s+claims?\s+against\b|\brefund\s+claims?\s+(?:processing|handling)\b/gi;
+const legalCounterclaimContexts = /\bconsumer[- ]protection\s+claims?\b|\bcounter-claims?\b|\blegal\s+claims?\s+registers?\b|\b(?:arbitration|non-competition\s+and\s+non-solicitation)\s+claims?\s+against\b|\brefund\s+claims?\s+(?:processing|handling)\b/gi;
 const rightsClaimContexts = new RegExp([
   '\\bcopyright claims?\\b(?=\\s+(?:impose cost|resolved against)\\b)',
   '\\bcopyright litigation and any similar claims\\b',

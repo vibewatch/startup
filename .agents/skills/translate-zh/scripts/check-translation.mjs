@@ -72,11 +72,13 @@ const DESCRIPTOR_WORDS = new Set([
 const PRESERVED_PROPER_NAMES = new Set([
   'Tiger Global Management',
   'IBM (watsonx Orchestrate)',
+  'dbt Labs, Inc.',
 ]);
 
 function isTokenLike(value) {
   const s = value.trim();
   if (/^(?:n\/a|na|null|none|—|–|-|T\+\d+)$/i.test(s)) return true;
+  if (/^(?:https?:\/\/\S+|(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,}(?:\/\S*)?)$/i.test(s)) return true;
   return /^[A-Z0-9][A-Z0-9&+./_ -]{0,24}$/.test(s);
 }
 
