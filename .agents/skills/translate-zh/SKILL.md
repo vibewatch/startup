@@ -1077,16 +1077,16 @@ layer's label, value, qualification and tone hints in order, allow page breaks b
 layers, and inspect actual PDF type size and complete layer text.
 Approximation and evidence notes must remain visible on narrow screens and in
 print; they qualify the chart data rather than serving as optional decoration.
-Multi-series bars render as tables: check every series name and point, including
-duplicate point labels, visible context cells, and full hover/tap text.
+Multi-series bars render as separate bar panels: check every series name and point,
+including duplicate point labels, visible context and full hover/tap text.
 Single-series bars preserve point qualifications on the page and in print;
-differing explicit point units instead produce separate cards with a localized
-notice. These presentation changes preserve report YAML and do not certify the
+differing explicit point units instead produce independently scaled panels with
+a localized notice. These presentation changes preserve report YAML and do not certify the
 underlying metrics or comparability.
 KPI item detail, note, context and unit text qualify its value: verify every
 distinct qualification on the card, in print and in its hover/tap tooltip,
 including when several fields coexist. Preserve distinct qualifications without
-duplicating identical text; mixed-unit bar cards follow the same rule.
+duplicating identical text; mixed-unit bar panels follow the same rule.
 Range-chart colors must agree across locales. The renderer resolves legacy
 English label hints before translation and gives explicit `tone` values priority;
 translated display labels must not change those colors.
@@ -1124,7 +1124,7 @@ explicit flows render as directed diagrams using declared topology, with localiz
 notices for missing or ambiguous endpoints. Verify all connection directions, duplicate
 connections, node details and visible notes in both locales and in print;
 unchanged endpoint identifiers must not be translated to repair a display issue.
-Flow, DAG and quadrant supplements use native, initially collapsed disclosures
+Flow, DAG, quadrant and value supplements use native, initially collapsed disclosures
 so the diagram remains the primary presentation. Expand them to inspect complete
 source content, ordered evidence and mobile cell labels. Print must automatically
 expand them, then restore each disclosure's prior state on returning to screen.
@@ -1145,8 +1145,10 @@ generated ranking zones or inferred benchmark thresholds. Honor declared numeric
 axis bounds; otherwise fit each axis independently to its data, without inferring
 a 0–10 or percentage scoring system. Preserve complete axis definitions, point
 labels, coordinates, qualifications and ordered evidence in the accompanying
-table. Restore descriptive axis labels on the plot. Only numbered annotation
-badges may move to avoid collisions, with leader lines anchored to unchanged
+table. Preserve descriptive axes, four background panels and dashed
+domain-midpoint dividers; these dividers are not benchmark thresholds.
+Only measured full-name annotation boxes may move to avoid collisions, with
+leader lines anchored to unchanged
 coordinate dots; coincident dots stay coincident. Use each legend entry to inspect them.
 Check exact plotted positions, both locales, mobile labels and physical PDFs.
 Print uses the readable coordinate table rather than a shrunken SVG.
@@ -1165,21 +1167,26 @@ Check actual text bounds inside the track and summary, including widths near the
 stacked-layout breakpoint; non-overlapping labels alone do not prove containment.
 Keep full numeric strings and qualifications rather than clipping or shortening
 them, and verify that short summaries and printed rows retain their layout.
-Funnel figures display ordered stage-value tables without deriving conversion
-rates or shared population, unit or time assumptions. Preserve explicitly
+Funnel figures display ordered tapering bands; widths indicate stage order, not
+quantity. Do not derive conversion rates or shared population, unit or time
+assumptions. Preserve explicitly
 authored rates and qualifications. Verify stage labels, raw values, units,
-series names and notes in the visible rows and hover/tap tooltips in both locales,
+series names and notes in the visible bands and hover/tap tooltips in both locales,
 including narrow screens and print; never invent a rate to replace the old
 renderer-generated percentages.
-Waterfall figures likewise display ordered source-value tables rather than
-inferring additive steps or cumulative totals. Preserve every raw value, unit,
+Waterfall figures draw cumulative spans only for exactly reconciled declared
+`base`/`cumulative` values or an explicitly described, exactly balanced same-unit
+from-to bridge. Resolve the mode from English before overlays. Other figures show
+independent source-value bars with an explicit notice, not invented cumulative totals.
+Preserve every raw value, unit,
 qualification and any declared `kind` / `role`, including conflicting or unfamiliar
 role strings. Other authored `type`, `isTotal`, `category`, `direction`, `status`,
 `base` and `cumulative` fields also remain literal metadata, not instructions to
-recompute a bridge or validate its assumptions. With evidence enabled, retain each
+validate its assumptions. The complete source-value supplement opens for print.
+With evidence enabled, retain each
 value's own ordered claim links; hide those evidence-only rows when disabled and
 in print. Evidence labels follow the value-table label precedence. Keep the
-localized no-inference notice visible on screen and in
+localized presentation notice visible on screen and in
 print. Check physical PDFs: each value card must keep its label, value, declared
 roles and context together when the card fits on one page. A final financing tranche must not become a total merely because it is
 last; declared totals also remain authored values, not recalculated results.

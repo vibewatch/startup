@@ -12,7 +12,7 @@ import { KNOWN_DIMENSIONS, WARNING_DIMENSIONS } from './validation-catalog.mjs';
 import { checkDistinctChapterSources, checkPrefetchedSourceQuotes, isVerbatimSourceQuote } from './source-quote-checks.mjs';
 import { checkRefreshReadback, refreshArtifactsAreInSync } from './refresh-readback.mjs';
 import { reportsDir } from './utils.mjs';
-import { barSeries, barSeriesTable, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, graphItemNotes, matrixCellText, quadrantAxes, quadrantLabelPositions, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails, waterfallValueTable, withFlowTopology, withRangeTones } from '../../../../website/src/lib/figures.mjs';
+import { barSeries, barSeriesTable, chartNumericValue, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, graphItemNotes, matrixCellText, quadrantAxes, quadrantLabelPositions, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails, waterfallSpans, waterfallValueTable, withFlowTopology, withRangeTones, withWaterfallSpans } from '../../../../website/src/lib/figures.mjs';
 import { isTranslatableLeaf, TRANSLATE_PATHS } from '../../translate-zh/scripts/whitelist.mjs';
 import { asArray, asRecord, claimRefs } from '../../../../website/src/lib/report-types.ts';
 import { t } from '../../../../website/src/lib/i18n.ts';
@@ -98,8 +98,11 @@ test('compact SVGs retain authored font sizes and graph previews fit measured gl
   assert.match(dag, /textWrapper, maxWidth: compact \? width - 68 : stageGapW - 22/);
   assert.doesNotMatch(dag, /nodeLabelFontSize \* 0\.58/);
   const flow = figure.slice(figure.indexOf('const renderFlow ='), figure.indexOf('const firstNonEmpty'));
-  assert.match(flow, /const connectorLabelWidth = Math\.min\(84, railX \* 2 - 8\)/);
-  assert.match(flow, /textWrapper\.fit\(visibleEdgeLabel\(d\.edge\), .*maxWidth: connectorLabelWidth - 16/);
+  assert.match(flow, /textWrapper\.wrap\(edge\?\.label \?\? ''/);
+  assert.match(flow, /maxWidth: cardW - 24/);
+  assert.match(flow, /gap = Math\.max\(gap, .*d\.lines\.length \* 16 \+ 20/);
+  assert.match(flow, /attr\('class', 'flow-connection-label'\)/);
+  assert.doesNotMatch(flow, /textWrapper\.fit\(visibleEdgeLabel/);
   assert.match(flow, /withTooltip\(connectorLabels/);
   assert.match(flow, /const detailY = compact \? 76 : 84/);
   assert.match(flow, /const cardH = hasDetails \? \(compact \? 108 : 118\)/);
@@ -402,18 +405,81 @@ test('waterfall metadata retains literal conflicting declarations, zero bases an
   assert.deepEqual(items, before);
 });
 
-test('waterfall rendering uses source-value tables and explicitly disclaims invented cumulative arithmetic', () => {
+test('waterfall rendering restores diagrams with source-value supplements and explicit independent mode', () => {
   const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
   assert.match(source, /const waterfall = authoredType === 'waterfall'/);
-  assert.match(source, /const type = funnel \|\| waterfall \|\|/);
+  assert.match(source, /const type = relationshipDiagram \? 'dag' : authoredType/);
   assert.match(source, /waterfall \? waterfallValueTable\(data,/);
   assert.match(source, /class="figure-note waterfall-comparison-notice"[^>]*>\{t\('reportWaterfallNotice', locale\)\}/);
-  assert.doesNotMatch(source, /renderWaterfall|totalLike|waterfall-step|waterfallLabels/);
-  assert.match(t('reportWaterfallNotice', 'en'), /No additive steps, cumulative totals, or shared unit or time basis are inferred/);
-  assert.match(t('reportWaterfallNotice', 'zh'), /不推定各项可以相加，不计算累计值/);
+  assert.match(source, /waterfall: renderWaterfall/);
+  assert.match(source, /layout\.mode === 'independent'/);
+  assert.match(source, /waterfall-independent-notice/);
+  assert.match(t('reportWaterfallIndependent', 'en'), /independent/i);
+  assert.match(t('reportWaterfallIndependent', 'zh'), /独立/);
   const report = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
-  const print = report.slice(report.indexOf('@media print'));
-  assert.match(print, /\.chart-matrix \.matrix-card\)\s*\{[^}]*break-inside: avoid;[^}]*page-break-inside: avoid;/);
+  assert.match(report, /withWaterfallSpans\(figure\)/);
+  assert.ok(report.indexOf('withWaterfallSpans(figure)') < report.indexOf('mergeI18n(enDoc'));
+  assert.match(report.slice(report.indexOf('@media print')), /\.chart-waterfall > svg/);
+});
+
+test('chart numeric values preserve zero and negatives without treating unavailable values as zero', () => {
+  for (const [value, expected] of [[0, 0], [-2, -2], ['0', 0], ['-0.02', -0.02], [' 2e2 ', 200]]) {
+    assert.equal(chartNumericValue(value), expected);
+  }
+  for (const value of [null, undefined, '', ' ', false, true, 'unknown', NaN, Infinity]) {
+    assert.equal(chartNumericValue(value), null);
+  }
+});
+
+test('waterfall bridges require explicit reconciled spans or an exactly balanced declared from-to bridge', () => {
+  const bridge = values => ({
+    type: 'waterfall', description: 'P&L waterfall from revenue to operating result.',
+    data: { items: values.map(value => ({ value, unit: 'EUR M' })) },
+  });
+  const figure = bridge([1990, -200, -300, -480, -380, -280, -438, -88]);
+  const before = structuredClone(figure);
+  figure.data.items.forEach(Object.freeze);
+  Object.freeze(figure.data.items);
+  Object.freeze(figure.data);
+  Object.freeze(figure);
+  assert.deepEqual(waterfallSpans(figure), {
+    mode: 'balanced',
+    spans: [{ from: 0, to: 1990 }, { from: 1990, to: 1790 }, { from: 1790, to: 1490 },
+      { from: 1490, to: 1010 }, { from: 1010, to: 630 }, { from: 630, to: 350 },
+      { from: 350, to: -88 }, { from: 0, to: -88 }],
+  });
+  assert.deepEqual(figure, before);
+  assert.equal(waterfallSpans(bridge([0.3, -0.1, 0.2])).mode, 'balanced');
+  assert.equal(waterfallSpans({ ...bridge([0.3, -0.1, 0.2]), description: 'Waterfall from revenue of EUR 0.3 million to operating result.' }).mode, 'balanced');
+  assert.equal(waterfallSpans(bridge(['0.3', '-0.1', '0.20000000000000001'])).mode, 'independent');
+  assert.equal(waterfallSpans(bridge([0.3, -0.1, 0.2000001])).mode, 'independent');
+  assert.equal(waterfallSpans(bridge([250, 215, 700])).mode, 'independent');
+  assert.equal(waterfallSpans({ ...figure, description: 'Amounts without additive semantics.' }).mode, 'independent');
+  assert.equal(waterfallSpans({ ...figure, data: { items: [{ value: 3, unit: 'USD' }, { value: -1, unit: '%' }, { value: 2, unit: 'USD' }] } }).mode, 'independent');
+  assert.deepEqual(waterfallSpans(bridge([null, 0])).spans, [null, { from: 0, to: 0 }]);
+  const declared = { type: 'waterfall', data: { items: [
+    { value: 2, base: 0, cumulative: 2 }, { value: -0.5, base: 2, cumulative: 1.5 },
+  ] } };
+  assert.deepEqual(waterfallSpans(declared), { mode: 'declared', spans: [{ from: 0, to: 2 }, { from: 2, to: 1.5 }] });
+  assert.equal(waterfallSpans({ ...declared, data: { items: [{ value: 2, base: 0, cumulative: 99 }] } }).mode, 'independent');
+  const prepared = withWaterfallSpans(figure);
+  assert.notEqual(prepared, figure);
+  assert.equal(prepared.data, figure.data);
+  assert.equal(prepared._waterfallSpans.mode, 'balanced');
+  assert.equal(withWaterfallSpans({ type: 'bar', data: {} }).type, 'bar');
+});
+
+test('funnel and multiple-series bars retain dedicated diagrams instead of matrix or KPI substitutions', () => {
+  const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+  assert.match(source, /funnel: renderFunnel/);
+  assert.match(source, /bar: renderBar/);
+  assert.match(source, /const type = relationshipDiagram \? 'dag' : authoredType/);
+  assert.match(source, /figureUnitsDiffer\(group\.points\) \? group\.points\.map/);
+  assert.match(source, /attr\('class', 'funnel-band'\)/);
+  assert.match(source, /attr\('data-value-state', value == null \? 'unavailable' : 'numeric'\)/);
+  assert.match(source, /class="figure-value-details"/);
+  const funnel = source.slice(source.indexOf('const renderFunnel ='), source.indexOf('const renderWaterfall ='));
+  assert.doesNotMatch(funnel, /item\.value\s*\/|conversion|percentage/);
 });
 
 test('refresh acceptance checks both reports and existing overlays without rewriting history', () => {
@@ -704,8 +770,8 @@ test('pyramids print ordered complete layers at body-text size rather than shrin
   const print = report.slice(report.indexOf('@media print'));
   assert.match(print, /:global\(\.native-figure:has\(\.chart-pyramid\)\) \{ break-inside: auto; page-break-inside: auto; \}/);
   assert.match(print, /:global\(\.chart-pyramid > svg\) \{ position: absolute; visibility: hidden; \}/);
-  assert.match(print, /:global\(\.pyramid-print-layers\) \{ display: block !important;[^}]*font-size: 10pt;/);
-  assert.match(print, /:global\(\.pyramid-print-layers > li\) \{[^}]*break-inside: avoid; page-break-inside: avoid;/);
+  assert.match(print, /:global\(\.pyramid-print-layers\)[^{}]*\{ display: block !important;[^}]*font-size: 10pt;/);
+  assert.match(print, /:global\(\.pyramid-print-layers > li\)[^{}]*\{[^}]*break-inside: avoid; page-break-inside: avoid;/);
 });
 
 test('font readiness remeasures existing charts before laying out range axes', () => {
@@ -903,6 +969,13 @@ test('quadrant rendering removes fabricated rankings and plots exact positions w
   assert.match(quadrant, /y\(point\.y\)/);
   assert.match(quadrant, /payload\.quadrantAxes\.x/);
   assert.match(quadrant, /payload\.quadrantAxes\.y/);
+  assert.match(quadrant, /attr\('class', 'quadrant-zone'\)/);
+  assert.match(quadrant, /attr\('class', 'quadrant-dividers'\)/);
+  assert.match(quadrant, /_labelWidth/);
+  assert.match(quadrant, /label\.x === plotPoints\[index\]\.x && label\.y === plotPoints\[index\]\.y/);
+  assert.match(quadrant, /return renderQuadrant\(element, payload, Math\.min\(height \+ 120, maximumHeight\)\)/);
+  assert.match(quadrant, /throw new Error\('Quadrant names cannot fit/);
+  assert.ok(quadrant.indexOf("'quadrant-label-leader'") < quadrant.indexOf("'quadrant-point'"), 'Leader lines stay behind every name box');
   assert.equal((quadrant.match(/tickPadding\(18\)/g) ?? []).length, 2);
   assert.match(source, /class="quadrant-details"/);
   assert.match(source, /refs=\{claimRefs\(point\)\}/);
@@ -945,9 +1018,24 @@ test('non-sequential flows use declared graph topology rather than a generic mat
   assert.match(source, /dependency: relationshipDiagram \? t\('reportFigureConnection', locale\)/);
 });
 
+test('quadrant full-name boxes stay inside mobile panels and avoid labels and authored dots', () => {
+  const bounds = { left: 76, right: 298, top: 60, bottom: 420 };
+  const points = [[2, 9.5], [3.5, 8.8], [5, 7.5], [5.5, 7], [8.5, 6], [8, 6.2]]
+    .map(([x, y]) => Object.freeze({ x: 76 + x * 22.2, y: 420 - y * 36, _labelWidth: 98, _labelHeight: 48 }));
+  const before = structuredClone(points);
+  const labels = quadrantLabelPositions(Object.freeze(points), bounds, 6);
+  assert.deepEqual(points, before);
+  labels.forEach((label, index) => {
+    assert.ok(label.x - 49 >= bounds.left && label.x + 49 <= bounds.right);
+    assert.ok(label.y - 24 >= bounds.top && label.y + 24 <= bounds.bottom);
+    labels.slice(index + 1).forEach(other => assert.ok(Math.abs(label.x - other.x) >= 102 || Math.abs(label.y - other.y) >= 52));
+    points.forEach(point => assert.ok(Math.abs(label.x - point.x) >= 56 || Math.abs(label.y - point.y) >= 31));
+  });
+});
+
 test('diagram supplements use native disclosures and expand for print without losing reader state', () => {
   const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
-  for (const className of ['flow-sequence-details', 'dag-details', 'quadrant-details']) {
+  for (const className of ['flow-sequence-details', 'dag-details', 'quadrant-details', 'figure-value-details']) {
     assert.match(source, new RegExp(`<details class="${className}">\\s*<summary>`));
   }
   assert.match(source, /printOpenedDetails\.add\(details\)/);

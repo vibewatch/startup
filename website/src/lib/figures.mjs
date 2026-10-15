@@ -114,28 +114,96 @@ export function quadrantAxes(figure) {
   }));
 }
 
-export function quadrantLabelPositions(points, bounds, radius) {
+export function quadrantLabelPositions(points, bounds, radius, packed = false) {
   const placed = [];
-  return points.map((point, index) => {
-    const candidates = [{ x: point.x, y: point.y }];
-    for (let ring = 1; ring <= 3; ring++) {
+  let needsPacking = false;
+  const labels = points.map((point, index) => {
+    const boxed = Number.isFinite(point._labelWidth);
+    const halfWidth = boxed ? point._labelWidth / 2 : radius;
+    const halfHeight = boxed ? point._labelHeight / 2 : radius;
+    const candidates = boxed ? [] : [{ x: point.x, y: point.y }];
+    for (let ring = 1; ring <= (boxed ? 5 : 3); ring++) {
       for (let direction = 0; direction < 8; direction++) {
         const angle = direction * Math.PI / 4;
-        const distance = ring * (radius * 2 + 6);
-        candidates.push({ x: point.x + Math.cos(angle) * distance, y: point.y + Math.sin(angle) * distance });
+        candidates.push({
+          x: point.x + Math.cos(angle) * ring * (halfWidth + radius + 8),
+          y: point.y + Math.sin(angle) * ring * (halfHeight + radius + 8),
+        });
       }
     }
+    if (boxed) {
+      const grid = [];
+      for (let y = bounds.top + halfHeight; y <= bounds.bottom - halfHeight; y += packed ? halfHeight * 2 + 6 : 6) {
+        for (let x = bounds.left + halfWidth; x <= bounds.right - halfWidth; x += packed ? halfWidth * 2 + 6 : 6) {
+          grid.push({ x, y });
+        }
+      }
+      grid.sort((a, b) => Math.hypot(a.x - point.x, a.y - point.y) - Math.hypot(b.x - point.x, b.y - point.y));
+      if (packed) candidates.unshift(...grid);
+      else candidates.push(...grid);
+    }
     const position = candidates.find(candidate =>
-      candidate.x - radius >= bounds.left && candidate.x + radius <= bounds.right
-      && candidate.y - radius >= bounds.top && candidate.y + radius <= bounds.bottom
-      && placed.every(label => Math.hypot(label.x - candidate.x, label.y - candidate.y) >= radius * 2 + 2)
-      && points.every((other, otherIndex) => otherIndex === index
-        || Math.hypot(other.x - candidate.x, other.y - candidate.y) >= radius + 6));
-    // Dense charts can still overlap labels; every point remains in the legend.
-    const label = position ?? candidates[0];
-    placed.push(label);
+      candidate.x - halfWidth >= bounds.left && candidate.x + halfWidth <= bounds.right
+      && candidate.y - halfHeight >= bounds.top && candidate.y + halfHeight <= bounds.bottom
+      && placed.every(label => boxed
+        ? Math.abs(label.x - candidate.x) >= label.halfWidth + halfWidth + 4
+          || Math.abs(label.y - candidate.y) >= label.halfHeight + halfHeight + 4
+        : Math.hypot(label.x - candidate.x, label.y - candidate.y) >= radius * 2 + 2)
+      && points.every((other, otherIndex) => boxed
+        ? Math.abs(other.x - candidate.x) >= halfWidth + 7 || Math.abs(other.y - candidate.y) >= halfHeight + 7
+        : otherIndex === index || Math.hypot(other.x - candidate.x, other.y - candidate.y) >= radius + 6));
+    const label = position ?? { x: point.x, y: point.y };
+    if (!position && boxed) needsPacking = true;
+    placed.push({ ...label, halfWidth, halfHeight });
     return label;
   });
+  return needsPacking && !packed ? quadrantLabelPositions(points, bounds, radius, true) : labels;
+}
+
+export function chartNumericValue(value) {
+  if (typeof value !== 'number' && (typeof value !== 'string' || !value.trim())) return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+export function waterfallSpans(figure) {
+  const items = Array.isArray(figure.data?.items) ? figure.data.items : [];
+  const values = items.map(item => chartNumericValue(item.value));
+  const independent = { mode: 'independent', spans: values.map(value => value == null ? null : { from: 0, to: value }) };
+  if (!values.length || values.some(value => value == null) || figureUnitsDiffer(items)) return independent;
+  const equalSum = (terms, total) => {
+    const parts = [...terms, total].map(value => {
+      const match = String(value).trim().match(/^([+-]?)(\d+)(?:\.(\d*))?(?:e([+-]?\d+))?$/i);
+      if (!match) return null;
+      const [, sign, integer, fraction = '', exponent = '0'] = match;
+      return { digits: BigInt(`${sign === '-' ? '-' : ''}${integer}${fraction}`), exponent: Number(exponent) - fraction.length };
+    });
+    if (parts.some(part => part == null)) return false;
+    const exponent = Math.min(...parts.map(part => part.exponent));
+    const integers = parts.map(part => part.digits * 10n ** BigInt(part.exponent - exponent));
+    return integers.slice(0, -1).reduce((sum, value) => sum + value, 0n) === integers.at(-1);
+  };
+  if (items.every((item, index) => Number.isFinite(item.base) && Number.isFinite(item.cumulative)
+    && equalSum([item.base, item.value], item.cumulative))) {
+    return { mode: 'declared', spans: items.map(item => ({ from: item.base, to: item.cumulative })) };
+  }
+  const text = [figure.title, figure.summary, figure.description].filter(value => typeof value === 'string').join('\n');
+  const closing = values.at(-1);
+  if (!/\b(?:waterfall|bridge)\s+from\b(?:[^.!?\n]|\.(?=\d))*\bto\b/i.test(text) || values.length < 3
+    || values[0] < 0 || !values.slice(1, -1).some(value => value < 0)
+    || !equalSum(items.slice(0, -1).map(item => item.value), items.at(-1).value)) return independent;
+  let balance = values[0];
+  const spans = [{ from: 0, to: balance }];
+  for (const value of values.slice(1, -1)) {
+    spans.push({ from: balance, to: balance + value });
+    balance += value;
+  }
+  spans.push({ from: 0, to: closing });
+  return { mode: 'balanced', spans };
+}
+
+export function withWaterfallSpans(figure) {
+  return figure.type === 'waterfall' ? { ...figure, _waterfallSpans: waterfallSpans(figure) } : figure;
 }
 
 export function stackLayerDetails(data) {

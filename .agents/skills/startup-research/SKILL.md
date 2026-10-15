@@ -243,9 +243,10 @@ remain structural and do not certify the absence of such content defects.
 **Funnel comparability:** use a funnel only for comparable stages of the same
 population, unit and time basis. Mixed patient, organization, transaction and
 currency metrics belong in separate cards or a table, not a conversion funnel.
-The renderer lists funnel stages as an ordered value table with a localized
-notice. It does not derive conversion rates, percentage shares or proportional
-widths: the figure contract does not establish a shared population or time basis,
+The renderer shows ordered, tapering funnel bands with a localized notice.
+The taper indicates stage order, not magnitude. It does not derive conversion
+rates, percentage shares or value-proportional widths: the figure contract does
+not establish a shared population or time basis,
 and matching or missing units cannot supply that evidence. Values, explicitly
 authored rates, stage order, series names, units and supported qualifications
 remain on the page, in print and in tooltips. Populated `items` take precedence;
@@ -254,29 +255,49 @@ funnels, author and source conversion rates explicitly rather than relying on
 the website to infer them. This presentation safeguard does not validate the
 metrics or repair unsupported claims in the report text.
 Authored item `valueNote` strings are value qualifications, not replacement
-values. Retain them alongside other distinct notes in the table and tooltip,
+values. Retain them alongside other distinct notes in the diagram and tooltip,
 including the `series[].points[]` shape. Localize the prose, preserve numeric
 values, and do not treat an unaudited company figure as independently verified.
 
 **Bar-chart completeness:** multiple populated `series[].points[]` are shown
-as a table, with every point retained in original series order. Series names,
+in separate responsive bar panels, with every point retained in original series
+order. Series names,
 values, explicit units and point qualifications remain together; duplicate
 point labels are not merged. This avoids implying a common numeric scale for
-unlike series. Single-series bars with differing explicit point-unit strings
-use separate KPI cards instead. Other single-series bars retain their existing
-geometry and expose point qualifications and units on the page, in print and
+unlike series. Bars with differing explicit point-unit strings use independently
+scaled panels. Preserve zero, negative and unavailable values distinctly;
+unavailable values must not become zero. All bars expose point qualifications
+and units on the page, in print and
 in tooltips. Populated `items` retain precedence over the alternative `series`
 shape. These display safeguards do not establish metric accuracy or comparability
 when units, populations or time bases are missing or misleading in the source.
 
 KPI cards retain distinct detail, note, context and unit text both on the card
-and in tooltips, including when used for mixed-unit bars. Print must retain
+and in tooltips. Print must retain
 these qualifications too; identical strings appear only once. This display
 rule does not validate the metric or the assumptions behind it.
 
 Range charts retain the same distinct qualifications and units on each row,
 in tooltips and in print. Preserve authored endpoints and center values;
 showing their notes does not establish comparability or validate a forecast.
+
+**Waterfall semantics:** draw cumulative spans only when every item declares a
+finite `base` and `cumulative` that exactly reconcile with its value, or when
+English prose explicitly declares a waterfall/bridge from an opening amount to
+a closing amount and the same-unit signed values exactly reconcile to that
+closing amount. Resolve this mode from English before overlays. A final financing
+tranche is not a total merely because it is last. Otherwise display independently
+scaled source-value bars with an explicit no-cumulative-bridge notice. Preserve
+authored values, units, qualifications and literal metadata in the expandable
+supplement, tooltips and print; the mode does not validate underlying assumptions.
+
+**Quadrant presentation:** retain four background panels and dashed domain-midpoint
+dividers without inventing ranking zones or benchmark thresholds. Plot exact
+authored coordinates; move only measured full-name annotations with leader lines,
+not the coordinate dots. Expand crowded plots vertically instead of overlapping
+names or silently placing them back over dots. Keep full axes, source coordinates, qualifications and
+evidence in the supplementary disclosure. Compare actual desktop/mobile screenshots
+and check label overlap, not just chart hydration or absence of page overflow.
 
 **Flow relationships:** an ordered flow with no explicit edges keeps its existing
 sequence layout. Explicit edges must form the complete, unambiguous adjacent-node

@@ -1,4 +1,4 @@
-import type { flowTopology } from './figures.mjs';
+import type { flowTopology, waterfallSpans } from './figures.mjs';
 
 export type ReportRecord = Record<string, unknown>;
 
@@ -47,6 +47,7 @@ export interface ReportFigure extends ReportRecord {
   data?: unknown;
   claimRefs?: string[];
   _flowTopology?: ReturnType<typeof flowTopology>;
+  _waterfallSpans?: ReturnType<typeof waterfallSpans>;
 }
 
 export interface CoverFact extends ReportRecord {

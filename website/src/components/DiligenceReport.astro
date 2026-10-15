@@ -8,7 +8,7 @@ import { t } from '../lib/i18n';
 import type { Locale } from '../lib/locale';
 import { localePath } from '../lib/locale';
 import { splitClaimRefsText, stripTrailingClaimRefs } from '../lib/claim-refs.mjs';
-import { withFlowTopology, withRangeTones } from '../lib/figures.mjs';
+import { withFlowTopology, withRangeTones, withWaterfallSpans } from '../lib/figures.mjs';
 import type { ReportStageFiles, ReportStageFilesZh } from '../content/reports-loader';
 import { asArray, asRecord, claimRefs, isRecord } from '../lib/report-types';
 import type {
@@ -75,7 +75,7 @@ const supersededByHref = revision.supersededByFolderSlug
 
 const sourceDoc = stages.fullReport as FullReport | null;
 // Resolve English label hints and legacy edge aliases before translating labels.
-const enDoc = sourceDoc ? { ...sourceDoc, figures: sourceDoc.figures?.map((figure) => withFlowTopology(withRangeTones(figure))) } : null;
+const enDoc = sourceDoc ? { ...sourceDoc, figures: sourceDoc.figures?.map((figure) => withFlowTopology(withRangeTones(withWaterfallSpans(figure)))) } : null;
 const enLedger = asRecord(stages.evidence) as EvidenceLedger;
 const doc = (locale === 'zh' && stagesZh?.fullReport ? mergeI18n(enDoc, stagesZh.fullReport) : enDoc) as FullReport | null;
 const ledger = enLedger;
@@ -1005,24 +1005,42 @@ const card = {
     :global(.native-figure:has(.chart-timeline)),
     :global(.native-figure:has(.chart-dag)),
     :global(.native-figure:has(.chart-quadrant)),
+    :global(.native-figure:has(.chart-journey-map)),
+    :global(.native-figure:has(.chart-funnel)),
+    :global(.native-figure:has(.chart-waterfall)),
     :global(.native-figure:has(.chart-pyramid)) { break-inside: auto; page-break-inside: auto; }
     /* Keep glyphs measurable if web fonts finish loading during print. */
     :global(.chart-timeline > svg),
     :global(.chart-dag > svg),
     :global(.chart-quadrant > svg),
+    :global(.chart-journey-map > svg),
+    :global(.chart-funnel > svg),
+    :global(.chart-waterfall > svg),
     :global(.chart-pyramid > svg) { position: absolute; visibility: hidden; }
     :global(.timeline-print-events),
-    :global(.pyramid-print-layers) { display: block !important; margin: 0; padding-left: 5mm; font-size: 10pt; line-height: 1.45; }
+    :global(.pyramid-print-layers),
+    :global(.journey-print-events),
+    :global(.funnel-print-stages) { display: block !important; margin: 0; padding-left: 5mm; font-size: 10pt; line-height: 1.45; }
     :global(.timeline-print-events > li),
-    :global(.pyramid-print-layers > li) { padding: 2mm 3mm; border-left: 2pt solid; overflow-wrap: anywhere; break-inside: avoid; page-break-inside: avoid; }
+    :global(.pyramid-print-layers > li),
+    :global(.journey-print-events > li),
+    :global(.funnel-print-stages > li) { padding: 2mm 3mm; border-left: 2pt solid; overflow-wrap: anywhere; break-inside: avoid; page-break-inside: avoid; }
     :global(.timeline-print-events > li + li),
-    :global(.pyramid-print-layers > li + li) { border-top: 0.4pt solid #ddd; }
+    :global(.pyramid-print-layers > li + li),
+    :global(.journey-print-events > li + li),
+    :global(.funnel-print-stages > li + li) { border-top: 0.4pt solid #ddd; }
     :global(.timeline-print-events strong),
-    :global(.pyramid-print-layers strong) { display: block; color: #800020; }
+    :global(.pyramid-print-layers strong),
+    :global(.journey-print-events strong),
+    :global(.funnel-print-stages strong) { display: block; color: #800020; }
     :global(.chart-quadrant .quadrant-legend) { display: none !important; }
     :global(.native-figure details > summary) { break-after: avoid; page-break-after: avoid; }
     :global(.timeline-print-events p),
-    :global(.pyramid-print-layers p) { margin: 1mm 0 0; font-size: 10pt; line-height: 1.45; }
+    :global(.pyramid-print-layers p),
+    :global(.journey-print-events p),
+    :global(.funnel-print-stages p) { margin: 1mm 0 0; font-size: 10pt; line-height: 1.45; }
+    :global(.figure-value-details th),
+    :global(.figure-value-details td) { font-size: 10pt; }
 
     /* Hide citation refs in the printout regardless of the in-page toggle. */
     .report-shell :global(.claim-ref) { display: none !important; }

@@ -1,7 +1,7 @@
 ---
 import ClaimRefs from './ClaimRefs.astro';
 import DataTable from './DataTable.astro';
-import { RENDERED_FIGURE_TYPES, barSeries, barSeriesTable, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, quadrantAxes, stackLayerDetails, waterfallValueTable } from '../lib/figures.mjs';
+import { RENDERED_FIGURE_TYPES, barSeries, barSeriesTable, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowRelationshipTable, flowTopology, formatRangeValue, funnelStageTable, quadrantAxes, stackLayerDetails, waterfallSpans, waterfallValueTable } from '../lib/figures.mjs';
 import { t } from '../lib/i18n';
 import type { Locale } from '../lib/locale';
 import { asArray, asRecord, claimRefs, type Claim, type ReportFigure, type Source } from '../lib/report-types';
@@ -33,27 +33,23 @@ const sequenceDetails = flow?.sequence ? flowRelationshipTable(data, flow, {
 }) : null;
 const funnel = authoredType === 'funnel';
 const waterfall = authoredType === 'waterfall';
+const waterfallLayout = waterfall ? figure._waterfallSpans ?? waterfallSpans(figure) : null;
 const series = authoredType === 'bar' ? barSeries(data) : [];
 const multipleBarSeries = series.length > 1;
 const stages = series.length === 1
   ? series[0].points.map((item) => item.unit == null && series[0].unit != null ? { ...item, unit: series[0].unit } : item)
   : [];
 const unitsDiffer = figureUnitsDiffer(stages);
-const type = funnel || waterfall || multipleBarSeries ? 'matrix' : relationshipDiagram ? 'dag' : unitsDiffer ? 'kpi' : authoredType;
-const chartData = funnel ? funnelStageTable(data, {
+const type = relationshipDiagram ? 'dag' : authoredType;
+const valueDetails = funnel ? funnelStageTable(data, {
   valueLabel: t('reportFigureValue', locale), contextLabel: t('reportFigureContext', locale),
 }) : waterfall ? waterfallValueTable(data, {
   valueLabel: t('reportFigureValue', locale), contextLabel: t('reportFigureContext', locale),
   metadataLabel: t('reportWaterfallMetadata', locale),
 }) : multipleBarSeries ? barSeriesTable(series, {
   valueLabel: t('reportFigureValue', locale), contextLabel: t('reportFigureContext', locale),
-}) : unitsDiffer ? {
-  ...data,
-  items: stages,
-} : authoredType === 'bar' && series.length === 1 ? { ...data, items: stages } : data;
-const stageAnnotations = unitsDiffer ? [] : stages.map((item) => ({
-  item, notes: figureItemNotes(item),
-})).filter(({ item, notes }) => item.unit || notes.length);
+}) : null;
+const chartData = authoredType === 'bar' && series.length === 1 ? { ...data, items: stages } : data;
 const chartTypes = new Set(RENDERED_FIGURE_TYPES);
 const usesD3Chart = chartTypes.has(type);
 const itemLabel = t('reportFigureItem', locale);
@@ -99,6 +95,11 @@ const chartPayload = usesD3Chart ? {
   ...(dagTopology ? { dagLabels } : {}),
   ...(dagTopology ? { dagTopology } : {}),
   ...(coordinateAxes ? { quadrantAxes: coordinateAxes } : {}),
+  ...(waterfallLayout ? { waterfallLayout, waterfallLabels: {
+    independent: t('reportWaterfallIndependent', locale),
+    value: t('reportFigureValue', locale), context: t('reportFigureContext', locale),
+    metadata: t('reportWaterfallMetadata', locale),
+  } } : {}),
 } : null;
 const chartPayloadJson = chartPayload
   ? JSON.stringify(chartPayload).replace(/[<>&\u2028\u2029]/g, (char) => ({ '<': '\\u003c', '>': '\\u003e', '&': '\\u0026', '\u2028': '\\u2028', '\u2029': '\\u2029' }[char] ?? char))
@@ -109,6 +110,7 @@ const chartPayloadJson = chartPayload
   <figcaption>{figure.id}: {figure.title}</figcaption>
 
   {figure.summary && <p class="figure-summary">{figure.summary}</p>}
+  {typeof figure.description === 'string' && figure.description !== figure.summary && <p class="figure-summary">{figure.description}</p>}
 
   {relationshipDiagram && <p class="figure-note flow-relationship-notice" role="note">{t('reportFlowRelationshipNotice', locale)}</p>}
   {flow?.unresolved && <p class="figure-note flow-endpoint-notice" role="note">{t('reportFlowEndpointNotice', locale)}</p>}
@@ -137,20 +139,6 @@ const chartPayloadJson = chartPayload
           <div>
             <dt>{key.toUpperCase()}: {axis.label}</dt>
             {axis.definitions.map((definition) => <dd>{definition}</dd>)}
-          </div>
-        ))}
-      </dl>
-    </div>
-  )}
-
-  {stageAnnotations.length > 0 && (
-    <div class="figure-note figure-item-notes bar-point-notes">
-      <dl>
-        {stageAnnotations.map(({ item, notes }) => (
-          <div>
-            <dt>{item.label ?? item.name}</dt>
-            {item.unit && <dd>{item.displayValue ?? item.value} {item.unit}</dd>}
-            {notes.map((note) => <dd>{note}</dd>)}
           </div>
         ))}
       </dl>
@@ -221,6 +209,23 @@ const chartPayloadJson = chartPayload
     </details>
   )}
 
+  {valueDetails && (
+    <details class="figure-value-details">
+      <summary>{t('reportFigureValues', locale)}</summary>
+      <DataTable columns={[t('reportFigureItem', locale), ...valueDetails.columns]}>
+        {valueDetails.rows.map((row) => (
+          <tr>
+            <td>{row.label}</td>
+            {row.values.map((value) => <td>
+              {value && typeof value === 'object' ? value.label : value}
+              {value && typeof value === 'object' && value.detail && <small>{value.detail}</small>}
+            </td>)}
+          </tr>
+        ))}
+      </DataTable>
+    </details>
+  )}
+
   {type === 'other' && (
     <div class="figure-fallback" role="note">
       <strong>{t('reportFigureGenericTitle', locale)}</strong>
@@ -246,7 +251,7 @@ const chartPayloadJson = chartPayload
 <script>
   import * as d3 from 'd3';
   import { displayCellText } from '../lib/display';
-  import { figureDetail, figureItemNotes, figureValueNotes, flowTopology, formatRangeValue, graphItemNotes, matrixCellText, quadrantLabelPositions, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails } from '../lib/figures.mjs';
+  import { barSeries, chartNumericValue, figureDetail, figureItemNotes, figureUnitsDiffer, figureValueNotes, flowTopology, formatRangeValue, graphItemNotes, matrixCellText, quadrantLabelPositions, rangeAxisTickIndices, rangeCenterValue, stackLayerDetails, waterfallValueTable } from '../lib/figures.mjs';
 
   const palette = {
     claret: '#990f3d',
@@ -1280,11 +1285,11 @@ const chartPayloadJson = chartPayload
     const compact = containerWidth < 520;
     const hasDetails = nodes.some((node) => String(node.detail ?? '').trim());
     const cardH = hasDetails ? (compact ? 108 : 118) : (compact ? 72 : 84);
-    const gap = hasDetails ? (compact ? 18 : 34) : (compact ? 14 : 24);
+    let gap = hasDetails ? (compact ? 18 : 34) : (compact ? 14 : 24);
     const margin = compact
       ? { top: hasDetails ? 14 : 12, right: 18, bottom: hasDetails ? 18 : 14, left: 16 }
       : { top: hasDetails ? 24 : 20, right: 34, bottom: hasDetails ? 30 : 22, left: 30 };
-    const { svg, width, height } = svgBase(element, Math.max(260, margin.top + margin.bottom + nodes.length * cardH + Math.max(0, nodes.length - 1) * gap));
+    const { svg, width } = svgBase(element, 260);
     const textWrapper = createSvgTextWrapper(svg);
     const railX = margin.left + (compact ? 24 : 34);
     const cardX = margin.left + (compact ? 64 : 96);
@@ -1293,8 +1298,17 @@ const chartPayloadJson = chartPayload
     const gradient = defs.append('linearGradient').attr('id', `${payload.id}-flow-card-bg`).attr('x1', '0%').attr('x2', '100%');
     gradient.append('stop').attr('offset', '0%').attr('stop-color', '#fff7ef');
     gradient.append('stop').attr('offset', '100%').attr('stop-color', '#fbf0e8');
+    const connectorData = nodes.slice(0, -1).map((node, index) => {
+      const edge = edgeBetween(node, nodes[index + 1]);
+      const lines = textWrapper.wrap(edge?.label ?? '', {
+        fontSize: chartFont.small, fontWeight: fontWeight('label'), maxWidth: cardW - 24,
+      });
+      return { source: node, target: nodes[index + 1], edge, index, lines };
+    });
+    gap = Math.max(gap, ...connectorData.filter(d => d.edge?.label).map(d => d.lines.length * 16 + 20));
+    const height = Math.max(260, margin.top + margin.bottom + nodes.length * cardH + Math.max(0, nodes.length - 1) * gap);
+    svg.attr('viewBox', `0 0 ${width} ${height}`).attr('height', height);
     const stepY = (index) => margin.top + index * (cardH + gap);
-    const connectorData = nodes.slice(0, -1).map((node, index) => ({ source: node, target: nodes[index + 1], edge: edgeBetween(node, nodes[index + 1]), index }));
     const railRadius = hasDetails ? (compact ? 17 : 22) : (compact ? 15 : 18);
     const innerRailRadius = hasDetails ? (compact ? 12 : 16) : (compact ? 10.5 : 13);
     const connectorStartY = (index) => stepY(index) + cardH / 2 + railRadius + 3;
@@ -1331,24 +1345,20 @@ const chartPayloadJson = chartPayload
       })
       .attr('fill', (d) => colorForTone(d.source.tone))
       .attr('opacity', 0.42);
-    const connectorLabels = svg.append('g').selectAll('g').data(connectorData.filter((d) => visibleEdgeLabel(d.edge))).join('g');
-    const connectorLabelWidth = Math.min(84, railX * 2 - 8);
+    const connectorLabels = svg.append('g').selectAll('g').data(connectorData.filter((d) => visibleEdgeLabel(d.edge))).join('g')
+      .attr('class', 'flow-connection-label')
+      .attr('transform', d => `translate(${cardX},${stepY(d.index) + cardH + (gap - d.lines.length * 16 - 12) / 2})`);
     connectorLabels.append('rect')
-      .attr('x', railX - connectorLabelWidth / 2)
-      .attr('y', (d) => (stepY(d.index) + stepY(d.index + 1) + cardH) / 2 - 12)
-      .attr('width', connectorLabelWidth)
-      .attr('height', 24)
-      .attr('rx', 12)
+      .attr('width', d => Math.min(cardW, Math.max(...d.lines.map(line => textWrapper.measure(line, { fontSize: chartFont.small, fontWeight: fontWeight('label') }))) + 24))
+      .attr('height', d => d.lines.length * 16 + 12)
+      .attr('rx', 8)
       .attr('fill', palette.paper)
       .attr('stroke', palette.border);
     connectorLabels.append('text')
-      .attr('x', railX)
-      .attr('y', (d) => (stepY(d.index) + stepY(d.index + 1) + cardH) / 2 + 4)
-      .attr('text-anchor', 'middle')
       .attr('fill', palette.claret)
       .attr('font-size', chartFont.small)
       .attr('font-weight', fontWeight('label'))
-      .text((d) => textWrapper.fit(visibleEdgeLabel(d.edge), { fontSize: chartFont.small, fontWeight: fontWeight('label'), maxWidth: connectorLabelWidth - 16 }));
+      .each(function(d) { renderLineBlock(d3.select(this), d.lines, { x: 12, y: 18, lineHeight: 16 }); });
     connectorLabels.each(function(d) { addTitle(d3.select(this), `${d.source.label} → ${d.target.label}: ${d.edge.label}`); });
     withTooltip(connectorLabels, (d) => tooltipHtml(`${d.source.label} → ${d.target.label}`, [d.edge.label, d.edge.relationship, safeText(d.edge.displayValue ?? d.edge.value), ...figureValueNotes(d.edge)]));
     const railNodes = svg.append('g').selectAll('g').data(nodes).join('g').attr('transform', (_node, index) => `translate(${railX},${stepY(index) + cardH / 2})`);
@@ -1468,7 +1478,11 @@ const chartPayloadJson = chartPayload
       wrapCache.set(cacheKey, lines);
       return lines;
     };
-    return { wrap, fit, remove: () => measureText.remove() };
+    return {
+      wrap, fit,
+      measure: (text, { fontSize, fontWeight }) => { setFont(fontSize, fontWeight); return measuredWidth(text); },
+      remove: () => measureText.remove(),
+    };
   };
 
   const renderTimeline = (element, payload) => {
@@ -1699,20 +1713,70 @@ const chartPayloadJson = chartPayload
   };
 
   const renderJourneyMap = (element, payload) => {
-    const items = normalizedItems(payload.data, payload.itemLabel);
-    const margin = { top: 34, right: 34, bottom: 46, left: 34 };
-    const { svg, width, height } = svgBase(element, 360);
-    const x = d3.scalePoint().domain(items.map((d) => d.label)).range([margin.left + 22, width - margin.right - 22]).padding(0.5);
-    const yMid = height / 2;
-    const line = d3.line().curve(d3.curveCatmullRom.alpha(0.6)).x((d) => x(d.label)).y((d, index) => yMid + (index % 2 === 0 ? -28 : 28));
-    svg.append('path').attr('d', line(items)).attr('fill', 'none').attr('stroke', palette.claret).attr('stroke-width', 3).attr('opacity', 0.8);
-    const groups = svg.append('g').selectAll('g').data(items).join('g').attr('transform', (d, index) => `translate(${x(d.label)},${yMid + (index % 2 === 0 ? -28 : 28)})`);
-    groups.append('circle').attr('r', 18).attr('fill', (d) => colorForTone(d.tone)).attr('stroke', '#fff7ef').attr('stroke-width', 3);
-    groups.append('text').attr('text-anchor', 'middle').attr('y', 4).attr('fill', '#fff7ef').attr('font-size', chartFont.small).attr('font-weight', fontWeight('label')).text((d) => d._index + 1);
-    groups.append('rect').attr('x', -72).attr('y', (_d, index) => index % 2 === 0 ? -92 : 34).attr('width', 144).attr('height', 52).attr('rx', 9).attr('fill', '#fff7ef').attr('stroke', palette.border);
-    groups.append('text').attr('x', 0).attr('y', (_d, index) => index % 2 === 0 ? -68 : 57).attr('text-anchor', 'middle').attr('fill', palette.ink).attr('font-size', chartFont.small).attr('font-weight', fontWeight('strong')).each(function(d) { renderWrappedText(d3.select(this), d.label, { maxChars: 18, maxLines: 2, lineHeight: chartFont.lineHeight.tight }); });
-    groups.each(function(d) { addTitle(d3.select(this), `${d.label}${d.detail ? ` — ${d.detail}` : ''}`); });
-    withTooltip(groups, (d) => tooltipHtml(d.label, [d.detail]));
+    const items = normalizedItems(payload.data, payload.itemLabel).map(item => ({
+      ...item, notes: [...new Set([...figureValueNotes(item),
+        ...['actor', 'actors', 'phase', 'stage', 'emotion', 'channel', 'channels', 'touchpoints']
+          .flatMap(key => arr(item[key]).length ? item[key] : [item[key]])
+          .filter(value => typeof value === 'string' && value.trim()),
+      ])],
+    }));
+    const { svg, width } = svgBase(element, 300);
+    const columns = width >= 800 ? 3 : width >= 560 ? 2 : 1;
+    const margin = 20, gap = 38;
+    const cardW = (width - margin * 2 - gap * (columns - 1)) / columns;
+    const wrapper = createSvgTextWrapper(svg);
+    const layout = items.map((item, index) => {
+      const title = wrapper.wrap(item.label, { fontSize: 14, fontWeight: 900, maxWidth: cardW - 36 });
+      const notes = item.notes.flatMap(note => wrapper.wrap(note, { fontSize: 12, fontWeight: 650, maxWidth: cardW - 36 }));
+      return { ...item, index, title, noteLines: notes, height: 64 + title.length * 18 + notes.length * 16 };
+    });
+    let cursor = 20;
+    for (let start = 0; start < layout.length; start += columns) {
+      const row = layout.slice(start, start + columns);
+      const rowIndex = start / columns;
+      const height = Math.max(...row.map(item => item.height));
+      row.forEach((item, column) => {
+        item.x = margin + (rowIndex % 2 ? columns - column - 1 : column) * (cardW + gap);
+        item.y = cursor;
+      });
+      cursor += height + gap;
+    }
+    svg.attr('viewBox', `0 0 ${width} ${cursor}`).attr('height', cursor);
+    const marker = svg.append('defs').append('marker').attr('id', `${payload.id}-journey-arrow`)
+      .attr('viewBox', '0 0 10 10').attr('refX', 9).attr('refY', 5).attr('markerWidth', 7).attr('markerHeight', 7).attr('orient', 'auto');
+    marker.append('path').attr('d', 'M0,0 L10,5 L0,10 Z').attr('fill', palette.claret);
+    const links = layout.slice(0, -1).map((source, index) => ({ source, target: layout[index + 1] }));
+    svg.append('g').selectAll('path').data(links).join('path').attr('class', 'journey-connector')
+      .attr('d', ({ source, target }) => {
+        if (source.y === target.y) {
+          const forward = source.x < target.x;
+          const x1 = source.x + (forward ? cardW : 0), x2 = target.x + (forward ? 0 : cardW);
+          const y = source.y + Math.min(source.height, target.height) / 2;
+          return `M${x1},${y} H${x2}`;
+        }
+        const x1 = source.x + cardW / 2, x2 = target.x + cardW / 2;
+        const y1 = source.y + source.height, y2 = target.y;
+        return `M${x1},${y1} V${(y1 + y2) / 2} H${x2} V${y2}`;
+      })
+      .attr('fill', 'none').attr('stroke', palette.claret).attr('stroke-width', 1.7)
+      .attr('marker-end', `url(#${payload.id}-journey-arrow)`);
+    const cards = svg.append('g').selectAll('g').data(layout).join('g').attr('class', 'journey-card')
+      .attr('transform', item => `translate(${item.x},${item.y})`);
+    cards.append('rect').attr('width', cardW).attr('height', item => item.height).attr('rx', 14)
+      .attr('fill', palette.paper).attr('stroke', item => colorForTone(item.tone)).attr('stroke-opacity', 0.4);
+    cards.append('circle').attr('cx', 28).attr('cy', 28).attr('r', 13).attr('fill', item => colorForTone(item.tone));
+    cards.append('text').attr('x', 28).attr('y', 32).attr('text-anchor', 'middle')
+      .attr('fill', palette.paper).attr('font-size', 12).attr('font-weight', 800).text(item => item.index + 1);
+    cards.append('text').attr('fill', palette.ink).attr('font-size', 14).attr('font-weight', 900)
+      .each(function(item) { renderLineBlock(d3.select(this), item.title, { x: 18, y: 64, lineHeight: 18 }); });
+    cards.append('text').attr('fill', palette.muted).attr('font-size', 12).attr('font-weight', 650)
+      .each(function(item) { renderLineBlock(d3.select(this), item.noteLines, { x: 18, y: 74 + item.title.length * 18, lineHeight: 16 }); });
+    withTooltip(cards, item => tooltipHtml(item.label, item.notes));
+    const print = d3.select(element).append('ol').attr('class', 'journey-print-events');
+    const rows = print.selectAll('li').data(items).join('li');
+    rows.append('strong').text(item => item.label);
+    rows.selectAll('p').data(item => item.notes).join('p').text(note => note);
+    wrapper.remove();
   };
 
   const renderKpi = (element, payload) => {
@@ -1733,22 +1797,189 @@ const chartPayloadJson = chartPayload
     ]));
   };
 
+  const chartSeries = payload => barSeries(payload.data).map((series, seriesIndex) => ({
+    ...series, label: series.label ?? series.name ?? '',
+    points: series.points.map((item, index) => ({
+      ...item, label: item.label ?? item.name ?? item.id ?? `${payload.itemLabel} ${index + 1}`,
+      unit: item.unit ?? series.unit, _seriesIndex: seriesIndex, _pointIndex: index,
+    })),
+  }));
+
   const renderBar = (element, payload) => {
-    const items = arr(payload.data.items).length ? arr(payload.data.items) : arr(arr(payload.data.series)[0]?.points);
-    const { svg, width, height } = svgBase(element, Math.max(260, items.length * 42 + 78));
-    const margin = { top: 18, right: 112, bottom: 38, left: Math.min(220, Math.max(152, Math.max(...items.map((item) => String(item.label ?? '').length), 8) * 7.5)) };
-    const x = d3.scaleLinear().domain([0, d3.max(items, (d) => numberValue(d.value)) || 1]).nice().range([margin.left, width - margin.right]);
-    const y = d3.scaleBand().domain(items.map((d) => d.label)).range([margin.top, height - margin.bottom]).padding(0.26);
-    axisBottom(svg, x, height - margin.bottom);
-    axisLeft(svg, y, margin.left);
-    const bars = svg.append('g').selectAll('rect').data(items).join('rect')
-      .attr('x', x(0)).attr('y', (d) => y(d.label)).attr('width', (d) => Math.max(2, x(numberValue(d.value)) - x(0))).attr('height', y.bandwidth())
-      .attr('rx', 4).attr('fill', (d) => colorForTone(d.tone));
-    bars.each(function(d) { addTitle(d3.select(this), [d.label, valueLabel(d), d.unit, ...figureItemNotes(d)].filter((value) => value != null && value !== '').join(' — ')); });
-    withTooltip(bars, (d) => tooltipHtml(d.label, [String(valueLabel(d) ?? ''), d.unit, ...figureItemNotes(d)]));
-    svg.append('g').selectAll('text').data(items).join('text')
-      .attr('x', (d) => Math.min(width - margin.right + 6, x(numberValue(d.value)) + 8)).attr('y', (d) => y(d.label) + y.bandwidth() / 2 + 4)
-      .attr('fill', palette.ink).attr('font-size', chartFont.label).attr('font-weight', fontWeight('strong')).text((d) => labelText(valueLabel(d), 16));
+    const series = chartSeries(payload);
+    if (!series.length) throw new Error('Bar figure has no populated series');
+    d3.select(element).selectAll('*').remove();
+    const root = d3.select(element).append('div').attr('class', 'bar-panels');
+    for (const group of series) {
+      const panels = figureUnitsDiffer(group.points) ? group.points.map(point => [point]) : [group.points];
+      for (const points of panels) {
+        const panel = root.append('section').attr('class', 'bar-panel');
+        if (group.label) panel.append('h3').attr('class', 'bar-series-label').text(group.label);
+        panel.selectAll('p.bar-series-note').data(figureItemNotes(group)).join('p').attr('class', 'bar-series-note').text(note => note);
+        const numeric = points.map(point => chartNumericValue(point.value)).filter(value => value != null);
+        const minimum = Math.min(0, ...numeric), maximum = Math.max(0, ...numeric);
+        const span = Math.max(maximum - minimum, Number.MIN_VALUE);
+        const x = value => (value - minimum) / span * 100;
+        const rows = panel.selectAll('div.bar-row').data(points).join('div').attr('class', 'bar-row');
+        rows.each(function(point) {
+          const row = d3.select(this);
+          const heading = row.append('div').attr('class', 'bar-row-heading');
+          heading.append('span').attr('class', 'bar-row-label').text(point.label);
+          const rawValue = valueLabel(point);
+          heading.append('span').attr('class', 'bar-row-value')
+            .text([rawValue === '' && point.value == null && point.displayValue == null ? '—' : rawValue, point.unit].filter(value => value != null && value !== '').join(' '));
+          const value = chartNumericValue(point.value);
+          const track = row.append('div').attr('class', 'bar-track').attr('data-value-state', value == null ? 'unavailable' : 'numeric');
+          if (value != null) {
+            track.append('span').attr('class', 'bar-zero').style('left', `${x(0)}%`);
+            track.append('span').attr('class', 'bar-fill')
+              .style('left', `${x(Math.min(0, value))}%`).style('width', `${Math.abs(value) / span * 100}%`)
+              .style('background', colorForTone(point.tone));
+          }
+          row.selectAll('p.bar-row-note').data(figureItemNotes(point)).join('p').attr('class', 'bar-row-note').text(note => note);
+        });
+        if (numeric.length) {
+          const axis = panel.append('div').attr('class', 'bar-panel-axis');
+          const ticks = [...new Set([minimum, maximum])];
+          axis.selectAll('span').data(ticks).join('span').text(formatRangeValue);
+        }
+        withTooltip(rows, point => tooltipHtml(point.label, [group.label, String(valueLabel(point)), point.unit, ...figureItemNotes(point), ...figureItemNotes(group)]));
+      }
+    }
+  };
+
+  const renderFunnel = (element, payload) => {
+    const series = chartSeries(payload);
+    if (!series.length) throw new Error('Funnel figure has no populated stages');
+    const { svg, width } = svgBase(element, 300);
+    const wrapper = createSvgTextWrapper(svg);
+    const maxWidth = width - 36;
+    let cursor = 20;
+    const stages = [];
+    for (const group of series) {
+      if (group.label) {
+        const lines = wrapper.wrap(group.label, { fontSize: 14, fontWeight: 900, maxWidth });
+        const heading = svg.append('text').attr('fill', palette.ink).attr('font-size', 14).attr('font-weight', 900);
+        renderLineBlock(heading, lines, { x: 18, y: cursor + 14, lineHeight: 18 });
+        cursor += lines.length * 18 + 18;
+      }
+      group.points.forEach((item, index) => {
+        const w = maxWidth * (1 - 0.3 * index / Math.max(1, group.points.length - 1));
+        const textWidth = w - 42;
+        const title = wrapper.wrap(item.label, { fontSize: 14, fontWeight: 900, maxWidth: textWidth });
+        const value = [valueLabel(item), item.unit].filter(value => value != null && value !== '').join(' ');
+        const valueLines = wrapper.wrap(value, { fontSize: 18, fontWeight: 800, maxWidth: textWidth });
+        const notes = [...new Set([...figureItemNotes(group), ...figureItemNotes(item)])];
+        const noteLines = notes.flatMap(note => wrapper.wrap(note, { fontSize: 12, fontWeight: 650, maxWidth: textWidth }));
+        const h = 34 + title.length * 18 + valueLines.length * 24 + (noteLines.length ? 8 + noteLines.length * 16 : 0);
+        stages.push({ item, group: group.label, notes, value, title, valueLines, noteLines, x: (width - w) / 2, y: cursor, w, h });
+        cursor += h + 8;
+      });
+      cursor += 16;
+    }
+    svg.attr('viewBox', `0 0 ${width} ${cursor}`).attr('height', cursor);
+    const rows = svg.append('g').selectAll('g').data(stages).join('g').attr('class', 'funnel-stage')
+      .attr('transform', stage => `translate(${stage.x},${stage.y})`);
+    rows.append('path').attr('class', 'funnel-band')
+      .attr('d', stage => `M0,0 H${stage.w} L${stage.w - 8},${stage.h} H8 Z`)
+      .attr('fill', stage => d3.interpolateRgb(palette.paper, colorForTone(stage.item.tone))(0.09))
+      .attr('stroke', stage => colorForTone(stage.item.tone)).attr('stroke-opacity', 0.5);
+    rows.append('text').attr('fill', palette.ink).attr('font-size', 14).attr('font-weight', 900).attr('text-anchor', 'middle')
+      .each(function(stage) { renderLineBlock(d3.select(this), stage.title, { x: stage.w / 2, y: 25, lineHeight: 18 }); });
+    rows.append('text').attr('fill', palette.claret).attr('font-size', 18).attr('font-weight', 800).attr('text-anchor', 'middle')
+      .each(function(stage) { renderLineBlock(d3.select(this), stage.valueLines, { x: stage.w / 2, y: 32 + stage.title.length * 18, lineHeight: 24 }); });
+    rows.append('text').attr('fill', palette.muted).attr('font-size', 12).attr('font-weight', 650).attr('text-anchor', 'middle')
+      .each(function(stage) { renderLineBlock(d3.select(this), stage.noteLines, { x: stage.w / 2, y: 42 + stage.title.length * 18 + stage.valueLines.length * 24, lineHeight: 16 }); });
+    withTooltip(rows, stage => tooltipHtml(stage.item.label, [stage.group, stage.value, ...stage.notes]));
+    const print = d3.select(element).append('ol').attr('class', 'funnel-print-stages');
+    const printRows = print.selectAll('li').data(stages).join('li');
+    printRows.append('strong').text(stage => [stage.group, stage.item.label].filter(Boolean).join(' / '));
+    printRows.append('p').text(stage => stage.value);
+    printRows.selectAll('p.funnel-print-note').data(stage => stage.notes).join('p').attr('class', 'funnel-print-note').text(note => note);
+    wrapper.remove();
+  };
+
+  const renderWaterfall = (element, payload) => {
+    const layout = payload.waterfallLayout;
+    if (layout.mode === 'independent') {
+      renderBar(element, payload);
+      d3.select(element).insert('p', ':first-child').attr('class', 'figure-note waterfall-independent-notice').text(payload.waterfallLabels.independent);
+      return;
+    }
+    const details = waterfallValueTable(payload.data, {
+      valueLabel: payload.waterfallLabels.value, contextLabel: payload.waterfallLabels.context,
+      metadataLabel: payload.waterfallLabels.metadata,
+    });
+    const points = arr(payload.data.items).map((item, index) => ({
+      ...item, ...layout.spans[index], index, label: item.label ?? item.name ?? `${payload.itemLabel} ${index + 1}`,
+      notes: String(details.rows[index].values[0].detail ?? '').split('\n').filter(Boolean),
+    }));
+    const { svg, width } = svgBase(element, 360);
+    const wrapper = createSvgTextWrapper(svg);
+    const compact = width < 640 || points.length > 10;
+    const domain = d3.extent([0, ...points.flatMap(point => [point.from, point.to])]);
+    const maximumLabelWidth = compact ? width - 44 : (width - 96) / points.length - 10;
+    points.forEach(point => {
+      point.lines = wrapper.wrap(point.label, { fontSize: 13, fontWeight: 800, maxWidth: maximumLabelWidth });
+      point.valueLines = wrapper.wrap([valueLabel(point), point.unit].filter(value => value != null && value !== '').join(' '),
+        { fontSize: 13, fontWeight: 800, maxWidth: maximumLabelWidth });
+    });
+    if (compact) {
+      const x = d3.scaleLinear().domain(domain).nice().range([22, width - 22]);
+      let cursor = 34;
+      points.forEach(point => {
+        point.y = cursor;
+        cursor += 26 + (point.lines.length + point.valueLines.length) * 17 + 28;
+      });
+      svg.attr('viewBox', `0 0 ${width} ${cursor + 30}`).attr('height', cursor + 30);
+      axisBottom(svg, x, cursor + 8, 3);
+      const rows = svg.append('g').selectAll('g').data(points).join('g').attr('class', 'waterfall-step');
+      rows.append('text').attr('fill', palette.ink).attr('font-size', 13).attr('font-weight', 800)
+        .each(function(point) { renderLineBlock(d3.select(this), point.lines, { x: 22, y: point.y, lineHeight: 17 }); });
+      rows.append('text').attr('fill', palette.claret).attr('font-size', 13).attr('font-weight', 800)
+        .each(function(point) { renderLineBlock(d3.select(this), point.valueLines, { x: 22, y: point.y + point.lines.length * 17 + 3, lineHeight: 17 }); });
+      rows.append('rect').attr('class', 'waterfall-bar')
+        .attr('x', point => x(Math.min(point.from, point.to)))
+        .attr('y', point => point.y + (point.lines.length + point.valueLines.length) * 17 + 9)
+        .attr('width', point => Math.max(1, Math.abs(x(point.to) - x(point.from)))).attr('height', 18).attr('rx', 3)
+        .attr('fill', point => colorForTone(point.tone));
+      svg.append('g').selectAll('path').data(points.slice(0, -1)).join('path').attr('class', 'waterfall-connector')
+        .attr('d', (point, index) => {
+          const y1 = point.y + (point.lines.length + point.valueLines.length) * 17 + 27;
+          const next = points[index + 1];
+          const y2 = next.y + (next.lines.length + next.valueLines.length) * 17 + 9;
+          return `M${x(point.to)},${y1} V${y2} H${x(next.from)}`;
+        }).attr('fill', 'none').attr('stroke', palette.border).attr('stroke-dasharray', '3 4');
+      withTooltip(rows, point => tooltipHtml(point.label, [String(valueLabel(point)), ...point.notes]));
+    } else {
+      const bottom = 40 + Math.max(...points.map(point => point.lines.length)) * 16;
+      const height = 330 + bottom;
+      svg.attr('viewBox', `0 0 ${width} ${height}`).attr('height', height);
+      const x = d3.scaleBand().domain(points.map(point => point.index)).range([70, width - 26]).padding(0.28);
+      const top = 20 + Math.max(...points.map(point => point.valueLines.length)) * 17;
+      const y = d3.scaleLinear().domain(domain).nice().range([height - bottom, top]);
+      axisLeft(svg, y, 70);
+      svg.append('line').attr('x1', 70).attr('x2', width - 26).attr('y1', y(0)).attr('y2', y(0)).attr('stroke', palette.border);
+      svg.append('g').selectAll('line').data(points.slice(0, -1)).join('line').attr('class', 'waterfall-connector')
+        .attr('x1', point => x(point.index) + x.bandwidth()).attr('x2', point => x(point.index + 1))
+        .attr('y1', point => y(point.to)).attr('y2', point => y(point.to)).attr('stroke', palette.border).attr('stroke-dasharray', '3 4');
+      const bars = svg.append('g').selectAll('g').data(points).join('g').attr('class', 'waterfall-step');
+      bars.append('rect').attr('class', 'waterfall-bar').attr('x', point => x(point.index))
+        .attr('y', point => y(Math.max(point.from, point.to))).attr('width', x.bandwidth())
+        .attr('height', point => Math.max(1, Math.abs(y(point.to) - y(point.from))))
+        .attr('rx', 3).attr('fill', point => colorForTone(point.tone));
+      bars.append('text').attr('fill', palette.claret).attr('font-size', 13).attr('font-weight', 800).attr('text-anchor', 'middle')
+        .each(function(point) {
+          renderLineBlock(d3.select(this), point.valueLines, {
+            x: x(point.index) + x.bandwidth() / 2,
+            y: Math.max(16, y(Math.max(point.from, point.to)) - 8 - (point.valueLines.length - 1) * 17), lineHeight: 17,
+          });
+        });
+      bars.append('text').attr('fill', palette.ink).attr('font-size', 13).attr('font-weight', 800).attr('text-anchor', 'middle')
+        .each(function(point) { renderLineBlock(d3.select(this), point.lines, { x: x(point.index) + x.bandwidth() / 2, y: height - bottom + 24, lineHeight: 16 }); });
+      withTooltip(bars, point => tooltipHtml(point.label, [String(valueLabel(point)), ...point.notes]));
+    }
+    wrapper.remove();
   };
 
   const layoutRangeAxis = (axis) => {
@@ -1823,7 +2054,7 @@ const chartPayloadJson = chartPayload
     withTooltip(root.selectAll('.range-row'), (d) => tooltipHtml(d.label, [`${payload.rangeLabels.low} ${d.labels.low}`, `${payload.rangeLabels.mid} ${d.labels.mid}`, `${payload.rangeLabels.high} ${d.labels.high}`, ...d.notes]));
   };
 
-  const renderQuadrant = (element, payload) => {
+  const renderQuadrant = (element, payload, minimumHeight = 0) => {
     const points = arr(payload.data.points);
     const xAxis = payload.quadrantAxes.x;
     const yAxis = payload.quadrantAxes.y;
@@ -1831,7 +2062,7 @@ const chartPayloadJson = chartPayload
     const yAxisLabel = yAxis.label;
     const containerWidth = element.getBoundingClientRect().width || 760;
     const compact = containerWidth < 640;
-    const { svg, width, height } = svgBase(element, compact ? 420 : 380);
+    const { svg, width, height } = svgBase(element, Math.max(compact ? 500 : 430, points.length * 30 + 150, minimumHeight));
     const margin = compact ? { top: 52, right: 34, bottom: 84, left: 76 } : { top: 54, right: 42, bottom: 84, left: 94 };
     const textWrapper = createSvgTextWrapper(svg);
     const labelWidth = width - margin.left - margin.right;
@@ -1856,6 +2087,20 @@ const chartPayloadJson = chartPayload
       .attr('rx', 18)
       .attr('fill', '#fffaf5')
       .attr('stroke', palette.border);
+    const clip = svg.append('defs').append('clipPath').attr('id', `${payload.id}-quadrant-panel`);
+    clip.append('rect').attr('x', margin.left).attr('y', margin.top).attr('width', plotW).attr('height', plotH).attr('rx', 18);
+    const fills = ['#f4eeef', '#edf2f0', '#f5eee5', '#eeeaf2'];
+    panel.append('g').attr('clip-path', `url(#${payload.id}-quadrant-panel)`)
+      .selectAll('rect').data(fills).join('rect').attr('class', 'quadrant-zone')
+      .attr('x', (_fill, index) => margin.left + index % 2 * plotW / 2)
+      .attr('y', (_fill, index) => margin.top + Math.floor(index / 2) * plotH / 2)
+      .attr('width', plotW / 2).attr('height', plotH / 2).attr('fill', fill => fill);
+    const dividers = panel.append('g').attr('class', 'quadrant-dividers').attr('stroke', palette.muted)
+      .attr('stroke-width', 1).attr('stroke-dasharray', '5 5').attr('opacity', 0.55);
+    dividers.append('line').attr('x1', margin.left + plotW / 2).attr('x2', margin.left + plotW / 2)
+      .attr('y1', margin.top).attr('y2', height - margin.bottom);
+    dividers.append('line').attr('x1', margin.left).attr('x2', width - margin.right)
+      .attr('y1', margin.top + plotH / 2).attr('y2', margin.top + plotH / 2);
     const tickValues = (scale) => [...new Set([...scale.domain(), ...scale.ticks(2)])].sort((a, b) => a - b);
     const tickFormat = d3.format('~g');
     svg.append('g')
@@ -1879,24 +2124,37 @@ const chartPayloadJson = chartPayload
     const yTitle = svg.append('text').attr('class', 'quadrant-y-title').attr('fill', palette.ink).attr('font-size', chartFont.axis).attr('font-weight', fontWeight('label'));
     renderLineBlock(yTitle, yLines, { x: margin.left, y: 18, lineHeight: chartFont.lineHeight.small });
     const plotPoints = points.map((point, index) => {
+      const labelOptions = { fontSize: 13, fontWeight: 800, maxWidth: Math.min(compact ? 110 : 160, plotW - 24) };
+      const lines = textWrapper.wrap(`${index + 1}. ${point.label}`, labelOptions);
       return { ...point, _index: index, _valueX: point.x, _valueY: point.y,
-        notes: figureValueNotes(point), x: x(point.x), y: y(point.y) };
+        notes: figureValueNotes(point), x: x(point.x), y: y(point.y), _labelLines: lines,
+        _labelWidth: Math.max(...lines.map(line => textWrapper.measure(line, labelOptions))) + 20,
+        _labelHeight: lines.length * 17 + 14 };
     });
-    const badgeRadius = compact ? 15 : 17;
     const labels = quadrantLabelPositions(plotPoints, {
       left: margin.left, right: width - margin.right, top: margin.top, bottom: height - margin.bottom,
-    }, badgeRadius);
-    const dots = svg.append('g').selectAll('g.quadrant-point').data(plotPoints).join('g').attr('class', 'quadrant-point').attr('transform', (d) => `translate(${d.x},${d.y})`);
-    // Only annotation badges move; dots and leader origins stay at authored coordinates.
-    dots.filter((d) => labels[d._index].x !== d.x || labels[d._index].y !== d.y)
-      .append('line').attr('class', 'quadrant-label-leader')
-      .attr('x2', (d) => labels[d._index].x - d.x).attr('y2', (d) => labels[d._index].y - d.y)
+    }, 6);
+    if (labels.some((label, index) => label.x === plotPoints[index].x && label.y === plotPoints[index].y)) {
+      const maximumHeight = margin.top + margin.bottom + plotPoints.reduce((sum, point) => sum + point._labelHeight * 2 + 30, 0);
+      textWrapper.remove();
+      if (height >= maximumHeight) throw new Error('Quadrant names cannot fit within the available plot width');
+      return renderQuadrant(element, payload, Math.min(height + 120, maximumHeight));
+    }
+    svg.append('g').selectAll('line').data(plotPoints).join('line').attr('class', 'quadrant-label-leader')
+      .attr('x1', d => d.x).attr('y1', d => d.y)
+      .attr('x2', d => labels[d._index].x).attr('y2', d => labels[d._index].y)
       .attr('stroke', (d) => colorForTone(d.tone)).attr('stroke-width', 1.2);
-    dots.append('circle').attr('class', 'quadrant-coordinate-dot').attr('r', 4).attr('fill', (d) => colorForTone(d.tone));
+    const dots = svg.append('g').selectAll('g.quadrant-point').data(plotPoints).join('g').attr('class', 'quadrant-point').attr('transform', (d) => `translate(${d.x},${d.y})`);
+    dots.append('circle').attr('class', 'quadrant-coordinate-dot').attr('r', 5).attr('fill', (d) => colorForTone(d.tone));
     const badges = dots.append('g').attr('class', 'quadrant-point-label')
       .attr('transform', (d) => `translate(${labels[d._index].x - d.x},${labels[d._index].y - d.y})`);
-    badges.append('circle').attr('r', badgeRadius).attr('fill', (d) => colorForTone(d.tone)).attr('stroke', '#fff7ef').attr('stroke-width', 3).attr('opacity', 0.96);
-    badges.append('text').attr('text-anchor', 'middle').attr('dominant-baseline', 'middle').attr('fill', '#fff7ef').attr('font-size', chartFont.size.caption).attr('font-weight', fontWeight('emphasis')).text((d) => d._index + 1);
+    badges.append('rect').attr('x', d => -d._labelWidth / 2).attr('y', d => -d._labelHeight / 2)
+      .attr('width', d => d._labelWidth).attr('height', d => d._labelHeight).attr('rx', 7)
+      .attr('fill', '#fffaf5').attr('stroke', d => colorForTone(d.tone)).attr('stroke-opacity', 0.3);
+    badges.append('text').attr('fill', palette.ink).attr('font-size', 13).attr('font-weight', 800)
+      .each(function(d) {
+        renderLineBlock(d3.select(this), d._labelLines, { x: -d._labelWidth / 2 + 10, y: -d._labelHeight / 2 + 20, lineHeight: 17 });
+      });
     // Coincident points keep their coordinates; the legend exposes every item.
     dots.each(function(d) { addTitle(d3.select(this), `${d.label}: ${xAxisLabel} ${d._valueX}; ${yAxisLabel} ${d._valueY}`); });
     withTooltip(dots, (d) => tooltipHtml(d.label, [`${xAxisLabel}: ${d._valueX}`, `${yAxisLabel}: ${d._valueY}`, ...d.notes]));
@@ -2053,6 +2311,8 @@ const chartPayloadJson = chartPayload
     kpi: renderKpi,
     range: renderRange,
     bar: renderBar,
+    funnel: renderFunnel,
+    waterfall: renderWaterfall,
     matrix: renderHeatmap,
     cohort: renderCohort,
     quadrant: renderQuadrant,
@@ -2165,7 +2425,7 @@ const chartPayloadJson = chartPayload
     layoutRangeAxes();
   });
   window.addEventListener('beforeprint', () => {
-    document.querySelectorAll<HTMLDetailsElement>('details.flow-sequence-details, details.dag-details, details.quadrant-details').forEach((details) => {
+    document.querySelectorAll<HTMLDetailsElement>('details.flow-sequence-details, details.dag-details, details.quadrant-details, details.figure-value-details').forEach((details) => {
       if (!details.open) {
         printOpenedDetails.add(details);
         details.open = true;
@@ -2210,8 +2470,24 @@ const chartPayloadJson = chartPayload
   .flow-sequence-details :global(td) { white-space: pre-line; }
   .dag-details :global(td) { white-space: pre-line; }
   .quadrant-details :global(td) { white-space: pre-line; }
-  .flow-sequence-details, .dag-details, .quadrant-details { margin-top: var(--space-3); }
-  .flow-sequence-details > summary, .dag-details > summary, .quadrant-details > summary { cursor: pointer; color: var(--claret); font-family: var(--font-sans); font-size: var(--chart-fs-caption); font-weight: 700; padding-block: var(--space-2); }
+  .flow-sequence-details, .dag-details, .quadrant-details, .figure-value-details { margin-top: var(--space-3); }
+  .flow-sequence-details > summary, .dag-details > summary, .quadrant-details > summary, .figure-value-details > summary { cursor: pointer; color: var(--claret); font-family: var(--font-sans); font-size: var(--chart-fs-caption); font-weight: 700; padding-block: var(--space-2); }
+  .figure-value-details :global(td) { white-space: pre-line; }
+  .figure-value-details :global(td small) { display: block; margin-top: 0.3rem; }
+  :global(.bar-panels) { display: grid; gap: 1.5rem; padding: 0.75rem 0; }
+  :global(.bar-panel) { min-width: 0; }
+  :global(.bar-series-label) { margin: 0 0 0.8rem; font-family: var(--font-sans); font-size: 0.95rem; font-weight: 800; }
+  :global(.bar-row) { margin-block: 0.8rem; break-inside: avoid; }
+  :global(.bar-row-heading) { display: flex; align-items: baseline; justify-content: space-between; gap: 1rem; margin-bottom: 0.4rem; font-family: var(--font-sans); font-size: 0.85rem; line-height: 1.4; }
+  :global(.bar-row-label) { min-width: 0; overflow-wrap: anywhere; font-weight: 700; }
+  :global(.bar-row-value) { max-width: 40%; flex-shrink: 0; overflow-wrap: anywhere; text-align: right; font-weight: 800; color: var(--claret); }
+  :global(.bar-track) { height: 1.15rem; position: relative; background: rgba(153, 15, 61, 0.055); border-radius: 4px; overflow: hidden; }
+  :global(.bar-track[data-value-state="unavailable"]) { border: 1px dashed var(--line); background: transparent; }
+  :global(.bar-fill) { position: absolute; height: 100%; border-radius: 3px; }
+  :global(.bar-zero) { position: absolute; top: 0; bottom: 0; border-left: 1px solid rgba(51, 48, 46, 0.4); z-index: 1; }
+  :global(.bar-row-note), :global(.bar-series-note) { margin: 0.35rem 0; font-family: var(--font-sans); font-size: 0.8rem; line-height: 1.5; color: var(--muted); overflow-wrap: anywhere; }
+  :global(.bar-panel-axis) { display: flex; justify-content: space-between; font-family: var(--font-sans); font-size: 0.75rem; color: var(--muted); }
+  :global(.journey-print-events), :global(.funnel-print-stages) { display: none; }
   .flow-sequence-details :global(th:first-child),
   .dag-details :global(th:first-child) { width: 15%; }
   .timeline-event-evidence > .timeline-event-reference,
