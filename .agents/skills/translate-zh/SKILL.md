@@ -1077,7 +1077,8 @@ layer's label, value, qualification and tone hints in order, allow page breaks b
 layers, and inspect actual PDF type size and complete layer text.
 Approximation and evidence notes must remain visible on narrow screens and in
 print; they qualify the chart data rather than serving as optional decoration.
-Multi-series bars render as separate bar panels: check every series name and point,
+Multi-series bars render as separate SVG bar panels with numeric axes and
+value labels: check every series name and point,
 including duplicate point labels, visible context and full hover/tap text.
 Single-series bars preserve point qualifications on the page and in print;
 differing explicit point units instead produce independently scaled panels with
@@ -1147,7 +1148,8 @@ a 0–10 or percentage scoring system. Preserve complete axis definitions, point
 labels, coordinates, qualifications and ordered evidence in the accompanying
 table. Preserve descriptive axes, four background panels and dashed
 domain-midpoint dividers; these dividers are not benchmark thresholds.
-Only measured full-name annotation boxes may move to avoid collisions, with
+Keep the original filled numbered markers, matching name legend, compact plot
+and rotated y-axis title. Only numbered annotations may move to avoid collisions, with
 leader lines anchored to unchanged
 coordinate dots; coincident dots stay coincident. Use each legend entry to inspect them.
 Check exact plotted positions, both locales, mobile labels and physical PDFs.
@@ -1167,17 +1169,25 @@ Check actual text bounds inside the track and summary, including widths near the
 stacked-layout breakpoint; non-overlapping labels alone do not prove containment.
 Keep full numeric strings and qualifications rather than clipping or shortening
 them, and verify that short summaries and printed rows retain their layout.
-Funnel figures display ordered tapering bands; widths indicate stage order, not
+Funnel figures retain compact colored rounded levels and muted tracks, with
+stage labels and raw values alongside them. Widths indicate stage order, not
 quantity. Do not derive conversion rates or shared population, unit or time
 assumptions. Preserve explicitly
 authored rates and qualifications. Verify stage labels, raw values, units,
-series names and notes in the visible bands and hover/tap tooltips in both locales,
+series names and visible notes below the levels and in hover/tap tooltips in both locales,
 including narrow screens and print; never invent a rate to replace the old
 renderer-generated percentages.
 Waterfall figures draw cumulative spans only for exactly reconciled declared
 `base`/`cumulative` values or an explicitly described, exactly balanced same-unit
 from-to bridge. Resolve the mode from English before overlays. Other figures show
 independent source-value bars with an explicit notice, not invented cumulative totals.
+Preserve rounded vertical columns, decrease/increase colors, dashed connectors,
+the plot panel and readable inside values when they fit. Journey maps retain
+the original curved horizontal path, numbered circles and alternating compact
+title cards; repeated labels remain distinct indexed stages. On narrow screens,
+journeys and cumulative waterfalls scroll horizontally instead of changing
+orientation or shrinking their type. Check the final stage after scrolling,
+and complete labels and qualifications in tooltips and readable print alternatives.
 Preserve every raw value, unit,
 qualification and any declared `kind` / `role`, including conflicting or unfamiliar
 role strings. Other authored `type`, `isTotal`, `category`, `direction`, `status`,

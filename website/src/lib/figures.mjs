@@ -122,6 +122,10 @@ export function quadrantLabelPositions(points, bounds, radius, packed = false) {
     const halfWidth = boxed ? point._labelWidth / 2 : radius;
     const halfHeight = boxed ? point._labelHeight / 2 : radius;
     const candidates = boxed ? [] : [{ x: point.x, y: point.y }];
+    if (!boxed) candidates.push({
+      x: Math.max(bounds.left + radius, Math.min(bounds.right - radius, point.x)),
+      y: Math.max(bounds.top + radius, Math.min(bounds.bottom - radius, point.y)),
+    });
     for (let ring = 1; ring <= (boxed ? 5 : 3); ring++) {
       for (let direction = 0; direction < 8; direction++) {
         const angle = direction * Math.PI / 4;
@@ -131,7 +135,17 @@ export function quadrantLabelPositions(points, bounds, radius, packed = false) {
         });
       }
     }
-    if (boxed) {
+    const isAvailable = candidate =>
+      candidate.x - halfWidth >= bounds.left && candidate.x + halfWidth <= bounds.right
+      && candidate.y - halfHeight >= bounds.top && candidate.y + halfHeight <= bounds.bottom
+      && placed.every(label => boxed
+        ? Math.abs(label.x - candidate.x) >= label.halfWidth + halfWidth + 4
+          || Math.abs(label.y - candidate.y) >= label.halfHeight + halfHeight + 4
+        : Math.hypot(label.x - candidate.x, label.y - candidate.y) >= radius * 2 + 2)
+      && points.every((other, otherIndex) => boxed
+        ? Math.abs(other.x - candidate.x) >= halfWidth + 7 || Math.abs(other.y - candidate.y) >= halfHeight + 7
+        : otherIndex === index || Math.hypot(other.x - candidate.x, other.y - candidate.y) >= radius + 6);
+    if (boxed || !candidates.some(isAvailable)) {
       const grid = [];
       for (let y = bounds.top + halfHeight; y <= bounds.bottom - halfHeight; y += packed ? halfHeight * 2 + 6 : 6) {
         for (let x = bounds.left + halfWidth; x <= bounds.right - halfWidth; x += packed ? halfWidth * 2 + 6 : 6) {
@@ -142,16 +156,7 @@ export function quadrantLabelPositions(points, bounds, radius, packed = false) {
       if (packed) candidates.unshift(...grid);
       else candidates.push(...grid);
     }
-    const position = candidates.find(candidate =>
-      candidate.x - halfWidth >= bounds.left && candidate.x + halfWidth <= bounds.right
-      && candidate.y - halfHeight >= bounds.top && candidate.y + halfHeight <= bounds.bottom
-      && placed.every(label => boxed
-        ? Math.abs(label.x - candidate.x) >= label.halfWidth + halfWidth + 4
-          || Math.abs(label.y - candidate.y) >= label.halfHeight + halfHeight + 4
-        : Math.hypot(label.x - candidate.x, label.y - candidate.y) >= radius * 2 + 2)
-      && points.every((other, otherIndex) => boxed
-        ? Math.abs(other.x - candidate.x) >= halfWidth + 7 || Math.abs(other.y - candidate.y) >= halfHeight + 7
-        : otherIndex === index || Math.hypot(other.x - candidate.x, other.y - candidate.y) >= radius + 6));
+    const position = candidates.find(isAvailable);
     const label = position ?? { x: point.x, y: point.y };
     if (!position && boxed) needsPacking = true;
     placed.push({ ...label, halfWidth, halfHeight });

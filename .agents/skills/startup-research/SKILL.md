@@ -243,7 +243,9 @@ remain structural and do not certify the absence of such content defects.
 **Funnel comparability:** use a funnel only for comparable stages of the same
 population, unit and time basis. Mixed patient, organization, transaction and
 currency metrics belong in separate cards or a table, not a conversion funnel.
-The renderer shows ordered, tapering funnel bands with a localized notice.
+The renderer keeps the original compact colored, rounded levels and muted
+full-width tracks, with stage names and raw values alongside them.
+The levels taper by authored order, with a localized notice.
 The taper indicates stage order, not magnitude. It does not derive conversion
 rates, percentage shares or value-proportional widths: the figure contract does
 not establish a shared population or time basis,
@@ -255,12 +257,12 @@ funnels, author and source conversion rates explicitly rather than relying on
 the website to infer them. This presentation safeguard does not validate the
 metrics or repair unsupported claims in the report text.
 Authored item `valueNote` strings are value qualifications, not replacement
-values. Retain them alongside other distinct notes in the diagram and tooltip,
+values. Retain them alongside other distinct notes below the diagram and in its tooltip,
 including the `series[].points[]` shape. Localize the prose, preserve numeric
 values, and do not treat an unaudited company figure as independently verified.
 
 **Bar-chart completeness:** multiple populated `series[].points[]` are shown
-in separate responsive bar panels, with every point retained in original series
+in separate SVG bar panels with numeric axes and value labels, with every point retained in original series
 order. Series names,
 values, explicit units and point qualifications remain together; duplicate
 point labels are not merged. This avoids implying a common numeric scale for
@@ -293,11 +295,23 @@ supplement, tooltips and print; the mode does not validate underlying assumption
 
 **Quadrant presentation:** retain four background panels and dashed domain-midpoint
 dividers without inventing ranking zones or benchmark thresholds. Plot exact
-authored coordinates; move only measured full-name annotations with leader lines,
-not the coordinate dots. Expand crowded plots vertically instead of overlapping
-names or silently placing them back over dots. Keep full axes, source coordinates, qualifications and
+authored coordinates. Keep the original filled numbered markers, matching name
+legend, compact plot proportions and rotated y-axis title. Move only numbered
+annotations when necessary, with leader lines anchored to unchanged coordinate
+dots. Expand crowded plots vertically instead of overlapping markers.
+Keep full axes, source coordinates, qualifications and
 evidence in the supplementary disclosure. Compare actual desktop/mobile screenshots
-and check label overlap, not just chart hydration or absence of page overflow.
+against the historical renderer, not just chart hydration or absence of page overflow.
+
+**Historical presentation:** journey maps retain the curved horizontal path,
+numbered circles and alternating compact title cards, not a serpentine card grid.
+Use index-based positions so repeated stage names remain distinct. Waterfalls
+retain rounded vertical columns, decrease/increase colors, dashed connectors,
+the plot panel and inside values when space permits. Narrow screens scroll these
+diagrams at readable size rather than changing their orientation or shrinking
+the text. Tooltips and readable print alternatives retain complete source text.
+Do not restore the old renderer's invented conversion rates, ranking zones,
+force-displaced coordinates or unverified total assumptions to imitate its appearance.
 
 **Flow relationships:** an ordered flow with no explicit edges keeps its existing
 sequence layout. Explicit edges must form the complete, unambiguous adjacent-node

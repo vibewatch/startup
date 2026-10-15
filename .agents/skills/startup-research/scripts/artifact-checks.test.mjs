@@ -419,7 +419,7 @@ test('waterfall rendering restores diagrams with source-value supplements and ex
   const report = readFileSync('website/src/components/DiligenceReport.astro', 'utf8');
   assert.match(report, /withWaterfallSpans\(figure\)/);
   assert.ok(report.indexOf('withWaterfallSpans(figure)') < report.indexOf('mergeI18n(enDoc'));
-  assert.match(report.slice(report.indexOf('@media print')), /\.chart-waterfall > svg/);
+  assert.match(report.slice(report.indexOf('@media print')), /\.chart-waterfall > \.chart-scroll-frame/);
 });
 
 test('chart numeric values preserve zero and negatives without treating unavailable values as zero', () => {
@@ -476,7 +476,7 @@ test('funnel and multiple-series bars retain dedicated diagrams instead of matri
   assert.match(source, /const type = relationshipDiagram \? 'dag' : authoredType/);
   assert.match(source, /figureUnitsDiffer\(group\.points\) \? group\.points\.map/);
   assert.match(source, /attr\('class', 'funnel-band'\)/);
-  assert.match(source, /attr\('data-value-state', value == null \? 'unavailable' : 'numeric'\)/);
+  assert.match(source, /attr\('data-value-state', point => point\.number == null \? 'unavailable' : 'numeric'\)/);
   assert.match(source, /class="figure-value-details"/);
   const funnel = source.slice(source.indexOf('const renderFunnel ='), source.indexOf('const renderWaterfall ='));
   assert.doesNotMatch(funnel, /item\.value\s*\/|conversion|percentage/);
@@ -971,12 +971,14 @@ test('quadrant rendering removes fabricated rankings and plots exact positions w
   assert.match(quadrant, /payload\.quadrantAxes\.y/);
   assert.match(quadrant, /attr\('class', 'quadrant-zone'\)/);
   assert.match(quadrant, /attr\('class', 'quadrant-dividers'\)/);
-  assert.match(quadrant, /_labelWidth/);
-  assert.match(quadrant, /label\.x === plotPoints\[index\]\.x && label\.y === plotPoints\[index\]\.y/);
+  assert.match(quadrant, /quadrant-number-marker/);
+  assert.doesNotMatch(quadrant, /_labelWidth|badges\.append\('rect'\)/);
+  assert.match(quadrant, /Math\.hypot\(label\.x - other\.x, label\.y - other\.y\) < radius \* 2 \+ 2/);
   assert.match(quadrant, /return renderQuadrant\(element, payload, Math\.min\(height \+ 120, maximumHeight\)\)/);
-  assert.match(quadrant, /throw new Error\('Quadrant names cannot fit/);
-  assert.ok(quadrant.indexOf("'quadrant-label-leader'") < quadrant.indexOf("'quadrant-point'"), 'Leader lines stay behind every name box');
-  assert.equal((quadrant.match(/tickPadding\(18\)/g) ?? []).length, 2);
+  assert.match(quadrant, /throw new Error\('Quadrant markers cannot fit/);
+  assert.ok(quadrant.indexOf("'quadrant-label-leader'") < quadrant.indexOf("'quadrant-point'"), 'Leader lines stay behind every numbered marker');
+  assert.equal((quadrant.match(/tickPadding\(6\)/g) ?? []).length, 2);
+  assert.match(quadrant, /rotate\(-90\)/);
   assert.match(source, /class="quadrant-details"/);
   assert.match(source, /refs=\{claimRefs\(point\)\}/);
   assert.match(source, /quadrant-axis-definitions/);
@@ -1005,8 +1007,8 @@ test('quadrant labels avoid mobile clusters and coincident points without moving
   const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
   assert.match(source, /quadrant-coordinate-dot/);
   assert.match(source, /quadrant-label-leader/);
-  assert.match(source, /axisLines\(xAxisLabel\)/);
-  assert.match(source, /axisLines\(yAxisLabel\)/);
+  assert.match(source, /axisLines\(xAxisLabel,/);
+  assert.match(source, /axisLines\(yAxisLabel,/);
 });
 
 test('non-sequential flows use declared graph topology rather than a generic matrix', () => {
@@ -1030,6 +1032,51 @@ test('quadrant full-name boxes stay inside mobile panels and avoid labels and au
     assert.ok(label.y - 24 >= bounds.top && label.y + 24 <= bounds.bottom);
     labels.slice(index + 1).forEach(other => assert.ok(Math.abs(label.x - other.x) >= 102 || Math.abs(label.y - other.y) >= 52));
     points.forEach(point => assert.ok(Math.abs(label.x - point.x) >= 56 || Math.abs(label.y - point.y) >= 31));
+  });
+
+  test('quadrant numbered markers pack dense coincident boundary points without moving source coordinates', () => {
+    const bounds = { left: 72, right: 310, top: 54, bottom: 340 };
+    const nearBoundary = Object.freeze({ x: 180, y: 60 });
+    assert.deepEqual(quadrantLabelPositions([nearBoundary], bounds, 15), [{ x: 180, y: 69 }]);
+    assert.deepEqual(nearBoundary, { x: 180, y: 60 });
+    for (const corner of [{ x: 72, y: 54 }, { x: 310, y: 340 }]) {
+      const points = Object.freeze(Array.from({ length: 14 }, () => Object.freeze({ ...corner })));
+      const before = structuredClone(points);
+      const labels = quadrantLabelPositions(points, bounds, 15);
+      assert.deepEqual(points, before);
+      labels.forEach((label, index) => {
+        assert.ok(label.x - 15 >= bounds.left && label.x + 15 <= bounds.right);
+        assert.ok(label.y - 15 >= bounds.top && label.y + 15 <= bounds.bottom);
+        labels.slice(index + 1).forEach(other => assert.ok(Math.hypot(label.x - other.x, label.y - other.y) >= 32));
+      });
+    }
+  });
+
+  test('original chart presentation retains numbered markers, curved journeys, SVG bar axes and colored funnel levels', () => {
+    const source = readFileSync('website/src/components/FigureRenderer.astro', 'utf8');
+    const journey = source.slice(source.indexOf('const renderJourneyMap ='), source.indexOf('const renderKpi ='));
+    assert.match(journey, /curveCatmullRom\.alpha\(0\.6\)/);
+    assert.match(journey, /domain\(layout\.map\(item => item\.index\)\)/);
+    assert.match(journey, /attr\('r', 18\)/);
+    assert.match(journey, /attr\('width', 144\)/);
+    assert.doesNotMatch(journey, /columns|serpentine|journey-arrow/);
+    const bars = source.slice(source.indexOf('const renderBar ='), source.indexOf('const renderFunnel ='));
+    assert.match(bars, /panel\.append\('svg'\)/);
+    assert.match(bars, /axisBottom\(svg, x/);
+    assert.match(bars, /Math\.abs\(x\(point\.number\) - x\(0\)\)/);
+    assert.match(bars, /bar-zero-value/);
+    assert.doesNotMatch(bars, /bar-track|style\('width',.*%/);
+    const funnel = source.slice(source.indexOf('const renderFunnel ='), source.indexOf('const renderWaterfall ='));
+    assert.match(funnel, /const colors = \['#a81749', '#b42351', '#c2415a', '#d1942f', '#0f766e'\]/);
+    assert.match(funnel, /rows\.append\('rect'\)\.attr\('class', 'funnel-track'\)/);
+    assert.match(funnel, /rows\.append\('rect'\)\.attr\('class', 'funnel-band'\)/);
+    const waterfall = source.slice(source.indexOf('const renderWaterfall ='), source.indexOf('const layoutRangeAxis ='));
+    assert.match(waterfall, /waterfall-panel/);
+    assert.match(waterfall, /point\.to < point\.from \? palette\.risk : palette\.positive/);
+    assert.match(waterfall, /attr\('rx', 8\)/);
+    assert.match(waterfall, /inside\(point\) \? palette\.paper : palette\.ink/);
+    assert.doesNotMatch(waterfall, /if \(compact\)/);
+    for (const renderer of [journey, waterfall]) assert.match(renderer, /scrollableSvg\(element, svg, width, height, payload\)/);
   });
 });
 
