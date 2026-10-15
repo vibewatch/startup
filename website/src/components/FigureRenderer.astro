@@ -25,6 +25,9 @@ const dagDetails = dagTopology ? flowRelationshipTable(data, dagTopology, {
   contextLabel: t('reportFigureContext', locale),
 }) : null;
 const coordinateAxes = authoredType === 'quadrant' ? quadrantAxes(figure) : null;
+const coordinateDefinitions = coordinateAxes ? Object.entries(coordinateAxes).map(([key, axis]) => ({
+  key, label: axis.label, definitions: axis.definitions.filter((definition) => !/^(?:min|max): /.test(definition)),
+})).filter((axis) => axis.definitions.length) : [];
 const sequenceDetails = flow?.sequence ? flowRelationshipTable(data, flow, {
   nodeLabel: t('reportFigureNode', locale), connectionLabel: t('reportFigureConnection', locale),
   sourceLabel: t('reportFigureNodeOrFrom', locale), targetLabel: t('reportFigureTo', locale),
@@ -125,12 +128,12 @@ const chartPayloadJson = chartPayload
     data-loading-label={t('reportFigureLoading', locale)}
     data-error-label={t('reportFigureRenderError', locale)}></div>}
 
-  {coordinateAxes && Object.values(coordinateAxes).some((axis) => axis.definitions.length) && (
+  {coordinateDefinitions.length > 0 && (
     <div class="figure-note figure-item-notes quadrant-axis-definitions">
       <dl>
-        {Object.entries(coordinateAxes).filter(([, axis]) => axis.definitions.length).map(([key, axis]) => (
+        {coordinateDefinitions.map((axis) => (
           <div>
-            <dt>{key.toUpperCase()}: {axis.label}</dt>
+            <dt>{axis.key.toUpperCase()}: {axis.label}</dt>
             {axis.definitions.map((definition) => <dd>{definition}</dd>)}
           </div>
         ))}
@@ -185,7 +188,10 @@ const chartPayloadJson = chartPayload
 
   {coordinateAxes && (
     <div class="quadrant-details figure-print-details">
-      <DataTable columns={[t('reportFigureItem', locale), 'X', 'Y', t('reportFigureContext', locale)]}>
+      <DataTable columns={[t('reportFigureItem', locale),
+        `${coordinateAxes.x.label || 'X'} (${coordinateAxes.x.domain.map(formatRangeValue).join('–')})`,
+        `${coordinateAxes.y.label || 'Y'} (${coordinateAxes.y.domain.map(formatRangeValue).join('–')})`,
+        t('reportFigureContext', locale)]}>
         {asArray(data.points).map((item, index) => {
           const point = asRecord(item);
           return <tr>

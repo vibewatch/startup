@@ -104,7 +104,7 @@ test('compact SVGs retain authored font sizes and graph previews fit measured gl
   assert.match(flow, /attr\('class', 'flow-connection-label'\)/);
   assert.doesNotMatch(flow, /textWrapper\.fit\(visibleEdgeLabel/);
   assert.match(flow, /withTooltip\(connectorLabels/);
-  assert.match(flow, /const detailY = compact \? 76 : 84/);
+  assert.match(flow, /const detailY = compact \? 62 : 68/);
   assert.match(flow, /const cardH = hasDetails \? \(compact \? 108 : 118\)/);
   const timeline = figure.slice(figure.indexOf('const renderTimeline ='), figure.indexOf('const renderStack ='));
   assert.match(timeline, /const width = containerWidth;/);
@@ -1095,8 +1095,10 @@ test('diagrams omit added screen disclosures and renderer commentary while prese
   assert.doesNotMatch(source, /<details|<summary|printOpenedDetails|flowLabels/);
   assert.doesNotMatch(source, /reportFlowDetails|reportQuadrantValues|reportFigureValues|reportQuadrantNotice|reportFlowRelationshipNotice|reportWaterfallNotice|reportBarSeriesNotice/);
   assert.match(source, /\.figure-print-details \{ display: none; \}/);
-  assert.match(source, /Object\.values\(coordinateAxes\)\.some\(\(axis\) => axis\.definitions\.length\)/);
-  assert.match(source, /Object\.entries\(coordinateAxes\)\.filter\(\(\[, axis\]\) => axis\.definitions\.length\)/);
+  assert.match(source, /coordinateDefinitions\.length > 0/);
+  assert.match(source, /axis\.definitions\.filter\(\(definition\) => !\/\^\(\?:min\|max\): \//);
+  assert.match(source, /coordinateAxes\.x\.domain\.map\(formatRangeValue\)/);
+  assert.match(source, /coordinateAxes\.y\.domain\.map\(formatRangeValue\)/);
   assert.match(source, /figure\.approximationNotes && <p class="figure-note">/);
   assert.match(source, /flow\?\.unresolved &&/);
   assert.match(source, /refs=\{item\.refs\}/);
