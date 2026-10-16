@@ -41,8 +41,8 @@ const strictEditorStylePatterns = [
   /最(?:晚|迟)截至/u,
   /未达到至少/u,
 ];
-const insuranceClaimHeads = '(?:intake|communications?|orchestration|automation|processing|handling|journeys?|platforms?|systems?(?:-of-record)?|workflows?|intelligence|infrastructure|organizations?|executives?|officers?|leaders?|modules?|messaging|experiences?|stack|volume|throughput|transformation|severity|types?|facts|participants|sales|enablement|audits?|ingest(?:ion)?|integrations?|budgets?|cost|core|domain|pain|software|tech|operating|management|tooling|operations|scale|possibilities|AI|CX|lifecycle|submission|creation|work|quality|logic|coding|corrections?|accuracy|errors?|status|issues|datasets|context|data|rates?|preparation|production|routing|APIs?|histor(?:y|ies)|growth|visibility)';
-const insuranceClaimModifiers = '(?:(?:AI(?:-native)?|digital|agentic|enterprise|incumbent|legacy|modern|full|complete|cloud(?:-native)?|core|narrow|broader|automated|conversational|messy|intelligent|insurance|strong|pilot|P&C|annual|manual|transactional|preventable|touchless|clean|API-based|AI-driven|rules-driven|usage-based|payer-by-payer|retrospective|bi-directional|bidirectional|batch|Medicare)[ -]+)*';
+const insuranceClaimHeads = '(?:intake|communications?|orchestration|automation|processing|handling|journeys?|platforms?|systems?(?:-of-record)?|workflows?|intelligence|infrastructure|organizations?|executives?|officers?|leaders?|modules?|messaging|experiences?|stack|volume|throughput|transformation|severity|types?|facts|participants|sales|enablement|audits?|ingest(?:ion)?|integrations?|reserves?|transparency|obligations?|adjudication|triangles?|reimbursements?|budgets?|costs?|core|domain|pain|software|tech|operating|management|tooling|operations|scale|possibilities|AI|CX|lifecycle|submission|creation|work|quality|logic|coding|corrections?|accuracy|errors?|status|issues|datasets|context|data|rates?|preparation|production|routing|APIs?|histor(?:y|ies)|growth|visibility)';
+const insuranceClaimModifiers = '(?:(?:AI(?:-native)?|digital|agentic|enterprise|incumbent|legacy|modern|full|complete|cloud(?:-native)?|core|narrow|broader|automated|conversational|messy|intelligent|insurance|strong|pilot|P&C|annual|manual|transactional|preventable|touchless|clean|API-based|AI-driven|rules-driven|usage-based|payer-by-payer|retrospective|bi-directional|bidirectional|batch|Medicare|long-term|remaining|statutory|complex|accelerated)[ -]+)*';
 const insuranceClaimNouns = new RegExp([
   '\\b(?:telemedicine|(?:digital\\s+)?health\\s+insurance)\\s*,\\s*claims\\s+(?:automation|reimbursement)\\b',
   '\\b(?:rapid\\s+automated|automated|AI-assisted|core|instant\\s+mobile|zero-friction)\\s+claims\\s+(?:reimbursement|adjudication|engine|velocity|processing)\\b',
@@ -51,6 +51,10 @@ const insuranceClaimNouns = new RegExp([
   '\\band\\s+claims\\s+severity\\b',
   '\\b(?:submit\\s+(?:manual\\s+)?paper\\s+claims|paper\\s+claim\\s+submission)\\b',
   '\\b(?:severe\\s+)?medical\\s+claims\\s+(?:volatility|inflation)\\b',
+  '\\b(?:lower|reduce)\\s+(?:high-cost\\s+)?catastrophic\\s+claims\\b',
+  '\\bmember\\s+reimbursement\\s+claims\\b',
+  '\\bafter\\s+medical\\s+claims\\s+and\\s+(?:automated\\s+)?admin(?:istrative)?\\s+costs\\b',
+  '\\bclaims\\s+triangles?\\b',
   '\\bif\\s+claims\\s+inflation\\b',
   '\\bOCR\\s+claims\\s+engine\\b',
   '\\bmeasurable\\s+claim\\s+reduction\\b',
@@ -67,9 +71,9 @@ const insuranceClaimNouns = new RegExp([
   '\\bpayer denials (?:are )?documented in [<>]?\\s*\\d+(?:\\.\\d+)?% of claims\\b(?=\\s*(?:[,.;:]|$))',
   '\\bfor\\s+narrow\\s+claim\\s+classes\\b',
   `^claims?(?=[ -]+${insuranceClaimHeads}\\b)`,
-  `\\b(?:across|around|for|in|on|as|of|with|without|within|through|from|by|into|over|during|whether|because|where|buy|sells|satisfy|captures?|supports?|shows?|show(?:s|ed)? that|adopt|request|automates?|automating|correct|autocorrects?|influence|scale|exports?|disrupts?|causing|handle)\\s+${insuranceClaimModifiers}claims?(?=[ -]+${insuranceClaimHeads}\\b)`,
+  `\\b(?:across|around|for|in|on|as|of|with|without|within|through|from|by|into|over|during|if|whether|because|where|buy|sells|satisfy|captures?|supports?|shows?|show(?:s|ed)? that|adopt|request|seeking|seeks?|assess|manages?|accelerate|automates?|automating|correct|autocorrects?|influence|scale|exports?|disrupts?|causing|handle)\\s+${insuranceClaimModifiers}claims?(?=[ -]+${insuranceClaimHeads}\\b)`,
   `\\b(?:a|an|the|its|their|all|enough|insurance|P&C)\\s+claims?(?=[ -]+${insuranceClaimHeads}\\b)`,
-  `\\b(?:broader|modern|full|complete|AI-native|cloud-native|mission-critical|legacy|messy|existing|automatable|automated|faster|better|heavier|digitally native|annual|manual|transactional|preventable|touchless|clean|API-based|AI-driven|rules-driven|usage-based|payer-by-payer|minimum|scaled|false-positive|retrospective|bi-directional|bidirectional|batch|Medicare)[ -]+${insuranceClaimModifiers}claims?(?=[ -]+${insuranceClaimHeads}\\b)`,
+  `\\b(?:broader|modern|full|complete|AI-native|cloud-native|mission-critical|legacy|messy|existing|automatable|automated|faster|better|heavier|digitally native|annual|manual|transactional|preventable|touchless|clean|API-based|AI-driven|rules-driven|usage-based|payer-by-payer|minimum|scaled|false-positive|retrospective|bi-directional|bidirectional|batch|Medicare|long-term|remaining|statutory|complex|accelerated)[ -]+${insuranceClaimModifiers}claims?(?=[ -]+${insuranceClaimHeads}\\b)`,
   `\\bclaims?(?=-(?:${insuranceClaimHeads}|only)\\b)|\\b(?:cross|per|agentic|digital|property)-claims?\\b`,
   '\\b(?:across|outside|beyond|around|and)\\s+claims(?=\\s*(?:[.,;:]|$))',
   '\\bclaims\\s+(?:is|plus)\\b',

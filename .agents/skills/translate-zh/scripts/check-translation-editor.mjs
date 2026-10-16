@@ -2965,6 +2965,10 @@ const checks = [
         fullReport('定制 EHR 与理赔数据集成支持回顾性理赔审计、双向理赔数据流、Medicare 理赔审计日志，以及针对 ePRO、EHR 数据流和理赔数据的批量理赔数据导入。'),
       ).length === 0
       && checkPairQuality(
+        fullReport('The carrier aims to lower catastrophic claims, reduce high-cost catastrophic claims, assess long-term claims reserves and remaining claims reserves, meet statutory claims obligations, seek claims transparency, accelerate insurance claims adjudication, complex claims adjudication, and accelerated claims adjudication without member reimbursement claims, review claims triangles, and protect operating margin after medical claims and automated admin costs if claims costs escalate.'),
+        fullReport('承保方旨在降低灾难性保险赔付、减少高成本灾难性保险赔付、评估长期保险赔付准备金与剩余赔付准备金、履行法定保险赔付义务、获得赔付透明度、在无需会员先行报销的情况下加速保险理赔裁定与复杂理赔裁定、审阅保险理赔三角，并在保险赔付成本上升时保护扣除医疗保险赔付和自动化行政成本后的经营利润率。'),
+      ).length === 0
+      && checkPairQuality(
         fullReport('Review the legal claims register; the company claims litigation exposure is immaterial.'),
         fullReport('审阅法律索赔登记；诉讼敞口不重大。'),
       ).some((issue) => issue.code === 'hedge-preservation')

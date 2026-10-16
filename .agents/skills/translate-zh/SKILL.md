@@ -371,8 +371,12 @@ unrelated attribution or changing preserved URLs merely to satisfy a pattern.
 The reviewed medical-data contexts also include closed medical/payer claims,
 EHR/claims/imaging lists, EHR and claims integrations, ePRO/EHR/claims data
 ingestion, retrospective or Medicare claims audits, bi-directional claims data
-feeds, batch claims ingest, longitudinal claims history and static claims
-datasets. These are data assets or healthcare workflows, not company assertions.
+feeds, batch claims ingest, longitudinal claims history, static claims
+datasets, catastrophic claims, long-term or remaining claims reserves,
+statutory claims obligations, claims transparency, insurance/complex/accelerated
+claims adjudication, member reimbursement claims, claims triangles, and
+medical claims / claims costs in insurance loss-ratio or margin discussions.
+These are data assets or healthcare/insurance workflows, not company assertions.
 Do not exempt an assertion such as `the payer claims data coverage is complete`; a separate company assertion
 or disclosure gap still needs preservation. The explicit Truveta adjacency
 disclaimer treats exclusions as scope controls, not proof that the company
