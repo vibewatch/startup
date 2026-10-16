@@ -344,7 +344,7 @@ column, nonempty entirely dollar-denominated valuation cells, and no conflicting
 currency labels. Standalone text, ambiguous columns, mixed currencies, changed
 amounts, and added qualifications remain outside this inference. Review the
 table's assumptions separately; this does not validate its valuation or returns.
-An exact fallback accepts positive dollar scalars such as `$50M` and
+An exact fallback accepts positive dollar scalars such as `$50M`, `US$50M`, and
 `5,000 万美元`, comparing all numeric occurrences and paired month/year anchors.
 It shifts decimal text without floating-point rounding. Shared-unit ranges,
 signed amounts, and conversion between different currencies remain outside
@@ -389,7 +389,10 @@ health plans, administering claims
 across payer contracts, claim(s) denial rates/increases/reductions, member
 reimbursement claims, claims triangles, insurance underwriting and policy claims
 workflows, insurance claims and underwriting, securing claims documentation,
-major claim releases, and medical claims / claims costs in
+major claim releases, embedded-insurtech policy/servicing/repair and claims
+infrastructure, digital or servicing claims portals and architectures, claims
+lifecycle management, omni-channel claims filing, instant claim payouts, claims
+adjusters and claims resolution, and medical claims / claims costs in
 insurance loss-ratio or margin discussions.
 These are data assets or healthcare/insurance workflows, not company assertions.
 Do not exempt an assertion such as `the payer claims data coverage is complete`; a separate company assertion

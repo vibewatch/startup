@@ -1893,6 +1893,7 @@ const checks = [
     ['Revenue was $10M; the comparison also uses $10M.', '收入为 1,000 万美元；比较也使用 1,000 万美元。'],
     ['January 2026 revenue was $50M; December 2023 revenue was $10M.', '2026 年 1 月收入为 5,000 万美元；2023 年 12 月收入为 1,000 万美元。'],
     ['Revenue is £10M and capital is $5M.', '收入为 £10M，资本为 500 万美元。'],
+    ['The company raised US$147 million at a US$2.1 billion valuation, processing US$90 billion in quoted premiums.', '公司以 21 亿美元估值完成 1.47 亿美元融资，处理 900 亿美元报价保费。'],
   ].map(([en, zh]) => [
     checkPairQuality(fullReport(en), fullReport(zh), { strictEditor: true }).length === 0,
     `exact positive dollar scalars must match without losing precision or other anchors: ${zh}`,
@@ -1901,6 +1902,8 @@ const checks = [
     ['The revenue threshold is $50M.', '收入门槛为 500 万美元。'],
     ['The revenue threshold is $50M.', '收入门槛为 5,000 万元。'],
     ['The revenue threshold is AUD $50M.', '收入门槛为 5,000 万美元。'],
+    ['The revenue threshold is A$50M.', '收入门槛为 5,000 万美元。'],
+    ['The revenue threshold is S$50M.', '收入门槛为 5,000 万美元。'],
     ['The revenue threshold is $50M CAD.', '收入门槛为 5,000 万美元。'],
     ['The source labels the threshold EUR $50M.', '收入门槛为 5,000 万美元。'],
     ['Revenue is $9007199254740993.', '收入为 9007199254740992 美元。'],
@@ -2983,6 +2986,10 @@ const checks = [
       && checkPairQuality(
         fullReport('The practice platform handles credentialing, claims billing, electronic health records (EHR), and claims billing, fragmented claims billing, credentialing, claims processing, in-network directory integration, claims processing, telehealth video, and claims processing, prompt claims adjudication, clinical note generation, claims adjudication, payer claim adjudication delays when payers often adjudicate claims in 30 to 90 days, aggressive claims clawbacks, total claims billed, national claims analysis, Trilliant Health claims analyses, non-claims-based and claims-based models, health insurer claim pool, automated billing/claims, weekly claims payouts, MCO claims, automated claim generation, EDI 837 claim submission, across in-network claims, and submits standardized insurance claims.'),
         fullReport('执业平台处理资质认证、理赔计费、电子健康记录（EHR）与理赔计费、分散的理赔计费、资质认证与理赔处理、网络内目录集成与理赔处理、远程医疗视频与理赔处理、快速理赔裁定、临床记录生成与理赔裁定、支付方通常在 30 至 90 天内裁定理赔所带来的支付方理赔裁定延迟、激进的理赔追回、已开具账单的理赔总额、全国理赔分析、Trilliant Health 理赔分析、非基于理赔和基于理赔的模式、健康保险公司理赔资金池、自动化计费/理赔、每周理赔结算、MCO 理赔、自动化理赔生成、EDI 837 理赔提交、跨网络内理赔，并提交标准化保险理赔。'),
+      ).length === 0
+      && checkPairQuality(
+        fullReport('The insurtech exchange unifies policy administration, claims, and device lifecycle support, post-sale servicing, claims, and repair infrastructure; Claims, contact-center, repair and customization costs, digital claims processing, partner onboarding and claims lifecycle management, servicing and claims activity, claims handling, repair networks, claim handling, and trade-in management, repair networks and claims workflows, a self-service digital claims portal, servicing and claims portal, claims/servicing portal, this digital claims architecture, instant claim payouts, omni-channel claims filing, robust international claims infrastructure, routing for claims resolution, and assignments to claims adjusters.'),
+        fullReport('保险科技交易平台统一保单管理、理赔和设备生命周期支持，售后客服、理赔和维修基础设施；理赔、联络中心、维修与定制化成本，数字化理赔处理，合作伙伴接入与理赔全生命周期管理，服务与理赔活动，理赔处理与维修网络，理赔处理与以旧换新管理，维修网络与理赔工作流，自助式数字化理赔门户、服务与理赔门户、理赔/服务门户、该数字化理赔架构、即时理赔赔付、全渠道理赔申报、稳健的国际理赔基础设施、面向理赔解决的路由，以及向理赔定损员派单。'),
       ).length === 0
       && checkPairQuality(
         fullReport('Review the legal claims register; the company claims litigation exposure is immaterial.'),
