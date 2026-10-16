@@ -369,16 +369,20 @@ are not translation omissions or assertions. In medical-data lists such as
 demonstrated checker false positive with regression coverage rather than adding
 unrelated attribution or changing preserved URLs merely to satisfy a pattern.
 The reviewed medical-data contexts also include closed medical/payer claims,
-EHR/claims/imaging lists, EHR and claims integrations, ePRO/EHR/claims data
+EHR/claims/imaging lists, electronic health records/claims/clinical documentation
+lists, EHR and claims integrations, ePRO/EHR/claims data
 ingestion, retrospective or Medicare claims audits, bi-directional claims data
 feeds, batch claims ingest, longitudinal claims history, static claims
 datasets, catastrophic claims, long-term or remaining claims reserves,
-statutory claims obligations, claims transparency, insurance/insurer/complex/accelerated
-claims adjudication, in-network or payer claims submission, medical claims
-submitted to health plans, administering claims across payer contracts,
-claim(s) denial rates/increases/reductions, member reimbursement claims,
-claims triangles, and medical claims / claims costs in insurance loss-ratio
-or margin discussions.
+statutory claims obligations, claims transparency, insurance/insurer/post-service/complex/accelerated
+claims adjudication, pre-payment claims integrity/audit/review, post-care or
+sensitive claims data, downstream claim coding, medical service claims,
+post-claim billing disputes, automated healthcare claims and prior authorization
+workflows, UM and claims processing systems, in-network or payer claims
+submission, medical claims submitted to health plans, administering claims
+across payer contracts, claim(s) denial rates/increases/reductions, member
+reimbursement claims, claims triangles, and medical claims / claims costs in
+insurance loss-ratio or margin discussions.
 These are data assets or healthcare/insurance workflows, not company assertions.
 Do not exempt an assertion such as `the payer claims data coverage is complete`; a separate company assertion
 or disclosure gap still needs preservation. The explicit Truveta adjacency

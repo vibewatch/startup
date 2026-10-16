@@ -2973,6 +2973,10 @@ const checks = [
         fullReport('支付方理赔提交、自动网络内理赔提交、向签约保险计划提交的医疗理赔、管理不同支付方合同理赔的团队、保险公司理赔裁定滞后、审阅理赔拒付率、理赔拒付增加，以及在支付方按签约费率裁定理赔时患者量与保险理赔如何转化为收入。'),
       ).length === 0
       && checkPairQuality(
+        fullReport('The platform ingests structured electronic health records, claims, and unstructured clinical documentation, integrating pre-payment claims integrity, pre-payment claims audit software, pre-payment claims review, post-service claims adjudication, post-care claims data, post-care claims, downstream claim coding, medical service claims, sensitive claims data, post-claim billing disputes, automated healthcare claims and prior authorization workflows, integration between UM and claims processing systems, and VP Payment Integrity, Claims Operations.'),
+        fullReport('平台接收结构化电子健康记录、理赔数据和非结构化临床文档，集成付款前理赔完整性、付款前理赔审计软件、付款前理赔审核、服务后理赔裁定、护理后理赔数据、护理后理赔、下游理赔编码、医疗服务理赔、敏感理赔数据、事后理赔账单争议、自动化医疗理赔与事前授权工作流、UM 与理赔处理系统集成，以及支付完整性副总裁、理赔运营团队。'),
+      ).length === 0
+      && checkPairQuality(
         fullReport('Review the legal claims register; the company claims litigation exposure is immaterial.'),
         fullReport('审阅法律索赔登记；诉讼敞口不重大。'),
       ).some((issue) => issue.code === 'hedge-preservation')
