@@ -391,7 +391,8 @@ reimbursement claims, claims triangles, insurance underwriting and policy claims
 workflows, insurance claims and underwriting, securing claims documentation,
 major claim releases, embedded-insurtech policy/servicing/repair and claims
 infrastructure, digital or servicing claims portals and architectures, claims
-lifecycle management, omni-channel claims filing, instant claim payouts, claims
+lifecycle management, claims intake for insurance carriers, omni-channel or
+continuous zero-wait claims filing, instant claim payouts, claims
 adjusters and claims resolution, and medical claims / claims costs in
 insurance loss-ratio or margin discussions.
 These are data assets or healthcare/insurance workflows, not company assertions.
