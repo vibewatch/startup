@@ -41,8 +41,8 @@ const strictEditorStylePatterns = [
   /最(?:晚|迟)截至/u,
   /未达到至少/u,
 ];
-const insuranceClaimHeads = '(?:intake|communications?|orchestration|automation|processing|handling|journeys?|platforms?|systems?(?:-of-record)?|workflows?|intelligence|infrastructure|organizations?|executives?|officers?|leaders?|modules?|messaging|experiences?|stack|volume|throughput|transformation|severity|types?|facts|participants|sales|enablement|audits?|ingest(?:ion)?|integrations?|reserves?|transparency|obligations?|adjudication|triangles?|reimbursements?|budgets?|costs?|core|domain|pain|software|tech|operating|management|tooling|operations|scale|possibilities|AI|CX|lifecycle|submission|creation|work|quality|logic|coding|corrections?|accuracy|errors?|status|issues|datasets|context|data|rates?|preparation|production|routing|APIs?|histor(?:y|ies)|growth|visibility)';
-const insuranceClaimModifiers = '(?:(?:AI(?:-native)?|digital|agentic|enterprise|incumbent|legacy|modern|full|complete|cloud(?:-native)?|core|narrow|broader|automated|conversational|messy|intelligent|insurance|strong|pilot|P&C|annual|manual|transactional|preventable|touchless|clean|API-based|AI-driven|rules-driven|usage-based|payer-by-payer|retrospective|bi-directional|bidirectional|batch|Medicare|long-term|remaining|statutory|complex|accelerated)[ -]+)*';
+const insuranceClaimHeads = '(?:intake|communications?|orchestration|automation|processing|handling|journeys?|platforms?|systems?(?:-of-record)?|workflows?|intelligence|infrastructure|organizations?|executives?|officers?|leaders?|modules?|messaging|experiences?|stack|volume|throughput|transformation|severity|types?|facts|participants|sales|enablement|audits?|ingest(?:ion)?|integrations?|reserves?|transparency|obligations?|adjudication|triangles?|reimbursements?|denials?(?:\\s+(?:rates?|increases?|reductions?))?|budgets?|costs?|core|domain|pain|software|tech|operating|management|tooling|operations|scale|possibilities|AI|CX|lifecycle|submission|creation|work|quality|logic|coding|corrections?|accuracy|errors?|status|issues|datasets|context|data|rates?|preparation|production|routing|APIs?|histor(?:y|ies)|growth|visibility)';
+const insuranceClaimModifiers = '(?:(?:AI(?:-native)?|digital|agentic|enterprise|incumbent|legacy|modern|full|complete|cloud(?:-native)?|core|narrow|broader|automated|conversational|messy|intelligent|insurance|in-network|strong|pilot|P&C|annual|manual|transactional|preventable|touchless|clean|API-based|AI-driven|rules-driven|usage-based|payer-by-payer|retrospective|bi-directional|bidirectional|batch|Medicare|long-term|remaining|statutory|complex|accelerated)[ -]+)*';
 const insuranceClaimNouns = new RegExp([
   '\\b(?:telemedicine|(?:digital\\s+)?health\\s+insurance)\\s*,\\s*claims\\s+(?:automation|reimbursement)\\b',
   '\\b(?:rapid\\s+automated|automated|AI-assisted|core|instant\\s+mobile|zero-friction)\\s+claims\\s+(?:reimbursement|adjudication|engine|velocity|processing)\\b',
@@ -55,6 +55,11 @@ const insuranceClaimNouns = new RegExp([
   '\\bmember\\s+reimbursement\\s+claims\\b',
   '\\bafter\\s+medical\\s+claims\\s+and\\s+(?:automated\\s+)?admin(?:istrative)?\\s+costs\\b',
   '\\bclaims\\s+triangles?\\b',
+  '\\bmedical\\s+claims\\s+submitted\\s+to\\b',
+  '\\badminister\\s+claims\\s+across\\b',
+  '\\bfrom\\s+insurer\\s+claims\\s+adjudication\\b',
+  '\\bclaims?\\s+denials?(?:\\s+(?:rates?|increases?|reductions?))?\\b',
+  '^payer\\s+claims\\s+submission\\b',
   '\\bif\\s+claims\\s+inflation\\b',
   '\\bOCR\\s+claims\\s+engine\\b',
   '\\bmeasurable\\s+claim\\s+reduction\\b',
@@ -63,7 +68,7 @@ const insuranceClaimNouns = new RegExp([
   '\\blowers\\s+claim\\s+incidents\\b',
   '\\b(?:coordinated\\s+)?fraudulent\\s+claims\\s+exploitation\\b',
   '\\breduces\\s+claims\\s+overhead\\b',
-  '\\binsurance\\s+claims(?=\\s*(?:[,.;:]|$))',
+  '\\binsurance\\s+claims(?=\\s+convert\\b|\\s*(?:[,.;:]|$))',
   '\\bclaims?-reduction\\s+proof\\b',
   '\\breduced\\s+claims(?=\\s*,\\s*safer\\s+driving\\b)',
   '\\brequest claims? frequency\\b(?=\\s*(?:[,.;:]|$))',
@@ -71,9 +76,9 @@ const insuranceClaimNouns = new RegExp([
   '\\bpayer denials (?:are )?documented in [<>]?\\s*\\d+(?:\\.\\d+)?% of claims\\b(?=\\s*(?:[,.;:]|$))',
   '\\bfor\\s+narrow\\s+claim\\s+classes\\b',
   `^claims?(?=[ -]+${insuranceClaimHeads}\\b)`,
-  `\\b(?:across|around|for|in|on|as|of|with|without|within|through|from|by|into|over|during|if|whether|because|where|buy|sells|satisfy|captures?|supports?|shows?|show(?:s|ed)? that|adopt|request|seeking|seeks?|assess|manages?|accelerate|automates?|automating|correct|autocorrects?|influence|scale|exports?|disrupts?|causing|handle)\\s+${insuranceClaimModifiers}claims?(?=[ -]+${insuranceClaimHeads}\\b)`,
-  `\\b(?:a|an|the|its|their|all|enough|insurance|P&C)\\s+claims?(?=[ -]+${insuranceClaimHeads}\\b)`,
-  `\\b(?:broader|modern|full|complete|AI-native|cloud-native|mission-critical|legacy|messy|existing|automatable|automated|faster|better|heavier|digitally native|annual|manual|transactional|preventable|touchless|clean|API-based|AI-driven|rules-driven|usage-based|payer-by-payer|minimum|scaled|false-positive|retrospective|bi-directional|bidirectional|batch|Medicare|long-term|remaining|statutory|complex|accelerated)[ -]+${insuranceClaimModifiers}claims?(?=[ -]+${insuranceClaimHeads}\\b)`,
+  `\\b(?:across|around|for|in|on|as|of|with|without|within|through|from|by|into|over|during|if|whether|because|where|buy|sells|satisfy|captures?|supports?|shows?|show(?:s|ed)? that|adopt|request|review|seeking|seeks?|assess|manages?|accelerate|automates?|automating|correct|autocorrects?|influence|scale|exports?|disrupts?|causing|handle)\\s+${insuranceClaimModifiers}claims?(?=[ -]+${insuranceClaimHeads}\\b)`,
+  `\\b(?:a|an|the|its|their|all|enough|insurance|in-network|P&C)\\s+claims?(?=[ -]+${insuranceClaimHeads}\\b)`,
+  `\\b(?:broader|modern|full|complete|AI-native|cloud-native|mission-critical|legacy|messy|existing|automatable|automated|faster|better|heavier|digitally native|annual|manual|transactional|preventable|touchless|clean|API-based|AI-driven|rules-driven|usage-based|payer-by-payer|minimum|scaled|false-positive|retrospective|bi-directional|bidirectional|batch|Medicare|long-term|remaining|statutory|complex|accelerated|in-network)[ -]+${insuranceClaimModifiers}claims?(?=[ -]+${insuranceClaimHeads}\\b)`,
   `\\bclaims?(?=-(?:${insuranceClaimHeads}|only)\\b)|\\b(?:cross|per|agentic|digital|property)-claims?\\b`,
   '\\b(?:across|outside|beyond|around|and)\\s+claims(?=\\s*(?:[.,;:]|$))',
   '\\bclaims\\s+(?:is|plus)\\b',
@@ -86,7 +91,7 @@ const insuranceClaimNouns = new RegExp([
   '^claims\\s+(?:are\\s+)?submitted\\b',
   '\\b(?:billing|eligibility|authorizations|portal)\\s*,\\s*claims(?=\\s*,)',
   '\\b(?:encounter, claim, and financial APIs|encounter and claim APIs|automated billing and claim operations|rapid visit and claim growth|sensitive data and claims workflows|payment systems, and claims workflows|customer count, and claims volume|contract type, claim volume|capital and claim volume|contracted revenue growth, claim volume|automation to claim creation|clearinghouse and claims workflow|encounter / claim workflow|into payer-ready claims|dominates revenue or claim volume)\\b',
-  '\\b(?:resubmit claims by hand|payers adjudicate claims|scale claims quickly|claims and reimbursements|routes claims, eligibility data|automating claims, eligibility|request claims, collections)\\b',
+  '\\b(?:resubmit claims by hand|payers? adjudicates? claims?|scale claims quickly|claims and reimbursements|routes claims, eligibility data|automating claims, eligibility|request claims, collections)\\b',
   '\\b(?:eligibility(?: checks| verification)?|coding|creation|configured rules|ePROs?|EHR\\s+feeds?)\\s*,\\s*(?:and\\s+)?claims?(?=\\s+(?:submission|workflow|context|data)\\s*(?:[,;.]|$))',
   '\\btransaction routing, claim(?= status, remittance\\b)|\\buptime, claims(?= accuracy, (?:concentration|or incident history)\\b)',
   '\\bcustomer case study; claims(?= submission\\b)|\\bthis matters: claims(?= automation\\b)',

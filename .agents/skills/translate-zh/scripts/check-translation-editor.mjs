@@ -2969,6 +2969,10 @@ const checks = [
         fullReport('承保方旨在降低灾难性保险赔付、减少高成本灾难性保险赔付、评估长期保险赔付准备金与剩余赔付准备金、履行法定保险赔付义务、获得赔付透明度、在无需会员先行报销的情况下加速保险理赔裁定与复杂理赔裁定、审阅保险理赔三角，并在保险赔付成本上升时保护扣除医疗保险赔付和自动化行政成本后的经营利润率。'),
       ).length === 0
       && checkPairQuality(
+        fullReport('Payer claims submission, automated in-network claim submission, medical claims submitted to contracted plans, teams that administer claims across payer contracts, lag from insurer claims adjudication, review claims denial rates, claim denial increases, and how patient volume and insurance claims convert into revenue while a payer adjudicates claim at contracted rates.'),
+        fullReport('支付方理赔提交、自动网络内理赔提交、向签约保险计划提交的医疗理赔、管理不同支付方合同理赔的团队、保险公司理赔裁定滞后、审阅理赔拒付率、理赔拒付增加，以及在支付方按签约费率裁定理赔时患者量与保险理赔如何转化为收入。'),
+      ).length === 0
+      && checkPairQuality(
         fullReport('Review the legal claims register; the company claims litigation exposure is immaterial.'),
         fullReport('审阅法律索赔登记；诉讼敞口不重大。'),
       ).some((issue) => issue.code === 'hedge-preservation')
