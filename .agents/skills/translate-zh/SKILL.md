@@ -369,9 +369,11 @@ are not translation omissions or assertions. In medical-data lists such as
 demonstrated checker false positive with regression coverage rather than adding
 unrelated attribution or changing preserved URLs merely to satisfy a pattern.
 The reviewed medical-data contexts also include closed medical/payer claims,
-EHR/claims/imaging lists, longitudinal claims history and static claims datasets.
-These are data assets, not company assertions. Do not exempt an assertion such
-as `the payer claims data coverage is complete`; a separate company assertion
+EHR/claims/imaging lists, EHR and claims integrations, ePRO/EHR/claims data
+ingestion, retrospective or Medicare claims audits, bi-directional claims data
+feeds, batch claims ingest, longitudinal claims history and static claims
+datasets. These are data assets or healthcare workflows, not company assertions.
+Do not exempt an assertion such as `the payer claims data coverage is complete`; a separate company assertion
 or disclosure gap still needs preservation. The explicit Truveta adjacency
 disclaimer treats exclusions as scope controls, not proof that the company
 can never enter adjacent fields. Retain that denial, its company and scope;

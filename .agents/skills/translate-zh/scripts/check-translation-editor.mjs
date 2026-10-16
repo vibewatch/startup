@@ -2961,6 +2961,10 @@ const checks = [
         fullReport('审阅现行条款、审核政策、法律索赔登记、保险和准备金历史。'),
       ).length === 0
       && checkPairQuality(
+        fullReport('Custom EHR and claims integrations support retrospective claims audits, bi-directional claims data feeds, Medicare claims audit logs, and batch claims ingest for ePROs, EHR feeds, and claims data.'),
+        fullReport('定制 EHR 与理赔数据集成支持回顾性理赔审计、双向理赔数据流、Medicare 理赔审计日志，以及针对 ePRO、EHR 数据流和理赔数据的批量理赔数据导入。'),
+      ).length === 0
+      && checkPairQuality(
         fullReport('Review the legal claims register; the company claims litigation exposure is immaterial.'),
         fullReport('审阅法律索赔登记；诉讼敞口不重大。'),
       ).some((issue) => issue.code === 'hedge-preservation')
