@@ -381,7 +381,9 @@ post-claim billing disputes, automated healthcare claims and prior authorization
 workflows, UM and claims processing systems, in-network or payer claims
 submission, medical claims submitted to health plans, administering claims
 across payer contracts, claim(s) denial rates/increases/reductions, member
-reimbursement claims, claims triangles, and medical claims / claims costs in
+reimbursement claims, claims triangles, insurance underwriting and policy claims
+workflows, insurance claims and underwriting, securing claims documentation,
+major claim releases, and medical claims / claims costs in
 insurance loss-ratio or margin discussions.
 These are data assets or healthcare/insurance workflows, not company assertions.
 Do not exempt an assertion such as `the payer claims data coverage is complete`; a separate company assertion

@@ -2977,6 +2977,10 @@ const checks = [
         fullReport('平台接收结构化电子健康记录、理赔数据和非结构化临床文档，集成付款前理赔完整性、付款前理赔审计软件、付款前理赔审核、服务后理赔裁定、护理后理赔数据、护理后理赔、下游理赔编码、医疗服务理赔、敏感理赔数据、事后理赔账单争议、自动化医疗理赔与事前授权工作流、UM 与理赔处理系统集成，以及支付完整性副总裁、理赔运营团队。'),
       ).length === 0
       && checkPairQuality(
+        fullReport('Carriers deploy fraud prevention across insurance underwriting and policy claims workflows, across insurance claims and underwriting, to secure claims documentation against deepfakes, and for policy inception identity verification and major claim releases.'),
+        fullReport('保险公司在保险承保和保单理赔工作流、保险理赔和承保业务中部署防欺诈工具，保护理赔文件免受深度伪造影响，并用于保单生效身份核验和大额理赔放款。'),
+      ).length === 0
+      && checkPairQuality(
         fullReport('Review the legal claims register; the company claims litigation exposure is immaterial.'),
         fullReport('审阅法律索赔登记；诉讼敞口不重大。'),
       ).some((issue) => issue.code === 'hedge-preservation')
