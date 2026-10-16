@@ -390,11 +390,12 @@ across payer contracts, claim(s) denial rates/increases/reductions, member
 reimbursement claims, claims triangles, insurance underwriting and policy claims
 workflows, insurance claims and underwriting, securing claims documentation,
 major claim releases, embedded-insurtech policy/servicing/repair and claims
-infrastructure, digital or servicing claims portals and architectures, claims
-lifecycle management, claims intake for insurance carriers, omni-channel or
-continuous zero-wait claims filing, instant claim payouts, claims
-adjusters and claims resolution, and medical claims / claims costs in
-insurance loss-ratio or margin discussions.
+infrastructure, system-of-record returns/claims/cancellations lists, digital or
+servicing claims portals and architectures, claims lifecycle management, claims
+intake for insurance carriers, claims routing, routing complex insurance claims
+autonomously, omni-channel or continuous zero-wait claims filing, instant claim
+payouts, claims adjusters and claims resolution, and medical claims / claims
+costs in insurance loss-ratio or margin discussions.
 These are data assets or healthcare/insurance workflows, not company assertions.
 Do not exempt an assertion such as `the payer claims data coverage is complete`; a separate company assertion
 or disclosure gap still needs preservation. The explicit Truveta adjacency
