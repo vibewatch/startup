@@ -2981,6 +2981,10 @@ const checks = [
         fullReport('保险公司在保险承保和保单理赔工作流、保险理赔和承保业务中部署防欺诈工具，保护理赔文件免受深度伪造影响，并用于保单生效身份核验和大额理赔放款。'),
       ).length === 0
       && checkPairQuality(
+        fullReport('The practice platform handles credentialing, claims billing, electronic health records (EHR), and claims billing, fragmented claims billing, credentialing, claims processing, in-network directory integration, claims processing, telehealth video, and claims processing, prompt claims adjudication, clinical note generation, claims adjudication, payer claim adjudication delays when payers often adjudicate claims in 30 to 90 days, aggressive claims clawbacks, total claims billed, national claims analysis, Trilliant Health claims analyses, non-claims-based and claims-based models, health insurer claim pool, automated billing/claims, weekly claims payouts, MCO claims, automated claim generation, EDI 837 claim submission, across in-network claims, and submits standardized insurance claims.'),
+        fullReport('执业平台处理资质认证、理赔计费、电子健康记录（EHR）与理赔计费、分散的理赔计费、资质认证与理赔处理、网络内目录集成与理赔处理、远程医疗视频与理赔处理、快速理赔裁定、临床记录生成与理赔裁定、支付方通常在 30 至 90 天内裁定理赔所带来的支付方理赔裁定延迟、激进的理赔追回、已开具账单的理赔总额、全国理赔分析、Trilliant Health 理赔分析、非基于理赔和基于理赔的模式、健康保险公司理赔资金池、自动化计费/理赔、每周理赔结算、MCO 理赔、自动化理赔生成、EDI 837 理赔提交、跨网络内理赔，并提交标准化保险理赔。'),
+      ).length === 0
+      && checkPairQuality(
         fullReport('Review the legal claims register; the company claims litigation exposure is immaterial.'),
         fullReport('审阅法律索赔登记；诉讼敞口不重大。'),
       ).some((issue) => issue.code === 'hedge-preservation')

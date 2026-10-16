@@ -379,7 +379,13 @@ claims adjudication, pre-payment claims integrity/audit/review, post-care or
 sensitive claims data, downstream claim coding, medical service claims,
 post-claim billing disputes, automated healthcare claims and prior authorization
 workflows, UM and claims processing systems, in-network or payer claims
-submission, medical claims submitted to health plans, administering claims
+submission, EDI 837 claim submission, automated claim generation, automated
+billing/claims, claims billing, weekly claims payouts, aggressive claims
+clawbacks, payer claim(s) adjudication delays, payers adjudicating claims,
+total claims billed, national or Trilliant Health claims analyses,
+claims-based or non-claims-based models, health insurer claim pools, MCO
+claims, submitting standardized insurance claims, medical claims submitted to
+health plans, administering claims
 across payer contracts, claim(s) denial rates/increases/reductions, member
 reimbursement claims, claims triangles, insurance underwriting and policy claims
 workflows, insurance claims and underwriting, securing claims documentation,
