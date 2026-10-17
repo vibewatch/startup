@@ -399,6 +399,11 @@ peer-reviewed claims data/studies, clinical claims validation/advantage,
 claims-audited cost reductions, administrative claims and files, de-identified
 claims datasets, payer claims integration and audits, neonatal or catastrophic
 delivery claims, avoidable NICU admissions and large claims,
+healthcare navigation claims analytics, physician claims scoring, claims
+steerage volume, HRA or out-of-pocket reimbursement claims and funding,
+national/commercial/Medicare/Medicaid claims records and databases, claims
+savings/spend/reductions/trend targets, claims data warehouses/sharing/access/lag,
+and claim status tracking/inquiries,
 omni-channel or continuous zero-wait claims filing, instant claim
 payouts, claims adjusters and claims resolution, and medical claims / claims
 costs in insurance loss-ratio or margin discussions.
