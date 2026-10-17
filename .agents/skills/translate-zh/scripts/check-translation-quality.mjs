@@ -500,7 +500,7 @@ function normalizedMetricTokens(value, { includePlainNumbers = false } = {}) {
   // A trailing multiplier or percentage applies to both endpoints of a range.
   const financialMultiple = String.raw`(?:revenue|sales|ARR|MRR|EBITDA|EBIT|earnings|book\s+value)`;
   const expanded = retention.replace(
-    new RegExp(String.raw`\b(\d+(?:[.,]\d+)*)\s+times(?=\s+(?:(?:to|and)\s+(?:(?:nearly|almost|approximately|roughly|about)\s+)?\d+(?:[.,]\d+)*\s+times\s+)?${financialMultiple}\b)`, 'gi'),
+    new RegExp(String.raw`\b(\d+(?:[.,]\d+)*)\s+times(?=\s+(?:(?:to|and)\s+(?:(?:nearly|almost|approximately|roughly|about)\s+)?\d+(?:[.,]\d+)*\s+times\s+)?(?:(?:its|their)\s+)?(?:(?:19|20)\d{2}\s+)?${financialMultiple}\b)`, 'gi'),
     '$1x',
   ).replace(
     /(?<![\w./@+$€£¥₦–—−-])(\d+(?:[.,]\d+)*)\s+times(?=\s+the\s+lending\s+scale\s+of\b)/gi,
@@ -512,6 +512,9 @@ function normalizedMetricTokens(value, { includePlainNumbers = false } = {}) {
     /(?<![\w./@+$€£¥₦负正零〇一二两三四五六七八九十百千万亿点–—−-])(?:两百|二百)\s*倍(?![零〇一二两三四五六七八九十百千万亿点\d])/gu,
     '200x',
   ).replace(/\b(\d+(?:[.,]\d+)*)[\s-]*fold\b/gi, '$1x').replace(
+    /\b(by\s+a\s+factor\s+of\s+(?:(?:over|more\s+than|nearly|almost|approximately|roughly|about|around)\s+)?)(\d+(?:[.,]\d+)*)\b(?!\s*(?:[x×%]|[-–—]|\bto\b))/gi,
+    '$1$2x',
+  ).replace(
     /(\d+(?:[.,]\d+)*)\s*([-–—])\s*(\d+(?:[.,]\d+)*)\s*(x|×|倍|%)/gi,
     '$1$4$2$3$4',
   );

@@ -103,6 +103,10 @@ const checks = [
     ['Selected companies trade near 2.5 times ARR and 10 times EBITDA.', '部分公司估值接近 2.6 倍 ARR 和 10 倍 EBITDA。', true],
     ['Selected companies trade near 5-10 times revenue.', '部分公司估值接近收入的 5–10 倍。', false],
     ['Selected companies trade near 5-10 times revenue.', '部分公司估值接近收入的 6–10 倍。', true],
+    ['Pricing the company at more than $2 billion represents 15 times 2024 revenue ($134 million) and 15 times its 2024 revenue.', '超过 $2 billion 的定价对应 2024 年收入（$134 million）的 15 倍，也是其 2024 年收入的 15 倍。', false],
+    ['Pricing the company at more than $2 billion represents 15 times 2024 revenue ($134 million).', '超过 $2 billion 的定价对应 2024 年收入（$134 million）的 16 倍。', true],
+    ['Annual revenues expanded by a factor of over 48 since 2020.', '自 2020 年以来，年收入增长超过 48 倍。', false],
+    ['Annual revenues expanded by a factor of over 48 since 2020.', '自 2020 年以来，年收入增长超过 49 倍。', true],
     ['Customers logged in 26 times.', '客户登录了 26 次。', false],
     ['Customers logged in 26 times.', '客户登录了 26 倍。', true],
   ].map(([en, zh, fails]) => [

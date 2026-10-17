@@ -314,8 +314,8 @@ between English and Chinese magnitude units. This is not a general comparison of
 verbal bounds or a verification of the metric's population or proposition.
 Common written percentages such as `百分之十三` and `超过八成`
 can resolve a mismatched numeric anchor only when the full metric-token sets
-then agree; this does not validate all verbal ratios. `26-fold` and `26 倍`
-retain the same multiplier. A bare
+then agree; this does not validate all verbal ratios. `26-fold`, `by a factor of over 48`, `15 times 2024 revenue`, and `26 倍` / `48 倍` / `15 倍`
+retain their respective multipliers alongside any calendar-year anchor. A bare
 calendar year followed by `ARR` or another metric label remains a year;
 repeating that year does not create another quantitative claim. Repeated
 amounts and rates still retain their occurrence counts.
