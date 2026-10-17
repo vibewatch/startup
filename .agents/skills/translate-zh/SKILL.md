@@ -405,8 +405,10 @@ national/commercial/Medicare/Medicaid claims records and databases, claims
 savings/spend/reductions/trend targets, claims data warehouses/sharing/access/lag,
 and claim status tracking/inquiries,
 commercial auto insurance claims development/exoneration/litigation/monitoring,
+cash-pay/ASO health-plan claims accounts/disbursements/volatility/administration,
 claims fraud detection/prevention, False Claims Act enforcement, patent
 method-of-use/formulation/secondary claims, warranty/defect/refund claim rates,
+advertising/substantiation/docket/infringement/ADA/CIPA/CFAA/reclassification claims,
 and bankruptcy/arbitration/antitrust/senior-debt claims,
 omni-channel or continuous zero-wait claims filing, instant claim
 payouts, claims adjusters and claims resolution, and medical claims / claims
@@ -597,7 +599,7 @@ not company assertions; a separate assertion in the same leaf still needs attrib
 finding; negated wording and a separate disclosure gap still fail. A clause-ending
 `insurance and customer claims` list refers to legal demands, not a company
 assertion. Separate assertions still require attribution.
-`尚未得到证明` (also `验证` or `证实`) can retain a single unproven predicate.
+`尚未得到证明` or `仍未得到验证` (also `证实`) can retain a single unproven predicate.
 For an explicit `no public announcement` gap, `没有…的公开公告` or
 `未见…的公开公告` retains the missing announcement, not absence of the event.
 Negated wording, clause boundaries and additional gaps remain separate.
