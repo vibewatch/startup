@@ -573,8 +573,9 @@ but not a separate `not yet` claim. Direct negations of these aliases do not
 preserve the gap. `public-claim dispersion` describes variation among public
 statements, not an assertion by a company; a separate company assertion still
 requires attribution.
-Coverage lists containing claim procedures, claim triggers, or claims history
-refer to insurance processes, not assertions; separate company claims still
+Coverage lists containing claim procedures, claim triggers, or claims history,
+and explicit PBM, cash-pay, cashless, SLA, or senior-debt claim workflows
+refer to insurance or legal/financial processes, not assertions; separate company claims still
 require attribution. `公司披露的增长口径` and `管理层口径` retain attribution.
 `未提交公开…` can preserve an explicit public-filing gap, and `未确认公开…`
 can preserve an explicit confirmation gap. Neither is a blanket substitute
