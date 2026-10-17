@@ -395,6 +395,10 @@ servicing claims portals and architectures, claims lifecycle management, claims
 intake for insurance carriers, claims routing, routing complex insurance claims
 autonomously, healthcare claims adjudication, medical claims examiners,
 multi-step claim evidence compilation, claims triage, claims decisioning,
+peer-reviewed claims data/studies, clinical claims validation/advantage,
+claims-audited cost reductions, administrative claims and files, de-identified
+claims datasets, payer claims integration and audits, neonatal or catastrophic
+delivery claims, avoidable NICU admissions and large claims,
 omni-channel or continuous zero-wait claims filing, instant claim
 payouts, claims adjusters and claims resolution, and medical claims / claims
 costs in insurance loss-ratio or margin discussions.
