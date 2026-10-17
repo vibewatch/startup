@@ -59,6 +59,8 @@ const insuranceClaimNouns = new RegExp([
   '\\band\\s+claims\\s+cost\\s+reductions\\b',
   '\\b(?:lower\\s+(?:total\\s+)?claims\\s+(?:spend|costs)|claims\\s+funding\\s+for\\s+(?:member|HRA)\\s+reimbursements)\\b',
   '\\b(?:HRA\\s+claim\\s+reimbursement|out-of-pocket\\s+reimbursement\\s+claims|claims\\s+or\\s+billing\\s+support|physician\\s+claims\\s+scoring|claims\\s+steerage\\s+volume|data\\s+ingestion\\s*,\\s*and\\s+claims\\s+fees|member\\s+friction\\s+and\\s+claims\\s+disputes)\\b',
+  '\\b(?:reduction\\s+in\\s+corporate\\s+healthcare\\s+claims|and\\s+claims\\s+adjudication\\s+data|Head\\s+of\\s+Claims\\s+Fraud|claims\\s+fraud\\s+(?:detection|prevention))\\b',
+  '\\b(?:adverse\\s+claims\\s+(?:scenarios|severity)|claims\\s+settlement\\s+satisfaction|claims\\s+handling\\s+(?:track\\s+records|efficiencies)|operational\\s+claims-servicing\\s+expenses|claims\\s+development\\s+matures|upon\\s+(?:the\\s+reporting\\s+of\\s+a\\s+claim|claim\\s+notice)|severe\\s+commercial\\s+trucking\\s+claims|rapid\\s+digital\\s+claims\\s+intake|claims?\\s+resolution(?:\\s+(?:workflow|speeds?)|\\s*,\\s*and\\s+annual\\s+renewal)?|\\d+x\\s+faster\\s+claims?\\s+resolution|before\\s+catastrophic\\s+claims\\s+occur|(?:dash-?cam\\s+|and\\s+)?claims\\s+exoneration|full\\s+policy\\s+term\\s+regardless\\s+of\\s+claims|Direct\\s+email\\s+claim\\s+file\\s+creation|Paperwork-intensive\\s+claim\\s+initiation|AI\\s+creates\\s+claim\\s+files|Claims\\s+reporting\\s+2x\\s+faster|third-party\\s+claims\\s+benchmark\\s+validation|In-house\\s+claims\\s+(?:litigation\\s+defense|adjustment\\s+bottlenecks|team)|claims\\s+litigation\\s+loss\\s+runs|regional\\s+claim\\s+spikes|underwriting\\s+and\\s+claims\\s+monitoring)\\b',
   '\\band\\s+claim\\s+status\\s+(?:tracking|inquiries)\\b',
   '\\b(?:proprietary|upstream|processes|restrict|and|or)\\s+claims\\s+data(?:\\s+(?:warehouse|lag|sharing|access|integration))?\\b',
   '\\bproprietary\\s+claims\\s+datasets\\b',
@@ -158,9 +160,13 @@ const patentClaimNouns = new RegExp([
   '\\b(?:requires?\\s+careful|depends\\s+on)\\s+claim\\s+drafting(?:\\s+strategy)?\\b',
   '\\bcomposition-of-matter\\s+claims(?:\\s+on\\s+novel\\s+analogs\\s+more\\s+defensible\\s+than\\s+isolation\\s+claims)?\\b',
   '\\bUSPTO\\s+patent\\s+filing\\s+portfolio\\s+not\\s+fully\\s+disclosed;\\s+depth\\s+and\\s+quality\\s+of\\s+claims\\s+uncertain\\b',
+  '\\b(?:method-of-use\\s*,\\s*dosing\\s*,\\s*or\\s+formulation|secondary-use|freedom-to-operate\\s+secondary)\\s+patent\\s+claims\\b',
+  '\\bmethod-of-use\\s+and\\s+patient\\s+sub-population\\s+claims\\b',
+  '\\bnarrow\\s+claims\\s+preventing\\s+generic\\s+protection\\b',
+  '\\bexposure\\s+to\\s+patent\\s+claims\\s+from\\b',
 ].join('|'), 'gi');
 const marketSizingClaimContexts = /\bcan\s+claim\s+every\s+(?:BaaS|DBaaS)(?:\s+or\s+(?:BaaS|DBaaS))?\s+dollar\b|\brather\s+than\s+a\s+single\s+(?:expansive\s+)?TAM\s+claim\b/gi;
-const legalCounterclaimContexts = /\bconsumer[- ]protection\s+claims?\b|\bcounter-claims?\b|\blegal\s+claims?\s+registers?\b|\b(?:arbitration|non-competition\s+and\s+non-solicitation)\s+claims?\s+against\b|\brefund\s+claims?\s+(?:processing|handling)\b/gi;
+const legalCounterclaimContexts = /\bconsumer[- ]protection\s+claims?\b|\bcounter-claims?\b|\blegal\s+claims?\s+registers?\b|\b(?:arbitration|non-competition\s+and\s+non-solicitation)\s+claims?\s+against\b|\bongoing\s+former-employee\s+arbitration\s+claims\b|\bFalse\s+Claims\s+Act\b|\bfiled\s+federal\s+antitrust\s+claims\b|\bCelsius\s+bankruptcy\s+claim\s+resolution\b|\brefund\s+claims?\s+(?:processing|handling|rates?)\b|\b(?:dispute\s+defect\s+claims|widespread\s+warranty\s+claims|warranty\s+claim\s+ratios|upstream\s+hardware\s+manufacturers\s+contest\s+claims|senior\s+claims\s+and\s+debt\s+service\s+obligations)\b/gi;
 const rightsClaimContexts = new RegExp([
   '\\bcopyright claims?\\b(?=\\s+(?:impose cost|resolved against)\\b)',
   '\\bcopyright litigation and any similar claims\\b',

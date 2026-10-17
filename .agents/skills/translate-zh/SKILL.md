@@ -404,6 +404,10 @@ steerage volume, HRA or out-of-pocket reimbursement claims and funding,
 national/commercial/Medicare/Medicaid claims records and databases, claims
 savings/spend/reductions/trend targets, claims data warehouses/sharing/access/lag,
 and claim status tracking/inquiries,
+commercial auto insurance claims development/exoneration/litigation/monitoring,
+claims fraud detection/prevention, False Claims Act enforcement, patent
+method-of-use/formulation/secondary claims, warranty/defect/refund claim rates,
+and bankruptcy/arbitration/antitrust/senior-debt claims,
 omni-channel or continuous zero-wait claims filing, instant claim
 payouts, claims adjusters and claims resolution, and medical claims / claims
 costs in insurance loss-ratio or margin discussions.
