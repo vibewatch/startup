@@ -1,0 +1,527 @@
+schemaVersion: "report-v2"
+artifact: "risks"
+slug: "teleport"
+runDate: "2026-10-17"
+company:
+  name: "Teleport"
+chapter:
+  number: 7
+  title: "Risks"
+  summary: "Teleport's top risks are executional rather than conceptual: official evidence supports strong identity, certificate, and audit controls, but independent material repeatedly points to rollout complexity, workflow redesign, and expanding product scope. Underwriting should treat regulated-proof gaps, pricing and partner dependence, and preview-status AI controls as diligence items rather than resolved strengths."
+sections:
+  - id: "risk-ranking"
+    title: "Severity-ranked risk posture"
+    body: "Teleport's core control thesis is credible in public materials: official pages describe a unified identity layer, short-lived certificates, and resource-scoped session recording across servers, databases, Kubernetes, cloud consoles, desktops, and MCP resources. That de-risks the product concept, but it also means implementation quality becomes part of the product. Independent reviews and technical writeups consistently describe the control plane, RBAC design, migration path, and product breadth as material execution risks. In practice, the main underwriting question is not whether Teleport addresses a real access problem, but whether a customer can deploy and operate the platform without creating new misconfiguration, migration, and governance failure modes."
+    claimRefs: ["CR001", "CR002", "CR004", "CR010", "CR011"]
+    figureRefs: ["FR001"]
+  - id: "regulatory-and-governance"
+    title: "Regulatory, legal, and governance exposure"
+    body: "Teleport has visible compliance-oriented controls, and both company-controlled and third-party material point to audit trails, session recording, and support for frameworks such as SOC 2 and ISO 27001. That said, the public pool here does not provide a primary-source public authorization artifact for Teleport's own FedRAMP or equivalent government listing, so regulated-sale readiness should be treated as partially evidenced rather than proven. A second governance risk is architectural: even Teleport-friendly sources note the security boundary is the session entry point, not cryptographic control over each command after access is granted. That leaves residual insider-misuse or compromised-session risk, which has to be mitigated operationally through approvals, moderation, and review rather than assumed away by product design."
+    claimRefs: ["CR002", "CR007", "CR011", "CR014"]
+    tableRefs: ["TR001"]
+  - id: "operational-and-technical"
+    title: "Operational, quality, and technical execution risk"
+    body: "Operationally, Teleport is not a drop-in wrapper around existing SSH keys and network paths. The self-hosted model adds Auth, Proxy, and backend responsibilities; adoption also requires redesign for teams that still depend on static keys, direct database passwords, or direct kubeconfig-based cluster access. Independent material further highlights migration lock-in, version compatibility changes, and setup complexity, especially when SSO, multi-cloud infrastructure, and self-hosted deployments are involved. Teleport Cloud reduces some of that burden by hosting the control plane, but the underlying access model, role design, and retention choices still have to be implemented correctly by the customer."
+    claimRefs: ["CR003", "CR004", "CR005", "CR006", "CR008", "CR010"]
+    tableRefs: ["TR002"]
+  - id: "partner-commercial-and-roadmap"
+    title: "Partner, commercial, and roadmap dependence"
+    body: "Commercially, the pricing model appears seat-driven rather than infrastructure-driven, which can work for large engineering organizations but can create budget friction for smaller or slower-expanding deployments. The company also now spans more surfaces - including Linux desktops and AI-agent controls - which broadens upside but increases support and roadmap burden. Finally, outside summaries point to a Cisco partnership that includes technology integration, licensing, and investment, while noting that the amount was undisclosed and that some newer agent-security capabilities were still described as preview rather than generally available. Taken together, the partner and roadmap story is strategically promising, but not yet de-risked enough to treat as a closed underwriting point."
+    claimRefs: ["CR003", "CR009", "CR012", "CR013"]
+    tableRefs: ["TR003"]
+  - id: "monitoring-and-kill-criteria"
+    title: "Mitigations, monitoring, and thesis-break triggers"
+    body: "The mitigations visible in public evidence are real: short-lived certificates, audit trails, session recording, managed-cloud deployment options, and established compliance programs all lower baseline access risk. The remaining question is whether those controls survive real-world rollout, procurement, and scope expansion. For diligence, the cleanest kill criteria are monitorable: failure to produce primary certification or authorization artifacts for regulated accounts, repeated deployment slippage caused by RBAC or migration complexity, continued preview-only status for AI-agent controls after customer pilots, or pricing friction that prevents expansion beyond a narrow admin cohort. If those conditions persist after technical validation and reference calls, the residual execution risk is likely too high for an aggressive underwriting stance."
+    claimRefs: ["CR008", "CR009", "CR012", "CR013", "CR014"]
+tables:
+  - id: "TR001"
+    title: "Regulatory / legal risk register"
+    columns:
+      ["Risk", "Public evidence", "Jurisdiction / exposure", "Likelihood", "Severity", "Mitigation", "Residual exposure", "Diligence path"]
+    rows:
+      - ["Regulated-sale proof gap", "Public sources show control statements and customer testimonials, but no primary authorization artifact in this pool for Teleport's own government listing.", "US federal / highly regulated buyers", "Medium", "High", "Audit logs, session recording, FIPS-oriented claims, and compliance-oriented product features.", "High for government or public-sector deals until primary proof is shown.", "Request trust-center materials, certification numbers, and any formal authorization letters or registry entries."]
+      - ["Session-boundary residual misuse", "Risk-reducing controls are resource-scoped and audited, but a session still allows actions after entry rather than cryptographic per-command enforcement.", "All privileged workflows", "Medium", "High", "Short-lived certificates, approvals, moderation, and complete audit trails.", "Medium to high where privileged commands can cause irreversible damage quickly.", "Review moderator requirements, approval policies, session review workflows, and control mappings for high-risk operations."]
+      - ["Open-source / commercial boundary drift", "Teleport blends open-source deployment with commercial cloud, compliance, and partner motions, so entitlement and licensing boundaries matter in embedded or reseller use cases.", "Enterprise procurement, channel, and embedded deployments", "Low to medium", "Medium", "Official licensing, annual contracts, and partner agreements.", "Medium where procurement needs reseller, redistribution, or sovereign-hosting clarity.", "Review current OSS and commercial license terms, channel rights, and any Cisco-linked licensing commitments."]
+    notes: "Rows are ordered by residual severity using only the assigned public pool; missing primary regulatory artifacts remain diligence items rather than assumed negatives."
+    enumerationScope:
+      coverage: "partial"
+      basis: "Publicly visible regulatory, compliance, and legal-style risk surfaces retained in the assigned pool as of 2026-10-17."
+    claimRefs: ["CR002", "CR007", "CR009", "CR011", "CR012", "CR014"]
+  - id: "TR002"
+    title: "Operational / quality / security risk register"
+    columns:
+      ["Failure mode", "Public evidence", "Likelihood", "Severity", "Mitigation maturity", "Residual exposure", "Unresolved gap"]
+    rows:
+      - ["Control-plane misconfiguration", "Independent sources describe a broad operational surface where role, agent, or proxy mistakes can expose unintended access paths.", "High", "High", "Medium", "High", "Need architecture review, default-role audit, and privilege-boundary testing."]
+      - ["Migration redesign burden", "Teams using static SSH keys, direct DB passwords, or direct kubeconfigs have to redesign workflows around Teleport's proxy and certificate model.", "High", "High", "Medium", "High", "Need pilot results for the most business-critical admin and automation workflows."]
+      - ["Upgrade and compatibility breaks", "Public material cites stricter client compatibility in newer versions and a WebAuthn MFA shift in Teleport 18.", "Medium", "Medium", "Medium", "Medium", "Need current version matrix, upgrade runbooks, and reference accounts that crossed major versions cleanly."]
+      - ["Product-scope expansion strain", "The platform now covers Linux desktops and AI-agent workflows in addition to core infrastructure access, broadening test and support surface.", "Medium", "Medium", "Low to medium", "Medium", "Need GA/support evidence, adoption references, and support metrics for newer product surfaces."]
+    notes: "Residual exposure reflects operational reality after visible mitigations; managed cloud reduces some burden but does not remove policy-design or rollout risk."
+    claimRefs: ["CR003", "CR004", "CR005", "CR006", "CR008", "CR010", "CR013"]
+  - id: "TR003"
+    title: "Partner / dependency risk register"
+    columns:
+      ["Dependency", "Counterparty", "Role", "Concentration", "Failure scenario", "Severity", "Mitigation", "Residual exposure"]
+    rows:
+      - ["Identity and cloud ecosystem dependence", "IdPs, cloud providers, storage backends", "Authentication, deployment, and session-retention plumbing", "High in enterprise deployments", "Customer rollout stalls because SSO, storage, or cloud-environment integration is more complex than expected.", "High", "Managed cloud option, documented integrations, and centralized policy model.", "Medium to high until reference architecture and rollout ownership are clear."]
+      - ["Strategic partner concentration", "Cisco", "Technology integration, licensing, and strategic investment", "Medium and rising", "Go-to-market expectations or roadmap assumptions run ahead of disclosed economics or delivered integration.", "Medium to high", "Partnership broadens distribution and validation if execution lands.", "Medium because investment size, commercial terms, and customer pull-through are undisclosed."]
+      - ["Seat-based pricing dependence", "Customer budget owners", "Commercial expansion and procurement approval", "Medium", "Per-user pricing slows deployment beyond a narrow admin cohort or makes small-team adoption uneconomic.", "Medium", "Value improves in regulated or multi-cloud environments where auditability replaces multiple point tools.", "Medium where customer estates are small, budget-constrained, or satisfied with native tooling."]
+    notes: "Rows focus on dependencies that can constrain adoption, monetization, or rollout timing even when product controls are sound."
+    claimRefs: ["CR008", "CR009", "CR012"]
+figures:
+  - id: "FR001"
+    title: "Risk heatmap"
+    type: "matrix"
+    summary: "The highest residual exposure sits in implementation complexity and regulated-proof gaps, not in the underlying access-control concept."
+    data:
+      columns:
+        - label: "Likelihood"
+          note: "Probability that the issue becomes a material underwriting problem in the next 12-18 months."
+        - label: "Impact"
+          note: "Effect on security posture, enterprise conversion, or deal quality if the risk materializes."
+        - label: "Mitigation maturity"
+          note: "How mature the visible mitigations appear in public evidence."
+        - label: "Residual exposure"
+          note: "Net exposure after considering currently visible mitigations."
+      rows:
+        - label: "Implementation and migration complexity"
+          note: "Combines self-hosted control-plane burden, workflow redesign, and setup complexity."
+          values:
+            - label: "High"
+              tone: "high"
+            - label: "High"
+              tone: "high"
+            - label: "Medium"
+              tone: "medium"
+            - label: "High"
+              tone: "high"
+        - label: "Regulated-proof gap"
+          note: "Public evidence supports controls, but primary authorization artifacts are not in this pool."
+          values:
+            - label: "Medium"
+              tone: "medium"
+            - label: "High"
+              tone: "high"
+            - label: "Medium"
+              tone: "medium"
+            - label: "High"
+              tone: "high"
+        - label: "Session-boundary residual misuse"
+          note: "Teleport governs entry and audit strongly, but not cryptographic per-command enforcement."
+          values:
+            - label: "Medium"
+              tone: "medium"
+            - label: "High"
+              tone: "high"
+            - label: "Medium"
+              tone: "medium"
+            - label: "Medium"
+              tone: "medium"
+        - label: "Pricing and procurement friction"
+          note: "Seat-driven pricing can create budget friction when usage remains narrow."
+          values:
+            - label: "Medium"
+              tone: "medium"
+            - label: "Medium"
+              tone: "medium"
+            - label: "Medium"
+              tone: "medium"
+            - label: "Medium"
+              tone: "medium"
+        - label: "Partner and roadmap dependence"
+          note: "Cisco integration economics are undisclosed, and some AI controls were still preview in the retained evidence."
+          values:
+            - label: "Medium"
+              tone: "medium"
+            - label: "Medium"
+              tone: "medium"
+            - label: "Low"
+              tone: "low"
+            - label: "Medium"
+              tone: "medium"
+        - label: "Product-scope expansion"
+          note: "Linux desktops and agent controls broaden coverage but also widen support and testing requirements."
+          values:
+            - label: "Medium"
+              tone: "medium"
+            - label: "Medium"
+              tone: "medium"
+            - label: "Low"
+              tone: "low"
+            - label: "Medium"
+              tone: "medium"
+    approximationNotes: "This matrix expresses qualitative risk ranking from retained public evidence; it is not a probabilistic loss model."
+    claimRefs: ["CR003", "CR004", "CR007", "CR009", "CR012", "CR013", "CR014"]
+callouts:
+  - calloutType: "risk"
+    title: "Implementation quality is part of the product risk"
+    body: "Teleport can lower access risk only if customers actually implement the control plane, RBAC, migration path, and upgrades well. Independent sources repeatedly show that rollout complexity is the main way the thesis can fail."
+    claimRefs: ["CR004", "CR005", "CR006", "CR010"]
+  - calloutType: "risk"
+    title: "Regulated traction still needs primary proof"
+    body: "Public evidence supports auditability and compliance features, but the retained pool does not itself prove a primary public authorization record for regulated procurement. That gap should remain open until primary artifacts are reviewed."
+    claimRefs: ["CR011", "CR014"]
+  - calloutType: "recommendation"
+    title: "Kill criteria should be measurable"
+    body: "The thesis should weaken if Teleport cannot produce primary compliance artifacts, if rollout pilots stall on RBAC or migration complexity, if new AI controls remain preview-only, or if seat-based pricing prevents expansion beyond a narrow admin cohort."
+    claimRefs: ["CR009", "CR012", "CR013", "CR014"]
+localEvidence:
+  searchQueries:
+    - query: '"Teleport" Unified infrastructure identity platform securing SSH, Kubernetes, databases, internal web apps, machines, site:goteleport.com product company'
+      engine: "anysearch"
+      hits: 8
+      retainedSourceRefs: ["SR002", "SR003"]
+    - query: '"Teleport" Unified infrastructure identity platform securing SSH, Kubernetes, databases, internal web apps, machines, funding valuation revenue customers leadership launches 2026'
+      engine: "anysearch"
+      hits: 8
+      retainedSourceRefs: ["SR009"]
+    - query: '"Teleport" Unified infrastructure identity platform securing SSH, Kubernetes, databases, internal web apps, machines, lawsuit regulatory outage breach complaints risks 2026'
+      engine: "anysearch"
+      hits: 7
+      retainedSourceRefs: ["SR001", "SR005"]
+    - query: '"Teleport" Unified infrastructure identity platform securing SSH, Kubernetes, databases, internal web apps, machines, launch history investors team governance 2026'
+      engine: "anysearch"
+      hits: 8
+      retainedSourceRefs: ["SR005"]
+    - query: '"Teleport" Unified infrastructure identity platform securing SSH, Kubernetes, databases, internal web apps, machines, The 600+ customer figure is company-stated and not independently verified. 2026'
+      engine: "anysearch"
+      hits: 8
+      retainedSourceRefs: ["SR008"]
+    - query: '"Teleport" Unified infrastructure identity platform securing SSH, Kubernetes, databases, internal web apps, machines, market size segmentation demand adoption'
+      engine: "anysearch"
+      hits: 7
+      retainedSourceRefs: ["SR001", "SR005"]
+    - query: '"Teleport" Unified infrastructure identity platform securing SSH, Kubernetes, databases, internal web apps, machines, industry trends buyer needs spending addressable market'
+      engine: "anysearch"
+      hits: 7
+      retainedSourceRefs: ["SR005"]
+    - query: '"Teleport" Unified infrastructure identity platform securing SSH, Kubernetes, databases, internal web apps, machines, alternatives competitors positioning differentiation'
+      engine: "anysearch"
+      hits: 7
+      retainedSourceRefs: ["SR001"]
+    - query: '"Teleport" Unified infrastructure identity platform securing SSH, Kubernetes, databases, internal web apps, machines, competitive comparison pricing capabilities customer tradeoffs 2026'
+      engine: "anysearch"
+      hits: 8
+      retainedSourceRefs: ["SR008"]
+    - query: '"Teleport" Unified infrastructure identity platform securing SSH, Kubernetes, databases, internal web apps, machines, product architecture technology technical documentation'
+      engine: "anysearch"
+      hits: 8
+      retainedSourceRefs: ["SR002", "SR008"]
+    - query: '"Teleport" Unified infrastructure identity platform securing SSH, Kubernetes, databases, internal web apps, machines, technical design integrations performance scalability'
+      engine: "anysearch"
+      hits: 8
+      retainedSourceRefs: ["SR008"]
+    - query: '"Teleport" Unified infrastructure identity platform securing SSH, Kubernetes, databases, internal web apps, machines, customer case study adoption users partners 2026'
+      engine: "anysearch"
+      hits: 8
+      retainedSourceRefs: ["SR003", "SR008"]
+    - query: '"Teleport" Unified infrastructure identity platform securing SSH, Kubernetes, databases, internal web apps, machines, operational financial regulatory legal risks limitations 2026'
+      engine: "anysearch"
+      hits: 7
+      retainedSourceRefs: ["SR001", "SR004", "SR005"]
+    - query: '"Teleport" Unified infrastructure identity platform securing SSH, Kubernetes, databases, internal web apps, machines, reliability execution dependencies adverse evidence'
+      engine: "anysearch"
+      hits: 8
+      retainedSourceRefs: ["SR006", "SR007", "SR008"]
+  researchQuestions:
+    - id: "QR001"
+      question: "Do public sources show that Teleport's control model is mature enough to reduce privileged-access risk rather than just shift it?"
+      type: "verification"
+      targets: ["contentRequirements/0", "plannedFigures/risk-heatmap"]
+      status: "answered"
+    - id: "QR002"
+      question: "Are Teleport's access controls resource-scoped and auditable enough to contain blast radius in high-privilege environments?"
+      type: "verification"
+      targets: ["contentRequirements/0", "plannedTables/operational-quality-security-risk-register"]
+      status: "answered"
+    - id: "QR003"
+      question: "Can regulated-market readiness be verified from primary public evidence rather than customer testimonials or control statements?"
+      type: "adverse"
+      targets: ["contentRequirements/1", "plannedTables/regulatory-legal-risk-register"]
+      status: "partial"
+    - id: "QR004"
+      question: "Does Teleport's expanding product surface create execution risk through breadth, rollout complexity, or support burden?"
+      type: "adverse"
+      targets: ["contentRequirements/2", "plannedTables/operational-quality-security-risk-register"]
+      status: "answered"
+    - id: "QR005"
+      question: "What workflow changes are required for teams that still rely on static credentials and direct network access?"
+      type: "mechanism"
+      targets: ["contentRequirements/2", "plannedTables/operational-quality-security-risk-register"]
+      status: "answered"
+    - id: "QR006"
+      question: "How much of Teleport's security and audit promise still depends on deployment choices and customer operating discipline?"
+      type: "verification"
+      targets: ["contentRequirements/2", "contentRequirements/5"]
+      status: "answered"
+    - id: "QR007"
+      question: "Do pricing structure and strategic-partner dependence create material commercial risk even if the product works technically?"
+      type: "adverse"
+      targets: ["contentRequirements/4", "plannedTables/partner-dependency-risk-register"]
+      status: "answered"
+    - id: "QR008"
+      question: "Are Teleport's newest AI-agent and Linux-desktop claims already mature, or are they still rollout-stage capabilities?"
+      type: "freshness"
+      targets: ["contentRequirements/3", "plannedFigures/risk-heatmap"]
+      status: "answered"
+    - id: "QR009"
+      question: "Compared with simpler point tools, does Teleport trade away convenience for a more complex but more governable control plane?"
+      type: "comparison"
+      targets: ["contentRequirements/5", "plannedFigures/risk-heatmap"]
+      status: "answered"
+  sources:
+    - id: "SR001"
+      publisher: "Teleport"
+      title: "Unified Identity Layer for Humans, Machines & AI"
+      url: "https://goteleport.com/platform/unified-identity-layer/"
+      accessDate: "2026-10-17"
+      accessStatus: "ok"
+      stance: "confirming"
+      sourceType: "official"
+      reputationTier: "medium"
+      independence: "company"
+      topics: ["identity-layer", "audit", "compliance", "ai-agents"]
+      keyQuote: "Teleport implements a unified identity layer by providing cryptographic identities for humans, machines, workloads, endpoints, infrastructure assets, and AI agents from one control plane."
+    - id: "SR002"
+      publisher: "Teleport"
+      title: "Teleport Zero Trust Access"
+      url: "https://goteleport.com/platform/zero-trust-access/"
+      accessDate: "2026-10-17"
+      accessStatus: "ok"
+      stance: "confirming"
+      sourceType: "official"
+      reputationTier: "medium"
+      independence: "company"
+      topics: ["zero-trust", "session-recording", "compliance", "resource-scope"]
+      keyQuote: "Every session is authenticated against role-based policies, scoped to a specific resource, and recorded in a tamper-proof audit trail tied to a verified identity - not an IP address."
+    - id: "SR003"
+      publisher: "Teleport"
+      title: "Introduction to Teleport - overview"
+      url: "https://goteleport.com/resources/videos/introduction-to-teleport/"
+      date: "2022-06-02"
+      accessDate: "2026-10-17"
+      accessStatus: "ok"
+      stance: "confirming"
+      sourceType: "official"
+      reputationTier: "medium"
+      independence: "company"
+      topics: ["pricing", "deployment-model", "session-storage"]
+      keyQuote: "Our pricing is a per-user pricing model per protocol. So you basically determine how many users you need access on each protocol, and then we price it accordingly. And our pricing is based on an annual basis."
+    - id: "SR004"
+      publisher: "Zaira Labs"
+      title: "Teleport (OSS): Identity-aware access proxy for SSH, Kubernetes, databases, Windows, web apps, and MCP servers"
+      url: "https://zairalabs.ai/guide/tools/teleport-oss/"
+      accessDate: "2026-10-17"
+      accessStatus: "ok"
+      stance: "neutral"
+      sourceType: "review"
+      reputationTier: "medium"
+      independence: "independent"
+      topics: ["oss", "migration", "upgrade-risk", "session-boundary"]
+      keyQuote: "No. Teleport's security boundary is the session itself; once connected, it does not cryptographically constrain individual actions or commands performed inside the session."
+    - id: "SR005"
+      publisher: "Security Stack"
+      title: "Teleport Infrastructure Identity Platform | Security Stack"
+      url: "https://securitystack.app/products/teleport-infrastructure-identity-platform"
+      accessDate: "2026-10-17"
+      accessStatus: "ok"
+      stance: "neutral"
+      sourceType: "analyst-market-data"
+      reputationTier: "medium"
+      independence: "independent"
+      topics: ["certifications", "customers", "integrations", "maturity"]
+      keyQuote: "Teleport holds SOC 2 Type II and ISO 27001 certifications and attests to HIPAA Security Rule compliance."
+    - id: "SR006"
+      publisher: "Startupik"
+      title: "Teleport Cloud: Managed Secure Infrastructure Access Review: Features, Pricing, and Why Startups Use It"
+      url: "https://startupik.com/teleport-cloud-managed-secure-infrastructure-access/"
+      accessDate: "2026-10-17"
+      accessStatus: "ok"
+      stance: "neutral"
+      sourceType: "review"
+      reputationTier: "medium"
+      independence: "independent"
+      topics: ["cloud", "pricing", "adoption", "setup-complexity"]
+      keyQuote: "Per-user pricing may feel expensive for very small budgets."
+    - id: "SR007"
+      publisher: "MSP Channel Insights"
+      title: "Teleport extends identity platform to secure Linux desktops"
+      url: "https://www.msp-channel.com/news/23409-teleport-extends-identity-platform-to-secure-linux-desktops"
+      date: "2026-08-18"
+      accessDate: "2026-10-17"
+      accessStatus: "ok"
+      stance: "neutral"
+      sourceType: "news"
+      reputationTier: "medium"
+      independence: "independent"
+      topics: ["linux-desktop", "product-scope", "endpoint-security"]
+      keyQuote: "Teleport is extending its Infrastructure Identity Platform to cover Linux desktops, bringing cryptographic identity, least-privilege access, and session auditing to developer workstations alongside servers, clusters, and cloud environments."
+    - id: "SR008"
+      publisher: "DEV Community"
+      title: "How Teleport Works: A Deep Dive into Modern Infrastructure Access"
+      url: "https://dev.to/piyushjajoo/how-teleport-works-a-deep-dive-into-modern-infrastructure-access-14m5"
+      accessDate: "2026-10-17"
+      accessStatus: "ok"
+      stance: "neutral"
+      sourceType: "technical-docs"
+      reputationTier: "medium"
+      independence: "independent"
+      topics: ["architecture", "lock-in", "debugging", "operations"]
+      keyQuote: "Strong coupling to Teleport's certificate model, RBAC system, and agent deployment. Migrating away is non-trivial."
+    - id: "SR009"
+      publisher: "NHI Governance"
+      title: "Teleport: NHI Profile, Funding, Leadership and Products"
+      url: "https://nhigovernance.com/companies/teleport.html"
+      accessDate: "2026-10-17"
+      accessStatus: "ok"
+      stance: "neutral"
+      sourceType: "analyst-market-data"
+      reputationTier: "medium"
+      independence: "independent"
+      topics: ["cisco", "funding", "roadmap", "preview-features"]
+      keyQuote: "The size and terms of Cisco's August 2026 investment are not disclosed, and no priced round has been announced since 2022."
+  claims:
+    - id: "CR001"
+      statement: "Teleport publicly positions one unified identity layer for humans, machines, workloads, resources, and AI agents from a single control plane."
+      type: "company-claimed"
+      topic: "control-model"
+      sourceRefs: ["SR001", "SR002"]
+      confidence: "high"
+      freshness: "current"
+      answersQuestionRefs: ["QR001"]
+    - id: "CR002"
+      statement: "Teleport's access model is resource-scoped and session-audited, with each connection separately authenticated and tied to a verified identity."
+      type: "company-claimed"
+      topic: "blast-radius"
+      sourceRefs: ["SR001", "SR002"]
+      confidence: "high"
+      freshness: "current"
+      answersQuestionRefs: ["QR001", "QR002"]
+    - id: "CR003"
+      statement: "By August 2026, Teleport had expanded the platform's protected resource surface to include Linux desktops alongside servers, databases, Kubernetes, cloud consoles, GitHub, and MCP-related resources."
+      type: "third-party-reported"
+      topic: "product-scope"
+      sourceRefs: ["SR002", "SR007"]
+      confidence: "medium"
+      freshness: "recent"
+      answersQuestionRefs: ["QR004", "QR008"]
+    - id: "CR004"
+      statement: "Independent material describes Teleport's self-hosted footprint as a broad operational surface in which role, agent, proxy, and backend mistakes can expose unintended access paths."
+      type: "third-party-reported"
+      topic: "implementation-risk"
+      sourceRefs: ["SR004", "SR008"]
+      confidence: "medium"
+      freshness: "current"
+      answersQuestionRefs: ["QR004", "QR005", "QR009"]
+    - id: "CR005"
+      statement: "Teleport adoption requires workflow redesign for organizations that still rely on long-lived SSH keys, direct database passwords, or direct kubeconfig-based cluster access."
+      type: "third-party-reported"
+      topic: "migration-risk"
+      sourceRefs: ["SR004"]
+      confidence: "medium"
+      freshness: "current"
+      answersQuestionRefs: ["QR005", "QR009"]
+    - id: "CR006"
+      statement: "Public product material points to upgrade risk from stricter client compatibility in newer versions and a WebAuthn requirement for per-session MFA in Teleport 18."
+      type: "third-party-reported"
+      topic: "upgrade-risk"
+      sourceRefs: ["SR004"]
+      confidence: "medium"
+      freshness: "recent"
+      answersQuestionRefs: ["QR005"]
+    - id: "CR007"
+      statement: "Teleport's documented security boundary is the session itself rather than cryptographic constraint over every command once a session has started."
+      type: "third-party-reported"
+      topic: "session-boundary"
+      sourceRefs: ["SR004"]
+      confidence: "medium"
+      freshness: "current"
+      answersQuestionRefs: ["QR002", "QR003"]
+    - id: "CR008"
+      statement: "Deployment responsibility remains shared: Teleport Cloud hosts the control plane, but public material shows customers still have to design access policy and choose how retention and storage are handled in non-cloud deployments."
+      type: "company-claimed"
+      topic: "deployment-governance"
+      sourceRefs: ["SR003", "SR006"]
+      confidence: "medium"
+      freshness: "unknown"
+      answersQuestionRefs: ["QR006"]
+    - id: "CR009"
+      statement: "Teleport's commercial model is presented publicly as per-user pricing, with the vendor webinar describing per-user annual pricing per protocol and an independent review warning that the seat model can feel expensive for very small budgets."
+      type: "third-party-reported"
+      topic: "pricing-risk"
+      sourceRefs: ["SR003", "SR006"]
+      confidence: "medium"
+      freshness: "unknown"
+      answersQuestionRefs: ["QR007"]
+    - id: "CR010"
+      statement: "Independent reviews repeatedly describe initial setup, SSO or multi-cloud integration, and self-hosted configuration as meaningful adoption complexity."
+      type: "third-party-reported"
+      topic: "setup-complexity"
+      sourceRefs: ["SR006", "SR008"]
+      confidence: "medium"
+      freshness: "recent"
+      answersQuestionRefs: ["QR004", "QR009"]
+    - id: "CR011"
+      statement: "A third-party product directory reports that Teleport holds SOC 2 Type II and ISO 27001 certifications and is used by more than 600 companies."
+      type: "third-party-reported"
+      topic: "maturity-signals"
+      sourceRefs: ["SR005"]
+      confidence: "medium"
+      freshness: "unknown"
+      answersQuestionRefs: ["QR001", "QR003", "QR006"]
+    - id: "CR012"
+      statement: "An independent profile says Teleport's August 2026 Cisco deal included technology integration, licensing, and strategic investment, but the amount and terms were undisclosed and no newer priced round was disclosed."
+      type: "third-party-reported"
+      topic: "partner-dependence"
+      sourceRefs: ["SR009"]
+      confidence: "medium"
+      freshness: "recent"
+      answersQuestionRefs: ["QR007"]
+    - id: "CR013"
+      statement: "The same independent profile says Teleport's July 2026 agent-session summaries, classifiers, and session risk scoring were described as preview features rather than confirmed general availability."
+      type: "third-party-reported"
+      topic: "roadmap-maturity"
+      sourceRefs: ["SR009"]
+      confidence: "medium"
+      freshness: "recent"
+      answersQuestionRefs: ["QR004", "QR008"]
+    - id: "CR014"
+      statement: "The assigned public source pool does not establish a primary-source public authorization artifact for Teleport's own FedRAMP or equivalent government listing."
+      type: "open-question"
+      topic: "regulated-proof-gap"
+      sourceRefs: []
+      confidence: "low"
+      freshness: "current"
+      answersQuestionRefs: ["QR003"]
+  evidenceGaps:
+    - type: "missing-source"
+      severity: "material"
+      topic: "regulated-proof-gap"
+      missingEvidence: "Primary-source certification or authorization artifacts for regulated deployments, including any public registry entries, certificate numbers, or formal authorization letters."
+      whyItMatters: "Government and highly regulated buyers may treat the absence of primary proof as a procurement blocker even if control statements and testimonials are strong."
+      diligencePath: "Request trust-center exports, certification IDs, and any public-sector authorization artifacts directly from the company."
+      relatedQuestionRefs: ["QR003"]
+      relatedTableRefs: ["TR001"]
+    - type: "missing-source"
+      severity: "material"
+      topic: "incident-history"
+      missingEvidence: "A verified incident, outage, or litigation record showing whether Teleport has had material security, service-availability, or legal events."
+      whyItMatters: "Without an incident or docket history, downside frequency and crisis-handling quality remain under-specified."
+      diligencePath: "Request status-history exports, security incident summaries, and legal docket disclosures during diligence."
+      relatedQuestionRefs: ["QR002", "QR006"]
+    - type: "private-evidence-only"
+      severity: "material"
+      topic: "pricing-risk"
+      missingEvidence: "Current edition-by-edition pricing, discounting behavior, expansion patterns, and gross-retention or seat-expansion evidence."
+      whyItMatters: "Public pricing language is not enough to judge whether the model scales efficiently across customer sizes or only fits a narrow enterprise buyer."
+      diligencePath: "Ask for current price books, cohort expansion data, and reference calls focused on seat growth and procurement friction."
+      relatedQuestionRefs: ["QR007"]
+      relatedTableRefs: ["TR003"]
+    - type: "stale"
+      severity: "material"
+      topic: "roadmap-maturity"
+      missingEvidence: "General-availability confirmation, support scope, and customer references for the 2026 AI-agent controls and newer endpoint surfaces."
+      whyItMatters: "Preview-stage controls should not be underwritten as mature differentiators until customer evidence confirms production use and supportability."
+      diligencePath: "Request GA notes, customer references, support SLAs, and product telemetry for Linux desktop and agent-security features."
+      relatedQuestionRefs: ["QR004", "QR008"]
+      relatedTableRefs: ["TR002", "TR003"]
