@@ -1,0 +1,586 @@
+schemaVersion: "report-v2"
+artifact: risks
+slug: juspay
+runDate: 2026-10-17
+company:
+  name: Juspay
+chapter:
+  number: 7
+  title: Risks
+  summary: >-
+    The clearest evidenced risk is payment-aggregator resistance to third-party
+    orchestration, while peak-load architecture, multi-jurisdiction expansion,
+    broad product scope, and external infrastructure dependencies create material
+    execution exposure. Public evidence describes mitigations, but independently
+    verified licensing, incident, concentration, and financial-risk data remain gaps.
+sections:
+  - id: ranked-risk-posture
+    title: Ranked risk posture
+    body: >-
+      The most immediate risk is ecosystem disintermediation: Business Standard
+      reported operational friction and efforts by payment aggregators to move
+      merchants away from third-party routing, directly challenging the neutral
+      orchestration position that Juspay markets. Technical resilience is the
+      second major exposure because the workload can spike twenty-fold within
+      seconds; the disclosed architecture reduces earlier database bottlenecks
+      but retains eventual-consistency and managed-cloud dependencies. Regulatory
+      and cross-border execution risk ranks next because public compliance claims
+      are broad while entity-level licenses and jurisdictional scope are not
+      independently evidenced. The heatmap is qualitative and reflects evidence
+      strength as well as impact, not a measured probability model.
+    claimRefs: [CR001, CR004, CR006, CR011, CR016]
+    figureRefs: [FR001]
+  - id: regulatory-and-legal-exposure
+    title: Regulatory and legal exposure
+    body: >-
+      Juspay states that its bank platform maintains PCI DSS V4, PSD2, ISO
+      27001:2022, SOC 2 Type 2, and GDPR compliance. Those claims indicate a
+      substantial control program, but the assigned evidence does not provide
+      certificates, audit periods, covered legal entities, exceptions, or
+      regulator records. A low-reputation blog also claims Payment Aggregator
+      status and early adaptation to Indian localization rules; this is treated
+      only as an unverified lead. VEF, an investor rather than an independent
+      benchmark, describes expansion across Europe, the Americas, Southeast Asia,
+      and the Middle East. Investment clearance should therefore require a
+      jurisdiction-by-entity license matrix, current audit reports, enforcement
+      searches, and counsel confirmation of whether Juspay or its customers carry
+      each regulated obligation.
+    claimRefs: [CR003, CR011, CR015]
+    tableRefs: [TR001]
+  - id: operational-quality-and-security
+    title: Operational, quality, and security exposure
+    body: >-
+      The adverse merchant-channel report matters because it describes operating
+      issues reaching counterparties rather than merely a theoretical outage
+      scenario. Juspay's supplier-hosted technical account says IPL traffic can
+      jump from normal levels to twenty times average in seconds and describes
+      earlier rate limiting, database scaling constraints, and a database
+      single-point-of-failure concern. Its current memory-first design, controlled
+      write-back, secondary streams, and fault isolation are credible mitigations,
+      but the same account says multi-region active-active resilience remains
+      future work. Company uptime claims use different scopes and lack an
+      independently audited measurement window. Monthly review should therefore
+      track failed-payment rates, throttling, write-back lag, recovery objectives,
+      severity-one incidents, and progress toward tested active-active failover.
+    claimRefs: [CR001, CR002, CR004, CR005, CR006, CR007]
+    tableRefs: [TR002]
+  - id: dependencies-financial-model-and-kill-criteria
+    title: Dependencies, financial-model risk, and kill criteria
+    body: >-
+      Juspay's advertised breadth creates both resilience and coordination risk:
+      it claims integrations with more than 300 PSPs and local methods, while VEF
+      describes card-network partnerships and a full acquiring build for an
+      unnamed global bank. The company also spans orchestration, checkout,
+      authentication, tokenisation, payouts, offers, reconciliation, and revenue
+      recovery. VEF characterizes India as a low-margin payment environment with
+      zero UPI merchant discount rates and capped economics elsewhere, but the
+      pool contains no audited margin, loss, fraud, working-capital, or cash
+      exposure data. Thesis-break triggers are sustained PA-led merchant bypass,
+      a material security or availability event without tested recovery, failure
+      to validate required licenses, or evidence that partner concentration and
+      low take rates prevent durable unit economics.
+    claimRefs: [CR008, CR009, CR010, CR012, CR013, CR014, CR016]
+    tableRefs: [TR003]
+tables:
+  - id: TR001
+    title: Regulatory / legal risk register
+    columns:
+      - Risk area
+      - Jurisdiction
+      - Public status
+      - Likelihood
+      - Impact
+      - Mitigation maturity
+      - Residual exposure
+      - Diligence path
+    rows:
+      - [Entity-level licensing and payment-regulatory perimeter, India, "Low-reputation blog claims PA approval; no regulator record is retained", Uncertain, High, Unverified, High, "Obtain legal-entity and license schedule; verify each identifier with RBI or the relevant regulator"]
+      - [Cross-border payments and data obligations, "Europe, Americas, Southeast Asia, Middle East", "Investor describes expansion; company claims PSD2 and GDPR compliance", Medium, High, Partial, "Medium-high", "Map product and data flows by jurisdiction; obtain local counsel opinions and regulator correspondence"]
+      - [Security and privacy assurance scope, Global, "Company claims PCI DSS V4, ISO 27001:2022, SOC 2 Type 2, PSD2, and GDPR compliance", Medium, High, "Claimed controls; audit scope undisclosed", Medium, "Review current certificates, SOC report, exceptions, penetration tests, subprocessors, and breach register"]
+    notes: >-
+      Partial public-evidence register ordered by residual severity; likelihood and
+      impact are analyst judgments, while statuses preserve the cited issuer and
+      do not independently validate licenses or certifications.
+    enumerationScope:
+      coverage: partial
+      basis: >-
+        Public regulatory and compliance issues identifiable in the eight assigned
+        sources as of 2026-10-17; court, regulator, and certificate records are absent.
+    claimRefs: [CR003, CR011, CR015]
+  - id: TR002
+    title: Operational / quality / security risk register
+    columns:
+      - Failure mode
+      - Likelihood
+      - Impact
+      - Evidence
+      - Mitigation maturity
+      - Residual exposure
+      - Monitoring indicator
+    rows:
+      - ["PA or merchant rejection of third-party orchestration", High, High, "Business Standard reported operating strain and merchant-bypass pressure", "Open-source and routing breadth are claimed; outcome evidence absent", High, "Merchant churn linked to PA pressure; direct-routing share; escalations by PA"]
+      - ["Twenty-fold event-driven traffic spike", High, High, "AWS/Juspay account describes 7.6 million transactions per hour at peak", "Cell-based ElastiCache design deployed", Medium, "Peak failure rate; p99 latency; throttled requests; cache and drainer saturation"]
+      - ["Write-back delay, cache failure, or inconsistent transaction state", Medium, High, "Current architecture drains short-lived state to RDS with eventual consistency", "Secondary streams and cache-miss handlers disclosed", Medium, "Write-back lag; replay errors; reconciliation breaks; failover data loss"]
+      - ["Regional outage or incomplete disaster recovery", Medium, High, "Multi-region expansion exists, but active-active and shuffle sharding were described as future work", "In progress", "Medium-high", "Recovery-time and recovery-point tests; active-active launch and fault-injection results"]
+    notes: >-
+      Severity ordering combines an independent adverse report with supplier-hosted
+      company technical disclosures; no audited incident-frequency denominator was available.
+    claimRefs: [CR001, CR004, CR005, CR006, CR007]
+  - id: TR003
+    title: Partner / dependency risk register
+    columns:
+      - Dependency
+      - Counterparty
+      - Role
+      - Concentration
+      - Failure scenario
+      - Severity
+      - Mitigation
+      - Residual exposure
+    rows:
+      - ["Merchant-routing access", "Payment aggregators and PSPs", "Processing routes and merchant relationships", "Not disclosed", "Aggregators steer merchants to direct relationships and away from Juspay", High, "300+ integrations and fallback routing are company-claimed", High]
+      - ["Managed cloud and data layer", "AWS services including ElastiCache, RDS, EKS, and Aurora", "Critical transaction-state and compute infrastructure", "Not disclosed", "Service or regional failure impairs transaction processing or persistence", High, "Fault-isolated cells, secondary streams, and multi-region deployments", Medium]
+      - ["Network and banking partnerships", "Visa, Mastercard, and an unnamed global bank", "Cross-border products and acquiring-stack distribution", "Not disclosed", "Partner reprioritization or delayed market delivery constrains expansion", "Medium-high", "Multiple regions, payment methods, and counterparties", "Medium-high"]
+    notes: >-
+      Counterparties and mitigations come from company or investor-issued sources;
+      contractual concentration, termination rights, and revenue exposure are unavailable.
+    claimRefs: [CR001, CR007, CR008, CR009, CR012]
+figures:
+  - id: FR001
+    title: Risk heatmap
+    type: matrix
+    summary: >-
+      Qualitative ranking of the six most decision-relevant risks using the assigned evidence.
+    data:
+      columns:
+        - label: Likelihood
+          detail: Qualitative frequency or emergence assessment from retained evidence
+        - label: Impact
+          detail: Potential effect on payment continuity, market access, or economics
+        - label: Mitigation maturity
+          detail: Publicly evidenced maturity, not management assertion alone
+        - label: Residual severity
+          detail: Exposure after disclosed mitigations and evidence limitations
+      rows:
+        - label: PA-led orchestration bypass
+          note: Independently reported operating and channel pressure
+          values: [High, High, Limited, High]
+        - label: Peak-load or transaction-state failure
+          note: Twenty-fold spikes and eventual-consistency design
+          values: [High, High, Deployed, Medium]
+        - label: License or compliance-scope mismatch
+          note: Broad claims without retained regulator or audit records
+          values: [Uncertain, High, "Partially evidenced", High]
+        - label: Cloud or regional dependency
+          note: Active-active architecture remained future work in the technical account
+          values: [Medium, High, "In progress", "Medium-high"]
+        - label: Cross-border execution complexity
+          note: Multi-region product and regulatory breadth
+          values: [Medium, High, Partial, "Medium-high"]
+        - label: Low-take-rate financial pressure
+          note: Audited unit economics and cash-risk data are absent
+          values: [Uncertain, High, Unverified, High]
+    approximationNotes: >-
+      All ratings are qualitative analyst assessments; no numeric probability,
+      loss estimate, incident denominator, or audited mitigation test was available.
+    claimRefs: [CR004, CR006, CR010, CR011, CR016]
+callouts:
+  - calloutType: risk
+    title: Investment kill criteria
+    body: >-
+      Pause investment if PA-led bypass produces sustained merchant loss, a material
+      incident reveals untested recovery, required licenses cannot be validated,
+      or partner concentration and low take rates fail underwriting thresholds.
+    claimRefs: [CR001, CR007, CR010, CR016]
+localEvidence:
+  searchQueries:
+    - query: '"Juspay" Indian payment infrastructure platform powering enterprise checkout, orchestration, and bank payments stacks. site:juspay.io product company'
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: [SR007, SR008]
+    - query: '"Juspay" Indian payment infrastructure platform powering enterprise checkout, orchestration, and bank payments stacks. funding valuation revenue customers leadership launches 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SR008]
+    - query: '"Juspay" Indian payment infrastructure platform powering enterprise checkout, orchestration, and bank payments stacks. lawsuit regulatory outage breach complaints risks 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SR002, SR003, SR006]
+    - query: '"Juspay" Indian payment infrastructure platform powering enterprise checkout, orchestration, and bank payments stacks. FY26 management accounts, including quarterly revenue trajectory, gross margin, and cash generation. 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: '"Juspay" Indian payment infrastructure platform powering enterprise checkout, orchestration, and bank payments stacks. founders leadership funding headquarters company profile 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: '"Juspay" Indian payment infrastructure platform powering enterprise checkout, orchestration, and bank payments stacks. market size segmentation demand adoption'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SR004]
+    - query: '"Juspay" Indian payment infrastructure platform powering enterprise checkout, orchestration, and bank payments stacks. industry trends buyer needs spending addressable market'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SR008]
+    - query: '"Juspay" Indian payment infrastructure platform powering enterprise checkout, orchestration, and bank payments stacks. Quantified customer concentration, NRR/GRR, and international revenue mix beyond management commentary. 2026'
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: [SR008]
+    - query: '"Juspay" Indian payment infrastructure platform powering enterprise checkout, orchestration, and bank payments stacks. alternatives competitors positioning differentiation'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SR001, SR003]
+    - query: '"Juspay" Indian payment infrastructure platform powering enterprise checkout, orchestration, and bank payments stacks. competitive comparison pricing capabilities customer tradeoffs 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SR007]
+    - query: '"Juspay" Indian payment infrastructure platform powering enterprise checkout, orchestration, and bank payments stacks. pricing funding revenue investors business model 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SR008]
+    - query: '"Juspay" Indian payment infrastructure platform powering enterprise checkout, orchestration, and bank payments stacks. revenue model profitability unit economics commercial traction 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: '"Juspay" Indian payment infrastructure platform powering enterprise checkout, orchestration, and bank payments stacks. product architecture technology technical documentation'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SR005]
+    - query: '"Juspay" Indian payment infrastructure platform powering enterprise checkout, orchestration, and bank payments stacks. technical design integrations performance scalability'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SR003, SR007]
+    - query: '"Juspay" Indian payment infrastructure platform powering enterprise checkout, orchestration, and bank payments stacks. customer case study adoption users partners 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SR003, SR008]
+    - query: '"Juspay" Indian payment infrastructure platform powering enterprise checkout, orchestration, and bank payments stacks. customer outcomes adoption demand commercial relationships 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SR004]
+    - query: '"Juspay" Indian payment infrastructure platform powering enterprise checkout, orchestration, and bank payments stacks. operational financial regulatory legal risks limitations 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SR001, SR002, SR003, SR004]
+    - query: '"Juspay" Indian payment infrastructure platform powering enterprise checkout, orchestration, and bank payments stacks. reliability execution dependencies adverse evidence'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SR004, SR005]
+  researchQuestions:
+    - id: QR001
+      question: What peak-load conditions and architectural bottlenecks can interrupt Juspay payment processing?
+      type: quantification
+      targets: [contentRequirements/2, plannedTables/operational-quality-security-risk-register]
+      status: answered
+    - id: QR002
+      question: What adverse evidence shows payment aggregators or merchants resisting Juspay orchestration?
+      type: adverse
+      targets: [contentRequirements/2, plannedTables/partner-dependency-risk-register]
+      status: answered
+    - id: QR003
+      question: Which security and privacy certifications does Juspay publicly claim for its bank platform?
+      type: verification
+      targets: [contentRequirements/1, plannedTables/regulatory-legal-risk-register]
+      status: answered
+    - id: QR004
+      question: Which legal entities, licenses, approvals, and regulatory obligations govern each Juspay market?
+      type: adverse
+      targets: [contentRequirements/1, plannedTables/regulatory-legal-risk-register]
+      status: partial
+    - id: QR005
+      question: How do processor, network, bank, and cloud dependencies create or reduce single-counterparty risk?
+      type: mechanism
+      targets: [contentRequirements/3, plannedTables/partner-dependency-risk-register]
+      status: answered
+    - id: QR006
+      question: Which disclosed technical failure modes remain after the current scaling architecture and controls?
+      type: adverse
+      targets: [contentRequirements/2, plannedTables/operational-quality-security-risk-register]
+      status: answered
+    - id: QR007
+      question: What audited loss, fraud, margin, working-capital, and cash exposures define financial-model risk?
+      type: quantification
+      targets: [contentRequirements/4]
+      status: partial
+    - id: QR008
+      question: Could direct payment-aggregator relationships disintermediate Juspay's orchestration layer?
+      type: adverse
+      targets: [contentRequirements/0, plannedFigures/risk-heatmap]
+      status: answered
+    - id: QR009
+      question: How do the disclosed availability claims compare with the architecture's stated residual weaknesses?
+      type: comparison
+      targets: [contentRequirements/0, plannedFigures/risk-heatmap]
+      status: answered
+    - id: QR010
+      question: Which disclosed product and geographic breadth factors increase execution and control complexity?
+      type: adverse
+      targets: [contentRequirements/0, contentRequirements/4]
+      status: answered
+  sources:
+    - id: SR001
+      publisher: Billcut
+      title: "Juspay’s Unicorn Moment: Infra Pays Off"
+      url: https://www.billcut.com/blogs/juspay-unicorn-moment-infra-pays-off/
+      date: 2026-04-22
+      accessDate: 2026-10-17
+      accessStatus: ok
+      stance: confirming
+      sourceType: other
+      reputationTier: low
+      independence: independent
+      topics: [regulation, licensing, payments-infrastructure]
+      keyQuote: "Compliance Edge: Achieved RBI-approved Payment Aggregator (PA) status under the 2025 framework, enhancing regulatory trust."
+    - id: SR002
+      publisher: Business Standard
+      title: "Payment aggregators push back against Juspay Tech's orchestration"
+      url: https://www.business-standard.com/industry/news/payment-aggregators-call-for-break-from-juspay-s-third-party-routing-125033000575_1.html
+      date: 2025-03-31
+      accessDate: 2026-10-17
+      accessStatus: ok
+      stance: adverse
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics: [orchestration, payment-aggregators, disintermediation, operational-risk]
+      keyQuote: "Operational issues with Juspay Technologies’ orchestration were straining relationships between payment aggregators (PAs) and their customers, prompting aggregators to urge merchants to abandon third-party routing altogether, industry sources said."
+    - id: SR003
+      publisher: Juspay
+      title: "Juspay | Banks"
+      url: https://juspay.io/banks
+      accessDate: 2026-10-17
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: [bank-platform, compliance, security, uptime, scale]
+      keyQuote: "Juspay maintains PCI DSS V4 compliance, PSD2 compliance, ISO 27001:2022 certification, SOC 2 Type 2, and GDPR compliance, with bank-grade security including API authentication, encryption, session management, and audit trails."
+    - id: SR004
+      publisher: VEF
+      title: "Juspay: Transforming payments infrastructure for a digital world"
+      url: https://vef.vc/wp-content/uploads/Juspay-Transforming-payments-infrastructure-for-a-digital-world_VEF_2025.pdf
+      accessDate: 2026-10-17
+      accessStatus: ok
+      stance: confirming
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: partner
+      topics: [investor-view, low-margin-payments, global-expansion, partnerships]
+      keyQuote: "Founded in 2012, Juspay set out to simplify digital pay-"
+    - id: SR005
+      publisher: Amazon Web Services
+      title: "Scaling transaction peaks: Juspay’s approach using Amazon ElastiCache"
+      url: https://aws.amazon.com/blogs/database/scaling-transaction-peaks-juspays-approach-using-amazon-elasticache/
+      date: 2025-08-11
+      accessDate: 2026-10-17
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics: [architecture, scalability, resilience, cloud-dependency, consistency]
+      keyQuote: "Juspay’s payment traffic generally follows predictable patterns on typical days but witnesses hockey-stick spikes in traffic during IPL, going from 1 to 20-fold greater in a matter of seconds."
+    - id: SR006
+      publisher: Juspay
+      title: "Juspay Newsroom | Press Releases and Media Coverage"
+      url: https://juspay.io/newsroom
+      accessDate: 2026-10-17
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: [product-breadth, execution-complexity]
+    - id: SR007
+      publisher: Juspay
+      title: "Juspay | Payment Orchestration"
+      url: https://juspay.io/payment-orchestration
+      accessDate: 2026-10-17
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: [orchestration, processor-dependency, routing, fraud-controls]
+      keyQuote: "Juspay offers no-code integrations to 300+ PSPs and local payment methods across APAC, North America, Europe, Latin America, Middle East and Africa, including cards, wallets, buy now pay later, online banking, and direct debit options."
+    - id: SR008
+      publisher: Juspay
+      title: "Juspay | Global Payments Operating System"
+      url: https://juspay.io/in
+      accessDate: 2026-10-17
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: [customer-scale, product-breadth, UPI, geographic-expansion]
+  claims:
+    - id: CR001
+      statement: "Business Standard reported that operational issues with Juspay's orchestration strained payment-aggregator relationships and prompted efforts to move merchants away from third-party routing."
+      type: third-party-reported
+      topic: disintermediation
+      sourceRefs: [SR002]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QR002, QR006, QR008]
+    - id: CR002
+      statement: "Juspay claims 99.999% uptime for its bank-focused payments platform, without an independently audited measurement period in the retained source."
+      type: company-claimed
+      topic: availability
+      sourceRefs: [SR003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR009]
+    - id: CR003
+      statement: "Juspay claims PCI DSS V4, PSD2, ISO 27001:2022, SOC 2 Type 2, and GDPR compliance for its bank platform."
+      type: company-claimed
+      topic: compliance
+      sourceRefs: [SR003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR003, QR004]
+    - id: CR004
+      statement: "A Juspay-authored AWS technical post says event traffic can rise twenty-fold within seconds and reach 7.6 million transactions per hour."
+      type: company-claimed
+      topic: peak-load
+      sourceRefs: [SR005]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QR001, QR006, QR009]
+    - id: CR005
+      statement: "The same technical account says the prior RDS-centric design could throttle or reject requests and presented a potential single point of failure."
+      type: company-claimed
+      topic: architecture-risk
+      sourceRefs: [SR005]
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs: [QR001, QR006]
+    - id: CR006
+      statement: "Juspay's disclosed architecture uses ElastiCache for active transaction state with eventual-consistency write-back to RDS and secondary streams intended to reduce failover data-loss risk."
+      type: company-claimed
+      topic: architecture-mitigation
+      sourceRefs: [SR005]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QR005, QR006, QR009]
+    - id: CR007
+      statement: "The AWS/Juspay account describes shuffle sharding and multi-region active-active resilience as future work rather than a completed control."
+      type: company-claimed
+      topic: disaster-recovery
+      sourceRefs: [SR005]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QR005, QR006, QR009]
+    - id: CR008
+      statement: "Juspay claims no-code integrations to more than 300 PSPs and local payment methods across six named global regions."
+      type: company-claimed
+      topic: processor-dependency
+      sourceRefs: [SR007]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR005, QR010]
+    - id: CR009
+      statement: "Juspay says its orchestration layer supports fallback, cascading, risk-based, and outage-aware routing."
+      type: company-claimed
+      topic: routing-mitigation
+      sourceRefs: [SR007]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR005, QR006]
+    - id: CR010
+      statement: "VEF characterizes India as a low-margin payments environment in which UPI has zero merchant discount rates and other methods face tightly capped rates."
+      type: third-party-reported
+      topic: financial-model-risk
+      sourceRefs: [SR004]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QR007]
+    - id: CR011
+      statement: "VEF describes Juspay expanding across Southeast Asia, the Middle East, Europe, and the Americas, increasing multi-jurisdiction execution demands."
+      type: third-party-reported
+      topic: cross-border-execution
+      sourceRefs: [SR004]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QR004, QR010]
+    - id: CR012
+      statement: "VEF describes Juspay partnerships with Visa and Mastercard and a full acquiring-stack project for an unnamed global bank across more than ten markets."
+      type: third-party-reported
+      topic: strategic-partners
+      sourceRefs: [SR004]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QR005, QR010]
+    - id: CR013
+      statement: "Juspay's India page claims the company is trusted by more than 500 global enterprises, but does not quantify customer concentration."
+      type: company-claimed
+      topic: customer-concentration
+      sourceRefs: [SR008]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR010]
+    - id: CR014
+      statement: "Juspay's current newsroom page lists a product surface spanning orchestration, checkout, authentication, tokenisation, payouts, offers, reconciliation, and revenue recovery."
+      type: observed
+      topic: execution-complexity
+      sourceRefs: [SR006]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR010]
+    - id: CR015
+      statement: "Billcut claims Juspay obtained RBI Payment Aggregator approval under a 2025 framework, but the assigned pool contains no regulator record corroborating that claim."
+      type: third-party-reported
+      topic: licensing
+      sourceRefs: [SR001]
+      confidence: low
+      freshness: recent
+      answersQuestionRefs: [QR003, QR004]
+    - id: CR016
+      statement: "PA-led merchant bypass is the most immediate evidenced strategic risk because adverse reporting directly challenges Juspay's marketed role as a multi-processor orchestration layer."
+      type: inferred
+      topic: disintermediation
+      sourceRefs: [SR002, SR007]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR002, QR008]
+  evidenceGaps:
+    - type: enumeration-incomplete
+      severity: material
+      topic: regulatory-verification
+      missingEvidence: >-
+        Regulator records, legal-entity license identifiers, current certificates,
+        audit periods, exceptions, enforcement history, and jurisdiction-specific scope.
+      whyItMatters: >-
+        Unsupported license or compliance scope could block products, markets, or
+        enterprise contracts and materially change residual legal exposure.
+      diligencePath: >-
+        Obtain management's entity-by-jurisdiction matrix and current audit pack,
+        then verify identifiers with each regulator and review with payments counsel.
+      relatedQuestionRefs: [QR004]
+      relatedTableRefs: [TR001]
+    - type: private-evidence-only
+      severity: material
+      topic: financial-model-risk
+      missingEvidence: >-
+        Audited gross margin, fraud and loss exposure, working-capital profile,
+        customer and partner concentration, liquidity, cash generation, and stress tests.
+      whyItMatters: >-
+        Public discussion of low take rates cannot establish whether transaction
+        growth produces durable economics or hidden balance-sheet and cash risk.
+      diligencePath: >-
+        Review FY26 audited accounts, monthly management accounts, loss ledgers,
+        settlement flows, top-counterparty exposures, and downside liquidity scenarios.
+      relatedQuestionRefs: [QR007]
+    - type: private-evidence-only
+      severity: material
+      topic: resilience-validation
+      missingEvidence: >-
+        Audited incident history, severity-one root-cause analyses, RTO and RPO test
+        results, failover evidence, write-back lag distributions, and customer SLAs.
+      whyItMatters: >-
+        Marketing uptime and architecture descriptions do not establish realized
+        availability or recovery performance across the full production estate.
+      diligencePath: >-
+        Review three years of incident and SLA data, observe disaster-recovery and
+        active-active tests, and reconcile results to customer credits and churn.
