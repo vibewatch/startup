@@ -560,7 +560,7 @@ The same holds for `using locally minted claims rather than copied claim ids`:
 these are evidence statements and their identifiers. A separate company assertion
 or public-disclosure gap remains subject to its own check.
 Likewise, scores `synthesized from the cited claims` (or `tied to` / `backed by`
-the cited or retained claims) refer to cited evidence,
+/ `based on` / `rests on` / `summarizes` the cited or retained claims) refer to cited evidence,
 not a new company assertion. `章节证据中未收录公开…` and subordinate-clause
 `由于这一来源池未留存任何公开…` / `但未留存公开…` retain a single
 `no public … retained` gap; they do not prove that no public

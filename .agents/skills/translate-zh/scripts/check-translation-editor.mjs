@@ -819,6 +819,8 @@ const checks = [
     ['Scores are tied to the cited claims and backed by the cited claims.', '评分与所引用的论断挂钩并由所引用论断支撑。', false],
     ['Common upside remains credible only if senior claims are manageable.', '仅在优先求偿权可控时普通股上行空间才可信。', false],
     ['Underwriting and claims workflows require operator insurance certificates and claims history.', '核保与理赔流程需要运营商保险证明与理赔历史。', false],
+    ['Coverage does not disclose claims frequency, premium burden, or loss ratios.', '现有保障披露并未涵盖出险频率、保费负担或损失率。', false],
+    ['Each row rests on the cited claims and summarizes the chapter’s cited claims.', '每一行都建立在所引用的论断之上并汇总本章引用的证据。', false],
   ].flatMap(([en, zh, expected]) => [false, true].map(strictEditor => [
     checkPairQuality(fullReport(`${en} This is a source-reviewed diligence observation.`), fullReport(zh), { strictEditor })
       .some(issue => issue.code === 'hedge-preservation') === expected,
