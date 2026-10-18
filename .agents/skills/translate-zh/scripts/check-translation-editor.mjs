@@ -194,6 +194,8 @@ const checks = [
       ['No public production deployment references or quote examples retained', '未留存公开的生产部署引用或报价示例'],
       ['No public software architecture or cybersecurity detail retained', '未留存公开的软件架构或网络安全细节'],
       ['No public certification file package or field-service documentation retained', '未留存公开认证文件包或现场服务文档'],
+      ['Budget-owner labels are directional because no public procurement contracts were retained in this pool.', '由于这一来源池未留存任何公开采购合同，预算负责人标签仅供方向性参考。'],
+      ['Pilot interest is visible, but no public customer deployment economics are retained.', '试点意向可见，但未留存公开客户部署经济性数据。'],
     ].map(([en, zh]) => [en, zh, false]),
     ['No public quote sheet retained.', '已留存公开报价单。', true],
     ['No public quote sheet retained.', '并非未留存公开报价单。', true],
@@ -814,6 +816,9 @@ const checks = [
     ['No public data on installed base.', '没有关于装机量的内部信息；装机量的公开数据可查。', true],
     ['No public data on installed base; no public revenue disclosure.', '没有关于装机量的公开数据；收入已披露。', true],
     ['No public milestone is disclosed.', '没有关于装机量的公开数据。', true],
+    ['Scores are tied to the cited claims and backed by the cited claims.', '评分与所引用的论断挂钩并由所引用论断支撑。', false],
+    ['Common upside remains credible only if senior claims are manageable.', '仅在优先求偿权可控时普通股上行空间才可信。', false],
+    ['Underwriting and claims workflows require operator insurance certificates and claims history.', '核保与理赔流程需要运营商保险证明与理赔历史。', false],
   ].flatMap(([en, zh, expected]) => [false, true].map(strictEditor => [
     checkPairQuality(fullReport(`${en} This is a source-reviewed diligence observation.`), fullReport(zh), { strictEditor })
       .some(issue => issue.code === 'hedge-preservation') === expected,

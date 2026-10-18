@@ -559,9 +559,11 @@ ledger, not a company assertion; a separate company claim still needs attributio
 The same holds for `using locally minted claims rather than copied claim ids`:
 these are evidence statements and their identifiers. A separate company assertion
 or public-disclosure gap remains subject to its own check.
-Likewise, scores `synthesized from the cited claims` refer to cited evidence,
-not a new company assertion. `章节证据中未收录公开…` retains a single
-`no public … retained in chapter evidence` gap; it does not prove that no public
+Likewise, scores `synthesized from the cited claims` (or `tied to` / `backed by`
+the cited or retained claims) refer to cited evidence,
+not a new company assertion. `章节证据中未收录公开…` and subordinate-clause
+`由于这一来源池未留存任何公开…` / `但未留存公开…` retain a single
+`no public … retained` gap; they do not prove that no public
 material exists. Separate assertions and disclosure gaps still need preservation.
 `公开证据缺失` can retain a single `no public evidence` gap. Negated predicates
 and additional disclosure gaps must not be cleared by that wording. These
