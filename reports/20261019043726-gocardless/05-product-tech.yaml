@@ -1,0 +1,513 @@
+schemaVersion: report-v2
+artifact: product-tech
+slug: gocardless
+runDate: 2026-10-19
+company:
+  name: GoCardless
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: >
+    GoCardless sells bank-payment infrastructure rather than a generic checkout
+    widget: the retained evidence shows a product set spanning recurring bank debit,
+    one-off collections, pay-by-bank and partner-embedded billing workflows. The
+    operating model is API and webhook centric, with strong public evidence for
+    integration breadth and workflow automation, but much thinner public evidence on
+    production SLA, incident root-cause disclosure and the depth of the post-Mollie
+    platform convergence plan.
+sections:
+  - id: product-scope
+    title: Product scope in customer workflow terms
+    body: >
+      The public product surface is organized around how merchants get paid from bank
+      accounts rather than around card-acquiring features. GoCardless positions its core
+      offer as one platform for recurring collections, one-off or invoice payments,
+      outbound payments, integrations and custom API builds, while the one-off Direct
+      Debit documentation separates mandate-led collections from pay-by-bank flows that
+      require customer authorization each time. In practical workflow terms, that means
+      the company serves finance and billing teams that want to set up a bank-payment
+      instruction once, reuse it for later charges, and keep payment events synchronized
+      back into their operating systems instead of manually reconciling each collection.
+    claimRefs: [CE001, CE002, CE003]
+    tableRefs: [TE001, TE002]
+  - id: architecture-operating-model
+    title: Architecture and operating model
+    body: >
+      The retained technical evidence points to a consistent integration pattern:
+      merchants or software partners initiate billing or mandate requests through the API,
+      redirect or embed authorization flows for end customers, then rely on webhooks and
+      later payout files to reconcile state changes. The independent CiviCRM extension
+      documentation is useful because it describes the concrete event choreography rather
+      than marketing copy: billing requests create authorization flows, the customer
+      returns to the merchant flow after mandate setup, and later payment confirmations
+      and cancellations arrive asynchronously through webhooks. That asynchronous design
+      is a strength for automation but it also means implementers must handle pending,
+      failed and paid-out states correctly rather than assume instant finality.
+    claimRefs: [CE004, CE005, CE006, CE007]
+    tableRefs: [TE003]
+    figureRefs: [FE001]
+  - id: deployment-roadmap
+    title: Deployment surfaces, partner embedding and roadmap
+    body: >
+      Deployment evidence in the assigned pool is strongest where GoCardless is embedded
+      into adjacent billing software. The Sequence launch shows native Direct Debit
+      inside quote-to-cash workflows for one-off invoices and recurring schedules, while
+      the Mollie acquisition materials and follow-on independent coverage describe a
+      broader product roadmap that combines GoCardless bank-payment rails with cards,
+      accounts and financing. That expands the strategic product narrative, but the same
+      sources explicitly say integration will be phased and that existing dashboards,
+      contracts and services remain unchanged for now, so the broader suite should be
+      treated as roadmap direction rather than already-unified technical reality.
+    claimRefs: [CE008, CE009, CE010]
+  - id: trust-controls-and-gaps
+    title: Trust, compliance and remaining diligence gaps
+    body: >
+      Public evidence supports the existence of baseline controls, but not a deep
+      independent reliability review. The developer page claims ISO 27001 certification,
+      GDPR-aligned data-risk management and AI-powered retries and fraud tooling, and the
+      third-party setup guides reinforce that integrators must plan for webhook handling,
+      sandbox testing, consent capture and exception states before launch. What is still
+      missing from this pool is a public SLA, MTTR disclosure, detailed incident
+      root-cause evidence, or independent technical validation of the underlying fraud,
+      data and routing engines. For underwriting, that leaves implementation maturity
+      reasonably evidenced while operational resilience and security-depth claims remain
+      only partially testable from public materials.
+    claimRefs: [CE005, CE006, CE011, CE012]
+tables:
+  - id: TE001
+    title: Product module / asset matrix
+    columns:
+      - Module / asset
+      - Primary user
+      - Status / maturity
+      - Differentiation
+      - Diligence gap
+    rows:
+      - [Recurring bank payments, Finance and billing teams, Publicly central offer, Mandate-based repeat collections via bank rails, No public gross-margin or attach-rate split by module]
+      - [One-off Direct Debit, Invoice and AR operators, Documented current workflow, One mandate setup then later variable collections without re-authorisation, No public adoption mix versus pay-by-bank]
+      - [Pay by Bank, Merchants needing faster confirmation, Publicly marketed current offer, Minutes-level confirmation for one-off payments, No public conversion or success-rate comparison by market]
+      - [Partner-embedded billing integrations, SaaS and billing platforms, Active 2026 launch evidence, Native billing-to-cash automation inside partner systems, No disclosed implementation backlog or partner concentration]
+    notes: Public-product snapshot compiled from official product pages and partner launch evidence; maturity reflects what is explicitly documented, not inferred adoption.
+    claimRefs: [CE001, CE002, CE003, CE008]
+  - id: TE002
+    title: Workflow / use-case table
+    columns:
+      - User job
+      - Current workflow
+      - GoCardless solution
+      - Measurable benefit
+      - Limitation
+    rows:
+      - [Collect repeat subscription charges, Capture authorization once then reuse it over time, Recurring bank debit via mandate, Lower re-entry friction than per-payment authorization, Public pool lacks churn or NRR evidence]
+      - [Collect one-off invoice or variable charges, Create a billing request then charge against the resulting mandate, One-off Direct Debit, Re-use the mandate without asking again for every payment, Confirmation is slower than pay-by-bank]
+      - [Collect an urgent one-off payment, Ask the customer to authorize each payment, Pay by Bank, Minutes-level confirmation, No mandate re-use for later collections]
+      - [Automate billing-to-cash inside adjacent systems, Trigger payment collection from invoicing or quote-to-cash software, Native integrations such as Sequence, Fewer manual handoffs between billing and payments, No public implementation-time or failure-rate benchmark]
+    notes: Benefits are limited to explicit source statements; where no public denominator exists, the limitation column records the missing proof rather than inferring outcomes.
+    claimRefs: [CE002, CE003, CE007, CE008]
+  - id: TE003
+    title: Technology / operating architecture table
+    columns:
+      - Layer / process
+      - Role
+      - Dependency
+      - Risk
+    rows:
+      - [Customer authorization, Capture mandate or pay-by-bank consent through hosted or embedded flows, Merchant UX plus bank-account consent language, Weak consent or redirect handling can break setup completion]
+      - [API and billing requests, "Create billing requests, mandates and payment instructions", GoCardless API credentials and merchant integration logic, Public docs do not expose internal routing or performance architecture]
+      - [Webhook and status sync, "Reconcile fulfilled mandates, payment confirmations, failures and cancellations", Reliable webhook endpoint and idempotent merchant-side processing, Integrators that treat flows as synchronous can misstate payment status]
+      - [Settlement and payout reconciliation, Match scheme processing and payout timing back to invoices, Scheme timelines plus merchant finance processes, Public evidence does not include SLA or incident-depth disclosure]
+    notes: Architecture table reflects the observable integration pattern from retained docs and third-party guides; missing internal-system details remain explicit diligence gaps.
+    claimRefs: [CE004, CE005, CE006, CE007, CE011]
+figures:
+  - id: FE001
+    title: Product architecture map
+    type: stack
+    summary: Publicly observable architecture centers on customer authorization, API orchestration, asynchronous status updates and downstream reconciliation.
+    data:
+      layers:
+        - label: Customer payment experiences
+          detail: Merchants expose different bank-payment entry points depending on urgency and reuse.
+          modules:
+            - label: Recurring collections
+              detail: Mandate-based subscriptions and instalments.
+            - label: One-off Direct Debit
+              detail: Variable charges collected against a reused mandate.
+            - label: Pay by Bank
+              detail: Per-payment authorization with faster confirmation.
+        - label: Authorization and onboarding
+          detail: Customer consent and merchant setup happen before money movement begins.
+          modules:
+            - label: Billing requests and mandate setup
+              detail: API-led setup for bank-debit authority.
+            - label: Redirect or embedded flows
+              detail: Hosted pages or partner-native billing experiences.
+          outputs:
+            - label: Mandate or authorization record
+            - label: Customer and bank-account linkage
+        - label: Payment orchestration and eventing
+          detail: Merchants create payment instructions and consume asynchronous status events.
+          modules:
+            - label: Payment and subscription creation
+              detail: Merchant systems issue API calls after authorization.
+            - label: Webhook processing
+              detail: Confirmed, failed, cancelled and paid-out states return later.
+          outputs:
+            - label: Updated billing status
+            - label: Retry and exception triggers
+        - label: Settlement and reconciliation
+          detail: Finance teams consume later payout and payment-reference data after bank-scheme processing completes.
+          modules:
+            - label: Payout and ledger matching
+              detail: Payment references reconcile back to invoices and customer records.
+          outputs:
+            - label: Cash-application visibility
+            - label: Finance reconciliation workflow
+        - label: Suite expansion roadmap
+          detail: Post-acquisition product expansion is publicly framed as a phased combination rather than a finished single platform.
+          modules:
+            - label: Cross-rail bundle
+              detail: Cards, pay by bank, accounts and financing in one future suite.
+          outputs:
+            - label: Broader product adjacency
+        - label: Trust and control layer
+          detail: Publicly described controls emphasize certification, privacy posture and payment-recovery tooling.
+          modules:
+            - label: ISO 27001 and GDPR claims
+              detail: Certification and privacy statements are publicly marketed controls.
+            - label: Success+ and fraud tooling
+              detail: Retry and protection tooling are described as add-on resilience features.
+          outputs:
+            - label: Control baseline for diligence
+    claimRefs: [CE002, CE003, CE004, CE006, CE009, CE010]
+localEvidence:
+  searchQueries:
+    - query: '"GoCardless" London-based bank-payments platform for direct debit, pay-by-bank, bank-account data, and payment-recovery workflows. site:gocardless.com product company'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE001, SE006]
+    - query: '"GoCardless" London-based bank-payments platform for direct debit, pay-by-bank, bank-account data, and payment-recovery workflows. funding valuation revenue customers leadership launches 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE001, SE005]
+    - query: '"GoCardless" London-based bank-payments platform for direct debit, pay-by-bank, bank-account data, and payment-recovery workflows. lawsuit regulatory outage breach complaints risks 2026'
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: []
+    - query: '"GoCardless" London-based bank-payments platform for direct debit, pay-by-bank, bank-account data, and payment-recovery workflows. Official transaction price, waterfall economics, minority-holder treatment, and cash-versus-share mix for the Mollie sale. 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE008]
+    - query: '"GoCardless" London-based bank-payments platform for direct debit, pay-by-bank, bank-account data, and payment-recovery workflows. launch history investors team governance 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE001]
+    - query: '"GoCardless" London-based bank-payments platform for direct debit, pay-by-bank, bank-account data, and payment-recovery workflows. Confirmed regulatory approvals, legal close date, and post-close board or governance structure. 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE001]
+    - query: '"GoCardless" London-based bank-payments platform for direct debit, pay-by-bank, bank-account data, and payment-recovery workflows. industry trends buyer needs spending addressable market'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE001]
+    - query: '"GoCardless" London-based bank-payments platform for direct debit, pay-by-bank, bank-account data, and payment-recovery workflows. Exact current headcount, enterprise SLA/MTTR disclosure, and deeper incident root-cause evidence. 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE001]
+    - query: '"GoCardless" London-based bank-payments platform for direct debit, pay-by-bank, bank-account data, and payment-recovery workflows. product architecture technology technical documentation'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE002, SE003, SE004]
+    - query: '"GoCardless" London-based bank-payments platform for direct debit, pay-by-bank, bank-account data, and payment-recovery workflows. technical design integrations performance scalability'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: '"GoCardless" London-based bank-payments platform for direct debit, pay-by-bank, bank-account data, and payment-recovery workflows. operational financial regulatory legal risks limitations 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE001]
+    - query: '"GoCardless" London-based bank-payments platform for direct debit, pay-by-bank, bank-account data, and payment-recovery workflows. funding investors valuation financing 2026'
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE001]
+  researchQuestions:
+    - id: QE001
+      question: What product modules does GoCardless publicly package today for merchants and billing teams?
+      type: verification
+      targets: [contentRequirements/0, contentRequirements/1]
+      status: answered
+    - id: QE002
+      question: How does the one-off Direct Debit flow differ from Pay by Bank in authorization and confirmation timing?
+      type: comparison
+      targets: [contentRequirements/0, plannedTables/workflow-use-case-table]
+      status: answered
+    - id: QE003
+      question: What public evidence shows how the integration architecture handles authorization, events and payouts?
+      type: mechanism
+      targets: [contentRequirements/2, plannedFigures/product-architecture-map]
+      status: answered
+    - id: QE004
+      question: What deployment or integration dependencies are imposed on merchants or software partners?
+      type: verification
+      targets: [contentRequirements/3, plannedTables/technology-operating-architecture-table]
+      status: answered
+    - id: QE005
+      question: What differentiation claims are explicit in the retained product and partner materials?
+      type: comparison
+      targets: [contentRequirements/4, plannedTables/product-module-asset-matrix]
+      status: answered
+    - id: QE006
+      question: What trust, compliance and fraud-control claims are public and current in the assigned evidence?
+      type: freshness
+      targets: [contentRequirements/5]
+      status: answered
+    - id: QE007
+      question: What product risks or adoption limits are visible from payment timing, integration complexity or partner dependence?
+      type: adverse
+      targets: [contentRequirements/3, contentRequirements/5]
+      status: answered
+    - id: QE008
+      question: What public evidence validates uptime, SLA, MTTR or incident-response depth for GoCardless production systems?
+      type: quantification
+      targets: [contentRequirements/3, contentRequirements/5]
+      status: unresolved
+  sources:
+    - id: SE001
+      publisher: GoCardless
+      title: Online Payment Processing Solution | GoCardless
+      url: https://gocardless.com/
+      accessDate: 2026-10-19
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: [product-scope, pay-by-bank, integrations, outbound-payments]
+      keyQuote: "One platform, every payment"
+    - id: SE002
+      publisher: GoCardless
+      title: GoCardless API
+      url: https://gocardless.com/en-us/developers
+      accessDate: 2026-10-19
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: [api, integrations, security, compliance, geography]
+      keyQuote: "Collect bank debit payments across 30+ countries from a single, hassle-free integration."
+    - id: SE003
+      publisher: GoCardless
+      title: One-off Direct Debit | GoCardless Docs
+      url: https://docs.gocardless.com/docs/collect-payments/one-off-payments/one-off-direct-debit
+      accessDate: 2026-10-19
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: [one-off-direct-debit, pay-by-bank, workflow, webhooks]
+      keyQuote: "The customer sets up a Direct Debit mandate once; after that, you can collect payments of any amount at any time without requiring re-authorisation."
+    - id: SE004
+      publisher: CiviCRM
+      title: Technical - GoCardless Direct Debit Payment Processor Extension
+      url: https://docs.civicrm.org/gocardless/en/latest/reference/technical/
+      accessDate: 2026-10-19
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: independent
+      topics: [integration-flow, webhooks, settlement, developer-surface]
+      keyQuote: "creates a Billing Request (BRQ) ... creates a Billing Request Flow (BRF) and returns its authorization_uri ... GoCardless submits the charge for a payment to the customer's bank and eventually (4-5 working days after creation) this is confirmed."
+    - id: SE005
+      publisher: Akurateco
+      title: "GoCardless Payment Method: How It Works & Use Cases"
+      url: https://akurateco.com/payment-methods/gocardless
+      accessDate: 2026-10-19
+      accessStatus: ok
+      stance: neutral
+      sourceType: other
+      reputationTier: medium
+      independence: independent
+      topics: [merchant-setup, webhooks, sandbox, payouts]
+      keyQuote: "GoCardless API credentials and a webhook endpoint to receive payment, mandate, and refund events ... A way to handle pending and failed states in your order, invoice, or subscription logic ... Testing in a sandbox environment before launch"
+    - id: SE006
+      publisher: GoCardless
+      title: GoCardless and Sequence partner to launch native Direct Debit integration for growing businesses
+      url: https://gocardless.com/blog/gocardless-and-sequence-partner
+      date: 2026-06-25
+      accessDate: 2026-10-19
+      accessStatus: ok
+      stance: confirming
+      sourceType: partner-proof
+      reputationTier: medium
+      independence: company
+      topics: [partner-integration, billing, quote-to-cash]
+      keyQuote: "a fully native Direct Debit integration, enabling businesses to automate payment collection across one-off invoices and recurring billing schedules without leaving their billing engine"
+    - id: SE007
+      publisher: Mollie
+      title: Mollie and GoCardless combine to create Europe’s leading payments and financial services partner
+      url: https://www.mollie.com/news/mollie-and-gocardless
+      date: 2026-09-01
+      accessDate: 2026-10-19
+      accessStatus: ok
+      stance: confirming
+      sourceType: partner-proof
+      reputationTier: medium
+      independence: independent
+      topics: [roadmap, mollie-acquisition, platform-expansion]
+      keyQuote: "At its heart is a comprehensive payment suite that unites Mollie's best-in-class card and local payment methods with GoCardless's leading Pay by Bank solution, available across 38 countries ... Integration will be phased and led by what is best for customers"
+    - id: SE008
+      publisher: FinTech Magazine
+      title: How Mollie & GoCardless are Reshaping Payments in Europe
+      url: https://fintechmagazine.com/news/how-mollie-gocardless-are-reshaping-sme-payments-in-europe
+      date: 2026-09-03
+      accessDate: 2026-10-19
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: [platform-expansion, cards, pay-by-bank, phased-integration]
+      keyQuote: "Mollie has completed its acquisition of GoCardless, creating a single European platform for card payments, Pay by Bank and business financing that now serves more than 350,000 businesses across more than 30 markets."
+  claims:
+    - id: CE001
+      statement: GoCardless publicly packages its offer as a single platform spanning one-off payments, recurring payments, outbound payments, integrations and custom API integrations.
+      type: company-claimed
+      topic: product-scope
+      sourceRefs: [SE001]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE001]
+    - id: CE002
+      statement: GoCardless states that one-off Direct Debit lets a customer set up a mandate once and then supports later collections of any amount without requiring re-authorisation.
+      type: company-claimed
+      topic: one-off-direct-debit
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE001, QE002]
+    - id: CE003
+      statement: In GoCardless's own comparison, pay-by-bank requires customer authorisation for each payment and confirms in minutes, while one-off Direct Debit requires a mandate and typically confirms in two to five business days.
+      type: company-claimed
+      topic: pay-by-bank-vs-direct-debit
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE002, QE005]
+    - id: CE004
+      statement: GoCardless's developer surface advertises a single API integration for bank-debit payments across 30-plus countries, client libraries for PHP, Java, Ruby, Python and .NET, and a free sandbox test environment.
+      type: company-claimed
+      topic: api-surface
+      sourceRefs: [SE002]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE003, QE004]
+    - id: CE005
+      statement: GoCardless claims 97.3% first-attempt payment success for ACH debit and says Success+ can reduce failed payments by a further 15%.
+      type: company-claimed
+      topic: payment-performance
+      sourceRefs: [SE002]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE005, QE006]
+    - id: CE006
+      statement: GoCardless publicly claims ISO 27001 certification and a GDPR-aligned global data-risk management programme.
+      type: company-claimed
+      topic: trust-controls
+      sourceRefs: [SE002]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE003, QE006]
+    - id: CE007
+      statement: Independent CiviCRM implementation documentation shows a GoCardless flow built around billing requests, an authorization redirect, callback handling and later webhook-driven payment-state updates.
+      type: third-party-reported
+      topic: integration-flow
+      sourceRefs: [SE004]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE003, QE004]
+    - id: CE008
+      statement: The retained Sequence launch evidence shows GoCardless being embedded directly inside billing software so businesses can automate collections for one-off invoices and recurring billing schedules without leaving the billing engine.
+      type: company-claimed
+      topic: embedded-billing
+      sourceRefs: [SE006]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE001, QE004]
+    - id: CE009
+      statement: Mollie's September 2026 acquisition materials describe the future offer as a comprehensive suite combining Mollie card and local payment methods with GoCardless pay-by-bank capabilities, while also stating that product integration will be phased.
+      type: third-party-reported
+      topic: post-acquisition-roadmap
+      sourceRefs: [SE007]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE003, QE005]
+    - id: CE010
+      statement: Independent post-acquisition coverage says the combined platform is intended to cover card payments, pay by bank and business financing, and characterizes the integration as gradual rather than already unified.
+      type: third-party-reported
+      topic: post-acquisition-roadmap
+      sourceRefs: [SE008]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE005]
+    - id: CE011
+      statement: Third-party setup guidance says merchants need GoCardless API credentials, a webhook endpoint, logic for pending and failed states and sandbox testing before launch.
+      type: third-party-reported
+      topic: merchant-dependencies
+      sourceRefs: [SE005]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE004, QE007]
+    - id: CE012
+      statement: The same setup guidance and independent implementation notes imply that GoCardless integrations are asynchronous and operationally sensitive to event handling, because merchants must reconcile pending, failed and later-confirmed payment states.
+      type: inferred
+      topic: operational-risk
+      sourceRefs: [SE004, SE005]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE007]
+    - id: CE013
+      statement: The assigned public pool does not provide a verifiable uptime SLA, MTTR disclosure or incident root-cause record for GoCardless production systems.
+      type: inferred
+      topic: reliability-gap
+      sourceRefs: [SE002, SE005]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE008]
+    - id: CE014
+      statement: Publicly retained evidence is much stronger on product packaging and partner workflows than on the internal architecture of fraud controls, bank-routing logic or post-acquisition system convergence.
+      type: inferred
+      topic: evidence-limit
+      sourceRefs: [SE002, SE007, SE008]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE007]
+  evidenceGaps:
+    - type: private-evidence-only
+      severity: material
+      topic: reliability-gap
+      missingEvidence: Public or diligence-room evidence for uptime SLA, MTTR, incident postmortems and status-page history for core payment services.
+      whyItMatters: Reliability and recovery depth affect enterprise suitability, operational risk and the credibility of automation claims.
+      diligencePath: Request contractual SLA terms, incident logs or postmortems, and a current status-history export from management.
+      relatedQuestionRefs: [QE008]
+    - type: missing-source
+      severity: material
+      topic: trust-controls
+      missingEvidence: Independent detail on the scope, recency and operational coverage of GoCardless's ISO 27001 and privacy controls.
+      whyItMatters: Marketing-level certification statements do not show which systems, geographies or control boundaries are actually covered.
+      diligencePath: Request certification scope statements, the latest audit dates and any customer-facing security whitepaper or shared assessment.
+      relatedQuestionRefs: [QE006]
+    - type: missing-source
+      severity: material
+      topic: post-acquisition-roadmap
+      missingEvidence: A dated migration roadmap explaining when, if at all, GoCardless and Mollie products, data models or dashboards will converge.
+      whyItMatters: Product-bundle upside depends on execution timing, integration complexity and customer migration friction, all of which remain open.
+      diligencePath: Ask management for integration milestones, platform-boundary decisions and any customer cohort migration sequencing.
+      relatedQuestionRefs: [QE005]
+    - type: private-evidence-only
+      severity: minor
+      topic: developer-surface
+      missingEvidence: Broader practitioner telemetry such as public repo activity, package download data, support-forum traffic or API error-rate benchmarks.
+      whyItMatters: The retained developer signal confirms an integration ecosystem exists but does not independently validate developer adoption quality or maintenance velocity.
+      diligencePath: Request internal API adoption metrics, public SDK repository pointers and support-volume or release-cadence summaries.
