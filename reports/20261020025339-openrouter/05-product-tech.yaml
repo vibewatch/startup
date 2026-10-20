@@ -1,0 +1,649 @@
+schemaVersion: "report-v2"
+artifact: product-tech
+slug: openrouter
+runDate: 2026-10-20
+company:
+  name: OpenRouter
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: >-
+    OpenRouter is a managed control plane that places a normalized, OpenAI-compatible API,
+    provider-routing logic, billing, and policy controls between applications and a broad
+    model catalog. The public product surface is mature enough for rapid integration and
+    multi-provider failover, but enterprise underwriting still requires direct evidence on
+    service levels, incident history, audit scope, support performance, and routing transparency.
+sections:
+  - id: product-surface
+    title: Product surface and customer workflow
+    body: >-
+      OpenRouter's core product is not a foundation model; it is a hosted access and routing
+      layer that lets an application address many models through one OpenAI-compatible contract.
+      The customer workflow starts with an API key or official SDK, sends a familiar chat request,
+      selects a model by identifier, and receives a normalized response. This removes much of the
+      integration work involved in maintaining separate provider SDKs, credentials, response
+      parsers, and billing accounts. The current homepage displayed 500+ active models across 80+
+      providers, while other current official and third-party surfaces cited lower figures, so
+      catalog breadth should be treated as a dated operating snapshot rather than a stable KPI.
+      Public TypeScript, Python, Go, agent, and integration repositories broaden the product from
+      a single endpoint into an ecosystem of supported client paths.
+    claimRefs: [CE001, CE002, CE003, CE004, CE012, CE015]
+    tableRefs: [TE001]
+  - id: architecture-and-deployment
+    title: Architecture, deployment, and integration model
+    body: >-
+      The observable architecture has six layers: application workflows, client SDKs, a normalized
+      API contract, policy and provider routing, upstream model execution, and usage governance.
+      OpenRouter's documentation establishes schema normalization and a documented OpenAPI surface;
+      independent guides corroborate that changing the endpoint, key, and model identifier can
+      replace multiple direct integrations. Routing then selects or falls back among providers when
+      a preferred path is unavailable or rate-limited. This design reduces integration and failover
+      work but adds a gateway dependency between the customer and every upstream provider. Production
+      qualification should therefore test provider pinning, fallbacks, structured outputs, tool
+      calls, streaming, rate limits, and error semantics against the customer's actual workload
+      rather than infer compatibility from the shared request shape alone.
+    claimRefs: [CE001, CE002, CE005, CE006, CE007, CE008]
+    tableRefs: [TE002, TE003]
+    figureRefs: [FE001]
+  - id: maturity-and-differentiation
+    title: Maturity, ecosystem signal, and differentiation
+    body: >-
+      Product maturity is visible in the official multi-language SDK portfolio, agent tooling,
+      examples, OpenAPI specification, and a homepage release stream that included enterprise
+      private endpoints in October 2026. The clearest differentiation is breadth plus operating
+      abstraction: one integration can compare models, apply routing preferences, consolidate usage,
+      and fail over without the customer operating its own gateway. A third-party test reported
+      three upstream outages handled without service interruption over a two-week, roughly
+      50,000-request chatbot run, although that single publisher also observed 200-500 millisecond
+      latency variation and opaque provider selection. This is useful directional evidence, not an
+      independent reliability benchmark. The durable moat depends on routing quality, provider
+      relationships, developer adoption, and operational trust more than proprietary model IP.
+    claimRefs: [CE003, CE004, CE006, CE012, CE013, CE014]
+  - id: trust-reliability-and-gaps
+    title: Trust, reliability, privacy, and diligence gaps
+    body: >-
+      The abstraction creates a concentrated control point for availability, data handling, billing,
+      and support. Independent reviews flag closed routing logic, no self-hosted deployment, and
+      after-the-fact rather than fully transparent provider selection as auditability constraints.
+      They also report that retention and privacy conditions vary by upstream provider and that
+      zero-data-retention paths are not universal. User evidence is mixed: one August 2026 review
+      summarized a 1.8/5 Trustpilot score from 33 reviews and complaints involving support delays,
+      billing, free-tier limits, outages, and model-identifier changes. These signals warrant direct
+      diligence but do not establish incident frequency. Before enterprise underwriting, obtain the
+      current SOC report and scope, subprocessors, data-flow and retention matrix, regional controls,
+      uptime and recovery history, support metrics, and a tested exit plan to direct providers or a
+      self-hosted gateway.
+    claimRefs: [CE008, CE009, CE010, CE011, CE013]
+callouts:
+  - calloutType: strength
+    title: Integration leverage is the product
+    body: >-
+      Schema normalization, official SDKs, and provider fallback can compress a fragmented
+      multi-provider implementation into one application-facing contract.
+    claimRefs: [CE001, CE002, CE004, CE005]
+  - calloutType: risk
+    title: Convenience creates gateway concentration
+    body: >-
+      Production users inherit OpenRouter's availability, routing transparency, support, billing,
+      and privacy-control quality in addition to the risks of each upstream model provider.
+    claimRefs: [CE008, CE009, CE010, CE011]
+tables:
+  - id: TE001
+    title: Product module and asset matrix
+    columns:
+      - Module or product line
+      - Primary user
+      - Public maturity signal
+      - Differentiation
+      - Diligence gap
+    rows:
+      - - Normalized API and OpenAPI contract
+        - Application developers
+        - Current documentation exposes chat-completion and structured-output schemas
+        - One request and response pattern across models and providers
+        - Verify endpoint-by-endpoint compatibility, error behavior, and versioning policy
+      - - Model and provider catalog
+        - Developers and AI platform teams
+        - Homepage displayed 500+ active models and 80+ providers on the access date
+        - Broad model choice behind one account
+        - Reconcile changing catalog counts and test capability flags per selected model
+      - - Routing and fallback controls
+        - Platform and reliability engineers
+        - Current guides describe provider selection and automatic fallback
+        - Centralized optimization across availability, cost, and policy
+        - Obtain routing decision logs, provider-pin guarantees, and measured failover behavior
+      - - Official SDK and agent portfolio
+        - JavaScript, Python, Go, and agent developers
+        - Public SDK, agent, provider, examples, and tool-calling repositories
+        - Low-friction adoption across several application stacks
+        - Review release cadence, maintainers, issue backlog, and compatibility commitments
+      - - Private Endpoints
+        - Enterprise customers with fine-tuned or dedicated capacity
+        - Announced October 14, 2026 and available by request on Enterprise
+        - Brings private deployments into the existing routing and API surface
+        - Validate availability, isolation model, regions, pricing, and contractual service levels
+    notes: >-
+      Statuses are public-surface observations as of 2026-10-20; catalog counts are volatile,
+      third-party testing is directional, and null private operating details remain diligence asks.
+    claimRefs: [CE001, CE003, CE004, CE005, CE012, CE014, CE015]
+  - id: TE002
+    title: Workflow and use-case table
+    columns:
+      - User job
+      - Direct-provider workflow
+      - OpenRouter workflow
+      - Publicly supported benefit
+      - Limitation or test
+    rows:
+      - - Integrate multiple model families
+        - Maintain provider-specific SDKs, keys, and parsers
+        - Use one normalized endpoint and model identifiers
+        - Less integration branching and faster model switching
+        - Shared shape does not guarantee identical capabilities or outputs
+      - - Survive an upstream provider failure
+        - Build and operate a custom failover chain
+        - Configure or accept routing to another eligible provider
+        - Third-party guides and one test report describe successful fallback
+        - Test failure modes, idempotency, retries, and provider equivalence
+      - - Compare models for one workload
+        - Recreate requests and cost tracking in several accounts
+        - Change the model identifier while retaining the application contract
+        - Faster comparative evaluation from one integration
+        - Customer still owns quality rubrics and output verification
+      - - Apply privacy and provider policy
+        - Interpret and enforce each provider's terms separately
+        - Set routing constraints and data-policy preferences centrally
+        - One policy point can exclude ineligible providers
+        - Retention varies by provider; verify enforcement and audit evidence
+      - - Run production agents and tools
+        - Adapt tool calling and structured output per provider
+        - Use normalized features and agent-oriented SDK support
+        - Potentially simpler orchestration across models
+        - Validate tool-call correctness, streaming, and fallback continuity end to end
+    notes: >-
+      Benefits describe supported mechanisms rather than measured customer outcomes; each row
+      includes a production test because no independent cross-model compatibility benchmark was retained.
+    claimRefs: [CE001, CE002, CE005, CE006, CE007, CE010, CE013]
+  - id: TE003
+    title: Technology and operating architecture
+    columns:
+      - Layer or process
+      - Role
+      - Key dependency
+      - Principal risk
+    rows:
+      - - Application and workflow
+        - Defines prompts, tools, output checks, and business logic
+        - Customer code and selected model capabilities
+        - Normalized transport can mask model-specific behavior
+      - - Official SDK and client layer
+        - Packages authentication, request construction, streaming, and agent helpers
+        - SDK release quality and backward compatibility
+        - Version drift or uneven language support
+      - - Normalized API contract
+        - Maps requests and responses to a common OpenAI-style schema
+        - OpenRouter API availability and schema governance
+        - Gateway outage or breaking contract change affects every route
+      - - Policy, routing, and fallback
+        - Applies provider preferences and selects an eligible execution path
+        - Accurate provider metadata, health, pricing, and policy controls
+        - Opaque decisions complicate debugging, compliance, and cost attribution
+      - - Upstream provider and model execution
+        - Performs inference and returns native model results
+        - External provider capacity, terms, retention, and model lifecycle
+        - Rate limits, deprecations, outages, and inconsistent capabilities
+      - - Usage, billing, privacy, and support
+        - Consolidates spend, telemetry, keys, and policy administration
+        - Correct metering, access controls, and responsive support
+        - Billing disputes, retention ambiguity, and slow incident resolution
+    notes: >-
+      This is an evidence-based operating abstraction, not a claim about undisclosed internal
+      implementation; infrastructure, audit scope, control ownership, and SLOs require direct diligence.
+    claimRefs: [CE001, CE004, CE005, CE008, CE009, CE010, CE011]
+figures:
+  - id: FE001
+    title: OpenRouter product architecture map
+    type: stack
+    summary: >-
+      A customer-facing stack from application workflows through normalized routing to upstream
+      inference, with governance spanning the managed gateway.
+    data:
+      layers:
+        - label: Application workflows
+          items:
+            - Prompts and messages
+            - Tools and structured outputs
+            - Customer evaluation and business logic
+          detail: Customers retain responsibility for model choice and output verification.
+        - label: SDK and integration layer
+          items:
+            - TypeScript SDK
+            - Python SDK
+            - Go SDK
+            - Agent and Vercel AI integrations
+          detail: Public repositories provide several supported entry points.
+        - label: Normalized API contract
+          items:
+            - OpenAI-compatible requests
+            - Normalized responses
+            - OpenAPI specification
+          detail: Compatibility must still be tested for model-specific features.
+        - label: Policy and provider routing
+          items:
+            - Provider selection
+            - Fallbacks
+            - Cost and latency preferences
+            - Data-policy controls
+          detail: Routing quality is central but independently opaque.
+        - label: Provider and model execution
+          items:
+            - Multiple upstream providers
+            - Frontier and open-weight models
+            - Provider-specific capacity and retention
+          detail: Upstream availability and policies remain external dependencies.
+        - label: Governance and operations
+          items:
+            - Usage telemetry
+            - Consolidated billing
+            - API-key controls
+            - Support and incident response
+          detail: Service levels, audit scope, and support performance are private diligence items.
+    approximationNotes: >-
+      The layer order reflects the observable customer workflow, not undisclosed internal deployment
+      topology; counts and upstream availability change over time.
+    claimRefs: [CE001, CE004, CE005, CE008, CE010, CE014]
+localEvidence:
+  searchQueries:
+    - query: "\"OpenRouter\" Unified API and routing control plane for 400+ AI models site:openrouter.ai product company"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"OpenRouter\" Unified API and routing control plane for 400+ AI models funding valuation revenue customers leadership launches 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"OpenRouter\" Unified API and routing control plane for 400+ AI models lawsuit regulatory outage breach complaints risks 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE002, SE006, SE007, SE008]
+    - query: "\"OpenRouter\" Unified API and routing control plane for 400+ AI models Current ARR or revenue run-rate is not publicly disclosed, limiting valuation support 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"OpenRouter\" Unified API and routing control plane for 400+ AI models alternatives competitors positioning differentiation"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: [SE006]
+    - query: "\"OpenRouter\" Unified API and routing control plane for 400+ AI models competitive comparison pricing capabilities customer tradeoffs 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"OpenRouter\" Unified API and routing control plane for 400+ AI models product architecture technology technical documentation"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: [SE003, SE005, SE006]
+    - query: "\"OpenRouter\" Unified API and routing control plane for 400+ AI models technical design integrations performance scalability"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE002, SE004, SE005, SE006]
+    - query: "\"OpenRouter\" Unified API and routing control plane for 400+ AI models customer outcomes adoption demand commercial relationships 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE002, SE006]
+    - query: "\"OpenRouter\" Unified API and routing control plane for 400+ AI models operational financial regulatory legal risks limitations 2026"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: [SE006]
+  researchQuestions:
+    - id: QE001
+      question: How does OpenRouter define the product in the application developer's workflow?
+      type: mechanism
+      targets: [contentRequirements/0, plannedTables/workflow-use-case-table]
+      status: answered
+    - id: QE002
+      question: Which product modules and public assets are currently visible, and how mature are they?
+      type: enumeration
+      targets: [contentRequirements/1, plannedTables/product-module-asset-matrix]
+      status: answered
+    - id: QE003
+      question: What observable architecture connects customer applications to upstream model providers?
+      type: mechanism
+      targets: [contentRequirements/2, plannedTables/technology-operating-architecture-table, plannedFigures/product-architecture-map]
+      status: answered
+    - id: QE004
+      question: What public evidence supports deployment simplicity, fallback reliability, and integration quality?
+      type: verification
+      targets: [contentRequirements/3, plannedTables/workflow-use-case-table]
+      status: answered
+    - id: QE005
+      question: What developer-signal demonstrates ecosystem maturity beyond the marketing website?
+      type: verification
+      targets: [contentRequirements/3, contentRequirements/4, plannedTables/product-module-asset-matrix]
+      status: answered
+    - id: QE006
+      question: Which trust, privacy, security, and compliance controls are supported by retained evidence?
+      type: verification
+      targets: [contentRequirements/5, plannedTables/technology-operating-architecture-table]
+      status: answered
+    - id: QE007
+      question: What adverse evidence challenges OpenRouter's reliability, support, billing, or auditability?
+      type: adverse
+      targets: [contentRequirements/3, contentRequirements/5]
+      status: answered
+    - id: QE008
+      question: What independently verifiable SLO, incident, audit, and roadmap evidence supports enterprise readiness?
+      type: freshness
+      targets: [contentRequirements/3, contentRequirements/5]
+      status: partial
+    - id: QE009
+      question: How does OpenRouter's managed abstraction change the benefits and risks of common customer workflows?
+      type: comparison
+      targets: [contentRequirements/0, contentRequirements/4, plannedTables/workflow-use-case-table]
+      status: answered
+  sources:
+    - id: SE001
+      publisher: OpenRouter
+      title: OpenRouter - GitHub
+      url: https://github.com/OpenRouterTeam
+      accessDate: 2026-10-20
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics: [developer-ecosystem, sdk, routing, product-breadth]
+      keyQuote: >-
+        One API, 400+ models. Route requests to models from OpenAI, Anthropic, Google, Meta,
+        Mistral, and many more — without changing your code.
+    - id: SE002
+      publisher: DeployHQ
+      title: What Is OpenRouter? One API, 400+ AI Models, Explained (2026)
+      url: https://www.deployhq.com/blog/openrouter-practical-guide-teams
+      accessDate: 2026-10-20
+      accessStatus: ok
+      stance: neutral
+      sourceType: review
+      reputationTier: medium
+      independence: independent
+      topics: [workflow, api-compatibility, fallback, privacy, billing]
+      keyQuote: >-
+        A unified API. One endpoint (https://openrouter.ai/api/v1/chat/completions),
+        OpenAI-compatible request/response shape. Any participating provider's model is
+        selectable by a single model string. Existing OpenAI SDK code becomes drop-in
+        compatible by swapping the base_url.
+    - id: SE003
+      publisher: OpenRouter
+      title: OpenRouter API Reference - Complete Documentation
+      url: https://openrouter.ai/docs/api_reference/overview
+      accessDate: 2026-10-20
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics: [api-schema, openapi, structured-output, normalization]
+      keyQuote: >-
+        OpenRouter’s request and response schemas are very similar to the OpenAI Chat API,
+        with a few small differences. At a high level, OpenRouter normalizes the schema
+        across models and providers so you only need to learn one.
+    - id: SE004
+      publisher: Data Studios
+      title: OpenRouter Explained
+      url: https://www.datastudios.org/post/openrouter-explained-how-one-api-connects-developers-to-many-ai-models-through-unified-requests-pr
+      accessDate: 2026-10-20
+      accessStatus: ok
+      stance: confirming
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics: [architecture, schema-normalization, routing, billing]
+      keyQuote: >-
+        The cleanest summary is therefore that OpenRouter connects one application to many
+        AI models by acting as a common API layer above many providers, while request
+        normalization, provider routing, uptime pooling, and consolidated billing are the
+        real mechanisms that make that promise work in practice.
+    - id: SE005
+      publisher: Coding Fab
+      title: "OpenRouter API Tutorial: One Key, Every AI Model"
+      url: https://coding-fab.com/2026/05/30/openrouter-api-tutorial-unified-ai-gateway/
+      accessDate: 2026-10-20
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: low
+      independence: independent
+      topics: [provider-routing, agent-reliability, limitations, gateway-risk]
+      keyQuote: >-
+        OpenRouter reduces provider-specific risk but introduces gateway risk. The honest
+        trade-offs:
+    - id: SE006
+      publisher: OpenRouter
+      title: OpenRouter
+      url: https://openrouter.ai/
+      accessDate: 2026-10-20
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: [product-breadth, provider-count, product-launches, private-endpoints]
+      keyQuote: |-
+        80+
+
+        Providers
+
+        500+
+
+        Models
+    - id: SE007
+      publisher: University 365
+      title: "OpenRouter: One API for Many AI Models and Providers"
+      url: https://www.university-365.com/post/openrouter-one-api-for-many-ai-models-and-providers
+      date: 2026-08-31
+      accessDate: 2026-10-20
+      accessStatus: ok
+      stance: adverse
+      sourceType: review
+      reputationTier: medium
+      independence: independent
+      topics: [developer-signal, user-sentiment, support, billing, outages]
+      keyQuote: >-
+        Complaints concentrate at production scale. Support and billing responses are slow,
+        the dominant Trustpilot theme (a May 2026 third-party analysis found 79 percent of
+        Trustpilot reviews at one star). Free-model rate limits frustrate builders. During one
+        outage, users reported delayed logging that appeared to double-charge credits. Model
+        identifier changes broke dependent apps.
+    - id: SE008
+      publisher: Compsmag
+      title: OpenRouter Review 2026
+      url: https://www.compsmag.com/reviews/openrouter-review/
+      accessDate: 2026-10-20
+      accessStatus: ok
+      stance: adverse
+      sourceType: review
+      reputationTier: medium
+      independence: independent
+      topics: [auditability, security, privacy, reliability, performance]
+      keyQuote: >-
+        OpenRouter is not open-source. You cannot self-host it. You cannot audit its routing
+        code. You trust its security team, its Cloudflare edge infrastructure, and its provider
+        relationships. For many teams, this is a reasonable tradeoff. For others, it is a
+        dealbreaker. This review examines both sides.
+  claims:
+    - id: CE001
+      statement: OpenRouter exposes an OpenAI-compatible API that normalizes request and response schemas across models and providers.
+      type: observed
+      topic: api-normalization
+      sourceRefs: [SE002, SE003, SE004]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE001, QE003]
+    - id: CE002
+      statement: Model selection can be changed within the shared API contract while routing and fallback logic handle eligible upstream provider paths.
+      type: observed
+      topic: model-routing
+      sourceRefs: [SE001, SE002, SE003]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE001, QE003, QE009]
+    - id: CE003
+      statement: OpenRouter's homepage displayed 500+ active models across 80+ providers on the 2026-10-20 access date.
+      type: company-claimed
+      topic: catalog-scale
+      sourceRefs: [SE006]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE002]
+    - id: CE004
+      statement: OpenRouter's GitHub organization presents official TypeScript, Python, Go, agent, Vercel AI provider, example, and tool-calling repositories.
+      type: company-claimed
+      topic: developer-ecosystem
+      sourceRefs: [SE001]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE002, QE005]
+    - id: CE005
+      statement: DeployHQ describes OpenRouter's routing layer as falling back to another provider serving the same model when the first provider has an outage or rate limit.
+      type: third-party-reported
+      topic: fallback
+      sourceRefs: [SE002]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE004]
+    - id: CE006
+      statement: Independent explainers characterize request normalization, provider routing, uptime pooling, and consolidated billing as the mechanisms behind the unified interface.
+      type: third-party-reported
+      topic: operating-model
+      sourceRefs: [SE002, SE004]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE003, QE009]
+    - id: CE007
+      statement: Coding Fab reports that provider routing can be configured around cost, latency, availability, data policy, and tool-calling reliability.
+      type: third-party-reported
+      topic: routing-controls
+      sourceRefs: [SE005]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE004]
+    - id: CE008
+      statement: A gateway outage can affect every application route that depends exclusively on OpenRouter.
+      type: inferred
+      topic: gateway-concentration
+      sourceRefs: [SE005, SE008]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE007, QE009]
+    - id: CE009
+      statement: Compsmag reports that OpenRouter is closed-source, cannot be self-hosted, and provides limited visibility into routing decisions.
+      type: third-party-reported
+      topic: auditability
+      sourceRefs: [SE008]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE006, QE007]
+    - id: CE010
+      statement: Compsmag reports that privacy conditions vary by upstream model and that zero-data-retention routing is available for some rather than all providers.
+      type: third-party-reported
+      topic: privacy
+      sourceRefs: [SE002, SE008]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE006]
+    - id: CE011
+      statement: University 365 reported a 1.8/5 Trustpilot score from 33 reviews as of 2026-08-31 and summarized complaints involving support, billing, rate limits, outages, and model-identifier changes.
+      type: third-party-reported
+      topic: user-sentiment
+      sourceRefs: [SE007]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE007]
+    - id: CE012
+      statement: Public SDK and example repositories provide developer-signal across multiple languages and integration surfaces.
+      type: observed
+      topic: developer-ecosystem
+      sourceRefs: [SE001, SE007]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE002, QE005]
+    - id: CE013
+      statement: Compsmag reported that automatic failover handled three provider outages during a two-week, approximately 50,000-request chatbot test, while provider selection added 200-500 milliseconds of latency variation.
+      type: third-party-reported
+      topic: reliability-test
+      sourceRefs: [SE008]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE004, QE007]
+    - id: CE014
+      statement: OpenRouter announced Private Endpoints for enterprise customers on 2026-10-14, with availability by request.
+      type: company-claimed
+      topic: product-roadmap
+      sourceRefs: [SE006]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE002]
+    - id: CE015
+      statement: Retained current sources cite catalog breadth ranging from 400+ to 500+ models and from 60+ to 90+ providers, making catalog counts snapshot-dependent.
+      type: observed
+      topic: catalog-scale
+      sourceRefs: [SE001, SE002, SE006, SE008]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE002]
+  evidenceGaps:
+    - type: private-evidence-only
+      severity: material
+      topic: reliability
+      missingEvidence: >-
+        Contractual uptime SLOs, monthly availability, incident frequency, recovery-time history,
+        fallback success rate, and customer-specific latency distributions.
+      whyItMatters: >-
+        The managed gateway is a concentrated dependency, and one third-party test cannot establish
+        production reliability across workloads, regions, providers, and time periods.
+      diligencePath: >-
+        Obtain 12-24 months of status and incident data, enterprise SLA terms, regional latency
+        percentiles, and run customer-specific failure-injection tests before production approval.
+      relatedQuestionRefs: [QE004, QE008]
+      relatedTableRefs: [TE002, TE003]
+    - type: private-evidence-only
+      severity: material
+      topic: security-and-privacy
+      missingEvidence: >-
+        Current SOC report and scope, penetration-test summary, subprocessor list, retention matrix,
+        regional processing controls, key-management design, and proof of policy enforcement.
+      whyItMatters: >-
+        Public reviews describe controls but also note provider-level variation and limited auditability,
+        which is insufficient for regulated or sensitive production workloads.
+      diligencePath: >-
+        Review the trust-center package under NDA, map every eligible route's data handling, and test
+        that provider exclusions and zero-retention settings are enforced in logs.
+      relatedQuestionRefs: [QE006, QE008]
+      relatedTableRefs: [TE003]
+    - type: missing-source
+      severity: material
+      topic: roadmap-and-support
+      missingEvidence: >-
+        Dated product roadmap, deprecation policy, support response and resolution metrics, SDK
+        maintenance commitments, and general-availability criteria for Private Endpoints.
+      whyItMatters: >-
+        Public announcements establish launches but do not establish delivery timing, support quality,
+        or backward-compatibility commitments for production customers.
+      diligencePath: >-
+        Request the enterprise roadmap, support policy, historical ticket metrics, API versioning policy,
+        and named owners for each official SDK.
+      relatedQuestionRefs: [QE008]
+      relatedTableRefs: [TE001]
+    - type: missing-source
+      severity: material
+      topic: independent-benchmarking
+      missingEvidence: >-
+        Independent, reproducible benchmarks for routing accuracy, failover continuity, latency,
+        structured-output conformance, and tool-call correctness across representative providers.
+      whyItMatters: >-
+        Marketing and tutorial evidence demonstrates mechanisms, but it does not quantify whether the
+        abstraction preserves behavior under real production failure and compatibility conditions.
+      diligencePath: >-
+        Run a benchmark suite against direct-provider baselines and publish methodology, workload,
+        regions, provider settings, error classes, and confidence intervals.
+      relatedQuestionRefs: [QE004, QE008]
+      relatedTableRefs: [TE002]
