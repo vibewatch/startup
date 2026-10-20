@@ -612,9 +612,12 @@ neither alias can stand in for another missing predicate. `can claim every
 BaaS or DBaaS dollar` describes capturing market spending, not making an
 assertion; `rather than a single expansive TAM claim` rejects a sizing shortcut.
 A separate company assertion still requires attribution.
-Consumer-protection claims, legal claims registers, and hyphenated counter-claims
-describe legal demands or registers, not a separate company assertion.
-`evidence does not support a clear positive claim`
+Consumer-protection claims, legal claims registers, incident/claims schedules,
+patent `claims mapping`, and hyphenated counter-claims
+describe legal demands, registers, or patent scope, not a separate company assertion.
+Likewise, `ordinal synthesis of cited claims` refers to this report's evidence
+ledger, and `a claim on company revenue` refers to a financial claim on cash
+flows. `evidence does not support a clear positive claim`
 is a negative assessment, not a positive company claim. Separate assertions still
 need attribution. `关税影响论断基于` can retain one explicitly source-based tariff
 assertion; it cannot clear another claim in the leaf. `缺少公开基准` can preserve

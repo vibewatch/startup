@@ -61,6 +61,17 @@ const legalClaimNounPairs = [
   ['PI-specific flows trained on thousands of claims', 'PI 专用流程用数千宗索赔训练'],
   ['Incorrect citations could expose attorneys to malpractice claims.', '错误引用可能让律师面临执业过失索赔。'],
   ['Reputational risk; likely customer compensation claims; pause adoption pending resolution.', '声誉风险；可能引发客户赔偿索赔；问题解决前暂停采用。'],
+  ['Ordinal synthesis of cited claims, not a statistical model.', '引用证据的序数综合，并非统计模型。'],
+  ['Claims administration or broad GRC not tied to cyber.', '与网络安全无关的理赔管理或宽泛 GRC。'],
+  ['Indicates meaningful automation in the cited claims workflow.', '表明所引用的理赔工作流存在显著自动化。'],
+  ['Review reserve assumptions for claims or rework.', '审阅索赔或返工的准备金假设。'],
+  ['Review closure costs, supplier claims, customer transition obligations.', '审阅关停成本、供应商索赔和客户过渡义务。'],
+  ['Review claims, refund leakage, and legal opinions by top jurisdictions.', '按主要司法辖区审阅索赔、退款漏损和法律意见。'],
+  ['Obtain the complaint, docket status, claims, defenses, insurance, and management response.', '获取起诉状、案卷状态、诉讼请求、抗辩、保险及管理层回应。'],
+  ['Request legal schedule, regulator correspondence, recall log, claims history, and insurance tower.', '索取法律清单、监管往来函、召回记录、索赔历史和保险结构。'],
+  ['Canton Coin is not Digital Asset equity or a claim on company revenue.', 'Canton Coin 不是 Digital Asset 股权，也不是对公司收入的索取权。'],
+  ['Commission USPTO chain-of-title, claims mapping, freedom-to-operate, and litigation review.', '委托开展 USPTO 权属链、权利要求映射、自由实施和诉讼审查。'],
+  ['Require DPA/subprocessor materials, insurance, incident and claims schedules.', '要求提供 DPA / 子处理方材料、保险、事故与索赔清单。'],
 ].map(([en, zh]) => [`${en} This is a diligence observation.`, `${zh} 这是尽调观察。`]);
 
 function entryMultiplePair({ header = 'Exit Multiple at 5.6B Entry', target = '以 $5.6B 入场的退出倍数',
