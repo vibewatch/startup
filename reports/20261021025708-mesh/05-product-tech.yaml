@@ -1,0 +1,475 @@
+schemaVersion: "report-v2"
+artifact: product-tech
+slug: mesh
+runDate: 2026-10-21
+company:
+  name: Mesh
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: Mesh exposes a documented orchestration layer for moving assets from connected wallets and exchanges into merchant or application destinations, with hosted UX, five client SDKs, managed authorization, routing, sandbox, and webhook primitives. The public record is materially weaker on audited reliability, reconciliation, security certifications, and named compliance controls, while the announced Visa distribution surface had not yet disclosed rollout details.
+sections:
+  - id: product-workflow
+    title: Product surface and customer workflow
+    body: >-
+      Mesh's documented product starts with Link, a hosted user experience embedded by a client application. A server creates a short-lived, single-use Link Token that configures the transfer type, destination, amount constraints, and display currency; one of five client SDKs then presents account connection, wallet verification, transfer preview, compliance steps, and completion states. The supported journeys include deposits, fixed-amount payments, on-ramp flows, withdrawal-address retrieval, and wallet verification. For repeat users, Mesh Managed Tokens preserve a stable token identifier while Mesh refreshes the underlying authorization. SmartFunding adds routing across available balances using network compatibility, fees, and speed. This combination reduces the integration burden at the experience layer, but the customer still needs to define settlement destinations, ledger treatment, and operational controls around the resulting transfer events.
+    claimRefs: [CE001, CE002, CE003, CE004, CE005]
+    tableRefs: [TE001, TE002]
+  - id: architecture-and-operations
+    title: Architecture, deployment, and operating dependencies
+    body: >-
+      The observable architecture is an orchestration stack rather than a custody system. Mesh connects to exchanges and self-custody wallets, handles their authentication and API calls, applies session configuration through Link Tokens, selects funding paths through SmartFunding, and reports transfer state through webhooks. Sub-clients provide separate API credentials, branding, compliance settings, and data isolation for payment-service-provider use cases. A production-like sandbox supports integration testing without moving real assets. Operationally, the documentation warns that an SDK completion callback is not sufficient evidence of final transfer posting because exchanges may take seconds to days; clients are told to consume server-to-server webhooks before crediting a user or releasing inventory. The architecture therefore depends on external exchange availability, chain finality, destination-wallet readiness, and the client's own idempotent event processing and reconciliation.
+    claimRefs: [CE003, CE005, CE006, CE007, CE008, CE014]
+    tableRefs: [TE003]
+    figureRefs: [FE001]
+  - id: maturity-and-risk
+    title: Maturity, differentiation, and technical diligence risks
+    body: >-
+      External evidence validates parts of the integration proposition but does not close enterprise-control diligence. A 2026 World App integration says users can fund wallets from hundreds of supported exchanges and wallets, while Mesh's Alliance announcement describes a shared connectivity and routing layer across chains, wallets, exchanges, issuers, and platforms. Fireblocks, a direct competitor rather than an independent benchmark, nonetheless credits Mesh's five-SDK developer experience and SmartFunding while asserting that merchants bring their own destination or custody and that public compliance, reconciliation, and certification disclosures are thin. Mesh's own Core-team recruiting language also shows that expanding exchange and wallet coverage and standardizing routing remain active execution work. Independent reporting on the Visa partnership adds a potentially broad distribution path, but it also states that launch timing, supported devices, and initial participants were not disclosed. The investment conclusion is a credible and increasingly deployed connectivity layer whose operational maturity, control environment, and production performance still require primary diligence.
+    claimRefs: [CE009, CE010, CE011, CE012, CE013, CE014, CE015, CE016]
+tables:
+  - id: TE001
+    title: Product module and maturity matrix
+    columns:
+      - Module
+      - Primary user
+      - Publicly evidenced status
+      - Differentiation
+      - Diligence gap
+    rows:
+      - [Link, "Application end user and client developer", "Documented hosted UX across five client SDKs", "Combines account connection, transfer initiation, and wallet verification", "Production conversion, accessibility, and error-rate data"]
+      - ["Link Token", "Client backend", "Documented 10-minute, single-use session primitive", "Server-side configuration of each user journey", "Token abuse controls and revocation telemetry"]
+      - ["Mesh Managed Tokens", "Returning user and client backend", "Documented managed authorization capability", "Stable tokenId can reduce repeat authentication", "Storage controls, compromise response, and provider-specific failure rates"]
+      - [SmartFunding, "Payer and merchant platform", "Documented routing capability; also cited by a competitor", "Selects a source using balance, network compatibility, fees, and speed", "Routing benchmarks, slippage, failover, and supported-destination limits"]
+      - ["Sub-clients and sandbox", "PSP, enterprise platform, and integration team", "Documented account-isolation and testing surfaces", "Separate credentials, branding, compliance settings, and data isolation", "Formal tenancy controls, audit reports, and production promotion process"]
+    notes: "Statuses describe only capabilities visible in Mesh documentation or the assigned source set as of 2026-10-21; they are not independent performance or control attestations."
+    claimRefs: [CE001, CE002, CE004, CE005, CE006, CE007, CE011]
+  - id: TE002
+    title: Workflow and use-case assessment
+    columns:
+      - User job
+      - Current workflow
+      - Mesh intervention
+      - Publicly evidenced benefit
+      - Limitation
+    rows:
+      - ["Fund an application", "User moves assets from an exchange or wallet to a platform address", "Link deposit flow plus integrations and transfer events", "One embedded journey across supported sources", "No public success-rate or time-to-completion distribution"]
+      - ["Pay a merchant", "User sends a specified crypto amount to a destination", "Fixed-amount payment flow with SmartFunding routing", "Source asset can differ from desired settlement asset", "Merchant custody, reconciliation, and control responsibilities remain"]
+      - ["Return or withdraw funds", "Platform needs a user-specific return destination", "refundAddress and withdrawal-address retrieval", "Handles exchange omnibus-wallet constraints by returning a deposit address", "Refund execution, exception handling, and recovery metrics are undisclosed"]
+      - ["Fund World App", "User transfers assets from an existing exchange or wallet", "Mesh integration connects supported sources to World App", "Company release describes access from hundreds of sources", "No independent operating metrics in the assigned evidence"]
+      - ["Spend through Visa acceptance", "Wallet user would otherwise cash out or load a separate card", "Planned Mesh funding and conversion behind a Visa credential", "Could preserve existing merchant checkout hardware and flows", "Launch date, supported devices, and initial participants were not disclosed"]
+    notes: "Benefits and limitations preserve the source-specific distinction between documented workflows, company announcements, and rollout details that remained unavailable."
+    claimRefs: [CE003, CE005, CE008, CE009, CE013, CE015]
+  - id: TE003
+    title: Technology and operating architecture
+    columns:
+      - Layer or component
+      - Role
+      - Key dependency
+      - Principal risk
+    rows:
+      - ["Client SDK and Link", "Render the hosted connection and transfer journey", "Correct client initialization and callback handling", "Client-side completion may be mistaken for final transfer posting"]
+      - ["Session control", "Configure each journey through a Link Token", "Secure server-side issuance and ten-minute validity", "Token leakage or incorrect destination parameters"]
+      - ["Integration connectors", "Authenticate and call exchanges and self-custody wallets", "External APIs, wallet protocols, and connector maintenance", "Coverage, availability, and behavioral drift across providers"]
+      - ["Authorization management", "Persist and refresh exchange authorization through MMT", "Provider token policies and Mesh credential controls", "Revocation, compromise, and stale authorization handling"]
+      - ["Routing and settlement handoff", "Select funding source and deliver assets to a configured destination", "Asset liquidity, network compatibility, fees, bridges, and destination wallet", "Slippage, failed conversion, chain finality, and customer-owned custody controls"]
+      - ["Events and downstream operations", "Notify clients of transfer state and final posting", "Webhook availability and idempotent client processing", "Delayed exchange posting, duplicate delivery, and incomplete reconciliation"]
+    notes: "Architecture is reconstructed from Mesh's public concepts documentation and company-issued technical recruiting material; no source in the assigned pool provides an audited end-to-end control design."
+    claimRefs: [CE002, CE003, CE004, CE005, CE006, CE007, CE008, CE014]
+figures:
+  - id: FE001
+    title: Mesh product architecture and settlement handoff
+    type: stack
+    summary: The publicly observable stack moves from client experience through session, connectivity, authorization, and routing services to a customer-configured destination and downstream operations.
+    data:
+      layers:
+        - label: Client experience
+          items: ["Web SDK", "iOS SDK", "Android SDK", "React Native SDK", "Flutter SDK"]
+          detail: "Link presents connection, verification, transfer, and completion states."
+        - label: Session configuration
+          items: ["Link Token"]
+          detail: "A server-issued, ten-minute, single-use token configures the journey."
+        - label: Connectivity
+          items: ["Exchange integrations", "Self-custody wallet integrations"]
+          detail: "Mesh handles authentication flows and provider API calls."
+        - label: Managed authorization
+          items: ["Mesh Managed Tokens"]
+          detail: "A stable tokenId supports repeat sessions while Mesh refreshes underlying access."
+        - label: Funding orchestration
+          items: ["SmartFunding", "Transfer type", "Network and fee selection"]
+          detail: "Routing evaluates balance, compatibility, fees, and speed."
+        - label: Destination and operations
+          items: ["Merchant or application address", "Transfer webhooks", "Refund address"]
+          detail: "The customer supplies the destination and consumes events for downstream posting."
+    approximationNotes: "This is a source-bounded logical stack, not a claim about Mesh's internal service topology, custody model, or control boundaries."
+    claimRefs: [CE001, CE002, CE004, CE005, CE008, CE009, CE015]
+callouts:
+  - calloutType: risk
+    title: Enterprise controls remain a diligence gate
+    body: The assigned evidence does not establish audited uptime, transaction failure rates, reconciliation coverage, named screening providers, incident history, or company-disclosed SOC/ISO certifications. Treat these as open control questions rather than proof that a control is absent.
+    claimRefs: [CE012, CE016]
+localEvidence:
+  searchQueries:
+    - query: "\"Mesh\" Crypto payments network that connects wallets, exchanges, and apps so users can site:meshpay.com product company"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE004]
+    - query: "\"Mesh\" Crypto payments network that connects wallets, exchanges, and apps so users can funding valuation revenue customers leadership launches 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE005, SE006, SE007]
+    - query: "\"Mesh\" Crypto payments network that connects wallets, exchanges, and apps so users can lawsuit regulatory outage breach complaints risks 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"Mesh\" Crypto payments network that connects wallets, exchanges, and apps so users can founders leadership funding headquarters company profile 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE004]
+    - query: "\"Mesh\" Crypto payments network that connects wallets, exchanges, and apps so users can launch history investors team governance 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE004]
+    - query: "\"Mesh\" Crypto payments network that connects wallets, exchanges, and apps so users can Cash on hand, monthly burn, runway, and whether any debt, credit, or preference overhang sits alongside the equity rounds. 2026"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: []
+    - query: "\"Mesh\" Crypto payments network that connects wallets, exchanges, and apps so users can industry trends buyer needs spending addressable market"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE004]
+    - query: "\"Mesh\" Crypto payments network that connects wallets, exchanges, and apps so users can alternatives competitors positioning differentiation"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: []
+    - query: "\"Mesh\" Crypto payments network that connects wallets, exchanges, and apps so users can competitive comparison pricing capabilities customer tradeoffs 2026"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: []
+    - query: "\"Mesh\" Crypto payments network that connects wallets, exchanges, and apps so users can pricing funding revenue investors business model 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE004, SE006]
+    - query: "\"Mesh\" Crypto payments network that connects wallets, exchanges, and apps so users can revenue model profitability unit economics commercial traction 2026"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: [SE004]
+    - query: "\"Mesh\" Crypto payments network that connects wallets, exchanges, and apps so users can Full board composition, independent governance depth, and any compliance or licensing matrix by jurisdiction. 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"Mesh\" Crypto payments network that connects wallets, exchanges, and apps so users can product architecture technology technical documentation"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE001, SE003, SE008]
+    - query: "\"Mesh\" Crypto payments network that connects wallets, exchanges, and apps so users can technical design integrations performance scalability"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE002]
+    - query: "\"Mesh\" Crypto payments network that connects wallets, exchanges, and apps so users can customer case study adoption users partners 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE006]
+    - query: "\"Mesh\" Crypto payments network that connects wallets, exchanges, and apps so users can customer outcomes adoption demand commercial relationships 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"Mesh\" Crypto payments network that connects wallets, exchanges, and apps so users can operational financial regulatory legal risks limitations 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE001]
+    - query: "\"Mesh\" Crypto payments network that connects wallets, exchanges, and apps so users can reliability execution dependencies adverse evidence"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE004]
+    - query: "\"Mesh\" Crypto payments network that connects wallets, exchanges, and apps so users can funding round seed series acquisition 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+  researchQuestions:
+    - id: QE001
+      question: How does Mesh define the customer workflow from account connection through transfer completion?
+      type: mechanism
+      targets: [contentRequirements/0]
+      status: answered
+    - id: QE002
+      question: Which distinct product modules and operating surfaces are evidenced in the public documentation?
+      type: enumeration
+      targets: [contentRequirements/1]
+      status: answered
+    - id: QE003
+      question: How do session control, authorization, connectivity, routing, and transfer events fit together?
+      type: mechanism
+      targets: [contentRequirements/2]
+      status: answered
+    - id: QE004
+      question: What public evidence describes deployment, testing, integration, and reliable transfer confirmation?
+      type: verification
+      targets: [contentRequirements/3]
+      status: answered
+    - id: QE005
+      question: Which product attributes appear differentiated relative to competing stablecoin acceptance infrastructure?
+      type: comparison
+      targets: [contentRequirements/4]
+      status: answered
+    - id: QE006
+      question: What adverse evidence or disclosure gaps weaken confidence in security, compliance, and quality controls?
+      type: adverse
+      targets: [contentRequirements/5]
+      status: answered
+    - id: QE007
+      question: Which 2026 integrations and product initiatives are live, launched, or still awaiting rollout details?
+      type: freshness
+      targets: [contentRequirements/3, contentRequirements/4]
+      status: answered
+    - id: QE008
+      question: What production metrics quantify latency, failure rates, uptime, routing quality, and reconciliation accuracy?
+      type: quantification
+      targets: [contentRequirements/3, contentRequirements/5]
+      status: partial
+  sources:
+    - id: SE001
+      publisher: Fireblocks
+      title: "Stablecoin Acceptance: Fireblocks Flow vs. Mesh & More"
+      url: https://www.fireblocks.com/report/compare-stablecoin-acceptance-infrastructure
+      date: 2026-06-09
+      accessDate: 2026-10-21
+      accessStatus: ok
+      stance: adverse
+      sourceType: other
+      reputationTier: medium
+      independence: competitor
+      topics: [developer-experience, routing, compliance, reconciliation, security-certifications]
+      keyQuote: "Mesh has built a strong developer experience across five SDKs and comprehensive API documentation, with SmartFunding auto-routing that is a genuine technical differentiator for routing across user balances."
+    - id: SE002
+      publisher: Mesh
+      title: Mesh Integration Helps Power Crypto Deposits for World App
+      url: https://www.prnewswire.com/news-releases/mesh-integration-helps-power-crypto-deposits-for-world-app-302807237.html
+      date: 2026-06-23
+      accessDate: 2026-10-21
+      accessStatus: ok
+      stance: confirming
+      sourceType: partner-proof
+      reputationTier: medium
+      independence: company
+      topics: [World-App, deposits, integrations]
+      keyQuote: "Through Mesh, World App users can fund their wallets directly from hundreds of supported exchanges and wallets."
+    - id: SE003
+      publisher: Mesh
+      title: Concepts
+      url: https://docs.meshconnect.com/resources/concepts
+      accessDate: 2026-10-21
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: company
+      topics: [Link, SDKs, tokens, SmartFunding, sandbox, webhooks]
+      keyQuote: "Link is available on five client-side SDKs: web, iOS, Android, React Native, Flutter."
+    - id: SE004
+      publisher: Mesh
+      title: Mesh Secures $75M Series C, Reaches $1B Valuation to Build the Universal Crypto Payments Network
+      url: https://www.prnewswire.com/news-releases/mesh-secures-75m-series-c-reaches-1b-valuation-to-build-the-universal-crypto-payments-network-302670833.html
+      date: 2026-01-27
+      accessDate: 2026-10-21
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: [SmartFunding, settlement, interoperability]
+      keyQuote: "Mesh serves as the neutral layer that unifies this fragmented landscape, ensuring the future of payments is built on infrastructure that makes all assets universally spendable."
+    - id: SE005
+      publisher: Mesh
+      title: Mesh Launches the Mesh Alliance Program to Solve Enterprise Payments Fragmentation
+      url: https://finance.yahoo.com/markets/crypto/articles/mesh-launches-mesh-alliance-program-130000392.html?fr=sycsrp_catchall
+      date: 2026-06-02
+      accessDate: 2026-10-21
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: medium
+      independence: company
+      topics: [Mesh-Alliance-Program, interoperability, routing]
+      keyQuote: "Rather than adding another integration point, the program establishes a shared connectivity infrastructure that links leading L1s, L2s, wallets, exchanges, stablecoin issuers, and platforms into a unified ecosystem — enabling enterprise clients to move value across networks without building custom bridges or managing fragmented routing logic."
+    - id: SE006
+      publisher: IDNFinancials
+      title: Visa partners Mesh, targets crypto payments at 175M merchant locations
+      url: https://www.idnfinancials.com/digital-asset/70563/visa-partners-mesh-targets-crypto-payments-at-175m-merchant-locations
+      accessDate: 2026-10-21
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: [Visa, rollout, payment-credentials, compliance]
+      keyQuote: "However, the service is not yet immediately available across the entire Visa network."
+    - id: SE007
+      publisher: Qazinform
+      title: Visa and Mesh bring crypto closer to checkout
+      url: https://qazinform.com/news/visa-and-mesh-bring-crypto-closer-to-checkout-044f71
+      date: 2026-10-20
+      accessDate: 2026-10-21
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: [Visa, rollout, payment-credentials]
+      keyQuote: "The service’s initial availability, supported devices and participating platforms have yet to be announced."
+    - id: SE008
+      publisher: Mesh
+      title: Senior Product Manager - Onchain
+      url: https://simplify.jobs/p/8ec56288-08ff-4819-99fc-3595f7eca26a/Senior-Product-Manager
+      accessDate: 2026-10-21
+      accessStatus: ok
+      stance: confirming
+      sourceType: developer-signal
+      reputationTier: low
+      independence: company
+      topics: [Core-team, integrations, routing, scalability]
+      keyQuote: "This team builds the foundational infrastructure that handles crypto transfers, bridging logic, and network connectivity."
+  claims:
+    - id: CE001
+      statement: Mesh documents Link as its hosted user experience for connecting accounts, initiating transfers, and verifying wallets across five client SDKs.
+      type: company-claimed
+      topic: product-surface
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE001, QE002]
+    - id: CE002
+      statement: Each Link session starts with a server-requested token that is single-use and expires after ten minutes.
+      type: company-claimed
+      topic: session-control
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE001, QE003]
+    - id: CE003
+      statement: Mesh says it handles authentication flows, OAuth connections, and API calls for supported exchange and wallet integrations.
+      type: company-claimed
+      topic: connectivity
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE001, QE003]
+    - id: CE004
+      statement: Mesh Managed Tokens use a stable tokenId while Mesh stores and refreshes the underlying exchange authorization.
+      type: company-claimed
+      topic: authorization
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE002, QE003]
+    - id: CE005
+      statement: SmartFunding selects a funding source using available balance, network compatibility, fees, and speed.
+      type: company-claimed
+      topic: routing
+      sourceRefs: [SE003, SE004]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE002, QE003, QE005]
+    - id: CE006
+      statement: Mesh documents sub-clients with separate credentials, branding, compliance settings, and data isolation for downstream businesses.
+      type: company-claimed
+      topic: enterprise-tenancy
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE002, QE004]
+    - id: CE007
+      statement: Mesh describes its sandbox as a production replica that uses separate credentials and moves no real assets.
+      type: company-claimed
+      topic: deployment
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE004]
+    - id: CE008
+      statement: Mesh instructs clients to use webhooks for reliable transfer confirmation because exchange posting can take from seconds to days.
+      type: company-claimed
+      topic: reliability
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE004]
+    - id: CE009
+      statement: Mesh announced that its World App integration lets users fund wallets from hundreds of supported exchanges and wallets.
+      type: company-claimed
+      topic: World-App
+      sourceRefs: [SE002]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE007]
+    - id: CE010
+      statement: Mesh announced the Alliance Program as a shared connectivity and routing layer across chains, wallets, exchanges, issuers, and platforms.
+      type: company-claimed
+      topic: interoperability
+      sourceRefs: [SE005]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE007]
+    - id: CE011
+      statement: Fireblocks credits Mesh with five SDKs, comprehensive API documentation, and differentiated SmartFunding routing.
+      type: third-party-reported
+      topic: differentiation
+      sourceRefs: [SE001]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE005]
+    - id: CE012
+      statement: Fireblocks asserts that Mesh customers provide their own destination or custody and that Mesh lacks publicly disclosed reconciliation, named compliance partners, and comparable security certifications.
+      type: third-party-reported
+      topic: control-gaps
+      sourceRefs: [SE001]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE006]
+    - id: CE013
+      statement: Independent coverage says the Mesh-Visa service was not yet broadly available and lacked disclosed launch timing, supported devices, and initial participating platforms.
+      type: third-party-reported
+      topic: Visa-rollout
+      sourceRefs: [SE006, SE007]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE007]
+    - id: CE014
+      statement: Mesh's republished Core-team job listing frames exchange and wallet expansion plus standardized, scalable, secure routing as active product work.
+      type: company-claimed
+      topic: roadmap
+      sourceRefs: [SE008]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE002, QE007]
+    - id: CE015
+      statement: Mesh claims SmartFunding enables consumers to pay with one asset while merchants settle in a preferred stablecoin or local currency.
+      type: company-claimed
+      topic: settlement
+      sourceRefs: [SE004]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE001, QE005]
+    - id: CE016
+      statement: The assigned public evidence does not establish audited uptime, independently verified routing performance, or company-disclosed enterprise security certifications for Mesh.
+      type: inferred
+      topic: control-gaps
+      sourceRefs: [SE001, SE003]
+      confidence: low
+      freshness: current
+      answersQuestionRefs: [QE006]
+  evidenceGaps:
+    - type: private-evidence-only
+      severity: material
+      topic: production-performance
+      missingEvidence: Audited uptime, latency percentiles, transfer failure and recovery rates, routing-quality benchmarks, and reconciliation accuracy by product and integration.
+      whyItMatters: These metrics determine whether the documented orchestration layer performs reliably under production volume and provider outages.
+      diligencePath: Request twelve months of service-level reports, incident logs, route-level completion data, webhook delivery statistics, and customer reconciliation samples.
+      relatedQuestionRefs: [QE008]
+    - type: missing-source
+      severity: material
+      topic: security-and-compliance
+      missingEvidence: Current independent audit reports, security certifications, named transaction-screening providers, control ownership, and jurisdiction-specific compliance responsibilities.
+      whyItMatters: The product handles authorization and asset movement across external platforms, so enterprise adoption depends on verifiable control design and operating effectiveness.
+      diligencePath: Obtain SOC reports or equivalent audits, penetration-test summaries, vendor and subprocessor lists, compliance-control matrices, and incident-response evidence under NDA.
+      relatedQuestionRefs: [QE006, QE008]
