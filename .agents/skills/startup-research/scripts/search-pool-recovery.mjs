@@ -31,23 +31,31 @@ export function promoteReserveEvidence(pool, fetchedByUrl) {
   );
   const metrics = successfulPoolMetrics({ ...pool, recommended }, fetchedByUrl);
   const promoted = [];
-  for (const candidate of reserve) {
+  while (true) {
     const sourcesSatisfied = metrics.successful >= pool.evidenceTarget.minSources;
     const domainsSatisfied = metrics.successfulDomains.size >= pool.evidenceTarget.minDomains;
     const netNewSatisfied = metrics.successfulNetNew >= pool.evidenceTarget.minNetNewSources;
     if (sourcesSatisfied && domainsSatisfied && netNewSatisfied) break;
-    if (!fetchedByUrl.get(candidate.url)?.ok) continue;
+    const orderedReserve = netNewSatisfied
+      ? [
+        ...reserve.filter((entry) => entry.allocation !== 'net-new-reserve'),
+        ...reserve.filter((entry) => entry.allocation === 'net-new-reserve'),
+      ]
+      : reserve;
+    const candidate = orderedReserve.find((entry) => {
+      if (usedUrls.has(canonicalSourceUrl(entry.url)) || !fetchedByUrl.get(entry.url)?.ok) return false;
+      const domain = registrableDomain(entry.url);
+      const addsNeededSource = !sourcesSatisfied;
+      const addsNeededDomain = !domainsSatisfied && domain && !metrics.successfulDomains.has(domain);
+      const addsNeededNetNew = !netNewSatisfied && entry.allocation === 'net-new-reserve';
+      return addsNeededSource || addsNeededDomain || addsNeededNetNew;
+    });
+    if (!candidate) break;
 
     const domain = registrableDomain(candidate.url);
-    const addsNeededSource = !sourcesSatisfied;
-    const addsNeededDomain = !domainsSatisfied && domain && !metrics.successfulDomains.has(domain);
-    const addsNeededNetNew = (
-      !netNewSatisfied
-      && candidate.allocation === 'net-new-reserve'
-    );
-    if (!addsNeededSource && !addsNeededDomain && !addsNeededNetNew) continue;
-
-    const allocation = candidate.allocation === 'net-new-reserve' ? 'net-new' : 'reserve-recovery';
+    const allocation = (!netNewSatisfied && candidate.allocation === 'net-new-reserve')
+      ? 'net-new'
+      : 'reserve-recovery';
     promoted.push({ ...candidate, allocation });
     usedUrls.add(canonicalSourceUrl(candidate.url));
     metrics.successful += 1;
@@ -70,6 +78,12 @@ export function replenishReserveEvidence(pools, candidates, fetchedByUrl) {
       || metrics.successfulDomains.size < pool.evidenceTarget.minDomains
       || metrics.successfulNetNew < pool.evidenceTarget.minNetNewSources;
   }).map(pool => pool.key));
+  const needsNetNew = pool => {
+    const okNetNew = uniqueCandidates(pool.recommended).filter(
+      candidate => candidate.allocation === 'net-new' && fetchedByUrl.get(candidate.url)?.ok,
+    ).length;
+    return okNetNew < pool.evidenceTarget.minNetNewSources;
+  };
   const protectedUrls = new Set(pools.flatMap(pool => [
     ...pool.recommended, ...(deficient.has(pool.key) ? pool.reserve : []),
   ].map(candidate => canonicalSourceUrl(candidate.url))));
@@ -86,8 +100,17 @@ export function replenishReserveEvidence(pools, candidates, fetchedByUrl) {
   // Release only surplus backups, never another chapter's recommended evidence.
   for (let round = 0; round < 6 && available.length; round += 1) {
     for (const pool of result) {
-      if (!deficient.has(pool.key) || pool.reserve.length >= 6 || !available.length) continue;
+      if (!deficient.has(pool.key) || !needsNetNew(pool) || pool.reserve.length >= 6 || !available.length) continue;
       const candidate = available.shift();
+      pool.reserve.push({ ...candidate, allocation: 'net-new-reserve' });
+      transferred.add(canonicalSourceUrl(candidate.url));
+    }
+  }
+  for (let round = 0; round < 6 && available.some(candidate => !fetchedByUrl.has(candidate.url)); round += 1) {
+    for (const pool of result) {
+      const index = available.findIndex(candidate => !fetchedByUrl.has(candidate.url));
+      if (!deficient.has(pool.key) || pool.reserve.length >= 6 || index < 0) continue;
+      const [candidate] = available.splice(index, 1);
       pool.reserve.push({ ...candidate, allocation: 'net-new-reserve' });
       transferred.add(canonicalSourceUrl(candidate.url));
     }
@@ -126,12 +149,32 @@ export function recoverExclusiveEvidence(pools, candidates, fetchedByUrl) {
   const result = pools.map(pool => ({
     ...pool, recommended: [...pool.recommended], reserve: [...pool.reserve],
   }));
+  for (const pool of result) {
+    let seenOkNetNew = 0;
+    pool.recommended = pool.recommended.map(entry => {
+      if (entry.allocation === 'net-new' && fetchedByUrl.get(entry.url)?.ok) {
+        seenOkNetNew += 1;
+        if (seenOkNetNew > pool.evidenceTarget.minNetNewSources) {
+          return { ...entry, allocation: 'reserve-recovery' };
+        }
+      }
+      return entry;
+    });
+  }
   const usable = uniqueCandidates(candidates).filter(candidate =>
     candidate.sourceQuality?.tier !== 'low' && fetchedByUrl.get(candidate.url)?.ok);
   const externalCount = recommended => recommended.filter(candidate =>
     fetchedByUrl.get(candidate.url)?.ok
     && !candidate.sourceQuality?.reasons?.includes('official-domain')).length;
-  const exclusive = new Set(result.flatMap(pool => [...pool.recommended, ...pool.reserve]
+  const hasNetNewDeficit = result.some(
+    pool => successfulPoolMetrics(pool, fetchedByUrl).successfulNetNew < pool.evidenceTarget.minNetNewSources,
+  );
+  const exclusive = new Set(result.flatMap(pool => [
+    ...pool.recommended,
+    ...(hasNetNewDeficit && successfulPoolMetrics(pool, fetchedByUrl).successfulNetNew >= pool.evidenceTarget.minNetNewSources
+      ? []
+      : pool.reserve),
+  ]
     .filter(candidate => ['net-new', 'net-new-reserve'].includes(candidate.allocation))
     .map(candidate => canonicalSourceUrl(candidate.url))));
   for (const pool of result) {
@@ -151,14 +194,18 @@ export function recoverExclusiveEvidence(pools, candidates, fetchedByUrl) {
       const replacements = [];
       let safe = true;
       for (const sibling of result.filter(other => other !== pool)) {
+        const beforeMetrics = successfulPoolMetrics(sibling, fetchedByUrl);
+        const targetSources = Math.min(sibling.evidenceTarget.minSources, beforeMetrics.successful);
+        const targetDomains = Math.min(sibling.evidenceTarget.minDomains, beforeMetrics.successfulDomains.size);
+        const targetNetNew = Math.min(sibling.evidenceTarget.minNetNewSources, beforeMetrics.successfulNetNew);
         const removed = sibling.recommended.find(entry => canonicalSourceUrl(entry.url) === url);
         const recommended = sibling.recommended.filter(entry => canonicalSourceUrl(entry.url) !== url);
         if (recommended.length === sibling.recommended.length) continue;
         const minExternal = Math.min(Math.ceil(sibling.evidenceTarget.minSources / 2),
           externalCount(sibling.recommended));
         let metrics = successfulPoolMetrics({ ...sibling, recommended }, fetchedByUrl);
-        if (metrics.successful < sibling.evidenceTarget.minSources
-            || metrics.successfulDomains.size < sibling.evidenceTarget.minDomains
+        if (metrics.successful < targetSources
+            || metrics.successfulDomains.size < targetDomains
             || externalCount(recommended) < minExternal
             || removed.allocation === 'independent-candidate') {
           const local = new Set(recommended.map(entry => canonicalSourceUrl(entry.url)));
@@ -168,8 +215,8 @@ export function recoverExclusiveEvidence(pools, candidates, fetchedByUrl) {
             if (!candidate.sourceQuality?.reasons?.includes('official-domain')
                 && entry.sourceQuality?.reasons?.includes('official-domain')) return false;
             const restored = successfulPoolMetrics({ ...sibling, recommended: [...recommended, entry] }, fetchedByUrl);
-            return restored.successful >= sibling.evidenceTarget.minSources
-              && restored.successfulDomains.size >= sibling.evidenceTarget.minDomains
+            return restored.successful >= targetSources
+              && restored.successfulDomains.size >= targetDomains
               && externalCount([...recommended, entry]) >= minExternal;
           });
           if (!replacement) { safe = false; break; }
@@ -177,7 +224,7 @@ export function recoverExclusiveEvidence(pools, candidates, fetchedByUrl) {
             ? 'independent-candidate' : 'shared-recovery' });
           metrics = successfulPoolMetrics({ ...sibling, recommended }, fetchedByUrl);
         }
-        if (metrics.successfulNetNew < successfulPoolMetrics(sibling, fetchedByUrl).successfulNetNew) {
+        if (metrics.successfulNetNew < targetNetNew) {
           safe = false;
           break;
         }

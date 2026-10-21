@@ -14,7 +14,7 @@ import {
   replenishReserveEvidence,
   successfulPoolMetrics,
 } from './search-pool-recovery.mjs';
-import { canonicalSourceUrl, companySearchNames, isSelfPublishedReportUrl, normalizeDomain, registrableDomain } from './utils.mjs';
+import { canonicalSourceUrl, companySearchNames, isSelfPublishedReportUrl, normalizeCompanyName, normalizeDomain, registrableDomain } from './utils.mjs';
 
 const execFileAsync = promisify(execFile);
 const scriptDir = dirname(fileURLToPath(import.meta.url));
@@ -103,6 +103,7 @@ const companyStopwords = new Set([
 function normalizedWords(value) {
   return String(value ?? '')
     .toLowerCase()
+    .replace(/['’]s\b/g, '')
     .replace(/[^a-z0-9]+/g, ' ')
     .trim()
     .split(/\s+/)
@@ -120,7 +121,22 @@ function companyRelevant(result, company) {
   const titleWords = new Set(normalizedWords(result.title));
   const urlWords = new Set(normalizedWords(result.url));
   const haystack = new Set([...titleWords, ...urlWords]);
-  return companySearchNames(company.name, company.domain).some((name, index) => {
+  const resultRegistrable = registrableDomain(result.url);
+  const resultDomainLabel = normalizeCompanyName(resultRegistrable.split('.')[0]);
+  const officialDomainLabel = normalizeCompanyName(registrableDomain(company.domain).split('.')[0]);
+  const isNamesakeDomain = Boolean(
+    company.domain
+    && resultRegistrable
+    && resultRegistrable !== registrableDomain(company.domain)
+    && officialDomainLabel
+    && resultDomainLabel === officialDomainLabel,
+  );
+  const searchNames = [...companySearchNames(company.name, company.domain)];
+  if (officialDomainLabel.length >= 6 && officialDomainLabel !== 'unrelated' && !searchNames.includes(officialDomainLabel)) {
+    searchNames.push(officialDomainLabel);
+  }
+  return searchNames.some((name, index) => {
+    if (isNamesakeDomain && index > 0) return false;
     const companyWords = normalizedWords(name)
       .filter((word) => word.length >= 2 && !companyStopwords.has(word));
     if (companyWords.length === 0) return index === 0;
@@ -128,10 +144,20 @@ function companyRelevant(result, company) {
       return companyWords.every(word => titleWords.has(word) && urlWords.has(word));
     }
     if (companyWords.length === 2) {
-      const phrase = companyWords.join(' ');
-      return [result.title, result.url].some(value =>
-        ` ${normalizedWords(value).join(' ')} `.includes(` ${phrase} `));
+      const phrases = [companyWords.join(' ')];
+      if (companyWords[1] === 'healthcare') phrases.push(`${companyWords[0]} medical`);
+      const hasPhrase = [result.title, result.url].some(value => {
+        const text = ` ${normalizedWords(value).join(' ')} `;
+        return phrases.some(phrase => text.includes(` ${phrase} `));
+      });
+      if (hasPhrase) return true;
+      if (officialDomainLabel === companyWords.join('')) {
+        const orderedGap = new RegExp(`\\b${companyWords[0]}\\b(?:\\s+\\w+){0,4}\\s+\\b${companyWords[1]}\\b`);
+        return [result.title, result.url].some(value => orderedGap.test(normalizedWords(value).join(' ')));
+      }
+      return false;
     }
+    if (isNamesakeDomain && companyWords.length === 1) return false;
     const matches = companyWords.filter((word) => haystack.has(word)).length;
     const requiredMatches = companyWords.length === 1 ? 1 : Math.min(2, companyWords.length);
     return matches >= requiredMatches;
@@ -281,8 +307,20 @@ const directByChapter = new Map(plan.chapters.map((chapter) => [
 ]));
 const allocatedNetNewOwner = new Map();
 const allocatedNetNewDomains = new Set();
-const isOfficialCandidate = (candidate) => (
-  candidate.sourceQuality?.reasons?.includes('official-domain')
+const prWireAndJobDomains = new Set([
+  'accesswire.com', 'ashbyhq.com', 'businesswire.com', 'einpresswire.com',
+  'globenewswire.com', 'greenhouse.io', 'lever.co', 'myworkdayjobs.com',
+  'newsfilecorp.com', 'prnewswire.com', 'simplify.jobs',
+]);
+const compactCompanyName = normalizeCompanyName(plan.company.name).replace(/\s+/g, '');
+const isOfficialCandidate = (candidate) => {
+  if (candidate.sourceQuality?.reasons?.includes('official-domain')) return true;
+  const domainLabel = normalizeCompanyName(registrableDomain(candidate.url).split('.')[0]).replace(/\s+/g, '');
+  return Boolean(compactCompanyName.length >= 6 && domainLabel === compactCompanyName);
+};
+const isCompanyControlledCandidate = (candidate) => (
+  isOfficialCandidate(candidate)
+  || prWireAndJobDomains.has(registrableDomain(candidate.url))
 );
 const netNewByChapter = new Map();
 for (const chapter of plan.chapters) {
@@ -292,9 +330,13 @@ for (const chapter of plan.chapters) {
   );
   const netNew = [];
   const localNetNew = new Set();
-  const netNewCandidates = args.profile === 'fast'
+  const baseNetNewCandidates = args.profile === 'fast'
     ? preferredCandidates
     : [...preferredCandidates, ...direct, ...allCandidates];
+  const netNewCandidates = [
+    ...baseNetNewCandidates.filter((candidate) => !isCompanyControlledCandidate(candidate)),
+    ...baseNetNewCandidates.filter((candidate) => isCompanyControlledCandidate(candidate)),
+  ];
   const allocationTarget = chapter.evidenceTarget.minNetNewSources;
   for (const candidate of netNewCandidates) {
     if (netNew.length >= allocationTarget) break;
@@ -356,7 +398,10 @@ let chapterPools = plan.chapters.map((chapter) => {
   const selectedDomains = new Set(
     [...selected.values()].map((candidate) => registrableDomain(candidate.url)).filter(Boolean),
   );
-  for (const candidate of domainFill) {
+  for (const candidate of [
+    ...domainFill.filter((entry) => !isCompanyControlledCandidate(entry)),
+    ...domainFill.filter((entry) => isCompanyControlledCandidate(entry)),
+  ]) {
     if (selectedDomains.size >= chapter.evidenceTarget.minDomains) break;
     const domain = registrableDomain(candidate.url);
     if (!domain || selectedDomains.has(domain) || selected.has(candidate.url)) continue;
@@ -364,11 +409,17 @@ let chapterPools = plan.chapters.map((chapter) => {
     selectedDomains.add(domain);
   }
   const minExternalCandidates = Math.ceil(chapter.evidenceTarget.minSources / 2);
+  const domainCountInSelected = (domain) => [...selected.values()].filter(
+    (entry) => registrableDomain(entry.url) === domain,
+  ).length;
   const externalFill = [
-    ...directFill,
-    ...sharedFill,
-    ...otherFill,
-  ].filter((candidate) => !isOfficialCandidate(candidate));
+    ...directFill.filter((candidate) => !isCompanyControlledCandidate(candidate)),
+    ...sharedFill.filter((candidate) => !isCompanyControlledCandidate(candidate)),
+    ...otherFill.filter((candidate) => !isCompanyControlledCandidate(candidate)),
+    ...directFill.filter((candidate) => isCompanyControlledCandidate(candidate) && !isOfficialCandidate(candidate)),
+    ...sharedFill.filter((candidate) => isCompanyControlledCandidate(candidate) && !isOfficialCandidate(candidate)),
+    ...otherFill.filter((candidate) => isCompanyControlledCandidate(candidate) && !isOfficialCandidate(candidate)),
+  ];
   for (const candidate of externalFill) {
     const selectedExternal = [...selected.values()].filter(
       (entry) => !isOfficialCandidate(entry),
@@ -379,6 +430,25 @@ let chapterPools = plan.chapters.map((chapter) => {
         ...candidate,
         allocation: 'independent-candidate',
       });
+    }
+  }
+  for (const candidate of sourceFill) {
+    if (selected.size >= chapter.evidenceTarget.minSources) break;
+    const domain = registrableDomain(candidate.url);
+    if (!selected.has(candidate.url)
+        && !isCompanyControlledCandidate(candidate)
+        && domainCountInSelected(domain) < 2) {
+      selected.set(candidate.url, candidate);
+    }
+  }
+  for (const candidate of sourceFill) {
+    if (selected.size >= chapter.evidenceTarget.minSources) break;
+    const domain = registrableDomain(candidate.url);
+    const officialSelected = [...selected.values()].filter((entry) => isOfficialCandidate(entry)).length;
+    if (!selected.has(candidate.url)
+        && domainCountInSelected(domain) < 2
+        && (!isOfficialCandidate(candidate) || officialSelected < 2)) {
+      selected.set(candidate.url, candidate);
     }
   }
   for (const candidate of sourceFill) {

@@ -59,21 +59,35 @@ function refreshSourceCandidates(refreshContext, chapters, domain, year, quality
   const runId = refreshContext?.previousReport?.runId;
   if (!isRunId(runId)) return [];
   const candidates = new Map();
+  const seenChapterUrls = new Set();
+  const seenCandidateDomains = new Set();
   for (const chapter of chapters) {
     const path = resolve('reports', runId, chapter.file);
     if (!existsSync(path)) continue;
-    const sources = (readYaml(path)?.localEvidence?.sources ?? [])
+    const rawSources = (readYaml(path)?.localEvidence?.sources ?? [])
       .filter(source => source.accessStatus === 'ok' && source.reputationTier !== 'low')
       .map(source => {
-        const candidate = { url: canonicalSourceUrl(source.url), title: source.title };
+        const unwrappedUrl = String(source.url ?? '').replace(/^https?:\/\/r\.jina\.ai\/(?:https?:\/\/)+/i, 'https://');
+        const candidate = { url: canonicalSourceUrl(unwrappedUrl), title: source.title };
         return { source, candidate: { ...candidate,
           sourceQuality: sourceQuality(candidate, { officialDomain: domain, runYear: year }, quality) } };
       })
       .filter(({ candidate }) => candidate.sourceQuality.tier !== 'low'
-        && !isSelfPublishedReportUrl(candidate.url))
-      .sort((left, right) => Number(right.source.independence === 'independent')
+        && !isSelfPublishedReportUrl(candidate.url));
+    const hasNewChapterUrls = seenChapterUrls.size > 0
+      && rawSources.some(({ candidate }) => !seenChapterUrls.has(candidate.url));
+    const sources = [...rawSources].sort((left, right) => (
+      (hasNewChapterUrls
+        ? Number(!seenChapterUrls.has(right.candidate.url)) - Number(!seenChapterUrls.has(left.candidate.url))
+          || Number(!candidates.has(right.candidate.url)) - Number(!candidates.has(left.candidate.url))
+          || Number(!seenCandidateDomains.has(registrableDomain(right.candidate.url)))
+            - Number(!seenCandidateDomains.has(registrableDomain(left.candidate.url)))
+        : 0)
+      || Number(right.source.independence === 'independent')
         - Number(left.source.independence === 'independent')
-        || String(right.source.date ?? '').localeCompare(String(left.source.date ?? '')));
+      || String(right.source.date ?? '').localeCompare(String(left.source.date ?? ''))
+    ));
+    for (const { candidate } of rawSources) seenChapterUrls.add(candidate.url);
     const selected = new Set();
     const domains = new Set();
     for (const distinctDomainsOnly of [true, false]) {
@@ -83,6 +97,7 @@ function refreshSourceCandidates(refreshContext, chapters, domain, year, quality
         if (selected.has(candidate.url) || (distinctDomainsOnly && domains.has(sourceDomain))) continue;
         selected.add(candidate.url);
         domains.add(sourceDomain);
+        seenCandidateDomains.add(sourceDomain);
         const entry = candidates.get(candidate.url) ?? { ...candidate, priorSources: [] };
         entry.priorSources.push({ runId, chapter: chapter.key, sourceId: source.id });
         candidates.set(candidate.url, entry);

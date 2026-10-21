@@ -992,6 +992,55 @@ const tests = [
     assert.equal(netNewRefill[0].reserve.length, 0,
       'a net-new-only deficit allocated shared sources that cannot repair it');
   }],
+  ['company relevance accepts domain-anchored compound names and medical/healthcare synonyms while rejecting competing TLD namesakes', () => bootstrapFixture(
+    'compound-and-tld', {
+      company: { name: 'Nio GeniTech', domain: 'niogenitech.com' },
+      resultOverrides: {
+        0: { url: 'https://cnevpost.example/2026/02/26/nio-chip-subsidiary-genitech-raises-funding/',
+          title: "NIO's chip subsidiary GeniTech raises $328 million", snippet: 'Shenji NX9031' },
+        1: { url: 'https://niogenitech.org/unrelated',
+          title: 'NioGeniTech Foundation', snippet: 'Unrelated foundation on another TLD' },
+      },
+    }, result => {
+      assertFloors(result);
+      assert(result.bundle.candidates.some(entry => entry.url.includes('cnevpost.example')));
+      assert(!result.bundle.candidates.some(entry => entry.url.includes('niogenitech.org')));
+    },
+  )],
+  ['refresh seed selection unwraps r.jina.ai URLs and prioritizes chapter-new URLs across cumulative chapters', () => {
+    const runId = `20990301000000-cumulative-seed-${process.pid}`;
+    const previousFolder = resolve('reports', runId);
+    const folder = resolve('.research-cache', `20990401000000-cumulative-plan-${process.pid}`);
+    try {
+      mkdirSync(previousFolder);
+      mkdirSync(folder, { recursive: true });
+      runJson('apply-research-profile.mjs', ['--report-folder', folder, '--profile', 'fast']);
+      const company = { name: 'Acme', website: 'https://acme.example', shortDescription: 'Factory automation' };
+      const makeSource = (chapterIndex, itemIndex) => ({
+        id: `SO-${chapterIndex}-${itemIndex}`,
+        url: itemIndex === 0
+          ? `https://r.jina.ai/http://https://ch${chapterIndex}-d${itemIndex}.example/acme`
+          : `https://ch${chapterIndex}-d${itemIndex}.example/acme`,
+        title: `Acme chapter ${chapterIndex} source ${itemIndex}`,
+        date: '2099-02-01',
+        accessStatus: 'ok',
+        independence: 'independent',
+        reputationTier: 'high',
+      });
+      const ch1Sources = Array.from({ length: 6 }, (_, i) => makeSource(1, i));
+      const ch2Sources = [...ch1Sources, ...Array.from({ length: 6 }, (_, i) => makeSource(2, i))];
+      writeFileSync(join(previousFolder, '01-company-overview.yaml'), JSON.stringify({ localEvidence: { sources: ch1Sources } }));
+      writeFileSync(join(previousFolder, '02-market-analysis.yaml'), JSON.stringify({ localEvidence: { sources: ch2Sources } }));
+      writeFileSync(join(folder, 'refresh-context.yaml'), JSON.stringify({ previousReport: { runId, company } }));
+      const plan = runJson('build-search-plan.mjs', ['--report-folder', folder, '--profile', 'fast']);
+      assert.equal(plan.refreshCandidates.length, 12);
+      assert(plan.refreshCandidates.every(entry => !entry.url.includes('r.jina.ai')));
+      assert(plan.refreshCandidates.some(entry => entry.url === 'https://ch2-d0.example/acme'));
+    } finally {
+      rmSync(previousFolder, { recursive: true, force: true });
+      rmSync(folder, { recursive: true, force: true });
+    }
+  }],
 ];
 
 const failures = [];

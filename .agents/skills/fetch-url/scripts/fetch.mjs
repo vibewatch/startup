@@ -986,7 +986,10 @@ const ACCESS_ERROR_TITLES = new Set([
   'page not found',
   '页面未找到',
   '页面不存在',
+  '该页面不存在',
   '找不到页面',
+  '正在进行安全检测...',
+  '正在进行安全检测',
 ]);
 
 export function isAccessErrorResponse(result) {
@@ -996,15 +999,23 @@ export function isAccessErrorResponse(result) {
   const body = Buffer.isBuffer(result.body) ? result.body.toString('utf8') : String(result.body ?? '');
   const title = (result.title ?? extractTitle(body) ?? '').trim().toLowerCase();
   if (ACCESS_ERROR_TITLES.has(title)) return true;
+  if (/^(?:error\s+404|404(?:\s+not\s+found|\s+page\s+not\s+found)?|page\s+not\s+found)\s*[|\-–—_]\s*\S[\s\S]*$/i.test(title)
+      || /^404\s*(?:[-|_:：]\s*)?(?:您访问的页面找不到了|该?页面未找到|该?页面不存在|找不到页面)(?:[_|\-–—\s]\S[\s\S]*)?$/iu.test(title)) return true;
   if (/^URL Source:\s*https?:\/\//im.test(body)
       && /^Warning: Target URL returned error [45]\d{2}\b/im.test(body)) return true;
   const text = htmlToText(stripWaybackToolbar(body).replace(/<head\b[^>]*>[\s\S]*?<\/head>/gi, ''))
     .replace(/[‘’]/gu, "'");
-  if (/^(?:404\s*[-:：]?\s*)?(?:没有找到此种页面|页面未找到|页面不存在|找不到页面|page not found|not found)[.!。]?\s*$/iu.test(text)) return true;
+  if (/^(?:404\s*[-:：]?\s*)?(?:没有找到此种页面|该?页面未找到|该?页面不存在|找不到页面|您访问的页面找不到了|page not found|not found)[.!。]?\s*$/iu.test(text)) return true;
   const unwrappedText = text.replace(/^Title:[^\n]*\n+URL Source:\s*https?:\/\/[^\n]+\n+(?:(?:Published Time:[^\n]*|Warning: This is a cached snapshot of the original page, consider retry with caching opt-out\.)\n+)*Markdown Content:\s*/i, '');
   const mainHeading = unwrappedText.match(/^#[ \t]+([^\n]+)$/m)?.[1]
     ?? body.match(/<h1\b[^>]*>([\s\S]*?)<\/h1\s*>/i)?.[1];
   if (/^404:\s+The article you are looking for cannot be found\.$/i.test(htmlToText(mainHeading ?? unwrappedText).trim())) return true;
+  if (unwrappedText.trim()
+      && /^(?:\[!\[[^\]]*\]\([^)]*404[^)]*\)\]\([^)]+\)|!\[[^\]]*404[^\]]*(?:页面走丢了|页面找不到了|页面不存在|page not found)[^\]]*\]\([^)]+\)|\s)+$/iu.test(unwrappedText.trim())) return true;
+  if (/^(?:火山引擎\s+)?正在进行安全检测\.{0,3}(?:\s+(?:为保障您的访问安全，系统正在检测当前网络环境，该过程通常需要几秒钟，请耐心等待|请开启\s*javascript\s*并刷新页面)[。.!]?)?\s*$/iu.test(unwrappedText.trim())) return true;
+  if (/^The value you submitted is not valid\.\s*Please try a different selection\.\s*$/i.test(unwrappedText.trim())) return true;
+  if (/^(?:Sign\s*in\s*Sign\s*up(?:\s+free)?\s+)?Loading\.{0,3}\s*$/i.test(unwrappedText.trim())) return true;
+  if (/^(?:工业和信息化部备案管理系统网站\s+\S+\s+主办单位：[^\n]+(?:\s+Operated by [^\n]+)?|(?:©\s*\d{4}\s+[^\n|]+\|\s*)?[京津沪渝冀豫云辽黑湘皖鲁新苏浙赣鄂桂甘晋蒙陕吉闽贵粤青藏川宁琼][A-Z]?ICP备\d+号(?:-\d+)?)\s*$/iu.test(unwrappedText.trim())) return true;
   if (isLoginLockoutNotice(unwrappedText)) return true;
   if (ORG_CHART_CONTROL_ONLY_RE.test(unwrappedText.trim())) return true;
   if (/^(?:#{1,6}\s+)?(?:\S+\s+is blocked\s+)?This page has been blocked by Chrome\s+ERR_BLOCKED_BY_CLIENT(?:\s+This page has been blocked by Chrome)?\s*$/i.test(unwrappedText)) return true;
@@ -1036,7 +1047,7 @@ async function hasAccessErrorContent(result) {
   if (!result || looksLikePdfBuffer(result.body)) return false;
   const body = Buffer.isBuffer(result.body) ? result.body.toString('utf8') : String(result.body ?? '');
   if (!looksLikeHtml(body, result.contentType)
-      || !/Create\s+FREE\s+account\s+to\s+continue\.|After\s+three\s+unsuccessful\s+trials,\s*for\s+your\s+security,/i.test(htmlToText(body))) return false;
+      || !/Create\s+FREE\s+account\s+to\s+continue\.|After\s+three\s+unsuccessful\s+trials,\s*for\s+your\s+security,|正在进行安全检测|The\s+value\s+you\s+submitted\s+is\s+not\s+valid\.\s*Please\s+try\s+a\s+different\s+selection\.|工业和信息化部备案管理系统网站|\bLoading\.{0,3}\b/i.test(htmlToText(body))) return false;
   const extracted = await extractHtmlText(body, result.finalUrl || result.url, result.contentType);
   return isAccessErrorResponse({ ...result, body: extracted.text });
 }

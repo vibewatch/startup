@@ -804,7 +804,7 @@ full-report drafts, then use `gpt-6-luna` for compact table/figure leaves
 where brevity matters. Run deterministic QA after translation and route only
 meaning-sensitive or still-awkward leaves to `gpt-5.6-luna`; reserve
 `gpt-5.6-sol-fast` for unresolved semantic conflicts. Use
-`gpt-5.4` for search planning and evidence extraction. The shared policy is in
+`gpt-6-luna` for search planning and evidence extraction. The shared policy is in
 `../startup-research/references/model-routing.yaml`.
 
 If both zh siblings already exist and no repair is requested, do not rewrite

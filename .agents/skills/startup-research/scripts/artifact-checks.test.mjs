@@ -2426,10 +2426,19 @@ test('HTTP-200 challenge pages are not successful source retrievals', () => {
   }
   assert.equal(isAccessErrorResponse({ status: 200, title: '页面未找到', body: '' }), true);
   assert.equal(isAccessErrorResponse({ status: 200, title: '404 | Page Not Found', body: '' }), true);
+  assert.equal(isAccessErrorResponse({ status: 200, title: 'Error 404 | Redaptive', body: '' }), true);
+  assert.equal(isAccessErrorResponse({ status: 200, title: 'Page Not Found | Freenome', body: '' }), true);
+  assert.equal(isAccessErrorResponse({ status: 200, title: '404 您访问的页面找不到了_腾讯网', body: '' }), true);
   assert.equal(isAccessErrorResponse({ status: 200, title: 'DO NOT DELETE - 404 Page', body: '' }), true);
   assert.equal(isAccessErrorResponse({ status: 200, title: 'ClinicalTrials.gov', body: 'Show glossary' }), true);
   assert.equal(isAccessErrorResponse({ status: 200, title: 'Wayback Machine', body: '' }), true);
   assert.equal(isAccessErrorResponse({ status: 200, title: 'Federal Register :: Request Access', body: '' }), true);
+  assert.equal(isAccessErrorResponse({ status: 200, title: '正在进行安全检测...', body: '请开启JavaScript并刷新页面' }), true);
+  assert.equal(isAccessErrorResponse({ status: 200, title: 'EDGAR Search Results', body: 'The value you submitted is not valid. Please try a different selection.' }), true);
+  assert.equal(isAccessErrorResponse({ status: 200, title: 'Huihe Healthcare', body: '该页面不存在' }), true);
+  assert.equal(isAccessErrorResponse({ status: 200, title: 'App', body: 'Loading...' }), true);
+  assert.equal(isAccessErrorResponse({ status: 200, title: '华尔街见闻', body: '©2026 华尔街见闻 | 沪ICP备13019121号' }), true);
+  assert.equal(isAccessErrorResponse({ status: 200, title: '', body: '[![Image 1](http://mat1.gtimg.com/www/images/qq2012/404_1.png)](http://www.qq.com/)' }), true);
 });
 
 test('browser client-blocked notices require complete error-shell text', () => {
@@ -2504,6 +2513,7 @@ test('access-error detection preserves real articles about security and PDF bodi
     `${archiveRedirectText}\n\nThis article explains the archived redirect above; it is not an interstitial.`,
     `<html><article><h1>Archived redirects</h1><p>This article discusses an error example:</p><pre>${archiveRedirectText}</pre><p>The company reported revenue of $288M in 2025.</p></article></html>`,
     '<html><head><title>Company profile</title></head><body><p>Revenue: $288M in 2025.</p></body></html>',
+    '<html><head><title>Company profile</title></head><body><p>Revenue: $288M in 2025.</p><footer>沪ICP备13019121号</footer></body></html>',
     'Title: Company profile\n\nURL Source: https://example.com/profile\n\nMarkdown Content:\nRevenue: $288M in 2025.',
     Buffer.from('%PDF-1.7\nTitle: Vercel Security Checkpoint'),
     Buffer.from('%PDF-1.7\nTitle: 页面未找到'),

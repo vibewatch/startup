@@ -41,11 +41,11 @@ try {
     [context.chapter.gate.maxLocalClaims === 16, 'fast profile claim cap is not 16'],
     [context.chapter.gate.minNetNewSources === 2, 'fast profile net-new source floor is not 2'],
     [context.policy?.workerRouting?.profile === 'chapter-synthesis-fast', 'fast profile did not select the fast worker route'],
-    [context.policy?.workerRouting?.model === 'gpt-5.4', 'fast worker model is not gpt-5.4'],
+    [context.policy?.workerRouting?.model === 'gpt-5.6-luna', 'fast worker model is not gpt-5.6-luna'],
     [context.policy?.workerRouting?.reasoningEffort === 'default', 'fast worker reasoning effort is not default'],
     [context.policy?.workerRouting?.escalateTo === 'gpt-5.6-sol-fast', 'fast worker escalation is not gpt-5.6-sol-fast'],
     [context.policy?.finalizerRouting?.profile === 'report-finalization', 'runtime context did not select the report finalizer route'],
-    [context.policy?.finalizerRouting?.model === 'gpt-5.4-mini', 'finalizer model is not gpt-5.4-mini'],
+    [context.policy?.finalizerRouting?.model === 'gpt-5.6-luna', 'finalizer model is not gpt-5.6-luna'],
     [context.policy?.finalizerRouting?.reasoningEffort === 'medium', 'finalizer reasoning effort is not medium'],
     [context.policy?.finalizerRouting?.escalateTo === 'gpt-5.6-sol-fast', 'finalizer escalation is not gpt-5.6-sol-fast'],
   ];
