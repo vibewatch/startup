@@ -1,0 +1,414 @@
+schemaVersion: "report-v2"
+artifact: risks
+slug: blacksmith
+runDate: 2026-10-22
+company:
+  name: Blacksmith
+chapter:
+  number: 7
+  title: Risks
+  summary: Blacksmith's principal risks are capacity and hardware exposure, dependency on the GitHub control plane, cache and execution reliability, and the possibility that AI coding vendors internalize validation. Public evidence is strongest on operating constraints and customer-observed failure modes; legal and security posture remain under-disclosed.
+sections:
+  - id: risk-ranking
+    title: Ranked risk assessment
+    body: >
+      Blacksmith's risk profile is shaped by a deliberate infrastructure choice: it buys and operates its own compute rather than renting only hyperscaler capacity. Fortune reports that this improves performance control but exposes the company to shortages of compute and memory, while capacity planning becomes difficult when model launches create abrupt demand spikes. SiliconANGLE describes a more than 40% single-day workload increase after one model launch. This creates a coupled availability and margin risk: capacity bought too early can depress utilization, while capacity bought too late can constrain service quality or growth. The risk is material because the company's stated expansion plan also calls for buying more servers. The evidence supports high severity for capacity execution, but not a quantified outage probability.
+    claimRefs: [CR001, CR002, CR003, CR004]
+    tableRefs: [TR001]
+  - id: operating-and-security
+    title: Operational, quality, and security exposure
+    body: >
+      A customer account review provides useful but bounded operating evidence. Across an unfiltered organization view, 801 PLANET recorded 1,527 Blacksmith jobs from January 23 to July 23, 2026, with a 13.75% failure rate; the reviewer explicitly says this is not a Blacksmith incident rate because it combines failed tests, application errors, workflow mistakes, and deliberate failures. The same review found cache-lineage problems: a successful sticky-disk commit was later followed by restoration of an older parent snapshot, and cold or invalidated builds were materially slower than the prior median. A separate implementation plan records authentication, environment propagation, shallow-fetch, stop semantics, and API-outage cleanup findings. These are integration and reliability risks, not proof of a platform-wide incident rate.
+    claimRefs: [CR005, CR006, CR007, CR008, CR009, CR010]
+    tableRefs: [TR002]
+    figureRefs: [FR001]
+  - id: dependency-and-thesis-breaks
+    title: Dependencies, competition, and thesis-break triggers
+    body: >
+      Blacksmith keeps GitHub Actions as the workflow control plane and changes the runner target, so GitHub organization support and GitHub availability are strategic dependencies. The 801 PLANET review says the service is unavailable for personal repositories and becomes a less simple choice when GitLab or CodeCommit is the source of truth. Fortune and SiliconANGLE also identify a structural competitive risk: AI model vendors and GitHub already provide adjacent test execution or hosted machines, and could absorb validation. The company's current growth claims are reported by the company through journalists, while independent operating baselines remain sparse. The investment thesis should therefore break if capacity shortages cause sustained queueing or SLA deterioration, cache correctness remains unresolved, or core AI and source-control platforms bundle equivalent validation at lower friction.
+    claimRefs: [CR011, CR012, CR013, CR014]
+    tableRefs: [TR003]
+
+tables:
+  - id: TR001
+    title: Regulatory / legal risk register
+    columns: [Rule, Jurisdiction, Status, Likelihood, Severity, Mitigation maturity, Residual exposure, Diligence path]
+    rows:
+      - ["Data-center, hardware, and service availability obligations", "Multi-region", "No public certification, incident, or SLA evidence retained in this pool", "Medium", "High", "Unknown", "High", "Obtain SOC 2/ISO scope, uptime commitments, incident history, and region-by-region resiliency plan"]
+      - ["Customer data, source-code, and build-secret handling", "Customer and data-hosting jurisdictions", "Public pool does not establish privacy, DPA, retention, or isolation terms", "Medium", "High", "Unknown", "High", "Review DPA, subprocessors, encryption, tenant isolation, secret handling, and deletion controls"]
+      - ["Entity and contractual counterparty identification", "Global diligence", "Search pool contains unrelated mining and Rowhammer uses of the Blacksmith name", "Medium", "Medium", "Partial", "Medium", "Verify legal entity, contract entity, domains, and all security/legal records against blacksmith.sh"]
+    notes: "Publicly retained evidence did not establish a specific Blacksmith lawsuit, regulator action, certification, or SLA. Null-like status language is an evidence gap, not evidence that no issue exists."
+    enumerationScope:
+      coverage: partial
+      basis: "Publicly accessible assigned URLs and implementation evidence through 2026-10-22; private contracts and regulatory databases were not available."
+    claimRefs: [CR009, CR014]
+  - id: TR002
+    title: Operational, quality, and security risk register
+    columns: [Failure mode, Likelihood, Severity, Mitigation maturity, Residual exposure, Unresolved gap]
+    rows:
+      - ["Compute or memory shortage during AI-driven workload spikes", "Medium", "High", "Developing", "High", "Capacity headroom, regional failover, and SLA performance are undisclosed"]
+      - ["Persistent-cache snapshot lineage or concurrent-writer error", "Medium", "High", "Developing", "High", "Root cause of older-parent restoration was not confirmed"]
+      - ["Workflow/control-plane or CLI integration failure", "Medium", "High", "Developing", "Medium-high", "Need production incident and recovery metrics across supported GitHub organizations"]
+      - ["Build failure signal misinterpreted as platform incident", "High", "Medium", "Partial", "Medium", "Separate customer test/application failures from Blacksmith service failures in reporting"]
+    notes: "The 801 PLANET review is a single customer account and explicitly cautions that its 13.75% failure rate is not a Blacksmith incident rate. Operational severity is therefore directional, not a population estimate."
+    claimRefs: [CR005, CR006, CR007, CR008, CR010]
+  - id: TR003
+    title: Partner and dependency risk register
+    columns: [Dependency, Counterparty, Role, Concentration, Failure scenario, Severity, Mitigation, Residual exposure]
+    rows:
+      - ["Workflow control plane", "GitHub / GitHub Actions", "Source integration and orchestration", "High for GitHub-centric customers", "API, organization-policy, or hosted-runner change disrupts execution or migration path", "High", "Maintain supported runner and recovery paths; verify API and outage runbooks", "High"]
+      - ["Source and deployment ecosystem", "AWS, GitLab, CodeCommit, ECR/ECS", "Customer-specific source, identity, and deployment path", "Customer-dependent", "Incompatible source control or private-network requirements make Blacksmith less simple than native tooling", "Medium", "Qualify control-plane fit and use narrowly scoped OIDC roles", "Medium"]
+      - ["AI coding vendors and GitHub", "Anthropic, OpenAI, Cursor, Microsoft/GitHub", "Adjacent code generation, testing, and hosted execution", "Strategic", "Bundled validation compresses pricing or removes the need for a separate CI layer", "Medium", "Demonstrate independent performance, reliability, and analytics value", "High"]
+    notes: "Concentration is qualitative because the pool does not disclose revenue by platform or customer. The GitHub dependency is product-architecture evidence, not a claim that an outage occurred."
+    claimRefs: [CR011, CR012, CR013]
+
+figures:
+  - id: FR001
+    title: Risk heatmap
+    summary: Capacity, cache correctness, control-plane dependency, and competitive substitution combine likelihood with residual impact.
+    type: matrix
+    data:
+      columns: [Risk, Low likelihood, Medium likelihood, High likelihood]
+      rows:
+        - label: Compute and memory shortage
+          values: ["", "Medium likelihood", "High residual", ""]
+        - label: Cache snapshot lineage error
+          values: ["", "Medium likelihood", "High residual", ""]
+        - label: GitHub or CLI integration failure
+          values: ["", "Medium likelihood", "Medium-high residual", ""]
+        - label: AI platform substitution
+          values: ["", "Medium likelihood", "High residual", ""]
+        - label: Customer-specific source-control mismatch
+          values: ["", "Medium likelihood", "Medium residual", ""]
+        - label: Legal/privacy evidence gap
+          values: ["", "Medium likelihood", "High residual", ""]
+    claimRefs: [CR001, CR006, CR011, CR012]
+
+callouts:
+  - calloutType: risk
+    title: Highest-priority diligence
+    body: Request capacity headroom and SLA data, cache correctness and recovery evidence, security/compliance artifacts, and a customer-level incident taxonomy before underwriting scale.
+    claimRefs: [CR001, CR006, CR009]
+  - calloutType: assumption
+    title: Thesis-break trigger
+    body: Treat sustained queueing, repeated cache corruption, or a bundled validation feature from a core platform as a thesis-break event unless Blacksmith can show measurable reliability or workflow advantages.
+    claimRefs: [CR006, CR011, CR012]
+
+localEvidence:
+  searchQueries:
+    - query: "\"Blacksmith\" site:blacksmith.sh product company"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"Blacksmith\" funding valuation revenue customers leadership launches 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SR003, SR004, SR005, SR006]
+    - query: "\"Blacksmith\" lawsuit regulatory outage breach complaints risks 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"Blacksmith\" founders leadership funding headquarters company profile 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"Blacksmith\" operational financial regulatory legal risks limitations 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"Blacksmith\" reliability execution dependencies adverse evidence"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SR001, SR002]
+  researchQuestions:
+    - id: QR001
+      question: "What operating conditions could constrain Blacksmith's capacity or service reliability?"
+      type: adverse
+      targets: ["contentRequirements/0"]
+      status: answered
+    - id: QR002
+      question: "What evidence exists for cache, runner, or workflow execution failures?"
+      type: verification
+      targets: ["contentRequirements/2"]
+      status: answered
+    - id: QR003
+      question: "How dependent is Blacksmith on GitHub Actions and organization integrations?"
+      type: mechanism
+      targets: ["contentRequirements/3"]
+      status: answered
+    - id: QR004
+      question: "Could AI model vendors or GitHub substitute for Blacksmith's validation layer?"
+      type: comparison
+      targets: ["contentRequirements/3"]
+      status: answered
+    - id: QR005
+      question: "What regulatory, privacy, security, or legal evidence is publicly available?"
+      type: adverse
+      targets: ["contentRequirements/1"]
+      status: partial
+    - id: QR006
+      question: "What customer-observed metrics distinguish platform incidents from test failures?"
+      type: quantification
+      targets: ["contentRequirements/2"]
+      status: answered
+    - id: QR007
+      question: "What measurable events should trigger a thesis break or escalation?"
+      type: verification
+      targets: ["contentRequirements/5"]
+      status: answered
+    - id: QR008
+      question: "What source-quality limitations could contaminate Blacksmith risk diligence?"
+      type: freshness
+      targets: ["contentRequirements/4"]
+      status: answered
+    - id: QR009
+      question: "What adverse evidence could indicate legal, operational, or competitive thesis failure?"
+      type: adverse
+      targets: ["contentRequirements/5"]
+      status: answered
+  sources:
+    - id: SR001
+      publisher: 801 PLANET
+      title: "Blacksmith Docker Cache: Real GitHub Actions Results"
+      url: https://801pla.net/en/insights/blacksmith-github-actions-docker-builds
+      accessDate: 2026-10-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: customer-proof
+      reputationTier: medium
+      independence: customer
+      topics: [operations, reliability, cache, GitHub]
+      keyQuote: "This screen cannot prove that Blacksmith made us a specific multiple faster. We did not preserve an equivalent pre-migration baseline that reran the same commits on GitHub-hosted runners. The 13.75% failure rate is not a Blacksmith incident rate, either."
+    - id: SR002
+      publisher: mokly-ai
+      title: "blacksmith-remote-verification.md"
+      url: https://github.com/mokly-ai/mokly/blob/main/plans/blacksmith-remote-verification.md
+      accessDate: 2026-10-22
+      accessStatus: ok
+      stance: adverse
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: customer
+      topics: [operations, CLI, security, dependency]
+      keyQuote: "Open finding 14 (Medium): A Blacksmith API outage skips GitHub run cancellation, because cleanup reads run IDs only from testbox status."
+    - id: SR003
+      publisher: TechCrunch
+      title: "Google Ventures doubles down on dev tool startup Blacksmith just 4 months after its seed round"
+      url: https://techcrunch.com/2025/09/17/google-ventures-doubles-down-on-dev-tool-startup-blacksmith-just-4-months-after-its-seed-round/
+      date: 2025-09-17
+      accessDate: 2026-10-22
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics: [funding, margins, customers, competition]
+      keyQuote: "Unlike many rivals that rent generic cloud servers from cloud providers like AWS, Blacksmith’s service runs on high-performance, gaming-grade CPUs."
+    - id: SR004
+      publisher: Fortune
+      title: "Exclusive: AI code-testing startup Blacksmith hits $1 billion valuation as AI-written code surges"
+      url: https://fortune.com/2026/10/21/exclusive-ai-code-testing-startup-blacksmith-hits-1-billion-valuation-as-ai-written-code-surges/
+      date: 2026-10-21
+      accessDate: 2026-10-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics: [capacity, hardware, competition, valuation]
+      keyQuote: "Blacksmith owns much of its own hardware—it buys its own servers rather than renting them from cloud giants like Amazon—which Jayaprakash says gives the company control over performance, but also exposes the company to the industry-wide shortage of compute and memory."
+    - id: SR005
+      publisher: SiliconANGLE
+      title: "Code testing startup Blacksmith becomes a unicorn after raising $66M in Series C funding"
+      url: https://siliconangle.com/2026/10/21/code-testing-startup-blacksmith-becomes-a-unicorn-after-raising-66m-in-series-c-funding/
+      date: 2026-10-21
+      accessDate: 2026-10-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: [capacity, competition, customers, hardware]
+      keyQuote: "Capacity planning has become one of the most challenging aspects of running the company, he said, as demand often jumps whenever a new frontier model is launched."
+    - id: SR006
+      publisher: Межа
+      title: "Blacksmith reaches $1 billion valuation after Sequoia-led Series C"
+      url: https://mezha.net/eng/news/mezha-5f7eaed02b6699202b09fb83_blacksmith_reaches_-1/
+      date: 2026-10-21
+      accessDate: 2026-10-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: [capacity, growth, customers]
+      keyQuote: "Blacksmith says its annual recurring revenue has grown 17-fold and that it has run more than 90 million automated code checks."
+    - id: SR008
+      publisher: Listcorp
+      title: "Blacksmith Project Mineral Resource and Ore Reserve Update"
+      url: https://www.listcorp.com/asx/fmg/fortescue-ltd/news/blacksmith-project-mineral-resource-and-ore-reserve-update-3392259.html
+      date: 2026-08-20
+      accessDate: 2026-10-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: other
+      reputationTier: medium
+      independence: independent
+      topics: [entity-resolution, diligence-quality]
+      keyQuote: "# Blacksmith Project Mineral Resource and Ore Reserve Update"
+    - id: SR009
+      publisher: GRC Research
+      title: "Blacksmith"
+      url: https://www.grc.com/sn/sn-845.pdf
+      date: 2021-11-16
+      accessDate: 2026-10-22
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: independent
+      topics: [entity-resolution, security]
+      keyQuote: 'Then we''re going to take a look at "Blacksmith," the evolution of Rowhammer attacks on DRAM.'
+  claims:
+    - id: CR001
+      statement: "Blacksmith's ownership of its own hardware exposes it to industry-wide shortages of compute and memory."
+      type: third-party-reported
+      topic: capacity
+      sourceRefs: [SR004, SR005]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR001]
+    - id: CR002
+      statement: "Blacksmith's capacity planning is difficult because demand can jump when a new frontier model launches."
+      type: third-party-reported
+      topic: capacity
+      sourceRefs: [SR004, SR005]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR001]
+    - id: CR003
+      statement: "SiliconANGLE reports that Blacksmith's CI workload volume rose more than 40% in a single day when Anthropic debuted Claude Fable 5 in July."
+      type: third-party-reported
+      topic: demand-volatility
+      sourceRefs: [SR005]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QR001]
+    - id: CR004
+      statement: "Blacksmith plans to use most of its Series C proceeds to buy more servers for its global CI cloud."
+      type: third-party-reported
+      topic: capital-intensity
+      sourceRefs: [SR005]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR001]
+    - id: CR005
+      statement: "An 801 PLANET review recorded 1,527 Blacksmith jobs from January 23 to July 23, 2026, in an unfiltered organization view."
+      type: third-party-reported
+      topic: operations
+      sourceRefs: [SR001]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QR002, QR006]
+    - id: CR006
+      statement: "The 801 PLANET review reports a 13.75% failure rate but states that it combines failed tests, application errors, workflow mistakes, and deliberate failures and is not a Blacksmith incident rate."
+      type: third-party-reported
+      topic: reliability
+      sourceRefs: [SR001]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QR002, QR006]
+    - id: CR007
+      statement: "The 801 PLANET review reports that a warm cache sample was 32.5% faster while cold or invalidated builds were 113% slower than the prior median."
+      type: third-party-reported
+      topic: cache
+      sourceRefs: [SR001]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QR002]
+    - id: CR008
+      statement: "The 801 PLANET review says several runs reported a successful sticky-disk commit but later restored an older parent snapshot, without confirming the root cause."
+      type: third-party-reported
+      topic: cache
+      sourceRefs: [SR001]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QR002]
+    - id: CR009
+      statement: "A mokly implementation plan records an open medium finding that a Blacksmith API outage could skip GitHub run cancellation because cleanup reads run IDs only from testbox status."
+      type: third-party-reported
+      topic: api-dependency
+      sourceRefs: [SR002]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QR002, QR005]
+    - id: CR010
+      statement: "The public evidence pool does not establish Blacksmith's privacy terms, security certification scope, incident history, or service-level commitments."
+      type: open-question
+      topic: security-compliance
+      sourceRefs: []
+      confidence: low
+      freshness: current
+      answersQuestionRefs: [QR005]
+    - id: CR011
+      statement: "Blacksmith keeps GitHub Actions as the workflow control plane and changes the runs-on target to a Blacksmith runner."
+      type: third-party-reported
+      topic: dependency
+      sourceRefs: [SR001]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QR003]
+    - id: CR012
+      statement: "Fortune reports that AI model vendors could eventually take over code validation, while GitHub sells hosted machines for CI jobs."
+      type: third-party-reported
+      topic: competition
+      sourceRefs: [SR004]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR004]
+    - id: CR013
+      statement: "Blacksmith's service is unavailable for personal repositories and is less simple when GitLab or CodeCommit is the source of truth, according to the 801 PLANET review."
+      type: third-party-reported
+      topic: product-fit
+      sourceRefs: [SR001]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QR003]
+    - id: CR014
+      statement: "The assigned search pool contains unrelated mining and Rowhammer materials using the Blacksmith name, so entity-resolution controls are required before treating public search results as company evidence."
+      type: inferred
+      topic: diligence-quality
+      sourceRefs: [SR008, SR009]
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs: [QR008]
+  evidenceGaps:
+    - type: missing-source
+      severity: material
+      topic: security-compliance
+      missingEvidence: "Current security certifications, privacy terms, subprocessors, tenant isolation, source-code handling, and incident history."
+      whyItMatters: "Blacksmith executes customer build workloads and may process source code, secrets, artifacts, and deployment credentials."
+      diligencePath: "Obtain the current SOC 2 or ISO report, DPA, subprocessor list, security questionnaire, penetration-test summary, and incident log under NDA."
+      relatedQuestionRefs: [QR005]
+      relatedTableRefs: [TR001]
+    - type: missing-source
+      severity: material
+      topic: capacity
+      missingEvidence: "Regional capacity headroom, queue-time distribution, uptime/SLA history, and recovery testing."
+      whyItMatters: "The cited evidence shows demand volatility and hardware shortage exposure but does not quantify service resilience."
+      diligencePath: "Request trailing-12-month SLOs, capacity utilization, queue percentiles, failover tests, and planned server procurement by region."
+      relatedQuestionRefs: [QR001, QR007]
+    - type: conflicting-data
+      severity: material
+      topic: reliability
+      missingEvidence: "A reproducible explanation and remediation record for older cache snapshot restoration."
+      whyItMatters: "Cache correctness can affect build duration, reproducibility, and customer trust even when a run reports success."
+      diligencePath: "Review cache-key isolation, concurrency controls, snapshot lineage logs, incident tickets, and regression tests with engineering."
+      relatedQuestionRefs: [QR002, QR007]
+    - type: missing-source
+      severity: minor
+      topic: diligence-quality
+      missingEvidence: "A canonical legal entity and verified source registry for Blacksmith Software Inc."
+      whyItMatters: "The same name is used by unrelated mining and security research, increasing the chance of false attribution."
+      diligencePath: "Reconcile every source to blacksmith.sh, the legal entity, named executives, and official contracts before refresh."
+      relatedQuestionRefs: [QR008]
