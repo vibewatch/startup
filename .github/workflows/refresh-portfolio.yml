@@ -99,3 +99,61 @@ jobs:
       refreshOfRunId: ${{ matrix.runId }}
       profile: ${{ inputs.profile || 'fast' }}
     secrets: inherit
+
+  summarize:
+    name: Summarize published refresh batch
+    needs:
+      - plan
+      - refresh
+    if: always() && needs.plan.outputs.count != '0'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout latest branch after refresh batch
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Summarize published vs failed company refreshes
+        env:
+          PLANNED_MATRIX: ${{ needs.plan.outputs.matrix }}
+          REFRESH_RESULT: ${{ needs.refresh.result }}
+        run: |
+          set -euo pipefail
+          node --input-type=module <<'NODE' >> "$GITHUB_STEP_SUMMARY"
+          import fs from 'node:fs';
+          import path from 'node:path';
+          const matrix = JSON.parse(process.env.PLANNED_MATRIX || '{"include":[]}');
+          const planned = Array.isArray(matrix.include) ? matrix.include : [];
+          const redirectsDir = path.join('reports', '.redirects');
+          const published = [];
+          const pending = [];
+          for (const entry of planned) {
+            const redirectPath = path.join(redirectsDir, `${entry.runId}.json`);
+            if (fs.existsSync(redirectPath)) {
+              const replacementRunId = JSON.parse(fs.readFileSync(redirectPath, 'utf8'));
+              published.push({ ...entry, replacementRunId });
+            } else {
+              pending.push(entry);
+            }
+          }
+          console.log('## Refresh batch publication summary');
+          console.log();
+          console.log(`- Planned company refreshes: ${planned.length}`);
+          console.log(`- Published to branch: ${published.length}`);
+          console.log(`- Incomplete / remaining in queue: ${pending.length}`);
+          console.log(`- Matrix conclusion: ${process.env.REFRESH_RESULT || 'unknown'}`);
+          if (published.length > 0) {
+            console.log();
+            console.log('### Published refreshed reports');
+            for (const item of published) {
+              console.log(`- **${item.companyName}**: \`${item.runId}\` → \`${item.replacementRunId}\``);
+            }
+          }
+          if (pending.length > 0) {
+            console.log();
+            console.log('### Failed or still-pending refreshes (previous report retained on branch)');
+            for (const item of pending) {
+              console.log(`- **${item.companyName}** (\`${item.runId}\`)`);
+            }
+          }
+          NODE

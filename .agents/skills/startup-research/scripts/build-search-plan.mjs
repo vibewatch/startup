@@ -77,14 +77,14 @@ function refreshSourceCandidates(refreshContext, chapters, domain, year, quality
     const hasNewChapterUrls = seenChapterUrls.size > 0
       && rawSources.some(({ candidate }) => !seenChapterUrls.has(candidate.url));
     const sources = [...rawSources].sort((left, right) => (
-      (hasNewChapterUrls
+      Number(right.source.independence === 'independent')
+        - Number(left.source.independence === 'independent')
+      || (hasNewChapterUrls
         ? Number(!seenChapterUrls.has(right.candidate.url)) - Number(!seenChapterUrls.has(left.candidate.url))
           || Number(!candidates.has(right.candidate.url)) - Number(!candidates.has(left.candidate.url))
           || Number(!seenCandidateDomains.has(registrableDomain(right.candidate.url)))
             - Number(!seenCandidateDomains.has(registrableDomain(left.candidate.url)))
         : 0)
-      || Number(right.source.independence === 'independent')
-        - Number(left.source.independence === 'independent')
       || String(right.source.date ?? '').localeCompare(String(left.source.date ?? ''))
     ));
     for (const { candidate } of rawSources) seenChapterUrls.add(candidate.url);

@@ -11,7 +11,7 @@ import {
   promoteReserveEvidence, recoverExclusiveEvidence, recoverRefreshEvidence, recoverReportDomains,
   replenishReserveEvidence, successfulPoolMetrics,
 } from './search-pool-recovery.mjs';
-import { canonicalSourceUrl, companySearchNames, getCoreArtifacts, isSelfPublishedReportUrl, loadWorkflowConfig } from './utils.mjs';
+import { canonicalSourceUrl, companySearchNames, getCoreArtifacts, isSelfPublishedReportUrl, loadWorkflowConfig, readYaml } from './utils.mjs';
 import { checkRun } from './check-report.mjs';
 import { checkSearchQueryProvenance, executedSearchQueries } from './search-query-checks.mjs';
 import { sourceQuality } from './source-quality.mjs';
@@ -1036,6 +1036,86 @@ const tests = [
       assert.equal(plan.refreshCandidates.length, 12);
       assert(plan.refreshCandidates.every(entry => !entry.url.includes('r.jina.ai')));
       assert(plan.refreshCandidates.some(entry => entry.url === 'https://ch2-d0.example/acme'));
+    } finally {
+      rmSync(previousFolder, { recursive: true, force: true });
+      rmSync(folder, { recursive: true, force: true });
+    }
+  }],
+  ['subdomain low-signal and high-reputation matching plus refresh seed reserve and independent priority', () => {
+    const qualityConfig = readYaml(resolve('.agents/skills/startup-research/references/search-strategy.yaml')).quality ?? {};
+    assert(sourceQuality({ url: 'https://ca.linkedin.com/company/acme' }, {}, qualityConfig).reasons.includes('low-signal-platform'),
+      'regional linkedin subdomains must match configured lowSignalDomains');
+    assert(sourceQuality({ url: 'https://uk.linkedin.com/posts/acme-123' }, {}, qualityConfig).reasons.includes('low-signal-platform'),
+      'regional linkedin subdomains must match configured lowSignalDomains');
+    assert(!sourceQuality({ url: 'https://news.crunchbase.com/acme' }, {}, qualityConfig).reasons.includes('low-signal-platform'),
+      'editorial news.crunchbase.com must not be penalized as low-signal directory crunchbase.com');
+    assert(sourceQuality({ url: 'https://gist.github.com/acme' }, {}, qualityConfig).reasons.includes('high-reputation-publisher'),
+      'publisher subdomains must match configured highReputationDomains');
+    const runId = `20990501000000-subdomain-seed-${process.pid}`;
+    const previousFolder = resolve('reports', runId);
+    const folder = resolve('.research-cache', `20990601000000-subdomain-plan-${process.pid}`);
+    try {
+      mkdirSync(previousFolder);
+      mkdirSync(folder, { recursive: true });
+      runJson('apply-research-profile.mjs', ['--report-folder', folder, '--profile', 'fast']);
+      const company = { name: 'Acme', website: 'https://acme.example', shortDescription: 'Factory automation' };
+      const ch1Sources = [
+        ...Array.from({ length: 4 }, (_, i) => ({
+          id: `SO-comp-${i}`,
+          url: `https://acme.example/post-${i}`,
+          title: `Acme company post ${i}`,
+          date: '2099-02-01',
+          accessStatus: 'ok',
+          independence: 'company',
+          reputationTier: 'medium',
+        })),
+        ...Array.from({ length: 4 }, (_, i) => ({
+          id: `SO-ind-${i}`,
+          url: `https://independent-${i}.example/acme`,
+          title: `Acme independent article ${i}`,
+          date: '2099-02-01',
+          accessStatus: 'ok',
+          independence: 'independent',
+          reputationTier: 'high',
+        })),
+      ];
+      writeFileSync(join(previousFolder, '01-company-overview.yaml'), JSON.stringify({ localEvidence: { sources: ch1Sources } }));
+      writeFileSync(join(folder, 'refresh-context.yaml'), JSON.stringify({ previousReport: { runId, company } }));
+      const plan = runJson('build-search-plan.mjs', ['--report-folder', folder, '--profile', 'fast']);
+      assert.equal(plan.refreshCandidates.length, 6);
+      assert.deepEqual(
+        plan.refreshCandidates.slice(0, 4).map(entry => entry.url),
+        Array.from({ length: 4 }, (_, i) => `https://independent-${i}.example/acme`),
+        'refresh seed selection must prioritize independent prior sources before company-controlled ones',
+      );
+      const fullPool = {
+        key: '01-company-overview',
+        evidenceTarget: { minSources: 6, maxSources: 4, minDomains: 3, minNetNewSources: 1 },
+        recommended: [
+          { url: 'https://exclusive.example/acme', domain: 'exclusive.example', allocation: 'net-new', sourceQuality: { tier: 'high', reasons: [] } },
+          { url: 'https://acme.example/a', domain: 'acme.example', allocation: 'shared', sourceQuality: { tier: 'medium', reasons: ['official-domain'] } },
+          { url: 'https://acme.example/b', domain: 'acme.example', allocation: 'shared', sourceQuality: { tier: 'medium', reasons: ['official-domain'] } },
+          { url: 'https://acme.example/c', domain: 'acme.example', allocation: 'shared', sourceQuality: { tier: 'medium', reasons: ['official-domain'] } },
+        ],
+        reserve: [
+          { url: 'https://acme.example/r1', domain: 'acme.example', allocation: 'reserve', sourceQuality: { tier: 'medium', reasons: ['official-domain'] } },
+        ],
+      };
+      const refreshSeeds = Array.from({ length: 4 }, (_, i) => ({
+        url: `https://independent-${i}.example/acme`,
+        domain: `independent-${i}.example`,
+        priorSources: [{ chapter: '01-company-overview' }],
+        sourceQuality: { tier: 'high', reasons: [] },
+      }));
+      const fetched = new Map([
+        ...fullPool.recommended.map(entry => [entry.url, { ok: true }]),
+        ...refreshSeeds.map(entry => [entry.url, { ok: true }]),
+      ]);
+      const [recovered] = recoverRefreshEvidence([fullPool], refreshSeeds, fetched);
+      assert.equal(recovered.recommended.filter(entry => entry.requiredForRefreshEvidence).length, 2,
+        'refresh seed recovery must replace non-exclusive company-controlled slots when recommended is at maxSources');
+      assert.equal(recovered.reserve.filter(entry => entry.allocation === 'refresh-reserve').length, 2,
+        'additional fetched refresh seeds beyond the recommended cap must populate reserve slots');
     } finally {
       rmSync(previousFolder, { recursive: true, force: true });
       rmSync(folder, { recursive: true, force: true });

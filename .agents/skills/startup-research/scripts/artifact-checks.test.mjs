@@ -2437,6 +2437,14 @@ test('HTTP-200 challenge pages are not successful source retrievals', () => {
   assert.equal(isAccessErrorResponse({ status: 200, title: 'EDGAR Search Results', body: 'The value you submitted is not valid. Please try a different selection.' }), true);
   assert.equal(isAccessErrorResponse({ status: 200, title: 'Huihe Healthcare', body: '该页面不存在' }), true);
   assert.equal(isAccessErrorResponse({ status: 200, title: 'App', body: 'Loading...' }), true);
+  assert.equal(isAccessErrorResponse({ status: 200, title: 'App', body: 'Loading content...' }), true);
+  assert.equal(isAccessErrorResponse({ status: 200, title: 'Error 404 (Not Found)!!1', body: "404. That's an error.\n\nThe requested URL /about/ was not found on this server. That’s all we know." }), true);
+  assert.equal(isAccessErrorResponse({ status: 200, title: 'Error Page', body: 'Error 404: Page Not Found' }), true);
+  assert.equal(isAccessErrorResponse({ status: 200, title: 'npm | Sign In', body: 'Sign in to npm' }), true);
+  assert.equal(isAccessErrorResponse({ status: 200, title: 'PE Hub', body: 'Create an account to continue reading\n\nGain instant access to our expert editorial analysis and in-depth insight.\n\nAlready have an account?' }), true);
+  assert.equal(isAccessErrorResponse({ status: 200, title: 'Maintenance', body: 'Building an improved web experience\n\nWe are currently updating our website. The page will shortly be available again.' }), true);
+  assert.equal(isAccessErrorResponse({ status: 200, title: 'Coinbase Investor Relations', body: 'Selecting the value will change the page content\n\nSelect Year: 2026 2025\nFilter filing type: All\nDate Filing Type Filing Description Download / View' }), true);
+  assert.equal(looksLikeBotChallenge({ status: 200, body: Buffer.from('<html><head><META NAME="robots" CONTENT="noindex,nofollow"></head><body>Request unsuccessful. Incapsula incident ID: 120000700222195294-281891519582680499</body></html>') }), true);
   assert.equal(isAccessErrorResponse({ status: 200, title: '华尔街见闻', body: '©2026 华尔街见闻 | 沪ICP备13019121号' }), true);
   assert.equal(isAccessErrorResponse({ status: 200, title: '', body: '[![Image 1](http://mat1.gtimg.com/www/images/qq2012/404_1.png)](http://www.qq.com/)' }), true);
 });

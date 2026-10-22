@@ -215,7 +215,7 @@ async function executeQuery(query) {
     ];
     if (plan.company.domain) searchArgs.push('--official-domain', plan.company.domain);
     if (query.intent === 'freshness') searchArgs.push('--freshness', 'pm');
-    const maxAttempts = args.provider === 'auto' ? 2 : 3;
+    const maxAttempts = 4;
     for (let providerAttempt = 1; providerAttempt <= maxAttempts; providerAttempt += 1) {
       attempts += 1;
       if (!providersTried.includes(provider)) providersTried.push(provider);
@@ -237,7 +237,7 @@ async function executeQuery(query) {
           break;
         }
         if (!isTransientProviderFailure(lastError) || providerAttempt === maxAttempts) break;
-        await new Promise((resolveDelay) => setTimeout(resolveDelay, providerAttempt * 1000));
+        await new Promise((resolveDelay) => setTimeout(resolveDelay, providerAttempt * 1500));
       }
     }
   }
@@ -252,6 +252,22 @@ async function executeQuery(query) {
 }
 
 const searches = await runPool(queries, plan.strategy.concurrency, executeQuery);
+const transientFailedIndices = searches
+  .map((search, index) => (!search.response && isTransientProviderFailure(search.error) ? index : -1))
+  .filter((index) => index >= 0);
+if (transientFailedIndices.length > 0) {
+  console.error(`[execute-search-plan] retrying ${transientFailedIndices.length} transiently failed initial search query(s)`);
+  await new Promise((resolveDelay) => setTimeout(resolveDelay, 3000));
+  const retriedSearches = await runPool(
+    transientFailedIndices.map((index) => queries[index]),
+    Math.min(2, plan.strategy.concurrency),
+    executeQuery,
+  );
+  for (const [offset, searchIndex] of transientFailedIndices.entries()) {
+    const retried = retriedSearches[offset];
+    if (retried?.response) searches[searchIndex] = retried;
+  }
+}
 
 const candidates = new Map();
 let rejectedIrrelevantCount = 0;
@@ -278,6 +294,13 @@ function retainCandidates(records) {
   }
 }
 retainCandidates(searches);
+for (const refreshCandidate of plan.refreshCandidates ?? []) {
+  const key = canonicalSourceUrl(refreshCandidate.url);
+  const existing = candidates.get(key);
+  if (existing && !existing.priorSources) {
+    existing.priorSources = refreshCandidate.priorSources;
+  }
+}
 
 function uniqueResults(searchList) {
   const seen = new Set();
@@ -451,12 +474,17 @@ let chapterPools = plan.chapters.map((chapter) => {
       selected.set(candidate.url, candidate);
     }
   }
-  for (const candidate of sourceFill) {
+  for (const candidate of [
+    ...sourceFill.filter((entry) => !isCompanyControlledCandidate(entry)),
+    ...sourceFill.filter((entry) => isCompanyControlledCandidate(entry)),
+  ]) {
     if (selected.size >= chapter.evidenceTarget.minSources) break;
     if (!selected.has(candidate.url)) selected.set(candidate.url, candidate);
   }
-  const reserveCandidates = reserveFill
-    .filter((candidate) => !selected.has(candidate.url));
+  const reserveCandidates = [
+    ...reserveFill.filter((entry) => !isCompanyControlledCandidate(entry)),
+    ...reserveFill.filter((entry) => isCompanyControlledCandidate(entry)),
+  ].filter((candidate) => !selected.has(candidate.url));
   const reserve = [];
   const reserveDomains = new Set(selectedDomains);
   for (const candidate of reserveCandidates) {
@@ -659,6 +687,19 @@ if (args.prefetch) {
   const fetched = await fetchCandidates(fetchTargets);
   fetchedSources.push(...fetched);
   const fetchedByUrl = new Map(fetchedSources.map((entry) => [entry.url, entry]));
+  const uniqueByCanonicalUrl = (entries) => [
+    ...new Map(entries.map((entry) => [canonicalSourceUrl(entry.url), entry])).values(),
+  ];
+  const fetchedNonCompanyCount = (pool) => uniqueByCanonicalUrl(pool.recommended).filter(
+    (candidate) => fetchedByUrl.get(candidate.url)?.ok && !isCompanyControlledCandidate(candidate),
+  ).length;
+  const fetchedHighExternalCount = (pool) => uniqueByCanonicalUrl(pool.recommended).filter(
+    (candidate) => fetchedByUrl.get(candidate.url)?.ok
+      && candidate.sourceQuality?.tier === 'high'
+      && !isCompanyControlledCandidate(candidate),
+  ).length;
+  const minNonCompanyTarget = (pool) => Math.ceil(pool.evidenceTarget.minSources * 0.6);
+  const minHighExternalTarget = (pool) => Math.ceil(pool.evidenceTarget.minSources / 2);
   const recoveryByUrl = new Map();
   for (const pool of chapterPools) {
     const metrics = successfulPoolMetrics(pool, fetchedByUrl);
@@ -666,6 +707,7 @@ if (args.prefetch) {
       metrics.successful < pool.evidenceTarget.minSources
       || metrics.successfulDomains.size < pool.evidenceTarget.minDomains
       || metrics.successfulNetNew < pool.evidenceTarget.minNetNewSources
+      || fetchedNonCompanyCount(pool) < minNonCompanyTarget(pool)
     );
     if (!needsRecovery) continue;
     for (const candidate of pool.reserve.filter((entry) => entry.sourceQuality?.tier !== 'low')) {
@@ -695,7 +737,8 @@ if (args.prefetch) {
     pool.reserve = metrics.reserve;
     if (metrics.successful >= pool.evidenceTarget.minSources
         && metrics.successfulDomains.size >= pool.evidenceTarget.minDomains
-        && metrics.successfulNetNew >= pool.evidenceTarget.minNetNewSources) continue;
+        && metrics.successfulNetNew >= pool.evidenceTarget.minNetNewSources
+        && fetchedNonCompanyCount(pool) >= minNonCompanyTarget(pool)) continue;
     for (const candidate of pool.reserve) {
       if (fetchedByUrl.has(candidate.url)) continue;
       if (!replenishedByUrl.has(candidate.url)) {
@@ -724,7 +767,8 @@ if (args.prefetch) {
     const metrics = successfulPoolMetrics(pool, fetchedByUrl);
     return metrics.successful < pool.evidenceTarget.minSources
       || metrics.successfulDomains.size < pool.evidenceTarget.minDomains
-      || metrics.successfulNetNew < pool.evidenceTarget.minNetNewSources;
+      || metrics.successfulNetNew < pool.evidenceTarget.minNetNewSources
+      || fetchedNonCompanyCount(pool) < minNonCompanyTarget(pool);
   }).map(pool => pool.key));
   const reportDomains = new Set(chapterPools.flatMap(pool => pool.recommended
     .filter(candidate => fetchedByUrl.get(candidate.url)?.ok)
@@ -765,8 +809,12 @@ if (args.prefetch) {
     const metrics = successfulPoolMetrics(pool, fetchedByUrl);
     return metrics.successful < pool.evidenceTarget.minSources
       || metrics.successfulDomains.size < pool.evidenceTarget.minDomains
-      || metrics.successfulNetNew < pool.evidenceTarget.minNetNewSources;
+      || metrics.successfulNetNew < pool.evidenceTarget.minNetNewSources
+      || fetchedNonCompanyCount(pool) < minNonCompanyTarget(pool);
   }).map(pool => pool.key));
+  const needsRefreshSeeds = new Set(chapterPools.filter(pool =>
+    remainingDeficient.has(pool.key) || fetchedHighExternalCount(pool) < minHighExternalTarget(pool))
+    .map(pool => pool.key));
   const remainingDomains = new Set(chapterPools.flatMap(pool => pool.recommended
     .filter(candidate => fetchedByUrl.get(candidate.url)?.ok)
     .map(candidate => registrableDomain(candidate.url))));
@@ -774,7 +822,7 @@ if (args.prefetch) {
   const refreshTargets = (plan.refreshCandidates ?? []).filter(candidate =>
     candidate.sourceQuality?.tier !== 'low' && !isSelfPublishedReportUrl(candidate.url)
     && !alreadyFetched.has(canonicalSourceUrl(candidate.url))
-    && (candidate.priorSources.some(source => remainingDeficient.has(source.chapter))
+    && (candidate.priorSources.some(source => needsRefreshSeeds.has(source.chapter))
       || (remainingDomains.size < reportDomainTarget && !remainingDomains.has(registrableDomain(candidate.url)))))
     .map(candidate => ({ candidate, chapters: [...new Set(candidate.priorSources.map(source => source.chapter))] }));
   if (refreshTargets.length) {
@@ -793,6 +841,9 @@ if (args.prefetch) {
     chapterPools = recoverRefreshEvidence(chapterPools, [...candidates.values()], fetchedByUrl);
     chapterPools = replenishReserveEvidence(chapterPools, [...candidates.values()], fetchedByUrl);
     repairAllocation();
+    chapterPools = recoverRefreshEvidence(chapterPools, [...candidates.values()], fetchedByUrl);
+  } else if ([...candidates.values()].some(candidate => candidate.priorSources?.length && fetchedByUrl.get(candidate.url)?.ok)) {
+    chapterPools = recoverRefreshEvidence(chapterPools, [...candidates.values()], fetchedByUrl);
   }
   for (const pool of chapterPools) {
     const recovery = promoteReserveEvidence(pool, fetchedByUrl);

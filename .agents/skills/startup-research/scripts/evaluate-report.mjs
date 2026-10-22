@@ -83,10 +83,12 @@ const primarySources = sources.filter((source) => primaryTypes.has(source.source
 const adverseSources = sources.filter((source) => source.stance === 'adverse');
 const restrictedSources = sources.filter((source) => restrictedStatuses.has(source.accessStatus));
 const lowReputationSources = sources.filter((source) => source.reputationTier === 'low');
-const configuredLowSignalDomains = new Set(searchStrategy.quality?.lowSignalDomains ?? []);
-const configuredLowSignalSources = sources.filter(
-  (source) => configuredLowSignalDomains.has(normalizeDomain(source.url)),
-);
+const configuredLowSignalDomains = searchStrategy.quality?.lowSignalDomains ?? [];
+const configuredLowSignalSources = sources.filter((source) => {
+  const domain = normalizeDomain(source.url);
+  return domain !== 'news.crunchbase.com'
+    && configuredLowSignalDomains.some((entry) => domain === entry || domain.endsWith(`.${entry}`));
+});
 const companyControlledSources = sources.filter((source) => source.independence === 'company');
 const highConfidenceClaims = claims.filter((claim) => claim.confidence === 'high');
 const chapterRows = chapters.map(chapterMetrics);

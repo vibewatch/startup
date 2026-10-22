@@ -19,11 +19,13 @@ export function sourceQuality(result, { officialDomain, runYear }, quality) {
     score += 35;
     reasons.push('government-or-regulator');
   }
-  if (quality.highReputationDomains.includes(domain)) {
+  const matchesDomainList = (list) => (list ?? []).some(
+    (entry) => domain === entry || domain.endsWith(`.${entry}`),
+  );
+  if (matchesDomainList(quality.highReputationDomains)) {
     score += 20;
     reasons.push('high-reputation-publisher');
-  }
-  if (quality.lowSignalDomains.includes(domain)) {
+  } else if (domain !== 'news.crunchbase.com' && matchesDomainList(quality.lowSignalDomains)) {
     score -= 25;
     reasons.push('low-signal-platform');
   }

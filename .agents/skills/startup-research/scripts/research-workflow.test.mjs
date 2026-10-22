@@ -746,6 +746,49 @@ test('refresh publication validates replacements before pruning and verifies the
     'never remove a predecessor before the replacement passes its report gate');
 });
 
+test('partial research and refresh batches still validate and publish succeeded reports before failing the batch', t => {
+  for (const file of ['research-unicorns.yml', 'refresh-company.yml']) {
+    const { repo, runner, runId, steps, execute, write, commit } = publicationWorkflowFixture(t, file);
+    const badRunId = '20990101000001-invalid-sibling';
+    rmSync(join(repo, `reports/${runId}/summary-card.zh.yaml`), { force: true });
+    rmSync(join(repo, `reports/${runId}/full-report.zh.yaml`), { force: true });
+    rmSync(join(runner, 'publication-approval'), { recursive: true, force: true });
+    write('.agents/skills/startup-research/scripts/check-report.mjs', `
+const target = process.argv[2];
+if (target.includes('${badRunId}')) {
+  console.error('fixture: sibling report failed contract gate');
+  process.exit(1);
+}
+`);
+    commit('Fixture sibling check-report');
+    const snapshot = execute(steps.find(step => step.name === 'Snapshot publication approval inputs'));
+    assert.equal(snapshot.status, 0, snapshot.stderr);
+    for (const artifact of ['summary-card', 'full-report']) {
+      write(`reports/${badRunId}/${artifact}.yaml`, 'amount: $10M\n');
+    }
+    writeFileSync(join(runner, 'reports-created.txt'), `${runId}\n${badRunId}\n`);
+    writeFileSync(join(runner, 'reports-new.txt'), `${runId}\n${badRunId}\n`);
+    writeFileSync(join(runner, 'reports-new-dropped.txt'), '');
+    const validateStep = steps.find(step => /^Validate (?:generated|refreshed) reports$/u.test(step.name));
+    const validated = execute(validateStep);
+    assert.equal(validated.status, 0, `${file}: ${validated.stderr}`);
+    assert.equal(readFileSync(join(runner, 'reports-new.txt'), 'utf8').trim(), runId);
+    assert.equal(readFileSync(join(runner, 'reports-new-dropped.txt'), 'utf8').trim(), badRunId);
+    assert(!existsSync(join(repo, 'reports', badRunId)), 'failed sibling folder must be removed before commit');
+    assert(existsSync(join(repo, 'reports', runId)), 'succeeded report folder must remain for publication');
+    const reportIncomplete = steps.find(step => /^Report incomplete (?:research|refresh) batch$/u.test(step.name));
+    const incompleteOutcome = execute(reportIncomplete);
+    assert.equal(incompleteOutcome.status, 1, `${file}: partial failure must still surface after publication`);
+    assert.match(incompleteOutcome.stdout, new RegExp(badRunId, 'u'));
+  }
+
+  const portfolio = yaml.load(readFileSync('.github/workflows/refresh-portfolio.yml', 'utf8'));
+  assert.equal(portfolio.jobs.refresh.strategy['fail-fast'], false);
+  const summarizeJob = portfolio.jobs.summarize;
+  assert.ok(summarizeJob, 'refresh-portfolio must include a post-matrix publication summary job');
+  assert.equal(summarizeJob.if, "always() && needs.plan.outputs.count != '0'");
+});
+
 for (const scenario of [
   'selected-overlays', 'checker-edit', 'staged-checker-edit', 'guard-edit', 'english-edit',
   'unselected-overlay', 'untracked-code', 'model-commit', 'dangling-symlink',

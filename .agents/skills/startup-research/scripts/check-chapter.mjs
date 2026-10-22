@@ -110,6 +110,8 @@ let VOLATILE_FACT_QUERY_TOKENS;
 // derived from this via paywallWarningThreshold(); checkSources() consumes
 // both so the warning text and the report-level fail message stay in sync.
 let REPORT_PAYWALL_CEILING;
+let REPORT_INDEPENDENT_FLOOR;
+let REPORT_COMPANY_CEILING;
 try {
   const config = loadWorkflowConfig({ reportFolder });
   ANALYSIS_ARTIFACTS = getAnalysisArtifacts(config);
@@ -117,6 +119,8 @@ try {
     .map((token) => String(token).toLowerCase())
     .filter((token) => token.length > 0);
   REPORT_PAYWALL_CEILING = config.reportGate?.maxPaywallPercent ?? 0.3;
+  REPORT_INDEPENDENT_FLOOR = config.reportGate?.minIndependentSourceShare ?? 0;
+  REPORT_COMPANY_CEILING = config.reportGate?.maxCompanyControlledSourceShare ?? 1;
 } catch (err) {
   console.error(`[check:chapter] failed to load workflow config: ${err.message}`);
   console.error('[check:chapter] run `node .agents/skills/startup-research/scripts/check-workflow-config.mjs` to diagnose workflow-config.yaml.');
@@ -412,6 +416,25 @@ function checkSearchQueryFreshness(file, doc) {
   }
 }
 
+function loadChapterPoolForCheck(reportFolder, chapterKey) {
+  const runId = basename(reportFolder);
+  const candidates = [
+    join(reportFolder, 'search-bundle.json'),
+    resolve('.research-cache', runId, 'search-bundle.json'),
+  ];
+  for (const path of candidates) {
+    if (!existsSync(path)) continue;
+    try {
+      const bundle = JSON.parse(readFileSync(path, 'utf8'));
+      const pool = (bundle?.chapterPools ?? []).find((entry) => entry?.key === chapterKey);
+      if (pool) return pool;
+    } catch {
+      // Ignore unreadable search bundle in standalone checks.
+    }
+  }
+  return null;
+}
+
 function checkSources(file, doc, gate, earlierUrls) {
   const sources = doc.localEvidence?.sources ?? [];
   let shapeFails = 0;
@@ -464,6 +487,44 @@ function checkSources(file, doc, gate, earlierUrls) {
   }
   if (netNew < gate.minNetNewSources) {
     fail('netNewSources', `${file}: only ${netNew} sources are new vs earlier chapters, expected at least ${gate.minNetNewSources} (per-chapter research must add fresh sources, not reuse the global pool)`, { actual: netNew, required: gate.minNetNewSources });
+  }
+  const chapterPool = loadChapterPoolForCheck(reportFolder, spec.key);
+  if (chapterPool) {
+    const poolCandidates = [...(chapterPool.recommended ?? []), ...(chapterPool.reserve ?? [])]
+      .filter((entry) => entry?.fetch?.ok === true);
+    const availableNonCompanyUrls = new Set(
+      poolCandidates
+        .filter((entry) => {
+          const reasons = entry?.sourceQuality?.reasons ?? [];
+          return !reasons.includes('official-domain') && !reasons.includes('wire-service');
+        })
+        .map((entry) => canonicalSourceUrl(entry.url))
+        .filter(Boolean),
+    );
+    const independentCount = sources.filter((source) => source?.independence === 'independent').length;
+    const companyCount = sources.filter((source) => source?.independence === 'company').length;
+    const minIndependentCount = Math.min(
+      Math.ceil(sources.length * REPORT_INDEPENDENT_FLOOR),
+      Math.max(0, availableNonCompanyUrls.size - 1),
+    );
+    const maxCompanyCount = Math.max(
+      Math.floor(sources.length * REPORT_COMPANY_CEILING),
+      sources.length - availableNonCompanyUrls.size,
+    );
+    if (independentCount < minIndependentCount) {
+      fail(
+        'sourceIndependence',
+        `${file}: only ${independentCount}/${sources.length} sources have independence:independent (${((independentCount / sources.length) * 100).toFixed(1)}%), expected at least ${minIndependentCount} (${(REPORT_INDEPENDENT_FLOOR * 100).toFixed(0)}% report floor; assigned pool has ${availableNonCompanyUrls.size} fetched non-company-controlled sources). Swap company/partner/competitor sources for independent sources from your assigned pool, or set independence:independent on third-party sources that are not company/partner/customer/competitor controlled.`,
+        { actual: independentCount, required: minIndependentCount, availableNonCompany: availableNonCompanyUrls.size },
+      );
+    }
+    if (companyCount > maxCompanyCount) {
+      fail(
+        'sourceIndependence',
+        `${file}: ${companyCount}/${sources.length} sources have independence:company (${((companyCount / sources.length) * 100).toFixed(1)}%), expected at most ${maxCompanyCount} (${(REPORT_COMPANY_CEILING * 100).toFixed(0)}% report ceiling; assigned pool has ${availableNonCompanyUrls.size} fetched non-company-controlled sources). Replace excess company-controlled sources with non-company sources from your assigned pool.`,
+        { actual: companyCount, ceiling: maxCompanyCount, availableNonCompany: availableNonCompanyUrls.size },
+      );
+    }
   }
   // Soft early-warning: if a single chapter's restricted-access share exceeds
   // the warning threshold (derived from the report-level paywall ceiling

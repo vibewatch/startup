@@ -2,6 +2,11 @@ import { canonicalSourceUrl, registrableDomain } from './utils.mjs';
 
 export const NET_NEW_RESERVE_COUNT = 2;
 
+function isCompanyControlledPoolCandidate(candidate) {
+  const reasons = candidate?.sourceQuality?.reasons ?? [];
+  return reasons.includes('official-domain') || reasons.includes('wire-service');
+}
+
 function uniqueCandidates(candidates) {
   return [...new Map(candidates.map((candidate) => [
     canonicalSourceUrl(candidate.url), candidate,
@@ -258,14 +263,37 @@ export function recoverRefreshEvidence(pools, candidates, fetchedByUrl) {
   for (const pool of result) {
     let retained = 0;
     for (const candidate of uniqueCandidates(candidates)) {
-      if (retained >= 2) break;
       const url = canonicalSourceUrl(candidate.url);
       const owner = exclusiveOwner.get(url);
       if (candidate.sourceQuality?.tier === 'low' || !fetchedByUrl.get(candidate.url)?.ok
           || (owner && owner !== pool.key)
           || !candidate.priorSources?.some(source => source.chapter === pool.key)) continue;
+      if (retained >= 2) {
+        const inPool = pool.recommended.some(entry => canonicalSourceUrl(entry.url) === url)
+          || pool.reserve.some(entry => canonicalSourceUrl(entry.url) === url);
+        if (!inPool) {
+          const reserveEntry = { ...candidate, allocation: owner ? 'net-new-reserve' : 'refresh-reserve' };
+          if (pool.reserve.length < 6) {
+            pool.reserve.push(reserveEntry);
+          } else {
+            const replaceIdx = pool.reserve.findLastIndex(entry =>
+              entry.allocation !== 'net-new-reserve'
+              && (!fetchedByUrl.get(entry.url)?.ok || isCompanyControlledPoolCandidate(entry)));
+            if (replaceIdx >= 0) pool.reserve[replaceIdx] = reserveEntry;
+          }
+        }
+        continue;
+      }
       const index = pool.recommended.findIndex(entry => canonicalSourceUrl(entry.url) === url);
-      if (index < 0 && successfulPoolMetrics(pool, fetchedByUrl).successful >= (pool.evidenceTarget.maxSources ?? Infinity)) continue;
+      if (index < 0 && successfulPoolMetrics(pool, fetchedByUrl).successful >= (pool.evidenceTarget.maxSources ?? Infinity)) {
+        const removableIndex = pool.recommended.findLastIndex(entry =>
+          isCompanyControlledPoolCandidate(entry)
+          && entry.allocation !== 'net-new'
+          && !entry.requiredForReportDomains
+          && !entry.requiredForRefreshEvidence);
+        if (removableIndex < 0) continue;
+        pool.recommended.splice(removableIndex, 1);
+      }
       const selected = { ...(index < 0 ? { ...candidate, allocation: owner ? 'net-new' : 'refresh-recovery' }
         : pool.recommended[index]), requiredForRefreshEvidence: true };
       if (index < 0) pool.recommended.push(selected);

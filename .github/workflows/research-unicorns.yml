@@ -725,13 +725,17 @@ jobs:
               echo "No new finalized report folders detected."
             fi
           } >> "$GITHUB_STEP_SUMMARY"
-          if [ -s "$RUNNER_TEMP/reports-new-dropped.txt" ]; then
-            echo "::error::Newly-created report folder(s) were incomplete and had to be pruned. This means report generation did not finish cleanly; see the preserved research-reports artifact for recovery details."
-            exit 1
-          fi
-          if [ -s "$RUNNER_TEMP/reports-created.txt" ] && [ ! -s "$RUNNER_TEMP/reports-new.txt" ]; then
-            echo "::error::Report folders were created, but none survived finalization/pruning. This usually means generation exited before writing complete report artifacts. See the preserved research-reports artifact for recovery details."
-            exit 1
+          if [ ! -s "$RUNNER_TEMP/reports-new.txt" ]; then
+            if [ -s "$RUNNER_TEMP/reports-new-dropped.txt" ]; then
+              echo "::error::Newly-created report folder(s) were incomplete and had to be pruned. This means report generation did not finish cleanly; see the preserved research-reports artifact for recovery details."
+              exit 1
+            fi
+            if [ -s "$RUNNER_TEMP/reports-created.txt" ]; then
+              echo "::error::Report folders were created, but none survived finalization/pruning. This usually means generation exited before writing complete report artifacts. See the preserved research-reports artifact for recovery details."
+              exit 1
+            fi
+          elif [ -s "$RUNNER_TEMP/reports-new-dropped.txt" ]; then
+            echo "::warning::Some newly-created report folder(s) were incomplete and pruned; continuing to validate and publish the finalized report(s) before reporting the partial failure."
           fi
 
       - name: Validate generated reports
@@ -746,11 +750,23 @@ jobs:
           node "$RUNNER_TEMP/publication-approval/check-publication-scope.mjs" verify "$RUNNER_TEMP/publication-approval"
           npm run check:automation-config
           npm run check:workflow-config
-          npm run check:revision-graph
+          : > "$RUNNER_TEMP/reports-approved.txt"
           while IFS= read -r folder; do
             [ -n "$folder" ] || continue
-            node .agents/skills/startup-research/scripts/check-report.mjs "reports/$folder" --contract --format compact
+            if node .agents/skills/startup-research/scripts/check-report.mjs "reports/$folder" --contract --format compact; then
+              printf '%s\n' "$folder" >> "$RUNNER_TEMP/reports-approved.txt"
+            else
+              echo "::warning::Dropped generated report folder that failed contract validation: reports/$folder"
+              rm -rf "reports/$folder"
+              printf '%s\n' "$folder" >> "$RUNNER_TEMP/reports-new-dropped.txt"
+            fi
           done < "$RUNNER_TEMP/reports-new.txt"
+          mv "$RUNNER_TEMP/reports-approved.txt" "$RUNNER_TEMP/reports-new.txt"
+          if [ ! -s "$RUNNER_TEMP/reports-new.txt" ]; then
+            echo "::error::No newly-created report folder passed contract validation."
+            exit 1
+          fi
+          npm run check:revision-graph
 
       - name: Commit and publish generated reports
         if: steps.discovery.outputs.outcome == 'reports-created'
@@ -822,3 +838,13 @@ jobs:
           gh pr create --base "$BRANCH" --head "$PR_BRANCH" \
             --title "$MESSAGE" \
             --body "Automated research run. Direct push to \`$BRANCH\` failed after 3 attempts; merging via PR instead."
+
+      - name: Report incomplete research batch
+        if: steps.discovery.outputs.outcome == 'reports-created'
+        run: |
+          set -euo pipefail
+          if [ -s "$RUNNER_TEMP/reports-new-dropped.txt" ]; then
+            echo "::error::Published succeeded report(s), but some newly-created report folder(s) failed generation or validation and were dropped; see the preserved research-reports artifact for recovery details:"
+            sed 's/^/ - reports\//' "$RUNNER_TEMP/reports-new-dropped.txt"
+            exit 1
+          fi
