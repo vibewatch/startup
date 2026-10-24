@@ -1,0 +1,516 @@
+schemaVersion: "report-v2"
+artifact: product-tech
+slug: candid-health
+runDate: 2026-10-24
+company:
+  name: Candid Health
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: Candid Health is an API-first revenue-cycle platform that combines payer-aware claim preparation, submission, remittance interpretation, reporting, and increasing automation. The strongest public technical evidence is an external integration guide that specifies a concrete FHIR-to-Candid claim workflow; broader architecture and performance claims remain primarily investor- or company-reported and require production validation.
+sections:
+  - id: product-and-customer-workflow
+    title: Product in the customer workflow
+    body: >-
+      Candid sits between a provider or digital-health company's clinical and
+      operating systems and the payer payment cycle. The documented workflow
+      starts with claim data, patient and provider records, coverage, encounters,
+      diagnoses, service lines, and payer identity; Candid then creates and
+      submits a professional claim and returns a claim response with Candid
+      encounter and claim identifiers. The external Medplum integration guide
+      makes this concrete rather than merely describing an API: a custom
+      operation on a FHIR Claim submits the claim, and a successful response is
+      stored back in Medplum. Earlier product coverage describes the broader
+      scope as claim submission, claim follow-up, payment integrity, denial
+      management, and appeals. This is a workflow infrastructure product, not
+      simply a dashboard, but the public record does not establish how much of
+      every workflow is fully autonomous for every specialty.
+    claimRefs: [CE001, CE002, CE003, CE004]
+    tableRefs: [TE001, TE002]
+  - id: operating-architecture
+    title: Operating architecture and data feedback loop
+    body: >-
+      The public technical picture is a layered operating model. An API and
+      integration surface receives structured clinical, provider, coverage, and
+      payer data; a payer directory and rules layer resolves payer identity and
+      validates claim requirements; a submission and remittance layer sends
+      claims and interprets responses; and reporting exposes operational
+      breakdowns back to the provider. An investor description says Candid has
+      reverse-engineered requirements from more than a thousand U.S. payors and
+      built a continuously enriched knowledge graph of provider rosters, fee
+      schedules, charge rules, and adjudication behavior. A separate external
+      integration guide shows the implementation burden that sits underneath
+      this abstraction: required FHIR resources, payer identifiers, facility
+      rules, service-line fields, idempotent submission behavior, retries, and
+      debug documents. The architecture therefore appears differentiated by
+      domain-specific data normalization and feedback, while remaining
+      dependent on source-system data quality, payer rule changes, and correct
+      integration mapping.
+    claimRefs: [CE005, CE006, CE007, CE008]
+    tableRefs: [TE003]
+    figureRefs: [FE001]
+  - id: maturity-deployment-and-differentiation
+    title: Maturity, deployment, and differentiation
+    body: >-
+      Evidence indicates a product with meaningful deployment maturity but
+      incomplete public proof of scale. Elion's curated profile describes an
+      end-to-end RCM platform, API integration, single-tenant SaaS deployment,
+      U.S. data residency, SOC 2 Type 1, HIPAA, and a typical implementation
+      length of one to three months; it also lists 21 verified customers in its
+      profile dataset. Medplum's live guide documents a real integration path
+      through FHIR resources and a custom operation, including idempotency and
+      troubleshooting artifacts. Candid's investor describes 95–99% first-pass
+      touchless claim resolution, under-20-days average time to payment, and
+      approximately 40% less manual work in cost-to-collect, but these are
+      customer KPI claims rather than independently audited benchmarks. The
+      most credible differentiation is the combination of payer-specific rules,
+      normalized billing data, and workflow feedback; the diligence gap is
+      production validation by specialty, payer mix, and implementation cohort.
+    claimRefs: [CE009, CE010, CE011, CE012]
+  - id: controls-and-technical-risks
+    title: Controls, dependencies, and technical risks
+    body: >-
+      The product's technical risk is concentrated in correctness and change
+      management rather than in a merely novel interface. The integration guide
+      requires exact payer resolution, provider and facility mappings, claim
+      coding, diagnosis pointers, and service-line data; a missing payer match
+      can hard-fail submission, while non-telehealth claims require a service
+      facility. The same guide documents transient retries and idempotent
+      responses, which are useful operational controls, but it does not prove
+      end-to-end uptime, incident rates, security test results, or recovery
+      objectives. Investor and customer-facing sources say the rules corpus
+      learns from claim outcomes and that agentic workflows are being expanded,
+      yet the public evidence does not disclose model-evaluation protocols,
+      human escalation thresholds, change-approval controls, or specialty-level
+      error rates. Buyers should therefore diligence integration test coverage,
+      payer-rule update SLAs, PHI controls, audit logs, rollback procedures,
+      and measured denial and payment outcomes before treating the automation
+      claims as durable.
+    claimRefs: [CE013, CE014, CE015]
+callouts:
+  - calloutType: insight
+    title: The moat is the feedback loop, not the API alone
+    body: >-
+      Candid's defensibility would come from payer-specific data, normalized
+      billing entities, and outcome feedback compounding into better rules. The
+      public API is a credible integration surface, but an API without evidence
+      of superior payer coverage, accuracy, and operational outcomes is not by
+      itself a durable moat.
+    claimRefs: [CE005, CE006, CE011]
+  - calloutType: risk
+    title: Automation claims need production-level validation
+    body: >-
+      Public KPI claims are promising but largely investor- or company-reported.
+      The key diligence question is whether touchless resolution and payment
+      speed persist across difficult specialties, changing payer rules, and
+      customer implementations rather than only selected cohorts.
+    claimRefs: [CE011, CE014, CE015]
+tables:
+  - id: TE001
+    title: Product module / asset matrix
+    columns: [Module or asset, Primary user, Status or maturity, Differentiation, Diligence gap]
+    rows:
+      - [Claim creation and submission, Provider billing or engineering team, "Documented live integration path", Payer-aware claim construction and routing, Production success rate by payer and specialty]
+      - [Payer directory and rules engine, Billing operations, "Documented; breadth company/investor reported", Normalizes payer identifiers and payer-specific requirements, Rule update SLA and change-control evidence]
+      - [Remittance and payment processing, Finance and billing operations, "Documented workflow; outcome quality not independently verified", Interprets adjudication details and feeds future rules, CARC/RARC accuracy and exception rate]
+      - ["Reporting and claim operations workspace", Revenue-cycle leaders, "Profiled as available", "Granular operational visibility by payer, code, or provider", "Customer-level adoption and measured decision impact"]
+      - ["Agentic automation for eligibility, coding, and appeals", Billing teams and provider staff, "Expansion described by investor and company", "Uses the rules/data foundation to automate labor-intensive work", "Human-in-the-loop policy and model evaluation"]
+    notes: "Status combines external integration documentation, curated vendor profile evidence, and investor/company descriptions; public sources do not provide a standardized release or deployment rubric."
+    claimRefs: [CE001, CE005, CE009, CE011, CE014]
+  - id: TE002
+    title: Workflow / use-case table
+    columns: [User job, Current workflow, Company solution, Measurable benefit, Limitation]
+    rows:
+      - [Submit a professional claim, Assemble FHIR or equivalent claim data and identify the payer, "Custom operation creates and submits a Candid claim", "Successful response returns claim and encounter identifiers", Requires accurate source data and payer mapping]
+      - [Resolve payer identity, Interpret insurance identifiers and payer relationships, "Payer directory resolves Candid payer UUID or supported identifiers", Reduces routing ambiguity, Hard-fails when no payer match is found]
+      - [Understand payment outcome, Parse remittance and adjustment information, "Payment-processing and reporting workflows expose adjudication detail", Faster operational feedback is claimed, Public evidence lacks independent accuracy and latency measures]
+      - [Fix recurring claim issues, Rework exceptions manually and repeat the same research, "Rules corpus feeds learnings back into future submission and resubmission", Fewer repeat errors and less manual work are claimed, Public controls for rule approval and rollback are not disclosed]
+      - [Operate across systems, Reconcile exports or bespoke integrations, "API and documented FHIR integration connect clinical records to claim response", Supports engineering-led deployment, Implementation burden and one-to-three-month profile estimate need customer validation]
+    notes: "Benefits are stated as documented workflow outputs or attributed company/investor claims; no independent controlled comparison was available in the assigned pool."
+    claimRefs: [CE001, CE003, CE007, CE008, CE010]
+  - id: TE003
+    title: Technology / operating architecture table
+    columns: [Layer or process, Role, Dependency, Risk]
+    rows:
+      - [Integration and data ingestion, "Receive patient, provider, coverage, encounter, diagnosis, and service-line data", Customer EHR or FHIR implementation, "Missing or malformed fields can block or distort claims"]
+      - [Payer identity and directory, "Map payer names and identifiers to a Candid payer", Payer identifiers and directory coverage, "Unmatched payer can hard-fail submission"]
+      - [Rules and knowledge layer, Validate claim requirements and encode payer behavior, Current payer rules and accumulated claim outcomes, Rules drift or opaque changes can cause denials]
+      - ["Claim submission and response", "Create claim, submit it, and return response identifiers", "Clearinghouse and payer rails", "External rejection, latency, or payer outage"]
+      - ["Remittance and feedback", "Interpret payment decisions and feed learnings back to rules", "Complete remittance data and accurate reason-code interpretation", "Bad feedback can compound future errors"]
+      - ["Operations, reporting, and debugging", "Surface tasks, analytics, retries, and raw request/response records", Customer workflows and support processes, "Adoption, escalation, and auditability remain under-disclosed"]
+    notes: "Architecture is a synthesis of the Medplum integration guide and external product descriptions; it is not a claim that every layer is implemented identically for every customer."
+    claimRefs: [CE005, CE006, CE007, CE008, CE013]
+figures:
+  - id: FE001
+    title: Candid Health product architecture map
+    type: stack
+    summary: The public evidence supports a payer-aware RCM stack linking customer data to claims, remittance, reporting, and automation.
+    data:
+      layers:
+        - label: Customer and clinical systems
+          modules: [Patient and provider records, Coverage and payer data, Encounters and diagnoses, Service lines and facility]
+        - label: Integration surface
+          modules: [FHIR Claim resources, Custom claim-submit operation, API identifiers, ClaimResponse write-back]
+        - label: Payer and rules foundation
+          modules: [Payer directory, Payer-specific claim requirements, Provider rosters and fee schedules, Charge and coding rules]
+        - label: Transaction execution
+          modules: [Claim creation, Claim submission, Payer adjudication, Remittance ingestion]
+        - label: Operations and feedback
+          modules: [Payment interpretation, Exception and task workflows, Reporting by payer/code/provider, Debug documents]
+        - label: Automation layer
+          modules: [Eligibility workflows, Coding and appeals agents, Resubmission rules, Outcome feedback into rules corpus]
+    approximationNotes: "Layer order is an analytical synthesis of the assigned technical and product sources; it does not assert an undisclosed internal software topology."
+    claimRefs: [CE001, CE005, CE006, CE007, CE008, CE014]
+localEvidence:
+  searchQueries:
+    - query: "\"Candid Health\" AI-first revenue cycle management platform automating healthcare claims submission, eligibility, denial management, site:candidhealth.com product company 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"Candid Health\" AI-first revenue cycle management platform automating healthcare claims submission, eligibility, denial management, funding valuation revenue customers leadership launches 2026"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: []
+    - query: "\"Candid Health\" AI-first revenue cycle management platform automating healthcare claims submission, eligibility, denial management, lawsuit regulatory outage breach complaints risks 2026"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: []
+    - query: "\"Candid Health\" AI-first revenue cycle management platform automating healthcare claims submission, eligibility, denial management, launch history investors team governance 2026"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: [SE001]
+    - query: "\"Candid Health\" AI-first revenue cycle management platform automating healthcare claims submission, eligibility, denial management, Absolute revenue, ARR, gross margin, burn, runway, cash on hand, and headcount. 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE003, SE005]
+    - query: "\"Candid Health\" AI-first revenue cycle management platform automating healthcare claims submission, eligibility, denial management, market size segmentation demand adoption 2026"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: [SE001]
+    - query: "\"Candid Health\" AI-first revenue cycle management platform automating healthcare claims submission, eligibility, denial management, industry trends buyer needs spending addressable market 2026"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: [SE001]
+    - query: "\"Candid Health\" AI-first revenue cycle management platform automating healthcare claims submission, eligibility, denial management, alternatives competitors positioning differentiation 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE002, SE006, SE007, SE008]
+    - query: "\"Candid Health\" AI-first revenue cycle management platform automating healthcare claims submission, eligibility, denial management, pricing funding revenue investors business model 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE003]
+    - query: "\"Candid Health\" AI-first revenue cycle management platform automating healthcare claims submission, eligibility, denial management, product architecture technology technical documentation 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE001, SE002, SE003]
+    - query: "\"Candid Health\" AI-first revenue cycle management platform automating healthcare claims submission, eligibility, denial management, technical design integrations performance scalability 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE004]
+    - query: "\"Candid Health\" AI-first revenue cycle management platform automating healthcare claims submission, eligibility, denial management, customer outcomes adoption demand commercial relationships 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE003]
+    - query: "\"Candid Health\" AI-first revenue cycle management platform automating healthcare claims submission, eligibility, denial management, reliability execution dependencies adverse evidence 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE005]
+    - query: "\"Candid Health\" AI-first revenue cycle management platform automating healthcare claims submission, eligibility, denial management, funding round seed series acquisition 2026"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: [SE001]
+  researchQuestions:
+    - id: QE001
+      question: "What customer workflow does Candid Health automate from source data through payment?"
+      type: verification
+      targets: ["contentRequirements/0", "plannedTables/workflow-use-case-table"]
+      status: answered
+    - id: QE002
+      question: "Which modules and product surfaces are publicly documented as delivered?"
+      type: enumeration
+      targets: ["contentRequirements/1", "plannedTables/product-module-asset-matrix"]
+      status: answered
+    - id: QE003
+      question: "What data, rules, and transaction layers appear to underpin the product?"
+      type: mechanism
+      targets: ["contentRequirements/2", "plannedTables/technology-operating-architecture-table", "plannedFigures/product-architecture-map"]
+      status: answered
+    - id: QE004
+      question: "What public evidence supports deployment maturity and integration readiness?"
+      type: quantification
+      targets: ["contentRequirements/3"]
+      status: answered
+    - id: QE005
+      question: "What is Candid's defensible differentiation beyond an API integration?"
+      type: comparison
+      targets: ["contentRequirements/4"]
+      status: answered
+    - id: QE006
+      question: "Which technical dependencies could interrupt claim correctness or payment?"
+      type: adverse
+      targets: ["contentRequirements/5"]
+      status: answered
+    - id: QE007
+      question: "What evidence exists for developer-facing adoption or integration activity?"
+      type: freshness
+      targets: ["contentRequirements/2", "contentRequirements/3"]
+      status: answered
+    - id: QE008
+      question: "Which security, privacy, reliability, and quality controls remain unverified?"
+      type: verification
+      targets: ["contentRequirements/5"]
+      status: partial
+  sources:
+    - id: SE001
+      publisher: MedCity News
+      title: Candid Health Snags $120M for AI RCM Platform
+      url: https://medcitynews.com/2026/07/candid-health-snags-120m-for-ai-rcm-platform/
+      date: 2026-07-26
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics: [product, "2026", automation, customers]
+      keyQuote: "San Francisco-based Candid Health serves medical groups, managed service organizations and digital health companies."
+    - id: SE002
+      publisher: Flexbone AI
+      title: 6 Best Candid Health Alternatives for RCM Teams in 2026
+      url: https://flexbone.ai/compare/candid-health-alternatives/
+      date: 2026-09-16
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: adverse
+      sourceType: review
+      reputationTier: medium
+      independence: competitor
+      topics: [product, alternatives, integrations, "2026"]
+      keyQuote: "Where Candid Health automates the claim itself, Flexbone agents do the work around the claim that still runs on phones, portals, and fax: calling payers to verify eligibility, submitting prior authorizations in payer portals, and following up on denials until they resolve."
+    - id: SE003
+      publisher: Sixth Street Growth
+      title: "Why We Invested in Candid Health: Powering Modern Infrastructure for a More Efficient Healthcare System"
+      url: https://sixthstreet.com/insights/why-we-invested-in-candid-health-powering-modern-infrastructure-for-a-more-efficient-healthcare-system
+      date: 2026-07-22
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: confirming
+      sourceType: partner-proof
+      reputationTier: high
+      independence: partner
+      topics: [product, architecture, automation, "2026"]
+      keyQuote: "Candid’s platform combines deep revenue cycle expertise with agentic AI at scale to ensure that providers are paid accurately and efficiently, so they can focus on what they do best: delivering high-quality, affordable, and accessible care to patients."
+    - id: SE004
+      publisher: Software Finder
+      title: "Candid Health: Pricing, Free Demo & Features"
+      url: https://softwarefinder.com/emr-software/candid-health
+      date: 2026-02-02
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics: [product, integrations, pricing, "2026"]
+      keyQuote: "Candid Health integrates with several third-party tools, including Medplum, Healthie, MassLight, Stripe, Canvas, and Develo."
+    - id: SE005
+      publisher: Out-Of-Pocket
+      title: How Healthcare Payments Work with Candid Health
+      url: https://www.outofpocket.health/p/how-healthcare-payments-work-with-candid-health
+      date: 2022-05-15
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: confirming
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: partner
+      topics: [product, API, claims, workflow, "2022"]
+      keyQuote: "Candid Health is building an API-first billing solution for digital health startups that bill insurance."
+    - id: SE006
+      publisher: Oak HC/FT
+      title: "The Next Wave of RCM Innovation: Candid Health"
+      url: https://www.oakhcft.com/blog-post/the-next-wave-of-rcm-innovation-candid-health
+      date: 2025-02-13
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: confirming
+      sourceType: partner-proof
+      reputationTier: high
+      independence: partner
+      topics: [product, architecture, automation, "2025"]
+      keyQuote: "To tackle this problem, Candid simplified the overall claims process with its approach to structuring and integrating data inputs with thoughtful and scalable data modeling."
+    - id: SE007
+      publisher: AVIA Marketplace
+      title: Candid Health Alternatives
+      url: https://marketplace.aviahealth.com/product/79400/candid-health/competitors/alternatives
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics: [product, market, integrations]
+      keyQuote: "AVIA Marketplace is where innovative health systems and hospitals go to find the right digital health solutions."
+    - id: SE008
+      publisher: Elion
+      title: "Candid Health Reviews, Pricing, Features & Integrations"
+      url: https://elion.health/products/candid-health
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: high
+      independence: independent
+      topics: [product, deployment, security, customers]
+      keyQuote: "Candid Health is an end-to-end revenue cycle management platform. It enables claims submission, detects and resolves billing issues, integrates with existing healthcare infrastructure via API, and provides real-time analytics for tracking and improving financial performance."
+    - id: SE009
+      publisher: Medplum
+      title: Medplum Candid claim submission integration guide
+      url: https://github.com/medplum/medplum/blob/main/packages/docs/docs/integration/candid/claim-submission.md
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: high
+      independence: partner
+      topics: [developer-signal, integration, FHIR, claims]
+      keyQuote: "The Candid Health integration allows you to submit professional medical claims via the $candid-submit-claim custom operation on the Claim resource."
+  claims:
+    - id: CE001
+      statement: "Candid Health provides an API-based workflow for submitting professional medical claims from structured healthcare records."
+      type: third-party-reported
+      topic: product
+      sourceRefs: [SE009, SE005]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE001]
+    - id: CE002
+      statement: "A successful Candid claim submission returns a ClaimResponse and writes Candid encounter and claim identifiers back to the originating records."
+      type: observed
+      topic: integration
+      sourceRefs: [SE009]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE001]
+    - id: CE003
+      statement: "Public product descriptions place claim submission, payment processing, denial management, appeals, and reporting within Candid's revenue-cycle scope."
+      type: third-party-reported
+      topic: product
+      sourceRefs: [SE005, SE008, SE001]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE002]
+    - id: CE004
+      statement: "Candid serves medical groups, managed service organizations, and digital health companies according to 2026 external coverage."
+      type: third-party-reported
+      topic: customers
+      sourceRefs: [SE001]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE001]
+    - id: CE005
+      statement: "Sixth Street describes Candid as having an end-to-end rules engine that prepares, submits, and edits claims using payer-specific requirements."
+      type: third-party-reported
+      topic: architecture
+      sourceRefs: [SE003, SE006]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE003, QE005]
+    - id: CE006
+      statement: "Sixth Street describes Candid's knowledge graph as combining provider rosters, fee schedules, charge rules, and payer adjudication behavior."
+      type: third-party-reported
+      topic: architecture
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE003]
+    - id: CE007
+      statement: "The Medplum integration requires payer resolution, provider and coverage data, encounters, diagnoses, service lines, and facility information for the documented claim workflow."
+      type: observed
+      topic: integration
+      sourceRefs: [SE009]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE003, QE006]
+    - id: CE008
+      statement: "The documented integration is idempotent and stores outgoing requests and raw responses as debug documents."
+      type: observed
+      topic: reliability
+      sourceRefs: [SE009]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE003, QE006]
+    - id: CE009
+      statement: "Elion's vendor profile describes Candid as single-tenant SaaS with U.S. data residency, SOC 2 Type 1, and HIPAA support."
+      type: third-party-reported
+      topic: security
+      sourceRefs: [SE008]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE004]
+    - id: CE010
+      statement: "Elion's profile lists a typical Candid implementation length of one to three months and 21 verified customers in its profile dataset."
+      type: third-party-reported
+      topic: deployment
+      sourceRefs: [SE008]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE004]
+    - id: CE011
+      statement: "Sixth Street reports customer KPI claims of 95–99% first-pass touchless claim resolution, under-20-days average time to payment, and approximately 40% less manual work in cost-to-collect."
+      type: third-party-reported
+      topic: performance
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE004, QE005]
+    - id: CE012
+      statement: "Medplum publishes a developer-facing integration guide with a custom claim-submission operation and FHIR resource mapping."
+      type: observed
+      topic: developer-signal
+      sourceRefs: [SE009]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE007]
+    - id: CE013
+      statement: "The documented integration can hard-fail when no payer match is found and requires a service facility for every non-telehealth claim."
+      type: observed
+      topic: technical-risk
+      sourceRefs: [SE009]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE006]
+    - id: CE014
+      statement: "Candid's investor describes agentic workflows for eligibility, coding, and appeals as operating on top of the rules and data foundation."
+      type: third-party-reported
+      topic: automation
+      sourceRefs: [SE003, SE006]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QE002, QE005]
+    - id: CE015
+      statement: "Public assigned sources do not disclose independent end-to-end uptime, specialty-level error rates, model-evaluation protocols, or human-escalation thresholds."
+      type: inferred
+      topic: controls
+      sourceRefs: [SE008, SE009]
+      confidence: low
+      freshness: current
+      answersQuestionRefs: [QE008]
+  evidenceGaps:
+    - type: missing-source
+      severity: material
+      topic: controls
+      missingEvidence: "Independent security, reliability, and model-governance evidence covering uptime, incidents, PHI controls, audit logs, evaluation protocols, and escalation thresholds."
+      whyItMatters: "Candid processes sensitive healthcare and payment data, so product maturity cannot be underwritten from feature descriptions and investor claims alone."
+      diligencePath: "Request current SOC 2 report or bridge letter, HIPAA risk-assessment materials, uptime and incident history, model cards or evaluation results, and sample audit logs under NDA."
+      relatedQuestionRefs: [QE008]
+    - type: missing-source
+      severity: material
+      topic: performance
+      missingEvidence: "Customer-level, specialty- and payer-mix-segmented validation of touchless resolution, payment speed, denial reduction, and implementation outcomes."
+      whyItMatters: "The strongest product performance metrics are attributed to the investor or company and may reflect selected cohorts rather than the full installed base."
+      diligencePath: "Obtain anonymized cohort data and reference calls covering production deployments, difficult specialties, payer changes, implementation duration, and exception rates."
+      relatedQuestionRefs: [QE004, QE005]
+acknowledgedWarnings:
+  - dimension: tableNotes
+    reason: "Tables are qualified with source, estimation, and limitation notes; remaining snapshot-style wording is non-actionable because every row carries an explicit diligence boundary."
