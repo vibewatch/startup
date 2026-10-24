@@ -1,0 +1,438 @@
+schemaVersion: "report-v2"
+artifact: risks
+slug: postman
+runDate: 2026-10-24
+company:
+  name: Postman
+chapter:
+  number: 7
+  title: Risks
+  summary: Postman's collaboration model creates material credential-exposure and governance risks, while public evidence is thinner on legal, financial, and operational resilience. The most actionable mitigations are access governance, secrets hygiene, monitoring, and explicit testing limits.
+sections:
+  - id: security-and-governance
+    title: Security and governance
+    body: >-
+      Postman is used to build, test, document, and collaborate around APIs, so its workspaces can contain authentication tokens, API keys, internal endpoints, and test data. The strongest adverse evidence concerns the interaction between public sharing, forks, synced variables, and imperfect secret-scanning coverage. Truffle Security reported 1,689 live unique credentials across 183 secret types in a scan of about 40,000 workspaces, while noting that its search and detector coverage were incomplete. CybelAngel separately described exposed credentials and access paths affecting healthcare, payments, CRM, and observability systems. These findings are not proof that Postman itself was breached, but they establish a high-impact misuse and configuration risk around the platform's data-sharing surface.
+    claimRefs: [CR001, CR002, CR003, CR004]
+    tableRefs: [TR001]
+  - id: operational-and-technical
+    title: Operational and technical resilience
+    body: >-
+      Postman's operating risk is concentrated in the gap between developer-friendly functional testing and enterprise-grade control requirements. SmartBear's comparison, written by a competitor, characterizes Postman as cloud-based and collaboration-focused, with teams assembling separate tools for performance and security testing when those needs exceed its core workflow. Independent testing guidance similarly says Postman can perform basic security checks but cannot replace specialized penetration testing for advanced exploits. This creates a dependency risk: customers may overestimate what routine collection tests prove, while production reliability, authorization, and deeper vulnerability coverage remain dependent on customer process and adjacent tooling.
+    claimRefs: [CR005, CR006, CR007]
+    tableRefs: [TR002]
+  - id: partner-and-financial-exposure
+    title: Partner, dependency, and financial exposure
+    body: >-
+      The available pool does not establish a verified current supplier concentration, key-customer concentration, burn rate, runway, credit exposure, litigation posture, or capital structure. It does show that Postman workflows can connect to payment, identity, observability, and internal systems, making third-party and customer-side integrations consequential even when the underlying failure is a user's configuration. A security guide states that environment variables sync to Postman's cloud and travel with workspace sharing, while local vault storage avoids that exposure path. The investment implication is therefore asymmetric: a large installed workflow surface can amplify the cost of a single secret-management failure, but the public evidence does not quantify Postman's own loss frequency or financial reserve.
+    claimRefs: [CR008, CR009, CR010]
+    tableRefs: [TR003]
+  - id: triggers-and-diligence
+    title: Mitigations and thesis-break triggers
+    body: >-
+      The most credible mitigations are measurable controls rather than generic assurances: restrict public workspace creation, federate authentication, enforce least privilege and administrator separation, limit API-key generation and expiry, use local or external vaults for secrets, and monitor scanner findings with a documented rotation process. A thesis break would be a confirmed material incident attributable to a Postman control failure, repeated exposure after documented remediation, or evidence that enterprise customers cannot obtain adequate auditability and data-sovereignty controls for their use case. Before underwriting resilience, diligence should obtain incident and claim history, control-coverage metrics by workspace type, mean time to revoke exposed keys, independent assurance reports, retention and concentration data, and current burn/runway.
+    claimRefs: [CR011, CR012, CR013]
+    figureRefs: [FR001]
+tables:
+  - id: TR001
+    title: Regulatory / legal risk register
+    columns: [Risk, Evidence and status, Likelihood, Severity, Mitigation maturity, Residual exposure, Diligence path]
+    rows:
+      - [Public-workspace credential exposure, "Truffle Security reported 1,689 live unique credentials from about 40,000 scanned workspaces; sample and detector limits apply.", "High", "Critical", "Partial", "High", "Obtain Postman's incident history, scanner coverage, and confirmed remediation statistics."]
+      - [Misconfigured sharing and access controls, "CybelAngel described public-workspace exposure of credentials and access paths; it attributes root causes to sharing, visibility, and plaintext handling.", "High", "High", "Partial", "High", "Test default visibility, approval gates, access reviews, and customer notification procedures."]
+      - [Insufficient enterprise auditability or sovereignty, "SmartBear's competitor comparison says Postman is primarily cloud-based, while regulated teams may require on-premises deployment and auditability.", "Medium", "High", "Unverified", "Medium-high", "Request contractual, compliance, deployment, and exportable-audit evidence for regulated customers."]
+      - ["Unverified litigation, regulatory, or IP posture", "The assigned evidence does not establish a current case, enforcement action, license issue, or IP dispute.", "Unknown", "Material", "Unknown", "Unknown", "Obtain a current legal schedule, regulator correspondence, and IP warranty/indemnity detail."]
+    notes: "Evidence is a bounded public-source sample as of 2026-10-24; unknown means the assigned pool did not verify the condition, not that the condition is absent."
+    enumerationScope:
+      coverage: partial
+      basis: "Public sources allocated to the risks chapter, focused on security, governance, enterprise controls, and unverified legal posture."
+    claimRefs: [CR001, CR003, CR005, CR010]
+  - id: TR002
+    title: Operational / quality / security risk register
+    columns: [Failure mode, Likelihood, Severity, Mitigation maturity, Residual exposure, Unresolved gap]
+    rows:
+      - [Secrets copied into public or synced workspaces, "High", "Critical", "Partial", "High", "Coverage and response time by workspace type are not disclosed."]
+      - [Basic functional tests mistaken for full security assurance, "Medium", "High", "Partial", "Medium-high", "Independent penetration-test coverage and customer control ownership are not verified."]
+      - [Overbroad member or administrator access, "Medium", "High", "Partial", "Medium-high", "Obtain access-review cadence, SCIM deprovisioning metrics, and privileged-action logs."]
+      - [API-key persistence or delayed rotation, "Medium", "High", "Partial", "Medium-high", "Obtain key age distribution, expiry enforcement, and mean time to revoke exposed keys."]
+    notes: "Likelihood and severity are analytical ratings anchored to the cited failure modes; they are not incident-rate estimates."
+    claimRefs: [CR001, CR005, CR006, CR011]
+  - id: TR003
+    title: Partner / dependency risk register
+    columns: [Dependency, Counterparty or role, Failure scenario, Severity, Mitigation, Residual exposure, Diligence path]
+    rows:
+      - [Identity and access provider, "Customer IdP / Postman account", "A compromised or orphaned account reaches collections, environments, or tokens.", "High", "SSO, MFA, SCIM, least privilege, and rapid offboarding.", "Medium-high", "Obtain federated-authentication adoption and deprovisioning metrics."]
+      - [Cloud workspace and sync layer, "Postman cloud / workspace sharing", "Synced environment values or shared collections expose credentials or internal endpoints.", "Critical", "Local Vault or external secrets manager; restrict visibility and sharing.", "High", "Verify storage, sharing, export, and deletion semantics contractually."]
+      - [Customer payment and business systems, "Customer APIs and third-party integrations", "Leaked keys enable unauthorized transactions, data access, or operational disruption.", "High", "Short-lived credentials, rotation, monitoring, and scoped permissions.", "Medium-high", "Review customer incident cases, indemnities, and blast-radius controls."]
+      - [Specialized security and performance tooling, "Customer-selected adjacent vendors", "Coverage gaps remain when Postman functional tests are used without deeper scanners or load tools.", "Medium-high", "Define test ownership and required complementary controls.", "Medium", "Map enterprise reference architectures and control attestations."]
+    notes: "Counterparties are roles or dependency classes described by the sources, not a claim of contractual concentration or named supplier dependence."
+    claimRefs: [CR008, CR009, CR012]
+figures:
+  - id: FR001
+    title: Risk heatmap
+    type: matrix
+    summary: Security exposure is highest where public sharing, synced secrets, and weak access governance combine.
+    data:
+      columns:
+        - "Likelihood / impact"
+        - "Critical impact"
+        - "High impact"
+        - "Material impact"
+      rows:
+        - label: "High likelihood"
+          values: ["Public or synced secret exposure", "Overbroad workspace access", "Shared credentials", null]
+        - label: "Medium likelihood"
+          values: ["API-key persistence", "Testing-coverage gap", "Third-party integration blast radius", "Delayed revocation"]
+        - label: "Unknown likelihood"
+          values: [null, "Legal / regulatory posture", "Financial resilience disclosure", null]
+        - label: "Low likelihood"
+          values: [null, "Contained access issue", null, null]
+        - label: "Not assessed"
+          values: [null, null, "Unverified operating loss", null]
+        - label: "Low impact"
+          values: ["Routine test failure", null, null, null]
+    approximationNotes: "Qualitative placement uses source-described failure modes and explicitly preserves unknown likelihood where the assigned evidence is insufficient."
+    claimRefs: [CR001, CR005, CR008, CR010]
+callouts:
+  - calloutType: risk
+    title: Highest-ranked risk
+    body: >-
+      Public or synced workspace secrets can create a direct path from a developer artifact to customer or internal systems; the available evidence supports critical impact but not a quantified Postman incident rate.
+    claimRefs: [CR001, CR002, CR008]
+  - calloutType: assumption
+    title: Evidence boundary
+    body: >-
+      The assigned pool does not verify current litigation, regulatory enforcement, burn, runway, customer concentration, or the effectiveness of Postman's controls across private and internal workspaces.
+    claimRefs: [CR010, CR013]
+localEvidence:
+  searchQueries:
+    - query: "\"Postman\" Postman is an API development and collaboration platform spanning design, testing, documentation, site:postman.com product company"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"Postman\" Postman is an API development and collaboration platform spanning design, testing, documentation, funding valuation revenue customers leadership launches 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"Postman\" Postman is an API development and collaboration platform spanning design, testing, documentation, lawsuit regulatory outage breach complaints risks 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SR004, SR005, SR006, SR007]
+    - query: "\"Postman\" Postman is an API development and collaboration platform spanning design, testing, documentation, founders leadership funding headquarters company profile 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"Postman\" Postman is an API development and collaboration platform spanning design, testing, documentation, Current cap table, investor rights, preference stack, and board composition. 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"Postman\" Postman is an API development and collaboration platform spanning design, testing, documentation, Customer retention, expansion, concentration, and contract-duration metrics by segment. 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SR002]
+    - query: "\"Postman\" Postman is an API development and collaboration platform spanning design, testing, documentation, competitive comparison pricing capabilities customer tradeoffs 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SR003]
+    - query: "\"Postman\" Postman is an API development and collaboration platform spanning design, testing, documentation, pricing funding revenue investors business model 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"Postman\" Postman is an API development and collaboration platform spanning design, testing, documentation, product architecture technology technical documentation"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SR002, SR003]
+    - query: "\"Postman\" Postman is an API development and collaboration platform spanning design, testing, documentation, technical design integrations performance scalability"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SR002]
+    - query: "\"Postman\" Postman is an API development and collaboration platform spanning design, testing, documentation, customer outcomes adoption demand commercial relationships 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"Postman\" Postman is an API development and collaboration platform spanning design, testing, documentation, operational financial regulatory legal risks limitations 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SR001, SR003]
+    - query: "\"Postman\" Postman is an API development and collaboration platform spanning design, testing, documentation, reliability execution dependencies adverse evidence"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: [SR002]
+    - query: "\"Postman\" Postman is an API development and collaboration platform spanning design, testing, documentation, funding investors valuation financing 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SR002]
+  researchQuestions:
+    - id: QR001
+      question: "What publicly documented security failure modes can expose Postman users or their connected systems?"
+      type: adverse
+      targets: ["contentRequirements/0", "contentRequirements/1"]
+      status: answered
+    - id: QR002
+      question: "How material is the risk of secrets being exposed through public workspaces or forks?"
+      type: quantification
+      targets: ["contentRequirements/0", "plannedFigures/risk-heatmap"]
+      status: answered
+    - id: QR003
+      question: "Which access-control and secrets-management mitigations are documented for enterprise use?"
+      type: mechanism
+      targets: ["contentRequirements/2", "contentRequirements/3"]
+      status: answered
+    - id: QR004
+      question: "Where can Postman testing leave coverage gaps relative to enterprise security requirements?"
+      type: comparison
+      targets: ["contentRequirements/1"]
+      status: answered
+    - id: QR005
+      question: "What customer, partner, or platform dependencies amplify the impact of a credential failure?"
+      type: enumeration
+      targets: ["contentRequirements/3"]
+      status: answered
+    - id: QR006
+      question: "What current legal, regulatory, and litigation facts remain unverified in the assigned evidence?"
+      type: adverse
+      targets: ["contentRequirements/1"]
+      status: answered
+    - id: QR007
+      question: "What financial and operating risk indicators require private diligence rather than public inference?"
+      type: verification
+      targets: ["contentRequirements/4"]
+      status: answered
+    - id: QR008
+      question: "Which measurable events would break the risk-adjusted investment thesis?"
+      type: adverse
+      targets: ["contentRequirements/5", "plannedFigures/risk-heatmap"]
+      status: answered
+  sources:
+    - id: SR001
+      publisher: InfluenceFlow
+      title: "Postman API Testing Guide: Complete 2026 Edition"
+      url: https://influenceflow.io/resources/postman-api-testing-guide-complete-2026-edition
+      date: 2026-02-26
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: low
+      independence: independent
+      topics: [testing, automation, api-security]
+      keyQuote: "API testing is essential in 2026. Modern software relies on APIs to connect services. Postman makes testing APIs simple and free."
+    - id: SR002
+      publisher: GeeksforGeeks
+      title: "Introduction to Postman for API Development"
+      url: https://www.geeksforgeeks.org/web-tech/introduction-postman-api-development
+      date: 2026-06-19
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: neutral
+      sourceType: other
+      reputationTier: medium
+      independence: independent
+      topics: [testing, api-development, workflow]
+      keyQuote: "Postman is a widely used API development tool that helps developers build, test, and manage APIs efficiently."
+    - id: SR003
+      publisher: SmartBear
+      title: "Enterprise API Testing Comparison | ReadyAPI vs Postman"
+      url: https://smartbear.com/blog/readyapi-vs-postman-enterprise-api-testing
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: adverse
+      sourceType: analyst-market-data
+      reputationTier: high
+      independence: competitor
+      topics: [enterprise-testing, compliance, deployment, performance]
+      keyQuote: "Postman serves teams prioritizing developer collaboration and functional API testing with flexible ecosystem integrations."
+    - id: SR004
+      publisher: HowToHarden
+      title: "Postman Enterprise Hardening Guide"
+      url: https://howtoharden.com/guides/postman
+      date: 2026-08-08
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: independent
+      topics: [security, sso, access-control, secrets]
+      keyQuote: "Public workspaces are discoverable by anyone on the internet, including automated secret-harvesting bots"
+    - id: SR005
+      publisher: CybelAngel
+      title: "Lessons from the Postman Data Breach"
+      url: https://cybelangel.com/blog/lessons-postman-data-breach
+      date: 2025-04-29
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: adverse
+      sourceType: analyst-market-data
+      reputationTier: high
+      independence: independent
+      topics: [data-exposure, credentials, breach-risk]
+      keyQuote: "The Postman data breach highlights how sensitive data can be accessed and spread, even on notable, reliable platforms."
+    - id: SR006
+      publisher: Vorlon
+      title: "The Postman Data Leak - Exposing the Hidden Risks of API Development"
+      url: https://vorlon.io/saas-security-blog/postman-data-leak-api-development-risks
+      date: 2025-01-30
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: adverse
+      sourceType: analyst-market-data
+      reputationTier: high
+      independence: independent
+      topics: [data-leak, secrets, third-party-risk]
+      keyQuote: "The Postman data leak has revealed significant security risks in API development and third-party app ecosystems, with over 30,000 publicly accessible Postman collections containing sensitive data."
+    - id: SR007
+      publisher: Codoid
+      title: "Postman API Security Testing: A Complete Guide"
+      url: https://codoid.com/security-testing/postman-api-security-testing-a-complete-guide
+      date: 2025-08-19
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: medium
+      independence: independent
+      topics: [api-security, authentication, testing-limits]
+      keyQuote: "Postman, while not a full-fledged penetration testing tool, provides an accessible and practical starting point for teams to test APIs for common vulnerabilities."
+    - id: SR008
+      publisher: Truffle Security
+      title: "(The) Postman Carries Lots of Secrets"
+      url: https://trufflesecurity.com/blog/postman-carries-lots-of-secrets
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: adverse
+      sourceType: analyst-market-data
+      reputationTier: high
+      independence: independent
+      topics: [secret-scanning, credentials, public-api-network]
+      keyQuote: "We discovered 1,689 live, unique credentials, representing 183 different types of secrets."
+  claims:
+    - id: CR001
+      statement: "Truffle Security reported 1,689 live unique credentials representing 183 secret types in its scan of about 40,000 Postman workspaces."
+      type: third-party-reported
+      topic: secret-exposure
+      sourceRefs: [SR008, SR006]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QR001, QR002]
+    - id: CR002
+      statement: "Truffle Security estimated that at least 4,000 live secrets were leaking on Postman's Public API Network, while warning that its estimate was incomplete."
+      type: third-party-reported
+      topic: secret-exposure
+      sourceRefs: [SR008]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QR002]
+    - id: CR003
+      statement: "CybelAngel attributed Postman-related exposure to accidental sharing, misconfigured access controls, public-repository syncing, plaintext storage, and limited use of secret-management tools."
+      type: third-party-reported
+      topic: governance
+      sourceRefs: [SR005]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QR001, QR003]
+    - id: CR004
+      statement: "CybelAngel described exposed credentials involving healthcare records, Razorpay payment systems, CRM refresh tokens, and New Relic observability data."
+      type: third-party-reported
+      topic: connected-systems
+      sourceRefs: [SR005, SR006]
+      confidence: high
+      freshness: recent
+      answersQuestionRefs: [QR005]
+    - id: CR005
+      statement: "SmartBear characterizes Postman as a cloud-based platform focused on developer collaboration and functional API testing."
+      type: third-party-reported
+      topic: enterprise-controls
+      sourceRefs: [SR003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR004]
+    - id: CR006
+      statement: "SmartBear says organizations using Postman may assemble separate tools for performance testing and security scanning when those requirements exceed its core workflow."
+      type: third-party-reported
+      topic: testing-coverage
+      sourceRefs: [SR003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR004]
+    - id: CR007
+      statement: "Codoid states that Postman supports basic API security checks but cannot fully replace penetration-testing tools for complex vulnerabilities."
+      type: third-party-reported
+      topic: testing-coverage
+      sourceRefs: [SR007]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QR004]
+    - id: CR008
+      statement: "HowToHarden states that Postman environment variables sync to the cloud and travel with workspace sharing, while local vault secrets are not synced."
+      type: third-party-reported
+      topic: secrets-management
+      sourceRefs: [SR004]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR003, QR005]
+    - id: CR009
+      statement: "HowToHarden recommends organization-wide API-key expiry and restricting who can generate API keys."
+      type: third-party-reported
+      topic: access-control
+      sourceRefs: [SR004]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR003]
+    - id: CR010
+      statement: "The assigned evidence does not verify a current Postman litigation, regulatory-enforcement, burn, runway, or customer-concentration position."
+      type: open-question
+      topic: evidence-boundary
+      sourceRefs: []
+      confidence: low
+      freshness: current
+      answersQuestionRefs: [QR006, QR007]
+    - id: CR011
+      statement: "HowToHarden describes SSO, MFA, SCIM, role separation, restricted invitations, and secret scanning as controls that can reduce account and credential exposure."
+      type: third-party-reported
+      topic: mitigation
+      sourceRefs: [SR004]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR003, QR008]
+    - id: CR012
+      statement: "A reasonable risk-control trigger is repeated public credential exposure after documented remediation, because the cited sources link public workspaces and leaked tokens to unauthorized access paths."
+      type: inferred
+      topic: thesis-break
+      sourceRefs: [SR004, SR005, SR008]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QR008]
+    - id: CR013
+      statement: "Current control coverage by workspace type, mean time to revoke exposed keys, independent assurance, and customer loss history remain diligence requirements."
+      type: open-question
+      topic: diligence
+      sourceRefs: []
+      confidence: low
+      freshness: current
+      answersQuestionRefs: [QR006, QR007]
+  evidenceGaps:
+    - type: missing-source
+      severity: material
+      topic: legal-regulatory
+      missingEvidence: "Current litigation, regulator correspondence, privacy claims, IP disputes, and indemnity commitments."
+      whyItMatters: "The assigned pool documents security exposure but does not establish whether legal or regulatory liabilities are active, reserved, or immaterial."
+      diligencePath: "Obtain a current legal schedule, regulator correspondence, insurance summary, and IP warranty/indemnity package."
+      relatedQuestionRefs: [QR006]
+      relatedTableRefs: [TR001]
+    - type: private-evidence-only
+      severity: material
+      topic: financial-resilience
+      missingEvidence: "Audited or management-certified burn, runway, margin, loss exposure, and capital structure data."
+      whyItMatters: "Security remediation and enterprise controls can require sustained investment, but public sources do not show liquidity or financing capacity."
+      diligencePath: "Request recent management accounts, cash forecast, debt terms, insurance, and security-remediation budget."
+      relatedQuestionRefs: [QR007]
+      relatedTableRefs: [TR003]
+    - type: missing-source
+      severity: material
+      topic: control-effectiveness
+      missingEvidence: "Workspace-type coverage, scanner false-negative rates, key-rotation timing, incident counts, and customer notification records."
+      whyItMatters: "The sources demonstrate plausible exposure mechanisms but cannot show whether current controls materially reduce recurrence."
+      diligencePath: "Request independent assurance reports, control metrics, incident postmortems, and a sample of customer-facing security commitments."
+      relatedQuestionRefs: [QR003, QR008]
+      relatedTableRefs: [TR002]
