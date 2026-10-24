@@ -1,0 +1,514 @@
+schemaVersion: "report-v2"
+artifact: product-tech
+slug: sima-ai
+runDate: 2026-10-24
+company:
+  name: SiMa.ai
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: SiMa.ai combines Modalix MLSoC hardware with the Palette software stack to run multimodal and vision inference at the edge, with a product surface spanning chip-down designs, modules, development kits, and PCIe cards. Public evidence supports a credible deployment workflow and mature first-generation production history, but independent performance, security-control, reliability, and second-source evidence remains limited.
+sections:
+  - id: product-surface
+    title: Product surface and customer workflow
+    body: >-
+      SiMa.ai's product is a hardware/software edge-inference platform rather than
+      a standalone model API. The company describes Modalix as a second-generation
+      MLSoC family supporting CNNs, Transformers, LLMs, LMMs, and generative AI,
+      with M25, M50, M100, and M200 configurations. The official hardware
+      documentation exposes three integration levels: the Modalix chip for a
+      customer-designed board, the Modalix SoM with LPDDR5 and power, and
+      pre-integrated DevKit and PCIe products. This lets a buyer begin with
+      evaluation hardware and later move toward a carrier-board or chip-down
+      design, but it also creates hardware bring-up and lifecycle work that is
+      not eliminated by the software compatibility promise.
+    claimRefs: [CE001, CE002, CE003]
+    tableRefs: [TE001]
+  - id: architecture-and-workflow
+    title: Architecture, software path, and integration
+    body: >-
+      The documented architecture is a heterogeneous edge system: eight Arm
+      Cortex-A65 application cores, a Machine Learning Accelerator, an image
+      signal processor, and a computer-vision unit are combined on the Modalix
+      die, with LPDDR5, camera interfaces, Ethernet, PCIe, and eLxr Linux
+      appearing in the product documentation. Palette and Edgematic provide the
+      model-preparation path: a developer trains or exports a model, performs
+      graph surgery, quantization, and compilation, transfers compiled artifacts
+      to Edgematic, and evaluates the result on edge hardware. AWS's worked
+      example shows that this path can connect SageMaker, Docker/ECR, Palette,
+      and an edge device, but it also introduces cloud-account, IAM, container,
+      storage, and large-image operational dependencies.
+    claimRefs: [CE005, CE006, CE007, CE008, CE009]
+    tableRefs: [TE002, TE003]
+    figureRefs: [FE001]
+  - id: maturity-and-differentiation
+    title: Maturity, differentiation, and ecosystem proof
+    body: >-
+      Public maturity evidence is strongest for the first-generation platform:
+      SiMa.ai announced shipping in 2022 and later described full
+      characterization, production-grade silicon, boards, and Palette
+      functionality in 2023. Modalix was announced in September 2024, with
+      customer samples targeted for Q4 2024, and a 2026 company release says
+      the Modalix SoM launched in 2025. This is a coherent progression from
+      silicon to modules and deployment tooling, while the exact current
+      production volume, customer yield, and Modalix benchmark results remain
+      undisclosed in the retained sources. The Arteris case study and AWS
+      deployment walkthrough indicate partner support for SoC interconnect and
+      model deployment, not independent proof of broad production scale.
+    claimRefs: [CE006, CE007, CE010, CE011, CE012, CE013]
+  - id: trust-and-technical-risks
+    title: Trust, safety, security, and technical risks
+    body: >-
+      The product is positioned for safety-sensitive settings such as factories,
+      warehouses, robotics, mobility, healthcare, and aerospace, where local
+      inference can reduce latency and keep data on-device. AWS's deployment
+      example explicitly says the workflow can reduce latency, avoid continuous
+      cloud connectivity, reduce security risks, and keep data in-house; those
+      are workflow properties, not a certification or proof of secure operation.
+      SiMa.ai's older production announcement records CE, FCC, and UL-related
+      board testing, while the preliminary Modalix brief describes secure boot,
+      authenticated boot images, eFuse key storage, and a security API. The
+      retained evidence does not establish current third-party Modalix security
+      certifications, vulnerability-response performance, uptime, thermal limits
+      under customer workloads, or a qualified second-source manufacturing plan.
+      A buyer should therefore treat integration control, field reliability, and
+      security assurance as diligence gates rather than assume them from the
+      architecture.
+    claimRefs: [CE014, CE015, CE016, CE017]
+
+tables:
+  - id: TE001
+    title: Product module and asset matrix
+    columns: [Module or asset, Primary user, Status or maturity, Differentiation, Diligence gap]
+    rows:
+      - [MLSoC Modalix chip, "Board designers and silicon integrators", "Second-generation product family; public documentation available", "Single-die combination of Arm compute, MLA, ISP, and CVU", "Confirm current production status, yield, thermal envelope, and lifecycle commitments"]
+      - [Modalix SoM, "OEMs and carrier-board designers", "Launched in 2025 according to SiMa.ai's 2026 release", "Packages MLSoC, LPDDR5 memory, and power for carrier-board integration", "Obtain production volumes, BOM constraints, lead times, and second-source plan"]
+      - [Modalix DevKit, "Evaluation and application teams", "Documented evaluation product", "Enclosed SoM/carrier platform with eLxr Linux and camera/I/O paths", "Validate sustained workload performance, support lifecycle, and field failure rates"]
+      - [Modalix PCIe Card, "Host-system and data-center-edge integrators", "Documented product form factor", "Adds Modalix inference to a host machine with PCIe connectivity", "Verify host compatibility, driver support, throughput, and power/thermal behavior"]
+    notes: "Product status is based on official documentation and company announcements; the public sources do not provide a complete current SKU availability, yield, or lifecycle schedule."
+    claimRefs: [CE001, CE002, CE003, CE012]
+  - id: TE002
+    title: Workflow and use-case table
+    columns: [User job, Current workflow, SiMa.ai solution, Measurable benefit, Limitation]
+    rows:
+      - ["Run vision or multimodal inference at the edge", "Move sensor data to a remote server or use a general-purpose accelerator", "Run models on Modalix with on-device camera, vision, and ML acceleration", "Company claims more than 10X performance per watt versus alternatives", "Claim is not independently reproduced for current Modalix workloads"]
+      - ["Prepare a production model for edge deployment", "Train/export in a framework, then hand-optimize device artifacts", "Use Palette ModelSDK/Edgematic for graph surgery, quantization, compilation, and evaluation", "AWS demonstrates a repeatable training-to-edge workflow", "Requires developer-portal access, container tooling, IAM, and hardware validation"]
+      - ["Deploy safety monitoring with low latency", "Cloud-based image recognition with network latency and connectivity dependence", "Optimize a YOLOv7 PPE detector and deploy it to an edge device", "AWS describes real-time monitoring without continuous cloud connectivity", "The example is a workflow demonstration, not a measured customer SLA or safety certification"]
+    notes: "Benefits are source-reported or workflow-level properties; no retained source supplies a common benchmark denominator, customer SLA, or independently audited latency series."
+    claimRefs: [CE006, CE007, CE008, CE014]
+  - id: TE003
+    title: Technology and operating architecture
+    columns: [Layer or process, Role, Dependency, Risk]
+    rows:
+      - ["Application and models", "CNN, Transformer, LLM, LMM, and generative-AI workloads", "Framework exports, model weights, calibration data", "Model compatibility and accuracy can vary by graph and quantization settings"]
+      - ["Palette software", "ModelSDK compilation, quantization, and performance preparation", "SiMa.ai developer portal and toolchain versions", "Version drift, proprietary compiler dependence, and opaque optimization behavior"]
+      - ["MLSoC Modalix", "MLA plus Arm application complex, ISP, and CVU on one die", "SiMa.ai silicon design and third-party IP", "Thermal, silicon errata, and workload-specific performance require validation"]
+      - ["Board, module, and I/O", "LPDDR5, MIPI CSI, Ethernet, PCIe, storage, and power delivery", "Carrier-board design, cameras, host systems, and firmware", "Bring-up, signal integrity, thermals, and component availability add OEM effort"]
+      - ["Cloud-to-edge deployment", "SageMaker training/export connected to Edgematic edge evaluation", "AWS account, IAM, ECR, Docker, network and storage", "Large container image and cloud permissions increase operational complexity"]
+    notes: "Architecture rows synthesize the official hardware documentation and retained deployment material; they describe documented roles and dependencies, not a complete internal block diagram or security threat model."
+    claimRefs: [CE005, CE006, CE007, CE009, CE016]
+
+figures:
+  - id: FE001
+    title: Modalix product and deployment architecture
+    type: stack
+    summary: "SiMa.ai's public product path runs from model preparation through Palette and Modalix silicon to integrated edge hardware and customer applications."
+    data:
+      layers:
+        - label: "Application layer"
+          detail: "Vision, Transformer, and GenAI workloads are prepared for edge inference."
+          modules: ["Model preparation", "Edge application"]
+        - label: "Software layer"
+          detail: "Palette ModelSDK and Edgematic provide quantization, compilation, deployment, and evaluation workflows."
+          modules: ["Palette ModelSDK", "Edgematic"]
+        - label: "Silicon layer"
+          detail: "Modalix integrates the MLA, Arm Cortex-A65 application cores, ISP, and CVU."
+          modules: ["MLA", "Arm Cortex-A65", "ISP and CVU"]
+        - label: "System layer"
+          detail: "Modalix SoM, DevKit, and PCIe products expose memory, power, camera, network, storage, and host interfaces."
+          modules: ["Modalix SoM", "Modalix DevKit", "Modalix PCIe Card"]
+        - label: "Ingress layer"
+          detail: "Camera and network inputs feed local inference through documented MIPI CSI and Ethernet paths."
+          modules: ["MIPI CSI", "Ethernet"]
+        - label: "Operations layer"
+          detail: "Firmware, board bring-up, model updates, and production testing remain part of deployment ownership."
+          modules: ["eLxr Linux", "Board bring-up", "Production testing"]
+    claimRefs: [CE005, CE006, CE007, CE008, CE009]
+
+callouts:
+  - calloutType: strength
+    title: "Integrated edge path"
+    body: "The combination of documented hardware form factors, Palette compilation, model examples, and AWS deployment guidance gives SiMa.ai a more complete adoption path than a bare accelerator specification."
+    claimRefs: [CE001, CE006, CE007, CE009]
+  - calloutType: risk
+    title: "Proof is stronger for architecture than outcomes"
+    body: "Public material documents components, workflows, and historical production milestones, but does not establish current Modalix customer-scale reliability, independently reproduced performance, security assurance, or manufacturing redundancy."
+    claimRefs: [CE010, CE012, CE015, CE017]
+
+localEvidence:
+  searchQueries:
+    - query: "\"SiMa.ai\" San Jose-based fabless edge-AI semiconductor company whose Modalix MLSoC (machine learning system-on-chip) site:sima.ai product company 2026"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: [SE005]
+    - query: "\"SiMa.ai\" San Jose-based fabless edge-AI semiconductor company whose Modalix MLSoC (machine learning system-on-chip) funding valuation revenue customers leadership launches 2026"
+      engine: anysearch
+      hits: 0
+      retainedSourceRefs: []
+    - query: "\"SiMa.ai\" San Jose-based fabless edge-AI semiconductor company whose Modalix MLSoC (machine learning system-on-chip) lawsuit regulatory outage breach complaints risks 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"SiMa.ai\" San Jose-based fabless edge-AI semiconductor company whose Modalix MLSoC (machine learning system-on-chip) Audited revenue, gross margin, operating burn, cash balance, and runway. 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"SiMa.ai\" San Jose-based fabless edge-AI semiconductor company whose Modalix MLSoC (machine learning system-on-chip) launch history investors team governance 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"SiMa.ai\" San Jose-based fabless edge-AI semiconductor company whose Modalix MLSoC (machine learning system-on-chip) Series C term sheet (liquidation preferences, participation, seniority) and full cap table and dilution history. 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"SiMa.ai\" San Jose-based fabless edge-AI semiconductor company whose Modalix MLSoC (machine learning system-on-chip) industry trends buyer needs spending addressable market 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"SiMa.ai\" San Jose-based fabless edge-AI semiconductor company whose Modalix MLSoC (machine learning system-on-chip) Foundry and OSAT second-source qualification roadmap and any concrete diversification timeline. 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"SiMa.ai\" San Jose-based fabless edge-AI semiconductor company whose Modalix MLSoC (machine learning system-on-chip) product architecture technology technical documentation 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"SiMa.ai\" San Jose-based fabless edge-AI semiconductor company whose Modalix MLSoC (machine learning system-on-chip) technical design integrations performance scalability 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+    - query: "\"SiMa.ai\" San Jose-based fabless edge-AI semiconductor company whose Modalix MLSoC (machine learning system-on-chip) news interviews independent reporting 2026 -site:sima.ai -site:linkedin.com -site:businesswire.com"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: []
+    - query: "\"SiMa.ai\" San Jose-based fabless edge-AI semiconductor company whose Modalix MLSoC (machine learning system-on-chip) product architecture technology 2026 -site:sima.ai -site:linkedin.com -site:businesswire.com"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: []
+  researchQuestions:
+    - id: QE001
+      question: "What product forms can a customer buy or integrate today?"
+      type: enumeration
+      targets: ["contentRequirements/0", "plannedTables/product-module-asset-matrix"]
+      status: answered
+    - id: QE002
+      question: "How does a model move from training into edge inference?"
+      type: mechanism
+      targets: ["contentRequirements/2", "plannedTables/technology-operating-architecture-table"]
+      status: answered
+    - id: QE003
+      question: "Which hardware components create the claimed edge-system advantage?"
+      type: verification
+      targets: ["contentRequirements/2", "plannedFigures/product-architecture-map"]
+      status: answered
+    - id: QE004
+      question: "What public evidence indicates product and deployment maturity?"
+      type: freshness
+      targets: ["contentRequirements/3", "plannedTables/workflow-use-case-table"]
+      status: answered
+    - id: QE005
+      question: "Which performance and efficiency claims are independently measurable?"
+      type: quantification
+      targets: ["contentRequirements/4"]
+      status: answered
+    - id: QE006
+      question: "What dependencies could constrain customer implementation?"
+      type: comparison
+      targets: ["contentRequirements/3"]
+      status: answered
+    - id: QE007
+      question: "What trust, safety, security, privacy, and compliance controls are publicly evidenced?"
+      type: verification
+      targets: ["contentRequirements/5"]
+      status: answered
+    - id: QE008
+      question: "What technical or supply-chain risks remain unresolved for diligence?"
+      type: adverse
+      targets: ["contentRequirements/4", "contentRequirements/5"]
+      status: unresolved
+  sources:
+    - id: SE001
+      publisher: "SiMa.ai"
+      title: "First Generation SiMa.ai Edge AI Platform Enters Mass Production Amidst Surge in Company Momentum"
+      url: "https://sima.ai/press-release/first-generation-sima-ai-edge-ai-platform-enters-mass-production-amidst-surge-in-company-momentum/"
+      date: 2023-06-13
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: [production, certification, Palette, MLPerf]
+      keyQuote: "SiMa.ai MLSoC silicon has achieved major milestones that allow the release for volume production orders, including the complete silicon PVT (process, voltage, temperature) characterization and qualification under multiple JEDEC/ESDA standards."
+    - id: SE002
+      publisher: "SiMa.ai"
+      title: "SiMa.ai Expands ONE Platform for Edge AI with MLSoC Modalix, a New Product Family for Generative AI"
+      url: "https://sima.ai/press-release/sima-ai-expands-one-platform-for-edge-ai-with-mlsoc-modalix/"
+      date: 2024-09-09
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: [Modalix, product, Palette, architecture]
+      keyQuote: "MLSoC Modalix is the second generation of the successful, commercially deployed first generation MLSoC."
+    - id: SE003
+      publisher: "SiMa.ai"
+      title: "SiMa.ai Wins Edge AI + Vision Alliance 2026 Product of the Year for Modalix SoM"
+      url: "https://sima.ai/press-release/sima-ai-wins-edge-ai-vision-alliance-2026-product-of-the-year-for-modalix-som/"
+      date: 2026-04-20
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: confirming
+      sourceType: official
+      reputationTier: high
+      independence: company
+      topics: [Modalix, SoM, product, Physical-AI]
+      keyQuote: "Modalix powers generative AI (GenAI), computer vision, and machine learning (ML) inference at the edge, combining Arm-based compute, advanced vision processing, and high-bandwidth I/O into a single, low-power module designed for power-constrained environments."
+    - id: SE004
+      publisher: "AI Infrastructure Summit"
+      title: "SiMa.ai"
+      url: "https://www.ai-infra-summit.com/sponsor-directory/simaai"
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: confirming
+      sourceType: other
+      reputationTier: medium
+      independence: independent
+      topics: [company, edge-AI]
+      keyQuote: "SiMa.ai delivers one platform for all edge AI that flexibly adjusts to any framework, network, model, sensor, or modality."
+    - id: SE005
+      publisher: "SiMa.ai Developer Documentation"
+      title: "SiMa.ai Hardware Documentation | SiMa.ai System Documentation"
+      url: "https://developer.sima.ai/hardware"
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics: [hardware, Modalix, DevKit, PCIe, deployment]
+      keyQuote: "The MLSoC Modalix is SiMa.ai's second-generation machine-learning system-on-chip. It combines an Arm Cortex-A65 application complex, a high-throughput Machine Learning Accelerator (MLA), an Image Signal Processor (ISP) for camera ingest, and a Computer Vision Unit (CVU) for classical vision workloads — all on a single die."
+    - id: SE006
+      publisher: "SiMa.ai"
+      title: "Machine Learning System on Chip MLSoC Modalix Product Brief"
+      url: "https://sima.ai/wp-content/uploads/2025/05/Modalix-SoC-Product-Brief-May2025.pdf"
+      date: 2025-04-29
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: confirming
+      sourceType: technical-docs
+      reputationTier: high
+      independence: company
+      topics: [Modalix, architecture, performance]
+      keyQuote: "Each Modalix SoC includes on-die LPDDR5 memory interfaces, multiple 10G ethernet, multiple MIPI digital camera interfaces, PCIe, video encode-decode, and security blocks."
+    - id: SE007
+      publisher: "TMCnet"
+      title: "SiMa.ai Unveils New Product Family for Edge AI"
+      url: "https://tmcnet.com/usubmit/2024/09/09/10069072.htm"
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: [Modalix, product, performance, edge-AI]
+      keyQuote: "SiMa.ai MLSoC Modalix supports CNNs, Transformers, LLMs, LMMs and Gen AI at the edge, and delivers industry leading performance - more than 10X the performance per watt of alternatives."
+    - id: SE008
+      publisher: "L&T Technology Services"
+      title: "LTTS and SiMa.ai Collaborate on Product Innovation for Mobility, Healthcare, Industrial Automation and Robotics"
+      url: "https://ltts.com/press-release/ltts-sima.ai-collaborate-product-innovation-mobility-healthcare-industrial-automation-robotics"
+      date: 2025-09-03
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: confirming
+      sourceType: partner-proof
+      reputationTier: medium
+      independence: partner
+      topics: [partnership, deployment, industrial-automation, robotics]
+      keyQuote: "This partnership integrates LTTS’ deep engineering expertise and domain focus with SiMa.ai’s MLSoC™ ONE platform and software SDK."
+    - id: SE009
+      publisher: "IoT Insider"
+      title: "SiMa.ai Unveils New Product Family for Edge AI"
+      url: "https://iotinsider.com/industries/ai/sima-ai-unveils-new-product-family-for-edge-ai"
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: confirming
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: [Modalix, product, performance, edge-AI]
+      keyQuote: "The MLSoC Modalix range will allow developers to maximise performance within a small power footprint, supporting a wide array of applications."
+    - id: SE010
+      publisher: "Amazon Web Services and SiMa.ai"
+      title: "Accelerate edge AI development with SiMa.ai Edgematic with a seamless AWS integration"
+      url: "https://aws.amazon.com/blogs/machine-learning/accelerate-edge-ai-development-with-sima-ai-edgematic-with-a-seamless-aws-integration"
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: confirming
+      sourceType: partner-proof
+      reputationTier: high
+      independence: independent
+      topics: [AWS, Edgematic, deployment, quantization]
+      keyQuote: "The solution integrates SiMa.ai Edgematic with SageMaker JupyterLab to deploy an ML model, YOLOv7, to the edge."
+  claims:
+    - id: CE001
+      statement: "SiMa.ai offers Modalix as a chip, a system-on-module, a development kit, and a PCIe card."
+      type: observed
+      topic: product-surface
+      sourceRefs: [SE005]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE001]
+    - id: CE002
+      statement: "The Modalix SoM packages the MLSoC with LPDDR5 memory and power for carrier-board integration."
+      type: observed
+      topic: product-surface
+      sourceRefs: [SE005]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE001]
+    - id: CE003
+      statement: "The Modalix DevKit and PCIe Card are documented with eLxr Linux and distinct camera, memory, networking, and host-integration options."
+      type: observed
+      topic: product-surface
+      sourceRefs: [SE005]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE001]
+    - id: CE005
+      statement: "Modalix combines an Arm Cortex-A65 application complex, an MLA, an ISP, and a CVU on a single die."
+      type: observed
+      topic: architecture
+      sourceRefs: [SE005, SE002]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE003]
+    - id: CE006
+      statement: "SiMa.ai's documented model path includes model export, graph surgery, quantization, compilation, transfer to Edgematic, and evaluation on edge hardware."
+      type: third-party-reported
+      topic: deployment-workflow
+      sourceRefs: [SE010]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE002, QE006]
+    - id: CE007
+      statement: "The AWS example connects SageMaker JupyterLab, a Docker/ECR Palette image, Edgematic, and a YOLOv7 edge deployment."
+      type: observed
+      topic: deployment-workflow
+      sourceRefs: [SE010]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE002, QE006]
+    - id: CE008
+      statement: "The preliminary Modalix product brief specifies 50 TOPS for one chip and describes two- and four-chip configurations for 100 and 200 TOPS."
+      type: company-claimed
+      topic: performance
+      sourceRefs: [SE006]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE005]
+    - id: CE009
+      statement: "Independent product coverage describes Modalix as supporting CNNs, Transformers, LLMs, LMMs, and Generative AI at the edge."
+      type: third-party-reported
+      topic: developer-signal
+      sourceRefs: [SE009]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE002, QE006]
+    - id: CE010
+      statement: "LTTS announced a strategic partnership integrating its engineering expertise with SiMa.ai's MLSoC ONE platform and software SDK."
+      type: third-party-reported
+      topic: maturity
+      sourceRefs: [SE008]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE004]
+    - id: CE011
+      statement: "SiMa.ai announced full characterization and production-grade releases for its first-generation silicon, boards, and software in 2023."
+      type: company-claimed
+      topic: maturity
+      sourceRefs: [SE001]
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs: [QE004]
+    - id: CE012
+      statement: "SiMa.ai's 2026 release says the Modalix SoM launched in 2025."
+      type: company-claimed
+      topic: maturity
+      sourceRefs: [SE003, SE006]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE004]
+    - id: CE013
+      statement: "A 2026 SiMa.ai release says the Modalix SoM launched in 2025 and received an Edge AI + Vision Alliance award recognizing operation below 10 W."
+      type: company-claimed
+      topic: maturity
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE004, QE005]
+    - id: CE014
+      statement: "AWS describes the Edgematic workflow as reducing latency and avoiding continuous cloud connectivity for a workplace-safety monitoring example."
+      type: third-party-reported
+      topic: trust-and-safety
+      sourceRefs: [SE010]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE007]
+    - id: CE015
+      statement: "SiMa.ai's 2023 announcement records CE and FCC certifications for its first-generation boards and UL safety testing."
+      type: company-claimed
+      topic: compliance
+      sourceRefs: [SE001]
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs: [QE007]
+    - id: CE016
+      statement: "The preliminary Modalix brief describes secure boot, authenticated boot images, eFuse key storage, key management, and a security API."
+      type: company-claimed
+      topic: security-reliability
+      sourceRefs: [SE006]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE007]
+    - id: CE017
+      statement: "The retained public sources do not establish current third-party Modalix security certifications, vulnerability-response performance, uptime, workload-specific thermal limits, or a qualified second-source manufacturing roadmap."
+      type: open-question
+      topic: security-reliability
+      sourceRefs: []
+      confidence: low
+      freshness: current
+  evidenceGaps:
+    - type: missing-source
+      severity: material
+      topic: performance
+      missingEvidence: "Independent Modalix benchmark results with model, batch, precision, power, latency, throughput, and comparison denominators."
+      whyItMatters: "Company-reported TOPS, tokens-per-second, and performance-per-watt figures cannot by themselves establish customer-relevant advantage or comparability."
+      diligencePath: "Request current MLPerf-class or equivalent third-party benchmark data and reproduce representative customer workloads on production hardware."
+      relatedQuestionRefs: [QE005]
+    - type: missing-source
+      severity: material
+      topic: security-reliability
+      missingEvidence: "Current Modalix security architecture, secure boot, patch policy, incident history, uptime, thermal qualification, and field-return data."
+      whyItMatters: "The target use cases include safety-sensitive and regulated environments where deployment assurance is part of the product decision."
+      diligencePath: "Obtain the current security white paper, SBOM and CVE process, certification pack, reliability qualification, and customer SLA evidence under NDA."
+      relatedQuestionRefs: [QE007, QE008]
+    - type: missing-source
+      severity: material
+      topic: supply-chain
+      missingEvidence: "Current foundry, OSAT, component availability, lead-time, and second-source qualification plan for Modalix."
+      whyItMatters: "A fabless edge-silicon product depends on wafer, packaging, memory, board, and module continuity for customer deployments."
+      diligencePath: "Request supplier concentration, qualified alternates, capacity reservations, lifecycle notices, and production lead-time history."
+      relatedQuestionRefs: [QE008]
