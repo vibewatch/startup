@@ -1,0 +1,520 @@
+schemaVersion: "report-v2"
+artifact: product-tech
+slug: satispay
+runDate: 2026-10-24
+company:
+  name: Satispay
+chapter:
+  number: 5
+  title: Product & Technology
+  summary: Satispay is a bank-linked payment network delivered through consumer and merchant applications, QR and hosted checkout flows, and partner integrations. Public evidence supports a mature payment workflow and expanding product surface, but detailed internal architecture, security controls, reliability metrics, and roadmap execution remain insufficiently disclosed.
+sections:
+  - id: customer-workflow
+    title: Customer and merchant workflow
+    body: >-
+      Satispay's core product is a mobile payment method that lets a customer select Satispay at checkout, receive a payment request or QR code, authorize in the Satispay app, and return with immediate confirmation. Stripe documents the same sequence for a merchant integration: select, redirect, identify by phone number or QR scan, authorize, and complete. Viva's partner documentation adds that the payment is synchronous, activation is instant, and settlement for confirmed transactions is next day. This is a concrete workflow rather than a generic wallet description, and it clarifies why the product can be embedded in third-party checkout without requiring every merchant to open a Satispay account. The operating limitation is equally concrete: Viva lists unsupported recurring payments, pre-authorizations, and cross-currency payments, while Stripe documents a different integration surface with mandates and recurring-payment support. Those differences indicate that capabilities vary by channel and should not be treated as a single universal product contract.
+    claimRefs: [CE001, CE002, CE003, CE004]
+    tableRefs: [TE001, TE002]
+  - id: product-surface
+    title: Product surface and maturity
+    body: >-
+      Public materials show a product expanding from everyday payments into adjacent financial services, but the evidence is uneven by module. Partner documentation verifies merchant acceptance through hosted checkout and API-connected platforms; the current Satispay employer profile describes payments, benefits, investing, and cards as the visible product sequence. Current reporting describes a free Red debit card, more than 650,000 activated IBANs, and nearly 100,000 cards, while other reporting describes planned or recently launched investment products and buy-now-pay-later. These are company or press-reported product claims, not independently audited usage or performance measures. The product map therefore separates observed integration capabilities from reported adjacency launches and from roadmap intent. The main maturity risk is that breadth can outpace proof: public sources do not establish attachment rates, failure rates, support load, or whether each adjacency is available in every market.
+    claimRefs: [CE005, CE006, CE007, CE008]
+    tableRefs: [TE003]
+  - id: architecture-dependencies
+    title: Architecture and operating dependencies
+    body: >-
+      The observable architecture is a layered payment workflow: a consumer app and merchant-facing checkout connect through Satispay's account-linked payment environment, while platforms such as Stripe and Viva provide distribution and integration surfaces. The evidence supports QR-based authorization, immediate payment status, refund and dispute handling, and webhook-style status updates in the Stripe integration. API Tracker explicitly says that authentication, permissions, and integration details remain undocumented in its profile, so internal service boundaries, credentials, observability, deployment model, and scalability cannot be responsibly inferred. Satispay's reported independence from Visa and Mastercard is a strategic and operating differentiator, but the system remains dependent on bank connectivity, regulated payment operations, partner availability, and market-specific eligibility. The architecture is therefore best understood as a verified external workflow with material unverified internals, not as a claimed microservice or ledger design.
+    claimRefs: [CE009, CE010, CE011, CE012]
+    figureRefs: [FE001]
+  - id: trust-controls
+    title: Trust, safety, and implementation risks
+    body: >-
+      Trust controls are visible at the boundary but not fully measurable inside the system. Viva describes secure authorization in the Satispay environment and restricts activation for specified merchant categories; Stripe documents customer authorization for saved payment methods, refund windows, dispute evidence deadlines, and mandate revocation. A separate review describes Satispay as an Electronic Money Institution subject to PSD2, AML controls, sanctions screening, and transaction monitoring, although that source is not a regulator record. These controls reduce the risk of treating the product as an unregulated checkout widget, but they do not prove incident rates, uptime, fraud loss, penetration-test status, or privacy-control effectiveness. The key technical diligence request is access to security and reliability evidence by product and market, alongside partner-specific capability matrices, because current public documentation contains both strong boundary-level detail and large gaps in internal assurance.
+    claimRefs: [CE013, CE014, CE015]
+    callouts:
+      - calloutType: risk
+        title: Internal assurance is the main product diligence gap
+        body: >-
+          Public integrations make the payment journey testable, but public sources do not establish Satispay's internal uptime, fraud, security, privacy, or deployment controls. Underwriting should require product-level reliability and assurance evidence before treating the expanding platform surface as technically mature.
+        claimRefs: [CE012, CE015]
+tables:
+  - id: TE001
+    title: Verified payment workflow capabilities
+    columns: [Workflow stage, Publicly supported behavior, Evidence posture, Limitation or diligence gap]
+    rows:
+      - [Checkout selection, Customer selects Satispay as the payment method, "Observed in Stripe documentation", "Channel-specific availability should be confirmed"]
+      - [Authorization, Customer approves in the Satispay app after phone-number request or QR scan, "Observed in Stripe documentation", "No public latency or failure-rate series"]
+      - [Confirmation, Payment status is confirmed immediately, "Observed in Stripe and Viva documentation", "Operational SLA and outage history not disclosed"]
+      - [Refunds and disputes, Partial/full refunds and dispute workflows are supported, "Observed in partner documentation", "Partner terms differ; validate merchant implementation"]
+      - [Settlement, Confirmed Viva transactions are deposited next day, "Partner-documented", "This is not a universal settlement promise"]
+    notes: "Partner documentation describes channel behavior; null or unreported operational metrics are not assumed to be zero."
+    claimRefs: [CE001, CE002, CE003, CE004, CE009, CE010]
+  - id: TE002
+    title: Workflow constraints by integration surface
+    columns: [Capability, Viva documentation, Stripe documentation, Underwriting implication]
+    rows:
+      - [Recurring payments, Not supported, Supported through saved payment methods and mandates, "Capability depends on integration path"]
+      - [Pre-authorizations, Not supported, Extended authorization options are listed, "Do not generalize one partner's contract"]
+      - [Refund timing, Next-day settlement context; partial/full refunds, Refunds may take up to five minutes to complete, "Reconcile cash and support processes by channel"]
+      - [Disputes, No public detail in the reviewed page, 120-day customer window and 15-day evidence period, "Merchant loss exposure requires partner-specific testing"]
+      - [Cross-currency, Not yet supported, EUR presentment is documented, "Geographic and currency expansion remains constrained"]
+    notes: "This comparison preserves differences between partner surfaces; it is not evidence that Satispay has one uniform API contract."
+    claimRefs: [CE003, CE004, CE009, CE010]
+  - id: TE003
+    title: Product module and asset matrix
+    columns: [Module or asset, User, Status or maturity, Differentiation, Diligence gap]
+    rows:
+      - [Mobile payment app, Consumer, "Core operating product", "Account-linked payment flow independent of card rails", "Current active-use and reliability metrics are not public"]
+      - [Merchant checkout and QR flow, Merchant and platform, "Documented integrations", "Hosted checkout, QR authorization, immediate confirmation", "Integration certification and monitoring controls are not public"]
+      - [Benefits and meal vouchers, Employer and employee, "Reported adjacent product", "Extends daily-payment distribution into workplace benefits", "Attachment rate and unit economics are not public"]
+      - [Red debit card and IBAN-related services, Consumer, "Reported current rollout", "Moves the app toward primary financial-account use", "Licensing, availability, and operational metrics need confirmation"]
+      - [Investing and savings products, Consumer, "Reported launch or expansion", "Uses existing payment distribution for financial adjacency", "AUM, suitability controls, and retention need verification"]
+      - [Buy-now-pay-later, Consumer and merchant, "Reported late-2025 launch", "Adds credit-like checkout functionality", "Underwriting, arrears, and regulatory controls are not public"]
+    notes: "Status labels distinguish partner-observed capabilities from company or press-reported adjacencies; reported launches are not independently audited."
+    claimRefs: [CE005, CE006, CE007, CE008]
+figures:
+  - id: FE001
+    title: Observable Satispay product architecture
+    type: stack
+    summary: The public evidence supports a layered payment workflow and partner distribution model, while internal assurance layers remain unverified.
+    data:
+      layers:
+        - label: Consumer interaction
+          modules:
+            - label: Satispay app authorization
+              detail: Phone-number request or QR scan followed by customer approval
+            - label: Mobile account experience
+              detail: Payments and reported adjacent financial services
+        - label: Merchant interaction
+          modules:
+            - label: Hosted checkout
+              detail: Customer selects Satispay and returns after authorization
+            - label: QR acceptance
+              detail: QR code is presented for scanning in the mobile flow
+        - label: Payment orchestration
+          modules:
+            - label: Immediate status
+              detail: Stripe and Viva document immediate or synchronous confirmation
+            - label: Refund and dispute handling
+              detail: Partner-specific refund, dispute, and mandate workflows
+        - label: Account-linked rails
+          modules:
+            - label: Bank-linked payment environment
+              detail: Public sources describe an account-linked alternative to card rails
+            - label: Settlement
+              detail: Viva documents next-day settlement for confirmed transactions
+        - label: Partner distribution
+          modules:
+            - label: Stripe
+              detail: Payment-method integration with Checkout and APIs
+            - label: Viva
+              detail: Smart Checkout activation and merchant-category controls
+        - label: Assurance boundary
+          modules:
+            - label: Secure authorization and eligibility
+              detail: Boundary controls are documented by partners
+            - label: Internal reliability and security evidence
+              detail: Not publicly established in the reviewed sources
+    approximationNotes: "Layers are an evidence map, not a claim about Satispay's internal software topology."
+    claimRefs: [CE001, CE009, CE012, CE013, CE015]
+callouts:
+  - calloutType: strength
+    title: The payment journey is externally legible
+    body: >-
+      Stripe and Viva documentation exposes concrete checkout, authorization, confirmation, refund, and settlement behaviors, giving merchants a testable integration surface even though internal implementation details are not public.
+    claimRefs: [CE001, CE002, CE003, CE009, CE010]
+localEvidence:
+  searchQueries:
+    - query: "\"Satispay\" Italian mobile-payments fintech building an account-linked consumer, merchant, welfare, card, and investing site:satispay.com product company"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE003, SE008]
+    - query: "\"Satispay\" Italian mobile-payments fintech building an account-linked consumer, merchant, welfare, card, and investing funding valuation revenue customers leadership launches 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE002, SE005]
+    - query: "\"Satispay\" Italian mobile-payments fintech building an account-linked consumer, merchant, welfare, card, and investing lawsuit regulatory outage breach complaints risks 2026"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: [SE005, SE006]
+    - query: "\"Satispay\" Italian mobile-payments fintech building an account-linked consumer, merchant, welfare, card, and investing Current GMV, net take rate, gross margin, and free-cash-flow quality. 2026"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: [SE005]
+    - query: "\"Satispay\" Italian mobile-payments fintech building an account-linked consumer, merchant, welfare, card, and investing founders leadership funding headquarters company profile 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE002]
+    - query: "\"Satispay\" Italian mobile-payments fintech building an account-linked consumer, merchant, welfare, card, and investing launch history investors team governance 2026"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: []
+    - query: "\"Satispay\" Italian mobile-payments fintech building an account-linked consumer, merchant, welfare, card, and investing Cohort retention, churn, CAC, and payback by major customer segment. 2026"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: [SE005]
+    - query: "\"Satispay\" Italian mobile-payments fintech building an account-linked consumer, merchant, welfare, card, and investing market size segmentation demand adoption"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: [SE005]
+    - query: "\"Satispay\" Italian mobile-payments fintech building an account-linked consumer, merchant, welfare, card, and investing Current cap table, investor rights, preference stack, and dilution from the planned 2026 capital increase. 2026"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: [SE005]
+    - query: "\"Satispay\" Italian mobile-payments fintech building an account-linked consumer, merchant, welfare, card, and investing alternatives competitors positioning differentiation"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: [SE005]
+    - query: "\"Satispay\" Italian mobile-payments fintech building an account-linked consumer, merchant, welfare, card, and investing competitive comparison pricing capabilities customer tradeoffs 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE003]
+    - query: "\"Satispay\" Italian mobile-payments fintech building an account-linked consumer, merchant, welfare, card, and investing Economics and attachment rates for welfare, card, and investing adjacencies. 2026"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: []
+    - query: "\"Satispay\" Italian mobile-payments fintech building an account-linked consumer, merchant, welfare, card, and investing pricing funding revenue investors business model 2026"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: [SE005]
+    - query: "\"Satispay\" Italian mobile-payments fintech building an account-linked consumer, merchant, welfare, card, and investing revenue model profitability unit economics commercial traction 2026"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: [SE005]
+    - query: "\"Satispay\" Italian mobile-payments fintech building an account-linked consumer, merchant, welfare, card, and investing product architecture technology technical documentation"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE001, SE002, SE004]
+    - query: "\"Satispay\" Italian mobile-payments fintech building an account-linked consumer, merchant, welfare, card, and investing technical design integrations performance scalability"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE003]
+    - query: "\"Satispay\" Italian mobile-payments fintech building an account-linked consumer, merchant, welfare, card, and investing customer case study adoption users partners 2026"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: []
+    - query: "\"Satispay\" Italian mobile-payments fintech building an account-linked consumer, merchant, welfare, card, and investing operational financial regulatory legal risks limitations 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE002, SE005]
+    - query: "\"Satispay\" Italian mobile-payments fintech building an account-linked consumer, merchant, welfare, card, and investing reliability execution dependencies adverse evidence"
+      engine: anysearch
+      hits: 7
+      retainedSourceRefs: []
+    - query: "\"Satispay\" Italian mobile-payments fintech building an account-linked consumer, merchant, welfare, card, and investing funding investors valuation financing 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE002]
+    - query: "\"Satispay\" Italian mobile-payments fintech building an account-linked consumer, merchant, welfare, card, and investing funding round seed series acquisition 2026"
+      engine: anysearch
+      hits: 8
+      retainedSourceRefs: [SE002]
+  researchQuestions:
+    - id: QE001
+      question: "How does Satispay move a customer from checkout selection to payment confirmation?"
+      type: mechanism
+      targets: [contentRequirements/0, contentRequirements/2]
+      status: answered
+    - id: QE002
+      question: "Which modules and financial products are publicly evidenced as current?"
+      type: enumeration
+      targets: [contentRequirements/1]
+      status: answered
+    - id: QE003
+      question: "Which architecture layers and external dependencies can be verified?"
+      type: verification
+      targets: [contentRequirements/2]
+      status: answered
+    - id: QE004
+      question: "What integration, settlement, refund, and dispute constraints affect deployment?"
+      type: quantification
+      targets: [contentRequirements/3, plannedTables/workflow-use-case-table]
+      status: answered
+    - id: QE005
+      question: "What differentiates Satispay from card-network payment infrastructure?"
+      type: comparison
+      targets: [contentRequirements/4]
+      status: answered
+    - id: QE006
+      question: "Which trust, compliance, and eligibility controls are visible publicly?"
+      type: verification
+      targets: [contentRequirements/5]
+      status: answered
+    - id: QE007
+      question: "What current product expansion claims require freshness verification?"
+      type: freshness
+      targets: [contentRequirements/1, contentRequirements/3]
+      status: answered
+    - id: QE008
+      question: "What public evidence establishes internal security and reliability maturity?"
+      type: adverse
+      targets: [contentRequirements/5, plannedFigures/product-architecture-map]
+      status: partial
+  sources:
+    - id: SE001
+      publisher: Viva.com
+      title: Satispay | Viva.com Developer Portal
+      url: https://developer.viva.com/payment-methods/local-payment-methods/satispay/
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: neutral
+      sourceType: partner-proof
+      reputationTier: high
+      independence: partner
+      topics: [checkout, QR, settlement, refunds, merchant-eligibility]
+      keyQuote: "Payment method type: Synchronous - payments are confirmed immediately"
+    - id: SE002
+      publisher: Torino Cronaca
+      title: "Satispay lancia la carta gratis e punta alla banca: la svolta del colosso piemontese"
+      url: https://www.torinocronaca.it/news/economia/716925/satispay-sfida-i-colossi-del-credito-verso-una-vera-banca-con-mutui-e-carte-gratis-per-tutti.html
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: [card, IBAN, investing, roadmap, "2026"]
+      keyQuote: "La carta permetterà di pagare in qualsiasi negozio fisicamente o online e di prelevare contanti agli bancomat."
+    - id: SE003
+      publisher: Multiples
+      title: Satispay Revenue, Valuation, Funding & Investors
+      url: https://multiples.vc/private-comps/satispay
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics: [business-model, payment-network, product-surface]
+      keyQuote: "Satispay is an Italian fintech unicorn providing a mobile payments network that bypasses traditional card infrastructure"
+    - id: SE004
+      publisher: Stripe
+      title: Satispay payments | Stripe Documentation
+      url: https://docs.stripe.com/payments/satispay
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: neutral
+      sourceType: technical-docs
+      reputationTier: high
+      independence: partner
+      topics: [checkout, authorization, refunds, disputes, mandates]
+      keyQuote: "The customer selects Satispay at checkout."
+    - id: SE005
+      publisher: Eastern Herald
+      title: Satispay Raises €120M to Turn Italy’s Idle Billions Into an Investing Habit
+      url: https://easternherald.com/2026/06/13/satispay-120-million-italy-fintech-superapp-investing/
+      date: 2026-06-13
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: medium
+      independence: independent
+      topics: [investing, welfare, product-expansion, "2026"]
+      keyQuote: "The company plans to open pension fund subscriptions to consumers by autumn and to add stock and ETF purchases directly inside the app by year-end."
+    - id: SE006
+      publisher: Payment Institutions Newsroom
+      title: Payment Institutions Newsroom Review of Satispay – The Mobile Payment Network Redefining Everyday Transactions in Europe
+      url: https://www.payment-institutions.info/review-of-satispay-the-mobile-payment-network-redefining-everyday-transactions-in-europe/
+      date: 2025-12-14
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: neutral
+      sourceType: other
+      reputationTier: medium
+      independence: independent
+      topics: [EMI, PSD2, AML, compliance]
+      keyQuote: "Satispay operates as a regulated Electronic Money Institution (EMI) in Europe, with authorization that allows it to issue e‑money, provide payment services, and safeguard customer funds under EU regulation."
+    - id: SE008
+      publisher: LeadIQ
+      title: Satispay Company Overview, Contact Details & Competitors
+      url: https://leadiq.com/c/satispay/5a1d8b01240000240065bf48
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: neutral
+      sourceType: analyst-market-data
+      reputationTier: medium
+      independence: independent
+      topics: [company-profile, Stripe-partnership, developer-signal]
+      keyQuote: "A notable development in 2024 is a strategic partnership with Stripe to facilitate online shopping for Italian merchants and consumers."
+    - id: SE009
+      publisher: Fintech Careers
+      title: Satispay employer profile
+      url: https://fintechcareers.com/employer/satispay
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: company
+      topics: [engineering, developer-signal, hiring]
+      keyQuote: "About Us Traditional banking has never really given you control over your financial life."
+    - id: SE010
+      publisher: API Tracker
+      title: Satispay API - Developer docs, APIs, SDKs, and auth
+      url: https://apitracker.io/a/satispay
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: neutral
+      sourceType: developer-signal
+      reputationTier: medium
+      independence: independent
+      topics: [API, developer-signal, documentation-gap]
+      keyQuote: "We don’t yet have enough API information for Satispay."
+    - id: SE011
+      publisher: The Next Web
+      title: Italian fintech unicorn Satispay reportedly plans €120M raise to push into stock trading
+      url: https://thenextweb.com/news/satispay-120-million-funding-round-italian-fintech-unicorn
+      date: 2026-06-11
+      accessDate: 2026-10-24
+      accessStatus: ok
+      stance: neutral
+      sourceType: news
+      reputationTier: high
+      independence: independent
+      topics: [product-launch, investing, buy-now-pay-later, "2026"]
+      keyQuote: "In 2026, Satispay launched three investment funds in partnership with Invesco, one of the world’s largest independent asset managers."
+  claims:
+    - id: CE001
+      statement: "Stripe documents a Satispay checkout flow in which the customer selects Satispay, is redirected to a Satispay-hosted page, identifies by phone number or QR scan, authorizes in the app, and returns after immediate confirmation."
+      type: observed
+      topic: checkout-workflow
+      sourceRefs: [SE004, SE001]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE001]
+    - id: CE002
+      statement: "Viva documents Satispay as a synchronous payment method whose payments are confirmed immediately."
+      type: observed
+      topic: payment-confirmation
+      sourceRefs: [SE001, SE004]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE001]
+    - id: CE003
+      statement: "Viva states that merchants do not need a Satispay account and that activation is instant for eligible production merchants."
+      type: observed
+      topic: merchant-onboarding
+      sourceRefs: [SE001]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE004]
+    - id: CE004
+      statement: "Viva documents no recurring payments, no pre-authorizations, and no cross-currency payments for its Satispay payment-method integration."
+      type: observed
+      topic: integration-constraints
+      sourceRefs: [SE001]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE004]
+    - id: CE005
+      statement: "Torino Cronaca reports that Satispay made its Red Mastercard debit card available without a subscription or monthly fee."
+      type: third-party-reported
+      topic: card-product
+      sourceRefs: [SE002]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE002, QE007]
+    - id: CE006
+      statement: "The current Satispay employer profile presents payments, benefits, investing, and cards as successive parts of its financial-services product surface."
+      type: company-claimed
+      topic: product-expansion
+      sourceRefs: [SE009]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE002]
+    - id: CE007
+      statement: "Eastern Herald reports that Satispay planned pension subscriptions and in-app stock and ETF purchases as part of its 2026 expansion."
+      type: third-party-reported
+      topic: investing-roadmap
+      sourceRefs: [SE005]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE002, QE007]
+    - id: CE008
+      statement: "The Next Web reports that Satispay launched three investment funds in partnership with Invesco in 2026 and had introduced buy-now-pay-later in November 2025."
+      type: third-party-reported
+      topic: adjacent-products
+      sourceRefs: [SE011]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE002, QE007]
+    - id: CE009
+      statement: "Stripe supports Satispay through Checkout and APIs, with immediate payment confirmation and partner-specific refund, dispute, and mandate workflows."
+      type: observed
+      topic: platform-integration
+      sourceRefs: [SE004, SE001]
+      confidence: high
+      freshness: current
+      answersQuestionRefs: [QE003, QE004]
+    - id: CE010
+      statement: "Viva documents QR-based customer authorization, next-day settlement for confirmed transactions, partial and full refunds, and merchant-category eligibility restrictions."
+      type: observed
+      topic: partner-operating-model
+      sourceRefs: [SE001, SE004]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE003, QE004]
+    - id: CE011
+      statement: "Multiples describes Satispay as a mobile payments network that bypasses traditional card infrastructure and connects payments to an app-based account."
+      type: third-party-reported
+      topic: network-differentiation
+      sourceRefs: [SE003]
+      confidence: medium
+      freshness: historical
+      answersQuestionRefs: [QE003, QE005]
+    - id: CE012
+      statement: "API Tracker states that Satispay's authentication, permissions, and integration details remain insufficiently documented in its profile."
+      type: third-party-reported
+      topic: architecture-disclosure
+      sourceRefs: [SE010]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE003, QE008]
+    - id: CE013
+      statement: "Viva states that each payment is authorized securely within the Satispay environment and identifies merchant categories that cannot activate the method."
+      type: observed
+      topic: trust-boundary
+      sourceRefs: [SE001]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE006]
+    - id: CE014
+      statement: "Stripe documents customer authorization for future payments, mandate revocation, refund limits, and a 15-day evidence period for disputes."
+      type: observed
+      topic: payment-controls
+      sourceRefs: [SE004]
+      confidence: medium
+      freshness: current
+      answersQuestionRefs: [QE006]
+    - id: CE015
+      statement: "Payment Institutions Newsroom describes Satispay as a regulated Electronic Money Institution subject to PSD2, AML controls, sanctions screening, and transaction monitoring."
+      type: third-party-reported
+      topic: compliance
+      sourceRefs: [SE006]
+      confidence: medium
+      freshness: recent
+      answersQuestionRefs: [QE006]
+  evidenceGaps:
+    - type: missing-source
+      severity: material
+      topic: internal-security-reliability
+      missingEvidence: "Current uptime, incident history, fraud-loss controls, penetration-test coverage, privacy assessments, and product-level security certifications."
+      whyItMatters: "Boundary-level partner controls do not establish the reliability or security maturity of Satispay's internal systems and operating processes."
+      diligencePath: "Request a current security pack, SOC or equivalent assurance reports, penetration-test summary, incident register, uptime history, and product-specific control matrix under NDA."
+      relatedQuestionRefs: [QE008]
+    - type: private-evidence-only
+      severity: material
+      topic: architecture-disclosure
+      missingEvidence: "Documented API authentication, permission scopes, service dependencies, deployment topology, observability, and disaster-recovery objectives."
+      whyItMatters: "Merchants and partners cannot assess implementation risk or operational resilience from the reviewed public integration pages alone."
+      diligencePath: "Obtain current API specifications, integration certification requirements, RTO/RPO targets, dependency map, and release-management controls from Satispay technical stakeholders."
+      relatedQuestionRefs: [QE003, QE008]
+    - type: stale
+      severity: minor
+      topic: adjacent-product-maturity
+      missingEvidence: "Market-by-market availability, attachment rates, active usage, and support metrics for cards, benefits, investing, and buy-now-pay-later."
+      whyItMatters: "Reported launches and product breadth do not establish durable adoption or operational maturity across the platform."
+      diligencePath: "Request a dated product catalogue with launch markets, active users, transaction volumes, support KPIs, and regulatory owner for each adjacent module."
+      relatedQuestionRefs: [QE002, QE007]
