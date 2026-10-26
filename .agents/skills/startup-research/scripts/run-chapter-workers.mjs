@@ -452,8 +452,7 @@ const escalationTasks = tasks.filter((task) => {
   const route = task.context.policy.workerRouting;
   return !args.disableEscalation
     && validation?.ok === false
-    && route.escalateTo
-    && route.escalateTo !== route.model;
+    && route.escalateTo;
 });
 let escalations = [];
 if (escalationTasks.length > 0) {

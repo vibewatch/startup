@@ -24,6 +24,22 @@ test('production deployment passes the configured Analytics ID to the website bu
   assert.equal(validation.run, 'npm run validate');
 });
 
+test('startup automation uses GPT-6 Luna for every model route and benchmark', () => {
+  const routing = yaml.load(readFileSync('.agents/skills/startup-research/references/model-routing.yaml', 'utf8'));
+  for (const [name, profile] of Object.entries(routing.profiles)) {
+    assert.equal(profile.defaultCopilotModel, 'gpt-6-luna', `${name} default model`);
+    assert.equal(profile.escalateTo, 'gpt-6-luna', `${name} retry model`);
+  }
+  const benchmark = yaml.load(readFileSync('.github/workflows/benchmark-synthesis-models.yml', 'utf8'));
+  assert.equal(benchmark.on.workflow_dispatch.inputs.includeGrok, undefined);
+  const run = workflowSteps('benchmark-synthesis-models.yml').find(step => step.name === 'Benchmark Luna');
+  assert.match(run.run, /run_model luna gpt-6-luna default/u);
+  assert.doesNotMatch(run.run, /grok|sol-fast|gpt-5/u);
+  for (const step of workflowSteps('research-unicorns.yml')) {
+    if (step.env?.MODEL) assert.equal(step.env.MODEL, 'gpt-6-luna');
+  }
+});
+
 for (const file of ['company.yml', 'refresh-company.yml', 'research-unicorns.yml', 'translate-reports-zh.yml', 'benchmark-synthesis-models.yml']) {
   for (const scenario of ['healthy', 'version-lookup-failure', 'platform-download-failure', 'missing-platform']) {
     test(`Copilot installation requires a working version-matched native package: ${file}/${scenario}`, t => {
@@ -293,25 +309,25 @@ for (const file of ['company.yml', 'refresh-company.yml', 'research-unicorns.yml
 test('translation model normalization uses the remaining workflow choice and rejects retired choices', t => {
   const workflow = yaml.load(readFileSync('.github/workflows/translate-reports-zh.yml', 'utf8'));
   const model = workflow.on.workflow_dispatch.inputs.model;
-  assert.deepEqual(model.options, ['gpt-5.6-luna']);
+  assert.deepEqual(model.options, ['gpt-6-luna']);
   assert.equal(model.default, model.options[0]);
   const normalize = workflowSteps('translate-reports-zh.yml')
     .find(step => step.name === 'Normalize translation inputs');
   const root = mkdtempSync(join(tmpdir(), 'translation-model-test-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  for (const [index, value] of ['', ` ${model.default} `, 'retired-model'].entries()) {
+  for (const [index, value] of ['', ` ${model.default} `, 'retired-model', 'gpt-5.6-luna', 'gpt-5.6-sol-fast'].entries()) {
     const output = join(root, `output-${index}`);
     const result = spawnSync('bash', ['-e', '-c', normalize.run], {
       encoding: 'utf8',
       env: { ...process.env, EVENT_NAME: 'schedule', RAW_COUNT: '', RAW_MODEL: value, GITHUB_OUTPUT: output },
     });
-    if (value === 'retired-model') {
+    if (index >= 2) {
       assert.equal(result.status, 1);
       assert.match(result.stderr, /Unsupported model/u);
       assert(!existsSync(output));
     } else {
       assert.equal(result.status, 0, result.stderr);
-      assert.match(readFileSync(output, 'utf8'), /^model=gpt-5\.6-luna$/mu);
+      assert.match(readFileSync(output, 'utf8'), /^model=gpt-6-luna$/mu);
     }
   }
 });

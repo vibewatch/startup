@@ -74,7 +74,7 @@ try {
   ]));
   const benchmarkPlan = JSON.parse(run('run-chapter-workers.mjs', [
     '--report-folder', folder,
-    '--model-override', 'gpt-6-luna',
+    '--model-override', 'fixture-benchmark-model',
     '--effort-override', 'default',
     '--disable-escalation',
     '--dry-run',
@@ -125,7 +125,7 @@ try {
   ]));
   const benchmarkFinalizer = JSON.parse(run('run-report-finalizer.mjs', [
     '--report-folder', folder,
-    '--model-override', 'gpt-6-luna',
+    '--model-override', 'fixture-benchmark-model',
     '--effort-override', 'default',
     '--disable-escalation',
     '--dry-run',
@@ -343,7 +343,7 @@ process.exit(Number(process.env.FAKE_COPILOT_EXIT ?? 1));
   writeFileSync(bundlePath, JSON.stringify(quoteBundle));
   const quoteProbe = spawnSync(process.execPath, [
     join(here, 'run-chapter-workers.mjs'), '--report-folder', folder,
-    '--copilot-bin', fakeCopilotPath, '--disable-escalation', '--format', 'json',
+    '--copilot-bin', fakeCopilotPath, '--format', 'json',
   ], {
     encoding: 'utf8',
     env: {
@@ -358,6 +358,14 @@ process.exit(Number(process.env.FAKE_COPILOT_EXIT ?? 1));
   assert.equal(quoteResults.validations.length, roster.totalChapters);
   assert(quoteResults.validations.every((entry) => !entry.ok && entry.issues?.[0]?.code === 'sourceQuoteMismatch'),
     'a success-shaped worker exit hid fabricated quotations');
+  assert.equal(quoteResults.escalations.length, roster.totalChapters,
+    'failed chapters did not receive exactly one same-model retry');
+  const workerInvocations = readFileSync(join(folder, 'fake-quote-workers.log'), 'utf8')
+    .trim().split('\n').map((line) => JSON.parse(line));
+  assert.equal(workerInvocations.length, roster.totalChapters * 2);
+  assert(workerInvocations.every((args) => args[args.indexOf('--model') + 1] === 'gpt-6-luna'));
+  assert.equal(workerInvocations.filter((args) => args.includes('xhigh')).length, roster.totalChapters,
+    'chapter retries did not use higher reasoning effort');
   for (const file of ['report-meta.yaml', 'summary-card.yaml', 'full-report.yaml', 'evidence.yaml']) {
     writeFileSync(join(folder, file), '{}\n');
   }
@@ -560,28 +568,28 @@ process.exit(Number(process.env.FAKE_COPILOT_EXIT ?? 1));
     [plan.concurrency === 8, 'runner default concurrency is not 8'],
     [plan.timeoutSeconds === 900, 'runner default timeout is not 900 seconds'],
     [plan.workers.length === roster.totalChapters, 'runner did not schedule every chapter'],
-    [plan.workers.every((worker) => worker.model === 'gpt-5.6-luna'), 'runner did not use GPT-5.6 Luna'],
+    [plan.workers.every((worker) => worker.model === 'gpt-6-luna'), 'runner did not use GPT-6 Luna'],
     [plan.workers.every((worker) => worker.reasoningEffort === 'default'), 'runner did not use default effort'],
-    [plan.workers.every((worker) => worker.escalateTo === 'gpt-5.6-sol-fast'), 'runner did not retain the Sol Fast quality fallback'],
+    [plan.workers.every((worker) => worker.escalateTo === 'gpt-6-luna'), 'runner did not retain the Luna quality retry'],
     [workerPools.every((pool) => pool.recommended.length === 1), 'worker pool retained an unsuccessful recommended source'],
     [workerPools.every((pool) => pool.reserve.length === 0), 'worker pool retained an unfetched reserve source'],
-    [benchmarkPlan.workers.every((worker) => worker.model === 'gpt-6-luna'), 'benchmark model override did not reach every worker'],
+    [benchmarkPlan.workers.every((worker) => worker.model === 'fixture-benchmark-model'), 'benchmark model override did not reach every worker'],
     [benchmarkPlan.workers.every((worker) => worker.reasoningEffort === 'default'), 'benchmark effort override did not reach every worker'],
     [benchmarkPlan.workers.every((worker) => worker.escalateTo === null), 'benchmark override retained a hidden escalation'],
     [benchmarkPlan.escalationEnabled === false, 'benchmark plan did not disable escalation'],
-    [finalizer.model === 'gpt-5.6-luna', 'finalizer did not use GPT-5.6 Luna'],
+    [finalizer.model === 'gpt-6-luna', 'finalizer did not use GPT-6 Luna'],
     [finalizer.reasoningEffort === 'medium', 'finalizer did not use Luna medium effort'],
-    [finalizer.escalateTo === 'gpt-5.6-sol-fast', 'finalizer did not retain the Sol Fast quality fallback'],
+    [finalizer.escalateTo === 'gpt-6-luna', 'finalizer did not retain the Luna quality retry'],
     [finalizer.escalationReasoningEffort === 'xhigh', 'finalizer escalation effort is not xhigh'],
     [finalizer.timeoutSeconds === 900, 'finalizer default timeout is not 900 seconds'],
-    [benchmarkFinalizer.model === 'gpt-6-luna', 'benchmark finalizer model override was ignored'],
+    [benchmarkFinalizer.model === 'fixture-benchmark-model', 'benchmark finalizer model override was ignored'],
     [benchmarkFinalizer.reasoningEffort === 'default', 'benchmark finalizer effort override was ignored'],
     [benchmarkFinalizer.escalateTo === null, 'benchmark finalizer retained a hidden escalation'],
     [benchmarkFinalizer.escalationEnabled === false, 'benchmark finalizer did not disable escalation'],
     [fallbackProbe.status === 1, 'synthetic finalizer failure did not remain a failure'],
     [fallbackInvocations.length === 2, 'finalizer did not make exactly one bounded fallback attempt'],
-    [fallbackInvocations[0]?.includes('gpt-5.6-luna') && fallbackInvocations[0]?.includes('medium'), 'finalizer primary attempt did not use Luna/medium'],
-    [fallbackInvocations[1]?.includes('gpt-5.6-sol-fast') && fallbackInvocations[1]?.includes('xhigh'), 'finalizer fallback did not use Sol Fast/xhigh'],
+    [fallbackInvocations[0]?.includes('gpt-6-luna') && fallbackInvocations[0]?.includes('medium'), 'finalizer primary attempt did not use Luna/medium'],
+    [fallbackInvocations[1]?.includes('gpt-6-luna') && fallbackInvocations[1]?.includes('xhigh'), 'finalizer retry did not use Luna/xhigh'],
     [companyWorkflow.includes('create-report-run.mjs "$COMPANY"'), 'company workflow does not create reports deterministically'],
     [companyWorkflow.includes('npm run research:workers -- --report-folder "$REPORT_FOLDER"'), 'company workflow does not invoke the bounded worker runner directly'],
     [companyWorkflow.includes('npm run research:finalize -- --report-folder "$REPORT_FOLDER"'), 'company workflow does not invoke the bounded finalizer directly'],

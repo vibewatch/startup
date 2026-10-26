@@ -24,10 +24,10 @@ on:
       model:
         description: "Model."
         required: false
-        default: "gpt-5.6-luna"
+        default: "gpt-6-luna"
         type: choice
         options:
-          - gpt-5.6-luna
+          - gpt-6-luna
 permissions:
   contents: write
   pull-requests: write
@@ -88,10 +88,10 @@ jobs:
             COUNT=5
           fi
           case "$MODEL" in
-            gpt-5.6-luna) ;;
-            "") MODEL="gpt-5.6-luna" ;;
+            gpt-6-luna) ;;
+            "") MODEL="gpt-6-luna" ;;
             *)
-              echo "Unsupported model: $MODEL (allowed: gpt-5.6-luna)" >&2
+              echo "Unsupported model: $MODEL (allowed: gpt-6-luna)" >&2
               exit 1
               ;;
           esac
@@ -358,7 +358,7 @@ jobs:
           )
           mkdir -p "$RUNNER_TEMP/copilot-logs"
           COPILOT_LOG="$RUNNER_TEMP/copilot-logs/translate-zh-editor.log"
-          copilot --yolo --autopilot --model gpt-5.6-luna -p "$PROMPT" 2>&1 | tee "$COPILOT_LOG"
+          copilot --yolo --autopilot --model gpt-6-luna -p "$PROMPT" 2>&1 | tee "$COPILOT_LOG"
 
       - name: Validate or roll back editorial pass
         id: editorial_results
@@ -423,7 +423,7 @@ jobs:
               )
               REPAIR_LOG="$RUNNER_TEMP/copilot-logs/translate-zh-editor-repair-$report.log"
               repair_status=0
-              STARTUP_TRANSLATION_EDITOR_WORKER=1 copilot --yolo --autopilot --model gpt-5.6-sol-fast -p "$REPAIR_PROMPT" 2>&1 | tee "$REPAIR_LOG" || repair_status=$?
+              STARTUP_TRANSLATION_EDITOR_WORKER=1 copilot --yolo --autopilot --model gpt-6-luna -p "$REPAIR_PROMPT" 2>&1 | tee "$REPAIR_LOG" || repair_status=$?
               assert_publication_scope
               if [ "$repair_status" -eq 0 ] && validate_editor "$report"; then
                 accepted=$((accepted + 1))
@@ -449,8 +449,8 @@ jobs:
           {
             echo
             echo "### Source-anchored editorial pass"
-            echo "- Editor model: gpt-5.6-luna"
-            echo "- Targeted repair model: gpt-5.6-sol-fast"
+            echo "- Editor model: gpt-6-luna"
+            echo "- Targeted repair model: gpt-6-luna"
             echo "- Accepted: $accepted"
             echo "- Accepted after targeted repair: $repaired"
             echo "- Rolled back safely: $restored"

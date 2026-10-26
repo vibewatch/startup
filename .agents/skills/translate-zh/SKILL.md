@@ -144,8 +144,8 @@ attribution, and the wider translationese soundcheck with zero hard errors.
 Advisory glossary/descriptor/punctuation findings must either reach zero or
 strictly decrease from the validated draft; equal or higher counts are rejected.
 If the first strict check reports exact failing paths, automation performs one
-bounded source-anchored repair with `gpt-5.6-sol-fast` of only those cached leaves
-and validates again; the initial editor uses `gpt-5.6-luna`. These stages follow
+bounded source-anchored repair with `gpt-6-luna` of only those cached leaves
+and validates again; the initial editor also uses `gpt-6-luna`. These stages follow
 the `translation-qa` profile's default and escalation routes respectively.
 `editor-accept` writes the complete cross-artifact issue set to
 `.translate-cache/<runId>/editor-findings.json`; the repair must address every
@@ -799,12 +799,11 @@ Review `.translate-cache/<runId>/batch-result.json` and `batch.log`, then run
 one integrated `npm run validate` for the accepted batch before publication.
 Archive the per-report evidence before using the runner's `cleanup` command.
 
-For model routing, use `gpt-5.6-luna` for summary and long-form
-full-report drafts, then use `gpt-6-luna` for compact table/figure leaves
-where brevity matters. Run deterministic QA after translation and route only
-meaning-sensitive or still-awkward leaves to `gpt-5.6-luna`; reserve
-`gpt-5.6-sol-fast` for unresolved semantic conflicts. Use
-`gpt-6-luna` for search planning and evidence extraction. The shared policy is in
+For model routing, use `gpt-6-luna` exclusively for summary and long-form
+full-report drafts, compact table/figure leaves, search planning, and evidence
+extraction. Run deterministic QA after translation and use the same model for
+meaning-sensitive or still-awkward leaves and bounded semantic repairs.
+The shared policy is in
 `../startup-research/references/model-routing.yaml`.
 
 If both zh siblings already exist and no repair is requested, do not rewrite

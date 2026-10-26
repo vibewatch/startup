@@ -466,7 +466,7 @@ let finalReport = inspectFinalReport();
 if ((processResult.timedOut || processResult.exitCode !== 0
       || finalReport.missingFiles.length > 0 || !finalReport.reportCheck.ok)
     && !args.disableEscalation
-    && route.escalateTo && route.escalateTo !== route.model) {
+    && route.escalateTo) {
   if (args.format === 'text') {
     console.log(`[run-report-finalizer] escalating failed finalizer to ${route.escalateTo}/xhigh`);
   }
