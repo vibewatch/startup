@@ -149,8 +149,8 @@ for (const path of [
     issues.push(`${path}: the worker/finalizer step must receive COPILOT_PAT directly`);
   }
 }
-if (!unicornWorkflow.includes('cron: "7 */6 * * *"')) {
-  issues.push('.github/workflows/research-unicorns.yml: missing native six-hour new-report schedule');
+if (!unicornWorkflow.includes('cron: "7 0 * * *"')) {
+  issues.push('.github/workflows/research-unicorns.yml: missing native daily new-report schedule');
 }
 for (const required of [
   'EVENT_NAME: ${{ github.event_name }}',
@@ -164,8 +164,8 @@ for (const required of [
     issues.push(`.github/workflows/research-unicorns.yml: missing scheduled single-report contract: ${required}`);
   }
 }
-if (!translationWorkflow.includes('cron: "17 */2 * * *"')) {
-  issues.push('.github/workflows/translate-reports-zh.yml: missing native two-hour recovery schedule');
+if (!translationWorkflow.includes('cron: "17 4 * * *"')) {
+  issues.push('.github/workflows/translate-reports-zh.yml: missing native daily recovery schedule');
 }
 for (const required of [
   'if [ "$EVENT_NAME" = "schedule" ]; then',
