@@ -55,9 +55,15 @@ function previousGaps(refreshContext) {
   return readYaml(path)?.summary?.unresolvedGaps ?? [];
 }
 
-function refreshSourceCandidates(refreshContext, chapters, domain, year, quality) {
+function refreshSourceCandidates(refreshContext, chapters, domain, year, quality, searchNames = []) {
   const runId = refreshContext?.previousReport?.runId;
   if (!isRunId(runId)) return [];
+  const loweredNames = searchNames.map((name) => String(name ?? '').toLowerCase()).filter(Boolean);
+  const mentionsCompany = (source, candidate) => loweredNames.length === 0 || loweredNames.some((name) => (
+    String(candidate.url ?? '').toLowerCase().includes(name)
+    || String(source.title ?? '').toLowerCase().includes(name)
+    || String(source.keyQuote ?? '').toLowerCase().includes(name)
+  ));
   const candidates = new Map();
   const seenChapterUrls = new Set();
   const seenCandidateDomains = new Set();
@@ -76,9 +82,11 @@ function refreshSourceCandidates(refreshContext, chapters, domain, year, quality
         && !isSelfPublishedReportUrl(candidate.url));
     const hasNewChapterUrls = seenChapterUrls.size > 0
       && rawSources.some(({ candidate }) => !seenChapterUrls.has(candidate.url));
-    const sources = [...rawSources].sort((left, right) => (
+    const sortedSources = [...rawSources].sort((left, right) => (
       Number(right.source.independence === 'independent')
         - Number(left.source.independence === 'independent')
+      || Number(mentionsCompany(right.source, right.candidate))
+        - Number(mentionsCompany(left.source, left.candidate))
       || (hasNewChapterUrls
         ? Number(!seenChapterUrls.has(right.candidate.url)) - Number(!seenChapterUrls.has(left.candidate.url))
           || Number(!candidates.has(right.candidate.url)) - Number(!candidates.has(left.candidate.url))
@@ -87,6 +95,10 @@ function refreshSourceCandidates(refreshContext, chapters, domain, year, quality
         : 0)
       || String(right.source.date ?? '').localeCompare(String(left.source.date ?? ''))
     ));
+    const adverseFirst = sortedSources.find(({ source }) => source.stance === 'adverse');
+    const sources = adverseFirst
+      ? [adverseFirst, ...sortedSources.filter((item) => item !== adverseFirst)]
+      : sortedSources;
     for (const { candidate } of rawSources) seenChapterUrls.add(candidate.url);
     const selected = new Set();
     const domains = new Set();
@@ -99,7 +111,12 @@ function refreshSourceCandidates(refreshContext, chapters, domain, year, quality
         domains.add(sourceDomain);
         seenCandidateDomains.add(sourceDomain);
         const entry = candidates.get(candidate.url) ?? { ...candidate, priorSources: [] };
-        entry.priorSources.push({ runId, chapter: chapter.key, sourceId: source.id });
+        entry.priorSources.push({
+          runId,
+          chapter: chapter.key,
+          sourceId: source.id,
+          ...(source.stance === 'adverse' ? { stance: 'adverse' } : {}),
+        });
         candidates.set(candidate.url, entry);
       }
     }
@@ -177,7 +194,7 @@ function chapterQueries({ company, year, chapter, mode, strategy, gaps, budget }
         .slice(0, budget.maxGapQueriesPerChapter);
       queries.push(...selectedGaps.map((gap) => ({
         intent: 'semantic',
-        query: `${company} ${gap} ${year}`,
+        query: `${company} ${String(gap ?? '').replace(/\s+/g, ' ').trim()} ${year}`,
         rationale: 'Carry forward and close an unresolved gap from the prior report.',
       })));
     }
@@ -299,7 +316,7 @@ const output = {
     maxResults: budget.maxResultsPerQuery,
   })),
   refreshCandidates: samePreviousCompany
-    ? refreshSourceCandidates(refreshContext, chapters, domain, year, strategy.quality) : [],
+    ? refreshSourceCandidates(refreshContext, chapters, domain, year, strategy.quality, searchNames) : [],
 };
 const volatileTokens = (config.agentPolicy?.volatileFactQueryTokens ?? [])
   .map((token) => String(token).toLowerCase())

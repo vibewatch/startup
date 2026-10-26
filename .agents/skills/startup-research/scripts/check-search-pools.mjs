@@ -1121,6 +1121,98 @@ const tests = [
       rmSync(folder, { recursive: true, force: true });
     }
   }],
+  ['refresh seed selection preserves prior adverse and company-specific sources and reserve refill replaces non-net-new slots when reserve is full', () => {
+    const runId = `20990701000000-adverse-seed-${process.pid}`;
+    const previousFolder = resolve('reports', runId);
+    const folder = resolve('.research-cache', `20990801000000-adverse-plan-${process.pid}`);
+    try {
+      mkdirSync(previousFolder);
+      mkdirSync(folder, { recursive: true });
+      runJson('apply-research-profile.mjs', ['--report-folder', folder, '--profile', 'fast']);
+      const company = { name: 'Acme', website: 'https://acme.example', shortDescription: 'Factory automation' };
+      const ch6Sources = [
+        {
+          id: 'SU-same-domain-confirm',
+          url: 'https://partner.example/',
+          title: 'Partner home page for Acme',
+          date: '2099-03-10',
+          accessStatus: 'ok',
+          independence: 'independent',
+          stance: 'confirming',
+          reputationTier: 'high',
+        },
+        ...Array.from({ length: 5 }, (_, i) => ({
+          id: `SU-macro-${i}`,
+          url: `https://macro-${i}.example/industry-report`,
+          title: `Global industry report ${i}`,
+          date: '2099-03-09',
+          accessStatus: 'ok',
+          independence: 'independent',
+          stance: 'neutral',
+          reputationTier: 'high',
+          keyQuote: 'Global industry volume grew 12%.',
+        })),
+        {
+          id: 'SU-company-specific',
+          url: 'https://customer.example/acme-deployment',
+          title: 'Acme deployment case study',
+          date: '2099-01-15',
+          accessStatus: 'ok',
+          independence: 'independent',
+          stance: 'confirming',
+          reputationTier: 'high',
+        },
+        {
+          id: 'SU-same-domain-adverse',
+          url: 'https://partner.example/3xs-withdrawal',
+          title: 'Acme partner 3XS service termination notice',
+          date: '2099-01-01',
+          accessStatus: 'ok',
+          independence: 'independent',
+          stance: 'adverse',
+          reputationTier: 'high',
+        },
+      ];
+      writeFileSync(join(previousFolder, '06-customers.yaml'), JSON.stringify({ localEvidence: { sources: ch6Sources } }));
+      writeFileSync(join(folder, 'refresh-context.yaml'), JSON.stringify({ previousReport: { runId, company } }));
+      const plan = runJson('build-search-plan.mjs', ['--report-folder', folder, '--profile', 'fast']);
+      const adverseSeed = plan.refreshCandidates.find(entry => entry.url === 'https://partner.example/3xs-withdrawal');
+      assert(adverseSeed, 'refresh seed selection must retain the chapter adverse source even when sharing a domain with a newer confirming source');
+      assert.equal(adverseSeed.priorSources[0]?.stance, 'adverse');
+      assert(plan.refreshCandidates.some(entry => entry.url === 'https://customer.example/acme-deployment'),
+        'company-mentioning prior sources must rank ahead of generic macro sources');
+      const fullReservePool = {
+        key: '06-customers',
+        evidenceTarget: { minSources: 2, minDomains: 2, minNetNewSources: 2 },
+        recommended: [
+          { url: 'https://own-net-new.example/acme', allocation: 'net-new', sourceQuality: { tier: 'high' } },
+          { url: 'https://shared-rec.example/acme', allocation: 'shared', sourceQuality: { tier: 'high' } },
+        ],
+        reserve: Array.from({ length: 6 }, (_, i) => ({
+          url: `https://reserve-${i}.example/acme`,
+          allocation: 'reserve',
+          sourceQuality: { tier: 'high' },
+        })),
+      };
+      const spareNetNew = { url: 'https://spare-net-new.example/acme', sourceQuality: { tier: 'high' } };
+      const fetched = new Map([
+        ...fullReservePool.recommended.map(entry => [entry.url, { ok: true }]),
+        ...fullReservePool.reserve.map(entry => [entry.url, { ok: true }]),
+        [spareNetNew.url, { ok: true }],
+      ]);
+      const [replenished] = replenishReserveEvidence(
+        [fullReservePool],
+        [...fullReservePool.recommended, ...fullReservePool.reserve, spareNetNew],
+        fetched,
+      );
+      assert.equal(replenished.reserve.length, 6);
+      assert(replenished.reserve.some(entry => entry.url === spareNetNew.url && entry.allocation === 'net-new-reserve'),
+        'replenishReserveEvidence must replace a non-net-new reserve entry when reserve is full and net-new is deficient');
+    } finally {
+      rmSync(previousFolder, { recursive: true, force: true });
+      rmSync(folder, { recursive: true, force: true });
+    }
+  }],
 ];
 
 const failures = [];

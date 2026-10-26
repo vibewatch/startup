@@ -84,7 +84,10 @@ function safeName(value) {
   return String(value).replace(/[^a-z0-9-]+/gi, '-').replace(/^-|-$/g, '').toLowerCase();
 }
 
-function workerPrompt({ reportFolder, contextPath, poolPath, fetchLogPath }) {
+function workerPrompt({ reportFolder, contextPath, poolPath, fetchLogPath, priorValidation = null }) {
+  const escalationSection = priorValidation
+    ? `\n\nPrior attempt validation failed (${[...(priorValidation.failedDimensions ?? []), ...(priorValidation.unackedWarningDimensions ?? [])].join(', ') || 'error'}):\n${String(priorValidation.error ?? '').slice(0, 4000)}\nRepair the existing chapter file in place to resolve every failure above before running check-chapter normal and strict.`
+    : '';
   return `Use the startup-research skill to author exactly one analysis chapter as a direct worker process. Do not launch subagents or background agents.
 
 Inputs:
@@ -105,7 +108,7 @@ Binding constraints:
 - Retain at least runtimeContext.chapter.gate.minNetNewSources relevant allocation:net-new sources and all relevant allocation:independent-candidate, allocation:report-diversity, requiredForReportDomains:true and requiredForRefreshEvidence:true sources. These allocations are evidence requirements, not automatic independence classifications.
 - Obey every fast cap, the exact chapter schema, source/claim IDs, and runtimeContext.policy.retryPolicy.
 - Run check-chapter normal and strict. The initial run plus at most maxChapterRetries repair attempts is a hard limit; stop with a failure result if the budget is exhausted or failures do not strictly decrease.
-- Do not inspect historical reports, edit sibling chapters, author report-meta or assembled artifacts, or use git.
+- Do not inspect historical reports, edit sibling chapters, author report-meta or assembled artifacts, or use git.${escalationSection}
 
 Return a compact final line containing chapter.file, normalStatus, normalRetries, strictStatus, strictRetries, and survivingFailureDimensions.`;
 }
@@ -136,7 +139,7 @@ function terminate(child) {
   }, 5000).unref();
 }
 
-function runWorker(task, args, fetchLogPath, logsDir, routeOverride = null) {
+function runWorker(task, args, fetchLogPath, logsDir, routeOverride = null, priorValidation = null) {
   return new Promise((resolveWorker) => {
     const startedAt = new Date();
     const route = routeOverride ?? task.context.policy.workerRouting;
@@ -155,6 +158,7 @@ function runWorker(task, args, fetchLogPath, logsDir, routeOverride = null) {
         contextPath: task.contextPath,
         poolPath: task.poolPath,
         fetchLogPath,
+        priorValidation,
       }),
     ];
     if (route.reasoningEffort !== 'default') {
@@ -256,50 +260,27 @@ function validateChapters(tasks, reportFolder, fetchLogPath) {
     const outsidePool = (chapter.value?.localEvidence?.sources ?? [])
       .filter((source) => !allowedUrls.has(canonicalSourceUrl(source?.url)))
       .map((source) => `${source?.id ?? '?'} ${source?.url ?? '?'}`);
-    if (outsidePool.length > 0) {
-      return {
-        chapter: task.context.chapter.key,
-        file: task.context.chapter.file,
-        ok: false,
-        failedDimensions: ['assignedSourcePool'],
-        unackedWarningDimensions: [],
-        retryOrder: ['assignedSourcePool'],
-        error: `chapter cited source(s) outside its successful assigned pool: ${outsidePool.join('; ')}`,
-      };
-    }
     const quoteIssues = checkPrefetchedSourceQuotes(
       chapter.value?.localEvidence?.sources ?? [],
       [...(task.pool.recommended ?? []), ...(task.pool.reserve ?? [])]
         .map((candidate) => ({ ...candidate.fetch, url: candidate.url })),
       task.context.chapter.file,
     );
-    if (quoteIssues.length > 0) {
-      return {
-        chapter: task.context.chapter.key,
-        file: task.context.chapter.file,
-        ok: false,
-        failedDimensions: ['sourceQuote'],
-        unackedWarningDimensions: [],
-        retryOrder: ['sourceQuote'],
-        issues: quoteIssues,
-        error: quoteIssues.map((issue) => `${issue.path}: ${issue.code}: ${issue.message}`).join('; '),
-      };
-    }
     const queryIssues = checkSearchQueryProvenance(
       chapter.value?.localEvidence, task.pool.executedSearchQueries, task.context.chapter.file,
     );
-    if (queryIssues.length > 0) {
-      return {
-        chapter: task.context.chapter.key,
-        file: task.context.chapter.file,
-        ok: false,
-        failedDimensions: ['searchQueryProvenance'],
-        unackedWarningDimensions: [],
-        retryOrder: ['searchQueryProvenance'],
-        issues: queryIssues,
-        error: queryIssues.map((issue) => `${issue.path}: ${issue.code}: ${issue.message}`).join('; '),
-      };
-    }
+    const extraFailedDimensions = [
+      ...(outsidePool.length > 0 ? ['assignedSourcePool'] : []),
+      ...(quoteIssues.length > 0 ? ['sourceQuote'] : []),
+      ...(queryIssues.length > 0 ? ['searchQueryProvenance'] : []),
+    ];
+    const extraIssues = [...quoteIssues, ...queryIssues];
+    const extraErrors = [
+      ...(outsidePool.length > 0
+        ? [`chapter cited source(s) outside its successful assigned pool: ${outsidePool.join('; ')}`]
+        : []),
+      ...extraIssues.map((issue) => `${issue.path}: ${issue.code}: ${issue.message}`),
+    ];
     const result = spawnSync(process.execPath, [
       checkChapterScript,
       reportFolder,
@@ -317,15 +298,19 @@ function validateChapters(tasks, reportFolder, fetchLogPath) {
     } catch {
       // Preserve raw output below when a validator crashes before JSON output.
     }
+    const ok = extraFailedDimensions.length === 0 && result.status === 0;
+    const chapterError = result.status === 0 ? '' : (result.stderr || result.stdout);
+    const combinedError = [...extraErrors, ...(chapterError ? [chapterError] : [])].join('\n');
     return {
       chapter: task.context.chapter.key,
       file: task.context.chapter.file,
-      ok: result.status === 0,
-      exitCode: result.status,
-      failedDimensions: envelope?.summary?.failedDimensions ?? [],
+      ok,
+      exitCode: ok ? 0 : (result.status || 1),
+      failedDimensions: [...new Set([...extraFailedDimensions, ...(envelope?.summary?.failedDimensions ?? [])])],
       unackedWarningDimensions: envelope?.summary?.unackedWarningDimensions ?? [],
-      retryOrder: envelope?.retryOrder ?? [],
-      error: result.status === 0 ? undefined : (result.stderr || result.stdout),
+      retryOrder: [...new Set([...extraFailedDimensions, ...(envelope?.retryOrder ?? [])])],
+      ...(extraIssues.length > 0 ? { issues: extraIssues } : {}),
+      error: ok ? undefined : combinedError,
     };
   });
 }
@@ -467,7 +452,8 @@ if (escalationTasks.length > 0) {
     if (args.format === 'text') {
       console.log(`[run-chapter-workers] -> ${task.context.chapter.key} escalation (${route.model}/${route.reasoningEffort})`);
     }
-    const result = await runWorker(task, args, fetchLogPath, logsDir, route);
+    const priorValidation = validations.find((entry) => entry.chapter === task.context.chapter.key) ?? null;
+    const result = await runWorker(task, args, fetchLogPath, logsDir, route, priorValidation);
     if (args.format === 'text') {
       console.log(`[run-chapter-workers] <- ${result.chapter} escalation: ${result.status} in ${result.durationSeconds}s`);
     }

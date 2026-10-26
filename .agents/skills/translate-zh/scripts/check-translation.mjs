@@ -69,6 +69,25 @@ const DESCRIPTOR_WORDS = new Set([
   'sample',
   'weights',
 ]);
+const PROPER_NOUN_CONNECTORS = new Set([
+  'and',
+  'bin',
+  'da',
+  'das',
+  'de',
+  'del',
+  'della',
+  'den',
+  'der',
+  'di',
+  'dos',
+  'du',
+  'ibn',
+  'ten',
+  'ter',
+  'van',
+  'von',
+]);
 const PRESERVED_PROPER_NAMES = new Set([
   'Tiger Global Management',
   'IBM (watsonx Orchestrate)',
@@ -82,11 +101,26 @@ function isTokenLike(value) {
   return /^[A-Z0-9][A-Z0-9&+./_ -]{0,24}$/.test(s);
 }
 
+function isCapitalizedOrAlnumProperToken(word) {
+  return !/[A-Za-z]/.test(word)
+    || /^\p{Lu}[\p{L}\p{N}.'\u2019+-]*$/u.test(word)
+    || /^(?=.*\d)[a-z][a-z0-9.+-]*$/i.test(word);
+}
+
 function isProperNounPhrase(value) {
   const words = properNounWords(value);
   return words.length > 0
     && words.length <= 8
-    && words.every((word) => !/[A-Za-z]/.test(word) || /^\p{Lu}[\p{L}\p{N}.'\u2019+-]*$/u.test(word) || /^(?=.*\d)[a-z][a-z0-9.+-]*$/i.test(word))
+    && words.every((word, index) => (
+      isCapitalizedOrAlnumProperToken(word)
+      || (
+        index > 0
+        && index < words.length - 1
+        && PROPER_NOUN_CONNECTORS.has(word)
+        && /^\p{Lu}/u.test(words[index - 1])
+        && /^\p{Lu}/u.test(words[index + 1])
+      )
+    ))
     && !words.some((word) => DESCRIPTOR_WORDS.has(word.toLowerCase()));
 }
 

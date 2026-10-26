@@ -210,11 +210,17 @@ jobs:
           fi
           draft_reports=()
           validate_draft() {
-            npm run translate:zh -- verify "$report" \
-              && node .agents/skills/translate-zh/scripts/check-translation-quality.mjs \
-                "reports/$report/summary-card.yaml" "reports/$report/summary-card.zh.yaml" \
-              && node .agents/skills/translate-zh/scripts/check-translation-quality.mjs \
-                "reports/$report/full-report.yaml" "reports/$report/full-report.zh.yaml"
+            local status=0
+            npm run translate:zh -- verify "$report" || status=$?
+            if [ -f "reports/$report/summary-card.zh.yaml" ]; then
+              node .agents/skills/translate-zh/scripts/check-translation-quality.mjs \
+                "reports/$report/summary-card.yaml" "reports/$report/summary-card.zh.yaml" || status=$?
+            fi
+            if [ -f "reports/$report/full-report.zh.yaml" ]; then
+              node .agents/skills/translate-zh/scripts/check-translation-quality.mjs \
+                "reports/$report/full-report.yaml" "reports/$report/full-report.zh.yaml" || status=$?
+            fi
+            return "$status"
           }
           preserve_draft_failure() {
             local evidence="$RUNNER_TEMP/translation-draft-failures/$report/$1"

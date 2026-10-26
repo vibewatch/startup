@@ -137,7 +137,7 @@ const insuranceClaimNouns = new RegExp([
   '\\bcoverage\\s+(?:limits?\\s*,\\s*(?:exclusions?\\s*,\\s*and\\s+claims?\\s+procedures?|claims?\\s+triggers?)|terms\\s+and\\s+claims?\\s+histor(?:y|ies))\\b',
   '\\binsurance\\s*,\\s*claims?\\s+history\\b',
   '\\binsurance/claims\\s+history\\b',
-  '\\b(?:counsel\\s+letters|retention\\s*,\\s*concentration|operator\\s+insurance\\s+certificates|SLA\\s+dashboards|policy\\s+exclusions?|master\\s+policies|license\\s+enforcement|study\\s+methods|IP\\s+policy|recall\\s+logs?|pentest\\s+results)\\s*(?:,\\s*(?:and\\s+)?|\\s+and\\s+)claims?\\s+history\\b',
+  '\\b(?:counsel\\s+letters|retention\\s*,\\s*concentration|operator\\s+insurance\\s+certificates|SLA\\s+dashboards|policy\\s+exclusions?|master\\s+policies|license\\s+enforcement|study\\s+methods|IP\\s+policy|recall\\s+logs?|pentest\\s+results|acceptance\\s+criteria|warranty\\s+reserves?)\\s*(?:,\\s*(?:and\\s+)?|\\s+and\\s+)claims?\\s+history\\b',
   '\\bshare\\s+claims?\\s+history(?=\\s*,\\s*exclusions?\\b)',
   '\\b(?:disclose\\s+|(?:loss\\s+ratios?|reserve\\s+policy)\\s*,\\s*)claims?\\s+frequency\\b',
   '\\bfirst\\s+reported\\s+claim\\s+settlements?\\b',
@@ -377,6 +377,7 @@ const hedgeRules = [
       || (/\bno public evidence\b/i.test(source)
         && !/\bno public\b/i.test(source.replace(/\bno public evidence\b/i, ''))
         && (/(?<!并非\s*|不是\s*|非\s*|不\s*)(?:没有|未见)[^。！？；，：\n.!?;,]{1,40}的公开证据/u.test(target)
+          || /(?<!并非\s*|不是\s*|没有\s*|非\s*|不\s*|无\s*)公开证据(?:也|均)?(?:未|尚未|没有|尚无|无法)(?!按(?:期|时|计划))/u.test(target)
           || /(?<!并非\s*|不是\s*|没有\s*|非\s*|不\s*|无\s*)公开证据(?:仍|尚)?缺失(?=\s*(?:[。；，.;,]|$))/u.test(target)
           || (/\bno public evidence supports\b/i.test(source)
             && /(?<!并非\s*|不是\s*|没有\s*|非\s*|不\s*|无\s*)公开证据(?:仍|尚)?不足以支撑/u.test(target)))),

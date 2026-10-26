@@ -416,6 +416,24 @@ function checkSearchQueryFreshness(file, doc) {
   }
 }
 
+function loadWorkerPoolForCheck(reportFolder, spec) {
+  const runId = basename(reportFolder);
+  const fileName = `${String(spec.order).padStart(2, '0')}-${spec.key}-pool.json`;
+  const candidates = [
+    join(reportFolder, 'worker-inputs', fileName),
+    resolve('.research-cache', runId, 'worker-inputs', fileName),
+  ];
+  for (const path of candidates) {
+    if (!existsSync(path)) continue;
+    try {
+      return JSON.parse(readFileSync(path, 'utf8'));
+    } catch {
+      // Ignore unreadable worker pool in standalone checks.
+    }
+  }
+  return null;
+}
+
 function loadChapterPoolForCheck(reportFolder, chapterKey) {
   const runId = basename(reportFolder);
   const candidates = [
@@ -488,12 +506,32 @@ function checkSources(file, doc, gate, earlierUrls) {
   if (netNew < gate.minNetNewSources) {
     fail('netNewSources', `${file}: only ${netNew} sources are new vs earlier chapters, expected at least ${gate.minNetNewSources} (per-chapter research must add fresh sources, not reuse the global pool)`, { actual: netNew, required: gate.minNetNewSources });
   }
-  const chapterPool = loadChapterPoolForCheck(reportFolder, spec.key);
-  if (chapterPool) {
-    const poolCandidates = [...(chapterPool.recommended ?? []), ...(chapterPool.reserve ?? [])]
+  const workerPool = loadWorkerPoolForCheck(reportFolder, spec);
+  const chapterPool = workerPool ?? loadChapterPoolForCheck(reportFolder, spec.key);
+  if (workerPool) {
+    const allowedCandidates = [...(workerPool.recommended ?? []), ...(workerPool.reserve ?? [])]
       .filter((entry) => entry?.fetch?.ok === true);
-    const availableNonCompanyUrls = new Set(
-      poolCandidates
+    if (allowedCandidates.length >= gate.minLocalSources) {
+      const allowedUrls = new Set(
+        allowedCandidates.map((entry) => canonicalSourceUrl(entry.url)).filter(Boolean),
+      );
+      for (const source of sources) {
+        const canonical = canonicalSourceUrl(source?.url);
+        if (canonical && !allowedUrls.has(canonical)) {
+          fail(
+            'assignedSourcePool',
+            `${file}: source ${source?.id ?? '?'} (${source?.url ?? '?'}) is not in this chapter's assigned worker pool. Replace it with a successful prefetched source from your assigned pool file.`,
+            { id: source?.id, url: source?.url },
+          );
+        }
+      }
+    }
+  }
+  if (chapterPool) {
+    const recommendedCandidates = (chapterPool.recommended ?? [])
+      .filter((entry) => entry?.fetch?.ok === true);
+    const recommendedNonCompanyUrls = new Set(
+      recommendedCandidates
         .filter((entry) => {
           const reasons = entry?.sourceQuality?.reasons ?? [];
           return !reasons.includes('official-domain') && !reasons.includes('wire-service');
@@ -501,28 +539,53 @@ function checkSources(file, doc, gate, earlierUrls) {
         .map((entry) => canonicalSourceUrl(entry.url))
         .filter(Boolean),
     );
+    const nonIndependentCitedUrls = new Set(
+      sources
+        .filter((source) => ['partner', 'customer', 'competitor'].includes(source?.independence))
+        .map((source) => canonicalSourceUrl(source.url))
+        .filter(Boolean),
+    );
+    const offDomainCompanyCitedUrls = new Set(
+      sources
+        .filter((source) => source?.independence === 'company')
+        .map((source) => canonicalSourceUrl(source.url))
+        .filter(Boolean),
+    );
+    const offDomainCompanyInRecommended = Math.min(
+      2,
+      [...recommendedNonCompanyUrls].filter((url) => offDomainCompanyCitedUrls.has(url)).length,
+    );
+    const availableNonCompanyCount = Math.max(
+      0,
+      recommendedNonCompanyUrls.size - offDomainCompanyInRecommended,
+    );
+    const availableIndependentCount = Math.max(
+      0,
+      [...recommendedNonCompanyUrls].filter((url) => !nonIndependentCitedUrls.has(url)).length
+        - offDomainCompanyInRecommended,
+    );
     const independentCount = sources.filter((source) => source?.independence === 'independent').length;
     const companyCount = sources.filter((source) => source?.independence === 'company').length;
     const minIndependentCount = Math.min(
       Math.ceil(sources.length * REPORT_INDEPENDENT_FLOOR),
-      Math.max(0, availableNonCompanyUrls.size - 1),
+      Math.max(0, availableIndependentCount - 1),
     );
     const maxCompanyCount = Math.max(
       Math.floor(sources.length * REPORT_COMPANY_CEILING),
-      sources.length - availableNonCompanyUrls.size,
+      sources.length - availableNonCompanyCount,
     );
     if (independentCount < minIndependentCount) {
       fail(
         'sourceIndependence',
-        `${file}: only ${independentCount}/${sources.length} sources have independence:independent (${((independentCount / sources.length) * 100).toFixed(1)}%), expected at least ${minIndependentCount} (${(REPORT_INDEPENDENT_FLOOR * 100).toFixed(0)}% report floor; assigned pool has ${availableNonCompanyUrls.size} fetched non-company-controlled sources). Swap company/partner/competitor sources for independent sources from your assigned pool, or set independence:independent on third-party sources that are not company/partner/customer/competitor controlled.`,
-        { actual: independentCount, required: minIndependentCount, availableNonCompany: availableNonCompanyUrls.size },
+        `${file}: only ${independentCount}/${sources.length} sources have independence:independent (${((independentCount / sources.length) * 100).toFixed(1)}%), expected at least ${minIndependentCount} (${(REPORT_INDEPENDENT_FLOOR * 100).toFixed(0)}% report floor; assigned recommended pool has ${availableIndependentCount} fetched independent-eligible sources). Swap company/partner/competitor sources for independent sources from your assigned pool, or set independence:independent on third-party sources that are not company/partner/customer/competitor controlled.`,
+        { actual: independentCount, required: minIndependentCount, availableNonCompany: availableIndependentCount },
       );
     }
     if (companyCount > maxCompanyCount) {
       fail(
         'sourceIndependence',
-        `${file}: ${companyCount}/${sources.length} sources have independence:company (${((companyCount / sources.length) * 100).toFixed(1)}%), expected at most ${maxCompanyCount} (${(REPORT_COMPANY_CEILING * 100).toFixed(0)}% report ceiling; assigned pool has ${availableNonCompanyUrls.size} fetched non-company-controlled sources). Replace excess company-controlled sources with non-company sources from your assigned pool.`,
-        { actual: companyCount, ceiling: maxCompanyCount, availableNonCompany: availableNonCompanyUrls.size },
+        `${file}: ${companyCount}/${sources.length} sources have independence:company (${((companyCount / sources.length) * 100).toFixed(1)}%), expected at most ${maxCompanyCount} (${(REPORT_COMPANY_CEILING * 100).toFixed(0)}% report ceiling; assigned recommended pool has ${availableNonCompanyCount} fetched non-company-controlled sources). Replace excess company-controlled sources with non-company sources from your assigned pool.`,
+        { actual: companyCount, ceiling: maxCompanyCount, availableNonCompany: availableNonCompanyCount },
       );
     }
   }

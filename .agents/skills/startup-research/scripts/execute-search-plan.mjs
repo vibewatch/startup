@@ -754,13 +754,16 @@ if (args.prefetch) {
     fetchedSources.push(...replenished);
     for (const entry of replenished) fetchedByUrl.set(entry.url, entry);
   }
+  const crossChapterCandidates = () => [...candidates.values()].filter(
+    (candidate) => (candidate.discoveredBy?.length ?? 0) > 0 || companyRelevant(candidate, plan.company),
+  );
   const repairAllocation = () => {
     chapterPools = chapterPools.map(pool => {
       const { recommended, reserve } = promoteReserveEvidence(pool, fetchedByUrl);
       return { ...pool, recommended, reserve };
     });
-    chapterPools = recoverExclusiveEvidence(chapterPools, [...candidates.values()], fetchedByUrl);
-    chapterPools = recoverReportDomains(chapterPools, [...candidates.values()], fetchedByUrl, reportDomainTarget);
+    chapterPools = recoverExclusiveEvidence(chapterPools, crossChapterCandidates(), fetchedByUrl);
+    chapterPools = recoverReportDomains(chapterPools, crossChapterCandidates(), fetchedByUrl, reportDomainTarget);
   };
   repairAllocation();
   const deficient = new Set(chapterPools.filter(pool => {
@@ -823,6 +826,7 @@ if (args.prefetch) {
     candidate.sourceQuality?.tier !== 'low' && !isSelfPublishedReportUrl(candidate.url)
     && !alreadyFetched.has(canonicalSourceUrl(candidate.url))
     && (candidate.priorSources.some(source => needsRefreshSeeds.has(source.chapter))
+      || candidate.priorSources.some(source => source.stance === 'adverse')
       || (remainingDomains.size < reportDomainTarget && !remainingDomains.has(registrableDomain(candidate.url)))))
     .map(candidate => ({ candidate, chapters: [...new Set(candidate.priorSources.map(source => source.chapter))] }));
   if (refreshTargets.length) {
@@ -839,7 +843,7 @@ if (args.prefetch) {
     fetchedSources.push(...refreshed);
     for (const entry of refreshed) fetchedByUrl.set(entry.url, entry);
     chapterPools = recoverRefreshEvidence(chapterPools, [...candidates.values()], fetchedByUrl);
-    chapterPools = replenishReserveEvidence(chapterPools, [...candidates.values()], fetchedByUrl);
+    chapterPools = replenishReserveEvidence(chapterPools, crossChapterCandidates(), fetchedByUrl);
     repairAllocation();
     chapterPools = recoverRefreshEvidence(chapterPools, [...candidates.values()], fetchedByUrl);
   } else if ([...candidates.values()].some(candidate => candidate.priorSources?.length && fetchedByUrl.get(candidate.url)?.ok)) {

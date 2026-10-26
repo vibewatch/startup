@@ -227,15 +227,31 @@ function ensurePreflight(runId) {
   return paths;
 }
 
-function runNodeScript(scriptName, args) {
+function runNodeScriptStatus(scriptName, args) {
   const scriptPath = resolve(scriptsDir, scriptName);
   const child = spawnSync(process.execPath, [scriptPath, ...args], {
     cwd: repoRoot,
     stdio: 'inherit',
   });
-  if (child.status !== 0) {
-    fail(`${scriptName} failed with exit code ${child.status ?? 'unknown'}`);
+  return child.status ?? 1;
+}
+
+function runNodeScript(scriptName, args) {
+  const status = runNodeScriptStatus(scriptName, args);
+  if (status !== 0) {
+    fail(`${scriptName} failed with exit code ${status}`);
   }
+}
+
+function runNodeScriptsAll(calls) {
+  let firstFailure = null;
+  for (const [scriptName, args] of calls) {
+    const status = runNodeScriptStatus(scriptName, args);
+    if (status !== 0 && !firstFailure) {
+      firstFailure = `${scriptName} failed with exit code ${status}`;
+    }
+  }
+  if (firstFailure) fail(firstFailure);
 }
 
 function preflight(runId) {
@@ -373,8 +389,10 @@ function finalizeSummary(runId, { skipQuality = false } = {}) {
   runNodeScript('bundle-translatable.mjs', ['import', paths.summarySource, paths.summaryBundle, '--out', paths.summaryJson]);
   retainEmptyPlaceholders(paths.summarySource, paths.summaryOut, paths.summaryJson);
   runNodeScript('apply-translation.mjs', [paths.summarySource, paths.summaryJson, '--out', paths.summaryOut]);
-  runNodeScript('check-translation.mjs', [paths.reportDir, ...(skipQuality ? [] : ['--strict'])]);
-  if (!skipQuality) runNodeScript('check-translation-quality.mjs', [paths.summarySource, paths.summaryOut]);
+  runNodeScriptsAll([
+    ['check-translation.mjs', [paths.reportDir, ...(skipQuality ? [] : ['--strict'])]],
+    ...(skipQuality ? [] : [['check-translation-quality.mjs', [paths.summarySource, paths.summaryOut]]]),
+  ]);
   console.log('[translate-zh] summary finalized');
 }
 
@@ -395,11 +413,13 @@ function finalizeFull(runId, { keepCache = false, skipQuality = false } = {}) {
   runNodeScript('bundle-translatable.mjs', ['import', paths.fullSource, paths.fullBundle, '--out', paths.fullJson]);
   retainEmptyPlaceholders(paths.fullSource, paths.fullOut, paths.fullJson);
   runNodeScript('apply-translation.mjs', [paths.fullSource, paths.fullJson, '--out', paths.fullOut]);
-  runNodeScript('check-translation.mjs', [paths.reportDir, ...(skipQuality ? [] : ['--strict']), '--require-final']);
-  if (!skipQuality) {
-    runNodeScript('check-translation-quality.mjs', [paths.summarySource, paths.summaryOut]);
-    runNodeScript('check-translation-quality.mjs', [paths.fullSource, paths.fullOut]);
-  }
+  runNodeScriptsAll([
+    ['check-translation.mjs', [paths.reportDir, ...(skipQuality ? [] : ['--strict']), '--require-final']],
+    ...(skipQuality ? [] : [
+      ['check-translation-quality.mjs', [paths.summarySource, paths.summaryOut]],
+      ['check-translation-quality.mjs', [paths.fullSource, paths.fullOut]],
+    ]),
+  ]);
   if (!keepCache) cleanup(runId);
   console.log('[translate-zh] full report finalized');
 }

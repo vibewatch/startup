@@ -105,19 +105,38 @@ export function replenishReserveEvidence(pools, candidates, fetchedByUrl) {
   // Release only surplus backups, never another chapter's recommended evidence.
   for (let round = 0; round < 6 && available.length; round += 1) {
     for (const pool of result) {
-      if (!deficient.has(pool.key) || !needsNetNew(pool) || pool.reserve.length >= 6 || !available.length) continue;
-      const candidate = available.shift();
-      pool.reserve.push({ ...candidate, allocation: 'net-new-reserve' });
-      transferred.add(canonicalSourceUrl(candidate.url));
+      if (!deficient.has(pool.key) || !needsNetNew(pool) || !available.length) continue;
+      if (pool.reserve.length < 6) {
+        const candidate = available.shift();
+        pool.reserve.push({ ...candidate, allocation: 'net-new-reserve' });
+        transferred.add(canonicalSourceUrl(candidate.url));
+      } else if (pool.reserve.filter(entry => entry.allocation === 'net-new-reserve').length < pool.evidenceTarget.minNetNewSources) {
+        const replaceIdx = pool.reserve.findLastIndex(entry => entry.allocation !== 'net-new-reserve');
+        if (replaceIdx >= 0) {
+          const candidate = available.shift();
+          pool.reserve[replaceIdx] = { ...candidate, allocation: 'net-new-reserve' };
+          transferred.add(canonicalSourceUrl(candidate.url));
+        }
+      }
     }
   }
   for (let round = 0; round < 6 && available.some(candidate => !fetchedByUrl.has(candidate.url)); round += 1) {
     for (const pool of result) {
       const index = available.findIndex(candidate => !fetchedByUrl.has(candidate.url));
-      if (!deficient.has(pool.key) || pool.reserve.length >= 6 || index < 0) continue;
-      const [candidate] = available.splice(index, 1);
-      pool.reserve.push({ ...candidate, allocation: 'net-new-reserve' });
-      transferred.add(canonicalSourceUrl(candidate.url));
+      if (!deficient.has(pool.key) || index < 0) continue;
+      if (pool.reserve.length < 6) {
+        const [candidate] = available.splice(index, 1);
+        pool.reserve.push({ ...candidate, allocation: 'net-new-reserve' });
+        transferred.add(canonicalSourceUrl(candidate.url));
+      } else if (needsNetNew(pool)
+          && pool.reserve.filter(entry => entry.allocation === 'net-new-reserve').length < pool.evidenceTarget.minNetNewSources) {
+        const replaceIdx = pool.reserve.findLastIndex(entry => entry.allocation !== 'net-new-reserve');
+        if (replaceIdx >= 0) {
+          const [candidate] = available.splice(index, 1);
+          pool.reserve[replaceIdx] = { ...candidate, allocation: 'net-new-reserve' };
+          transferred.add(canonicalSourceUrl(candidate.url));
+        }
+      }
     }
   }
   const exclusiveUrls = new Set(result.flatMap(pool => [
@@ -139,8 +158,17 @@ export function replenishReserveEvidence(pools, candidates, fetchedByUrl) {
       .sort((left, right) => Number(!metrics.successfulDomains.has(registrableDomain(right.url)))
         - Number(!metrics.successfulDomains.has(registrableDomain(left.url))));
     for (const candidate of shared) {
-      if (pool.reserve.length >= 6) break;
-      pool.reserve.push({ ...candidate, allocation: 'shared-recovery' });
+      if (pool.reserve.length < 6) {
+        pool.reserve.push({ ...candidate, allocation: 'shared-recovery' });
+      } else if (metrics.successfulDomains.size < pool.evidenceTarget.minDomains
+          && !metrics.successfulDomains.has(registrableDomain(candidate.url))) {
+        const replaceIdx = pool.reserve.findLastIndex(entry =>
+          entry.allocation !== 'net-new-reserve'
+          && metrics.successfulDomains.has(registrableDomain(entry.url)));
+        if (replaceIdx >= 0) {
+          pool.reserve[replaceIdx] = { ...candidate, allocation: 'shared-recovery' };
+        }
+      }
     }
   }
   return result.map(pool => {
@@ -262,7 +290,11 @@ export function recoverRefreshEvidence(pools, candidates, fetchedByUrl) {
     .map(candidate => [canonicalSourceUrl(candidate.url), pool.key])));
   for (const pool of result) {
     let retained = 0;
-    for (const candidate of uniqueCandidates(candidates)) {
+    const orderedCandidates = uniqueCandidates(candidates).sort((left, right) => (
+      Number(Boolean(right.priorSources?.some(source => source.chapter === pool.key && source.stance === 'adverse')))
+        - Number(Boolean(left.priorSources?.some(source => source.chapter === pool.key && source.stance === 'adverse')))
+    ));
+    for (const candidate of orderedCandidates) {
       const url = canonicalSourceUrl(candidate.url);
       const owner = exclusiveOwner.get(url);
       if (candidate.sourceQuality?.tier === 'low' || !fetchedByUrl.get(candidate.url)?.ok
